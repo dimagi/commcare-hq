@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import uuid
 
@@ -59,7 +60,7 @@ class AppManagerTest(TestCase):
             module = self.app.get_module(i)
             detail = module.ref_details.short
             detail.columns.append(
-                DetailColumn(header={"en": u"test 字 unicode"}, model="case", field="test", format="plain")
+                DetailColumn(header={"en": "test 字 unicode"}, model="case", field="test", format="plain")
             )
             detail.columns.append(
                 DetailColumn(header={"en": "age"}, model="case", field="age", format="years-ago")

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
 from corehq.apps.case_search.models import CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY
@@ -121,7 +122,7 @@ class RemoteRequestFactory(object):
         default_query_datums = [
             QueryData(
                 key='case_type',
-                ref=u"'{}'".format(self.module.case_type)
+                ref="'{}'".format(self.module.case_type)
             ),
             QueryData(
                 key='include_closed',
@@ -129,14 +130,14 @@ class RemoteRequestFactory(object):
             )
         ]
         extra_query_datums = [
-            QueryData(key=u"{}".format(c.property), ref=u"{}".format(c.defaultValue))
+            QueryData(key="{}".format(c.property), ref="{}".format(c.defaultValue))
             for c in self.module.search_config.default_properties
         ]
         if self.module.search_config.blacklisted_owner_ids_expression:
             extra_query_datums.append(
                 QueryData(
                     key=CASE_SEARCH_BLACKLISTED_OWNER_ID_KEY,
-                    ref=u"{}".format(self.module.search_config.blacklisted_owner_ids_expression)
+                    ref="{}".format(self.module.search_config.blacklisted_owner_ids_expression)
                 )
             )
         return default_query_datums + extra_query_datums

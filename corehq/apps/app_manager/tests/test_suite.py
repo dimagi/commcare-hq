@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import re
 
@@ -1036,22 +1037,22 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         # Tuple mapping translation formats to the expected output of each
         translation_formats = [
             ({
-                u'एक': {
+                'एक': {
                     'en': 'one',
                     'es': 'uno',
                 },
                 '2': {
                     'en': 'two',
                     'es': 'dos\'',
-                    'hin': u'दो',
+                    'hin': 'दो',
                 },
             }, 'reports_module_data_detail-translated'),
             ({
-                u'एक': 'one',
+                'एक': 'one',
                 '2': 'two',
             }, 'reports_module_data_detail-translated-simple'),
             ({
-                u'एक': {
+                'एक': {
                     'en': 'one',
                     'es': 'uno',
                 },
@@ -1093,7 +1094,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         module.case_details.long.custom_variables = long_custom_variables
         suite = factory.app.create_suite()
         self.assertXmlPartialEqual(
-            u"""
+            """
             <partial>
                 <variables>
                     {short_variables}
@@ -1107,7 +1108,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "detail/variables"
         )
         self.assertXmlPartialEqual(
-            u"""
+            """
             <partial>
                 <instance id="casedb" src="jr://instance/casedb"/>
                 <instance id="locations" src="jr://fixture/locations"/>
@@ -1131,7 +1132,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         instance_path = "jr://foo/bar"
         self.form.custom_instances = [CustomInstance(instance_id=instance_id, instance_path=instance_path)]
         self.assertXmlPartialEqual(
-            u"""
+            """
             <partial>
                 <instance id='{}' src='{}' />
             </partial>
@@ -1156,7 +1157,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.factory.form_requires_case(self.form)
         self.form.form_filter = "instance('casedb') instance('casedb') instance('locations') instance('locations')"
         self.assertXmlPartialEqual(
-            u"""
+            """
             <partial>
                 <instance id='casedb' src='jr://instance/casedb' />
                 <instance id='locations' src='jr://fixture/locations' />
@@ -1169,7 +1170,7 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_location_instances(self):
         self.form.form_filter = "instance('locations')/locations/"
         self.assertXmlPartialEqual(
-            u"""
+            """
             <partial>
                 <instance id='locations' src='jr://fixture/locations' />
             </partial>
@@ -1188,13 +1189,13 @@ class InstanceTests(SimpleTestCase, TestXmlMixin, SuiteMixin):
         configuration_mock_obj = mock.MagicMock()
         sync_patch.return_value = configuration_mock_obj
 
-        hierarchical_fixture_format_xml = u"""
+        hierarchical_fixture_format_xml = """
             <partial>
                 <instance id='locations' src='jr://fixture/commtrack:locations' />
             </partial>
         """
 
-        flat_fixture_format_xml = u"""
+        flat_fixture_format_xml = """
             <partial>
                 <instance id='locations' src='jr://fixture/locations' />
             </partial>

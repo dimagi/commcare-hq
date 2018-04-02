@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import copy
 import json
 import os
@@ -230,8 +231,8 @@ def get_app_view_context(request, app):
                               args=(app.domain, app.get_id)),
             'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
-            'adjective': _(u"U\u200BI translation"),
-            'plural_noun': _(u"U\u200BI translations"),
+            'adjective': _("U\u200BI translation"),
+            'plural_noun': _("U\u200BI translations"),
         },
         'bulk_app_translation_upload': {
             'action': reverse('upload_bulk_app_translations',
@@ -420,7 +421,7 @@ def import_app(request, domain):
         if not valid_request:
             return render(request, template, {'domain': domain})
 
-        source = decompress([six.unichr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
+        source = decompress([six.chr(int(x)) if int(x) < 256 else int(x) for x in compressed.split(',')])
         source = json.loads(source)
         assert(source is not None)
         app = import_app_util(source, domain, {'name': name})
