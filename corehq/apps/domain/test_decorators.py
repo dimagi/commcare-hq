@@ -20,7 +20,7 @@ class TestDecorators(TestCase):
                                            )
 
     @classmethod
-    def create_request(request_url, username, password):
+    def create_request(cls, request_url, username, password):
         # Initialize request
         request = Client().get(request_url).wsgi_request
         # Create user
