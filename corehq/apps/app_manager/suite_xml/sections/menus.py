@@ -3,7 +3,7 @@ from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.exceptions import (ScheduleError, CaseXPathValidationError,
     UserCaseXPathValidationError)
 from corehq.apps.app_manager.suite_xml.contributors import SuiteContributorByModule
-from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu
+from corehq.apps.app_manager.suite_xml.xml_models import Menu, Command, LocalizedMenu, Text
 from corehq.apps.app_manager.util import (is_usercase_in_use, xpath_references_case,
     xpath_references_user_case)
 from corehq.apps.app_manager.xpath import (interpolate_xpath, CaseIDXPath, session_var,
@@ -145,6 +145,11 @@ class MenuContributor(SuiteContributorByModule):
 
                     if len(menu.commands):
                         menus.append(menu)
+
+            if any(isinstance(id_module, TrainingModule) for id_module in id_modules):
+                menu = LocalizedMenu(id='training-root')
+                menu.text = Text(locale_id=id_strings.training_module_locale())
+                menus.append(menu)
 
         if self.app.grid_display_for_all_modules() or \
                 self.app.grid_display_for_some_modules() and module.grid_display_style():

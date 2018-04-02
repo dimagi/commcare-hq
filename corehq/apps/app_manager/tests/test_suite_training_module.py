@@ -22,6 +22,11 @@ class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin):
                     </text>
                     <command id="m0-f0"/>
                 </menu>
+                <menu id="training-root">
+                    <text>
+                        <locale id="training.root.title"/>
+                    </text>
+                </menu>
             </partial>
             """,
             app.create_suite(),
