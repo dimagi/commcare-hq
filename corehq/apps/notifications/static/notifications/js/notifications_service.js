@@ -153,18 +153,5 @@ hqDefine('notifications/js/notifications_service', [
         }
     };
 
-    $(function () {
-        var csrfToken = $("#csrfTokenContainer").val();
-        module.setRMI(initialPageData.reverse('notifications_service'), csrfToken);
-        module.initService('#js-settingsmenu-notifications');
-        module.relativelyPositionUINotify('.alert-ui-notify-relative');
-        module.initUINotify('.alert-ui-notify');
-
-        $(document).on('click', '.notification-link', function() {
-            googleAnalytics.track.event('Notification', 'Opened Message', this.href);
-        });
-        googleAnalytics.track.click($('#notification-icon'), 'Notification', 'Clicked Bell Icon');
-    });
-
     return module;
 });
