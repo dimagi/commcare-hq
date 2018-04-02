@@ -2261,7 +2261,7 @@ def update_fixture_status_for_users(user_ids, fixture_type):
         get_fixture_statuses.clear(user_id)
 
 
-@quickcache(['user_id'], lambda _: settings.UNIT_TESTING)
+@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
 def get_fixture_statuses(user_id):
     from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
     last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
