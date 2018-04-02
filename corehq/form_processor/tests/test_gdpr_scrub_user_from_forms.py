@@ -58,7 +58,7 @@ class GDPRScrubUserFromFormsTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
         actual_form_xml = Command().update_form_data(form, self.new_username)
-        # self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
+        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
     @use_sql_backend
     def test_modify_attachment_xml_and_metadata_sql(self):
