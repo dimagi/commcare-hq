@@ -377,7 +377,7 @@ def _case_list_form_not_allowed_reasons(module):
                          "which means that registration forms must go in a different case list"))
     if isinstance(module, Module):
         app = module.get_app()
-        if app.build_version < '2.23' and module.parent_select.active:
+        if app.build_version < b'2.23' and module.parent_select.active:
             reasons.append(_("'Parent Selection' is configured"))
     return reasons
 
