@@ -1023,7 +1023,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
             "./entry",
         )
         self.assertIn(
-            'reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i=CommBugz',
+            b'reports.ip1bjs8xtaejnhfrbzj2r6v1fi6hia4i=CommBugz',
             app.create_app_strings('default'),
         )
 
