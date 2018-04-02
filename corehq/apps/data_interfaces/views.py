@@ -38,7 +38,7 @@ from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, HQJSONResponseMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
@@ -607,7 +607,7 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
+class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = ugettext_lazy("Automatically Close Cases")
@@ -729,7 +729,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         }
 
 
-class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
+class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
     page_title = ugettext_lazy("Add Automatic Case Close Rule")
