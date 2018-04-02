@@ -14,6 +14,8 @@ class CommCareFeatureSupportMixin(object):
             return False
         assert isinstance(self.build_version, Version)
         assert isinstance(minimum_version, six.string_types + (Version,))
+        if isinstance(minimum_version, six.text_type):
+            minimum_version = minimum_version.encode('utf-8')
         return self.build_version >= minimum_version
 
     @property
