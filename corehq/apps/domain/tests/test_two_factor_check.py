@@ -6,7 +6,7 @@ from django.test.client import Client
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.domain.decorators import _two_factor_required
+from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
 
 
 class TestTwoFactorCheck(TestCase):
@@ -43,7 +43,7 @@ class TestTwoFactorCheck(TestCase):
         request = self.request
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
-        self.assertEqual(two_factor_required_bool, True)
+        self.assertTrue(two_factor_required_bool)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = "dummy_view_func"
@@ -51,4 +51,14 @@ class TestTwoFactorCheck(TestCase):
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain,
                                                         request.couch_user)
-        self.assertEqual(two_factor_required_bool, False)
+        self.assertFalse(two_factor_required_bool)
+
+    def test_login_or_challenge(self):
+        pass
+        # api_key = "dummy_api_key"
+        # view_func = "dummy_view_func"
+        # two_factor_check_fn = two_factor_check(view_func, api_key)
+        # # (request, domain, *args, ** kwargs):
+        # response = two_factor_check_fn(self.request, self.domain)
+        # print("RESPONSE: {}".format(response))
+
