@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import logging
 from django.utils.translation import ugettext
 import uuid
@@ -182,7 +183,7 @@ def send_new_request_update_email(user, requesting_ip, entity_name, entity_type=
         message = "A brand new user just requested a %s called %s." % (entity_texts[0], entity_name)
     else:
         message = "An existing user just created a new %s called %s." % (entity_texts[0], entity_name)
-    message = u"""%s
+    message = """%s
 
 Details include...
 
@@ -198,7 +199,7 @@ You can view the %s here: %s""" % (
     try:
         recipients = settings.NEW_DOMAIN_RECIPIENTS
         send_mail_async.delay(
-            u"New %s: %s" % (entity_texts[0], entity_name),
+            "New %s: %s" % (entity_texts[0], entity_name),
             message, settings.SERVER_EMAIL, recipients
         )
     except Exception:
