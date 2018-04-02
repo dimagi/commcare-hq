@@ -16,7 +16,8 @@ class XFormBuilderTests(SimpleTestCase, TestXmlMixin):
         self.xform = XFormBuilder()
 
     def replace_xmlns(self, xml, xmlns):
-        return re.sub(r'http://openrosa\.org/formdesigner/[\w-]{36}', xmlns, xml)
+        xmlns = xmlns.encode('utf-8')
+        return re.sub(br'http://openrosa\.org/formdesigner/[\w-]{36}', xmlns, xml)
 
     def test_new_question_group(self):
         """
