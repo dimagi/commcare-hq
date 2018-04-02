@@ -1,9 +1,9 @@
 hqDefine('app_manager/js/app_manager_media', function() {
-    var AppMenuMediaManager = function(o) {
+    var appMenuMediaManager = function(o) {
         /* This interfaces the media reference for a form or module menu
         (as an icon or image) with the upload manager.*/
         'use strict';
-        var self = this;
+        var self = {};
 
         self.ref = ko.observable(new MenuMediaReference(o.ref));
         self.refHasPath = ko.computed(function() {
@@ -137,17 +137,21 @@ hqDefine('app_manager/js/app_manager_media', function() {
         self.updateResource = function() {
             self.inputElement.trigger('change');
         };
+
+        return self;
     };
 
     var MenuMediaReference = function(ref) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.path = ref.path || '';
         self.iconType = ref.icon_class || '';
         self.mediaType = ref.media_class || '';
         self.module = ref.module;
         self.form = ref.form;
+
+        return self;
     };
 
     function initNavMenuMedia(qualifier, imageRef, audioRef, objectMap, defaultFileName) {
@@ -155,7 +159,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
         var $mediaImage = $('#' + qualifier + 'media_image'),
             $mediaAudio = $('#' + qualifier + 'media_audio');
 
-        var menuImage = new AppMenuMediaManager({
+        var menuImage = appMenuMediaManager({
             ref: imageRef,
             objectMap: objectMap,
             uploadController: uploaders.iconUploader,
@@ -163,7 +167,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
             inputElement: $mediaImage,
         });
 
-        var menuAudio = new AppMenuMediaManager({
+        var menuAudio = appMenuMediaManager({
             ref: audioRef,
             objectMap: objectMap,
             uploadController: uploaders.audioUploader,
@@ -185,7 +189,7 @@ hqDefine('app_manager/js/app_manager_media', function() {
 
     return {
         initNavMenuMedia: initNavMenuMedia,
-        AppMenuMediaManager: AppMenuMediaManager,
+        appMenuMediaManager: appMenuMediaManager,
     };
 
     function interpolatePath(path) {

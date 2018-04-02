@@ -51,7 +51,7 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-key-val-mapping', function () {
         if (mappingContext.values_are_icons()) {
             var actualPath = item.value[mappingContext.lang];
             var defaultIconPath = actualPath || self.generateIconPath();
-            this.iconManager = new app_manager.AppMenuMediaManager({
+            this.iconManager = app_manager.appMenuMediaManager({
                 ref: {
                     "path": actualPath,
                     "icon_type": "icon-picture",
