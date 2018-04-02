@@ -315,10 +315,7 @@ def two_factor_check(view_func, api_key):
 
 
 def _two_factor_required(view_func, domain, couch_user):
-    require_2fa = False
     if toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
-        require_2fa = True
-    if require_2fa:
         return not getattr(view_func, 'two_factor_exempt', False)
     return (
         not getattr(view_func, 'two_factor_exempt', False)
