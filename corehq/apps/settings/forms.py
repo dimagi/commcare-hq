@@ -164,7 +164,7 @@ class HQTwoFactorMethodForm(MethodForm):
                     _("Back"),
                     css_class='btn-default',
                     type='submit',
-                    value='welcome',
+                    value='welcome_setup',
                     name="wizard_goto_step",
                 ),
             )
