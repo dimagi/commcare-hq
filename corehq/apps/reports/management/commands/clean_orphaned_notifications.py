@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from corehq.apps.reports.models import ReportNotification, ReportConfig
+from corehq.apps.userreports.models import ReportConfiguration
 from collections import defaultdict
 from couchdbkit.exceptions import ResourceNotFound
+from dimagi.utils.couch.undo import is_deleted
 
 
 class Command(BaseCommand):
@@ -33,8 +35,15 @@ class Command(BaseCommand):
             for cid in notification.config_ids:
                 if not existent_config_ids[cid]:
                     try:
-                        ReportConfig.get(cid)
-                        existent_config_ids[cid] = True
+                        rc = ReportConfig.get(cid)
+                        rcuration = ReportConfiguration.get(rc.subreport_slug)
+                        if is_deleted(rcuration):
+                            if options['execute']:
+                                super(type(rc), rc).delete()  # i am updating notifications manually
+                            notification.config_ids.remove(cid)
+                            updated_notification = True
+                        else:
+                            existent_config_ids[cid] = True
                     except ResourceNotFound:
                         notification.config_ids.remove(cid)
                         updated_notification = True
@@ -49,7 +58,7 @@ class Command(BaseCommand):
             notifications_sifted += 1
 
             if notifications_sifted % 100 == 0:
-                self.stdout.write("%s%s notifications processes; %s notifications updated" %
+                self.stdout.write("%s%s notifications processed; %s notifications updated" %
                                   (dry_run_prefix, notifications_sifted, handled_cases))
 
         self.stdout.write(
