@@ -119,6 +119,7 @@ class CompoundIndicator(ConfigurableIndicator):
 
 class LedgerBalancesIndicator(ConfigurableIndicator):
     column_datatype = TYPE_INTEGER
+    default_value = 0
 
     def __init__(self, spec):
         self.product_codes = spec.product_codes
@@ -142,13 +143,14 @@ class LedgerBalancesIndicator(ConfigurableIndicator):
         domain = context.root_doc['domain']
         values = self._get_values_by_product(domain, case_id)
         return [
-            ColumnValue(self._make_column(product_code), values[product_code])
+            ColumnValue(self._make_column(product_code), values.get(product_code, self.default_value))
             for product_code in self.product_codes
         ]
 
 
 class DueListDateIndicator(LedgerBalancesIndicator):
     column_datatype = TYPE_DATE
+    default_value = date(1970, 1, 1)
 
     def _get_values_by_product(self, domain, case_id):
         unix_epoch = date(1970, 1, 1)
