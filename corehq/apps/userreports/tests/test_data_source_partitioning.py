@@ -136,3 +136,35 @@ class DataSourcePartitionByOwner(DataSourceConfigurationPartitionTest):
             'SELECT COUNT(*) FROM "{}abcdefhijk";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
         self.assertEqual(1, result)
+
+
+class DataSourcePartitionByOwnerLastChars(DataSourceConfigurationPartitionTest):
+    column = "owner"
+    subtype = "string_lastchars"
+    constraint = "10"
+
+    def test_partitioned_by_date(self):
+        # two docs from separate days
+        sample_doc1, _ = get_sample_doc_and_indicators()
+        sample_doc1['owner_id'] = "abcdefghijklmnop"
+        sample_doc2, _ = get_sample_doc_and_indicators()
+        sample_doc2['owner_id'] = "abcdefghijklmnop"
+
+        # drop g
+        sample_doc3, _ = get_sample_doc_and_indicators()
+        sample_doc3['owner_id'] = "abcdefhijklmnop"
+
+        self._process_docs([sample_doc1, sample_doc2, sample_doc3])
+
+        self.assertEqual(3, self.adapter.get_query_object().count())
+
+        # ensure docs are in separate databases
+        result = self.adapter.engine.execute(
+            'SELECT COUNT(*) FROM "{}ghijklmnop";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
+        result = result.fetchone()[0]
+
+        self.assertEqual(2, result)
+        result = self.adapter.engine.execute(
+            'SELECT COUNT(*) FROM "{}fhijklmnop";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
+        result = result.fetchone()[0]
+        self.assertEqual(1, result)
