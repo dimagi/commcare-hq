@@ -139,6 +139,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
@@ -202,6 +203,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'raven.contrib.django.raven_compat',
+    'django_user_agents',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -806,6 +808,8 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+USER_AGENTS_CACHE = 'default'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0

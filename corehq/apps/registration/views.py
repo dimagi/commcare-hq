@@ -126,15 +126,17 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
 
-        is_mobile = reg_form.cleaned_data.get('is_mobile')
         email = new_user.email
-
         properties = {}
-        if is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
-                email, True)
-            variation = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(email, toggles.NAMESPACE_USER)
-            properties = {"mobile_signups_test_march2018test": "variation" if variation else "control"}
+
+        if self.request.user_agent.is_mobile:
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
+            variation = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                email, toggles.NAMESPACE_USER
+            )
+            properties = {
+                "mobile_signups_test_march2018test": "variation" if variation else "control"
+            }
 
         track_workflow(email, "Requested new account", properties)
         login(self.request, new_user)
@@ -162,8 +164,10 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                     }
                 }
 
-            couch_user = CouchUser.get_by_username(reg_form.cleaned_data['email'])
-            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(reg_form.cleaned_data['email'],
+            username = reg_form.cleaned_data['email']
+
+            couch_user = CouchUser.get_by_username(username)
+            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
                                                               toggles.NAMESPACE_USER)
             if couch_user:
                 hubspot_fields = {
@@ -178,9 +182,9 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             return {
                 'success': True,
                 'is_mobile_experience': (
-                    reg_form.cleaned_data.get('is_mobile') and
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                        reg_form.cleaned_data['email'], toggles.NAMESPACE_USER)),
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(username) and
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(username)
+                ),
                 'appcues_ab_test': appcues_ab_test,
             }
         logging.error(
