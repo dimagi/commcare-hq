@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from dimagi.ext.jsonobject import JsonObject, StringProperty, ListProperty, BooleanProperty, DictProperty
 from jsonobject import DefaultProperty
 from jsonobject.exceptions import BadValueError
@@ -9,16 +11,6 @@ from corehq.apps.userreports.operators import in_multiselect, equal
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.transforms.factory import TransformFactory
 from corehq.apps.userreports.util import add_tabbed_text
-
-
-DATA_TYPE_CHOICES = ['date', 'datetime', 'string', 'integer', 'decimal', 'array', 'small_integer']
-
-
-def DataTypeProperty(**kwargs):
-    """
-    Shortcut for valid data types.
-    """
-    return StringProperty(choices=DATA_TYPE_CHOICES, **kwargs)
 
 
 class IndicatorSpecBase(JsonObject):

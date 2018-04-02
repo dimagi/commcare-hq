@@ -13,7 +13,7 @@ from dimagi.ext.jsonobject import (
     DictProperty,
 )
 from jsonobject.base import DefaultProperty
-from corehq.apps.userreports.indicators.specs import DataTypeProperty
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.reports.filters.choice_providers import DATA_SOURCE_COLUMN
 from corehq.apps.userreports.reports.filters.values import (
     PreFilterValue,
