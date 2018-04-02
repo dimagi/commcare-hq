@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import csv
+import copy
 
 from django.core.management import BaseCommand
 
@@ -39,7 +40,7 @@ class Command(BaseCommand):
             csv_writer.writeheader()
 
             for ccs_case in self._get_cases():
-                properties = ccs_case.case_json
+                properties = copy.deepcopy(ccs_case.case_json)
 
                 if 'add' in properties:
                     continue
@@ -51,7 +52,7 @@ class Command(BaseCommand):
                     'case_id': ccs_case.case_id,
                     'owner_id': ccs_case.owner_id,
                     'modified_on': ccs_case.modified_on,
-                    'server_modified_on': ccs_case.modified_on
+                    'server_modified_on': ccs_case.server_modified_on
                 })
                 csv_writer.write_row(properties)
 
