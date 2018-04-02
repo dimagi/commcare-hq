@@ -26,7 +26,7 @@ class Command(BaseCommand):
         user = CommCareUser.get_by_username(username)
         if not user:
             logger.info("User {} not found.".format(username))
-            sys.exit()
+            sys.exit(1)
         user_id = user._id
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Redacted User (GDPR)"
