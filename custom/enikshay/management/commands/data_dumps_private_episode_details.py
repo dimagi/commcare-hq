@@ -12,6 +12,7 @@ from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
     DSTB_EPISODE_TYPE,
 )
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.management.commands.base_data_dump import (
     BaseDataDump,
     PRIVATE_SECTOR_ID_MAPPING,
@@ -45,7 +46,14 @@ class Command(BaseDataDump):
                 )
 
     def include_case_in_dump(self, episode):
-        person = self.get_person(episode)
+        try:
+            person = self.get_person(episode)
+        except ENikshayCaseNotFound as e:
+            print("----ENikshayCaseNotFound----")
+            print(e)
+            print(episode.case_id)
+            print("-----------------------------")
+            return False
         return (
             person and
             person.get_case_property('dataset') == 'real' and

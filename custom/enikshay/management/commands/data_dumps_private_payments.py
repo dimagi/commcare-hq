@@ -18,6 +18,7 @@ from custom.enikshay.case_utils import (
 )
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump, PRIVATE_SECTOR_ID_MAPPING
 
 DOMAIN = "enikshay"
@@ -86,6 +87,14 @@ class Command(BaseDataDump):
         try:
             person = self.get_person(voucher_case)
         except IncorrectVoucherType:
+            print("----IncorrectVoucherType----")
+            print(voucher_case.case_id)
+            return False
+        except ENikshayCaseNotFound as e:
+            print("----ENikshayCaseNotFound----")
+            print(e)
+            print(voucher_case.case_id)
+            print("-----------------------------")
             return False
         return (
             person and
