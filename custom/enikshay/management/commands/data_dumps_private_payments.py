@@ -87,8 +87,6 @@ class Command(BaseDataDump):
         try:
             person = self.get_person(voucher_case)
         except IncorrectVoucherType:
-            print("----IncorrectVoucherType----")
-            print(voucher_case.case_id)
             return False
         except ENikshayCaseNotFound as e:
             print("----ENikshayCaseNotFound----")
