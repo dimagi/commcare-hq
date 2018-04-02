@@ -146,9 +146,9 @@ def get_releases_context(request, domain, app_id):
         'full_name': request.couch_user.full_name,
         'is_mobile_experience': (
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                request.couch_user.username) and
+                request.couch_user.username, toggles.NAMESPACE_USER) and
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                request.couch_user.username)
+                request.couch_user.username, toggles.NAMESPACE_USER)
         )
     })
     if not app.is_remote_app():

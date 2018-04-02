@@ -130,7 +130,9 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         properties = {}
 
         if self.request.user_agent.is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
+                email, True, toggles.NAMESPACE_USER
+            )
             variation = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                 email, toggles.NAMESPACE_USER
             )
@@ -182,8 +184,10 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             return {
                 'success': True,
                 'is_mobile_experience': (
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(username) and
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(username)
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
+                        username, toggles.NAMESPACE_USER) and
+                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                        username, toggles.NAMESPACE_USER)
                 ),
                 'appcues_ab_test': appcues_ab_test,
             }
