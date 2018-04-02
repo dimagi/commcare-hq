@@ -39,14 +39,14 @@ class TestDecorators(TestCase):
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_required_with_feature_flag(self):
-        view_func=5
+        view_func = "dummy_view_func"
         request = self.request
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
         self.assertEqual(two_factor_required_bool, True)
 
     def test_two_factor_required_without_feature_flag(self):
-        view_func = 5
+        view_func = "dummy_view_func"
         request = self.request
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain,
