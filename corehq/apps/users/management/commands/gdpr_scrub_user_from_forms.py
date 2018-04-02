@@ -31,16 +31,17 @@ class Command(BaseCommand):
         new_username = "Redacted User (GDPR)"
         forms_updated = 0
         for form_data in this_form_accessor.iter_forms(form_ids):
-            form_attachment_xml_new = self.parse_form_data(form_data, new_username)
+            form_attachment_xml_new = self.update_form_data(form_data, new_username)
             this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
             forms_updated += 1
         logging.info("Updated {} forms for user {}".format(forms_updated, username))
 
     @staticmethod
-    def parse_form_data(form_data, new_username):
+    def update_form_data(form_data, new_username):
         form_attachment_xml = form_data.get_attachment("form.xml")
+        print("$$$$$$FORM XML: {}".format(form_attachment_xml))
 
-        xml_elem = etree.parse(StringIO(form_attachment_xml))
+        xml_elem = etree.parse(StringIO(unicode(form_attachment_xml)))
         id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
             "{http://openrosa.org/jr/xforms}username")
         id_elem.text = new_username
