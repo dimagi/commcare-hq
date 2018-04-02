@@ -338,7 +338,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
                   chm_ucr.ebf_eating != COALESCE(agg.eating, 0) OR
                   chm_ucr.ebf_not_breastfeeding_reason != COALESCE(agg.not_breastfeeding, 'not_breastfeeding') OR
                   chm_ucr.counsel_ebf != GREATEST(agg.counsel_exclusive_bf, agg.counsel_only_milk, 0) OR
-                  chm_ucr.counsel_ebf != GREATEST(agg.counsel_adequate_bf, 0)
+                  chm_ucr.counsel_adequate_bf != GREATEST(agg.counsel_adequate_bf, 0)
               ))
         )
         """.format(
