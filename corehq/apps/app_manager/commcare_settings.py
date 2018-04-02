@@ -122,7 +122,7 @@ def parse_condition_string(condition_str):
         match["equals"] = True
     elif match["equals"] == 'false':
         match["equals"] = False
-    elif len(match["equals"]) > 1 and match["equals"][0] is "'" and match["equals"][-1] is "'":
+    elif len(match["equals"]) > 1 and match["equals"][0] == "'" and match["equals"][-1] == "'":
             match["equals"] = match["equals"][1:-1]
     else:
         raise Exception("Error parsing contingent condition")
