@@ -2706,7 +2706,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2806,6 +2806,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
+
+
+class TrainingModule(Module):
+    pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):

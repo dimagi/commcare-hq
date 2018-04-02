@@ -14,6 +14,8 @@ from memoized import memoized
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module):
+        from corehq.apps.app_manager.models import TrainingModule
+
         def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
@@ -100,7 +102,9 @@ class MenuContributor(SuiteContributorByModule):
                 for root_module in root_modules:
                     menu_kwargs = {}
                     suffix = ""
-                    if root_module:
+                    if isinstance(id_module, TrainingModule):
+                        menu_kwargs.update({'root': 'training-root'})
+                    elif root_module:
                         menu_kwargs.update({'root': id_strings.menu_id(root_module)})
                         suffix = id_strings.menu_id(root_module) if isinstance(root_module, ShadowModule) else ""
                     menu_kwargs.update({'id': id_strings.menu_id(id_module, suffix)})
