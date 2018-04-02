@@ -4,10 +4,12 @@ from __future__ import unicode_literals
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
+    CreatePatientIdentifierTask,
     CreatePersonAddressTask,
     CreatePersonAttributeTask,
     CreateVisitTask,
     OpenmrsResponse,
+    UpdatePatientIdentifierTask,
     UpdatePersonAddressTask,
     UpdatePersonAttributeTask,
     UpdatePersonNameTask,
@@ -61,6 +63,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             SyncPersonAttributesTask(
                 requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
             ),
+            SyncPatientIdentifiersTask(requests, info, openmrs_config, patient),
             CreateVisitsTask(
                 requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
@@ -112,6 +115,43 @@ class SyncPersonAttributesTask(WorkflowTask):
             else:
                 subtasks.append(
                     CreatePersonAttributeTask(self.requests, self.person_uuid, person_attribute_type, value)
+                )
+        return subtasks
+
+
+class SyncPatientIdentifiersTask(WorkflowTask):
+
+    def __init__(self, requests, info, openmrs_config, patient):
+        self.requests = requests
+        self.info = info
+        self.openmrs_config = openmrs_config
+        self.patient = patient
+
+    def run(self):
+        """
+        Returns WorkflowTasks for creating and updating OpenMRS patient identifiers.
+        """
+        subtasks = []
+        existing_patient_identifiers = {
+            identifier['identifierType']['uuid']: (identifier['uuid'], identifier['identifier'])
+            for identifier in self.patient['identifiers']
+        }
+        for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            identifier = value_source.get_value(self.info)
+            if patient_identifier_type in existing_patient_identifiers:
+                identifier_uuid, existing_identifier = existing_patient_identifiers[patient_identifier_type]
+                if identifier != existing_identifier:
+                    subtasks.append(
+                        UpdatePatientIdentifierTask(
+                            self.requests, self.patient['uuid'], identifier_uuid, patient_identifier_type,
+                            identifier, existing_identifier
+                        )
+                    )
+            else:
+                subtasks.append(
+                    CreatePatientIdentifierTask(
+                        self.requests, self.patient['uuid'], patient_identifier_type, identifier
+                    )
                 )
         return subtasks
 
