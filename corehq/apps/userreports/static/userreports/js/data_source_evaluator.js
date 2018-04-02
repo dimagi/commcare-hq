@@ -1,7 +1,7 @@
 /* globals hqDefine */
 hqDefine('userreports/js/data_source_evaluator', function () {
-    var DataSourceModel = function (submitUrl) {
-        var self = this;
+    var dataSourceModel = function (submitUrl) {
+        var self = {};
         self.submitUrl = submitUrl;
         self.documentsId = ko.observable();
         self.dataSourceId = ko.observable();
@@ -43,6 +43,15 @@ hqDefine('userreports/js/data_source_evaluator', function () {
                 });
             }
         };
+
+        return self;
     };
-    return {DataSourceModel: DataSourceModel};
+
+    $(function () {
+        var submitUrl = hqImport("hqwebapp/js/initial_page_data").reverse("data_source_evaluator");
+        ko.applyBindings(
+            dataSourceModel(submitUrl),
+            document.getElementById('data-source-debugger')
+        );
+    });
 });
