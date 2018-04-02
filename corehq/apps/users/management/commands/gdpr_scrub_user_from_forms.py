@@ -7,6 +7,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from io import StringIO
 from lxml import etree
 import sys
+import six
 import logging
 
 
@@ -39,7 +40,7 @@ class Command(BaseCommand):
     @staticmethod
     def update_form_data(form_data, new_username):
         form_attachment_xml = form_data.get_attachment("form.xml")
-        xml_elem = etree.parse(StringIO(unicode(form_attachment_xml)))
+        xml_elem = etree.parse(StringIO(six.text_type(form_attachment_xml)))
         id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
             "{http://openrosa.org/jr/xforms}username")
         id_elem.text = new_username
