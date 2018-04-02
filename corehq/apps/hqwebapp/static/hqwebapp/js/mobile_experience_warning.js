@@ -1,8 +1,8 @@
 hqDefine('hqwebapp/js/mobile_experience_warning', function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         cookieName = "has-seen-mobile-experience-warning";
 
-    if (initial_page_data("is_mobile_experience") && !$.cookie(cookieName)) {
+    if (initialPageData("is_mobile_experience") && !$.cookie(cookieName)) {
         $(function() {
             var toggles = hqImport('hqwebapp/js/toggles');
             if (!toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER') ||
