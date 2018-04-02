@@ -160,7 +160,7 @@ class DataSourcePartitionByOwnerLastChars(DataSourceConfigurationPartitionTest):
 
         # ensure docs are in separate databases
         result = self.adapter.engine.execute(
-            'SELECT COUNT(*) FROM "{}fhijklmnop";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
+            'SELECT COUNT(*) FROM "{}ghijklmnop";'.format(EXPECTED_UCR_CHILD_TABLE_PREFIX))
         result = result.fetchone()[0]
 
         self.assertEqual(2, result)
