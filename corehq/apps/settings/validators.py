@@ -14,17 +14,4 @@ def validate_international_phonenumber(value):
 validate_international_phonenumber.message = \
     _('Make sure to enter a valid phone number '
       'starting with a +, followed by your country code.')
-
-
-def run_validators(self, value):
-    # Validator that doesn't ignore none's
-    errors = []
-    for v in self.validators:
-        try:
-            v(value)
-        except ValidationError as e:
-            if hasattr(e, 'code') and e.code in self.error_messages:
-                e.message = self.error_messages[e.code]
-            errors.extend(e.error_list)
-    if errors:
-        raise ValidationError(errors)
+validators = [validate_international_phonenumber]
