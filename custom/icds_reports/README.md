@@ -18,6 +18,8 @@ agg_ccs_record - ccs_record data that is unique for location, age, gender, caste
 
 agg_awc - unique rows for each location
 
+Current workflow to get the data in these tables is shown [here](docs/current_state_aggregation.png)
+
 
 Collecting New Data
 -------------------
@@ -49,8 +51,8 @@ New UCRs should have the following data:
 
 ### Aggregating the data
 
-The work flow shown in the picture is the eventual ideal,
-and there is ongoing work to make all of the aggregation follow [this pattern](doc/ideal_aggregation_workflow.png)
+The work flow shown in the following picture is the eventual ideal,
+and there is ongoing work to make all of the aggregation follow [this pattern](docs/ideal_aggregation_workflow.png)
 
 Currently Complementary Feeding Forms follows this work flow if you want an example.
 
