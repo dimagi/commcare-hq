@@ -8,25 +8,23 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.decorators import _two_factor_required
 
+
 class TestDecorators(TestCase):
 
     def setUp(self):
         self.domain = create_domain("test_domain")
         self.domain.two_factor_auth = False
-        self.request_2fa_enabled = self.create_request(request_url="/account/",
-                                                       username="test0@test.com",
-                                                       password="123",
-                                                       )
-        self.request_2fa_disabled = self.create_request(request_url="/account/",
-                                                       username="test_1@test.com",
-                                                       password="123",
-                                                       )
+        self.request = self.create_request(request_url="/account/",
+                                           username="test0@test.com",
+                                           password="123",
+                                           )
 
     def create_request(self, request_url, username, password):
         # Initialize request
         request = Client().get(request_url).wsgi_request
         # Create user
-        request.user = get_user_model().objects.create_user(username=username, email=username,
+        request.user = get_user_model().objects.create_user(username=username,
+                                                            email=username,
                                                             password=password)
         # Create couch user
         request.couch_user = CouchUser()
@@ -41,16 +39,15 @@ class TestDecorators(TestCase):
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_required_with_feature_flag(self):
         view_func=5
-        request = self.request_2fa_disabled
+        request = self.request
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
         self.assertEqual(two_factor_required_bool, True)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = 5
-        request = self.request_2fa_disabled
+        request = self.request
         self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain,
                                                         request.couch_user)
         self.assertEqual(two_factor_required_bool, False)
-
