@@ -2713,7 +2713,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
         )
         module.get_or_create_unique_id()
@@ -3396,7 +3396,7 @@ class AdvancedModule(ModuleBase):
             case_type='',
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
             product_details=DetailPair(
                 short=Detail(
@@ -3409,7 +3409,7 @@ class AdvancedModule(ModuleBase):
                         ),
                     ],
                 ),
-                int=Detail(),
+                long=Detail(),
             ),
         )
         module.get_or_create_unique_id()
@@ -4269,7 +4269,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             case_details=DetailPair(
                 short=Detail(detail.to_json()),
-                int=Detail(detail.to_json()),
+                long=Detail(detail.to_json()),
             ),
         )
         module.get_or_create_unique_id()
