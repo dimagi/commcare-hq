@@ -30,12 +30,16 @@ class Command(BaseCommand):
         user_id = user._id
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Redacted User (GDPR)"
-        forms_updated = 0
-        for form_data in this_form_accessor.iter_forms(form_ids):
-            form_attachment_xml_new = self.update_form_data(form_data, new_username)
-            this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
-            forms_updated += 1
-        logging.info("Updated {} forms for user {}".format(forms_updated, username))
+        input_response = raw_input("Update {} forms for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
+        if input_response == "y":
+            for form_data in this_form_accessor.iter_forms(form_ids):
+                form_attachment_xml_new = self.update_form_data(form_data, new_username)
+                this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
+            logging.info("Updated {} form(s) for user {} in domain {}".format(len(form_ids), username, domain))
+        elif input_response == "n":
+            logging.info("No forms updated, exiting.")
+        else:
+            logging.info("Command not recognized. Exiting.")
 
     @staticmethod
     def update_form_data(form_data, new_username):
