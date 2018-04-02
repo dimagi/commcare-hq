@@ -78,7 +78,7 @@ class HQPhoneNumberMethodForm(PhoneNumberMethodForm):
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
-    forms.CharField.run_validators = run_validators
+    number.run_validators = run_validators
 
     def __init__(self, **kwargs):
         super(HQPhoneNumberMethodForm, self).__init__(**kwargs)
@@ -216,7 +216,7 @@ class HQPhoneNumberForm(PhoneNumberForm):
                              validators=[validate_international_phonenumber],
                              widget=forms.TextInput(
                                  attrs={'placeholder': _('Start with +, followed by Country Code.')}))
-    forms.CharField.run_validators = run_validators
+    number.run_validators = run_validators
 
     def __init__(self, **kwargs):
         super(HQPhoneNumberForm, self).__init__(**kwargs)
