@@ -13,7 +13,7 @@ from dimagi.utils.couch.database import iter_docs
 
 def premature_auto_gps(build):
     app = Application.wrap(build)
-    if app.build_version >= '2.14':
+    if app.build_version >= b'2.14':
         return
 
     for module in app.get_modules():

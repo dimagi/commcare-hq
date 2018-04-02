@@ -133,7 +133,7 @@ class MediaSuiteGenerator(object):
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
             descriptor = None
-            if self.app.build_version >= '2.9':
+            if self.app.build_version >= b'2.9':
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
                                 "CommCareVideo": "Video",
