@@ -28,7 +28,7 @@ class Command(BaseCommand):
             if isinstance(form, CouchForm):
                 meta = form.blobs.get(ATTACHMENT_NAME)
                 if not meta or not blob_db.exists(
-                        meta.id, meta._blobdb_bucket()):  # pylint: disable=protected-access
+                        meta.id, form._blobdb_bucket()):  # pylint: disable=protected-access
                     _logger.info(bad_form_id_string, form.form_id)
             elif isinstance(form, XFormInstanceSQL):
                 meta = form.get_attachment_meta(ATTACHMENT_NAME)
