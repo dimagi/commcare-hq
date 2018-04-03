@@ -34,6 +34,7 @@ class TestPNCForms(SimpleTestCase, TestFileMixin):
             'doc_type': 'XFormInstance',
         }
         ucr_result = config.get_all_values(form_json)
+        self.assertEqual(len(ucr_result), 1)
         for row in ucr_result:
             row = {
                 i.column.database_column_name: i.value
@@ -75,6 +76,7 @@ class TestPNCForms(SimpleTestCase, TestFileMixin):
             'doc_type': 'XFormInstance',
         }
         ucr_result = config.get_all_values(form_json)
+        self.assertEqual(len(ucr_result), 1)
         for row in ucr_result:
             row = {
                 i.column.database_column_name: i.value
@@ -101,4 +103,75 @@ class TestPNCForms(SimpleTestCase, TestFileMixin):
                 "tea_other": None,
                 "eating": None,
                 "not_breastfeeding": None
+            }, row)
+
+
+@patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
+class TestTHRForms(SimpleTestCase, TestFileMixin):
+    ucr_name = "static-icds-cas-static-dashboard_thr_forms"
+    domain = 'icds-cas'
+    file_path = ('data', )
+    root = os.path.dirname(__file__)
+    maxDiff = None
+
+    def test_with_child_form(self):
+        config, _ = get_datasource_config(self.ucr_name, 'icds-cas')
+        config.configured_indicators = [
+            ind for ind in config.configured_indicators if ind['column_id'] != 'state_id'
+        ]
+        form_json = convert_xform_to_json(self.get_xml('thr_form_with_child'))
+        form_json = {
+            'form': form_json,
+            'domain': self.domain,
+            'xmlns': form_json['@xmlns'],
+            'doc_type': 'XFormInstance',
+        }
+        ucr_result = config.get_all_values(form_json)
+        self.assertEqual(len(ucr_result), 1)
+        for row in ucr_result:
+            row = {
+                i.column.database_column_name: i.value
+                for i in row
+                if i.column.database_column_name not in BLACKLISTED_COLUMNS
+            }
+
+            self.assertEqual({
+                "doc_id": None,
+                "repeat_iteration": 0,
+                "timeend": None,
+                "ccs_record_case_id": "ef8a946d-3f6a-4715-b743-68d55b86a230",
+                "child_health_case_id": "cccd8d00-851c-4524-ab12-811ac98d1fe9",
+                "days_ration_given_child": 22,
+                "days_ration_given_mother": None
+            }, row)
+
+    def test_without_child_form(self):
+        config, _ = get_datasource_config(self.ucr_name, 'icds-cas')
+        config.configured_indicators = [
+            ind for ind in config.configured_indicators if ind['column_id'] != 'state_id'
+        ]
+        form_json = convert_xform_to_json(self.get_xml('thr_form_without_child'))
+        form_json = {
+            'form': form_json,
+            'domain': self.domain,
+            'xmlns': form_json['@xmlns'],
+            'doc_type': 'XFormInstance',
+        }
+        ucr_result = config.get_all_values(form_json)
+        self.assertEqual(len(ucr_result), 1)
+        for row in ucr_result:
+            row = {
+                i.column.database_column_name: i.value
+                for i in row
+                if i.column.database_column_name not in BLACKLISTED_COLUMNS
+            }
+
+            self.assertEqual({
+                "doc_id": None,
+                "repeat_iteration": 0,
+                "timeend": None,
+                "ccs_record_case_id": "ecf7d5cc-123d-41d2-a0d7-edf722895d13",
+                "child_health_case_id": None,
+                "days_ration_given_child": None,
+                "days_ration_given_mother": 22
             }, row)
