@@ -44,19 +44,38 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.total_weighed) : 'N/A';
-        var total_measured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
+        var totalMeasured = row ? $filter('indiaNumbers')(row.total_measured) : 'N/A';
         var sever = row ? d3.format(".2%")(row.severe / (row.total_measured || 1)) : 'N/A';
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
         var unmeasured = row ? $filter('indiaNumbers')(row.total_height_eligible - row.total_measured) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + total_measured + '</strong></div>' +
-            '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + unmeasured + '</strong></div>' +
-            '<div>% Severely Acute Malnutrition ' + vm.chosenFilters() + ': <strong>' + sever + '</strong></div>' +
-            '<div>% Moderately Acute Malnutrition ' + vm.chosenFilters() + ': <strong>' + moderate +'</strong></div>' +
-            '<div>% Normal ' + vm.chosenFilters() + ': <strong>' + normal + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                indicator_value: totalMeasured,
+            },
+            {
+                indicator_name: 'Number of Children ' + vm.chosenFilters() + ' unmeasured: ',
+                indicator_value: unmeasured,
+            },
+            {
+                indicator_name: '% Severely Acute Malnutrition ' + vm.chosenFilters() + ': ',
+                indicator_value: sever,
+            },
+            {
+                indicator_name: '% Moderately Acute Malnutrition ' + vm.chosenFilters() + ': ',
+                indicator_value: moderate,
+            },
+            {
+                indicator_name: '% Normal ' + vm.chosenFilters() + ': ',
+                indicator_value: normal,
+            }]
+        );
     };
 
     vm.loadData = function () {

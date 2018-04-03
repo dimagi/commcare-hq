@@ -31,15 +31,28 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var low_birth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
+        var lowBirth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
-        var unweighed_percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>' + chosenFilters + 'Total Number of Newborns born in given month: <strong>' + total + '</strong></div>' +
-            '<div>' + chosenFilters + 'Number of Newborns with LBW in given month: <strong>' + low_birth + '</strong></div>' +
-            '<div>% newborns with LBW in given month' + chosenFilters + ': <strong>' + percent + '</strong></div>' +
-            '<div>% Unweighted' + chosenFilters + ': <strong>' + unweighed_percent + '</strong></div>';
+        var unweighedPercent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : 'N/A';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: chosenFilters + 'Total Number of Newborns born in given month: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: chosenFilters + 'Number of Newborns with LBW in given month: ',
+                indicator_value: lowBirth,
+            },
+            {
+                indicator_name: '% newborns with LBW in given month' + chosenFilters + ': ',
+                indicator_value: percent,
+            },
+            {
+                indicator_name: '% Unweighted' + chosenFilters + ': ',
+                indicator_value: unweighedPercent,
+            }]
+        );
     };
 
     vm.loadData = function () {

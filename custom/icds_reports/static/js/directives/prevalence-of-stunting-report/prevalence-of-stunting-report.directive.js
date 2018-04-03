@@ -50,14 +50,33 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
         var moderate = row ? d3.format(".2%")(row.moderate / (row.total_measured || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.total_measured || 1)) : 'N/A';
         var unmeasured = row ? $filter('indiaNumbers')(row.total - row.total_measured) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + measured + '</strong></div>' +
-            '<div>Number of children ' + vm.chosenFilters() + ' unmeasured: <strong>' + unmeasured + '</strong></div>' +
-            '<div>% children ' + vm.chosenFilters() + ' with severely stunted growth: <strong>' + sever + '</strong></div>' +
-            '<div>% children ' + vm.chosenFilters() + ' with moderate stunted growth: <strong>' + moderate +'</strong></div>' +
-            '<div>% children ' + vm.chosenFilters() + ' with normal stunted growth: <strong>' + normal + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                indicator_value: measured,
+            },
+            {
+                indicator_name: 'Number of children ' + vm.chosenFilters() + ' unmeasured: ',
+                indicator_value: unmeasured,
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with severely stunted growth: ',
+                indicator_value: sever,
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with moderate stunted growth: ',
+                indicator_value: moderate,
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with normal stunted growth: ',
+                indicator_value: normal,
+            }]
+        );
     };
 
     vm.loadData = function () {

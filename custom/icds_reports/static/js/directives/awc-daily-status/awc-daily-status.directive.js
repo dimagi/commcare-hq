@@ -21,13 +21,23 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
-        var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
+        var inDay = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_day / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of AWCs that were open yesterday: <strong>' + in_day + '</strong></div>' +
-            '<div>Total number of AWCs that have been launched: <strong>' + total + '</strong></div>' +
-            '<div>% of AWCs open yesterday: <strong>' + percent + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total number of AWCs that were open yesterday: ',
+                indicator_value: inDay,
+            },
+            {
+                indicator_name: 'Total number of AWCs that have been launched: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: '% of AWCs open yesterday: ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {

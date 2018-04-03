@@ -44,16 +44,32 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.weighed) : 'N/A';
         var unweighed = row ? $filter('indiaNumbers')(row.total - row.weighed) : "N/A";
-        var severely_underweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
-        var moderately_underweight = row ? d3.format(".2%")(row.moderately_underweight / (row.weighed || 1)) : 'N/A';
+        var severelyUnderweight = row ? d3.format(".2%")(row.severely_underweight / (row.weighed || 1)) : 'N/A';
+        var moderatelyUnderweight = row ? d3.format(".2%")(row.moderately_underweight / (row.weighed || 1)) : 'N/A';
         var normal = row ? d3.format(".2%")(row.normal / (row.weighed || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Children '+ vm.chosenFilters() +' weighed in given month: <strong>' + total + '</strong></div>' +
-            '<div>Number of children unweighed '+ vm.chosenFilters() +': <strong>' + unweighed + '</strong></div>' +
-            '<div>% Severely Underweight '+ vm.chosenFilters() +': <strong>' + severely_underweight + '</strong></div>' +
-            '<div>% Moderately Underweight '+ vm.chosenFilters() +': <strong>' + moderately_underweight +'</strong></div>' +
-            '<div>% Normal '+ vm.chosenFilters() +': <strong>' + normal + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: 'Number of children unweighed ' + vm.chosenFilters() + ': ',
+                indicator_value: unweighed,
+            },
+            {
+                indicator_name: '% Severely Underweight '+ vm.chosenFilters() +': ',
+                indicator_value: severelyUnderweight,
+            },
+            {
+                indicator_name: '% Moderately Underweight '+ vm.chosenFilters() +': ',
+                indicator_value: moderatelyUnderweight,
+            },
+            {
+                indicator_name: '% Normal '+ vm.chosenFilters() +': ',
+                indicator_value: normal,
+            }]
+        );
     };
 
     vm.loadData = function () {

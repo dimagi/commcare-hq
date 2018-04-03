@@ -33,11 +33,21 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
         var children = row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var all = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of children between ages 0 - 6 months' + chosenFilters + ': <strong>' + all + '</strong></div>' +
-            '<div>Total number of children (0-6 months) exclusively breastfed in the given month' + chosenFilters + ':  <strong>' + children + '</strong></div>' +
-            '<div>% children (0-6 months) exclusively breastfed in the given month' + chosenFilters + ': <strong>' + percent + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total number of children between ages 0 - 6 months' + chosenFilters + ': ',
+                indicator_value: all,
+            },
+            {
+                indicator_name: 'Total number of children (0-6 months) exclusively breastfed in the given month' + chosenFilters + ': ',
+                indicator_value: children,
+            },
+            {
+                indicator_name: '% children (0-6 months) exclusively breastfed in the given month' + chosenFilters + ': ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {
