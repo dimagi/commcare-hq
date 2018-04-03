@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 from datetime import datetime
-
 from django.db import connections
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
@@ -17,11 +16,9 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--domain')
         parser.add_argument('--case_type')
-        parser.add_argument('--db_conn')
+        parser.add_argument('--db_conn', choices=settings.DATABASES)
 
     def ensure_params(self, for_domain, for_case_type, for_db_conn):
-        if for_db_conn not in settings.DATABASES:
-            raise CommandError("Invalid db conn. Please choose from %s" % settings.DATABASES)
         if for_case_type:
             available_case_types = (CommCareCaseSQL.objects.using(for_db_conn).
                                     values_list('type', flat=True).distinct())
