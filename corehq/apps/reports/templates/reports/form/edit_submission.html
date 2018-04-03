@@ -37,6 +37,10 @@
 
 {% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static "reports/js/edit_submission.js" %}"></script>
+{% endblock %}
+
 {% block js-inline %}{{ block.super }}
     {% include 'cloudcare/includes/formplayer-inline.html' %}
 {% endblock %}
@@ -44,11 +48,12 @@
 {% block head %}{{ block.super }}
     <script>
     $(function () {
-        GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is a global variable depended on by touchforms
-        var edit_context = {{ edit_context|JSON }};
-        var uses_sql_backend = {{ use_sqlite_backend|JSON }};
-        var username = "{{ username }}";
-        var edit_formplayer = {{ edit_formplayer|JSON }};
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+        GMAPS_API_KEY = initialPageData('maps_api_key'); // maps api is a global variable depended on by touchforms
+        var edit_context = initialPageData("edit_context");
+        var uses_sql_backend = initialPageData("use_sqlite_backend");
+        var username = initialPageData("username");
+        var edit_formplayer = initialPageData("edit_formplayer");
         var restoreAs = edit_context.sessionData.username;
         $('#edit-container').inlineFormplayer({
             formUrl: edit_context.formUrl,
@@ -75,6 +80,12 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'edit_context' edit_context %}
+    {% initial_page_data 'edit_formplayer' edit_formplayer %}
+    {% initial_page_data 'maps_api_key' maps_api_key %}
+    {% initial_page_data 'use_sqlite_backend' use_sqlite_backend %}
+    {% initial_page_data 'username' username %}
+
     <div class="inline-touchforms" data-bind="template: { name: 'form-fullform-ko-template' }" id="edit-container"></div>
     <div id="loading" class="hq-loading" style="display: none;">
         <img width="32" height="32" alt="Loading" src="{% static 'formplayer/img/loading_transparent.gif' %}" />
