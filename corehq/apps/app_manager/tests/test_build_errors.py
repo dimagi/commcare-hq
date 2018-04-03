@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.test import SimpleTestCase
 import os
@@ -64,11 +65,11 @@ class BuildErrorsTest(SimpleTestCase):
 
         standard_module_error = {
             'type': 'no forms or case list',
-            'module': {'id': 0, 'name': {'en': u'register module'}},
+            'module': {'id': 0, 'name': {'en': 'register module'}},
         }
         advanced_module_error = {
             'type': 'no forms or case list',
-            'module': {'id': 1, 'name': {'en': u'update module'}},
+            'module': {'id': 1, 'name': {'en': 'update module'}},
         }
         self._clean_unique_id(errors)
         self.assertEqual(len(errors), 2)
@@ -91,7 +92,7 @@ class BuildErrorsTest(SimpleTestCase):
     def test_case_tile_configuration_errors(self, mock):
         case_tile_error = {
             'type': "invalid tile configuration",
-            'module': {'id': 0, 'name': {u'en': u'View'}},
+            'module': {'id': 0, 'name': {'en': 'View'}},
             'reason': 'A case property must be assigned to the "sex" tile field.'
         }
         with open(os.path.join(
@@ -106,8 +107,8 @@ class BuildErrorsTest(SimpleTestCase):
     def test_case_list_form_advanced_module_different_case_config(self, mock):
         case_tile_error = {
             'type': "all forms in case list module must load the same cases",
-            'module': {'id': 1, 'name': {u'en': u'update module'}},
-            'form': {'id': 1, 'name': {u'en': u'update form 1'}},
+            'module': {'id': 1, 'name': {'en': 'update module'}},
+            'form': {'id': 1, 'name': {'en': 'update form 1'}},
         }
 
         factory = AppFactory(build_version='2.11')

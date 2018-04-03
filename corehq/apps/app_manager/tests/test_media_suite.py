@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from copy import deepcopy
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
@@ -343,7 +344,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         :param custom_icon_locale_method: method to find locale id in app strings for custom icon
         :param xml_node: where to find the xml partial for comparison
         """
-        custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': u'चित्र'})
+        custom_icon = CustomIcon(form="badge", text={'en': 'IconText', 'hin': 'चित्र'})
         form_or_module.custom_icons = [custom_icon]
 
         custom_icon_block_template = """
