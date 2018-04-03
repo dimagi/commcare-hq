@@ -21,6 +21,7 @@ from corehq.apps.es.aggregations import DateHistogram
 from corehq.apps.hqwebapp.decorators import use_nvd3
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.select import SelectApplicationFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.generic import (GenericTabularReport, GetParamsMixin,
@@ -262,7 +263,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
             ])
 
     def get_sql_sort(self):
-        res = []
+        res = None
         #the NUMBER of cols sorting
         sort_cols = int(self.request.GET.get('iSortingCols', 0))
         if sort_cols > 0:
@@ -273,9 +274,15 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 col = self.headers.header[col_id]
                 if col.sql_col is not None:
                     res = col.sql_col
+                    if sort_dir not in ('desc', 'asc'):
+                        raise BadRequestError(
+                            ('unexcpected sort direction: {}. '
+                             'sort direction must be asc or desc'.format(sort_dir))
+                        )
                     if sort_dir == 'desc':
                         res = '-{}'.format(res)
-        if len(res) == 0:
+                    break
+        if res is None:
             res = '-last_form_submission_date'
         return res
 
