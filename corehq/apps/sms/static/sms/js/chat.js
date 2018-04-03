@@ -63,8 +63,8 @@ hqDefine("sms/js/chat", function() {
             self.update_in_progress = false;
 
             self.history_choices = ko.observableArray([]);
-            _.each(initialPageData.get('history_choices'), function(timestamp, description) {
-                self.history_choices.push(new MessageHistoryChoice(description, timestamp));
+            _.each(initialPageData.get('history_choices'), function(choice) {
+                self.history_choices.push(new MessageHistoryChoice(choice[0], choice[1]));
             });
             self.selected_history_choice = ko.observable();
             // false until the user selects one of the history choices
