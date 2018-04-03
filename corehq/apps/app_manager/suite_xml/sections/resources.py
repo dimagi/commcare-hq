@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.suite_xml.contributors import SectionContributor
 from corehq.apps.app_manager.suite_xml.xml_models import LocaleResource, XFormResource, PracticeUserRestoreResource
@@ -31,7 +34,7 @@ class FormResourceContributor(SectionContributor):
                 local=path,
                 remote=remote_path,
             )
-            if self.app.build_version >= b'2.9':
+            if self.app.build_version >= LooseVersion('2.9'):
                 default_lang = self.app.default_language if not self.build_profile_id \
                     else self.app.build_profiles[self.build_profile_id].langs[0]
                 resource.descriptor = "Form: (Module {module_name}) - {form_name}".format(
@@ -63,7 +66,7 @@ class LocaleResourceContributor(SectionContributor):
                 local=path,
                 remote=remote_path,
             )
-            if self.app.build_version >= b'2.9':
+            if self.app.build_version >= LooseVersion('2.9'):
                 unknown_lang_txt = "Unknown Language (%s)" % lang
                 resource.descriptor = "Translations: %s" % languages_mapping().get(lang, [unknown_lang_txt])[0]
             yield resource
