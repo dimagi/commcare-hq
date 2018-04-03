@@ -19,27 +19,6 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
     };
 
-    $scope.$watch(function() {
-        return vm.selectedLocations;
-    }, function (newValue, oldValue) {
-        if (newValue === oldValue || !newValue || newValue.length === 0) {
-            return;
-        }
-
-        var isAWCSelected = (newValue.length === 6);
-        if (isAWCSelected) {
-            var supervisor = newValue[3];
-            $location.search('location_id', supervisor.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', supervisor.name);
-            storageService.setKey('message', true);
-            setTimeout(function() {
-                storageService.setKey('message', false);
-            }, 3000);
-        }
-        return newValue;
-    }, true);
-
     vm.templatePopup = function(loc, row) {
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);

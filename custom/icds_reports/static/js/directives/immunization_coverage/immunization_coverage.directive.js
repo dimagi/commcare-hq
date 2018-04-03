@@ -26,25 +26,6 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         info: 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
 
-    $scope.$watch(function() {
-        return vm.selectedLocations;
-    }, function (newValue, oldValue) {
-        if (newValue === oldValue || !newValue || newValue.length === 0) {
-            return;
-        }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
-            storageService.setKey('message', true);
-            setTimeout(function() {
-                storageService.setKey('message', false);
-            }, 3000);
-        }
-        return newValue;
-    }, true);
-
     vm.templatePopup = function(loc, row) {
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
         var chosenFilters = gender ? ' (' + gender + ') ' : '';

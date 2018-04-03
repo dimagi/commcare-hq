@@ -19,25 +19,6 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
         info: 'Percentage of Angwanwadi Centers that were open yesterday',
     };
 
-    $scope.$watch(function() {
-        return vm.selectedLocations;
-    }, function (newValue, oldValue) {
-        if (newValue === oldValue || !newValue || newValue.length === 0) {
-            return;
-        }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
-            storageService.setKey('message', true);
-            setTimeout(function() {
-                storageService.setKey('message', false);
-            }, 3000);
-        }
-        return newValue;
-    }, true);
-
     vm.templatePopup = function(loc, row) {
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var in_day = row ? $filter('indiaNumbers')(row.in_day) : 'N/A';

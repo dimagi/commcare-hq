@@ -21,25 +21,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
     vm.filters = ['age', 'gender'];
 
-    $scope.$watch(function() {
-        return vm.selectedLocations;
-    }, function (newValue, oldValue) {
-        if (newValue === oldValue || !newValue || newValue.length === 0) {
-            return;
-        }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
-            storageService.setKey('message', true);
-            setTimeout(function() {
-                storageService.setKey('message', false);
-            }, 3000);
-        }
-        return newValue;
-    }, true);
-
     vm.templatePopup = function(loc, row) {
         var awcs = row ? $filter('indiaNumbers')(row.awcs) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +

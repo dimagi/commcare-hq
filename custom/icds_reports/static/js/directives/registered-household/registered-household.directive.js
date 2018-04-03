@@ -19,25 +19,6 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
         info: 'Total AWCs that have launched ICDS CAS',
     };
 
-    $scope.$watch(function() {
-        return vm.selectedLocations;
-    }, function (newValue, oldValue) {
-        if (newValue === oldValue || !newValue || newValue.length === 0) {
-            return;
-        }
-        if (newValue.length === 6) {
-            var parent = newValue[3];
-            $location.search('location_id', parent.location_id);
-            $location.search('selectedLocationLevel', 3);
-            $location.search('location_name', parent.name);
-            storageService.setKey('message', true);
-            setTimeout(function() {
-                storageService.setKey('message', false);
-            }, 3000);
-        }
-        return newValue;
-    }, true);
-
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
