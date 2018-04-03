@@ -145,6 +145,12 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
+        'is_mobile_experience': (
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
+                request.couch_user.username, toggles.NAMESPACE_USER) and
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+                request.couch_user.username, toggles.NAMESPACE_USER)
+        )
     })
     if not app.is_remote_app():
         context.update({
