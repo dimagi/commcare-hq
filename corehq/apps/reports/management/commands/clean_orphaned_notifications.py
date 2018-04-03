@@ -27,40 +27,26 @@ class Command(BaseCommand):
             include_docs=False
         )
 
-        existent_config_ids = defaultdict(lambda: False)
         for notification_id in notification_id_iterator:
-            nid = notification_id['id']
-            notification = ReportNotification.get(nid)
-            cids_to_remove = []
+            notification = ReportNotification.get(notification_id['id'])
+            updated_n = False
 
             for cid in notification.config_ids:
-                if not existent_config_ids[cid]:
-                    try:
-                        rc = ReportConfig.get(cid)
-                        if not rc.subreport_slug:  # seems to be the case of common reports
-                            existent_config_ids[cid] = True
-                            continue
+                try:
+                    rc = ReportConfig.get(cid)
+                    if not rc.subreport_slug:  # seems to be the case of common reports
+                        continue
 
-                        rcuration = get_document_or_not_found(
-                            ReportConfiguration, rc.domain, rc.subreport_slug)
-                        if is_deleted(rcuration):
-                            if options['execute']:
-                                super(type(rc), rc).delete()  # i am updating notifications manually
-                            cids_to_remove.append(cid)
-                    except ResourceNotFound:  # ReportConfig not found
-                        cids_to_remove.append(cid)
-                    except DocumentNotFound:  # ReportConfiguration not found
-                        pass
+                    rcuration = get_document_or_not_found(
+                        ReportConfiguration, rc.domain, rc.subreport_slug)
+                    if is_deleted(rcuration):
+                        if options['execute']:
+                            rc.delete()  # i am updating notifications manually
+                        updated_n = True
+                except DocumentNotFound:  # ReportConfiguration not found
+                    pass
 
-            if cids_to_remove:
-                if options['execute']:
-                    for cid in cids_to_remove:
-                        notification.config_ids.remove(cid)
-
-                    if notification.config_ids:
-                        notification.save()
-                    else:
-                        notification.delete()
+            if updated_n:
                 handled_cases += 1
             notifications_sifted += 1
 
