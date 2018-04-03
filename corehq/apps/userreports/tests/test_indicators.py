@@ -572,7 +572,7 @@ class DueListDateIndicatorTest(SimpleTestCase):
             "column_id": "immun_dates",
             "display_name": "Immunization date",
             "ledger_section": "immuns",
-            "product_codes": ["tt_1", "tt_2", "hpv"],
+            "product_codes": ["tt_1", "tt_2", "hpv", "non_exist"],
             "case_id_expression": {
                 "type": "property_name",
                 "property_name": "_id"
@@ -592,7 +592,8 @@ class DueListDateIndicatorTest(SimpleTestCase):
             [
                 ('immun_dates_tt_1', date(2016, 7, 18)),
                 ('immun_dates_tt_2', date(2016, 8, 7)),
-                ('immun_dates_hpv', date(2019, 4, 14))
+                ('immun_dates_hpv', date(2019, 4, 14)),
+                ('immun_dates_non_exist', date(1970, 1, 1))
             ]
         )
 
@@ -679,15 +680,15 @@ class TestGetValuesByProduct(TestCase):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'soh', ['coke', 'surge', 'new_coke']
         )
-        self.assertEqual(values['coke'], 32)
-        self.assertEqual(values['surge'], 85)
-        self.assertEqual(values['new_coke'], 0)
+        self.assertEqual(values.get('coke'), 32)
+        self.assertEqual(values.get('surge'), 85)
+        self.assertEqual(values.get('new_coke'), None)
 
     @run_with_all_backends
     def test_get_consumption_by_product(self):
         values = get_values_by_product(
             self.domain_name, self.case_id, 'consumption', ['coke', 'surge', 'new_coke']
         )
-        self.assertEqual(values['coke'], 63)
-        self.assertEqual(values['surge'], 0)
-        self.assertEqual(values['new_coke'], 0)
+        self.assertEqual(values.get('coke'), 63)
+        self.assertEqual(values.get('surge'), None)
+        self.assertEqual(values.get('new_coke'), None)
