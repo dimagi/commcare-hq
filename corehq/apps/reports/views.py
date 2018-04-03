@@ -1913,7 +1913,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "context_case_id": case_id,
         "instance": instance,
         "is_archived": instance.is_archived,
-        "form_source_download_url": get_form_source_download_url(form),
+        "form_source_download_url": get_form_source_download_url(instance),
         "edit_info": _get_edit_info(instance),
         "domain": domain,
         "question_list_not_found": question_list_not_found,
