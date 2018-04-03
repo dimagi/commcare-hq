@@ -214,6 +214,66 @@ class UpdatePersonAttributeTask(WorkflowTask):
         )
 
 
+class CreatePatientIdentifierTask(WorkflowTask):
+
+    def __init__(self, requests, patient_uuid, identifier_type_uuid, identifier):
+        self.requests = requests
+        self.patient_uuid = patient_uuid
+        self.identifier_type_uuid = identifier_type_uuid
+        self.identifier = identifier
+        self.identifier_uuid = None
+
+    def run(self):
+        response = self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier'.format(patient_uuid=self.patient_uuid),
+            json={'identifierType': self.identifier_type_uuid, 'identifier': self.identifier},
+        )
+        self.identifier_uuid = response.json()['uuid']
+
+    def rollback(self):
+        if self.identifier_uuid:
+            self.requests.delete(
+                '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                    patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+                ),
+                raise_for_status=True,
+            )
+
+
+class UpdatePatientIdentifierTask(WorkflowTask):
+
+    def __init__(self, requests, patient_uuid, identifier_uuid, identifier_type_uuid, identifier,
+                 existing_identifier):
+        self.requests = requests
+        self.patient_uuid = patient_uuid
+        self.identifier_uuid = identifier_uuid
+        self.identifier_type_uuid = identifier_type_uuid
+        self.identifier = identifier
+        self.existing_identifier = existing_identifier
+
+    def run(self):
+        self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+            ),
+            json={
+                'identifier': self.identifier,
+                'identifierType': self.identifier_type_uuid,
+            }
+        )
+
+    def rollback(self):
+        self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+            ),
+            json={
+                'identifier': self.existing_identifier,
+                'identifierType': self.identifier_type_uuid,
+            }
+        )
+
+
 def server_datetime_to_openmrs_timestamp(dt):
     openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
     # todo: replace this with tests
