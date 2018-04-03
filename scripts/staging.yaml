@@ -59,6 +59,7 @@ branches:
   - np/training-module  # NP 4/2
   - np/py3/unicode-app_manager  # NP 4/3
   - je/report-builder-button # J$ 4/3
+  - jls/externalize-js-sms-chat # Jenny April 3
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
