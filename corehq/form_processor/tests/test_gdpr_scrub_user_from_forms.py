@@ -9,6 +9,14 @@ from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Com
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
+
+
+from corehq.form_processor.models import (
+    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
+)
+from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+
+
 import uuid
 
 DOMAIN = 'test-form-accessor'
@@ -42,30 +50,35 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
     </n0:meta>
 </data>"""
 
+NEW_USERNAME = "replacement_username"
 
-class GDPRScrubUserFromFormsTests(TestCase):
-    def setUp(self):
-        super(GDPRScrubUserFromFormsTests, self).setUp()
-        self.db = TemporaryFilesystemBlobDB()
-        self.new_username = "replacement_username"
 
-    def tearDown(self):
-        self.db.close()
-        super(GDPRScrubUserFromFormsTests, self).tearDown()
+class UpdateFormTests(TestCase):
 
     def test_update_form_data(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        actual_form_xml = Command().update_form_data(form, self.new_username)
+        actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
-    @use_sql_backend
+@use_sql_backend
+class GDPRScrubUserFromFormsSqlTests(TestCase):
+    def setUp(self):
+        super(GDPRScrubUserFromFormsSqlTests, self).setUp()
+        self.db = TemporaryFilesystemBlobDB()
+
+    def tearDown(self):
+        self.db.close()
+        super(GDPRScrubUserFromFormsSqlTests, self).tearDown()
+
     def test_modify_attachment_xml_and_metadata_sql(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        new_form_xml = Command().update_form_data(form, self.new_username)
+
+        # print("orig form history (initial): {}".format(form.history))
+        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
 
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
@@ -79,12 +92,25 @@ class GDPRScrubUserFromFormsTests(TestCase):
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml_from_db)
 
         # TODO: Test that the operations history is updated
+        # Refetch the form from the db
+        refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
+        print('refetched form.history:{}'.format(refetched_form.history))
+        print("orig form history: {}".format(form.history))
+
+class GDPRScrubUserFromFormsCouchTests(TestCase):
+    def setUp(self):
+        super(GDPRScrubUserFromFormsCouchTests, self).setUp()
+        self.db = TemporaryFilesystemBlobDB()
+
+    def tearDown(self):
+        self.db.close()
+        super(GDPRScrubUserFromFormsCouchTests, self).tearDown()
 
     def test_modify_attachment_xml_and_metadata_couch(self):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        new_form_xml = Command().update_form_data(form, self.new_username)
+        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the metadata changed in the database

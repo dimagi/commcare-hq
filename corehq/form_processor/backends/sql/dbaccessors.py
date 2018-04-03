@@ -590,8 +590,8 @@ class FormAccessorSQL(AbstractFormAccessor):
         attachment_metadata.save()
         operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                       operation='Scrub username for GDPR compliance.')
-        form_data.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
-        form_data.save()
+        form_data.track_create(operation)
+        FormAccessorSQL.update_form(form_data)  # TODO: This might not work still
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

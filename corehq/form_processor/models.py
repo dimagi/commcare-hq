@@ -343,8 +343,14 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def history(self):
         """:returns: List of XFormOperationSQL objects"""
         from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL
+        print("========================================")
+        print("YPE IM IN THIS CODE")
+        print("ARE WE SAVED?: {}".format(self.is_saved()))
         operations = FormAccessorSQL.get_form_operations(self.form_id) if self.is_saved() else []
+        print("OPERATIONS 1: {}".format(operations))
         operations += self.get_tracked_models_to_create(XFormOperationSQL)
+        print("OPERATIONS 2: {}".format(operations))
+        print("========================================")
         return operations
 
     @property
