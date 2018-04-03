@@ -2353,6 +2353,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             doc_type = data['doc_type']
             if doc_type == 'Module':
                 return Module.wrap(data)
+            elif doc_type == 'TrainingModule':
+                return TrainingModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
@@ -2706,7 +2708,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2806,6 +2808,10 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
+
+
+class TrainingModule(Module):
+    pass
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
