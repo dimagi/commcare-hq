@@ -8,7 +8,7 @@ hqDefine("cloudcare/js/formplayer/main", function() {
             username: initialPageData('username'),
             domain: initialPageData('domain'),
             formplayer_url: initialPageData('formplayer_url'),
-            gridPolyfillPath: "{% static 'css-grid-polyfill-binaries/css-polyfills.js' %}",
+            gridPolyfillPath: initialPageData('grid_polyfill_path'),
             debuggerEnabled: initialPageData('debugger_enabled'),
             singleAppMode: initialPageData('single_app_mode'),
             environment: initialPageData('environment'),
