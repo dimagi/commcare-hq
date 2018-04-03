@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 from six.moves import zip_longest
 
@@ -85,7 +86,7 @@ class EntriesHelper(object):
 
     @staticmethod
     def get_nodeset_xpath(case_type, filter_xpath=''):
-        return u"instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
+        return "instance('casedb')/casedb/case[@case_type='{case_type}'][@status='open']{filter_xpath}".format(
             case_type=case_type,
             filter_xpath=filter_xpath,
         )

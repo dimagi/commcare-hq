@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand
 from corehq.apps.app_manager.const import APP_V1
 from corehq.apps.app_manager.util import all_apps_by_domain
@@ -10,7 +11,7 @@ def turn_on_secure_submissions_for_all_apps(domain):
         save = False
         if app.application_version == APP_V1:
             continue
-        if app.build_version < '2.8':
+        if app.build_version < b'2.8':
             app.build_spec = get_default_build_spec()
             save = True
         if not app.secure_submissions:
