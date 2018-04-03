@@ -328,8 +328,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         WHERE chm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
               (chm_ucr.pnc_eligible = 1 AND (
                   chm_ucr.counsel_increase_food_bf != COALESCE(agg.counsel_increase_food_bf) OR
-                  chm_ucr.counsel_manage_breast_problems != COALESCE(agg.counsel_breast, 0) OR
-                  chm_ucr.counsel_skin_to_skin != COALESCE(agg.skin_to_skin, 0)
+                  chm_ucr.counsel_manage_breast_problems != COALESCE(agg.counsel_breast, 0)
               )) OR
               (chm_ucr.ebf_eligible = 1 AND (
                   chm_ucr.ebf_in_month != COALESCE(agg.is_ebf, 0) OR
@@ -339,7 +338,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
                   chm_ucr.ebf_eating != COALESCE(agg.eating, 0) OR
                   chm_ucr.ebf_not_breastfeeding_reason != COALESCE(agg.not_breastfeeding, 'not_breastfeeding') OR
                   chm_ucr.counsel_ebf != GREATEST(agg.counsel_exclusive_bf, agg.counsel_only_milk, 0) OR
-                  chm_ucr.counsel_ebf != GREATEST(agg.counsel_adequate_bf, 0)
+                  chm_ucr.counsel_adequate_bf != GREATEST(agg.counsel_adequate_bf, 0)
               ))
         )
         """.format(
