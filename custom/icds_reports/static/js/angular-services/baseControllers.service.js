@@ -1,9 +1,5 @@
 /* global d3 */
 
-// todo check callbacks
-// todo check tests
-// todo check progress-raport
-
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
         BaseController: function($scope, $routeParams, $location, locationsService, userLocationId, storageService) {
@@ -50,6 +46,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 for (var i = 0; i < lines.length; i++) {
                     template += '<div>' + lines[i]['key'] + '<strong>' + lines[i]['value'] + '</strong></div>';
                 }
+                template += '</div>';
                 return template;
             };
             vm.getLocationType = function() {

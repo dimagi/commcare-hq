@@ -80,7 +80,7 @@ describe('Institutional Deliveries Directive', function () {
             '<p>test</p>'
             + '<div>Total number of pregnant women who delivered in the last month: <strong>10</strong></div>'
             + '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>5</strong></div>'
-            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>50.00%</strong></div>');
+            + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {

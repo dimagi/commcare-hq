@@ -84,8 +84,8 @@ describe('Exclusive Breastfeeding Directive', function () {
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>'
             + '<div>Total number of children between ages 0 - 6 months: <strong>10</strong></div>'
-            + '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>5</strong></div>'
-            + '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>50.00%</strong></div>');
+            + '<div>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>5</strong></div>'
+            + '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {

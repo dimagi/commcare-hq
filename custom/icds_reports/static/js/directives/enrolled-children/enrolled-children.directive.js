@@ -79,6 +79,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         '%m/%d/%y', ",",
         ' Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services'
     );
+    vm.chartOptions.chart.type = 'multiBarChart';
     vm.chartOptions.chart.width = 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();
     delete vm.chartOptions.chart.tooltips;

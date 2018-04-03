@@ -26,7 +26,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>' + loc.properties.name + '</p>' +
             '<p>' + vm.rightLegend.info + '</p>' +
-            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div>';
+            '<div>Number of AWCs Launched: <strong>' + awcs + '</strong></div></div>';
     };
 
     vm.loadData = function () {
@@ -39,7 +39,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     vm.init();
 
     vm.chartOptions = vm.getChartOptions(
-        '%b %Y', ",", vm.data.legendTitle
+        '%b %Y', ",", ' ' + vm.data.legendTitle
     );
     vm.chartOptions.chart.width = 1100;
     vm.chartOptions.chart.color = d3.scale.category10().range();

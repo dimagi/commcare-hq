@@ -80,7 +80,7 @@ describe('AWCs Covered Directive', function () {
             + '<p>test</p>'
             + '<p>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'
-            + '<div>Number of AWCs Launched: <strong>15</strong></div>';
+            + '<div>Number of AWCs Launched: <strong>15</strong></div></div>';
 
         assert.equal(result, expected);
     });
@@ -187,8 +187,6 @@ describe('AWCs Covered Directive', function () {
         var data = {all: 0, series: 0, x: 1501545600000, y: 72};
         var month = {value: "Jul 2017", series: []};
 
-        '<p><strong>Jul 2017</strong></p><br/>Total AWCs that have launched ICDS-CAS. AWCs are considered launched after submitting at least one Household Registration form.<div>Number of AWCs Launched: <strong>72</strong></div>'
-        '<p><strong>Jul 2017</strong></p><br/><div>Total AWCs that have launched ICDS-CAS. AWCs are considered launched after submitting at least one Household Registration form.<strong></strong></div><div>Number of AWCs Launched: <strong>72</strong></div>'
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
             + '<div>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least'

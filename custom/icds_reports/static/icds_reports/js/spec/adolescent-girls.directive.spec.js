@@ -96,7 +96,7 @@ describe('Adolescent Girls Directive', function () {
             '<p>test</p>' +
             '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>14</strong></div>' +
             '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>28</strong></div>' +
-            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>';
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div></div>';
         assert.equal(result, expected);
     });
 
