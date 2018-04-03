@@ -92,9 +92,6 @@ class AbstractXFormInstance(object):
     def get_xml(self):
         raise NotImplementedError()
 
-    def update_responses(self, value_response_map, user_id):
-        raise NotImplementedError()
-
     def save(self, *args, **kwargs):
         raise NotImplementedError()
 

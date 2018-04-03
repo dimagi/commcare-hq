@@ -399,33 +399,6 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
     def xml_md5(self):
         return self.get_attachment_meta('form.xml').md5
 
-    def update_responses(self, value_responses_map, user_id):
-        from corehq.form_processor.utils.xform import update_response
-
-        xml = self.get_xml_element()
-        dirty = False
-        for question, response in value_responses_map.iteritems():
-            if update_response(xml, question, response, xmlns=self.xmlns):
-                dirty = True
-
-        if dirty:
-            from couchforms.const import ATTACHMENT_NAME
-            form_attachment = self.get_attachment(ATTACHMENT_NAME)
-            attachment = Attachment(
-                name=form_attachment.name,
-                raw_content=etree.tostring(xml),
-                content_type='text/xml',
-            )
-            form_attachment.write_content(attachment.content)
-            form_attachment.save()
-            operation = XFormOperationSQL(user_id=user_id, date=datetime.utcnow(),
-                                          operation=XFormOperationSQL.EDIT)
-            self.history.append(operation)
-            self.save()
-            return True
-
-        return False
-
     def archive(self, user_id=None):
         if self.is_archived:
             return

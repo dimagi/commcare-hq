@@ -139,6 +139,9 @@ class FormProcessorInterface(object):
     def xformerror_from_xform_instance(self, instance, error_message, with_new_id=False):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
+    def update_responses(self, xform, value_responses_map, user_id):
+        return self.processor.update_responses(xform, value_responses_map, user_id)
+
     def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)
         if stock_result:

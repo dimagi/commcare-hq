@@ -24,6 +24,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
@@ -2504,7 +2505,7 @@ def edit_form(request, domain, instance_id):
             name: request.POST[name],
         })
 
-    if instance.update_responses(updates, request.couch_user.get_id):
+    if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
         messages.success(request, _('Question responses saved.'))
     else:
         messages.success(request, _('No changes made to form.'))
