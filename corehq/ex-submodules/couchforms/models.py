@@ -31,8 +31,9 @@ from lxml import etree
 from lxml.etree import XMLSyntaxError
 
 from corehq.blobs.mixin import DeferredBlobMixin
-from corehq.form_processor.abstract_models import AbstractXFormInstance, XFormQuestionValueIterator
+from corehq.form_processor.abstract_models import AbstractXFormInstance
 from corehq.form_processor.exceptions import XFormNotFound
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import clean_metadata
 
 from couchforms import const

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import re
 from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
@@ -235,3 +236,49 @@ def _list_to_processed_forms_tuple(forms):
     else:
         assert len(forms) == 2
         return ProcessedForms(*sorted(forms, key=lambda form: form.is_deprecated))
+
+
+class XFormQuestionValueIterator(object):
+    '''
+    Iterator to help navigate a data structure (likely xml or json)
+    representing an xml document, based on a given path. Skips root node.
+    Each call of `next` returns a tuple of id and index. Iterates until
+    the last non-leaf node. After iterating, the leaf node's id is
+    available via `last`. Example:
+
+    i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
+    i.next()    # ('group', None)
+    i.next()    # ('repeat_group', 1)
+    i.next()    # raises StopIteration
+    i.last()    # 'question_id'
+
+    Note that repeat groups in the given path are ONE-indexed as in xpath, while
+    the indices returned by next/last are ZERO-indexed for easier array indexing.
+    '''
+
+    def __init__(self, path):
+        path = re.sub(r'^/[^\/]+/', '', path)   # strip root
+        self.levels = path.split("/")
+        self.levels.reverse()
+        self._last = None
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        if len(self.levels) > 1:
+            return self._next()
+        raise StopIteration
+
+    def _next(self):
+        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
+        if index is not None:
+            index = int(index) - 1
+        return (qid, index)
+
+    def last(self):
+        if self._last is None and len(self.levels) == 1:
+            self._last = self._next()[0]
+        return self._last
+
+    __next__ = next
