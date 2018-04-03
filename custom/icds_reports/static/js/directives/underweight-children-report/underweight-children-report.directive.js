@@ -2,8 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders, ages,
-                                             baseControllersService) {
+    locationsService, userLocationId, storageService, genders, ages, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService);
     var vm = this;

@@ -2,8 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
-                                         locationsService, userLocationId, storageService, genders,
-                                         baseControllersService) {
+    locationsService, userLocationId, storageService, genders, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService);
     var vm = this;

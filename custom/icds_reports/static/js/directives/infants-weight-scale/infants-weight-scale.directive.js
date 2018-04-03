@@ -1,8 +1,8 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InfantsWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
-                                      locationsService, userLocationId, storageService, baseControllersService) {
+    locationsService, userLocationId, storageService, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService);
     var vm = this;

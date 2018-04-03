@@ -200,7 +200,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                             'text-align': 'center',
                             'margin': '0 auto',
                             'width': '900px',
-                        }
+                        },
                     },
                 };
             };

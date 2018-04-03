@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function FunctionalToiletController($scope, $routeParams, $location, $filter, infrastructureService,
-                                    locationsService, userLocationId, storageService, baseControllersService) {
+    locationsService, userLocationId, storageService, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService);
     var vm = this;

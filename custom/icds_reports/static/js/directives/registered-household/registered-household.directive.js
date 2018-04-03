@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
-                                       locationsService, userLocationId, storageService, baseControllersService) {
+    locationsService, userLocationId, storageService, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
         userLocationId, storageService);
     var vm = this;
