@@ -55,7 +55,7 @@ class Command(BaseCommand):
             if cids_to_remove:
                 if options['execute']:
                     for cid in cids_to_remove:
-                        notification.remove(cid)
+                        notification.config_ids.remove(cid)
 
                     if notification.config_ids:
                         notification.save()
