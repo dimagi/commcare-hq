@@ -1,18 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
-                                             locationsService, userLocationId, storageService) {
+function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
+    userLocationId, storageService, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "AWCs Launched";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awcs_covered/map', label: 'Map View'},
         'chart': {route: '/awcs_covered/chart', label: 'Chart View'},
@@ -25,15 +19,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
         info: 'Total AWCs that have launched ICDS-CAS. ' +
         'AWCs are considered launched after submitting at least one Household Registration form.',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age', 'gender'];
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -229,7 +215,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
 }
 
-AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService'];
+AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('awcsCovered', function() {
     return {

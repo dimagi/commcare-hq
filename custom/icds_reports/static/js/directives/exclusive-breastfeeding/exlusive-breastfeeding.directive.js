@@ -1,16 +1,11 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+    locationsService, userLocationId, storageService, genders, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
 
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
@@ -20,7 +15,6 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     }
 
     vm.label = "Exclusive Breastfeeding";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/exclusive_breastfeeding/map', label: 'Map View'},
         'chart': {route: '/exclusive_breastfeeding/chart', label: 'Chart View'},
@@ -28,18 +22,10 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
         info: '"Percentage of infants 0-6 months of age who are fed exclusively with breast milk. An infant is exclusively breastfed if they recieve only breastmilk with no additional food, liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months"',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -239,7 +225,7 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     };
 }
 
-ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+ExclusiveBreasfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('exclusiveBreastfeeding', function() {
     return {

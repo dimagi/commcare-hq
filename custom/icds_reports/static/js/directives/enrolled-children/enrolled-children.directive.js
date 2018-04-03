@@ -1,16 +1,11 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EnrolledChildrenController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService, genders, ages) {
+    locationsService, userLocationId, storageService, genders, ages, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
 
     var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
@@ -27,7 +22,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     }
 
     vm.label = "Children (0-6 years) who are enrolled for Anganwadi Services";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_children/map', label: 'Map View'},
         'chart': {route: '/enrolled_children/chart', label: 'Chart View'},
@@ -35,13 +29,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.data = {
         legendTitle: 'Number of Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     if (vm.step === 'chart') {
         vm.filters = ['age'];
     } else {
@@ -51,9 +38,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
-
-    vm.message = storageService.getKey('message') || false;
-
     vm.hideRanking = true;
 
     $scope.$watch(function() {
@@ -240,7 +224,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     };
 }
 
-EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
+EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('enrolledChildren', function() {
     return {

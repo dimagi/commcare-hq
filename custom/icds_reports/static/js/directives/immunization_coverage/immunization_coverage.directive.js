@@ -1,16 +1,11 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ImmunizationCoverageController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+    locationsService, userLocationId, storageService, genders, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -19,7 +14,6 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     }
 
     vm.label = "Immunization coverage (at age 1 year)";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/immunization_coverage/map', label: 'Map View'},
         'chart': {route: '/immunization_coverage/chart', label: 'Chart View'},
@@ -27,18 +21,10 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children 1 year+ who have received complete immunization as per National Immunization Schedule of India required by age 1.<br/><br/>This includes the following immunizations:<br/>If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/>If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -237,7 +223,7 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     };
 }
 
-ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+ImmunizationCoverageController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('immunizationCoverage', function() {
     return {

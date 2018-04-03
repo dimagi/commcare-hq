@@ -1,18 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function InstitutionalDeliveriesController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService) {
+    locationsService, userLocationId, storageService, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "Institutional deliveries";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/institutional_deliveries/map', label: 'Map View'},
         'chart': {route: '/institutional_deliveries/chart', label: 'Chart View'},
@@ -20,18 +14,10 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of pregnant women who delivered in a public or private medical facility in the last month. Delivery in medical instituitions is associated with a decrease in maternal mortality rate.',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -224,7 +210,7 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     };
 }
 
-InstitutionalDeliveriesController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService'];
+InstitutionalDeliveriesController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('institutionalDeliveries', function() {
     return {

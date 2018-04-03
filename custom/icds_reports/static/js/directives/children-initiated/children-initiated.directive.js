@@ -1,16 +1,11 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+    locationsService, userLocationId, storageService, genders, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -19,7 +14,6 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     }
 
     vm.label = "Children initiated appropriate complementary feeding";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/children_initiated/map', label: 'Map View'},
         'chart': {route: '/children_initiated/chart', label: 'Chart View'},
@@ -27,18 +21,10 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age'];
     vm.rightLegend = {
         info: 'Percentage of children between 6 - 8 months given timely introduction to solid, semi-solid or soft food.',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -238,7 +224,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {

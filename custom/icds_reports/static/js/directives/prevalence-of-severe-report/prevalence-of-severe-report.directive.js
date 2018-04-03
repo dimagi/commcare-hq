@@ -1,17 +1,12 @@
-/* global d3, _, moment */
+/* global d3, _ */
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders, ages) {
+    locationsService, userLocationId, storageService, genders, ages, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
     });
@@ -27,7 +22,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     }
 
     vm.label = "Prevalence of Wasting (Weight-for-Height)";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/wasting/map', label: 'Map View'},
         'chart': {route: '/wasting/chart', label: 'Chart View'},
@@ -35,20 +29,11 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = [];
 
     vm.rightLegend = {
         info: 'Percentage of children (6-60 months) enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median.',
     };
-
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -283,7 +268,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
+PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
     return {

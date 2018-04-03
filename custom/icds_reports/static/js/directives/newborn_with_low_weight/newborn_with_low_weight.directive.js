@@ -1,16 +1,11 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function NewbornWithLowBirthController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+    locationsService, userLocationId, storageService, genders, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
     var genderIndex = _.findIndex(genders, function (x) {
         return x.id === vm.filtersData.gender;
     });
@@ -19,7 +14,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     }
 
     vm.label = "Newborns with Low Birth Weight";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/low_birth/map', label: 'Map View'},
         'chart': {route: '/low_birth/chart', label: 'Chart View'},
@@ -27,20 +21,11 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: '% Newborns',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age'];
 
     vm.rightLegend = {
         info: 'Percentage of newborns with born with birth weight less than 2500 grams.',
     };
-
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -246,7 +231,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     };
 }
 
-NewbornWithLowBirthController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+NewbornWithLowBirthController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('newbornLowWeight', function() {
     return {

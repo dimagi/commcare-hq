@@ -1,18 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService) {
+function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
+    userLocationId, storageService, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "Adolescent Girls (11-14 years)";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/adolescent_girls/map', label: 'Map View'},
         'chart': {route: '/adolescent_girls/chart', label: 'Chart View'},
@@ -20,20 +14,10 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age', 'gender'];
-
     vm.rightLegend = {
         info: 'Total number of adolescent girls who are enrolled for Anganwadi Services',
     };
-
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -221,7 +205,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
 }
 
-AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('adolescentGirls', function() {
     return {
