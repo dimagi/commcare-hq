@@ -591,7 +591,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                       operation='Scrub username for GDPR compliance.')
         form_data.track_create(operation)
-        FormAccessorSQL.update_form(form_data)  # TODO: This might not work still
+        FormAccessorSQL.update_form(form_data)
 
     @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):

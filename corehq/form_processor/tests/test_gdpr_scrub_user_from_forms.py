@@ -6,15 +6,11 @@ from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
-from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
 
 
-from corehq.form_processor.models import (
-    XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
-)
-from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
+from corehq.form_processor.models import XFormAttachmentSQL
 
 
 import uuid
@@ -77,7 +73,6 @@ class GDPRScrubUserFromFormsSqlTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
 
-        # print("orig form history (initial): {}".format(form.history))
         new_form_xml = Command().update_form_data(form, NEW_USERNAME)
 
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
@@ -91,11 +86,11 @@ class GDPRScrubUserFromFormsSqlTests(TestCase):
         actual_form_xml_from_db = XFormAttachmentSQL.read_content(attachment_metadata)
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml_from_db)
 
-        # TODO: Test that the operations history is updated
-        # Refetch the form from the db
+        # Test that the operations history is updated in this form
         refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
-        print('refetched form.history:{}'.format(refetched_form.history))
-        print("orig form history: {}".format(form.history))
+        self.assertEqual(len(refetched_form.history), 1)
+        self.assertEqual(refetched_form.history[0].operation, "Scrub username for GDPR compliance.")
+
 
 class GDPRScrubUserFromFormsCouchTests(TestCase):
     def setUp(self):
@@ -117,4 +112,7 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         actual_form_xml = form.get_attachment("form.xml")
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
-        # TODO: Test that the operations history is updated
+        # Test that the operations history is updated in this form
+        refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
+        self.assertEqual(len(refetched_form.history), 1)
+        self.assertEqual(refetched_form.history[0].operation, "Scrub username for GDPR compliance.")
