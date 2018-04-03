@@ -1594,7 +1594,10 @@ BEGIN
 		'infra_infant_weighing_scale = ut.infra_infant_weighing_scale, ' ||
 		'infra_cooking_utensils = ut.infra_cooking_utensils, ' ||
 		'infra_medicine_kits = ut.infra_medicine_kits, ' ||
-		'infra_adequate_space_pse = ut.infra_adequate_space_pse ' ||
+		'infra_adequate_space_pse = ut.infra_adequate_space_pse, ' ||
+		'electricity_awc = ut.electricity_awc, ' ||
+		'infantometer = ut.infantometer, ' ||
+		'stadiometer = ut.stadiometer ' ||
 	'FROM (SELECT DISTINCT ON (awc_id) ' ||
 		'awc_id, ' ||
 		'month, ' ||
@@ -1612,7 +1615,10 @@ BEGIN
 		'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
-		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
+		'has_adequate_space_pse AS infra_adequate_space_pse, ' ||
+		'electricity_awc AS electricity_awc, ' ||
+		'infantometer AS infantometer, ' ||
+		'stadiometer AS stadiometer ' ||
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
@@ -1742,7 +1748,10 @@ BEGIN
         quote_nullable(_null_value) || ', ' ||
         'sum(num_awc_infra_last_update), ' ||
         'sum(cases_person_has_aadhaar_v2 ), ' ||
-        'sum(cases_person_beneficiary_v2) ';
+        'sum(cases_person_beneficiary_v2), ' ||
+        'COALESCE(sum(electricity_awc), 0), ' ||
+        'COALESCE(sum(infantometer), 0), ' ||
+        'COALESCE(sum(stadiometer), 0) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||

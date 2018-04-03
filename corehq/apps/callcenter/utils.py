@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, timedelta
 import pytz
@@ -101,7 +102,7 @@ class _UserCaseHelper(object):
 
 
 def _domain_has_new_fields(domain, field_names):
-    cache_key = u'user_case_fields_{}'.format(domain)
+    cache_key = 'user_case_fields_{}'.format(domain)
     cached_fields = cache.get(cache_key)
     new_field_set = set(field_names)
     if cached_fields != new_field_set:

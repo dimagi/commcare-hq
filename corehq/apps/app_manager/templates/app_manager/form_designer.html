@@ -26,6 +26,7 @@
 
 {% block js %}{{ block.super }}
     <script src="{% static 'moment/moment.js' %}"></script>
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
     <script>
         /*
             When r.js optimizes the bundle.js files, one thing it does is add a call to `define` the module.

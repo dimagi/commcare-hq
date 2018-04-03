@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime
 
@@ -191,7 +192,7 @@ class Command(BaseCommand):
                 domains = iter_domains()
 
             for domain in domains:
-                print(u"Checking domain: %s" % domain)
+                print("Checking domain: %s" % domain)
                 form_ids_to_check = set()
                 dbs = [db] if db else get_db_aliases_for_partitioned_query()
                 for dbname in dbs:

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.urls import reverse, resolve, Resolver404
 from corehq.tabs.uitab import url_is_location_safe
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain

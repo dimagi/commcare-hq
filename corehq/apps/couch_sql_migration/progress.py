@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 
 from corehq.apps.domain_migration_flags.api import (

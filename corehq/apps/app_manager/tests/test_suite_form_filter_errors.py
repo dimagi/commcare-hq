@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.exceptions import CaseXPathValidationError
 from corehq.apps.app_manager.tests.app_factory import AppFactory

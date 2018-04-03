@@ -35,6 +35,11 @@ KAFKA_TOPICS = (
     topics.COMMCARE_USER,
 )
 
+FILTER_INTERPOLATION_DOC_TYPES = {
+    "CommCareCase": "type",
+    "XFormInstance": "xmlns",
+}
+
 VALID_REFERENCED_DOC_TYPES = [
     'CommCareCase',
     'CommCareUser',

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from xml.etree import cElementTree as ElementTree
@@ -393,14 +394,14 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
-    session_name = u'{app} > {form}'.format(
+    session_name = '{app} > {form}'.format(
         app=app.name,
         form=form_name,
     )
 
     if case_id:
         case = CaseAccessors(domain).get_case(case_id)
-        session_name = u'{0} - {1}'.format(session_name, case.name)
+        session_name = '{0} - {1}'.format(session_name, case.name)
 
     root_context = {
         'form_url': form_url,

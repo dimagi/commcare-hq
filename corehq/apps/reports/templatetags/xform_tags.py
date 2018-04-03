@@ -1,10 +1,7 @@
 from __future__ import absolute_import, unicode_literals
-from functools import partial
 
-from datetime import datetime
 from django import template
 from django.utils.html import format_html
-from django.utils.translation import ugettext_lazy
 
 from corehq.util.xml_utils import indent_xml
 import six

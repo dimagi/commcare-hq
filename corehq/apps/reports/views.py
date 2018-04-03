@@ -116,6 +116,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
+from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
@@ -1229,10 +1230,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
 
-    user_id = request.couch_user._id
-
-    user = CouchUser.get_by_user_id(user_id, domain)
-
     try:
         send_delayed_report(scheduled_report_id)
     except Exception as e:
@@ -1240,7 +1237,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Test message sent to the report's recipients."))
+        messages.success(request, _("Report sent to this report's recipients"))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
@@ -1916,9 +1913,10 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         "context_case_id": case_id,
         "instance": instance,
         "is_archived": instance.is_archived,
+        "form_source_download_url": get_form_source_download_url(form),
         "edit_info": _get_edit_info(instance),
         "domain": domain,
-        'question_list_not_found': question_list_not_found,
+        "question_list_not_found": question_list_not_found,
         "form_data": form_data,
         "question_response_map": question_response_map,
         "ordered_question_values": ordered_question_values,

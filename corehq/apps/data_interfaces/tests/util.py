@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.case.mock import CaseFactory
 from contextlib import contextmanager
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule

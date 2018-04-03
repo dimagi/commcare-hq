@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import json
 import logging
 
@@ -354,7 +355,7 @@ def _get_core_context_scheduler_data_nodes(module, form):
             SCHEDULE_GLOBAL_NEXT_VISIT_DATE,
         ]
         scheduler_data_nodes.extend([
-            u"next_{}".format(f.schedule_form_id)
+            "next_{}".format(f.schedule_form_id)
             for f in form.get_phase().get_forms()
             if getattr(f, 'schedule', False) and f.schedule.enabled
         ])

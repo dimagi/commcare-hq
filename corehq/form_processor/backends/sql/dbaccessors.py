@@ -686,7 +686,11 @@ class FormAccessorSQL(AbstractFormAccessor):
                         model.form = form
                         model.save()
             else:
-                form.save()
+                with transaction.atomic(db_name):
+                    form.save()
+                    for operation in new_operations:
+                        operation.form = form
+                        operation.save()
 
         if publish_changes:
             publish_form_saved(form)

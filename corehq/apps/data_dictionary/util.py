@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.exceptions import ValidationError
+from django.utils.translation import ugettext
 
 from corehq import toggles
 from corehq.apps.app_manager.app_schemas.case_properties import all_case_properties_by_domain
@@ -122,6 +124,9 @@ def save_case_property(name, case_type, domain=None, data_type=None,
     """
     Takes a case property to update and returns an error if there was one
     """
+    if not name:
+        return ugettext('Case property must have a name')
+
     prop = CaseProperty.get_or_create(
         name=name, case_type=case_type, domain=domain
     )
