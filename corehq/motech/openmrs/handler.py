@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
@@ -137,6 +138,10 @@ class SyncPatientIdentifiersTask(WorkflowTask):
             for identifier in self.patient['identifiers']
         }
         for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+                # Don't try to sync the OpenMRS person UUID; It's not a
+                # user-defined identifier and it can't be changed.
+                continue
             identifier = value_source.get_value(self.info)
             if patient_identifier_type in existing_patient_identifiers:
                 identifier_uuid, existing_identifier = existing_patient_identifiers[patient_identifier_type]
