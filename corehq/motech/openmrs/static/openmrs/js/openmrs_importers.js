@@ -3,10 +3,8 @@
 hqDefine('openmrs/js/openmrs_importers', function () {
     'use strict';
 
-    var module = {};
-
-    var OpenmrsImporter = function (properties) {
-        var self = this;
+    var openmrsImporter = function (properties) {
+        var self = {};
 
         self.server_url = ko.observable(properties["server_url"]);
         // We are using snake_case for property names so that they
@@ -56,10 +54,12 @@ hqDefine('openmrs/js/openmrs_importers', function () {
                 "column_map": self.column_map(),
             };
         };
+
+        return self;
     };
 
-    module.OpenmrsImporters = function (openmrsImporters, importNowUrl) {
-        var self = this;
+    var openmrsImporters = function (openmrsImporters, importNowUrl) {
+        var self = {};
         var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
 
         self.openmrsImporters = ko.observableArray();
@@ -67,8 +67,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
         self.init = function () {
             if (openmrsImporters.length > 0) {
                 for (var i = 0; i < openmrsImporters.length; i++) {
-                    var openmrsImporter = new OpenmrsImporter(openmrsImporters[i]);
-                    self.openmrsImporters.push(openmrsImporter);
+                    self.openmrsImporters.push(openmrsImporter(openmrsImporters[i]));
                 }
             } else {
                 self.addOpenmrsImporter();
@@ -76,7 +75,7 @@ hqDefine('openmrs/js/openmrs_importers', function () {
         };
 
         self.addOpenmrsImporter = function () {
-            self.openmrsImporters.push(new OpenmrsImporter({}));
+            self.openmrsImporters.push(openmrsImporter({}));
         };
 
         self.removeOpenmrsImporter = function (openmrsImporter) {
@@ -103,6 +102,16 @@ hqDefine('openmrs/js/openmrs_importers', function () {
                 alert_user(gettext("Failed to schedule task to import from OpenMRS."), "danger");
             });
         };
+
+        return self;
     };
-    return module;
+
+    $(function() {
+        var viewModel = openmrsImporters(
+            hqImport("hqwebapp/js/initial_page_data").get('openmrs_importers'),
+            hqImport("hqwebapp/js/initial_page_data").reverse('openmrs_import_now')
+        );
+        viewModel.init();
+        $('#openmrs-importers').koApplyBindings(viewModel);
+    });
 });

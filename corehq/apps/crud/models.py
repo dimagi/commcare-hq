@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.safestring import mark_safe
 from dimagi.utils.data.crud import TabularCRUDManager, BaseCRUDForm
 from memoized import memoized

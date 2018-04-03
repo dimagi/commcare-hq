@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import csv
+import copy
 
 from django.core.management import BaseCommand
 
@@ -39,21 +40,21 @@ class Command(BaseCommand):
             csv_writer.writeheader()
 
             for ccs_case in self._get_cases():
-                properties = ccs_case.case_json
+                properties = copy.deepcopy(ccs_case.case_json)
 
                 if 'add' in properties:
                     continue
 
-                if properties.get('current_schedule_phase') != 2:
+                if properties.get('current_schedule_phase') != '2':
                     continue
 
                 properties.update({
                     'case_id': ccs_case.case_id,
                     'owner_id': ccs_case.owner_id,
                     'modified_on': ccs_case.modified_on,
-                    'server_modified_on': ccs_case.modified_on
+                    'server_modified_on': ccs_case.server_modified_on
                 })
-                csv_writer.write_row(properties)
+                csv_writer.writerow(properties)
 
     def _get_cases(self):
         dbs = get_db_aliases_for_partitioned_query()
@@ -66,6 +67,6 @@ class Command(BaseCommand):
             )
 
             for case_ids in chunked(ccs_record_case_ids, 100):
-                cases = self.case_accessor.get_cases(case_ids)
+                cases = self.case_accessor.get_cases(list(case_ids))
                 for case in cases:
                     yield case

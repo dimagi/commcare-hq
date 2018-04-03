@@ -23,13 +23,15 @@ class WorkflowTask(object):
         pass
 
 
-WorkflowError = namedtuple('WorkflowError', 'task error is_rollback_error')
-WorkflowError.__str__ = lambda self: '{task}{is_rollback} failed: {exception}: {error}'.format(
-    task=self.task,
-    is_rollback='.rollback()' if self.is_rollback_error else '.run()',
-    exception=self.error.__class__.__name__,
-    error=self.error
-)
+class WorkflowError(namedtuple('WorkflowError', 'task error is_rollback_error')):
+
+    def __str__(self):
+        return '{task}{run_or_rollback} failed: {exception}: {error}'.format(
+            task=self.task,
+            run_or_rollback='.rollback()' if self.is_rollback_error else '.run()',
+            exception=self.error.__class__.__name__,
+            error=self.error
+        )
 
 
 def execute_workflow(workflow):

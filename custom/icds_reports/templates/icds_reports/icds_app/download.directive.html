@@ -19,7 +19,7 @@
             <strong>Please make the following selections before you can export:</strong>
             <ul>
                 <li ng-if="!$ctrl.isBlockOrBelowSelected()" style="padding: 5px;">Select at least a block-level location</li>
-                <li ng-if="!$ctrl.isAWCsSelected()" style="padding: 5px;">Select at least one AWC</li>
+                <li ng-if="!$ctrl.isAWCsSelected() && !$ctrl.isCombinedPDFSelected()" style="padding: 5px;">Select at least one AWC</li>
             </ul>
         </div>
         <div class="form-horizontal black">

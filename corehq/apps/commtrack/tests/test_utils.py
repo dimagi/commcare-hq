@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 import unittest
 from corehq.apps.commtrack.util import unicode_slug, generate_code
@@ -10,10 +11,10 @@ class CommtrackUtilsTest(TestCase):
     def test_unicode_slug(self):
         test_cases = (
             ('normal', 'normal'),
-            (u'unicode', 'unicode'),
+            ('unicode', 'unicode'),
             ('    with\n\t  whitespace   ', 'with-whitespace'),
-            (u'speçial çháracters', 'special-characters'),
-            (u'हिंदी', 'hindii'),
+            ('speçial çháracters', 'special-characters'),
+            ('हिंदी', 'hindii'),
         )
         for input, output in test_cases:
             self.assertEqual(output, unicode_slug(input))
@@ -31,7 +32,7 @@ class GenerateCodeTest(unittest.TestCase):
         )
 
     def test_sluggifies(self):
-        name = u'türtłę'
+        name = 'türtłę'
         existing = []
 
         self.assertEqual(

@@ -565,7 +565,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(null=False)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the

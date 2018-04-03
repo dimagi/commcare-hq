@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 from django.db import models
@@ -38,7 +39,7 @@ class DropboxUploadHelper(models.Model):
         existing_uploader = DropboxUploadHelper.objects.filter(download_id=download_id).first()
         if existing_uploader and existing_uploader.failure_reason is None:
             raise DropboxUploadAlreadyInProgress(
-                u'There already exists an upload with the download id: {}'.format(download_id)
+                'There already exists an upload with the download id: {}'.format(download_id)
             )
 
         helper = cls.objects.create(
@@ -60,7 +61,7 @@ class DropboxUploadHelper(models.Model):
 
     def upload(self, max_size=None, max_retries=3):
         if self.initiated:
-            raise DropboxUploadAlreadyInProgress(u'The upload has already been initiated')
+            raise DropboxUploadAlreadyInProgress('The upload has already been initiated')
         size = max_size or os.path.getsize(self.src)
         upload.delay(self.id, self.token, size, max_retries)
         self.initiated = True

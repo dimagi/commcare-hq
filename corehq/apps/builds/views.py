@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound, BadValueError
 from django.urls import reverse
 from django.http import HttpResponseBadRequest, HttpResponse, Http404
@@ -140,7 +141,7 @@ def import_build(request):
         # Strip and remove
         # U+200B ZERO WIDTH SPACE
         # https://manage.dimagi.com/default.asp?262198
-        build_number = build_number.strip().replace(u'\u200b', '')
+        build_number = build_number.strip().replace('\u200b', '')
         try:
             build_number = int(build_number)
         except ValueError:

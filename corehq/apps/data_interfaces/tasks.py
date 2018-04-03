@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from celery.utils.log import get_task_logger

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, namedtuple
 from functools import total_ordering
 from os.path import commonprefix
@@ -28,7 +29,7 @@ class WorkflowHelper(PostProcessor):
         root_modules = [module for module in self.modules if getattr(module, 'put_in_root', False)]
         return [
             datum for module in root_modules
-            for datum in self.get_module_datums(u'm{}'.format(module.id)).values()
+            for datum in self.get_module_datums('m{}'.format(module.id)).values()
         ]
 
     def update_suite(self):

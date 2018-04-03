@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.db import models
@@ -387,7 +388,7 @@ class StockExportColumn(ComplexExportColumn):
 
     def get_headers(self):
         for product_id, section in self._column_tuples:
-            yield u"{product} ({section})".format(
+            yield "{product} ({section})".format(
                 product=Product.get(product_id).name,
                 section=section
             )

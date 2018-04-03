@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 
 import itertools
@@ -519,8 +520,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
     if isinstance(form, ShadowForm):
         msgs.append((
             messages.warning,
-            u"Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
-            u" Cannot translate ShadowForms, skipping.".format(
+            "Found a ShadowForm at module-{module_index} form-{form_index} with the name {name}."
+            " Cannot translate ShadowForms, skipping.".format(
                 # Add one to revert back to match index in Excel sheet
                 module_index=module_index + 1,
                 form_index=form_index + 1,
@@ -647,8 +648,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
             if not text_node.exists():
                 msgs.append((
                     messages.warning,
-                    u"Unrecognized translation label {0} in sheet {1}. That row"
-                    u" has been skipped". format(label_id, sheet.worksheet.title)
+                    "Unrecognized translation label {0} in sheet {1}. That row"
+                    " has been skipped". format(label_id, sheet.worksheet.title)
                 ))
                 continue
 
@@ -710,7 +711,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
 def escape_output_value(value):
     try:
-        return etree.fromstring(u"<value>{}</value>".format(
+        return etree.fromstring("<value>{}</value>".format(
             re.sub("(?<!/)>", "&gt;", re.sub("<(\s*)(?!output)", "&lt;\\1", value))
         ))
     except XMLSyntaxError:

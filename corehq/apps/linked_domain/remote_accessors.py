@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import requests
 from couchdbkit.exceptions import ResourceNotFound
 from django.urls.base import reverse
@@ -109,7 +110,7 @@ def _do_request_to_remote_hq(relative_url, remote_details, linked_domain, params
     url_base = remote_details.url_base
     username = remote_details.username
     api_key = remote_details.api_key
-    full_url = u'%s%s' % (url_base, relative_url)
+    full_url = '%s%s' % (url_base, relative_url)
     headers = {
         'HQ-REMOTE-REQUESTER': absolute_reverse('domain_homepage', args=[linked_domain])
     }

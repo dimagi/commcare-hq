@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
 from corehq.apps.app_manager.dbaccessors import get_app, get_current_app
