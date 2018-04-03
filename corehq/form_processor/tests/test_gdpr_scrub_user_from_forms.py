@@ -66,6 +66,7 @@ class GDPRScrubUserFromFormsTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().update_form_data(form, self.new_username)
+
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the xml changed

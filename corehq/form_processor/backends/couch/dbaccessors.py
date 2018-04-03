@@ -104,10 +104,6 @@ class FormAccessorCouch(AbstractFormAccessor):
         form.save()
 
     @staticmethod
-    def update_form(form):
-        form.save()
-
-    @staticmethod
     def update_form_problem_and_state(form):
         form.save()
 

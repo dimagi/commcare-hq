@@ -159,9 +159,6 @@ class FormAccessors(object):
     def save_new_form(self, form):
         self.db_accessor.save_new_form(form)
 
-    def update_form(self, form):
-        self.db_accessor.update_form(form)
-
     def update_form_problem_and_state(self, form):
         self.db_accessor.update_form_problem_and_state(form)
 
