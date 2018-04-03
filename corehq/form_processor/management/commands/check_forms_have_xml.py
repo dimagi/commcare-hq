@@ -21,16 +21,17 @@ class Command(BaseCommand):
         blob_db = get_blob_db()
         form_db = FormAccessors(domain)
         form_ids = form_db.get_all_form_ids_in_domain()
+
         with open(file_name, 'w') as open_file:
             for form in with_progress_bar(form_db.iter_forms(form_ids), len(form_ids)):
                 if isinstance(form, CouchForm):
                     meta = form.blobs.get(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(
                             meta.id, form._blobdb_bucket()):  # pylint: disable=protected-access
-                        open_file.write(form.form_id)
+                        open_file.write(form.form_id + "\n")
                 elif isinstance(form, XFormInstanceSQL):
                     meta = form.get_attachment_meta(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(meta.blob_id, meta.blobdb_bucket()):
-                        open_file.write(form.form_id)
+                        open_file.write(form.form_id + "\n")
                 else:
                     raise Exception("not sure how we got here")
