@@ -5,6 +5,7 @@
 {% block js-inline %}{{ block.super }}
 <script>
     $(function () {
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var makeDB = function (list) {
             /* turn a list into a dict indexed by each object's _id */
             var db = {};
@@ -16,9 +17,9 @@
             db._sorted = list;
             return db;
         };
-        var access = {{ access|JSON }};
-        var appDB = makeDB({{ apps|JSON }});
-        var groupDB = makeDB({{ groups|JSON }});
+        var access = initialPageData.get('access');
+        var appDB = makeDB(initialPageData.get('apps'));
+        var groupDB = makeDB(initialPageData.get('groups'));
 
         var addJsonAccess = function (o) {
             o.JSON = ko.computed({
@@ -77,7 +78,7 @@
             self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
                 save: function () {
                     self.saveButton.ajax({
-                        url: '{% url "cloudcare_app_settings" domain %}',
+                        url: initialPageData.reverse("cloudcare_app_settings"),
                         type: 'put',
                         dataType: 'json',
                         data: ko.mapping.toJSON(self.applicationAccess),
@@ -138,6 +139,11 @@
 {% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'access' access %}
+    {% initial_page_data 'apps' apps %}
+    {% initial_page_data 'groups' groups %}
+    {% registerurl "cloudcare_app_settings" domain %}
+
     <h2>{% trans 'Manage Web Apps Permissions' %}</h2>
     <section id="cloudcare-app-settings" style="display: none">
         <div data-bind="saveButton: saveButton"></div>
