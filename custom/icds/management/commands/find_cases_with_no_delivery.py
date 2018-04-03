@@ -45,7 +45,7 @@ class Command(BaseCommand):
                 if 'add' in properties:
                     continue
 
-                if properties.get('current_schedule_phase') != 2:
+                if properties.get('current_schedule_phase') != '2':
                     continue
 
                 properties.update({
@@ -54,7 +54,7 @@ class Command(BaseCommand):
                     'modified_on': ccs_case.modified_on,
                     'server_modified_on': ccs_case.server_modified_on
                 })
-                csv_writer.write_row(properties)
+                csv_writer.writerow(properties)
 
     def _get_cases(self):
         dbs = get_db_aliases_for_partitioned_query()
@@ -67,6 +67,6 @@ class Command(BaseCommand):
             )
 
             for case_ids in chunked(ccs_record_case_ids, 100):
-                cases = self.case_accessor.get_cases(case_ids)
+                cases = self.case_accessor.get_cases(list(case_ids))
                 for case in cases:
                     yield case
