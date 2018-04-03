@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 
 from datetime import datetime
 
@@ -11,7 +12,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 
 
 class Command(BaseCommand):
-    help="Dump all case data, per case type per shard in csv files"
+    help = "Dump all case data, per case type per shard in csv files"
 
     def add_arguments(self, parser):
         parser.add_argument('--domain')
@@ -27,7 +28,7 @@ class Command(BaseCommand):
             if for_case_type not in available_case_types:
                 raise CommandError("Unexpected case type {for_case_type} passed. "
                                    "Should be from the following: {case_types}"
-                                    .format(for_case_type=for_case_type, case_types=available_case_types))
+                                   .format(for_case_type=for_case_type, case_types=available_case_types))
 
         if for_domain:
             available_domains = (CommCareCaseSQL.objects.using(for_db_conn).
@@ -73,10 +74,10 @@ class Command(BaseCommand):
                         c = db_conn.cursor()
                         where_clause += "type='{case_type}' ".format(case_type=case_type)
                         copy_query = "copy (SELECT * FROM form_processor_commcarecasesql " \
-                                     "{where_clause})".format(
-                                      case_type=case_type, where_clause=where_clause)
+                                     "{where_clause})".format(case_type=case_type, where_clause=where_clause)
                         print("Query Being Run:")
                         print(copy_query)
-                        c.copy_expert("{query} TO STDOUT DELIMITER ',' CSV HEADER;".format(query=copy_query), output)
+                        c.copy_expert(
+                            "{query} TO STDOUT DELIMITER ',' CSV HEADER;".format(query=copy_query), output)
             else:
                 print("Ignoring {db}. It does not have the table form_processor_commcarecasesql".format(db=db))
