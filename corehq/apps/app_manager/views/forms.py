@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 import hashlib
 import re
@@ -500,10 +501,10 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     try:
         xform = form.wrapped_xform()
     except XFormException as e:
-        form_errors.append(u"Error in form: %s" % e)
+        form_errors.append("Error in form: %s" % e)
     except Exception as e:
         logging.exception(e)
-        form_errors.append(u"Unexpected error in form: %s" % e)
+        form_errors.append("Unexpected error in form: %s" % e)
 
     if xform and xform.exists():
         if xform.already_has_meta():
@@ -517,9 +518,9 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             xform_questions = xform.get_questions(langs, include_triggers=True)
             form.validate_form()
         except etree.XMLSyntaxError as e:
-            form_errors.append(u"Syntax Error: %s" % e)
+            form_errors.append("Syntax Error: %s" % e)
         except AppEditingError as e:
-            form_errors.append(u"Error in application: %s" % e)
+            form_errors.append("Error in application: %s" % e)
         except XFormValidationError:
             xform_validation_errored = True
             # showing these messages is handled by validate_form_for_build ajax
@@ -528,14 +529,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             xform_validation_missing = True
             messages.warning(request, _("Unable to validate form due to server error."))
         except XFormException as e:
-            form_errors.append(u"Error in form: %s" % e)
+            form_errors.append("Error in form: %s" % e)
         # any other kind of error should fail hard,
         # but for now there are too many for that to be practical
         except Exception as e:
             if settings.DEBUG:
                 raise
             notify_exception(request, 'Unexpected Build Error')
-            form_errors.append(u"Unexpected System Error: %s" % e)
+            form_errors.append("Unexpected System Error: %s" % e)
         else:
             # remove upload questions (attachments) until MM Case Properties
             # are released to general public
@@ -549,14 +550,14 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
                 if not form_action_errors:
                     form.add_stuff_to_xform(xform)
             except CaseError as e:
-                messages.error(request, u"Error in Case Management: %s" % e)
+                messages.error(request, "Error in Case Management: %s" % e)
             except XFormException as e:
                 messages.error(request, six.text_type(e))
             except Exception as e:
                 if settings.DEBUG:
                     raise
                 logging.exception(six.text_type(e))
-                messages.error(request, u"Unexpected Error: %s" % e)
+                messages.error(request, "Unexpected Error: %s" % e)
 
     try:
         languages = xform.get_languages()
@@ -636,7 +637,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
             module_name = trans(module.name, langs)
             form_name = trans(form.name, langs)
             star = '* ' if auto_link else '  '
-            return u"{}{} -> {}".format(star, module_name, form_name)
+            return "{}{} -> {}".format(star, module_name, form_name)
 
         modules = [m for m in all_modules if m.case_type == module.case_type]
         if getattr(module, 'root_module_id', None) and module.root_module not in modules:

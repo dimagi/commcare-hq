@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+from __future__ import unicode_literals
 from django.core.management import BaseCommand, CommandError
 
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app_version

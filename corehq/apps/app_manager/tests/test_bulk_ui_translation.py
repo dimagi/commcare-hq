@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from distutils.version import StrictVersion
 from django.test import SimpleTestCase
 from io import BytesIO
@@ -59,17 +60,17 @@ class BulkUiTranslation(SimpleTestCase):
         self.assertEqual(
             dict(translations),
             {
-                u'en': {
-                    u'key.manage.title': u'wobble',
-                    u'bulk.send.dialog.progress': u'wabble',
-                    u'home.start.demo': u'Ding',
-                    u'unknown_string': u'Ding',
+                'en': {
+                    'key.manage.title': 'wobble',
+                    'bulk.send.dialog.progress': 'wabble',
+                    'home.start.demo': 'Ding',
+                    'unknown_string': 'Ding',
                 },
-                u'fra': {
-                    u'connection.test.access.settings': u'wibble',
-                    u'bulk.send.dialog.progress': u'wubble',
-                    u'home.start.demo': u'Dong',
-                    u'unknown_string': u'Dong',
+                'fra': {
+                    'connection.test.access.settings': 'wibble',
+                    'bulk.send.dialog.progress': 'wubble',
+                    'home.start.demo': 'Dong',
+                    'unknown_string': 'Dong',
                 }
             }
 
@@ -82,5 +83,5 @@ class BulkUiTranslation(SimpleTestCase):
         data = (('home.start.demo', 'change_1', 'change_2'))
         f = self._build_translation_download_file(headers, data)
         translations, error_properties, warnings = process_ui_translation_upload(self.app, f)
-        self.assertEqual(translations[u"fra"][u"home.start.demo"], u"change_2")
-        self.assertEqual(translations[u"en"][u"home.start.demo"], u"change_1")
+        self.assertEqual(translations["fra"]["home.start.demo"], "change_2")
+        self.assertEqual(translations["en"]["home.start.demo"], "change_1")

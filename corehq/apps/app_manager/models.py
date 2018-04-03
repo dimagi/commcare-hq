@@ -24,6 +24,7 @@ published on the exchange, but those are quite infrequent.
 """
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -1180,7 +1181,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1198,7 +1199,7 @@ class FormBase(DocumentSchema):
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
-                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1231,7 +1232,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1965,16 +1966,16 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
+            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return u'k{key}'.format(key=self.key)
+            return 'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return u"{condition}".format(condition=condition)
+            return "{condition}".format(condition=condition)
         else:
-            return u"{property} = '{key}'".format(
+            return "{property} = '{key}'".format(
                 property=property,
                 key=self.key
             )
@@ -2843,7 +2844,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in six.iteritems(by_type):
-            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+            action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
 
@@ -3201,7 +3202,7 @@ class ShadowForm(AdvancedForm):
 
     def get_shadow_parent_options(self):
         options = [
-            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
@@ -4335,7 +4336,7 @@ class LazyBlobDoc(BlobMixin):
         return self
 
     def __attachment_cache_key(self, name):
-        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+        return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
     def __set_cached_attachment(self, name, content, timeout=60*60*24):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
@@ -4981,7 +4982,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if self.build_version < '2.8':
+        if self.build_version < b'2.8':
             settings['Build-Number'] = self.version
         return settings
 
@@ -5578,7 +5579,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.master_id,
             'name': self.name,
-            'descriptor': u"Profile File",
+            'descriptor': "Profile File",
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
@@ -5733,7 +5734,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -6086,7 +6087,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if self.build_version < yaml_setting.get("since", "0"):
+        if self.build_version < yaml_setting.get("since", b"0"):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting
