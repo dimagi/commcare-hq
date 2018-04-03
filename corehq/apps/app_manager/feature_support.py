@@ -16,7 +16,7 @@ class CommCareFeatureSupportMixin(object):
         assert isinstance(minimum_version, six.string_types + (Version,))
         if isinstance(minimum_version, six.string_types):
             minimum_version = LooseVersion(minimum_version)
-        return self.build_version >= minimum_version
+        return self.build_version and self.build_version >= minimum_version
 
     @property
     def enable_multi_sort(self):

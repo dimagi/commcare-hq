@@ -14,7 +14,7 @@ def turn_on_secure_submissions_for_all_apps(domain):
         save = False
         if app.application_version == APP_V1:
             continue
-        if app.build_version < LooseVersion('2.8'):
+        if not app.build_version or app.build_version < LooseVersion('2.8'):
             app.build_spec = get_default_build_spec()
             save = True
         if not app.secure_submissions:
