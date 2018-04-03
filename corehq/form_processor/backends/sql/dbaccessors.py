@@ -586,7 +586,7 @@ class FormAccessorSQL(AbstractFormAccessor):
     def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
         # Write the new xml to the database
-        XFormAttachmentSQL.write_content(attachment_metadata, form_attachment_new_xml)
+        attachment_metadata.write_content(form_attachment_new_xml)
         attachment_metadata.save()
         operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                       operation='Scrub username for GDPR compliance.')
