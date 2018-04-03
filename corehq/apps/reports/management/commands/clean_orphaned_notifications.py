@@ -31,7 +31,7 @@ class Command(BaseCommand):
         for notification_id in notification_id_iterator:
             nid = notification_id['id']
             notification = ReportNotification.get(nid)
-            updated_notification = False
+            cids_to_remove = []
 
             for cid in notification.config_ids:
                 if not existent_config_ids[cid]:
@@ -46,16 +46,17 @@ class Command(BaseCommand):
                         if is_deleted(rcuration):
                             if options['execute']:
                                 super(type(rc), rc).delete()  # i am updating notifications manually
-                            notification.config_ids.remove(cid)
-                            updated_notification = True
+                            cids_to_remove.append(cid)
                     except ResourceNotFound:  # ReportConfig not found
-                        notification.config_ids.remove(cid)
-                        updated_notification = True
+                        cids_to_remove.append(cid)
                     except DocumentNotFound:  # ReportConfiguration not found
                         pass
 
-            if updated_notification:
+            if cids_to_remove:
                 if options['execute']:
+                    for cid in cids_to_remove:
+                        notification.remove(cid)
+
                     if notification.config_ids:
                         notification.save()
                     else:
