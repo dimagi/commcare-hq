@@ -1605,29 +1605,13 @@
         "column_id": "cf_in_month",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_latest_cf_repeat"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "comp_feeding"
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -1644,38 +1628,13 @@
         "column_id": "cf_initiated",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "cf_initiation_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "named",
-                    "name": "get_all_cf_repeats"
-                  },
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "comp_feeding"
-                    }
-                  }
-                }
-              }
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -1683,29 +1642,13 @@
         "column_id": "cf_diet_diversity",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_latest_cf_repeat"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "diet_diversity"
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -1713,29 +1656,13 @@
         "column_id": "cf_diet_quantity",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_latest_cf_repeat"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "diet_quantity"
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -1743,29 +1670,13 @@
         "column_id": "cf_handwashing",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "1",
-              "expression": {
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "get_latest_cf_repeat"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "hand_wash"
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -1773,38 +1684,13 @@
         "column_id": "cf_demo",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "named",
-                    "name": "get_all_cf_repeats"
-                  },
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "demo_comp_feeding"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -2073,38 +1959,13 @@
         "column_id": "counsel_pediatric_ifa",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "items_expression": {
-                    "type": "named",
-                    "name": "get_all_cf_repeats"
-                  },
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_name",
-                      "property_name": "counselled_pediatric_ifa"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -2112,47 +1973,13 @@
         "column_id": "counsel_comp_feeding_vid",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "filter_items",
-                  "filter_expression": {
-                    "type": "boolean_expression",
-                    "operator": "eq",
-                    "property_value": "yes",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "play_comp_feeding_vid"
-                      ]
-                    }
-                  },
-                  "items_expression": {
-                    "type": "icds_get_case_forms_by_date",
-                    "xmlns": [
-                      "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
-                    ],
-                    "end_date": {
-                      "type": "named",
-                      "name": "month_end"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "name": "cf_eligible",
-              "type": "named"
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "property_value": 0,
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          }
         },
         "type": "boolean"
       },
@@ -2794,48 +2621,6 @@
             "type": "named",
             "name": "month_start"
           },
-          "end_date": {
-            "type": "named",
-            "name": "month_end"
-          }
-        },
-        "repeat_path": [
-          "form",
-          "child",
-          "item"
-        ],
-        "case_id_path": [
-          "child_health_case_id"
-        ]
-      },
-      "get_latest_cf_repeat": {
-        "type": "icds_get_last_form_repeat",
-        "forms_expression": {
-          "type": "icds_get_case_forms_by_date",
-          "xmlns": [
-            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
-          ],
-          "end_date": {
-            "type": "named",
-            "name": "month_end"
-          }
-        },
-        "repeat_path": [
-          "form",
-          "child",
-          "item"
-        ],
-        "case_id_path": [
-          "child_health_case_id"
-        ]
-      },
-      "get_all_cf_repeats": {
-        "type": "icds_get_all_forms_repeats",
-        "forms_expression": {
-          "type": "icds_get_case_forms_by_date",
-          "xmlns": [
-            "http://openrosa.org/formdesigner/792DAF2B-E117-424A-A673-34E1513ABD88"
-          ],
           "end_date": {
             "type": "named",
             "name": "month_end"
