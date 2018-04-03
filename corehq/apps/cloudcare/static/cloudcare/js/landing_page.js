@@ -1,3 +1,4 @@
+/* globals FormplayerFrontend */
 hqDefine("cloudcare/js/landing_page", function() {
     $(function() {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;

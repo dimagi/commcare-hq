@@ -15,13 +15,15 @@ hqDefine("cloudcare/js/preview_app/main", function() {
             environment: initialPageData('environment'),
             debuggerEnabled: initialPageData('debugger_enabled'),
         });
+
         $('.dragscroll').on('scroll', function () {
-          $('.form-control').blur();
+            $('.form-control').blur();
         });
+
         // Adjust for those pesky scrollbars
         _.each($('.scrollable-container'), function (sc) {
-          var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
-          $(sc).addClass('has-scrollbar-'+scrollWidth);
+            var scrollWidth = $(sc).prop('offsetWidth') - $(sc).prop('clientWidth');
+            $(sc).addClass('has-scrollbar-'+scrollWidth);
         });
     });
 });

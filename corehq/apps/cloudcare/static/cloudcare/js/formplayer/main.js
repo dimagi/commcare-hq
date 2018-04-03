@@ -1,3 +1,4 @@
+/* globals FormplayerFrontend */
 hqDefine("cloudcare/js/formplayer/main", function() {
     $(function() {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
@@ -26,11 +27,11 @@ hqDefine("cloudcare/js/formplayer/main", function() {
             if ($menuToggle.data('minimized') === 'yes') {
                 $menuToggle.data('minimized', 'no');
                 $navbar.css('margin-top', '');
-                $menuToggle.text(django.gettext('Hide Full Menu'));
+                $menuToggle.text(gettext('Hide Full Menu'));
             } else {
                 $menuToggle.data('minimized', 'yes');
                 $navbar.css('margin-top', '-' + $navbar.outerHeight() + 'px');
-                $menuToggle.text(django.gettext('Show Full Menu'));
+                $menuToggle.text(gettext('Show Full Menu'));
             }
             e.preventDefault();
         });

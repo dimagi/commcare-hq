@@ -23,7 +23,7 @@ hqDefine("cloudcare/js/config", function() {
                 },
                 write: function (value) {
                     o(JSON.parse(value));
-                }
+                },
             });
             return o;
         };
@@ -79,22 +79,22 @@ hqDefine("cloudcare/js/config", function() {
                         data: ko.mapping.toJSON(self.applicationAccess),
                         success: function (data) {
                             self.applicationAccess._rev = data._rev;
-                        }
+                        },
                     });
-                }
+                },
             });
             self.appsByGroup = ko.computed(function () {
                 var lookup = {};
                 var returnValue = [];
                 for (var i = 0; i < self.applicationAccess.app_groups().length; i++) {
-                    var app_group = self.applicationAccess.app_groups()[i];
-                    if (!lookup.hasOwnProperty(app_group.group_id())) {
-                        lookup[app_group.group_id()] = {
-                            group: app_group.group_id.obj(),
-                            apps: []
-                        }
+                    var group = self.applicationAccess.app_groups()[i];
+                    if (!lookup.hasOwnProperty(group.group_id())) {
+                        lookup[group.group_id()] = {
+                            group: group.group_id.obj(),
+                            apps: [],
+                        };
                     }
-                    lookup[app_group.group_id()].apps.push(app_group.app_id.obj());
+                    lookup[group.group_id()].apps.push(group.app_id.obj());
                 }
                 for (var id in lookup) {
                     if (lookup.hasOwnProperty(id)) {
@@ -107,7 +107,7 @@ hqDefine("cloudcare/js/config", function() {
         var controller = new Controller({
             access: access,
             groupDB: groupDB,
-            appDB: appDB
+            appDB: appDB,
         });
         $home.koApplyBindings(controller);
         $home.show();
