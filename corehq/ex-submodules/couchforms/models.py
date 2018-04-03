@@ -255,10 +255,10 @@ class XFormInstance(DeferredBlobMixin, SafeSaveDocument, UnicodeMixIn,
 
             data = self.form_data
             i = XFormQuestionValueIterator(question)
-            for (qid, index) in i:
+            for (qid, repeat_index) in i:
                 data = data[qid]
-                if index is not None:
-                    data = data[index]
+                if repeat_index is not None:
+                    data = data[repeat_index]
             data[i.last()] = response
 
         if dirty:

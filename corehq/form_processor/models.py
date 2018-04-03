@@ -410,8 +410,7 @@ class XFormInstanceSQL(PartitionedModel, models.Model, RedisLockableMixIn, Attac
 
         if dirty:
             from couchforms.const import ATTACHMENT_NAME
-            all_attachments = {att.name: att for att in self.get_attachments()}
-            form_attachment = all_attachments[ATTACHMENT_NAME]
+            form_attachment = self.get_attachment(ATTACHMENT_NAME)
             attachment = Attachment(
                 name=form_attachment.name,
                 raw_content=etree.tostring(xml),
