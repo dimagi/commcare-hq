@@ -83,6 +83,22 @@ def parse_request_exception(err):
     return err_request, err_response
 
 
+def serialize(data):
+    """
+    Convert values in data to a format OpenMRS will accept.
+
+    >>> serialize({'birthdate': '2017-06-27'})
+    {'birthdate': '2017-06-27T00:00:00.000+0000'}
+
+    """
+    serializers = dict(zip(
+        # We can get away with not worrying about namespaces because these property names are fixed and unique
+        ADDRESS_PROPERTIES.keys() + NAME_PROPERTIES.keys() + PERSON_PROPERTIES.keys(),
+        ADDRESS_PROPERTIES.values() + NAME_PROPERTIES.values() + PERSON_PROPERTIES.values()
+    ))
+    return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
+
+
 def get_case_location(case):
     """
     If the owner of the case is a location, return it. Otherwise return
@@ -388,7 +404,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -409,7 +425,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -433,7 +449,7 @@ class CreatePersonAddressTask(WorkflowTask):
         if properties:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -471,7 +487,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -487,7 +503,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -566,7 +582,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -584,7 +600,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
