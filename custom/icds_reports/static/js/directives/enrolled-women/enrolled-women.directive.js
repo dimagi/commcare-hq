@@ -4,7 +4,7 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
     userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService);
+        userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
     vm.steps = {
@@ -51,22 +51,6 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     };
 
     vm.init();
-
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
 
     vm.chartOptions = {
         chart: {

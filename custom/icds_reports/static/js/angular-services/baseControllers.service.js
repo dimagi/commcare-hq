@@ -2,7 +2,8 @@
 
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
-        BaseController: function($scope, $routeParams, $location, locationsService, userLocationId, storageService) {
+        BaseController: function($scope, $routeParams, $location, locationsService, userLocationId,
+            storageService, haveAccessToAllLocations) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
@@ -122,6 +123,31 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     vm.loadData();
                     vm.loaded = true;
                 });
+            };
+            $scope.$on('filtersChange', function() {
+                vm.loadData();
+            });
+            vm.getDisableIndex = function () {
+                var i = -1;
+                if (!haveAccessToAllLocations) {
+                    window.angular.forEach(vm.selectedLocations, function (key, value) {
+                        if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                            i = value;
+                        }
+                    });
+                }
+                return i;
+            };
+            vm.moveToLocation = function(loc, index) {
+                if (loc === 'national') {
+                    $location.search('location_id', '');
+                    $location.search('selectedLocationLevel', -1);
+                    $location.search('location_name', '');
+                } else {
+                    $location.search('location_id', loc.location_id);
+                    $location.search('selectedLocationLevel', index);
+                    $location.search('location_name', loc.name);
+                }
             };
         },
     };

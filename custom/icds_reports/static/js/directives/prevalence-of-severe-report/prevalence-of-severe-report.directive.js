@@ -6,7 +6,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService);
+        userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
     var ageIndex = _.findIndex(ages,function (x) {
         return x.id === vm.filtersData.age;
@@ -90,12 +90,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     vm.init();
 
-
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -175,30 +169,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
             + '<div>% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: <strong>' + d3.format('.2%')(normal) + '</strong></div>'
             + '<div>% children ' + vm.chosenFilters() + '  with Moderate Acute Malnutrition (MAM): <strong>' + d3.format('.2%')(moderate) + '</strong></div>'
             + '<div>% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): <strong>' + d3.format('.2%')(severe) + '</strong></div>';
-    };
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        if (!haveAccessToAllLocations) {
-            window.angular.forEach(vm.selectedLocations, function (key, value) {
-                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
-                    i = value;
-                }
-            });
-        }
-        return i;
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
     };
 
     vm.resetAdditionalFilter = function() {

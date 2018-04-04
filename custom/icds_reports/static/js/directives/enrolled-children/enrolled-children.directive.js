@@ -5,7 +5,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService);
+        userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -77,11 +77,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.init();
 
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-
     vm.chartOptions = {
         chart: {
             type: 'multiBarChart',
@@ -135,30 +130,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         return "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
             + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
             + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        if (!haveAccessToAllLocations) {
-            window.angular.forEach(vm.selectedLocations, function (key, value) {
-                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
-                    i = value;
-                }
-            });
-        }
-        return i;
     };
 
     vm.resetAdditionalFilter = function() {

@@ -5,7 +5,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
     baseControllersService) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService);
+        userLocationId, storageService, haveAccessToAllLocations);
     var vm = this;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -83,34 +83,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 
     vm.init();
-
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        if (!haveAccessToAllLocations) {
-            window.angular.forEach(vm.selectedLocations, function (key, value) {
-                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
-                    i = value;
-                }
-            });
-        }
-        return i;
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
 
     vm.resetAdditionalFilter = function() {
         vm.filtersData.gender = '';
