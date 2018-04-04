@@ -27,6 +27,10 @@ validation_test_cases = [
         "There are two rows with table_id 'things' in 'types' sheet.",
 
     ]),
+    ("invalid_table_id", [
+        "Lookup-tables 'table_id' must be valid XML identifiers."
+        "table_id 'invalid table_id' should not contain spaces or special characters, or start with a number, "
+    ]),
     ('multiple_errors', [
         "Excel-sheet 'level_1' does not contain the column "
         "'field: fun_fact' as specified in its 'types' definition",
