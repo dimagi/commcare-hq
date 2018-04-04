@@ -19,7 +19,6 @@ FAILURE_MESSAGES = {
         "There are two rows with table_id '{tag}' in 'types' sheet."
     ),
     "invalid_table_id": ugettext_noop(
-        "Lookup-tables 'table_id' must be valid XML identifiers."
         "table_id '{tag}' should not contain spaces or special characters, or start with a number, "
     ),
     "has_no_field_column": ugettext_noop(
