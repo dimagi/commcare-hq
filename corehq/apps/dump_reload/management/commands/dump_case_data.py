@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import print_function
 
+import os
+from zipfile import ZipFile
 from datetime import datetime
 from django.db import connections
 from django.conf import settings
@@ -87,5 +89,8 @@ class Command(BaseCommand):
                         print(copy_query)
                         c.copy_expert(
                             "{query} TO STDOUT DELIMITER ',' CSV HEADER;".format(query=copy_query), output)
+                with ZipFile(file_name + '.zip', 'w') as zip_file:
+                    zip_file.write(file_name, file_name)
+                    os.remove(file_name)
             else:
                 print("Ignoring {db}. It does not have the table form_processor_commcarecasesql".format(db=db))
