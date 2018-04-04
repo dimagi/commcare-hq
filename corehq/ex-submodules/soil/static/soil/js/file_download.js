@@ -2,11 +2,10 @@ hqDefine("soil/js/file_download", function() {
     $(function () {
         var autoRefresh = '';
         var pollDownloader = function () {
-            var downloadId = $(".downloader_container[data-download-id]").data("downloadId");
-console.log("id=" + downloadId);
-            if ($('#ready_' + downloadId).length == 0)
-	        {
-                $.ajax("{% url 'ajax_job_poll' download_id %}", {
+            var $downloadContainer = $(".downloader_container[data-download-id]")
+                downloadId = $downloadContainer.data("downloadId");
+            if ($('#ready_' + downloadId).length == 0) {
+                $.ajax($downloadContainer.data("url"), {
                     success: function(data) {
                         $("#display_" + downloadId).html(data);
                     },
