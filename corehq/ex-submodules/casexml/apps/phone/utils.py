@@ -9,12 +9,9 @@ from collections import defaultdict
 from datetime import datetime
 
 from couchdbkit.exceptions import BulkSaveError
-from django.db.models import Min
 
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
-from casexml.apps.phone.exceptions import CouldNotPruneSyncLogs
-from casexml.apps.phone.models import SyncLogSQL, get_properly_wrapped_sync_log
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
@@ -23,39 +20,6 @@ from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from memoized import memoized
 from six.moves import range
 
-
-def delete_sync_logs(before_date, limit=1000, num_tries=10):
-    # Todo: convert to SQL including get_synclog_ids_before_date
-    from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date
-    from casexml.apps.phone.models import SyncLog
-    from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
-
-    for i in range(num_tries):
-        try:
-            sync_log_ids = get_synclog_ids_before_date(before_date, limit)
-            return iter_bulk_delete_with_doc_type_verification(
-                SyncLog.get_db(), sync_log_ids, 'SyncLog', chunksize=25)
-        except BulkSaveError:
-            pass
-
-    raise CouldNotPruneSyncLogs()
-
-
-def prune_sql_synclogs():
-    """
-    Drops all partition tables containing data that's older than 91 days (13 weeks)
-    """
-    SYNCLOG_RETENTION_DAYS = 13*7 # 91 days
-    oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
-        year, week, _ = oldest_synclog.isocalendar()
-        table_name = "{base_name}_y{year}w{week}".format(
-            base_name=SyncLogSQL._meta.db_table,
-            year=year,
-            week="%02d" % week
-        )
-        drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
-        get_cursor(SyncLogSQL).execute(drop_query)
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')
