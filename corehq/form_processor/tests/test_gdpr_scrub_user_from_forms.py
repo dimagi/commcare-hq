@@ -58,6 +58,7 @@ class UpdateFormTests(TestCase):
         actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
+
 @use_sql_backend
 class GDPRScrubUserFromFormsSqlTests(TestCase):
     def setUp(self):
