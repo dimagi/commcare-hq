@@ -61,14 +61,21 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, day) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
-            + "<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
-            + "<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
+                indicator_value: $filter('indiaNumbers')(day.y),
+            },
+            {
+                indicator_name: 'Total number of adolescent girls (11 - 14 years) who are registered: ',
+                indicator_value: $filter('indiaNumbers')(day.all),
+            },
+            {
+                indicator_name: 'Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: ',
+                indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
+            }]
+        );
     };
 }
 

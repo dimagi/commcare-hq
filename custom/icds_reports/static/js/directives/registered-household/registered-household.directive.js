@@ -63,12 +63,13 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     };
 
     vm.tooltipContent = function (monthName, value) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total number of household registered: <strong>" + value + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total number of household registered: ',
+                indicator_value: value,
+            }]
+        );
     };
 }
 

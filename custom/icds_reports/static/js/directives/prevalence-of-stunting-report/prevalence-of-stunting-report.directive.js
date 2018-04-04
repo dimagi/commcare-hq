@@ -119,13 +119,33 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
 
     vm.tooltipContent = function (monthName, normal, moderate, severe, measured, all) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total Children " + vm.chosenFilters() + " weighed in given month: <strong>" + $filter("indiaNumbers")(all) + "</strong></div>"
-            + "<div>Total Children " + vm.chosenFilters() + " with height measured in given month: <strong>" + $filter("indiaNumbers")(measured) + "</strong></div>"
-            + "<div>Number of children " + vm.chosenFilters() + " unmeasured: <strong>" + $filter("indiaNumbers")(all - measured) + "</strong></div>"
-            + "<div>% children " + vm.chosenFilters() + " with severely stunted growth: <strong>" + d3.format(".2%")(severe) + "</strong></div>"
-            + "<div>% children " + vm.chosenFilters() + " with moderate stunted growth: <strong>" + d3.format(".2%")(moderate) + "</strong></div>"
-            + "<div>% children " + vm.chosenFilters() + " with normal stunted growth: <strong>" + d3.format(".2%")(normal) + "</strong></div>";
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                indicator_value: $filter("indiaNumbers")(all),
+            },
+            {
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                indicator_value: $filter("indiaNumbers")(measured),
+            },
+            {
+                indicator_name: 'Number of children ' + vm.chosenFilters() + ' unmeasured: ',
+                indicator_value: $filter("indiaNumbers")(all - measured),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with severely stunted growth: ',
+                indicator_value: d3.format(".2%")(severe),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with moderate stunted growth: ',
+                indicator_value: d3.format(".2%")(moderate),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + ' with normal stunted growth: ',
+                indicator_value: d3.format(".2%")(normal),
+            }]
+        );
     };
 
     vm.resetAdditionalFilter = function() {
@@ -138,10 +158,6 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     vm.resetOnlyAgeAdditionalFilter = function() {
         vm.filtersData.age = '';
         $location.search('age', null);
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
     };
 }
 

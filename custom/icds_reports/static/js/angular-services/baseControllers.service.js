@@ -204,6 +204,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     },
                 };
             };
+            vm.createTooltipContent = function(header, lines) {
+                var template = "<p><strong>" + header + "</strong></p><br/>";
+                for (var i = 0; i < lines.length; i++) {
+                    template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                return template;
+            };
+            vm.showAllLocations = function() {
+                return vm.all_locations.length < 10;
+            };
         },
     };
 });

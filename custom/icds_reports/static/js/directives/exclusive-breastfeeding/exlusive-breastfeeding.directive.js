@@ -72,19 +72,26 @@ function ExclusiveBreasfeedingController($scope, $routeParams, $location, $filte
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total number of children between ages 0 - 6 months: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
-            + "<div>Total number of children (0-6 months) exclusively breastfed in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
-            + "<div>% children (0-6 months) exclusively breastfed in the given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total number of children between ages 0 - 6 months: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.all),
+            },
+            {
+                indicator_name: 'Total number of children (0-6 months) exclusively breastfed in the given month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
+            },
+            {
+                indicator_name: '% children (0-6 months) exclusively breastfed in the given month: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
+        );
     };
 
     vm.resetAdditionalFilter = function() {
         vm.filtersData.gender = '';
         $location.search('gender', null);
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
     };
 }
 

@@ -54,16 +54,18 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
-    vm.tooltipContent = function (monthName, dataInMonth) {
-        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
-        tooltip_content += "<div>Number of AWCs that reported having a weighing scale for mother and child: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
-        tooltip_content += "<div>% of AWCs that reported having a weighing scale for mother and child: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
-
-        return tooltip_content;
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+    vm.tooltipContent = function (monthName, day) {
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Number of AWCs that reported having a weighing scale for mother and child: ',
+                indicator_value: $filter('indiaNumbers')(day.in_month),
+            },
+            {
+                indicator_name: '% of AWCs that reported having a weighing scale for mother and child: ',
+                indicator_value: d3.format('.2%')(day.y),
+            }]
+        );
     };
 }
 

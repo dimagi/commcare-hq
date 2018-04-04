@@ -78,20 +78,30 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total Number of Newborns born in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
-            + "<div>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></div>"
-            + "<div>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>"
-            + "<div>% Unweighted: <strong>" + d3.format('.2%')(dataInMonth.in_month / (dataInMonth.all || 1)) + "</strong></div>";
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total Number of Newborns born in given month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.all),
+            },
+            {
+                indicator_name: 'Number of Newborns with LBW in given month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.low_birth),
+            },
+            {
+                indicator_name: '% newborns with LBW in given month: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            },
+            {
+                indicator_name: '% Unweighted: ',
+                indicator_value: d3.format('.2%')(dataInMonth.in_month / (dataInMonth.all || 1)),
+            }]
+        );
     };
 
     vm.resetAdditionalFilter = function() {
         vm.filtersData.gender = '';
         $location.search('gender', null);
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
     };
 }
 

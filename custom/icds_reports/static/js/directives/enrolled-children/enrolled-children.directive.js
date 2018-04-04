@@ -117,10 +117,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         vm.filtersData.age = '';
         $location.search('age', null);
     };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
-    };
 }
 
 EnrolledChildrenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'baseControllersService'];

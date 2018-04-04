@@ -60,15 +60,17 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        var tooltip_content = "<p><strong>" + monthName + "</strong></p><br/>";
-        tooltip_content += "<div>Number of AWCs that reported having a source of clean drinking water: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>";
-        tooltip_content += "<div>% of AWCs that reported having a source of clean drinking water: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
-
-        return tooltip_content;
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Number of AWCs that reported having a source of clean drinking water: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
+            },
+            {
+                indicator_name: '% of AWCs that reported having a source of clean drinking water: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
+        );
     };
 }
 

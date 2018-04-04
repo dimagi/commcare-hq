@@ -119,15 +119,34 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
         return chart;
     };
 
-    vm.tooltipContent = function (monthName, normal, moderate, severe, total_weighed, total_measured, height_eligible) {
-
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + '<div>Total Children ' + vm.chosenFilters() + ' weighed in given month: <strong>' + $filter('indiaNumbers')(total_weighed) + '</strong></div>'
-            + '<div>Total Children ' + vm.chosenFilters() + ' with height measured in given month: <strong>' + $filter('indiaNumbers')(total_measured) + '</strong></div>'
-            + '<div>Number of Children ' + vm.chosenFilters() + ' unmeasured: <strong>' + $filter('indiaNumbers')(height_eligible - total_measured) + '</strong></div>'
-            + '<div>% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: <strong>' + d3.format('.2%')(normal) + '</strong></div>'
-            + '<div>% children ' + vm.chosenFilters() + '  with Moderate Acute Malnutrition (MAM): <strong>' + d3.format('.2%')(moderate) + '</strong></div>'
-            + '<div>% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): <strong>' + d3.format('.2%')(severe) + '</strong></div>';
+    vm.tooltipContent = function (monthName, normal, moderate, severe, totalWeighed, totalMeasured, heightEligible) {
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' weighed in given month: ',
+                indicator_value: $filter('indiaNumbers')(totalWeighed),
+            },
+            {
+                indicator_name: 'Total Children ' + vm.chosenFilters() + ' with height measured in given month: ',
+                indicator_value: $filter('indiaNumbers')(totalMeasured),
+            },
+            {
+                indicator_name: 'Number of Children ' + vm.chosenFilters() + ' unmeasured: ',
+                indicator_value: $filter('indiaNumbers')(heightEligible - totalMeasured),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + '  with Normal Acute Malnutrition: ',
+                indicator_value: d3.format('.2%')(normal),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + '  with Moderate Acute Malnutrition (MAM): ',
+                indicator_value: d3.format('.2%')(moderate),
+            },
+            {
+                indicator_name: '% children ' + vm.chosenFilters() + '  with Severe Acute Malnutrition (SAM): ',
+                indicator_value: d3.format('.2%')(severe),
+            }]
+        );
     };
 
     vm.resetAdditionalFilter = function() {
@@ -140,10 +159,6 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     vm.resetOnlyAgeAdditionalFilter = function() {
         vm.filtersData.age = '';
         $location.search('age', null);
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
     };
 }
 
