@@ -85,7 +85,7 @@ describe('Immunization Coverage Directive', function () {
             '<p>test</p>'
             + '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>10</strong></div>'
             + '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>5</strong></div>'
-            + '<div>% of children who have recieved complete immunizations required by age 1: <strong>50.00%</strong></div>');
+            + '<div>% of children who have recieved complete immunizations required by age 1: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -194,7 +194,7 @@ describe('Immunization Coverage Directive', function () {
             + '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>5</strong></div>'
             + '<div>% of children who have recieved complete immunizations required by age 1: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

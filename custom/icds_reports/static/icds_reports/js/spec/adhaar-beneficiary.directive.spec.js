@@ -80,7 +80,7 @@ describe('Adhaar Beneficiary Directive', function () {
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>5</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div>');
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {

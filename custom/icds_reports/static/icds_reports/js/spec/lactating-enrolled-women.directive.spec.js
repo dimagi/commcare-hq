@@ -78,9 +78,9 @@ describe('Lactating Enrolled Women Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 5, all: 10});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong>' +
-            '<div>Total number of lactating women who are registered: <strong>10</strong>' +
-            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>5</strong></div>' +
+            '<div>Total number of lactating women who are registered: <strong>10</strong></div>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -190,7 +190,7 @@ describe('Lactating Enrolled Women Directive', function () {
             + "<div>Total number of lactating women who are registered: <strong>84</strong></div>"
             + "<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 });

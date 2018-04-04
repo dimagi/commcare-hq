@@ -86,7 +86,7 @@ describe('Newborn Low Weight Directive', function () {
             + '<div>Total Number of Newborns born in given month: <strong>20</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
             + '<div>% newborns with LBW in given month: <strong>50.00%</strong></div>'
-            + '<div>% Unweighted: <strong>50.00%</strong></div>');
+            + '<div>% Unweighted: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -196,7 +196,7 @@ describe('Newborn Low Weight Directive', function () {
             + '<div>% newborns with LBW in given month: <strong>72.00%</strong></div>'
             + '<div>% Unweighted: <strong>83.33%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

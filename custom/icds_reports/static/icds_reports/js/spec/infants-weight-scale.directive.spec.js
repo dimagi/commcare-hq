@@ -78,7 +78,7 @@ describe('Infants Weight Scale Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p><div>Total of AWCs that reported having a weighing scale for infants: <strong>5</strong></div>' +
-            '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>50.00%</strong></div>');
+            '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -184,7 +184,7 @@ describe('Infants Weight Scale Directive', function () {
             '<div>Number of AWCs that reported having a weighing scale for infants: <strong>5</strong></div>' +
             '<div>Percentage of AWCs that reported having a weighing scale for infants: <strong>72.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, data);
+        var result = controller.getTooltipContent(month.value, data);
         assert.equal(expected, result);
     });
 

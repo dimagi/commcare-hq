@@ -97,7 +97,7 @@ describe('Underweight Children Directive', function () {
             '<div>Number of children unweighed (0 - 5 years): <strong>10</strong></div>' +
             '<div>% Severely Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
             '<div>% Moderately Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
-            '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div>'
+            '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div></div>'
         );
     });
 
@@ -207,7 +207,7 @@ describe('Underweight Children Directive', function () {
             '<div>% children moderately underweight (0 - 5 years): <strong>15.00%</strong></div>' +
             '<div>% children severely underweight (0 - 5 years): <strong>20.00%</strong></div>';
 
-        var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
+        var result = controller.getTooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
         assert.equal(expected, result);
     });
 
