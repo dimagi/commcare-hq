@@ -6,6 +6,7 @@ from __future__ import (
 
 import json
 
+from corehq.apps.users.models import CommCareUser
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
@@ -66,7 +67,11 @@ class Command(BaseDataDump):
         elif column_name == "Beneficiary Type (Lab or Chemist)":
             return self.get_bets_repeat_record_payload(case)['BeneficiaryType']
         elif column_name == "Enikshay Approver username":
-            return self.get_bets_repeat_record_payload(case)['EnikshayApprover']
+            voucher_approved_by_id = case.get_case_property('voucher_approved_by_id')
+            if voucher_approved_by_id:
+                return CommCareUser.get_by_user_id(voucher_approved_by_id, DOMAIN).username
+            else:
+                raise Exception("Voucher Approved by ID not set for this case %s" % case.case_id)
         elif column_name == "Enikshay Approver Role":
             return self.get_bets_repeat_record_payload(case)['EnikshayRole']
         elif column_name == "Status (Successfully sent to BETS or not)/Acknowledgement from BETS":
