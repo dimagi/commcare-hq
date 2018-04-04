@@ -66,65 +66,16 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(".2%")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            forceY: [0],
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), dataInMonth);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of newborns with born with birth weight less than 2500 grams. \n' +
-            '\n' +
-            'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Percentage of newborns with born with birth weight less than 2500 grams. \n' +
+        '\n' +
+        'Newborns with Low Birth Weight are closely associated with foetal and neonatal mortality and morbidity, inhibited growth and cognitive development, and chronic diseases later in life',
     };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
         return "<p><strong>" + monthName + "</strong></p><br/>"

@@ -91,72 +91,32 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Percentage of children ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
+        '\n' +
+        'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    vm.chartOptions.chart.callback = function(chart) {
+        var tooltip = chart.interactiveLayer.tooltip;
+        tooltip.contentGenerator(function (d) {
 
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
+            var findValue = function (values, date) {
+                return _.find(values, function(num) { return num['x'] === date; });
+            };
 
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(".2%")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            forceY: [0],
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        return _.find(values, function(num) { return num['x'] === date; });
-                    };
-
-                    var normal = findValue(vm.chartData[0].values, d.value).y;
-                    var moderate = findValue(vm.chartData[1].values, d.value).y;
-                    var severe = findValue(vm.chartData[2].values, d.value).y;
-                    var measured = findValue(vm.chartData[0].values, d.value).measured;
-                    var all = findValue(vm.chartData[0].values, d.value).all;
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, measured, all);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of children ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. \n' +
-            '\n' +
-            'Stunting is a sign of chronic undernutrition and has long lasting harmful consequences on the growth of a child',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+            var normal = findValue(vm.chartData[0].values, d.value).y;
+            var moderate = findValue(vm.chartData[1].values, d.value).y;
+            var severe = findValue(vm.chartData[2].values, d.value).y;
+            var measured = findValue(vm.chartData[0].values, d.value).measured;
+            var all = findValue(vm.chartData[0].values, d.value).all;
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, measured, all);
+        });
+        return chart;
     };
 
     vm.tooltipContent = function (monthName, normal, moderate, severe, measured, all) {

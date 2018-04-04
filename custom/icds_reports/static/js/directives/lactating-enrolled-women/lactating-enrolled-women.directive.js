@@ -52,66 +52,14 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin: {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function (d) {
-                return d.x;
-            },
-            y: function (d) {
-                return d.y;
-            },
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function (d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function () {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function (d) {
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-                forceY: [0],
-            },
-            callback: function (chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of lactating women who are enrolled for Anganwadi Services',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            },
-        },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ",",
+        'captionContent': ' Total number of lactating women who are enrolled for Anganwadi Services',
     };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.getDisableIndex = function () {
         var i = -1;

@@ -96,70 +96,31 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
         $location.search('age', null);
     };
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(".2%")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            forceY: [0],
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
+        + 'Children who are moderately or severely underweight have a higher risk of mortality.',
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    vm.chartOptions.chart.callback = function(chart) {
+        var tooltip = chart.interactiveLayer.tooltip;
+        tooltip.contentGenerator(function (d) {
 
-                    var findValue = function(values, date) {
-                        return _.find(values, function(num) { return num['x'] === date; });
-                    };
+            var findValue = function(values, date) {
+                return _.find(values, function(num) { return num['x'] === date; });
+            };
 
-                    var normal = findValue(vm.chartData[0].values, d.value).y;
-                    var moderately = findValue(vm.chartData[1].values, d.value).y;
-                    var severely = findValue(vm.chartData[2].values, d.value).y;
-                    var unweighed = findValue(vm.chartData[0].values, d.value).unweighed;
-                    var weighed = findValue(vm.chartData[0].values, d.value).weighed;
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderately, severely, unweighed, weighed);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.'
-            + 'Children who are moderately or severely underweight have a higher risk of mortality.',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+            var normal = findValue(vm.chartData[0].values, d.value).y;
+            var moderately = findValue(vm.chartData[1].values, d.value).y;
+            var severely = findValue(vm.chartData[2].values, d.value).y;
+            var unweighed = findValue(vm.chartData[0].values, d.value).unweighed;
+            var weighed = findValue(vm.chartData[0].values, d.value).weighed;
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderately, severely, unweighed, weighed);
+        });
+        return chart;
     };
 
     vm.tooltipContent = function (monthName, normal, moderate, severe, unweighed, weighed) {

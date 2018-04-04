@@ -77,51 +77,26 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'multiBarChart',
-            height: 450,
-            width: 1100,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: false,
-            tooltip: function (key, x) {
-                var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
-                return vm.tooltipContent(data, x);
-            },
-            clipVoronoi: false,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickValues: function() {
-                    return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
-                },
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-                forceY: [0],
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
+    var options = {
+        'xAxisTickFormat': '%m/%d/%y',
+        'yAxisTickFormat': ",",
+        'captionContent': ' Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.type = 'multiBarChart';
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    delete vm.chartOptions.chart.tooltips;
+    vm.chartOptions.chart.useInteractiveGuideline = false;
+    vm.chartOptions.chart.tooltip = function (key, x) {
+        var data = _.find(vm.chartData[0].values, function(num) { return num.x === x;});
+        return vm.tooltipContent(data, x);
+    };
+    vm.chartOptions.chart.xAxis = {
+        axisLabel: '',
+        showMaxMin: true,
+        tickValues: function() {
+            return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
         },
     };
 
