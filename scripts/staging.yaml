@@ -55,7 +55,6 @@ branches:
   - fr/property-changes-paginated # FR 29/3
   - nh/orms/sync_identifiers  # NH --04-01
   - np/training-module  # NP 4/2
-  - np/py3/unicode-app_manager  # NP 4/3
   - je/report-builder-button # J$ 4/3
 submodules:
   submodules/touchforms-src:
