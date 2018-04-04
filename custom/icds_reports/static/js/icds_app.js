@@ -54,7 +54,7 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
         }
     };
 
-    $scope.$on('$routeChangeStart', function(event, next, last) {
+    $scope.$on('$routeChangeStart', function() {
         $scope.checkAccessToLocation();
     });
 

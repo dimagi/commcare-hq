@@ -359,7 +359,7 @@ describe('Location Modal Controller', function () {
                 "location_id": "all",
                 "user_have_access": 0,
                 "user_have_access_to_parent": 1,
-            }
+            },
         ];
 
         controller.reset();
