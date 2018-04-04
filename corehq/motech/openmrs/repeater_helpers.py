@@ -13,50 +13,19 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID, XMLNS_OPENMRS
+from corehq.motech.openmrs.const import (
+    ADDRESS_PROPERTIES,
+    LOCATION_OPENMRS_UUID,
+    NAME_PROPERTIES,
+    PERSON_PROPERTIES,
+    PERSON_UUID_IDENTIFIER_TYPE_ID,
+    XMLNS_OPENMRS,
+)
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.utils import pformat_json
-
-PERSON_PROPERTIES = (
-    'gender',
-    'age',
-    'birthdate',
-    'birthdateEstimated',
-    'dead',
-    'deathDate',
-    'deathdateEstimated',
-    'causeOfDeath',
-)
-NAME_PROPERTIES = (
-    'givenName',
-    'familyName',
-    'middleName',
-    'familyName2',
-    'prefix',
-    'familyNamePrefix',
-    'familyNameSuffix',
-    'degree',
-)
-ADDRESS_PROPERTIES = (
-    'address1',
-    'address2',
-    'cityVillage',
-    'stateProvince',
-    'country',
-    'postalCode',
-    'latitude',
-    'longitude',
-    'countyDistrict',
-    'address3',
-    'address4',
-    'address5',
-    'address6',
-    'startDate',
-    'endDate',
-)
 
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
