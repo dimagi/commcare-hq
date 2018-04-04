@@ -16,11 +16,10 @@ class TestTwoFactorCheck(TestCase):
     def setUp(self):
         self.domain = create_domain("test_domain")
         self.domain.two_factor_auth = False
-        self.request = self.create_request(request_url="/account/"cr)
+        self.request = self.create_request(request_url="/account/")
 
     @classmethod
     def create_request(cls, request_url):
-        # Initialize request
         request = Client().get(request_url).wsgi_request
         request.couch_user = CouchUser()
         return request
