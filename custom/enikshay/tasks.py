@@ -10,7 +10,6 @@ import sys
 
 from celery import group
 from celery.task import periodic_task, task
-from celery.schedules import crontab
 from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.utils.dateparse import parse_date
@@ -74,11 +73,6 @@ CACHE_KEY = "reconciliation-task-{}"
 cache = get_redis_client()
 
 
-@periodic_task(
-    bind=True,
-    run_every=crontab(hour=2, minute=15),  # every day at 2:15am IST (8:45pm UTC, 4:45pm EST)
-    queue=getattr(settings, 'ENIKSHAY_QUEUE', 'celery')
-)
 def enikshay_task(self):
     # runs adherence and voucher calculations for all domains that have
     # `toggles.UATBC_ADHERENCE_TASK` enabled
