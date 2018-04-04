@@ -1502,6 +1502,13 @@ MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+TARGET_COMMCARE_FLAVOR = StaticToggle(
+    'target_commcare_flavor',
+    'Target CommCare Flavor.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
     'mobile_signup_redirect_ab_test',
