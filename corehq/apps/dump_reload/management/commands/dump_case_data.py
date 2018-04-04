@@ -46,12 +46,23 @@ class Command(BaseCommand):
         else:
             dbs = settings.DATABASES
 
-        where_clause = "WHERE "
-        if for_domain:
-            where_clause += "domain='{domain}' and ".format(domain=for_domain)
         for db in dbs:
+            where_clause = "WHERE "
             db_conn = connections[db]
             if 'form_processor_commcarecasesql' in db_conn.introspection.table_names():
+                if for_domain:
+                    # ensure domain passed present for this db, if not just ignore it with a warning message
+                    available_domains = (CommCareCaseSQL.objects.using('default').
+                                         values_list('domain', flat=True).distinct())
+                    if for_domain not in available_domains:
+                        print("Domain name {for_domain} not found for any case in db {for_db_conn}".format(
+                            for_domain=for_domain,
+                            for_db_conn=db
+                        ))
+                        continue
+                    where_clause += "domain='{domain}' and ".format(domain=for_domain)
+
+                # ensure case type passed present for this db, if not just ignore it with a warning message
                 available_case_types = (CommCareCaseSQL.objects.using('default').
                                         values_list('type', flat=True).distinct())
                 if for_case_type and for_case_type not in available_case_types:
