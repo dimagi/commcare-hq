@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 import logging
-from base64 import b64decode
 
 # Django imports
 from django.conf import settings
@@ -24,7 +23,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
     get_username_and_password_from_request)
-from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
