@@ -198,7 +198,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
     function reportConfigModel(reportId, display,
         localizedDescription, xpathDescription, useXpathDescription,
-        showDataTable, syncDelay, uuid, availableReportIds,
+        showDataTable, syncDelay, reportSlug, uuid, availableReportIds,
         reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
         filterValues, reportFilters,
         language, languages, changeSaveButton) {
@@ -216,6 +216,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.useXpathDescription = ko.observable(useXpathDescription);
         self.showDataTable = ko.observable(showDataTable);
         self.syncDelay = ko.observable(syncDelay);
+        self.reportSlug = ko.observable(reportSlug || uuid);
 
         self.reportId.subscribe(changeSaveButton);
         self.display.subscribe(changeSaveButton);
@@ -224,6 +225,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.useXpathDescription.subscribe(changeSaveButton);
         self.showDataTable.subscribe(changeSaveButton);
         self.syncDelay.subscribe(changeSaveButton);
+        self.reportSlug.subscribe(changeSaveButton);
 
         self.graphConfig = graphConfigModel(self.reportId, self.display(), availableReportIds, reportCharts,
             graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -253,6 +255,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
                 sync_delay: self.syncDelay(),
+                // only pass reportSlug if it was manually specified
+                report_slug: (self.reportSlug() && self.reportSlug() !== self.uuid) ? self.reportSlug() : null,
                 uuid: self.uuid,
             };
         };
@@ -277,7 +281,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        self.supportSyncDelay = options.supportSyncDelay;
+        self.supportSyncDelay = options.mobileUcrVersion !== 1;
+        self.supportCustomUcrSlug = options.mobileUcrVersion >= 2;
         self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;
@@ -362,6 +367,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 options.use_xpath_description,
                 options.show_data_table,
                 options.sync_delay,
+                options.report_slug,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
