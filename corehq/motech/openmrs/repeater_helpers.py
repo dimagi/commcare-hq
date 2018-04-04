@@ -30,7 +30,6 @@ PERSON_PROPERTIES = (
     'deathdateEstimated',
     'causeOfDeath',
 )
-PERSON_SUBRESOURCES = ('attribute', 'address', 'name')
 NAME_PROPERTIES = (
     'givenName',
     'familyName',
@@ -522,14 +521,6 @@ class UpdatePersonAddressTask(WorkflowTask):
                 json=properties,
                 raise_for_status=True,
             )
-
-
-def get_subresource_instances(requests, person_uuid, subresource):
-    assert subresource in PERSON_SUBRESOURCES
-    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
-        person_uuid=person_uuid,
-        subresource=subresource,
-    )).json()['results']
 
 
 def save_match_ids(case, case_config, patient):
