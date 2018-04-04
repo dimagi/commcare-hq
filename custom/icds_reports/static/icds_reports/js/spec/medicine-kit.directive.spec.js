@@ -226,7 +226,7 @@ describe('Medicine Kit Directive', function () {
                 {
                     "key": "",
                     "value": 0,
-                    "color": "rgb(0, 111, 223)"
+                    "color": "rgb(0, 111, 223)",
                 },
             ],
         };

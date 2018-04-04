@@ -155,7 +155,7 @@ describe('AWC Daily Status Directive', function () {
         controller.all_locations.push(
             {name: 'name1', location_id: 'test_id1'}
         );
-        var locations = controller.showAll        Locations();
+        var locations = controller.showAllLocations();
         assert.equal(locations, true);
     });
 
@@ -232,7 +232,7 @@ describe('AWC Daily Status Directive', function () {
                 {
                     "key": "",
                     "value": 0,
-                    "color": "rgb(0, 111, 223)"
+                    "color": "rgb(0, 111, 223)",
                 },
             ],
         };
