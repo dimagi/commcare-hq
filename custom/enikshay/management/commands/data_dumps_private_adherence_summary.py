@@ -65,6 +65,8 @@ class Command(BaseDataDump):
                 raise Exception("Doses per week not present")
             adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
             adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            if adherence_latest_date_recorded < adherence_schedule_date_start:
+                return "adherence not recorded"
             doses_per_week = int(doses_per_week)
             return doses_per_week * (
                 math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
@@ -84,6 +86,8 @@ class Command(BaseDataDump):
                 raise Exception("Adherence total doses taken not present")
             adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
             adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            if adherence_latest_date_recorded < adherence_schedule_date_start:
+                return "adherence not recorded"
             doses_per_week = int(doses_per_week)
             adherence_total_doses_taken = int(adherence_total_doses_taken)
             total_expected_doses_taken = doses_per_week * (
@@ -105,6 +109,8 @@ class Command(BaseDataDump):
                 raise Exception("Adherence total doses taken not present")
             adherence_latest_date_recorded = parse_date(adherence_latest_date_recorded)
             adherence_schedule_date_start = parse_date(adherence_schedule_date_start)
+            if adherence_latest_date_recorded < adherence_schedule_date_start:
+                return "adherence not recorded"
             doses_per_week = int(doses_per_week)
             adherence_total_doses_taken = int(adherence_total_doses_taken)
             total_expected_doses_taken = doses_per_week * (
