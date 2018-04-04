@@ -51,67 +51,26 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%m/%d/%y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-                rotateLabels: -45,
-            },
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-                forceY: [0],
-            },
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return num.x === date; });
-                        return day.y;
-                    };
-                    var total = findValue(vm.chartData[0].values, d.value);
-                    var value = findValue(vm.chartData[1].values, d.value);
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value, total);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Total Number of Angwanwadi Centers that were open yesterday',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+    var options = {
+        'xAxisTickFormat': '%m/%d/%y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Total Number of Angwanwadi Centers that were open yesterday',
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    vm.chartOptions.chart.xAxis.rotateLabels = -45;
+    vm.chartOptions.chart.callback = function(chart) {
+        var tooltip = chart.interactiveLayer.tooltip;
+        tooltip.contentGenerator(function (d) {
+            var findValue = function (values, date) {
+                var day = _.find(values, function(num) { return num.x === date; });
+                return day.y;
+            };
+            var total = findValue(vm.chartData[0].values, d.value);
+            var value = findValue(vm.chartData[1].values, d.value);
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value, total);
+        });
+        return chart;
     };
 
     vm.tooltipContent = function(monthName, value, total) {

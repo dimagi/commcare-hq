@@ -187,7 +187,7 @@ describe('Adhaar Beneficiary Directive', function () {
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
             '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></div>';
 
-        var result = controller.getTooltipContent(month.value, day);
+        var result = controller.tooltipContent(month.value, day);
         assert.equal(expected, result);
     });
 

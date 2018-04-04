@@ -46,63 +46,14 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
-
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(".2%")(d);
-                },
-                axisLabelDistance: 20,
-                forceY: [0],
-            },
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value; });
-                    var tooltip_content = vm.getTooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
-                    return tooltip_content;
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Percentage number of ICDS beneficiaries whose Aadhaar identification has been captured',
     };
+    vm.chartOptions = vm.getChartOptions(options);
 
-    vm.getTooltipContent = function(monthName, day) {
+    vm.tooltipContent = function(monthName, day) {
         var content = "<p><strong>" + monthName + "</strong></p><br/>";
         content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
         content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";

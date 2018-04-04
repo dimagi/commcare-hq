@@ -40,71 +40,25 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin: {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function (d) {
-                return d.x;
-            },
-            y: function (d) {
-                return d.y;
-            },
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            tooltips: true,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function (d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function () {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ",",
+        'captionContent': ' ' + vm.data.legendTitle,
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    vm.chartOptions.chart.callback = function (chart) {
+        var tooltip = chart.interactiveLayer.tooltip;
+        tooltip.contentGenerator(function (d) {
+            var findValue = function (values, date) {
+                var day = _.find(values, function(num) { return num['x'] === date; });
+                return d3.format(",")(day['y']);
+            };
 
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function (d) {
-                    return d3.format(",")(d);
-                },
-                axisLabelDistance: 20,
-                forceY: [0],
-            },
-            callback: function (chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return num['x'] === date; });
-                        return d3.format(",")(day['y']);
-                    };
-
-                    var tooltipContent = vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), findValue(vm.chartData[0].values, d.value));
-                    return tooltipContent;
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> ' + vm.data.legendTitle,
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            },
-        },
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), findValue(vm.chartData[0].values, d.value));
+        });
+        return chart;
     };
 
     vm.tooltipContent = function(monthName, value) {

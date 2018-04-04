@@ -89,74 +89,34 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     vm.init();
 
-    vm.chartOptions = {
-        chart: {
-            type: 'lineChart',
-            height: 450,
-            width: 1100,
-            margin : {
-                top: 20,
-                right: 60,
-                bottom: 60,
-                left: 80,
-            },
-            x: function(d){ return d.x; },
-            y: function(d){ return d.y; },
+    var options = {
+        'xAxisTickFormat': '%b %Y',
+        'yAxisTickFormat': ".2%",
+        'captionContent': ' Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+        '\n' +
+        'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+        'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.',
+    };
+    vm.chartOptions = vm.getChartOptions(options);
+    vm.chartOptions.chart.width = 1100;
+    vm.chartOptions.chart.color = d3.scale.category10().range();
+    vm.chartOptions.chart.callback = function(chart) {
+        var tooltip = chart.interactiveLayer.tooltip;
+        tooltip.contentGenerator(function (d) {
 
-            color: d3.scale.category10().range(),
-            useInteractiveGuideline: true,
-            clipVoronoi: false,
-            xAxis: {
-                axisLabel: '',
-                showMaxMin: true,
-                tickFormat: function(d) {
-                    return d3.time.format('%b %Y')(new Date(d));
-                },
-                tickValues: function() {
-                    return vm.chartTicks;
-                },
-                axisLabelDistance: -100,
-            },
+            var findValue = function (values, date) {
+                return _.find(values, function(num) { return num['x'] === date; });
+            };
 
-            yAxis: {
-                axisLabel: '',
-                tickFormat: function(d){
-                    return d3.format(".2%")(d);
-                },
-                axisLabelDistance: 20,
-            },
-            forceY: [0],
-            callback: function(chart) {
-                var tooltip = chart.interactiveLayer.tooltip;
-                tooltip.contentGenerator(function (d) {
-
-                    var findValue = function (values, date) {
-                        return _.find(values, function(num) { return num['x'] === date; });
-                    };
-
-                    var normal = findValue(vm.chartData[0].values, d.value).y;
-                    var moderate = findValue(vm.chartData[1].values, d.value).y;
-                    var severe = findValue(vm.chartData[2].values, d.value).y;
-                    var total_measured = findValue(vm.chartData[0].values, d.value).total_measured;
-                    var total_weighed = findValue(vm.chartData[0].values, d.value).total_weighed;
-                    var height_eligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
-                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, total_weighed, total_measured, height_eligible);
-                });
-                return chart;
-            },
-        },
-        caption: {
-            enable: true,
-            html: '<i class="fa fa-info-circle"></i> Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
-            '\n' +
-            'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
-            'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.',
-            css: {
-                'text-align': 'center',
-                'margin': '0 auto',
-                'width': '900px',
-            }
-        },
+            var normal = findValue(vm.chartData[0].values, d.value).y;
+            var moderate = findValue(vm.chartData[1].values, d.value).y;
+            var severe = findValue(vm.chartData[2].values, d.value).y;
+            var totalMeasured = findValue(vm.chartData[0].values, d.value).total_measured;
+            var totalWeighed = findValue(vm.chartData[0].values, d.value).total_weighed;
+            var heightEligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
+            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, totalWeighed, totalMeasured, heightEligible);
+        });
+        return chart;
     };
 
     vm.tooltipContent = function (monthName, normal, moderate, severe, total_weighed, total_measured, height_eligible) {
