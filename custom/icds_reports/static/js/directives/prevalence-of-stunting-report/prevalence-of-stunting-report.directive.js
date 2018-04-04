@@ -90,12 +90,6 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.init();
 
-
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -172,28 +166,6 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
             + "<div>% children " + vm.chosenFilters() + " with severely stunted growth: <strong>" + d3.format(".2%")(severe) + "</strong></div>"
             + "<div>% children " + vm.chosenFilters() + " with moderate stunted growth: <strong>" + d3.format(".2%")(moderate) + "</strong></div>"
             + "<div>% children " + vm.chosenFilters() + " with normal stunted growth: <strong>" + d3.format(".2%")(normal) + "</strong></div>";
-    };
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
-        return i;
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
     };
 
     vm.resetAdditionalFilter = function() {

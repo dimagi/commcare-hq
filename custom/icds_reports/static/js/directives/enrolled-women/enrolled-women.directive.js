@@ -52,22 +52,6 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
 
     vm.init();
 
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',

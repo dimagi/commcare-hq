@@ -66,12 +66,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
 
     vm.init();
 
-
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',
@@ -138,28 +132,6 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             + "<div>Number of Newborns with LBW in given month: <strong>" + $filter('indiaNumbers')(dataInMonth.low_birth) + "</strong></div>"
             + "<div>% newborns with LBW in given month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>"
             + "<div>% Unweighted: <strong>" + d3.format('.2%')(dataInMonth.in_month / (dataInMonth.all || 1)) + "</strong></div>";
-    };
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
-        return i;
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
     };
 
     vm.resetAdditionalFilter = function() {

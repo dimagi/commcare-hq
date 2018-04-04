@@ -40,32 +40,6 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.init();
 
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-    vm.getDisableIndex = function () {
-        var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
-        return i;
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
-    };
-
     vm.chartOptions = {
         chart: {
             type: 'lineChart',

@@ -76,11 +76,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
 
     vm.init();
 
-    $scope.$on('filtersChange', function() {
-        vm.loadData();
-    });
-
-
     vm.chartOptions = {
         chart: {
             type: 'multiBarChart',
@@ -134,18 +129,6 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
         return "<div>Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services: <strong>"
             + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
             + "<div>% of children " + x + ": <strong>" + average + "</strong></div>";
-    };
-
-    vm.moveToLocation = function(loc, index) {
-        if (loc === 'national') {
-            $location.search('location_id', '');
-            $location.search('selectedLocationLevel', -1);
-            $location.search('location_name', '');
-        } else {
-            $location.search('location_id', loc.location_id);
-            $location.search('selectedLocationLevel', index);
-            $location.search('location_name', loc.name);
-        }
     };
 
     vm.resetAdditionalFilter = function() {
