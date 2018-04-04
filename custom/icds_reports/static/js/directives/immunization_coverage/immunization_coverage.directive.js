@@ -58,20 +58,6 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
         );
     };
 
-    vm.init = function() {
-        var locationId = vm.filtersData.location_id || vm.userLocationId;
-        if (!locationId || ["all", "null", "undefined"].indexOf(locationId) >= 0) {
-            vm.loadData();
-            vm.loaded = true;
-            return;
-        }
-        locationsService.getLocation(locationId).then(function(location) {
-            vm.location = location;
-            vm.loadData();
-            vm.loaded = true;
-        });
-    };
-
     vm.init();
 
     $scope.$on('filtersChange', function() {
