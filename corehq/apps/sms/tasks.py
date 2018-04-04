@@ -16,7 +16,6 @@ from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
     log_sms_exception, process_incoming, send_message_via_backend)
-from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, apply_leniency)
 from corehq.apps.sms.models import (INCOMING, MigrationStatus, OUTGOING,
@@ -512,15 +511,6 @@ def _sync_user_phone_numbers(couch_user_id):
                     couch_user.create_phone_entry(phone_number)
                 except InvalidFormatException:
                     pass
-
-
-@no_result_task(queue='background_queue', acks_late=True,
-                default_retry_delay=5 * 60, max_retries=10, bind=True)
-def publish_sms_change(self, sms):
-    try:
-        publish_sms_saved(sms)
-    except Exception as e:
-        self.retry(exc=e)
 
 
 @no_result_task(queue='background_queue')
