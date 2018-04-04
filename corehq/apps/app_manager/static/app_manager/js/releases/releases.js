@@ -142,6 +142,9 @@ hqDefine('app_manager/js/releases/releases', function () {
             return dateBuilt.getTime() > supportedDate.getTime();
         };
 
+        self.has_commcare_flavor_target = self.target_commcare_flavor() != 'none';
+        self.download_targeted_version = ko.observable(self.has_commcare_flavor_target);
+
         self.get_odk_install_url = ko.computed(function() {
             var slug = self.include_media() ? 'odk_media_install' : 'odk_install';
             return releasesMain.reverse(slug, self.id());

@@ -4705,6 +4705,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', 'commcare', 'commcare_lts']
+    )
+
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
@@ -5334,10 +5339,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
-    target_commcare_flavor = StringProperty(
-        default='none',
-        choices=['none', 'commcare', 'commcare_lts']
-    )
     add_ons = DictProperty()
 
     def has_modules(self):
