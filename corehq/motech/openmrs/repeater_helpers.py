@@ -1,8 +1,9 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 from collections import namedtuple, defaultdict
 from datetime import timedelta
+from itertools import chain
 import re
 
 from six.moves import zip
@@ -91,11 +92,9 @@ def serialize(data):
     {'birthdate': '2017-06-27T00:00:00.000+0000'}
 
     """
-    serializers = dict(zip(
-        # We can get away with not worrying about namespaces because these property names are fixed and unique
-        ADDRESS_PROPERTIES.keys() + NAME_PROPERTIES.keys() + PERSON_PROPERTIES.keys(),
-        ADDRESS_PROPERTIES.values() + NAME_PROPERTIES.values() + PERSON_PROPERTIES.values()
-    ))
+    # We can get away with not worrying about namespaces because these
+    # property names are fixed and unique.
+    serializers = dict(chain(ADDRESS_PROPERTIES.items(), NAME_PROPERTIES.items(), PERSON_PROPERTIES.items()))
     return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
