@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 import logging
-from base64 import b64decode
 
 # Django imports
 from django.conf import settings
@@ -24,7 +23,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
     get_username_and_password_from_request)
-from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -300,24 +298,14 @@ def two_factor_check(view_func, api_key):
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            print("~~~~~SPOT 1")
-            print("dom: {}".format(dom))
-            print("api_key: {}".format(api_key))
-            print("_two_factor_required(view_func, dom, couch_user): {}".format(_two_factor_required(view_func, dom, couch_user)))
-            # print(": {}".format())
             if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
-                print("~~~~~SPOT 2")
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token:
-                    print("~~~~~SPOT 3")
                     return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
                 elif not match_token(request.user, token):
-                    print("~~~~~SPOT 4")
                     return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
                 else:
-                    print("~~~~~SPOT 5")
                     return fn(request, domain, *args, **kwargs)
-            print("~~~~~SPOT 6")
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
@@ -325,12 +313,7 @@ def two_factor_check(view_func, api_key):
 
 def _two_factor_required(view_func, domain, couch_user):
     if toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
-        print("&&&&&&IN TOGGLES 1")
         return not getattr(view_func, 'two_factor_exempt', False)
-    print("&&&&&&IN TOGGLES 2c")
-    print("&&&&& getattr(view_func, 'two_factor_exempt', False): {}".format(getattr(view_func, 'two_factor_exempt', False)))
-    print("&&&&& domain.two_factor_auth: {}".format(domain.two_factor_auth))
-    print("&&&&& couch_user.two_factor_disabled: {}".format(couch_user.two_factor_disabled))
     return (
         not getattr(view_func, 'two_factor_exempt', False)
         and domain.two_factor_auth

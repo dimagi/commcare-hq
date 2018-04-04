@@ -25,14 +25,7 @@ class TestTwoFactorCheck(TestCase):
     def create_request(cls, request_url, username, password):
         # Initialize request
         request = Client().get(request_url).wsgi_request
-        # Create user
-        request.user = get_user_model().objects.create_user(username=username,
-                                                            email=username,
-                                                            password=password)
-        # Create couch user
         request.couch_user = CouchUser()
-        # Login
-        assert Client().login(username=username, password=password)
         return request
     #
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
