@@ -509,6 +509,10 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds', 'icds-new')
+
+# minimum minutes between updates to user reporting metadata
+USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
