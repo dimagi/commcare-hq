@@ -7,6 +7,11 @@ from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
+from django.http import (
+    HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
+)
+from mock import mock
+import json
 
 
 class TestTwoFactorCheck(TestCase):
@@ -32,33 +37,49 @@ class TestTwoFactorCheck(TestCase):
         # Login
         assert Client().login(username=username, password=password)
         return request
-
-    @classmethod
-    def enable_two_factor_for_user(cls, request):
-        request.user.otp_device = "test_device"
-
+    #
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_required_with_feature_flag(self):
         view_func = "dummy_view_func"
         request = self.request
-        self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
         self.assertTrue(two_factor_required_bool)
 
     def test_two_factor_required_without_feature_flag(self):
         view_func = "dummy_view_func"
         request = self.request
-        self.enable_two_factor_for_user(request)
         two_factor_required_bool = _two_factor_required(view_func, self.domain,
                                                         request.couch_user)
         self.assertFalse(two_factor_required_bool)
 
-    def test_login_or_challenge(self):
-        pass
-        # api_key = "dummy_api_key"
-        # view_func = "dummy_view_func"
-        # two_factor_check_fn = two_factor_check(view_func, api_key)
-        # # (request, domain, *args, ** kwargs):
-        # response = two_factor_check_fn(self.request, self.domain)
-        # print("RESPONSE: {}".format(response))
+    @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
+    def test_two_factor_check_with_feature_flag(self):
+        def func_to_check_2fa_on(*_):
+            return 'Function was called!'
 
+        request = self.request
+        api_key = None
+        view_func = "dummy_view_func"
+        two_factor_check_fn = two_factor_check(view_func, api_key)
+        function_getting_checked = two_factor_check_fn(func_to_check_2fa_on)
+
+        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+                        return_value=request.couch_user):
+            response = function_getting_checked(request, self.domain.name)
+            data = json.loads(response.content)
+            self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
+
+    def test_two_factor_check_without_feature_flag(self):
+        def func_to_check_2fa_on(*_):
+            return 'Function was called!'
+
+        request = self.request
+        api_key = None
+        view_func = "dummy_view_func"
+        two_factor_check_fn = f(view_func, api_key)
+        function_getting_checked = two_factor_check_fn(func_to_check_2fa_on)
+
+        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
+                        return_value=request.couch_user):
+            response = function_getting_checked(request, self.domain.name)
+            self.assertEqual(response, 'Function was called!')
