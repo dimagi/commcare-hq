@@ -232,7 +232,7 @@ describe('Enrolled Children Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -242,16 +242,18 @@ describe('Enrolled Children Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
-        var expected = 'templatePopup';
-
-        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>0</strong>' +
+            '<div>Total number of children (0 - 6 years) who are registered: <strong>25</strong>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>NaN%</strong>' +
+            '</div>';
         controllermapOrSectorView.templatePopup = function (d) {
-            return 'templatePopup';
+            return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);

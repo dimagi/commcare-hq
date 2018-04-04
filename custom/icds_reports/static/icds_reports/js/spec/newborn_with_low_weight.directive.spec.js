@@ -229,7 +229,7 @@ describe('Newborn Low Weight Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -239,16 +239,18 @@ describe('Newborn Low Weight Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
-        var expected = 'templatePopup';
-
-        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Number of Newborns born in given month: <strong>25</strong></div>' +
+            '<div>Number of Newborns with LBW in given month: <strong>0</strong></div>' +
+            '<div>% newborns with LBW in given month: <strong>NaN%</strong></div>' +
+            '<div>% Unweighted: <strong>0.00%</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
-            return 'templatePopup';
+            return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);

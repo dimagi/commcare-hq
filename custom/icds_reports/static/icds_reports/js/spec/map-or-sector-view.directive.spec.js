@@ -83,7 +83,7 @@ describe('Map Or Sector View Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -93,14 +93,11 @@ describe('Map Or Sector View Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
         var expected = 'templatePopup';
-
-        var r = controller.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
         controller.templatePopup = function (d) {
             return 'templatePopup';
         };

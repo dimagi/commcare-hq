@@ -242,7 +242,7 @@ describe('Prevalence Of Stunting Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -252,16 +252,20 @@ describe('Prevalence Of Stunting Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
-        var expected = 'templatePopup';
-
-        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Children (6 - 60 months) weighed in given month: <strong>0</strong></div>' +
+            '<div>Total Children (6 - 60 months) with height measured in given month: <strong>0</strong></div>' +
+            '<div>Number of children (6 - 60 months) unmeasured: <strong>0</strong></div>' +
+            '<div>% children (6 - 60 months) with severely stunted growth: <strong>NaN%</strong></div>' +
+            '<div>% children (6 - 60 months) with moderate stunted growth: <strong>NaN%</strong></div>' +
+            '<div>% children (6 - 60 months) with normal stunted growth: <strong>NaN%</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
-            return 'templatePopup';
+            return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);

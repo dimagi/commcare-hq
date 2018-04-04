@@ -34,6 +34,7 @@ describe('Adhaar Beneficiary Directive', function () {
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('adhaarBeneficiary');
+        controller.step = 'map';
         controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
         controllermapOrSectorView.data = {
             "mapData": {
@@ -57,7 +58,6 @@ describe('Adhaar Beneficiary Directive', function () {
                 },
             },
         };
-        controller.step = 'map';
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -220,7 +220,7 @@ describe('Adhaar Beneficiary Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -230,16 +230,16 @@ describe('Adhaar Beneficiary Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
-        var expected = 'templatePopup';
-
-        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>0.00%</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
-            return 'templatePopup';
+            return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);

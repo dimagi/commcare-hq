@@ -240,7 +240,7 @@ describe('Underweight Children Directive', function () {
         var d = {
             "data": [
                 "Ambah",
-                0
+                0,
             ],
             "index": 0,
             "color": "rgb(0, 111, 223)",
@@ -250,16 +250,19 @@ describe('Underweight Children Directive', function () {
                     "key": "",
                     "value": 0,
                     "color": "rgb(0, 111, 223)"
-                }
-            ]
+                },
+            ],
         };
 
-        var expected = 'templatePopup';
-
-        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
-        assert.equal(true, r);
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>0</strong></div>' +
+            '<div>Number of children unweighed (0 - 5 years): <strong>0</strong></div>' +
+            '<div>% Severely Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Moderately Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
-            return 'templatePopup';
+            return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);
