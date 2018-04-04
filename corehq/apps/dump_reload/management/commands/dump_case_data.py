@@ -71,7 +71,7 @@ class Command(BaseCommand):
                         c = db_conn.cursor()
                         where_clause += "type='{case_type}' ".format(case_type=case_type)
                         copy_query = "copy (SELECT * FROM form_processor_commcarecasesql " \
-                                     "{where_clause})".format(case_type=case_type, where_clause=where_clause)
+                                     "{where_clause})".format(where_clause=where_clause)
                         print("Query Being Run:")
                         print(copy_query)
                         c.copy_expert(
