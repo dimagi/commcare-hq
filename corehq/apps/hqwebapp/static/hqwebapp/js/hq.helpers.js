@@ -31,6 +31,12 @@ hqDefine("hqwebapp/js/hq.helpers", [
     $(document).on('submit', 'form.disable-on-submit', function (ev) {
         $(ev.target).find('[type="submit"]').disableButton();
     });
+    $(document).on('reset', 'form', function (ev) {
+        $(ev.target).find('.disable-on-submit').enableButton();
+    });
+    $(document).on('reset', 'form.disable-on-submit', function (ev) {
+        $(ev.target).enableButton();
+    });
     $(document).on('click', '.add-spinner-on-click', function(ev) {
         $(ev.target).addSpinnerToButton();
     });
