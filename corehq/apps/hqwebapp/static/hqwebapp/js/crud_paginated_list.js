@@ -155,6 +155,9 @@ hqDefine("hqwebapp/js/crud_paginated_list", [
                     statusCode: self.handleStatusCode,
                     success: function (data) {
                         $("#create-item-form")[0].reset();
+                        var button = $("#create-item-form").find(".disable-on-submit");
+                        if (button) button.enableButton();
+
                         self.createItemForm($(data.form).html());
                         if (data.newItem) {
                             if (data.newItem.error) {
