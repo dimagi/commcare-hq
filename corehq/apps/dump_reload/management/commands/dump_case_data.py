@@ -52,7 +52,7 @@ class Command(BaseCommand):
             if 'form_processor_commcarecasesql' in db_conn.introspection.table_names():
                 if for_domain:
                     # ensure domain passed present for this db, if not just ignore it with a warning message
-                    available_domains = (CommCareCaseSQL.objects.using('default').
+                    available_domains = (CommCareCaseSQL.objects.using(db).
                                          values_list('domain', flat=True).distinct())
                     if for_domain not in available_domains:
                         print("Domain name {for_domain} not found for any case in db {for_db_conn}".format(
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                     where_clause += "domain='{domain}' and ".format(domain=for_domain)
 
                 # ensure case type passed present for this db, if not just ignore it with a warning message
-                available_case_types = (CommCareCaseSQL.objects.using('default').
+                available_case_types = (CommCareCaseSQL.objects.using(db).
                                         values_list('type', flat=True).distinct())
                 if for_case_type and for_case_type not in available_case_types:
                     print("Ignoring Unexpected case type {for_case_type} passed."
