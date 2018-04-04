@@ -1,34 +1,14 @@
 {% extends "soil/base.html" %}
+{% load hq_shared_tags %}
+{% load i18n %}
 {% block title %}
-    File Downloader
+    {% trans "File Downloader" %}
 {% endblock title %}
 {% block extrahead %}
-    <script>
-        $(function () {
-            var autoRefresh = '';
-            var pollDownloader = function () {
-                var downloadId = $(".downloader_container[data-download-id]").data("downloadId");
-    console.log("id=" + downloadId);
-                if ($('#ready_' + downloadId).length == 0)
-    	        {
-                    $.ajax("{% url 'ajax_job_poll' download_id %}", {
-                        success: function(data) {
-                            $("#display_" + downloadId).html(data);
-                        },
-                        error: function(data) {
-                            $("#display_" + downloadId).html(data.responseText);
-                            clearInterval(autoRefresh);
-                        }
-                    });
-    	        } else {
-    	            clearInterval(autoRefresh);
-    	        }
-            };
-            autoRefresh = setInterval(pollDownloader, 2000);
-        });
-    </script>
+    {% javascript_libraries %}
+    <script src="{% static "soil/js/file_download.js" %}"></script>
 {% endblock extrahead %}
 {% block content %}
-    <h2>Preparing download. This may take some time...</h2>
+<h2>{% trans "Preparing download. This may take some time..." %}</h2>
     <div class="downloader_container" id="display_{{ download_id }}" data-download-id="{{ download_id }}"></div>
 {% endblock content %}
