@@ -260,17 +260,12 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 weight = property_weight['weight']
 
                 matches = self._property_map[prop].jsonpath.find(patient)
-                if matches:
-                    assert len(matches) == 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                        self._property_map[prop].jsonpath
-                    )
-                    patient_value = matches[0].value
+                for match in matches:
+                    patient_value = match.value
                     value_map = self._property_map[prop].value_map
                     case_value = case.get_case_property(prop)
                     is_equal = value_map.get(patient_value, patient_value) == case_value
                     yield weight if is_equal else 0
-                else:
-                    yield 0
 
         return sum(weights())
 
