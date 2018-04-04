@@ -51,6 +51,14 @@ class OpenmrsConfigForm(forms.Form):
                     params={'key': key}
                 )
 
+        for id_ in self.cleaned_data['case_config']['match_on_ids']:
+            if id_ not in self.cleaned_data['case_config']['patient_identifiers']:
+                raise ValidationError(
+                    _('ID "%(id_)s" used in "match_on_ids" is missing from "patient_identifiers".'),
+                    code='invalid',
+                    params={'id_': id_}
+                )
+
         return self.cleaned_data['case_config']
 
 
