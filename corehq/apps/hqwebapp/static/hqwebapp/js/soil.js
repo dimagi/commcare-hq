@@ -4,8 +4,7 @@ hqDefine("hqwebapp/js/soil", function() {
             downloadId = initialPageData("download_id"),
             autoRefresh = '',
             pollDownloader = function () {
-            if ($('#ready_' + downloadId).length == 0)
-                {
+                if (!$('#ready_' + downloadId).length) {
                     $.ajax(initialPageData("poll_url"), {
                         success: function(data) {
                             $("#display_" + downloadId).html(data);
@@ -17,12 +16,12 @@ hqDefine("hqwebapp/js/soil", function() {
                             }
                             $("#display_" + downloadId).html('<p class="alert alert-danger">' + message + '</p>');
                             clearInterval(autoRefresh);
-                        }
+                        },
                     });
                 } else {
                     clearInterval(autoRefresh);
                 }
-        };
+            };
         pollDownloader();
         autoRefresh = setInterval(pollDownloader, 2000);
     });
