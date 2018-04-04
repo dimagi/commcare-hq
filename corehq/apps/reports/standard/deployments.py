@@ -307,9 +307,9 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 self.request.couch_user,
             ).values_list('_id', flat=True)
             sort_clause = self.get_sql_sort()
-            rows = ApplicationStatusFact.objects.filter(user_id__in=users).order_by(sort_clause)
+            rows = ApplicationStatusFact.objects.filter(user_dim__user_id__in=users).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
-                rows.filter(app_id=self.selected_app_id)
+                rows.filter(app_dim__app_id=self.selected_app_id)
             return self.process_users(rows)
         else:
             users = self.user_query().run()
