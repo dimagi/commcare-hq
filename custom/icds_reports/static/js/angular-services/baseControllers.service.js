@@ -49,6 +49,27 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 template += '</div>';
                 return template;
             };
+            vm.getLocationType = function() {
+                if (vm.location) {
+                    if (vm.location.location_type === 'supervisor') {
+                        return "Sector";
+                    } else {
+                        return vm.location.location_type.charAt(0).toUpperCase() +
+                            vm.location.location_type.slice(1);
+                    }
+                }
+                return 'National';
+            };
+            vm.setStepsMapLabel = function() {
+                var locType = vm.getLocationType();
+                if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
+                    vm.mode = 'sector';
+                    vm.steps['map'].label = locType + ' View';
+                } else {
+                    vm.mode = 'map';
+                    vm.steps['map'].label = 'Map View: ' + locType;
+                }
+            };
         },
     };
 });

@@ -41,23 +41,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 
     vm.loadData = function () {
-        var loc_type = 'National';
-        if (vm.location) {
-            if (vm.location.location_type === 'supervisor') {
-                loc_type = "Sector";
-            } else {
-                loc_type = vm.location.location_type.charAt(0).toUpperCase() + vm.location.location_type.slice(1);
-            }
-        }
-
-        if (vm.location && _.contains(['block', 'supervisor', 'awc'], vm.location.location_type)) {
-            vm.mode = 'sector';
-            vm.steps['map'].label = loc_type + ' View';
-        } else {
-            vm.mode = 'map';
-            vm.steps['map'].label = 'Map View: ' + loc_type;
-        }
-
+        vm.setStepsMapLabel();
         vm.myPromise = icdsCasReachService.getAwcDailyStatusData(vm.step, vm.filtersData).then(function(response) {
             if (vm.step === "map") {
                 vm.data.mapData = response.data.report_data;
