@@ -54,14 +54,17 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     vm.chartOptions = vm.getChartOptions(options);
 
     vm.tooltipContent = function(monthName, day) {
-        var content = "<p><strong>" + monthName + "</strong></p><br/>";
-        content += "<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + $filter('indiaNumbers')(day.in_month) + "</strong></div>";
-        content += "<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>" + d3.format('.2%')(day.y) + "</strong></div>";
-        return content;
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total number of ICDS beneficiaries whose Aadhaar has been captured: ',
+                indicator_value: $filter('indiaNumbers')(day.in_month),
+            },
+            {
+                indicator_name: '% of ICDS beneficiaries whose Aadhaar has been captured: ',
+                indicator_value: d3.format('.2%')(day.y),
+            }]
+        );
     };
 }
 

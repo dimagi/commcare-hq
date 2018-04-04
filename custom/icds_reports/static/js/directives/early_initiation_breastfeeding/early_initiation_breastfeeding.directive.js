@@ -73,19 +73,26 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total Number of Children born in the given month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
-            + "<div>Total Number of Children who were put to the breast within one hour of birth: <strong>" + $filter('indiaNumbers')(dataInMonth.birth) + "</strong></div>"
-            + "<div>% children who were put to the breast within one hour of birth: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total Number of Children born in the given month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.all),
+            },
+            {
+                indicator_name: 'Total Number of Children who were put to the breast within one hour of birth: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.birth),
+            },
+            {
+                indicator_name: '% children who were put to the breast within one hour of birth: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
+        );
     };
 
     vm.resetAdditionalFilter = function() {
         vm.filtersData.gender = '';
         $location.search('gender', null);
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
     };
 }
 

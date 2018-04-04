@@ -62,14 +62,21 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total number of pregnant women who delivered in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
-            + "<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
-            + "<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total number of pregnant women who delivered in the last month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.all),
+            },
+            {
+                indicator_name: 'Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
+            },
+            {
+                indicator_name: '% pregnant women who delivered in a public or private medical facility in the last month: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
+        );
     };
 }
 

@@ -62,13 +62,17 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
 
     vm.tooltipContent = function(monthName, value) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + vm.data.legendTitle
-            + "<div>Number of AWCs Launched: <strong>" + value + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: vm.data.legendTitle,
+                indicator_value: '',
+            },
+            {
+                indicator_name: 'Number of AWCs Launched: ',
+                indicator_value: value,
+            }]
+        );
     };
 }
 

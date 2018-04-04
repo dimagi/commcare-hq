@@ -74,14 +74,21 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     };
 
     vm.tooltipContent = function(monthName, day) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
-            + "<div>Total number of pregnant women who are registered: <strong>" + $filter('indiaNumbers')(day.all) + "</strong></div>"
-            + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>" + d3.format('.2%')(day.y / (day.all || 1)) + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Number of pregnant women who are enrolled for Anganwadi Services: ',
+                indicator_value: $filter('indiaNumbers')(day.y),
+            },
+            {
+                indicator_name: 'Total number of pregnant women who are registered: ',
+                indicator_value: $filter('indiaNumbers')(day.all),
+            },
+            {
+                indicator_name: 'Percentage of registered pregnant women who are enrolled for Anganwadi Services: ',
+                indicator_value: d3.format('.2%')(day.y / (day.all || 1)),
+            }]
+        );
     };
 }
 

@@ -74,14 +74,21 @@ function ImmunizationCoverageController($scope, $routeParams, $location, $filter
     vm.chartOptions.chart.color = d3.scale.category10().range();
 
     vm.tooltipContent = function (monthName, dataInMonth) {
-        return "<p><strong>" + monthName + "</strong></p><br/>"
-            + "<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>" + $filter('indiaNumbers')(dataInMonth.all) + "</strong></div>"
-            + "<div>Total number of children who have recieved complete immunizations required by age 1: <strong>" + $filter('indiaNumbers')(dataInMonth.in_month) + "</strong></div>"
-            + "<div>% of children who have recieved complete immunizations required by age 1: <strong>" + d3.format('.2%')(dataInMonth.y) + "</strong></div>";
-    };
-
-    vm.showAllLocations = function () {
-        return vm.all_locations.length < 10;
+        return vm.createTooltipContent(
+            monthName,
+            [{
+                indicator_name: 'Total number of ICDS Child beneficiaries older than 1 year: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.all),
+            },
+            {
+                indicator_name: 'Total number of children who have recieved complete immunizations required by age 1: ',
+                indicator_value: $filter('indiaNumbers')(dataInMonth.in_month),
+            },
+            {
+                indicator_name: '% of children who have recieved complete immunizations required by age 1: ',
+                indicator_value: d3.format('.2%')(dataInMonth.y),
+            }]
+        );
     };
 }
 

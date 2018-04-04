@@ -197,9 +197,9 @@ describe('AWCs Covered Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + 'Total AWCs that have launched ICDS-CAS. '
+            + '<div>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least'
-            + ' one Household Registration form.'
+            + ' one Household Registration form.<strong></strong></div>'
             + '<div>Number of AWCs Launched: <strong>72</strong></div>';
 
         var result = controller.tooltipContent(month.value, data.y);
