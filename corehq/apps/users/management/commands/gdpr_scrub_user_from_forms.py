@@ -30,7 +30,7 @@ class Command(BaseCommand):
         user_id = user._id
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         new_username = "Redacted User (GDPR)"
-        input_response = raw_input("Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
+        input_response = six.moves.input("Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
             for form_data in this_form_accessor.iter_forms(form_ids):
                 form_attachment_xml_new = self.update_form_data(form_data, new_username)
