@@ -1,6 +1,8 @@
 /* global d3, moment */
 
-function MainController($scope, $route, $routeParams, $location, $uibModal, $window, reportAnIssueUrl, isWebUser) {
+var url = hqImport('hqwebapp/js/initial_page_data').reverse;
+
+function MainController($scope, $route, $routeParams, $location, $uibModal, $window, $http, reportAnIssueUrl, isWebUser, userLocationId) {
     $scope.$route = $route;
     $scope.$location = $location;
     $scope.$routeParams = $routeParams;
@@ -34,6 +36,27 @@ function MainController($scope, $route, $routeParams, $location, $uibModal, $win
             templateUrl: 'reportIssueModal.html',
         });
     };
+
+    $scope.checkAccessToLocation = function() {
+        var locationId = $location.search()['location_id'];
+        if (userLocationId !== void(0) && ['', 'undefinded', 'null', void(0)].indexOf(locationId) === -1) {
+            $http.get(url('have_access_to_location'), {
+                params: {location_id: locationId},
+            }).then(function (response) {
+                if ($scope.$location.$$path !== '/access_denied' && !response.data.haveAccess) {
+                    $scope.$evalAsync(function () {
+                        $location.search('location_id', userLocationId);
+                        $location.path('/access_denied');
+                        $window.location.href = '#/access_denied';
+                    });
+                }
+            });
+        }
+    };
+
+    $scope.$on('$routeChangeStart', function(event, next, last) {
+        $scope.checkAccessToLocation();
+    });
 
     // hack to have the same width between origin table and fixture headers,
     // without this fixture headers are bigger and not align to original columns
@@ -74,8 +97,10 @@ MainController.$inject = [
     '$location',
     '$uibModal',
     '$window',
+    '$http',
     'reportAnIssueUrl',
     'isWebUser',
+    'userLocationId',
 ];
 
 window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamaps', 'ui.bootstrap', 'nvd3', 'datatables', 'datatables.bootstrap', 'datatables.fixedcolumns', 'datatables.fixedheader', 'leaflet-directive', 'cgBusy', 'perfect_scrollbar'])
@@ -259,6 +284,8 @@ window.angular.module('icdsApp', ['ngRoute', 'ui.select', 'ngSanitize', 'datamap
             })
             .when("/adult_weight_scale/:step", {
                 template : "<adult-weight-scale></adult-weight-scale>",
+            }).when("/access_denied", {
+                template : "<access-denied></access-denied>",
             });
     }]);
 
