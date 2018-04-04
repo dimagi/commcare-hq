@@ -9,10 +9,6 @@ from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Com
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
 
-
-from corehq.form_processor.models import XFormAttachmentSQL
-
-
 import uuid
 
 DOMAIN = 'test-form-accessor'
