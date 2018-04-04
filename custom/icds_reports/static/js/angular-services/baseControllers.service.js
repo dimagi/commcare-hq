@@ -70,6 +70,46 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                     vm.steps['map'].label = 'Map View: ' + locType;
                 }
             };
+            vm.loadDataFromResponse = function(usePercentage, forceYAxisFromZero) {
+                var tailsMultiplier = 1;
+                if (usePercentage) {
+                    tailsMultiplier = 100;
+                }
+                var parseTails = function(value) {
+                    var precision = 0;
+                    if (usePercentage) {
+                        precision = 2;
+                    }
+                    return parseFloat((value / tailsMultiplier).toFixed(precision));
+                };
+                return function(response) {
+                    if (vm.step === "map") {
+                        vm.data.mapData = response.data.report_data;
+                    } else if (vm.step === "chart") {
+                        vm.chartData = response.data.report_data.chart_data;
+                        vm.all_locations = response.data.report_data.all_locations;
+                        vm.top_five = response.data.report_data.top_five;
+                        vm.bottom_five = response.data.report_data.bottom_five;
+                        vm.location_type = response.data.report_data.location_type;
+                        vm.chartTicks = vm.chartData[0].values.map(function (d) { return d.x; });
+                        var max = Math.ceil(d3.max(vm.chartData, function (line) {
+                            return d3.max(line.values, function (d) {
+                                return d.y;
+                            });
+                        }) * tailsMultiplier);
+                        var min = Math.ceil(d3.min(vm.chartData, function (line) {
+                            return d3.min(line.values, function (d) {
+                                return d.y;
+                            });
+                        }) * tailsMultiplier);
+                        var range = max - min;
+                        vm.chartOptions.chart.forceY = [
+                            ((min - range / 10) < 0 || forceYAxisFromZero) ? 0 : parseTails(min - range / 10),
+                            parseTails(max + range / 10),
+                        ];
+                    }
+                };
+            };
         },
     };
 });

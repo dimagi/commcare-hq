@@ -37,34 +37,11 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
 
     vm.loadData = function () {
         vm.setStepsMapLabel();
-        vm.myPromise = infrastructureService.getAdultWeightScaleData(vm.step, vm.filtersData).then(function(response) {
-            if (vm.step === "map") {
-                vm.data.mapData = response.data.report_data;
-            } else if (vm.step === "chart") {
-                vm.chartData = response.data.report_data.chart_data;
-                vm.all_locations = response.data.report_data.all_locations;
-                vm.top_five = response.data.report_data.top_five;
-                vm.bottom_five = response.data.report_data.bottom_five;
-                vm.location_type = response.data.report_data.location_type;
-                vm.chartTicks = vm.chartData[0].values.map(function(d) { return d.x; });
-                var max = Math.ceil(d3.max(vm.chartData, function(line) {
-                    return d3.max(line.values, function(d) {
-                        return d.y;
-                    });
-                }) * 100);
-                var min = Math.ceil(d3.min(vm.chartData, function(line) {
-                    return d3.min(line.values, function(d) {
-                        return d.y;
-                    });
-                }) * 100);
-                var range = max - min;
-                vm.chartOptions.chart.forceY = [
-                    parseInt(((min - range/10)/100).toFixed(2)) < 0 ?
-                        0 : parseInt(((min - range/10)/100).toFixed(2)),
-                    parseInt(((max + range/10)/100).toFixed(2)),
-                ];
-            }
-        });
+        var usePercentage = true;
+        var forceYAxisFromZero = false;
+        vm.myPromise = infrastructureService.getAdultWeightScaleData(vm.step, vm.filtersData).then(
+            vm.loadDataFromResponse(usePercentage, forceYAxisFromZero)
+        );
     };
 
     vm.init = function() {
