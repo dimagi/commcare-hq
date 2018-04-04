@@ -43,10 +43,11 @@ def delete_sync_logs(before_date, limit=1000, num_tries=10):
 
 def prune_sql_synclogs():
     """
-    Drops all partition tables containing data that's older than 63 days (9 weeks)
+    Drops all partition tables containing data that's older than 91 days (13 weeks)
     """
+    SYNCLOG_RETENTION_DAYS = 13*7 # 91 days
     oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while (datetime.today() - oldest_synclog).days > 9*7:
+    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
         year, week, _ = oldest_synclog.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,
