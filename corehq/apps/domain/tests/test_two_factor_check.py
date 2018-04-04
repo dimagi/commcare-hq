@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from django.contrib.auth import get_user_model
 from django.test.client import Client
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
@@ -23,7 +22,7 @@ class TestTwoFactorCheck(TestCase):
         request = Client().get(request_url).wsgi_request
         request.couch_user = CouchUser()
         return request
-    #
+
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_required_with_feature_flag(self):
         view_func = "dummy_view_func"
