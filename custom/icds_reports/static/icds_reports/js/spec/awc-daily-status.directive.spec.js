@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('AWC Daily Status Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('awc_daily_status', 'awc_daily_status');
@@ -28,11 +28,36 @@ describe('AWC Daily Status Directive', function () {
         });
         var element = window.angular.element("<awc-daily-status data='test'></awc-daily-status>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('awcDailyStatus');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = {
+            "mapData": {
+                "tooltips_data": {
+                    "Morena -R": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Porsa": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Morena-U": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Ambah": {
+                        "in_month": 0,
+                        "all": 25,
+                    },
+                },
+            },
+        };
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -130,7 +155,7 @@ describe('AWC Daily Status Directive', function () {
         controller.all_locations.push(
             {name: 'name1', location_id: 'test_id1'}
         );
-        var locations = controller.showAllLocations();
+        var locations = controller.showAll        Locations();
         assert.equal(locations, true);
     });
 
@@ -191,6 +216,35 @@ describe('AWC Daily Status Directive', function () {
             + "<div>% of AWCs open on <strong>Jul 2017</strong>: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, value, total);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var d = {
+            "data": [
+                "Ambah",
+                0
+            ],
+            "index": 0,
+            "color": "rgb(0, 111, 223)",
+            "value": "Ambah",
+            "series": [
+                {
+                    "key": "",
+                    "value": 0,
+                    "color": "rgb(0, 111, 223)"
+                }
+            ]
+        };
+
+        var expected = 'templatePopup';
+
+        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
+        assert.equal(true, r);
+        controllermapOrSectorView.templatePopup = function (d) {
+            return 'templatePopup';
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);
     });
 

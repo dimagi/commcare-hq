@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Prevalence Of Stunting Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('prevalence_of_stunting', 'prevalence_of_stunting');
@@ -42,11 +42,36 @@ describe('Prevalence Of Stunting Directive', function () {
         });
         var element = window.angular.element("<prevalence-of-stunting data='test'></prevalence-of-stunting>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('prevalenceOfStunting');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = {
+            "mapData": {
+                "tooltips_data": {
+                    "Morena -R": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Porsa": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Morena-U": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Ambah": {
+                        "in_month": 0,
+                        "all": 25,
+                    },
+                },
+            },
+        };
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -210,6 +235,35 @@ describe('Prevalence Of Stunting Directive', function () {
             '<div>% children (6 - 60 months) with normal stunted growth: <strong>10.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var d = {
+            "data": [
+                "Ambah",
+                0
+            ],
+            "index": 0,
+            "color": "rgb(0, 111, 223)",
+            "value": "Ambah",
+            "series": [
+                {
+                    "key": "",
+                    "value": 0,
+                    "color": "rgb(0, 111, 223)"
+                }
+            ]
+        };
+
+        var expected = 'templatePopup';
+
+        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
+        assert.equal(true, r);
+        controllermapOrSectorView.templatePopup = function (d) {
+            return 'templatePopup';
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);
     });
 

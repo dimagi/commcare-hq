@@ -22,6 +22,28 @@ describe('Map Or Sector View Directive', function () {
             storageService: storageService,
             locationsService: locationsService,
         });
+        controller.data = {
+            "mapData": {
+                "tooltips_data": {
+                    "Morena -R": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Porsa": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Morena-U": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Ambah": {
+                        "in_month": 0,
+                        "all": 25,
+                    },
+                },
+            },
+        };
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -56,5 +78,33 @@ describe('Map Or Sector View Directive', function () {
             'text-align': 'right',
             'color': 'black',
         });
+    });
+    it('tests horizontal chart tooltip content', function () {
+        var d = {
+            "data": [
+                "Ambah",
+                0
+            ],
+            "index": 0,
+            "color": "rgb(0, 111, 223)",
+            "value": "Ambah",
+            "series": [
+                {
+                    "key": "",
+                    "value": 0,
+                    "color": "rgb(0, 111, 223)"
+                }
+            ]
+        };
+
+        var expected = 'templatePopup';
+
+        var r = controller.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
+        assert.equal(true, r);
+        controller.templatePopup = function (d) {
+            return 'templatePopup';
+        };
+        var result = controller.chartOptions.chart.tooltip.contentGenerator(d);
+        assert.equal(expected, result);
     });
 });

@@ -6,7 +6,7 @@ var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Adult Weight Scale Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('adult_weight_scale', 'adult_weight_scale');
@@ -28,11 +28,36 @@ describe('Adult Weight Scale Directive', function () {
         });
         var element = window.angular.element("<adult-weight-scale data='test'></adult-weight-scale>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('adultWeightScale');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = {
+            "mapData": {
+                "tooltips_data": {
+                    "Morena -R": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Porsa": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Morena-U": {
+                        "in_month": 0,
+                        "all": 0,
+                    },
+                    "Ambah": {
+                        "in_month": 0,
+                        "all": 25,
+                    },
+                },
+            },
+        };
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -186,6 +211,35 @@ describe('Adult Weight Scale Directive', function () {
             '<div>% of AWCs that reported having a weighing scale for mother and child: <strong>24.56%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var d = {
+            "data": [
+                "Ambah",
+                0
+            ],
+            "index": 0,
+            "color": "rgb(0, 111, 223)",
+            "value": "Ambah",
+            "series": [
+                {
+                    "key": "",
+                    "value": 0,
+                    "color": "rgb(0, 111, 223)"
+                }
+            ]
+        };
+
+        var expected = 'templatePopup';
+
+        var r = controllermapOrSectorView.chartOptions.chart.tooltip.hasOwnProperty('contentGenerator');
+        assert.equal(true, r);
+        controllermapOrSectorView.templatePopup = function (d) {
+            return 'templatePopup';
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
         assert.equal(expected, result);
     });
 
