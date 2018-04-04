@@ -5334,6 +5334,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     use_grid_menus = BooleanProperty(default=False)
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', 'commcare', 'commcare_lts']
+    )
     add_ons = DictProperty()
 
     def has_modules(self):
