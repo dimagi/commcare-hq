@@ -16,6 +16,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID, XMLNS_OPENMRS
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.utils import pformat_json
 
@@ -216,13 +217,6 @@ class UpdatePersonAttributeTask(WorkflowTask):
         )
 
 
-def server_datetime_to_openmrs_timestamp(dt):
-    openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
-    # todo: replace this with tests
-    assert len(openmrs_timestamp) == len('2017-06-27T09:36:47.000-0400'), openmrs_timestamp
-    return openmrs_timestamp
-
-
 class CreateVisitTask(WorkflowTask):
 
     def __init__(self, requests, person_uuid, provider_uuid, visit_datetime, values_for_concept, encounter_type,
@@ -240,8 +234,8 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = server_datetime_to_openmrs_timestamp(self.visit_datetime)
-        stop_datetime = server_datetime_to_openmrs_timestamp(
+        start_datetime = to_timestamp(self.visit_datetime)
+        stop_datetime = to_timestamp(
             self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
         )
         visit = {
