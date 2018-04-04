@@ -25,7 +25,7 @@ class Command(BaseCommand):
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()
             for domain in domains:
-                print "Handling domain %s" % domain
+                self.stdout.write("Handling domain %s" % domain)
                 form_db = FormAccessors(domain)
                 form_ids = form_db.get_all_form_ids_in_domain()
                 form_ids.append(form_db.get_all_form_ids_in_domain('XFormArchived'))
@@ -34,11 +34,11 @@ class Command(BaseCommand):
                         meta = form.blobs.get(ATTACHMENT_NAME)
                         if not meta or not blob_db.exists(
                                 meta.id, form._blobdb_bucket()):  # pylint: disable=protected-access
-                            self.write_row(csv_writer, domain, form.is_archived, form.received_on, form_id)
+                            self.write_row(csv_writer, domain, form.is_archived, form.received_on, form.form_id)
                     elif isinstance(form, XFormInstanceSQL):
                         meta = form.get_attachment_meta(ATTACHMENT_NAME)
                         if not meta or not blob_db.exists(meta.blob_id, meta.blobdb_bucket()):
-                            self.write_row(csv_writer, domain, form.is_archived, form.received_on, form_id)
+                            self.write_row(csv_writer, domain, form.is_archived, form.received_on, form.form_id)
                     else:
                         raise Exception("not sure how we got here")
 
@@ -50,4 +50,4 @@ class Command(BaseCommand):
             'received_on': received_on,
             'form_id': form_id,
         }
-        csv_writer.writerow(properties)
+        writer.writerow(properties)
