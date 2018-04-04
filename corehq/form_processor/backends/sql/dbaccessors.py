@@ -589,7 +589,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         attachment_metadata.write_content(form_attachment_new_xml)
         attachment_metadata.save()
         operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
-                                      operation='Scrub username for GDPR compliance.')
+                                      operation=XFormOperationSQL.GDPR_SCRUB)
         form_data.track_create(operation)
         FormAccessorSQL.update_form(form_data)
 
