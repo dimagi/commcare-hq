@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import codecs
 import tempfile
 
@@ -175,7 +176,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
-          ('add_markdown-label', 'add_markdown: ~~new \u0939\u093f markdown~~', 'add_markdown: ~~new \u0939\u093f markdown~~', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown: ~~new \\u0939\\u093f markdown~~', 'add_markdown: ~~new \\u0939\\u093f markdown~~', '', '', '', '', '', ''),
           ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
         ))
@@ -279,7 +280,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
 
         # Test markdown
-        self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
+        self.assert_question_label("add_markdown: ~~new \\u0939\\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
         self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
         self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")
         form = self.app.get_module(0).get_form(0)
@@ -298,29 +299,29 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                u'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
+                'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
 
-                u'Sheet "module1" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "module1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "module1" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
-                u"You must provide at least one translation of the case property 'name'",
+                'Sheet "module1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
+                "You must provide at least one translation of the case property 'name'",
 
-                u'Sheet "module1_form1" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "module1_form1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "module1_form1" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
+                'Sheet "module1_form1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
 
-                u'App Translations Updated!'
+                'App Translations Updated!'
             ]
         )
 

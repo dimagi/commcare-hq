@@ -4,18 +4,8 @@
 {% block title %}
     {% trans "500 Error" %}
 {% endblock %}
-{% block js-inline %}
-    <script>
-        $(function () {
-            $('#sad-danny').popover({
-                title: "{% trans "This is Danny, one of our best developers." %}",
-                content: "{% trans "Danny is pretty sad that you had to encounter this issue. He's making sure it gets fixed as soon as possible." %}"
-            });
-            $('#refresh').click(function() {
-                window.location.reload(true);
-            });
-        });
-    </script>
+{% block js %}
+    <script src="{% static 'hqwebapp/js/500.js' %}"></script>
 {% endblock %}
 {% block page_name %}<h2>{% trans "Oh no, something unexpected just happened!" %}</h2>{% endblock %}
 {% block page_content %}

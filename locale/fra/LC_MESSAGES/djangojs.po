@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-03-27 20:21+0000\n"
+"POT-Creation-Date: 2018-04-03 20:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Sarah Sagan <ssagan@dimagi.com>, 2018\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -515,17 +515,17 @@ msgstr "Sélectionner un utilisateur"
 msgid "(Default)"
 msgstr "(Par défaut)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:388
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:387
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Désolé, ça n'a pas fonctionné. Veuillez rafraîchir la page et réessayer"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:422
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 "La liste des versions a changé depuis votre dernier chargement de la page."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
 msgid "No new changes!"
 msgstr "Pas de nouvelles modifications!"
 
@@ -546,6 +546,12 @@ msgstr ""
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:309
 msgid "You have unsaved settings."
 msgstr "Vous avez des paramètres non sauvegardées."
+
+#: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:483
+#, fuzzy
+#| msgid "Form Settings"
+msgid "Settings"
+msgstr "Paramètres de formulaire."
 
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:7
 msgid "You have unsaved changes to your whitelist"
@@ -2350,16 +2356,20 @@ msgid "You have unsaved changes to your data dictionary."
 msgstr ""
 
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:151
-#, fuzzy
-#| msgid "You have unsaved changes in your report list module"
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
 msgstr ""
-"Vous avez des modifications non sauvegardées dans votre module de liste de "
-"rapports"
 
-#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:49
+#: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:30
+#: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:47
+#: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:65
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:467
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
+msgid "Issue communicating with server. Try again."
+msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/manage_case_groups.js:40
 msgid "Sorry, it looks like the upload failed."
 msgstr "Désolé, il semble que le téléversement ait échoué."
 
@@ -2517,13 +2527,23 @@ msgstr ""
 msgid "Upload "
 msgstr ""
 
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:4
+msgid "This is Danny, one of our best developers."
+msgstr ""
+
+#: corehq/apps/hqwebapp/static/hqwebapp/js/500.js:5
+msgid ""
+"Danny is pretty sad that you had to encounter this issue. He's making sure "
+"it gets fixed as soon as possible."
+msgstr ""
+
 #: corehq/apps/hqwebapp/static/hqwebapp/js/components/inline_edit.js:54
 msgid "Error saving, please try again."
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:55
 msgid "Clear"
-msgstr ""
+msgstr "Effacer"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
 #: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
@@ -2638,32 +2658,36 @@ msgstr ""
 msgid "Not a valid email"
 msgstr ""
 
+#: corehq/apps/indicators/static/indicators/js/copy_to_domain.js:5
+#, fuzzy
+#| msgid "Available Products"
+msgid "Available Indicators"
+msgstr "Produits disponibles"
+
+#: corehq/apps/indicators/static/indicators/js/copy_to_domain.js:6
+msgid "Indicators to Copy"
+msgstr ""
+
+#: corehq/apps/indicators/static/indicators/js/copy_to_domain.js:7
+#, fuzzy
+#| msgid "Search Countries..."
+msgid "Search Indicators..."
+msgstr "Rechercher pays..."
+
 #: corehq/apps/linked_domain/static/linked_domain/js/domain_links.js:80
 msgid ""
 "Something unexpected happened.\n"
 "Please try again, or report an issue if the problem persists."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:11
+#: corehq/apps/locations/static/locations/js/location.js:14
 msgid ""
 "User <%= name %> added successfully. A validation message has been sent to "
 "the phone number provided."
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location.js:46
+#: corehq/apps/locations/static/locations/js/location.js:49
 msgid "Error saving user"
-msgstr ""
-
-#: corehq/apps/locations/static/locations/js/location.js:56
-msgid "Available Products"
-msgstr "Produits disponibles"
-
-#: corehq/apps/locations/static/locations/js/location.js:57
-msgid "Products at Location"
-msgstr "Produits au site"
-
-#: corehq/apps/locations/static/locations/js/location.js:58
-msgid "Search Products..."
 msgstr ""
 
 #: corehq/apps/locations/static/locations/js/location_tree.async.js:288
@@ -2836,10 +2860,8 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters.js:44
 #: corehq/apps/reports/static/reports/js/filters.js:229
-#, fuzzy
-#| msgid "Add All"
 msgid "All"
-msgstr "Ajouter tout"
+msgstr "Tous"
 
 #: corehq/apps/reports/static/reports/js/filters.js:67
 msgid "That have phone numbers"
@@ -3023,20 +3045,20 @@ msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:360
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:375
-#: corehq/apps/userreports/static/userreports/js/report_config.js:290
-#: corehq/apps/userreports/static/userreports/js/report_config.js:318
+#: corehq/apps/userreports/static/userreports/js/report_config.js:294
+#: corehq/apps/userreports/static/userreports/js/report_config.js:322
 msgid "Choose the property you would like to add as a filter to this report."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:361
-#: corehq/apps/userreports/static/userreports/js/report_config.js:291
+#: corehq/apps/userreports/static/userreports/js/report_config.js:295
 msgid ""
 "Web users viewing the report will see this display text instead of the "
 "property name. Name your filter something easy for users to understand."
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:362
-#: corehq/apps/userreports/static/userreports/js/report_config.js:292
+#: corehq/apps/userreports/static/userreports/js/report_config.js:296
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this if the property is a date.<br/><strong>Choice</strong>: Select this if "
@@ -3044,7 +3066,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:376
-#: corehq/apps/userreports/static/userreports/js/report_config.js:319
+#: corehq/apps/userreports/static/userreports/js/report_config.js:323
 msgid ""
 "What type of property is this filter?<br/><br/><strong>Date</strong>: Select "
 "this to filter the property by a date range.<br/><strong>Value</strong>: "
@@ -3052,7 +3074,7 @@ msgid ""
 msgstr ""
 
 #: corehq/apps/userreports/static/userreports/js/builder_view_models.js:377
-#: corehq/apps/userreports/static/userreports/js/report_config.js:320
+#: corehq/apps/userreports/static/userreports/js/report_config.js:324
 msgid "What value or date range must the property be equal to?"
 msgstr ""
 
@@ -3123,11 +3145,6 @@ msgstr ""
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:353
 msgid "Sorry, there was an issue communicating with the server."
 msgstr ""
-
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:467
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
-msgid "Issue communicating with server. Try again."
-msgstr "Problème de communication avec le serveur. Veuillez réessayer. "
 
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:495
 msgid "Username"
@@ -3282,31 +3299,46 @@ msgstr ""
 msgid "every month"
 msgstr ""
 
-#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:134
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:92
+msgid "Send"
+msgstr ""
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:101
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:133
+msgid "Server error. Try again..."
+msgstr ""
+
+#: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:126
+#, fuzzy
+#| msgid "Completed: "
+msgid "Complete"
+msgstr "Complété:"
+
+#: corehq/motech/dhis2/static/dhis2/js/dhis2_map_settings.js:136
 msgid "Unable to save DataSet maps"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:32
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:30
 msgid "Weekly"
 msgstr "Chaque semaine"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:33
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:31
 msgid "Monthly"
 msgstr "Chaque mois"
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:36
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:34
 msgid "Disable logging"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:96
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:95
 msgid "Unable to save OpenMRS Importers"
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:101
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:100
 msgid "Importing from OpenMRS will begin shortly."
 msgstr ""
 
-#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:103
+#: corehq/motech/openmrs/static/openmrs/js/openmrs_importers.js:102
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
@@ -3334,3 +3366,6 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
 msgid "Failed to cancel"
 msgstr ""
+
+#~ msgid "Products at Location"
+#~ msgstr "Produits au site"

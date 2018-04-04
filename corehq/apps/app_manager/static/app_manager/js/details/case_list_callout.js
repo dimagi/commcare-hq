@@ -4,9 +4,11 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
         var self = this,
             detail_type = $el.data('detail-type');
 
-        var ObservableKeyValue = function(obs){
-            this.key = ko.observable(obs.key);
-            this.value = ko.observable(obs.value);
+        var observableKeyValue = function(obs){
+            var self = {};
+            self.key = ko.observable(obs.key);
+            self.value = ko.observable(obs.value);
+            return self;
         };
 
         var _fireChange = function(){
@@ -29,7 +31,7 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
         self.add_item = function(type){
             _remove_empty(type);
             var data = (type === 'extras') ? {key: '', value: ''} : {key: ''};
-            self[type].push(new ObservableKeyValue(data));
+            self[type].push(observableKeyValue(data));
         };
 
         self.remove_item = function(type, item){
@@ -158,10 +160,10 @@ hqDefine("app_manager/js/details/case_list_callout", function() {
         self.lookup_action = ko.observable(state.lookup_action);
         self.lookup_name = ko.observable(state.lookup_name);
         self.extras = ko.observableArray(ko.utils.arrayMap(state.lookup_extras, function(extra){
-            return new ObservableKeyValue(extra);
+            return observableKeyValue(extra);
         }));
         self.responses = ko.observableArray(ko.utils.arrayMap(state.lookup_responses, function(response){
-            return new ObservableKeyValue(response);
+            return observableKeyValue(response);
         }));
 
         if (self.extras().length === 0){

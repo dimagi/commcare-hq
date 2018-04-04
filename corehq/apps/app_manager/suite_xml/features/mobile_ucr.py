@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
@@ -293,7 +294,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
     def _column_to_field(column):
         def _get_xpath(col):
             def _get_conditional(condition, if_true, if_false):
-                return u'if({condition}, {if_true}, {if_false})'.format(
+                return 'if({condition}, {if_true}, {if_false})'.format(
                     condition=condition,
                     if_true=if_true,
                     if_false=if_false,
@@ -306,7 +307,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                         "$lang = '{lang}'".format(
                             lang=lang,
                         ),
-                        u"'{translation}'".format(
+                        "'{translation}'".format(
                             translation=translation.replace("'", "''"),
                         ),
                         word_eval
@@ -331,7 +332,7 @@ def _get_data_detail(config, domain, new_mobile_ucr_restore):
                     else:
                         word_eval = _get_word_eval(translations, default_val)
                     xpath_function = _get_conditional(
-                        u"{value} = '{word}'".format(
+                        "{value} = '{word}'".format(
                             value=default_val,
                             word=word,
                         ),

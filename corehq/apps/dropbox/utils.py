@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from dropbox import Dropbox
 from dropbox.files import UploadSessionCursor, CommitInfo, WriteMode
 from dropbox.oauth import DropboxOAuth2Flow

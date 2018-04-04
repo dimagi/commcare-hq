@@ -2,15 +2,15 @@
 
 hqDefine('case_search/js/case_search', function(){
     'use strict';
-    return function(case_data_url){
-        var self = this;
+    var caseSearchModel = function(caseDataUrl){
+        var self = {};
         self.type = ko.observable();
         self.owner_id = ko.observable();
         self.customQueryAddition = ko.observable();
         self.includeClosed = ko.observable(false);
         self.results = ko.observableArray();
         self.count = ko.observable();
-        self.case_data_url = case_data_url;
+        self.case_data_url = caseDataUrl;
         self.parameters = ko.observableArray([{
             key: "",
             value: "",
@@ -51,5 +51,11 @@ hqDefine('case_search/js/case_search', function(){
                 },
             });
         };
+
+        return self;
     };
+
+    $(function() {
+        $("#case-search").koApplyBindings(caseSearchModel(hqImport("hqwebapp/js/initial_page_data").reverse('case_data')));
+    });
 });

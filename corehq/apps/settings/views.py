@@ -37,6 +37,7 @@ from dimagi.utils.couch import CriticalSection
 from django.shortcuts import redirect
 
 from tastypie.models import ApiKey
+from two_factor.models import PhoneDevice
 from two_factor.utils import default_device
 from two_factor.views import (
     ProfileView, SetupView, SetupCompleteView,
@@ -322,7 +323,7 @@ class TwoFactorSetupView(BaseMyAccountView, SetupView):
     page_title = ugettext_lazy("Two Factor Authentication Setup")
 
     form_list = (
-        ('welcome', HQEmptyForm),
+        ('welcome_setup', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),
@@ -378,7 +379,7 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
     page_title = ugettext_lazy("Two Factor Authentication Phone Setup")
 
     form_list = (
-        ('setup', HQPhoneNumberMethodForm),
+        ('method', HQPhoneNumberMethodForm),
         ('validation', HQDeviceValidationForm),
     )
 
@@ -395,6 +396,14 @@ class TwoFactorPhoneSetupView(BaseMyAccountView, PhoneSetupView):
         messages.add_message(self.request, messages.SUCCESS, _("Phone number added."))
         return redirect(reverse(TwoFactorProfileView.urlname))
 
+    def get_device(self, **kwargs):
+        """
+        Uses the data from the setup step and generated key to recreate device, gets the 'method' step
+        in the form_list.
+        """
+        kwargs = kwargs or {}
+        kwargs.update(self.storage.validated_step_data.get('method', {}))
+        return PhoneDevice(key=self.get_key(), **kwargs)
 
 class TwoFactorPhoneDeleteView(BaseMyAccountView, PhoneDeleteView):
 
@@ -412,6 +421,7 @@ class TwoFactorResetView(TwoFactorSetupView):
     urlname = 'reset'
 
     form_list = (
+        ('welcome_reset', HQEmptyForm),
         ('method', HQTwoFactorMethodForm),
         ('generator', HQTOTPDeviceForm),
         ('sms', HQPhoneNumberForm),

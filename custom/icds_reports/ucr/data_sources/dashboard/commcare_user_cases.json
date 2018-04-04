@@ -8,7 +8,7 @@
     "icds-new"
   ],
   "config": {
-    "table_id": "commcare_user_cases",
+    "table_id": "static-commcare_user_cases",
     "display_name": "Cases - commcare-user (Static)",
     "referenced_doc_type": "CommCareCase",
     "description": "",

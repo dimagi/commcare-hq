@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import couchdbkit
 from corehq.apps.app_manager.const import APP_V2
 import six
@@ -67,12 +68,12 @@ class XFormValidationError(XFormException):
 
     def __str__(self):
         fatal_error_text = self.format_v1(self.fatal_error)
-        ret = u"Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
+        ret = "Validation Error%s" % (': %s' % fatal_error_text if fatal_error_text else '')
         problems = [problem for problem in self.validation_problems if problem['message'] != self.fatal_error]
         if problems:
-            ret += u"\n\nMore information:"
+            ret += "\n\nMore information:"
             for problem in problems:
-                ret += u"\n{type}: {msg}".format(type=problem['type'].title(), msg=problem['message'])
+                ret += "\n{type}: {msg}".format(type=problem['type'].title(), msg=problem['message'])
         return ret
 
     def format_v1(self, msg):
