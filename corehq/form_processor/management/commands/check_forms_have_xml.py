@@ -24,7 +24,7 @@ class Command(BaseCommand):
         form_ids.append(form_db.get_all_form_ids_in_domain('XFormArchived'))
 
         with open(file_name, 'w') as csv_file:
-            field_names = ['domain', 'archived', 'form_id']
+            field_names = ['domain', 'archived', 'form_id', 'received_on']
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()
 
@@ -33,19 +33,20 @@ class Command(BaseCommand):
                     meta = form.blobs.get(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(
                             meta.id, form._blobdb_bucket()):  # pylint: disable=protected-access
-                        self.write_row(csv_writer, domain, form.is_archived, form_id)
+                        self.write_row(csv_writer, domain, form.is_archived, form.received_on, form_id)
                 elif isinstance(form, XFormInstanceSQL):
                     meta = form.get_attachment_meta(ATTACHMENT_NAME)
                     if not meta or not blob_db.exists(meta.blob_id, meta.blobdb_bucket()):
-                        self.write_row(csv_writer, domain, form.is_archived, form_id)
+                        self.write_row(csv_writer, domain, form.is_archived, form.received_on, form_id)
                 else:
                     raise Exception("not sure how we got here")
 
     @staticmethod
-    def write_row(writer, domain, archived, form_id):
+    def write_row(writer, domain, archived, received_on, form_id):
         properties = {
             'domain': domain,
             'archived': archived,
+            'received_on': received_on,
             'form_id': form_id,
         }
         csv_writer.writerow(properties)
