@@ -59,40 +59,6 @@ class UpdateFormTests(TestCase):
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
-@use_sql_backend
-class GDPRScrubUserFromFormsSqlTests(TestCase):
-    def setUp(self):
-        super(GDPRScrubUserFromFormsSqlTests, self).setUp()
-        self.db = TemporaryFilesystemBlobDB()
-
-    def tearDown(self):
-        self.db.close()
-        super(GDPRScrubUserFromFormsSqlTests, self).tearDown()
-
-    def test_modify_attachment_xml_and_metadata_sql(self):
-        form = get_simple_wrapped_form(uuid.uuid4().hex,
-                                       metadata=TestFormMetadata(domain=DOMAIN),
-                                       simple_form=GDPR_SIMPLE_FORM)
-
-        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
-
-        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
-
-        # Test that the xml changed
-        actual_form_xml = form.get_attachment("form.xml")
-        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
-
-        # Test that the metadata changed in the database
-        attachment_metadata = form.get_attachment_meta("form.xml")
-        actual_form_xml_from_db = XFormAttachmentSQL.read_content(attachment_metadata)
-        self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml_from_db)
-
-        # Test that the operations history is updated in this form
-        refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
-        self.assertEqual(len(refetched_form.history), 1)
-        self.assertEqual(refetched_form.history[0].operation, "Scrub username for GDPR compliance.")
-
-
 class GDPRScrubUserFromFormsCouchTests(TestCase):
     def setUp(self):
         super(GDPRScrubUserFromFormsCouchTests, self).setUp()
@@ -116,4 +82,10 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         # Test that the operations history is updated in this form
         refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
         self.assertEqual(len(refetched_form.history), 1)
-        self.assertEqual(refetched_form.history[0].operation, "Scrub username for GDPR compliance.")
+
+        self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
+
+
+@use_sql_backend
+class GDPRScrubUserFromFormsSqlTests(GDPRScrubUserFromFormsCouchTests):
+    pass

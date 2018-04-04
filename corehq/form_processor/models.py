@@ -555,7 +555,7 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     UNARCHIVE = 'unarchive'
     EDIT = 'edit'
     UUID_DATA_FIX = 'uuid_data_fix'
-    GDPR_SCRUB = 'gdpr_srub'
+    GDPR_SCRUB = 'gdpr_scrub'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)

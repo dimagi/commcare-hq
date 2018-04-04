@@ -131,7 +131,7 @@ class FormAccessorCouch(AbstractFormAccessor):
     def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml):
         form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
         operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
-                                   operation='Scrub username for GDPR compliance.')
+                                   operation='gdpr_scrub')
         form_data.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
         form_data.save()
 
