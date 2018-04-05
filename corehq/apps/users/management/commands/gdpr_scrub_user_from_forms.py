@@ -12,7 +12,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-NEW_USERNAME = "Redacted User (GDPR)- NEW"
+NEW_USERNAME = "Redacted User (GDPR)"
 
 
 class Command(BaseCommand):
