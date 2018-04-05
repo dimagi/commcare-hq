@@ -75,8 +75,8 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
 
         # Test that the metadata changed in the database
         actual_form_xml = form.get_attachment("form.xml")
-        print("FORM META: {}".format(form.meta))
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
+        self.assertEqual(form.metadata.username, NEW_USERNAME)
 
         # Test that the operations history is updated in this form
         refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
