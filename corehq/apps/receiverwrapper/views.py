@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from couchdbkit import ResourceNotFound
 from django.http import (
@@ -46,7 +47,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [
         'backend:sql' if should_use_sql_backend(domain) else 'backend:couch',
-        u'domain:{}'.format(domain),
+        'domain:{}'.format(domain),
     ]
     if should_ignore_submission(request):
         # silently ignore submission if it meets ignore-criteria
@@ -71,11 +72,11 @@ def _process_form(request, domain, app_id, user_id, authenticated,
                 meta = {}
 
             details = [
-                u"domain:{}".format(domain),
-                u"app_id:{}".format(app_id),
-                u"user_id:{}".format(user_id),
-                u"authenticated:{}".format(authenticated),
-                u"form_meta:{}".format(meta),
+                "domain:{}".format(domain),
+                "app_id:{}".format(app_id),
+                "user_id:{}".format(user_id),
+                "authenticated:{}".format(authenticated),
+                "form_meta:{}".format(meta),
             ]
             datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
             notify_exception(request, "Received a submission with POST.keys()", details)

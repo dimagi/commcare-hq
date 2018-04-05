@@ -10,7 +10,7 @@ class PadTests(SimpleTestCase):
 
     def test_assertion(self):
         with self.assertRaises(AssertionError):
-            pad(u'xyzzy', 8, b'*')
+            pad('xyzzy', 8, b'*')
 
     def test_ascii_bytestring_default_char(self):
         padded = pad(b'xyzzy', 8)
