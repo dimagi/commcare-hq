@@ -6,7 +6,6 @@ import weakref
 from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
-from datetime import datetime
 
 from couchdbkit.exceptions import BulkSaveError
 
@@ -16,7 +15,6 @@ from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
-from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 from memoized import memoized
 from six.moves import range
 
