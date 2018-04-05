@@ -151,7 +151,8 @@ hqDefine('app_manager/js/releases/releases', function () {
         });
 
         self.full_odk_install_url = ko.computed(function() {
-            return self.get_odk_install_url() + '?profile=' + self.build_profile();
+            return self.get_odk_install_url() + '?profile=' + self.build_profile()
+              + '&download_target_version=' + (self.download_targeted_version() ? 'true' : '');
         });
 
         self.sms_url = function(index) {
