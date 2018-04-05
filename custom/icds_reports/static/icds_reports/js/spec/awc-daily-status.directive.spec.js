@@ -239,8 +239,9 @@ describe('AWC Daily Status Directive', function () {
 
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>0.00%</strong></div>';
+            '<div>Total number of AWCs that were open yesterday: <strong>0</strong></div>' +
+            '<div>Total number of AWCs that have been launched: <strong>25</strong></div>' +
+            '<div>% of AWCs open yesterday: <strong>NaN%</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
