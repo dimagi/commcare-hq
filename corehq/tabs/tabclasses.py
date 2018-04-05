@@ -1019,7 +1019,7 @@ class MessagingTab(UITab):
                 )
                 messages_urls.extend([
                     {
-                        'title': _("Schedule a Message"),
+                        'title': _("Broadcasts"),
                         'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
@@ -1034,7 +1034,7 @@ class MessagingTab(UITab):
                         'show_in_dropdown': True,
                     },
                     {
-                        'title': _("Schedule a Conditional Message"),
+                        'title': _("Conditional Alerts"),
                         'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
