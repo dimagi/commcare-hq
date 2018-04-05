@@ -171,7 +171,8 @@ class AdjListManager(TreeManager):
             .order_by(self.tree_id_attr, self.left_attr)
         )
 
-    cte_get_queryset_descendants = cte_get_descendants
+    def cte_get_queryset_descendants(self, *args, **kw):
+        return self.cte_get_descendants(*args, **kw)
 
     def mptt_get_queryset_ancestors(self, node, *args, **kw):
         if isinstance(node, Q):
