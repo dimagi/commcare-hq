@@ -1,11 +1,11 @@
 hqDefine("data_interfaces/js/archive_forms", function() {
-    var managementSelector = '#form-management',
+    var managementSelector = '#data-interfaces-archive-forms',
         allFormsButtonSelector = managementSelector + ' input[name="select_all"]',
         checkboxesSelector = managementSelector + ' input.xform-checkbox',
         indicatorSelector = '#count_indicator';
 
     function updateFormCounts() {
-        var selectedCount = $('#form-management').find('input.xform-checkbox:checked').length;
+        var selectedCount = $(managementSelector + ' input.xform-checkbox:checked').length;
         $(".selectedCount").text(selectedCount);
         enableDisableButton(selectedCount);
     }

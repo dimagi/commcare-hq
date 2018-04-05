@@ -3,12 +3,8 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "data_interfaces/js/archive_forms.js" %}"></script>
-{% endblock %}
-
 {% block reportcontent %}
-    <div id="form-management">
+    <div id="data-interfaces-archive-forms">
         <p class="alert fade in hide page-level-alert alert-danger" id="errorMessage">
             {% blocktrans %}
                 Something went wrong! There was an error. If you see this error repeatedly please report it as issue.
