@@ -104,7 +104,6 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         SyncLogSQL.objects.all().delete()
-        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only

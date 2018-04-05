@@ -11,6 +11,8 @@ from dimagi.utils.couch.database import iter_docs
 class Command(BaseCommand):
     """
     Generate profile output for sync logs.
+    # Doesn't work since this queries from Couch
+    # Todo: Migrate to SQL
     """
 
     def handle(self, filename, *args, **kwargs):
