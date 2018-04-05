@@ -391,7 +391,15 @@ def new_form(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     form_type = request.POST.get('form_type', 'form')
     case_action = request.POST.get('case_action', 'none')
-    name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
+
+    if case_action == 'open':
+        name = _('Register')
+    elif case_action == 'update':
+        name = _('Followup')
+    elif form_type == 'lesson':
+        name = _('Lesson')
+    else:
+        name = _('Survey')
 
     if form_type == "shadow":
         if module.module_type == "advanced":
