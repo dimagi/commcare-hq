@@ -381,10 +381,10 @@ class EntriesHelper(object):
                     # so use that module for details
                     detail_module = module
                 else:
-                    # Check for case list parent child selection, which only works for shadow modules if it
-                    # is ALSO configured in the source module. If both shadow and source use parent case selection,
-                    # datums_meta will contain a datum for the parent case, based on the SOURCE's parent select,
-                    # and when we see that datum, we need to use the SHADOW's parent select to supply the details.
+                    # Check for case list parent child selection. If both shadow and source use parent case
+                    # selection, datums_meta will contain a datum for the parent case, based on the SOURCE's
+                    # parent select, and when we see that datum, we need to use the SHADOW's parent select
+                    # to supply the details.
                     shadow_active = hasattr(module, 'parent_select') and module.parent_select.active
                     source_active = hasattr(datum_module, 'parent_select') and datum_module.parent_select.active
                     if shadow_active and source_active:
