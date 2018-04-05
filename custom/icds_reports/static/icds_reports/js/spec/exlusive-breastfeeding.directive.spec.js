@@ -1,12 +1,13 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Exclusive Breastfeeding Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('exclusive-breastfeeding', 'exclusive-breastfeeding');
@@ -32,11 +33,15 @@ describe('Exclusive Breastfeeding Directive', function () {
         });
         var element = window.angular.element("<exclusive-breastfeeding data='test'></exclusive-breastfeeding>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('exclusiveBreastfeeding');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -196,6 +201,19 @@ describe('Exclusive Breastfeeding Directive', function () {
             + '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of children between ages 0 - 6 months: <strong>25</strong></div>' +
+            '<div>Total number of children (0-6 months) exclusively breastfed in the given month:  <strong>0</strong></div>' +
+            '<div>% children (0-6 months) exclusively breastfed in the given month: <strong>NaN%</strong></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

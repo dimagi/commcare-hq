@@ -1,12 +1,13 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Underweight Children Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('underweight_children', 'underweight_children');
@@ -42,11 +43,15 @@ describe('Underweight Children Directive', function () {
         });
         var element = window.angular.element("<underweight-children-report data='test'></underweight-children-report>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('underweightChildrenReport');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -208,6 +213,21 @@ describe('Underweight Children Directive', function () {
             '<div>% children severely underweight (0 - 5 years): <strong>20.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, 0.1, 0.15, 0.2, 10, 20);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total Children (0 - 5 years) weighed in given month: <strong>0</strong></div>' +
+            '<div>Number of children unweighed (0 - 5 years): <strong>0</strong></div>' +
+            '<div>% Severely Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Moderately Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
+            '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 
