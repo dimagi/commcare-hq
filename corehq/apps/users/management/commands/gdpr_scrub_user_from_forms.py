@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from io import StringIO
 from lxml import etree
@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 class Command(BaseCommand):
     help = "Scrubs the username from all forms associated with the given user"
     NEW_USERNAME = "Redacted User (GDPR)"
-    
+
     def add_arguments(self, parser):
         parser.add_argument('username')
         parser.add_argument('domain')
 
     def handle(self, username, domain, **options):
         this_form_accessor = FormAccessors(domain=domain)
-        user = CommCareUser.get_by_username(username)
+        user = CouchUser.get_by_username(username)
         if not user:
             logger.info("User {} not found.".format(username))
             sys.exit(1)
