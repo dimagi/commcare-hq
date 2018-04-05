@@ -7,10 +7,10 @@ hqDefine("data_interfaces/js/archive_forms", function() {
     function updateFormCounts() {
         var selectedCount = $(managementSelector + ' input.xform-checkbox:checked').length;
         $(".selectedCount").text(selectedCount);
-        enableDisableButton(selectedCount);
+        toggleButton(selectedCount);
     }
 
-    function enableDisableButton(count){
+    function toggleButton(count){
         if (count) {
             $("#submitForms").prop('disabled', false);
         }
@@ -53,13 +53,13 @@ hqDefine("data_interfaces/js/archive_forms", function() {
             if (this.checked) {
                 $(checkboxesSelector).prop('checked', true).change();
                 $(indicatorSelector).hide();
-                enableDisableButton(1);
+                toggleButton(1);
             }
             else {
                 $(indicatorSelector).show();
                 $(".selectedCount").text(0);
                 $(managementSelector + ' a.select-none').click();
-                enableDisableButton(0);
+                toggleButton(0);
             }
         });
 
