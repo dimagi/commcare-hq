@@ -999,7 +999,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms and self.show_old_reminders_pages:
+        if self.can_use_outbound_sms:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
@@ -1019,7 +1019,7 @@ class MessagingTab(UITab):
                 )
                 messages_urls.extend([
                     {
-                        'title': _("Schedule a Message"),
+                        'title': _("Broadcasts"),
                         'url': reverse(NewBroadcastListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
@@ -1034,7 +1034,7 @@ class MessagingTab(UITab):
                         'show_in_dropdown': True,
                     },
                     {
-                        'title': _("Schedule a Conditional Message"),
+                        'title': _("Conditional Alerts"),
                         'url': reverse(ConditionalAlertListView.urlname, args=[self.domain]),
                         'subpages': [
                             {
