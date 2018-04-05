@@ -64,27 +64,22 @@ class AdjListManager(TreeManager):
             where = Q(id=getattr(node, parent_col))
 
         def make_cte_query(cte):
-            return self.filter(where).order_by().values(
-                "id",
-                parent_col,
+            return self.filter(where).order_by().annotate(
                 _depth=Value(0, output_field=field),
             ).union(
                 cte.join(
                     self.all().order_by(),
                     id=getattr(cte.col, parent_col)
-                ).values(
-                    "id",
-                    parent_col,
+                ).annotate(
                     _depth=cte.col._depth + Value(1, output_field=field),
                 ),
             )
 
         cte = With.recursive(make_cte_query)
         return (
-            cte
-            .join(self.all(), id=cte.col.id)
+            cte.queryset()
             .with_cte(cte)
-            .order_by(("" if ascending else "-") + "{}._depth".format(cte.name))
+            .order_by(("" if ascending else "-") + "_depth")
         )
 
     def cte_get_descendants(self, node, include_self=False):
