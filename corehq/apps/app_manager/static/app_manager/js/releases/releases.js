@@ -167,7 +167,9 @@ hqDefine('app_manager/js/releases/releases', function () {
         };
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {
-            releasesMain.download_application_zip(self.id(), multimediaOnly, buildProfile);
+            releasesMain.download_application_zip(
+                self.id(), multimediaOnly, buildProfile, self.download_targeted_version()
+            );
         };
 
         self.clickDeploy = function () {
@@ -226,11 +228,12 @@ hqDefine('app_manager/js/releases/releases', function () {
         self.download_modal = $(self.options.download_modal_id);
         self.async_downloader = asyncDownloader(self.download_modal);
 
-        self.download_application_zip = function(appId, multimediaOnly, buildProfile) {
+        self.download_application_zip = function(appId, multimediaOnly, buildProfile, download_targeted_version) {
             var urlSlug = multimediaOnly ? 'download_multimedia_zip' : 'download_ccz';
             var url = self.reverse(urlSlug, appId);
             var params = {};
             params.message = "Your application download is ready";
+            params.download_targeted_version = download_targeted_version;
             if (buildProfile) {
                 params.profile = buildProfile;
             }
