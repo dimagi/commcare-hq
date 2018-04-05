@@ -5088,17 +5088,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
+        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
         try:
-            return self.lazy_fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            kwargs = []
             if build_profile_id is not None:
-                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+            if download_target_version:
+                kwargs.append('download_target_version=true')
+            url += '?' + '&'.join(kwargs)
+
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -5108,7 +5114,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.lazy_put_attachment(png_data, "qrcode.png",
+                self.lazy_put_attachment(png_data, filename,
                                          content_type="image/png")
             return png_data
 
