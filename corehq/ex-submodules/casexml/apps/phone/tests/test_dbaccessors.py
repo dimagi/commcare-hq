@@ -10,7 +10,7 @@ from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_fo
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog
 from casexml.apps.phone.exceptions import MissingSyncLog
 from corehq.util.test_utils import DocTestMixin
-
+from casexml.apps.phone.tasks import prune_synclogs
 
 class DBAccessorsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -40,6 +40,42 @@ class DBAccessorsTest(TestCase, DocTestMixin):
 
     def test_get_sync_logs_for_user(self):
         self.assert_doc_sets_equal(get_synclogs_for_user(self.user_id, 4), self.sync_logs)
+
+    def test_get_last_synclog_for_user(self):
+        self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.sync_logs[0])
+
+
+class SyncLogPruneTest(TestCase, DocTestMixin):
+    maxDiff = None
+
+    @classmethod
+    def setUpClass(cls):
+        cls.domain = "synclog_test"
+        cls.user_id = 'sadsadsa'
+        cls.docs = []
+        super(SyncLogPruneTest, cls).setUpClass()
+        delete_all_sync_logs()
+        update_analytics_indexes()
+
+    @classmethod
+    def tearDownClass(cls):
+        for doc in cls.docs:
+            doc.delete()
+        super(SyncLogPruneTest, cls).tearDownClass()
+
+    def test_count_delete_queries(self):
+        self.docs = [
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=125)),
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=95)),
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=90)),
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=85))
+        ]
+        for doc in self.docs:
+            doc.domain = self.domain
+            doc.user_id = self.user_id
+            doc.save()
+        prune_synclogs()
+        self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.docs[2])
 
     def test_get_last_synclog_for_user(self):
         self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.sync_logs[0])

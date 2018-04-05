@@ -10,6 +10,7 @@ from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.models import SyncLogSQL
+from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
