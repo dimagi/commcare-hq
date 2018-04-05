@@ -357,7 +357,8 @@ class EntriesHelper(object):
 
     def get_datum_meta_module(self, module, use_filter=False):
         datums = []
-        datum_module = module.source_module if module.module_type == 'shadow' else module
+        #datum_module = module.source_module if module.module_type == 'shadow' else module
+        datum_module = module
         datums_meta = get_select_chain_meta(self.app, datum_module)
         for i, datum in enumerate(datums_meta):
             # get the session var for the previous datum if there is one
