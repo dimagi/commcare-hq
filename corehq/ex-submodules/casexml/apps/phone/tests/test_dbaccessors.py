@@ -70,7 +70,7 @@ class SyncLogQueryTest(TestCase):
 
         delete_synclog(synclog._id)
         self.assertEqual(self._sql_count(), 0)
-        self.assertEqual(self._couch_count(), 0)
+        self.assertEqual(self._couch_count(), 1)
 
         with self.assertRaises(MissingSyncLog):
             delete_synclog(synclog._id)
