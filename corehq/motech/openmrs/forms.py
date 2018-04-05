@@ -8,7 +8,7 @@ from corehq.apps.userreports.ui.fields import JsonField
 from corehq.motech.openmrs.const import LOG_LEVEL_CHOICES, IMPORT_FREQUENCY_CHOICES
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.models import OpenmrsImporter, ColumnMapping
-from corehq.motech.openmrs.repeater_helpers import PERSON_PROPERTIES, NAME_PROPERTIES, ADDRESS_PROPERTIES
+from corehq.motech.openmrs.const import PERSON_PROPERTIES, NAME_PROPERTIES, ADDRESS_PROPERTIES
 from corehq.motech.utils import b64_aes_encrypt
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
