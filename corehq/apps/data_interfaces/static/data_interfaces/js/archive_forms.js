@@ -7,15 +7,15 @@ hqDefine("data_interfaces/js/archive_forms", function() {
     function updateFormCounts() {
         var selectedCount = $('#form-management').find('input.xform-checkbox:checked').length;
         $(".selectedCount").text(selectedCount);
-        enable_disable_button(selectedCount);
+        enableDisableButton(selectedCount);
     }
 
-    function enable_disable_button(count){
-        if (count == 0) {
-            $("#submitForms").prop('disabled', true);
+    function enableDisableButton(count){
+        if (count) {
+            $("#submitForms").prop('disabled', false);
         }
         else {
-            $("#submitForms").prop('disabled', false);
+            $("#submitForms").prop('disabled', true);
         }
     }
 
@@ -53,13 +53,13 @@ hqDefine("data_interfaces/js/archive_forms", function() {
             if (this.checked) {
                 $(checkboxesSelector).prop('checked', true).change();
                 $(indicatorSelector).hide();
-                enable_disable_button(1);
+                enableDisableButton(1);
             }
             else {
                 $(indicatorSelector).show();
                 $(".selectedCount").text(0);
                 $(managementSelector + ' a.select-none').click();
-                enable_disable_button(0);
+                enableDisableButton(0);
             }
         });
 
@@ -73,6 +73,6 @@ hqDefine("data_interfaces/js/archive_forms", function() {
             } else {
                 hqImport('analytix/js/google').track.event('Bulk Archive', 'All', 'Selected Forms');
             }
-        })
+        });
     });
 });
