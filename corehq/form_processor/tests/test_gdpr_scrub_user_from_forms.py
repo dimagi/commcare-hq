@@ -21,8 +21,9 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
         <n0:deviceID>{device_id}</n0:deviceID>
         <n0:timeStart>{time_start}</n0:timeStart>
         <n0:timeEnd>{time_end}</n0:timeEnd>
-        <n0:username>{username}</n0:username>
+        <n0:username>orig_username</n0:username>
         <n0:userID>{user_id}</n0:userID>
+        <n0:fake_username_field>orig_username is here</n0:fake_username_field>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
     {case_block}
@@ -38,12 +39,13 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
         <n0:timeEnd>2013-04-19T16:52:02.000000Z</n0:timeEnd>
         <n0:username>replacement_username</n0:username>
         <n0:userID>cruella_deville</n0:userID>
+        <n0:fake_username_field>replacement_username is here</n0:fake_username_field>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
 </data>"""
 
 NEW_USERNAME = "replacement_username"
-
+ORIG_USERNAME = "orig_username"
 
 class UpdateFormTests(TestCase):
 
@@ -51,7 +53,7 @@ class UpdateFormTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        actual_form_xml = Command().update_form_data(form, ORIG_USERNAME, NEW_USERNAME)
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
@@ -68,11 +70,12 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        new_form_xml = Command().update_form_data(form, ORIG_USERNAME, NEW_USERNAME)
         FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
 
         # Test that the metadata changed in the database
         actual_form_xml = form.get_attachment("form.xml")
+        print("FORM META: {}".format(form.meta))
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
         # Test that the operations history is updated in this form
