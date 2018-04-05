@@ -382,16 +382,6 @@ def delete_synclog(synclog_id):
             synclog.delete()
             deleted = True
     except ValidationError:
-        pass
-
-    try:
-        synclog = properly_wrap_sync_log(SyncLog.get_db().get(synclog_id))
-        SyncLog.get_db().delete_doc(synclog)
-        deleted = True
-    except ResourceNotFound:
-        pass
-
-    if not deleted:
         raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
 
 
@@ -1307,12 +1297,6 @@ def get_properly_wrapped_sync_log(doc_id):
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
         synclog = None
-    if not synclog:
-        try:
-            # try to lookup in couch
-            return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
-        except ResourceNotFound:
-            pass
         raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
             doc_id))
 
