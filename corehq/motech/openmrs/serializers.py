@@ -19,7 +19,7 @@ def to_timestamp(value):
     """
     if isinstance(value, six.string_types):
         value = dateutil_parser.parse(value)
-    if isinstance(value, datetime.datetime):
+    if isinstance(value, (datetime.date, datetime.datetime)):
         micros = value.strftime('%f')[:3]  # Only 3 digits for OpenMRS
         tz = value.strftime('%z') or '+0000'  # If we don't know, lie
         return value.strftime('%Y-%m-%dT%H:%M:%S.{f}{z}'.format(f=micros, z=tz))

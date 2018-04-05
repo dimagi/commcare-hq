@@ -32,6 +32,11 @@ class SerializerTests(SimpleTestCase):
         openmrs_timestamp = to_timestamp(datetime_str)
         self.assertEqual(openmrs_timestamp, '2017-06-27T09:36:47.396+0000')
 
+    def test_to_timestamp_date(self):
+        date = datetime.date(2017, 6, 27)
+        openmrs_timestamp = to_timestamp(date)
+        self.assertEqual(openmrs_timestamp, '2017-06-27T00:00:00.000+0000')
+
     def test_to_name_numeric(self):
         commcare_name = 'Bush 2'
         openmrs_name = to_name(commcare_name)
