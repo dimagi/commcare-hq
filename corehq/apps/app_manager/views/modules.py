@@ -184,7 +184,7 @@ def _get_basic_module_view_context(app, module, case_property_builder):
         'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not isinstance(module, TrainingModule)
         ),
     }
 
