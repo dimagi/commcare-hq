@@ -1,6 +1,7 @@
 /* global module, inject, _, chai */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
@@ -50,28 +51,7 @@ describe('Enrolled Children Directive', function () {
         controller = compiled.controller('enrolledChildren');
         controller.step = 'map';
         controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
-        controllermapOrSectorView.data = {
-            "mapData": {
-                "tooltips_data": {
-                    "Morena -R": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Porsa": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Morena-U": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Ambah": {
-                        "in_month": 0,
-                        "all": 25,
-                    },
-                },
-            },
-        };
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -229,23 +209,6 @@ describe('Enrolled Children Directive', function () {
     });
 
     it('tests horizontal chart tooltip content', function () {
-        var d = {
-            "data": [
-                "Ambah",
-                0,
-            ],
-            "index": 0,
-            "color": "rgb(0, 111, 223)",
-            "value": "Ambah",
-            "series": [
-                {
-                    "key": "",
-                    "value": 0,
-                    "color": "rgb(0, 111, 223)",
-                },
-            ],
-        };
-
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>0</strong>' +
@@ -255,7 +218,7 @@ describe('Enrolled Children Directive', function () {
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
-        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

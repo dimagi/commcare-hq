@@ -1,6 +1,7 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
@@ -35,28 +36,7 @@ describe('Registered Household Directive', function () {
         controller = compiled.controller('registeredHousehold');
         controller.step = 'map';
         controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
-        controllermapOrSectorView.data = {
-            "mapData": {
-                "tooltips_data": {
-                    "Morena -R": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Porsa": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Morena-U": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Ambah": {
-                        "in_month": 0,
-                        "all": 25,
-                    },
-                },
-            },
-        };
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -212,30 +192,13 @@ describe('Registered Household Directive', function () {
     });
 
     it('tests horizontal chart tooltip content', function () {
-        var d = {
-            "data": [
-                "Ambah",
-                0,
-            ],
-            "index": 0,
-            "color": "rgb(0, 111, 223)",
-            "value": "Ambah",
-            "series": [
-                {
-                    "key": "",
-                    "value": 0,
-                    "color": "rgb(0, 111, 223)",
-                },
-            ],
-        };
-
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<div>Total number of household registered: <strong>0</strong></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
-        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(d);
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

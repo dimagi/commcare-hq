@@ -1,6 +1,7 @@
-/* global module, inject, chai, MapOrSectorController */
+/* global module, inject, chai, MapOrSectorController, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 describe('Map Or Sector View Directive', function () {
@@ -22,28 +23,7 @@ describe('Map Or Sector View Directive', function () {
             storageService: storageService,
             locationsService: locationsService,
         });
-        controller.data = {
-            "mapData": {
-                "tooltips_data": {
-                    "Morena -R": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Porsa": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Morena-U": {
-                        "in_month": 0,
-                        "all": 0,
-                    },
-                    "Ambah": {
-                        "in_month": 0,
-                        "all": 25,
-                    },
-                },
-            },
-        };
+        controller.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -80,28 +60,14 @@ describe('Map Or Sector View Directive', function () {
         });
     });
     it('tests horizontal chart tooltip content', function () {
-        var d = {
-            "data": [
-                "Ambah",
-                0,
-            ],
-            "index": 0,
-            "color": "rgb(0, 111, 223)",
-            "value": "Ambah",
-            "series": [
-                {
-                    "key": "",
-                    "value": 0,
-                    "color": "rgb(0, 111, 223)",
-                },
-            ],
-        };
-
         var expected = 'templatePopup';
         controller.templatePopup = function (d) {
-            return 'templatePopup';
+            if (d) {
+                return 'templatePopup';
+            }
+            return null;
         };
-        var result = controller.chartOptions.chart.tooltip.contentGenerator(d);
+        var result = controller.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 });
