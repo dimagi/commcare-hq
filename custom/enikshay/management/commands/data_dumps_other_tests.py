@@ -41,7 +41,8 @@ class Command(BaseDataDump):
         1) whose host/host = a person case (open or closed)
         with person.dataset = 'real' and self.enrolled_in_private != 'true' AND
         2)
-        with self.test_category != 'clinical' and
+
+        with self.test_type_value != the ones used for clinical tests
         self.test_type_value != 'dst'
         and self.test_type_value != 'culture' and
         self.test_type_value != 'sl_line_probe_assay'
@@ -50,11 +51,12 @@ class Command(BaseDataDump):
         self.test_type_value != 'microscopy-fluorescent' and
         self.test_type_value !=  'microscopy-zn'
         """
-        reject_test_types = ['dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
+        reject_test_types = ["tst", "igra", "chest_x-ray", "cytopathology",
+                             "histopathology", "gene_sequencing", "other_clinical",
+                             'dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
                              'cbnaat', 'microscopy-fluorescent', 'microscopy-zn']
         return (self.case_search_instance
                 .case_type(case_type)
-                .case_property_query("test_category", "clinical", clause=queries.MUST_NOT)
                 .NOT(case_search.case_property_filter(
                     "test_type_value", reject_test_types))
                 )

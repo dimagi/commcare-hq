@@ -37,10 +37,17 @@ class Command(BaseDataDump):
         with person.dataset = 'real' and self.enrolled_in_private != 'true' AND
         2)
         with self.test_type_value = 'fl_line_probe_assay'
+        All open and closed test cases
+        1) whose host/host = a person case (open or closed)
+        with person.dataset = 'real' and self.enrolled_in_private != 'true' AND
+        2)
+        with self.test_type_value = 'tst' OR self.test_type_value = 'igra' OR self.test_type_value = 'chest_x-ray' OR self.test_type_value = 'cytopathology' OR self.test_type_value = 'histopathology' OR self.test_type_value = 'gene_sequencing' OR self.test_type_value = 'other_clinical'
         """
         return (self.case_search_instance
                 .case_type(case_type)
-                .case_property_query("test_category", "clinical", clause=queries.MUST)
+                .case_property_filter("test_type_value",
+                                      ["tst", "igra", "chest_x-ray", "cytopathology",
+                                       "histopathology", "gene_sequencing", "other_clinical"])
                 )
 
     def include_case_in_dump(self, test_case):
