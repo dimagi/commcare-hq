@@ -62,7 +62,14 @@ class Command(BaseDataDump):
                 )
 
     def include_case_in_dump(self, test_case):
-        person = self.get_person(test_case)
+        try:
+            person = self.get_person(test_case)
+        except ENikshayCaseNotFound as e:
+            print("----ENikshayCaseNotFound----")
+            print(e)
+            print(test_case.case_id)
+            print("-----------------------------")
+            return False
         return (
             person and
             person.get_case_property('dataset') == 'real' and
@@ -116,7 +123,7 @@ class Command(BaseDataDump):
             occurrence_case = self.get_occurrence(test_case)
             self.context['person'] = get_person_case_from_occurrence(DOMAIN, occurrence_case.case_id)
         if not self.context['person']:
-            raise Exception("could not find person for test %s" % test_case.case_id)
+            raise ENikshayCaseNotFound("could not find person for test %s" % test_case.case_id)
         return self.context['person']
 
     def get_occurrence(self, test_case):
@@ -126,7 +133,7 @@ class Command(BaseDataDump):
             except ENikshayCaseNotFound:
                 self.context['occurrence'] = None
         if not self.context['occurrence']:
-            raise Exception("could not find occurrrence for test %s" % test_case.case_id)
+            raise ENikshayCaseNotFound("could not find occurrrence for test %s" % test_case.case_id)
         return self.context['occurrence']
 
     def get_episode(self, test_case):
@@ -136,7 +143,7 @@ class Command(BaseDataDump):
                 raise Exception("episode case id not set for test %s" % test_case.case_id)
             self.context['episode'] = self.case_accessor.get_case(episode_case_id)
         if not self.context['episode']:
-            raise Exception("could not find episode for test %s" % test_case.case_id)
+            raise ENikshayCaseNotFound("could not find episode for test %s" % test_case.case_id)
         return self.context['episode']
 
     def get_case_reference_value(self, case_reference, test_case, calculation):
