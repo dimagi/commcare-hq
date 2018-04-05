@@ -7,7 +7,7 @@ from corehq.apps.app_manager.models import Application, TrainingModule
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
-class ShadowModuleSuiteTest(SimpleTestCase, TestXmlMixin):
+class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_training_module(self):
         app = Application.new_app('domain', 'Untitled Application')
