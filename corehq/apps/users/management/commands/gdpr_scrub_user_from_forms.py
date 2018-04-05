@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from io import StringIO
-import re
+from lxml import etree
 import sys
 import six
 import logging
@@ -43,9 +43,13 @@ class Command(BaseCommand):
             logging.info("Command not recognized. Exiting.")
 
     @staticmethod
-    def update_form_data(form_data, orig_username, new_username):
+    def update_form_data(form_data, new_username):
         form_attachment_xml = form_data.get_attachment("form.xml")
+        xml_elem = etree.parse(StringIO(six.text_type(form_attachment_xml)))
+        id_elem = xml_elem.find("{http://openrosa.org/jr/xforms}meta").find(
+            "{http://openrosa.org/jr/xforms}username")
+        id_elem.text = new_username
 
-        new_form_attachment_xml = re.sub(orig_username, new_username, form_attachment_xml)
+        new_form_attachment_xml = etree.tostring(xml_elem)
 
         return new_form_attachment_xml
