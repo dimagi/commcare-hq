@@ -66,7 +66,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                 vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
-                    locationsService.getLocationByNameAndParent(e.point[0], location_id).then(function (locations) {
+                    locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);
