@@ -44,6 +44,7 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
 
 NEW_USERNAME = "replacement_username"
 
+
 class UpdateFormTests(TestCase):
 
     def test_update_form_data(self):

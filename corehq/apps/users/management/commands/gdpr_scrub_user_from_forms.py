@@ -12,7 +12,7 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-NEW_USERNAME = "Redacted User (GDPR)"
+NEW_USERNAME = "Redacted User (GDPR)- NEW"
 
 
 class Command(BaseCommand):
@@ -22,21 +22,21 @@ class Command(BaseCommand):
         parser.add_argument('username')
         parser.add_argument('domain')
 
-    def handle(self, orig_username, domain, **options):
+    def handle(self, username, domain, **options):
         this_form_accessor = FormAccessors(domain=domain)
-        user = CouchUser.get_by_username(orig_username)
+        user = CouchUser.get_by_username(username)
         if not user:
-            logger.info("User {} not found.".format(orig_username))
+            logger.info("User {} not found.".format(username))
             sys.exit(1)
         user_id = user._id
         form_ids = this_form_accessor.get_form_ids_for_user(user_id)
         input_response = six.moves.input(
-            "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), orig_username, domain))
+            "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
             for form_data in this_form_accessor.iter_forms(form_ids):
-                form_attachment_xml_new = self.update_form_data(form_data, orig_username, NEW_USERNAME)
+                form_attachment_xml_new = self.update_form_data(form_data, NEW_USERNAME)
                 this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new, NEW_USERNAME)
-            logging.info("Updated {} form(s) for user {} in domain {}".format(len(form_ids), orig_username, domain))
+            logging.info("Updated {} form(s) for user {} in domain {}".format(len(form_ids), username, domain))
         elif input_response == "n":
             logging.info("No forms updated, exiting.")
         else:
