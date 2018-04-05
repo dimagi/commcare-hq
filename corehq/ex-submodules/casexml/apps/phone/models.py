@@ -375,14 +375,15 @@ def delete_synclog(synclog_id):
     Deletes synclog object both from Couch and SQL, if the doc
         isn't found in either couch or SQL an exception is raised
     """
-    deleted = False
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
         if synclog:
             synclog.delete()
-            deleted = True
+            return
     except ValidationError:
-        raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+        pass
+
+    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -1292,13 +1293,12 @@ def get_properly_wrapped_sync_log(doc_id):
     """
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
-        if synclog:
-            return properly_wrap_sync_log(synclog.doc)
+        return properly_wrap_sync_log(synclog.doc)
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
-        synclog = None
-        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
-            doc_id))
+        pass
+    raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
+        doc_id))
 
 
 def properly_wrap_sync_log(doc):
