@@ -999,7 +999,7 @@ class MessagingTab(UITab):
     def messages_urls(self):
         messages_urls = []
 
-        if self.can_use_outbound_sms and self.show_old_reminders_pages:
+        if self.can_use_outbound_sms:
             messages_urls.extend([
                 {
                     'title': _('Compose SMS Message'),
