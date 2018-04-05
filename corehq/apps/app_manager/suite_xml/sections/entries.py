@@ -373,6 +373,9 @@ class EntriesHelper(object):
             # For shadow modules, replace the source module's case list/detail with the shadow's
             if module.module_type == 'shadow' and module.source_module_id == datum['module'].unique_id:
                 detail_module = module
+            else:
+                if module.module_type == 'shadow' and datum['module'].unique_id == self.app.get_module_by_unique_id(module.source_module_id).parent_select.module_id:
+                    detail_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
             detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
             detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
 
