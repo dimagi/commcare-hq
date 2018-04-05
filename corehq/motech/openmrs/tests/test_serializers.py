@@ -37,6 +37,16 @@ class SerializerTests(SimpleTestCase):
         openmrs_timestamp = to_timestamp(date)
         self.assertEqual(openmrs_timestamp, '2017-06-27T00:00:00.000+0000')
 
+    def test_to_timestamp_day_str(self):
+        day_str = 'Wednesday'
+        with self.assertRaisesMessage(ValueError, '"Wednesday" is not recognised as a date or a datetime'):
+            to_timestamp(day_str)
+
+    def test_to_timestamp_day_num(self):
+        day_str = '1'
+        with self.assertRaisesMessage(ValueError, '"1" is not recognised as a date or a datetime'):
+            to_timestamp(day_str)
+
     def test_to_name_numeric(self):
         commcare_name = 'Bush 2'
         openmrs_name = to_name(commcare_name)
