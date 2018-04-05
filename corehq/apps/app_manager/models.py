@@ -2811,7 +2811,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
 
 class TrainingModule(Module):
-    pass
+    doc_type = 'TrainingModule'
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
