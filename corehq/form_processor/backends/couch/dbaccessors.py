@@ -132,7 +132,7 @@ class FormAccessorCouch(AbstractFormAccessor):
         form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
         operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                    operation='gdpr_scrub')
-        form_data.history.append(operation)  # TODO: should this show in Form History tab? it doesn't
+        form_data.history.append(operation)
         form_data.save()
 
     @staticmethod
