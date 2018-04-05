@@ -40,7 +40,7 @@ class Command(BaseDataDump):
         """
         return (self.case_search_instance
                 .case_type(case_type)
-                .case_property_query("test_type_value", "dst", clause=queries.MUST)
+                .case_property_filter("test_type_value", ["dst", "other_dst"])
                 )
 
     def include_case_in_dump(self, test_case):

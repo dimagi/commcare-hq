@@ -44,6 +44,7 @@ class Command(BaseDataDump):
 
         with self.test_type_value != the ones used for clinical tests
         self.test_type_value != 'dst'
+        and self.test_type_value != 'other_dst'
         and self.test_type_value != 'culture' and
         self.test_type_value != 'sl_line_probe_assay'
         and self.test_type_value != 'fl_line_probe_assay' and
@@ -53,7 +54,7 @@ class Command(BaseDataDump):
         """
         reject_test_types = ["tst", "igra", "chest_x-ray", "cytopathology",
                              "histopathology", "gene_sequencing", "other_clinical",
-                             'dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
+                             'dst', 'other_dst', 'culture', 'sl_line_probe_assay', 'fl_line_probe_assay',
                              'cbnaat', 'microscopy-fluorescent', 'microscopy-zn']
         return (self.case_search_instance
                 .case_type(case_type)
