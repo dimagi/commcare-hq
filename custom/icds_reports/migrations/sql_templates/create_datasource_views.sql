@@ -2,9 +2,9 @@ DROP VIEW IF EXISTS awc_location_months CASCADE;
 CREATE VIEW awc_location_months AS
  SELECT
   awc_location.doc_id as awc_id,
-    awc_location.awc_name,
+  awc_location.awc_name,
   awc_location.awc_site_code,
-    awc_location.supervisor_id,
+  awc_location.supervisor_id,
   awc_location.supervisor_name,
   awc_location.supervisor_site_code,
   awc_location.block_id,
@@ -20,7 +20,9 @@ CREATE VIEW awc_location_months AS
   awc_location.block_map_location_name,
   awc_location.district_map_location_name,
   awc_location.state_map_location_name,
-    months.start_date AS month,
+  awc_location.aww_name,
+  awc_location.contact_phone_number,
+  months.start_date AS month,
   months.month_name AS month_display
   FROM awc_location awc_location
   CROSS JOIN "icds_months" months;
@@ -48,6 +50,8 @@ CREATE VIEW agg_awc_monthly AS
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."month" AS "month",
+        "awc_location_months"."aww_name" AS "aww_name",
+        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "agg_awc"."is_launched" AS "is_launched",
         "agg_awc"."num_awcs" AS "num_awcs",
         "agg_awc"."num_launched_states" AS "num_launched_states",
