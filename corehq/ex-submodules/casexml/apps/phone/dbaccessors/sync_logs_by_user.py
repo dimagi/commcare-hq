@@ -15,10 +15,7 @@ def get_last_synclog_for_user(user_id):
 
 def get_synclogs_for_user(user_id, limit=10, wrap=True):
     synclogs = SyncLogSQL.objects.filter(user_id=user_id).order_by('date')[:limit]
-    if synclogs:
-        docs = [synclog.doc for synclog in synclogs]
-    else:
-        docs = []
+    docs = [synclog.doc for synclog in synclogs]
 
     if wrap:
         return [properly_wrap_sync_log(doc) for doc in docs]
