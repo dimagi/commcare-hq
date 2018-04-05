@@ -50,7 +50,7 @@ BEGIN
 		'5, ' ||
 		'block_map_location_name, ' ||
 		'district_map_location_name, ' ||
-		'state_map_location_name FROM ' || quote_ident(_ucr_location_table) || ')';
+		'state_map_location_name, NULL, NULL FROM ' || quote_ident(_ucr_location_table) || ')';
 END;
 $BODY$
 LANGUAGE plpgsql;
@@ -1751,7 +1751,9 @@ BEGIN
         'sum(cases_person_beneficiary_v2), ' ||
         'COALESCE(sum(electricity_awc), 0), ' ||
         'COALESCE(sum(infantometer), 0), ' ||
-        'COALESCE(sum(stadiometer), 0) ';
+        'COALESCE(sum(stadiometer), 0), ' ||
+        'COALESCE(sum(num_anc_visits), 0), ' ||
+        'COALESCE(sum(num_children_immunized), 0) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||
@@ -1869,7 +1871,7 @@ BEGIN
 		'4, ' ||
 		'block_map_location_name, ' ||
 		'district_map_location_name, ' ||
-		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
 		'supervisor_id, supervisor_name, supervisor_site_code, ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
@@ -1896,7 +1898,7 @@ BEGIN
 		'3, ' ||
 		'block_map_location_name, ' ||
 		'district_map_location_name, ' ||
-		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
 		'block_id, block_name, block_site_code,' ||
 		'district_id, district_name, district_site_code,' ||
 		'state_id, state_name, state_site_code, ' ||
@@ -1922,7 +1924,7 @@ BEGIN
 		'2, ' ||
 		quote_nullable(null_value) || ', ' ||
 		'district_map_location_name, ' ||
-		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
 		'district_id, district_name, district_site_code,' ||
 		'state_id, state_name, state_site_code, ' ||
 		'district_map_location_name, state_map_location_name ' ||
@@ -1947,7 +1949,7 @@ BEGIN
 		'1, ' ||
 		quote_nullable(null_value) || ', ' ||
 		quote_nullable(null_value) || ', ' ||
-		'state_map_location_name FROM awc_location GROUP BY ' ||
+		'state_map_location_name, NULL, NULL FROM awc_location GROUP BY ' ||
 		'state_id, state_name, state_site_code, state_map_location_name ' ||
 		')';
 END;
