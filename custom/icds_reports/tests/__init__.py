@@ -33,6 +33,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
     'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
+    'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
 }
 
 
