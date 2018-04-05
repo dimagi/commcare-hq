@@ -933,7 +933,13 @@ class ScheduleForm(Form):
         for user_id in value.strip().split(','):
             user_id = user_id.strip()
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
-            result.append({"id": user_id, "text": user.raw_username})
+            if user and not user.is_deleted():
+                result.append({"id": user_id, "text": user.raw_username})
+            else:
+                # Always add it here because, separately, the id still shows up in the
+                # field's value and it will raise a ValidationError. By adding it here
+                # it allows the user to remove it and fix the ValidationError.
+                result.append({"id": user_id, "text": _("(not found)")})
 
         return result
 
@@ -947,9 +953,10 @@ class ScheduleForm(Form):
         for group_id in value.strip().split(','):
             group_id = group_id.strip()
             group = Group.get(group_id)
-            if group.domain != self.domain:
-                continue
-            result.append({"id": group_id, "text": group.name})
+            if group.doc_type != 'Group' or group.domain != self.domain:
+                result.append({"id": group_id, "text": _("(not found)")})
+            else:
+                result.append({"id": group_id, "text": group.name})
 
         return result
 
@@ -963,11 +970,11 @@ class ScheduleForm(Form):
         for location_id in value.strip().split(','):
             location_id = location_id.strip()
             try:
-                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id)
+                location = SQLLocation.objects.get(domain=self.domain, location_id=location_id, is_archived=False)
             except SQLLocation.DoesNotExist:
-                continue
-
-            result.append({"id": location_id, "text": location.name})
+                result.append({"id": location_id, "text": _("(not found)")})
+            else:
+                result.append({"id": location_id, "text": location.name})
 
         return result
 
@@ -999,10 +1006,10 @@ class ScheduleForm(Form):
         for case_group_id in value.strip().split(','):
             case_group_id = case_group_id.strip()
             case_group = CommCareCaseGroup.get(case_group_id)
-            if case_group.domain != self.domain:
-                continue
-
-            result.append({"id": case_group_id, "text": case_group.name})
+            if case_group.doc_type != 'CommCareCaseGroup' or case_group.domain != self.domain:
+                result.append({"id": case_group_id, "text": _("(not found)")})
+            else:
+                result.append({"id": case_group_id, "text": case_group.name})
 
         return result
 
@@ -1031,7 +1038,7 @@ class ScheduleForm(Form):
 
         for user_id in data:
             user = CommCareUser.get_by_user_id(user_id, domain=self.domain)
-            if not user:
+            if not user or user.is_deleted():
                 raise ValidationError(
                     _("One or more users were unexpectedly not found. Please select user(s) again.")
                 )
