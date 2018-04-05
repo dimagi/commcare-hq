@@ -175,8 +175,8 @@ class ScheduleForm(Form):
         label=ugettext_lazy('On Days'),
         choices=(
             # The actual choices are rendered by a template
-            tuple((str(x), '') for x in range(-3, 0)) +
-            tuple((str(x), '') for x in range(1, 29))
+            tuple((six.text_type(x), '') for x in range(-3, 0)) +
+            tuple((six.text_type(x), '') for x in range(1, 29))
         )
     )
     send_time_type = ChoiceField(
@@ -348,11 +348,11 @@ class ScheduleForm(Form):
         weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
                     for e in self.initial_schedule.memoized_events]
         initial['send_frequency'] = self.SEND_WEEKLY
-        initial['weekdays'] = [str(day) for day in weekdays]
+        initial['weekdays'] = [six.text_type(day) for day in weekdays]
 
     def add_intial_for_monthly_schedule(self, initial):
         initial['send_frequency'] = self.SEND_MONTHLY
-        initial['days_of_month'] = [str(e.day) for e in self.initial_schedule.memoized_events]
+        initial['days_of_month'] = [six.text_type(e.day) for e in self.initial_schedule.memoized_events]
 
     def add_initial_for_send_time(self, initial):
         if self.initial_schedule.event_type == TimedSchedule.EVENT_SPECIFIC_TIME:
@@ -418,7 +418,7 @@ class ScheduleForm(Form):
             'case_group_recipients': ','.join(case_group_recipients),
             'include_descendant_locations': self.initial_schedule.include_descendant_locations,
             'restrict_location_types': 'Y' if len(self.initial_schedule.location_type_filter) > 0 else 'N',
-            'location_types': ','.join([str(i) for i in self.initial_schedule.location_type_filter]),
+            'location_types': ','.join(six.text_type(i) for i in self.initial_schedule.location_type_filter),
         })
 
     def add_initial_for_content(self, result):
@@ -440,7 +440,8 @@ class ScheduleForm(Form):
 
             if content.reminder_intervals:
                 result['survey_reminder_intervals_enabled'] = 'Y'
-                result['survey_reminder_intervals'] = ', '.join([str(i) for i in content.reminder_intervals])
+                result['survey_reminder_intervals'] = \
+                    ', '.join(six.text_type(i) for i in content.reminder_intervals)
             else:
                 result['survey_reminder_intervals_enabled'] = 'N'
         else:
@@ -1998,7 +1999,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     result['start_offset'] = abs(schedule.start_offset)
 
                 if schedule.start_day_of_week >= 0:
-                    result['start_day_of_week'] = str(schedule.start_day_of_week)
+                    result['start_day_of_week'] = six.text_type(schedule.start_day_of_week)
 
             self.add_initial_for_custom_metadata(result)
 
