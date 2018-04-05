@@ -97,16 +97,3 @@ class SyncLogQueryTest(TestCase):
         delete_synclog(synclog._id)
         self.assertEqual(self._sql_count(), 0)
         self.assertEqual(self._couch_count(), 0)
-
-    def test_couch_synclogs(self):
-        synclog = SyncLog(domain='test', user_id='user1', date=datetime.datetime(2015, 7, 1, 0, 0))
-        SyncLog.get_db().save_doc(synclog)
-        self.assertEqual(self._sql_count(), 0)
-        self.assertEqual(self._couch_count(), 1)
-
-        delete_synclog(synclog._id)
-        self.assertEqual(self._sql_count(), 0)
-        self.assertEqual(self._couch_count(), 1)
-
-        with self.assertRaises(MissingSyncLog):
-            delete_synclog(synclog._id)
