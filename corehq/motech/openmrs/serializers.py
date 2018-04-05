@@ -13,8 +13,8 @@ def to_timestamp(value):
     """
     OpenMRS accepts strings in the same format for both dates and datetimes.
 
-    >>> to_timestamp('2017-06-27')
-    '2017-06-27T00:00:00.000+0000'
+    >>> to_timestamp('2017-06-27') == '2017-06-27T00:00:00.000+0000'
+    True
 
     """
     if isinstance(value, six.string_types):
@@ -29,8 +29,8 @@ def to_name(value):
     """
     OpenMRS does not accept names that have numbers in them
 
-    >>> to_name('5dbbabc66c12730b')
-    u'-dbbabc--c-----b'
+    >>> to_name('5dbbabc66c12730b') == '-dbbabc--c-----b'
+    True
 
     """
     # Replace non-alphanumeric, digits and underscores with "-", but allow spaces and apostrophes

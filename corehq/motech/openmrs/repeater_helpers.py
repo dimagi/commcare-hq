@@ -88,8 +88,8 @@ def serialize(data):
     """
     Convert values in data to a format OpenMRS will accept.
 
-    >>> serialize({'birthdate': '2017-06-27'})
-    {'birthdate': '2017-06-27T00:00:00.000+0000'}
+    >>> serialize({'birthdate': '2017-06-27'}) == {'birthdate': '2017-06-27T00:00:00.000+0000'}
+    True
 
     """
     # We can get away with not worrying about namespaces because these
