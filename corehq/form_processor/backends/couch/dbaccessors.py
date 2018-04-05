@@ -128,11 +128,13 @@ class FormAccessorCouch(AbstractFormAccessor):
         return _soft_undelete(XFormInstance.get_db(), form_ids, _form_undelete)
 
     @staticmethod
-    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml):
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, new_username):
         form_data.put_attachment(form_attachment_new_xml, name="form.xml", content_type='text/xml')
         operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                    operation='gdpr_scrub')
         form_data.history.append(operation)
+        form_data.save()
+        form_data.metadata.username = new_username
         form_data.save()
 
     @staticmethod

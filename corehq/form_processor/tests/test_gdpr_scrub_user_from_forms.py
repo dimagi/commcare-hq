@@ -71,18 +71,18 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
         new_form_xml = Command().update_form_data(form, ORIG_USERNAME, NEW_USERNAME)
-        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml)
+        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
 
         # Test that the metadata changed in the database
         actual_form_xml = form.get_attachment("form.xml")
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
-        self.assertEqual(form.metadata.username, NEW_USERNAME)
+        # self.assertEqual(form.metadata.username, NEW_USERNAME)
 
         # Test that the operations history is updated in this form
         refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
         self.assertEqual(len(refetched_form.history), 1)
-
         self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
+        self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
 
 
 @use_sql_backend

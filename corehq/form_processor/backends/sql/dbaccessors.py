@@ -583,7 +583,7 @@ class FormAccessorSQL(AbstractFormAccessor):
         return return_value
 
     @staticmethod
-    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml):
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
         attachment_metadata = form_data.get_attachment_meta("form.xml")
         # Write the new xml to the database
         attachment_metadata.write_content(form_attachment_new_xml)

@@ -35,7 +35,7 @@ class Command(BaseCommand):
         if input_response == "y":
             for form_data in this_form_accessor.iter_forms(form_ids):
                 form_attachment_xml_new = self.update_form_data(form_data, orig_username, NEW_USERNAME)
-                this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new)
+                this_form_accessor.modify_attachment_xml_and_metadata(form_data, form_attachment_xml_new, NEW_USERNAME)
             logging.info("Updated {} form(s) for user {} in domain {}".format(len(form_ids), orig_username, domain))
         elif input_response == "n":
             logging.info("No forms updated, exiting.")
