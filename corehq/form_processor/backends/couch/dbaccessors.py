@@ -134,7 +134,6 @@ class FormAccessorCouch(AbstractFormAccessor):
         operation = XFormOperation(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
                                    operation='gdpr_scrub')
         form_data.history.append(operation)
-        form_data.save()
         # Update metadata
         form_data.form['meta']['username'] = new_username
         form_data.save()
