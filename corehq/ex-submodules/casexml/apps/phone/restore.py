@@ -633,8 +633,6 @@ class RestoreConfig(object):
             self.async_restore_task_id_cache.set_value(task.id)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
-            RedisExponentialBackoff.clear_key(
-                "%s.%s" % (task, self.restore_user.username))
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
