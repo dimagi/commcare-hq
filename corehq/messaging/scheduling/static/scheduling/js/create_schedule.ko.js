@@ -53,7 +53,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     };
 
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
-        select2_user_group_recipients, select2_user_organization_recipients,
+        select2_user_group_recipients, select2_user_organization_recipients, select2_location_types,
         select2_case_group_recipients, current_visit_scheduler_form) {
         var self = this;
 
@@ -71,18 +71,30 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
+
         self.user_recipients = new recipientsSelect2Handler(select2_user_recipients,
             initial_values.user_recipients, 'schedule-user_recipients');
         self.user_recipients.init();
+
         self.user_group_recipients = new recipientsSelect2Handler(select2_user_group_recipients,
             initial_values.user_group_recipients, 'schedule-user_group_recipients');
         self.user_group_recipients.init();
+
         self.user_organization_recipients = new recipientsSelect2Handler(select2_user_organization_recipients,
             initial_values.user_organization_recipients, 'schedule-user_organization_recipients');
         self.user_organization_recipients.init();
+
+        self.include_descendant_locations = ko.observable(initial_values.include_descendant_locations);
+        self.restrict_location_types = ko.observable(initial_values.restrict_location_types);
+
+        self.location_types = new recipientsSelect2Handler(select2_location_types,
+            initial_values.location_types, 'schedule-location_types');
+        self.location_types.init();
+
         self.case_group_recipients = new recipientsSelect2Handler(select2_case_group_recipients,
             initial_values.case_group_recipients, 'schedule-case_group_recipients');
         self.case_group_recipients.init();
+
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
         self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
@@ -373,6 +385,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
+            hqImport("hqwebapp/js/initial_page_data").get("current_select2_location_types"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_visit_scheduler_form")
         );
