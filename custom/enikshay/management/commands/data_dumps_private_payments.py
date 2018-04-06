@@ -59,6 +59,11 @@ class Command(BaseDataDump):
                     raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
                 raise Exception("Location not found for id %s" % owner_id)
+        elif column_name == "Approved Amount":
+            if case.get_case_property('state') in ['paid', 'approved']:
+                return case.get_case_property('amount_approved') or case.get_case_property('amount_fulfilled')
+            else:
+                return "not approved/paid, current state %s" % case.get_case_property('state')
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
@@ -79,7 +84,7 @@ class Command(BaseDataDump):
 
     @staticmethod
     def _is_lab_voucher(voucher_case):
-        return voucher_case.get_case_property("voucher_type") == "lab"
+        return voucher_case.get_case_property("voucher_type") == "test"
 
     def include_case_in_dump(self, voucher_case):
         if not voucher_case.get_case_property("date_fulfilled"):

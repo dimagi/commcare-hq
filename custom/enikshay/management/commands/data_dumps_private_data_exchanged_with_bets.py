@@ -6,6 +6,7 @@ from __future__ import (
 
 import json
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from custom.enikshay.case_utils import (
@@ -19,7 +20,7 @@ from custom.enikshay.case_utils import (
 )
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.base_data_dump import BaseDataDump, PRIVATE_SECTOR_ID_MAPPING
 
 DOMAIN = "enikshay"
 
@@ -89,6 +90,17 @@ class Command(BaseDataDump):
                 attempts = repeat_record.attempts
                 all_attempts_datetime[repeat_record.get_id] = [str(attempt.datetime) for attempt in attempts]
             return all_attempts_datetime
+        elif column_name == "Organisation (of person)":
+            owner_id = self.get_person(case).owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                private_sector_org_id = location.metadata.get('private_sector_org_id')
+                if private_sector_org_id:
+                    return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
+                else:
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
+            else:
+                raise Exception("Location not found for id %s" % owner_id)
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
@@ -108,7 +120,7 @@ class Command(BaseDataDump):
 
     @staticmethod
     def _is_lab_voucher(voucher_case):
-        return voucher_case.get_case_property("voucher_type") == "lab"
+        return voucher_case.get_case_property("voucher_type") == "test"
 
     def include_case_in_dump(self, voucher_case):
         try:
