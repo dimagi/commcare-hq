@@ -13,9 +13,7 @@ from corehq.util.test_utils import unit_testing_only
 from dimagi.utils.dates import utcnow_sans_milliseconds
 from lxml import etree
 
-from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.xml import V1, V2, NS_VERSION_MAP
-from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams
 from six.moves import range
 

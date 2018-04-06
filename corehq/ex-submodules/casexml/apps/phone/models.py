@@ -267,7 +267,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
-    previous_log_removed = BooleanProperty(default=False)
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
@@ -336,7 +335,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         Get the previous sync log, if there was one.  Otherwise returns nothing.
         """
-        if self.previous_log_removed or not self.previous_log_id:
+        if not self.previous_log_id:
             return
 
         try:
@@ -375,24 +374,15 @@ def delete_synclog(synclog_id):
     Deletes synclog object both from Couch and SQL, if the doc
         isn't found in either couch or SQL an exception is raised
     """
-    deleted = False
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=synclog_id).first()
         if synclog:
             synclog.delete()
-            deleted = True
+            return
     except ValidationError:
         pass
 
-    try:
-        synclog = properly_wrap_sync_log(SyncLog.get_db().get(synclog_id))
-        SyncLog.get_db().delete_doc(synclog)
-        deleted = True
-    except ResourceNotFound:
-        pass
-
-    if not deleted:
-        raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
+    raise MissingSyncLog("No synclog object with this synclog_id ({}) is  found".format(synclog_id))
 
 
 def synclog_to_sql_object(synclog_json_object):
@@ -1306,15 +1296,9 @@ def get_properly_wrapped_sync_log(doc_id):
             return properly_wrap_sync_log(synclog.doc)
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
-        synclog = None
-    if not synclog:
-        try:
-            # try to lookup in couch
-            return properly_wrap_sync_log(SyncLog.get_db().get(doc_id))
-        except ResourceNotFound:
-            pass
-        raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
-            doc_id))
+        pass
+    raise MissingSyncLog("A SyncLogSQL object with this synclog_id ({})is not found".format(
+        doc_id))
 
 
 def properly_wrap_sync_log(doc):
