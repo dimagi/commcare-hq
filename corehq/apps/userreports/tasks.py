@@ -488,10 +488,11 @@ def _indicator_metrics(date_created=None):
 
 
 @task
-def export_ucr_async(export_table, download_id, title, user):
+def export_ucr_async(report_export, download_id, title, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
     filename = '{}.xlsx'.format(title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
+    export_table = report_export.get_table()
     export_from_tables(export_table, file_path, Format.XLS_2007)
     expose_download(use_transfer, file_path, filename, download_id, 'xlsx')
     link = reverse("retrieve_download", args=[download_id], params={"get_file": '1'}, absolute=True)
