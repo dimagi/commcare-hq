@@ -67,6 +67,7 @@ from corehq.apps.app_manager.models import (
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
 from six.moves import map
 
 logger = logging.getLogger(__name__)
@@ -904,6 +905,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
+    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 
