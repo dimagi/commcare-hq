@@ -7,7 +7,6 @@ from django.utils.translation import ugettext as _
 from memoized import memoized
 
 from corehq.apps.userreports.columns import get_expanded_column_config
-from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import get_report_config
 from corehq.toggles import INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
 from corehq.util.timezones.utils import get_timezone_for_domain
