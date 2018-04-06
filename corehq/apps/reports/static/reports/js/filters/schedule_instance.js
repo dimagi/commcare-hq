@@ -1,5 +1,11 @@
-hqDefine("reports/js/filters/schedule_instance", function() {
-    var scheduleInstanceFilterViewModel = function(initial, conditionalAlertChoices) {
+hqDefine("reports/js/filters/schedule_instance", [
+    'jquery',
+    'knockout',
+], function(
+    $,
+    ko
+) {
+    var model = function(initial, conditionalAlertChoices) {
         var self = {};
         var all = [{'id': '', 'name': gettext('All')}];
         self.date_selector_type = ko.observable(initial.date_selector_type);
@@ -25,6 +31,6 @@ hqDefine("reports/js/filters/schedule_instance", function() {
     };
 
     return {
-        scheduleInstanceFilterViewModel: scheduleInstanceFilterViewModel,
+        model: model,
     };
 });

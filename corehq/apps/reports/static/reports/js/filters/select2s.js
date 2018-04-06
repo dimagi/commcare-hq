@@ -1,7 +1,14 @@
 /**
  * The basic single and multi option filters.
  */
-hqDefine("reports/js/filters/select2s", function() {
+hqDefine("reports/js/filters/select2s", [
+    'jquery',
+    'knockout',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    ko
+) {
     var initSingle = function(el) {
         var $filter = $(el);
         $filter.parent().koApplyBindings({
