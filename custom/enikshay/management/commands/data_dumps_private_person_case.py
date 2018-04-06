@@ -5,6 +5,7 @@ from __future__ import (
 )
 
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.users.models import CommCareUser
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_PERSON,
@@ -103,6 +104,15 @@ class Command(BaseDataDump):
             return case.modified_on
         elif column_name == "Last Modified By":
             return case.modified_by
+        elif column_name == "Registered By":
+            registered_by = case.get_case_property('registered_by')
+            if registered_by:
+                try:
+                    return SQLLocation.active_objects.get(location_id=registered_by).name
+                except SQLLocation.DoesNotExist:
+                    raise Exception("Location not found for id %s" % registered_by)
+            else:
+                raise Exception("Private Sector Organization ID not set for location %s" % registered_by)
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
