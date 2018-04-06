@@ -931,10 +931,6 @@ DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
-# Allow overriding the synclog DB
-# This allows us to periodically rotate the synclog DB to remove deleted docs
-CUSTOM_SYNCLOGS_DB = None
-
 from env_settings import *
 
 try:
@@ -1386,8 +1382,6 @@ DOMAINS_DB = NEW_DOMAINS_DB
 NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
 
-SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
-
 META_DB = 'meta'
 
 
@@ -1474,9 +1468,6 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
-
-    # sync logs
-    ('phone', SYNCLOGS_DB),
 
     # applications
     ('app_manager', APPS_DB),
