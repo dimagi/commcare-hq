@@ -4081,6 +4081,10 @@ class ReportAppConfig(DocumentSchema):
             self._report = get_report_config(self.report_id, domain)[0]
         return self._report
 
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
+
 
 class ReportModule(ModuleBase):
     """
