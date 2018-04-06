@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain.decorators import cls_to_view
 from corehq.apps.reports.dispatcher import ReportDispatcher
 from corehq.apps.users.decorators import require_permission

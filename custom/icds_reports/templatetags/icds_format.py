@@ -1,8 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import pytz
+from datetime import datetime
 from django import template
 
+from custom.icds_reports.const import INDIA_TIMEZONE
 from custom.icds_reports.reports.issnip_monthly_register import DATA_NOT_ENTERED
+from custom.icds_reports.utils import generate_qrcode
 
 register = template.Library()
 
@@ -90,3 +95,13 @@ def icds_yesno(data):
         return 'No'
     else:
         return DATA_NOT_ENTERED
+
+
+@register.filter(name='icds_qr_code')
+def icds_qr_code(awc_site_code):
+    utc_now = datetime.now(pytz.utc)
+    india_now = utc_now.astimezone(INDIA_TIMEZONE)
+    return generate_qrcode("{} {}".format(
+        awc_site_code,
+        india_now.strftime('%d %b %Y')
+    ))

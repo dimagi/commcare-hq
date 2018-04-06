@@ -168,7 +168,6 @@ class ComposeMessageView(BaseMessagingSectionView):
         page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
-    @method_decorator(requires_old_reminder_framework())
     @method_decorator(require_permission(Permissions.edit_data))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_typeahead
@@ -2204,8 +2203,8 @@ class InvitationAppInfoView(View, DomainViewMixin):
         raise Http404()
 
     def get(self, *args, **kwargs):
-        url = str(self.odk_url).strip()
-        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        url = six.binary_type(self.odk_url).strip()
+        response = b'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
 

@@ -191,8 +191,8 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, data_in_month);
+                    var data_in_month = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), data_in_month);
                 });
                 return chart;
             },

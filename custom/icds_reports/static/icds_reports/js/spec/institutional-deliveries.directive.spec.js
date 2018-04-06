@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Institutional Deliveries Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('institutional_deliveries', 'institutional_deliveries');
@@ -27,11 +28,15 @@ describe('Institutional Deliveries Directive', function () {
         });
         var element = window.angular.element("<institutional_deliveries data='test'></institutional_deliveries>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('institutionalDeliveries');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -191,6 +196,19 @@ describe('Institutional Deliveries Directive', function () {
             + '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>72.00%</strong></div>';
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Total number of pregnant women who delivered in the last month: <strong>25</strong></div>' +
+            '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>0</strong></div>' +
+            '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>NaN%</strong></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

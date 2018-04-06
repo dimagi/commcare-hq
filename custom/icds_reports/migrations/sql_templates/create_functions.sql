@@ -187,7 +187,15 @@ BEGIN
 		'caste, ' ||
 		'disabled, ' ||
 		'minority, ' ||
-		'resident ' ||
+		'resident, ' ||
+    'cf_in_month, ' ||
+    'cf_diet_diversity, ' ||
+    'cf_diet_quantity, ' ||
+    'cf_handwashing, ' ||
+    'cf_demo, ' ||
+    'counsel_pediatric_ifa, ' ||
+    'counsel_comp_feeding_vid, ' ||
+    'cf_initiation_in_month ' ||
   ') (SELECT ' ||
 		'awc_id, ' ||
 		'case_id, ' ||
@@ -244,10 +252,21 @@ BEGIN
 		'caste, ' ||
 		'disabled, ' ||
 		'minority, ' ||
-		'resident ' ||
+		'resident, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0 ' ||
 		'FROM ' || quote_ident(_ucr_child_monthly_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx2') || ' ON ' || quote_ident(_tablename) || '(case_id)';
+
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_eligible) WHERE cf_eligible = 1';
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_initiation_eligible) WHERE cf_initiation_eligible = 1';
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
@@ -264,20 +283,6 @@ BEGIN
     '  cf_initiation_in_month = COALESCE(agg.comp_feeding_ever, 0) ' ||
     'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_initiation_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
-
-    -- Likely not needed, but these have been coerced to 0 historically
-    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
-      'cf_in_month = COALESCE(cf_in_month, 0), ' ||
-      'cf_diet_diversity = COALESCE(cf_diet_diversity, 0), ' ||
-      'cf_diet_quantity = COALESCE(cf_diet_quantity, 0), ' ||
-      'cf_handwashing = COALESCE(cf_handwashing, 0), ' ||
-      'cf_demo = COALESCE(cf_demo, 0), ' ||
-      'counsel_pediatric_ifa = COALESCE(counsel_pediatric_ifa, 0), ' ||
-      'counsel_comp_feeding_vid = COALESCE(counsel_comp_feeding_vid, 0), ' ||
-      'cf_initiation_in_month = COALESCE(cf_initiation_in_month, 0) ' ||
-    'WHERE cf_in_month IS NULL OR cf_diet_diversity IS NULL OR cf_diet_quantity IS NULL ' ||
-      'OR cf_handwashing IS NULL OR cf_demo IS NULL OR counsel_pediatric_ifa IS NULL ' ||
-      'OR counsel_comp_feeding_vid IS NULL OR cf_initiation_in_month IS NULL';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 END;
@@ -1589,7 +1594,10 @@ BEGIN
 		'infra_infant_weighing_scale = ut.infra_infant_weighing_scale, ' ||
 		'infra_cooking_utensils = ut.infra_cooking_utensils, ' ||
 		'infra_medicine_kits = ut.infra_medicine_kits, ' ||
-		'infra_adequate_space_pse = ut.infra_adequate_space_pse ' ||
+		'infra_adequate_space_pse = ut.infra_adequate_space_pse, ' ||
+		'electricity_awc = ut.electricity_awc, ' ||
+		'infantometer = ut.infantometer, ' ||
+		'stadiometer = ut.stadiometer ' ||
 	'FROM (SELECT DISTINCT ON (awc_id) ' ||
 		'awc_id, ' ||
 		'month, ' ||
@@ -1607,7 +1615,10 @@ BEGIN
 		'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
 		'cooking_utensils_usable AS infra_cooking_utensils, ' ||
 		'medicine_kits_usable AS infra_medicine_kits, ' ||
-		'has_adequate_space_pse AS infra_adequate_space_pse ' ||
+		'has_adequate_space_pse AS infra_adequate_space_pse, ' ||
+		'electricity_awc AS electricity_awc, ' ||
+		'infantometer AS infantometer, ' ||
+		'stadiometer AS stadiometer ' ||
 		'FROM ' || quote_ident(_infra_tablename) || ' ' ||
 		'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
 	'WHERE ut.awc_id = agg_awc.awc_id';
@@ -1737,7 +1748,10 @@ BEGIN
         quote_nullable(_null_value) || ', ' ||
         'sum(num_awc_infra_last_update), ' ||
         'sum(cases_person_has_aadhaar_v2 ), ' ||
-        'sum(cases_person_beneficiary_v2) ';
+        'sum(cases_person_beneficiary_v2), ' ||
+        'COALESCE(sum(electricity_awc), 0), ' ||
+        'COALESCE(sum(infantometer), 0), ' ||
+        'COALESCE(sum(stadiometer), 0) ';
 
 	EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
 		'state_id, ' ||

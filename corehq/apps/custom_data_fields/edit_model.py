@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import re
 
@@ -200,7 +201,7 @@ class CustomDataModelMixin(object):
             self.save_custom_fields()
             if self.show_purge_existing and self.form.cleaned_data['purge_existing']:
                 self.update_existing_models()
-            msg = _(u"{} fields saved successfully").format(
+            msg = _("{} fields saved successfully").format(
                 six.text_type(self.entity_string)
             )
             messages.success(request, msg)

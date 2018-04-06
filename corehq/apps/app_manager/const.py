@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 APP_V1 = '1.0'
 APP_V2 = '2.0'
 MAJOR_RELEASE_TO_VERSION = {
@@ -6,15 +7,15 @@ MAJOR_RELEASE_TO_VERSION = {
 }
 
 SCHEDULE_PHASE = 'current_schedule_phase'
-SCHEDULE_LAST_VISIT = u'last_visit_number_{}'
-SCHEDULE_LAST_VISIT_DATE = u'last_visit_date_{}'
-SCHEDULE_GLOBAL_NEXT_VISIT_DATE = u'next_visit_date'
-SCHEDULE_NEXT_DUE = u'next_due'
+SCHEDULE_LAST_VISIT = 'last_visit_number_{}'
+SCHEDULE_LAST_VISIT_DATE = 'last_visit_date_{}'
+SCHEDULE_GLOBAL_NEXT_VISIT_DATE = 'next_visit_date'
+SCHEDULE_NEXT_DUE = 'next_due'
 SCHEDULE_TERMINATED = '-1'
 SCHEDULE_CURRENT_VISIT_NUMBER = 'current_visit_number'
 SCHEDULE_UNSCHEDULED_VISIT = 'unscheduled_visit'
 SCHEDULE_MAX_DATE = (2 ** 31) - 1
-SCHEDULE_DATE_CASE_OPENED = u'date_opened'
+SCHEDULE_DATE_CASE_OPENED = 'date_opened'
 
 ATTACHMENT_PREFIX = 'attachment:'
 

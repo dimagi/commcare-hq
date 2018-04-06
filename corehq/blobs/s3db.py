@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import weakref
 from contextlib import contextmanager
@@ -163,7 +164,7 @@ def safepath(path):
             "/../" in path or
             path.endswith("/..") or
             not SAFENAME.match(path)):
-        raise BadName(u"unsafe path name: %r" % path)
+        raise BadName("unsafe path name: %r" % path)
     return path
 
 

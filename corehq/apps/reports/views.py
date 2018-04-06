@@ -315,9 +315,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def others_scheduled_reports(self):
-        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.domain):
-            return []
-
         def _is_valid(rn):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
@@ -1224,10 +1221,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
 
-    user_id = request.couch_user._id
-
-    user = CouchUser.get_by_user_id(user_id, domain)
-
     try:
         send_delayed_report(scheduled_report_id)
     except Exception as e:
@@ -1235,7 +1228,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Test message sent to the report's recipients."))
+        messages.success(request, _("Report sent to this report's recipients"))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from distutils.version import LooseVersion
 
 from datetime import datetime
@@ -183,7 +184,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     uses_login_as = bool(as_user)
     as_user_obj = CouchUser.get_by_username(as_user) if uses_login_as else None
     if uses_login_as and not as_user_obj:
-        msg = _(u'Invalid restore as user {}').format(as_user)
+        msg = _('Invalid restore as user {}').format(as_user)
         return HttpResponse(msg, status=401), None
     is_permitted, message = is_permitted_to_restore(
         domain,

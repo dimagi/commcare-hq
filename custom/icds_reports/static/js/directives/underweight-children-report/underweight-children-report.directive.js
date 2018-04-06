@@ -232,7 +232,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function(values, date) {
-                        return _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return _.find(values, function(num) { return num['x'] === date; });
                     };
 
                     var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -240,7 +240,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
                     var severely = findValue(vm.chartData[2].values, d.value).y;
                     var unweighed = findValue(vm.chartData[0].values, d.value).unweighed;
                     var weighed = findValue(vm.chartData[0].values, d.value).weighed;
-                    return vm.tooltipContent(d.value, normal, moderately, severely, unweighed, weighed);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderately, severely, unweighed, weighed);
                 });
                 return chart;
             },

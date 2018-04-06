@@ -412,7 +412,10 @@ class SQLLocation(AdjListModel):
         """
         Returns the ancestor of given location_type_code of the location
         """
-        return self.get_ancestors().get(location_type__code=type_code)
+        try:
+            return self.get_ancestors().get(location_type__code=type_code)
+        except self.DoesNotExist:
+            return None
 
     @classmethod
     def get_sync_fields(cls):
@@ -514,6 +517,12 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
+        self.update_users_at_ancestor_locations()
+
+    def update_users_at_ancestor_locations(self):
+        from . tasks import update_users_at_locations
+        location_ids = list(self.get_ancestors().location_ids())
+        update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """

@@ -37,7 +37,7 @@ class BaseICDSAggregationHelper(object):
     aggregate_parent_table = None
     aggregate_child_table_prefix = None
     child_health_monthly_ucr_id = 'static-child_cases_monthly_tableau_v2'
-    ccs_record_monthly_ucr_id = 'static-ccs_record_cases_monthly_tableau2'
+    ccs_record_monthly_ucr_id = 'static-ccs_record_cases_monthly_tableau_v2'
 
     def __init__(self, state_id, month):
         self.state_id = state_id
@@ -242,7 +242,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT child_health_case_id AS case_id,
+        SELECT DISTINCT child_health_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(counsel_increase_food_bf) OVER w AS counsel_increase_food_bf,
         MAX(counsel_breast) OVER w AS counsel_breast,
@@ -328,8 +328,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         WHERE chm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
               (chm_ucr.pnc_eligible = 1 AND (
                   chm_ucr.counsel_increase_food_bf != COALESCE(agg.counsel_increase_food_bf) OR
-                  chm_ucr.counsel_manage_breast_problems != COALESCE(agg.counsel_breast, 0) OR
-                  chm_ucr.counsel_skin_to_skin != COALESCE(agg.skin_to_skin, 0)
+                  chm_ucr.counsel_manage_breast_problems != COALESCE(agg.counsel_breast, 0)
               )) OR
               (chm_ucr.ebf_eligible = 1 AND (
                   chm_ucr.ebf_in_month != COALESCE(agg.is_ebf, 0) OR
@@ -339,7 +338,7 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
                   chm_ucr.ebf_eating != COALESCE(agg.eating, 0) OR
                   chm_ucr.ebf_not_breastfeeding_reason != COALESCE(agg.not_breastfeeding, 'not_breastfeeding') OR
                   chm_ucr.counsel_ebf != GREATEST(agg.counsel_exclusive_bf, agg.counsel_only_milk, 0) OR
-                  chm_ucr.counsel_ebf != GREATEST(agg.counsel_adequate_bf, 0)
+                  chm_ucr.counsel_adequate_bf != GREATEST(agg.counsel_adequate_bf, 0)
               ))
         )
         """.format(
@@ -367,13 +366,13 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         next_month_start = month_formatter(self.month + relativedelta(months=1))
 
         return """
-        SELECT ccs_record_case_id AS case_id,
+        SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
-        MAX(counsel_methods) AS counsel_methods
+        MAX(counsel_methods) OVER w AS counsel_methods
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
         WINDOW w AS (
-            PARTITION BY child_health_case_id
+            PARTITION BY ccs_record_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
         )
         """.format(ucr_tablename=self.ucr_tablename), {
@@ -403,7 +402,7 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
-            COALESCE(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods
+            GREATEST(ucr.counsel_methods, prev_month.counsel_methods) AS counsel_methods
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -426,10 +425,10 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
         FULL OUTER JOIN "{new_agg_table}" agg
         ON crm_ucr.doc_id = agg.case_id AND crm_ucr.month = agg.month AND agg.state_id = crm_ucr.state_id
         WHERE crm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
-              (crm_ucr.lactating = 'yes' OR crm_ucr.pregnant = 'yes') AND (
-                crm_ucr.counsel_fp_methods != agg.counsel_methods OR
+              (crm_ucr.lactating = 1 OR crm_ucr.pregnant = 1) AND (
+                crm_ucr.counsel_fp_methods != COALESCE(agg.counsel_methods, 0) OR
                 (crm_ucr.pnc_visited_in_month = 1 AND
-                 agg.latest_time_end BETWEEN %(month)s AND %(next_month)s)
+                 agg.latest_time_end_processed NOT BETWEEN %(month)s AND %(next_month)s)
               )
         )
         """.format(

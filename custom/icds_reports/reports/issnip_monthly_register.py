@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
     AggChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
@@ -29,20 +30,20 @@ class ISSNIPMonthlyReport(object):
     @cached_property
     def agg_awc_monthly_data(self):
         data = AggAwcMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values(
-            'block_name', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
+            'block_name', 'awc_id', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
             'cases_ccs_pregnant_all', 'cases_ccs_lactating_all', 'awc_days_open', 'awc_days_pse_conducted',
             'usage_num_home_visit', 'cases_person_referred'
         )
-        return data[0] if data else None
+        return data
 
     @cached_property
     def child_health_monthly_data(self):
         data = ChildHealthMonthlyView.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             month=self.config['month']
         ).values('awc_id').annotate(
             infants_0_6=Sum(self.filter_by({'age_in_months__range': [0, 6]}, 'valid_in_month')),
@@ -71,12 +72,12 @@ class ISSNIPMonthlyReport(object):
                 }, 'thr_eligible')
             ),
         )
-        return data[0] if data else None
+        return data
 
     @cached_property
     def css_record_monthly(self):
         data = CcsRecordMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             month=self.config['month']
         ).values(
             'awc_id'
@@ -94,32 +95,32 @@ class ISSNIPMonthlyReport(object):
                 }, 'lactating')
             )
         )
-        return data[0] if data else None
+        return data
 
     @cached_property
     def infrastructure_data(self):
-        data = AWCInfrastructureUCR(self.config).data
-        return list(data.values())[-1] if data else None
+        data = AWCInfrastructureUCR(self.config.copy()).data
+        return data.values() if data else []
 
     @cached_property
     def vhnd_data(self):
-        data = VHNDFormUCR(self.config).data
-        return list(data.values())[-1] if data else None
+        data = VHNDFormUCR(self.config.copy()).data
+        return data.values() if data else []
 
     @cached_property
     def ccs_record_monthly_ucr(self):
-        data = CcsRecordMonthlyURC(self.config).data
-        return data[self.config['awc_id']] if data else None
+        data = CcsRecordMonthlyURC(self.config.copy()).data
+        return data
 
     @cached_property
     def child_health_monthly_ucr(self):
-        data = ChildHealthMonthlyURC(self.config).data
-        return data[self.config['awc_id']] if data else None
+        data = ChildHealthMonthlyURC(self.config.copy()).data
+        return data
 
     @cached_property
     def agg_child_health_monthly(self):
         data = AggChildHealthMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values('awc_id').annotate(
@@ -287,4 +288,32 @@ class ISSNIPMonthlyReport(object):
             }, 'rations_21_plus_distributed')),
 
         )
-        return data[0] if data else None
+        return data
+
+    def get_awc_name(self, awc_id):
+        return SQLLocation.objects.get(location_id=awc_id).name,
+
+    @cached_property
+    def to_pdf_format(self):
+        for awc in self.config['awc_id']:
+            agg_awc_monthly_data = [x for x in self.agg_awc_monthly_data if x['awc_id'] == awc]
+            child_health_monthly_data = [x for x in self.child_health_monthly_data if x['awc_id'] == awc]
+            css_record_monthly = [x for x in self.css_record_monthly if x['awc_id'] == awc]
+            infrastructure_data = [x for x in self.infrastructure_data if x['awc_id'] == awc]
+            vhnd_data = [x for x in self.vhnd_data if x['awc_id'] == awc]
+            agg_child_health_monthly = [x for x in self.agg_child_health_monthly if x['awc_id'] == awc]
+            yield dict(
+                awc_name=self.get_awc_name(awc),
+                agg_awc_monthly_data=agg_awc_monthly_data[0] if agg_awc_monthly_data else None,
+                child_health_monthly_data=child_health_monthly_data[0] if child_health_monthly_data else None,
+                css_record_monthly=css_record_monthly[0] if css_record_monthly else None,
+                infrastructure_data=infrastructure_data[-1] if infrastructure_data else None,
+                vhnd_data=vhnd_data[-1] if vhnd_data else None,
+                ccs_record_monthly_ucr=(
+                    self.ccs_record_monthly_ucr[awc] if awc in self.ccs_record_monthly_ucr else None
+                ),
+                child_health_monthly_ucr=(
+                    self.child_health_monthly_ucr[awc] if awc in self.child_health_monthly_ucr else None
+                ),
+                agg_child_health_monthly=agg_child_health_monthly[0] if agg_child_health_monthly else None,
+            )

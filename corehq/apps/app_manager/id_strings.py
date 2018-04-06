@@ -1,8 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from six.moves import zip
 
-ROOT = u'root'
+ROOT = 'root'
 
 
 def _format_to_regex(pattern):
@@ -75,7 +76,7 @@ def detail_title_locale(detail_type):
 
 @pattern('m%d.%s.tab.%d.title')
 def detail_tab_title_locale(module, detail_type, tab):
-    return u"m{module.id}.{detail_type}.tab.{tab_index}.title".format(
+    return "m{module.id}.{detail_type}.tab.{tab_index}.title".format(
         module=module,
         detail_type=detail_type,
         tab_index=tab.id + 1
@@ -88,7 +89,7 @@ def detail_column_header_locale(module, detail_type, column):
         field = 'calculated_property'
     else:
         field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.header".format(
         detail_type=detail_type,
         module=module,
         d=column,
@@ -100,7 +101,7 @@ def detail_column_header_locale(module, detail_type, column):
 @pattern('m%d.%s.%s_%s_%s.enum.%s')
 def detail_column_enum_variable(module, detail_type, column, key_as_var):
     field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.{key_as_var}".format(
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.enum.{key_as_var}".format(
         module=module,
         detail_type=detail_type,
         d=column,
@@ -113,7 +114,7 @@ def detail_column_enum_variable(module, detail_type, column, key_as_var):
 @pattern('m%d.%s.%s_%s_%s.graph.key.%s')
 def graph_configuration(module, detail_type, column, key):
     field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.key.{key}".format(
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.key.{key}".format(
         module=module,
         detail_type=detail_type,
         d=column,
@@ -125,7 +126,7 @@ def graph_configuration(module, detail_type, column, key):
 
 @pattern('m%d.%s.graph.key.%s')
 def mobile_ucr_configuration(module, uuid, key):
-    return u"m{module.id}.{uuid}.graph.key.{key}".format(
+    return "m{module.id}.{uuid}.graph.key.{key}".format(
         module=module,
         uuid=uuid,
         key=key
@@ -135,7 +136,7 @@ def mobile_ucr_configuration(module, uuid, key):
 @pattern('m%d.%s.%s_%s_%s.graph.series_%d.key.%s')
 def graph_series_configuration(module, detail_type, column, series_index, key):
     field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.series_{series_index}.key.{key}".format(
         module=module,
         detail_type=detail_type,
         d=column,
@@ -148,7 +149,7 @@ def graph_series_configuration(module, detail_type, column, series_index, key):
 
 @pattern('m%d.%s.graph.series_%d.key.%s')
 def mobile_ucr_series_configuration(module, uuid, series_index, key):
-    return u"m{module.id}.{uuid}.graph.series_{series_index}.key.{key}".format(
+    return "m{module.id}.{uuid}.graph.series_{series_index}.key.{key}".format(
         module=module,
         uuid=uuid,
         series_index=series_index,
@@ -159,7 +160,7 @@ def mobile_ucr_series_configuration(module, uuid, series_index, key):
 @pattern('m%d.%s.%s_%s_%s.graph.a.%d')
 def graph_annotation(module, detail_type, column, annotation_index):
     field = column.field.replace('#', '')
-    return u"m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.a.{a_id}".format(
+    return "m{module.id}.{detail_type}.{d.model}_{field}_{d_id}.graph.a.{a_id}".format(
         module=module,
         detail_type=detail_type,
         d=column,
@@ -171,7 +172,7 @@ def graph_annotation(module, detail_type, column, annotation_index):
 
 @pattern('m%d.%s.graph.a.%d')
 def mobile_ucr_annotation(module, uuid, annotation_index):
-    return u"m{module.id}.{uuid}.graph.a.{a_id}".format(
+    return "m{module.id}.{uuid}.graph.a.{a_id}".format(
         module=module,
         uuid=uuid,
         a_id=annotation_index
@@ -180,94 +181,94 @@ def mobile_ucr_annotation(module, uuid, annotation_index):
 
 @pattern('modules.m%d')
 def module_locale(module):
-    return u"modules.m{module.id}".format(module=module)
+    return "modules.m{module.id}".format(module=module)
 
 
 @pattern('forms.m%df%d')
 def form_locale(form):
-    return u"forms.m{module.id}f{form.id}".format(module=form.get_module(),
+    return "forms.m{module.id}f{form.id}".format(module=form.get_module(),
                                                   form=form)
 
 
 @pattern('case_lists.m%d')
 def case_list_locale(module):
-    return u"case_lists.m{module.id}".format(module=module)
+    return "case_lists.m{module.id}".format(module=module)
 
 
 @pattern('case_list_form.m%d')
 def case_list_form_locale(module):
-    return u"case_list_form.m{module.id}".format(module=module)
+    return "case_list_form.m{module.id}".format(module=module)
 
 
 @pattern('case_lists.m%d.callout.header')
 def callout_header_locale(module):
-    return u"case_lists.m{module.id}.callout.header".format(module=module)
+    return "case_lists.m{module.id}.callout.header".format(module=module)
 
 
 @pattern('case_search.m%d')
 def case_search_locale(module):
-    return u"case_search.m{module.id}".format(module=module)
+    return "case_search.m{module.id}".format(module=module)
 
 
 @pattern('search_command.m%d')
 def search_command(module):
-    return u"search_command.m{module.id}".format(module=module)
+    return "search_command.m{module.id}".format(module=module)
 
 
 @pattern('search_property.m%d.%s')
 def search_property_locale(module, search_prop):
-    return u"search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
+    return "search_property.m{module.id}.{search_prop}".format(module=module, search_prop=search_prop)
 
 
 @pattern('referral_lists.m%d')
 def referral_list_locale(module):
     """1.0 holdover"""
-    return u"referral_lists.m{module.id}".format(module=module)
+    return "referral_lists.m{module.id}".format(module=module)
 
 
 @pattern('reports.%s')
 def report_command(report_id):
-    return u'reports.{report_id}'.format(report_id=report_id)
+    return 'reports.{report_id}'.format(report_id=report_id)
 
 
 @pattern('cchq.report_menu')
 def report_menu():
-    return u'cchq.report_menu'
+    return 'cchq.report_menu'
 
 
 @pattern('cchq.report_name_header')
 def report_name_header():
-    return u'cchq.report_name_header'
+    return 'cchq.report_name_header'
 
 
 @pattern('cchq.report_description_header')
 def report_description_header():
-    return u'cchq.report_description_header'
+    return 'cchq.report_description_header'
 
 
 @pattern('cchq.report_data_table')
 def report_data_table():
-    return u'cchq.report_data_table'
+    return 'cchq.report_data_table'
 
 
 @pattern('cchq.reports.%s.headers.%s')
 def report_column_header(report_id, column):
-    return u'cchq.reports.{report_id}.headers.{column}'.format(report_id=report_id, column=column)
+    return 'cchq.reports.{report_id}.headers.{column}'.format(report_id=report_id, column=column)
 
 
 @pattern('cchq.reports.%s.name')
 def report_name(report_id):
-    return u'cchq.reports.{report_id}.name'.format(report_id=report_id)
+    return 'cchq.reports.{report_id}.name'.format(report_id=report_id)
 
 
 @pattern('cchq.reports.%s.description')
 def report_description(report_id):
-    return u'cchq.reports.{report_id}.description'.format(report_id=report_id)
+    return 'cchq.reports.{report_id}.description'.format(report_id=report_id)
 
 
 @pattern('cchq.report_last_sync')
 def report_last_sync():
-    return u'cchq.report_last_sync'
+    return 'cchq.report_last_sync'
 
 
 CUSTOM_APP_STRINGS_RE = _regex_union(REGEXES)
@@ -284,31 +285,31 @@ def xform_resource(form):
 
 
 def locale_resource(lang):
-    return u'app_{lang}_strings'.format(lang=lang)
+    return 'app_{lang}_strings'.format(lang=lang)
 
 
 def media_resource(multimedia_id, name):
-    return u'media-{id}-{name}'.format(id=multimedia_id, name=name)
+    return 'media-{id}-{name}'.format(id=multimedia_id, name=name)
 
 
 @pattern('modules.m%d.icon')
 def module_icon_locale(module):
-    return u"modules.m{module.id}.icon".format(module=module)
+    return "modules.m{module.id}.icon".format(module=module)
 
 
 @pattern('modules.m%d.audio')
 def module_audio_locale(module):
-    return u"modules.m{module.id}.audio".format(module=module)
+    return "modules.m{module.id}.audio".format(module=module)
 
 
 @pattern('modules.m%d.%s')
 def module_custom_icon_locale(module, icon_form):
-    return u"modules.m{module.id}.{icon_form}".format(module=module, icon_form=icon_form)
+    return "modules.m{module.id}.{icon_form}".format(module=module, icon_form=icon_form)
 
 
 @pattern('forms.m%df%d.icon')
 def form_icon_locale(form):
-    return u"forms.m{module.id}f{form.id}.icon".format(
+    return "forms.m{module.id}f{form.id}.icon".format(
         module=form.get_module(),
         form=form
     )
@@ -316,7 +317,7 @@ def form_icon_locale(form):
 
 @pattern('forms.m%df%d.audio')
 def form_audio_locale(form):
-    return u"forms.m{module.id}f{form.id}.audio".format(
+    return "forms.m{module.id}f{form.id}.audio".format(
         module=form.get_module(),
         form=form
     )
@@ -324,7 +325,7 @@ def form_audio_locale(form):
 
 @pattern('forms.m%df%d.%s')
 def form_custom_icon_locale(form, icon_form):
-    return u"forms.m{module.id}f{form.id}.{icon_form}".format(
+    return "forms.m{module.id}f{form.id}.{icon_form}".format(
         module=form.get_module(),
         form=form,
         icon_form=icon_form,
@@ -333,26 +334,26 @@ def form_custom_icon_locale(form, icon_form):
 
 @pattern('case_list_form.m%d.icon')
 def case_list_form_icon_locale(module):
-    return u"case_list_form.m{module.id}.icon".format(module=module)
+    return "case_list_form.m{module.id}.icon".format(module=module)
 
 
 @pattern('case_list_form.m%d.audio')
 def case_list_form_audio_locale(module):
-    return u"case_list_form.m{module.id}.audio".format(module=module)
+    return "case_list_form.m{module.id}.audio".format(module=module)
 
 
 @pattern('case_lists.m%d.icon')
 def case_list_icon_locale(module):
-    return u"case_lists.m{module.id}.icon".format(module=module)
+    return "case_lists.m{module.id}.icon".format(module=module)
 
 
 @pattern('case_lists.m%d.audio')
 def case_list_audio_locale(module):
-    return u"case_lists.m{module.id}.audio".format(module=module)
+    return "case_lists.m{module.id}.audio".format(module=module)
 
 
 def detail(module, detail_type):
-    return u"m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
+    return "m{module.id}_{detail_type}".format(module=module, detail_type=detail_type)
 
 
 def persistent_case_context_detail(module):
@@ -364,7 +365,7 @@ def fixture_detail(module):
 
 
 def fixture_session_var(module):
-    return u'fixture_value_m{module.id}'.format(module=module)
+    return 'fixture_value_m{module.id}'.format(module=module)
 
 
 def menu_id(module, suffix=""):
@@ -375,28 +376,28 @@ def menu_id(module, suffix=""):
     else:
         if suffix:
             suffix = ".{}".format(suffix)
-        return u"m{module.id}{suffix}".format(module=module, suffix=suffix)
+        return "m{module.id}{suffix}".format(module=module, suffix=suffix)
 
 
 def form_command(form, module=None):
     if not module:
         module = form.get_module()
-    return u"m{module.id}-f{form.id}".format(module=module, form=form)
+    return "m{module.id}-f{form.id}".format(module=module, form=form)
 
 
 def case_list_command(module):
-    return u"m{module.id}-case-list".format(module=module)
+    return "m{module.id}-case-list".format(module=module)
 
 
 def referral_list_command(module):
     """1.0 holdover"""
-    return u"m{module.id}-referral-list".format(module=module)
+    return "m{module.id}-referral-list".format(module=module)
 
 
 def indicator_instance(indicator_set_name):
-    return u"indicators:%s" % indicator_set_name
+    return "indicators:%s" % indicator_set_name
 
 
 def schedule_fixture(module, phase, form):
     form_id = phase.get_phase_form_index(form)
-    return u'schedule:m{module.id}:p{phase.id}:f{form_id}'.format(module=module, phase=phase, form_id=form_id)
+    return 'schedule:m{module.id}:p{phase.id}:f{form_id}'.format(module=module, phase=phase, form_id=form_id)

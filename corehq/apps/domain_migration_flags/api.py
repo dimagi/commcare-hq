@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.domain_migration_flags.exceptions import DomainMigrationProgressError
 from corehq.toggles import DATA_MIGRATION
 from corehq.util.quickcache import quickcache

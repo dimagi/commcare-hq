@@ -99,7 +99,7 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
                 'case_hierarchy_options': {
                     "show_view_buttons": False,
                     "get_case_url": lambda case_id: reverse(
-                        'case_details', args=[PACT_DOMAIN, case_id])
+                        'case_data', args=[PACT_DOMAIN, case_id])
                 },
                 'case': patient_doc,
             })

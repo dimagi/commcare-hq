@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django.contrib import messages
 from django.urls import reverse
@@ -170,8 +171,8 @@ class BulkImportIndicatorsView(BaseSectionPageView, DomainViewMixin):
         if upload and self.import_form.is_valid():
             data = json.loads(upload.read())
             for (view_type, indicator_class) in [
-                (u'indicator_definitions', IndicatorDefinition),
-                (u'dynamic_indicator_definitions', DynamicIndicatorDefinition),
+                ('indicator_definitions', IndicatorDefinition),
+                ('dynamic_indicator_definitions', DynamicIndicatorDefinition),
             ]:
                 for doc in data[view_type]:
                     copied = indicator_class.copy_to_domain(

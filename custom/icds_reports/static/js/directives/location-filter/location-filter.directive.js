@@ -13,7 +13,12 @@ var transformLocationTypeName = function(locationTypeName) {
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
-    var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var ALL_OPTION = {
+        name: 'All',
+        location_id: 'all',
+        "user_have_access": 0,
+        "user_have_access_to_parent": 1,
+    };
 
     vm.locationsCache = locationsCache;
     vm.userLocationId = userLocationId;
@@ -127,8 +132,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     vm.userLocationId = userLocationId;
     vm.animationsEnabled = true;
-    vm.selectedLocationId = $location.search()['location_id'] !== 'undefined' &&
-        $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.userLocationId;
+    vm.selectedLocationId = ['', 'undefined', 'null'].indexOf($location.search()['location_id']) === -1 ? $location.search()['location_id'] : vm.userLocationId;
     vm.locationsCache = {};
     vm.selectedLocations = [];
     vm.hierarchy = [];
@@ -137,7 +141,12 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     vm.location_id = $location.search()['location_id'] !== 'undefined' &&
         $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.selectedLocationId;
 
-    var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var ALL_OPTION = {
+        name: 'All',
+        location_id: 'all',
+        "user_have_access": 0,
+        "user_have_access_to_parent": 1,
+    };
 
     var initHierarchy = function() {
         var hierarchy = _.map(locationHierarchy, function(locationType) {
@@ -241,15 +250,20 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
+                        var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
                             return o.name;
                         });
-                        if (["null", "undefined"].indexOf(userLocationId) === -1 && parentId === 'root' && !haveAccessToAllLocations) {
-                            vm.locationsCache[parentId] = sorted_locations;
+
+                        var userLocationInSorted = _.filter(sortedLocations, function (location) {
+                            return location.location_id === userLocationId;
+                        });
+
+                        if (["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations && (parentId === 'root' || parentId === selectedLocation.parent_id || userLocationInSorted.length > 0 )) {
+                            vm.locationsCache[parentId] = sortedLocations;
                         } else if (selectedLocation.user_have_access) {
-                            vm.locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
+                            vm.locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
                         } else {
-                            vm.locationsCache[parentId] = sorted_locations;
+                            vm.locationsCache[parentId] = sortedLocations;
                         }
                     }
                 }

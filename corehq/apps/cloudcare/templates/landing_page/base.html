@@ -24,6 +24,16 @@
 
 {% block body %}
 
+{% initial_page_data 'allowed_host' request.get_host %}
+{% initial_page_data 'app' app %}
+{% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
+{% initial_page_data 'domain' request.domain %}
+{% initial_page_data 'environment' environment %}
+{% initial_page_data 'formplayer_url' formplayer_url %}
+{% initial_page_data 'language' request.user.language|default:'en' %}
+{% initial_page_data 'maps_api_key' maps_api_key %}
+{% initial_page_data 'username' request.user.username %}
+
 <div id="cloudcare-main" class="cloudcare-home-content">
     <section id="case-crumbs" style="width: 800px"></section>
     <section id="cases"></section>
@@ -53,26 +63,6 @@
 </div>
 {% endblock %}
 
-
-{% block js-inline %}
-<script>
-    window.GMAPS_API_KEY = '{{ maps_api_key|safe }}'; // maps api is loaded on-demand
-    var options = {
-        apps: [{{ app|JSON }}],
-        language: "{{ request.couch_user.language|default:'en' }}",
-        username: "{{ request.couch_user.username  }}",
-        domain: "{{ request.domain }}",
-        formplayer_url: "{{ formplayer_url }}",
-        landingPageAppMode: true,
-        singleAppMode: false,
-        phoneMode: false,
-        oneQuestionPerScreen: false,
-        allowedHost: "{{ request.get_host }}",
-        environment: {{ environment|JSON }},
-        {% if request.couch_user.can_edit_data %}
-        debuggerEnabled: true,
-        {% endif %}
-    };
-    FormplayerFrontend.start(options);
-</script>
+{% block js %}{{ block.super }}
+    <script src="{% static 'cloudcare/js/landing_page.js' %}"></script>
 {% endblock %}

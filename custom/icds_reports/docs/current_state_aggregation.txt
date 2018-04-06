@@ -1,0 +1,48 @@
+@startuml
+[UCR - Child Health Monthly Tableau]
+[UCR - CCS Record Monthly Tableau]
+[UCR - Person Cases]
+[UCR - Household Cases]
+
+[UCR - Usage Forms]
+[UCR - VHND Forms]
+[UCR - AWC Mgmt Forms]
+[UCR - Daily Feeding Forms]
+[UCR - Infrastructure Forms]
+[UCR - THR Forms]
+[UCR - Complementary Feeding Forms]
+[Child Health Monthly]
+[CCS Record Monthly]
+[Daily Attendance]
+[Agg Child Health]
+[Agg CCS Record]
+[Agg AWC]
+[Agg THR Data]
+[Agg AWC Daily]
+
+[UCR - Complementary Feeding Forms] --> [Child Health Monthly]
+[UCR - Child Health Monthly Tableau] --> [Child Health Monthly]
+[UCR - CCS Record Monthly Tableau] --> [CCS Record Monthly]
+
+[UCR - Daily Feeding Forms] --> [Daily Attendance]
+
+[UCR - Child Health Monthly Tableau] --> [Agg Child Health]
+[UCR - CCS Record Monthly Tableau] --> [Agg CCS Record]
+[Agg Child Health] --> [Agg THR Data]
+[Agg CCS Record] --> [Agg THR Data]
+
+[UCR - Daily Feeding Forms] --> [Agg AWC]
+[Agg Child Health] --> [Agg AWC]
+[Agg CCS Record] --> [Agg AWC]
+[UCR - Household Cases] --> [Agg AWC]
+[UCR - Person Cases] --> [Agg AWC]
+[Child Health Monthly] --> [Agg AWC]
+[CCS Record Monthly] --> [Agg AWC]
+[UCR - Usage Forms] --> [Agg AWC]
+[UCR - VHND Forms] --> [Agg AWC]
+[UCR - AWC Mgmt Forms] --> [Agg AWC]
+[UCR - Infrastructure Forms] --> [Agg AWC]
+
+[Agg AWC] --> [Agg AWC Daily]
+[Daily Attendance] --> [Agg AWC Daily]
+@enduml

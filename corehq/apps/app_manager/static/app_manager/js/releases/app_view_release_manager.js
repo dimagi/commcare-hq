@@ -5,7 +5,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     hqImport('app_manager/js/app_manager').setPrependedPageTitle(django.gettext("Publish"));
 
     // Main releases content
-    var ReleasesMain = hqImport('app_manager/js/releases/releases').ReleasesMain;
+    var releasesMainModel = hqImport('app_manager/js/releases/releases').releasesMainModel;
     var o = {
         currentAppVersion: initial_page_data('app_version') || -1,
         recipient_contacts: initial_page_data('sms_contacts'),
@@ -14,7 +14,7 @@ hqDefine("app_manager/js/releases/app_view_release_manager", function() {
     };
     var el = $('#releases-table');
     if (el.length) {
-        var releasesMain = new ReleasesMain(o);
+        var releasesMain = releasesMainModel(o);
         _.defer(function(){ releasesMain.getMoreSavedApps(false); });
         el.koApplyBindings(releasesMain);
     }
