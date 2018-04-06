@@ -437,6 +437,7 @@ class RestoreState(object):
     def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
         new_synclog = SimplifiedSyncLog(
+            _id=SyncLog.get_db().server.next_uuid(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
