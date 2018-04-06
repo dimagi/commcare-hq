@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 
