@@ -19,7 +19,7 @@
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-    <script src="{% static 'reports/js/filters.js' %}"></script>
+    {% include 'reports/partials/filters_js.html' %}
     {% endcompress %}
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
@@ -28,6 +28,8 @@
 
 {% block stylesheets %}
     {{ block.super }}
+
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 
     {% if less_debug %}
     <link type="text/less"

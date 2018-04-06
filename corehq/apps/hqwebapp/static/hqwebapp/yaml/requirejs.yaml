@@ -71,7 +71,7 @@ modules:
   - name: reports/js/bundle
     include:
       - reports/js/config.dataTables.bootstrap
-      - reports/js/filters
+      - reports/js/filters/main
       - reports/js/standard_hq_report
     exclude:
       - hqwebapp/js/common
