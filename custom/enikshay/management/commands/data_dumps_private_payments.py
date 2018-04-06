@@ -41,13 +41,29 @@ class Command(BaseDataDump):
         self.case_type = CASE_TYPE_VOUCHER
         self.case_accessor = CaseAccessors(DOMAIN)
 
+    def get_all_episode_cases(self, voucher_case):
+        if 'all_episode_cases' not in self.context:
+            occurrence_case = self.get_occurrence(voucher_case)
+            self.context['all_episode_cases'] = [
+                case for case in CaseAccessors(DOMAIN).get_reverse_indexed_cases(
+                    [occurrence_case.case_id], case_types=[CASE_TYPE_EPISODE])
+            ]
+        if not self.context['all_episode_cases']:
+            raise Exception("No episodes found for voucher %s" % voucher_case.case_id)
+        return self.context['all_episode_cases']
+
     def get_custom_value(self, column_name, case):
         if column_name == "eNikshay person UUID":
             person_case = self.get_person(case)
             return person_case.case_id
         elif column_name == "eNikshay episode UUID":
-            episode_case = self.get_episode(case)
-            return episode_case.case_id
+            return ','.join([episode_case.case_id
+                             for episode_case in self.get_all_episode_cases(case)])
+        elif column_name == "Nikshay ID":
+            return ','.join([episode_case.get_case_property('nikshay_id')
+                             for episode_case in self.get_all_episode_cases(case)
+                             if episode_case.get_case_property('nikshay_id')
+                             ])
         elif column_name == "Organisation":
             owner_id = self.get_person(case).owner_id
             location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
@@ -91,8 +107,6 @@ class Command(BaseDataDump):
             return False
         try:
             person = self.get_person(voucher_case)
-        except IncorrectVoucherType:
-            return False
         except ENikshayCaseNotFound as e:
             print("----ENikshayCaseNotFound----")
             print(e)
@@ -118,9 +132,16 @@ class Command(BaseDataDump):
 
     def get_occurrence(self, voucher_case):
         if 'occurrence' not in self.context:
-            episode_case = self.get_episode(voucher_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain,
-                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            if self._is_prescription_voucher(voucher_case):
+                episode_case = self.get_episode(voucher_case)
+                occurrence_case = get_first_parent_of_case(episode_case.domain,
+                                                           episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            elif self._is_lab_voucher(voucher_case):
+                test_case = self.get_test(voucher_case)
+                occurrence_case = get_first_parent_of_case(test_case.domain,
+                                                           test_case.case_id, CASE_TYPE_OCCURRENCE)
+            else:
+                raise IncorrectVoucherType("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for voucher %s" % voucher_case.case_id)
@@ -128,7 +149,7 @@ class Command(BaseDataDump):
 
     def get_test(self, voucher_case):
         assert self._is_lab_voucher(voucher_case)
-        if not self.context['test']:
+        if 'test' not in self.context:
             test_case = get_first_parent_of_case(voucher_case.domain, voucher_case.case_id,
                                                  CASE_TYPE_TEST)
             self.context['test'] = test_case
@@ -147,13 +168,9 @@ class Command(BaseDataDump):
         return self.context['prescription']
 
     def get_episode(self, voucher_case):
+        assert self._is_prescription_voucher(voucher_case)
         if 'episode' not in self.context:
-            if self._is_prescription_voucher(voucher_case):
-                host_case = self.get_prescription(voucher_case)
-            elif self._is_lab_voucher(voucher_case):
-                host_case = self.get_test(voucher_case)
-            else:
-                raise IncorrectVoucherType("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
+            host_case = self.get_prescription(voucher_case)
             episode_case = get_first_parent_of_case(host_case.domain, host_case.case_id,
                                                     CASE_TYPE_EPISODE)
             self.context['episode'] = episode_case
@@ -164,6 +181,4 @@ class Command(BaseDataDump):
     def get_case_reference_value(self, case_reference, test_case, calculation):
         if case_reference == 'person':
             return self.get_person(test_case).get_case_property(calculation)
-        elif case_reference == 'episode':
-            return self.get_episode(test_case).get_case_property(calculation)
         raise Exception("unknown case reference %s" % case_reference)

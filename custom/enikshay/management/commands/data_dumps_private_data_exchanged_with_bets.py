@@ -8,6 +8,7 @@ import json
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CommCareUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
@@ -20,6 +21,7 @@ from custom.enikshay.case_utils import (
 )
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.management.commands.base_data_dump import BaseDataDump, PRIVATE_SECTOR_ID_MAPPING
 
 DOMAIN = "enikshay"
@@ -56,13 +58,29 @@ class Command(BaseDataDump):
             self.context['bets_repeater_payload'] = json.loads(repeat_record.get_payload())['voucher_details'][0]
         return self.context['bets_repeater_payload']
 
+    def get_all_episode_cases(self, voucher_case):
+        if 'all_episode_cases' not in self.context:
+            occurrence_case = self.get_occurrence(voucher_case)
+            self.context['all_episode_cases'] = [
+                case for case in CaseAccessors(DOMAIN).get_reverse_indexed_cases(
+                    [occurrence_case.case_id], case_types=[CASE_TYPE_EPISODE])
+            ]
+        if not self.context['all_episode_cases']:
+            raise Exception("No episodes found for voucher %s" % voucher_case.case_id)
+        return self.context['all_episode_cases']
+
     def get_custom_value(self, column_name, case):
         if column_name == "eNikshay person UUID":
             person_case = self.get_person(case)
             return person_case.case_id
         elif column_name == "eNikshay episode UUID":
-            episode_case = self.get_episode(case)
-            return episode_case.case_id
+            return ','.join([episode_case.case_id
+                             for episode_case in self.get_all_episode_cases(case)])
+        elif column_name == "Nikshay ID":
+            return ','.join([episode_case.get_case_property('nikshay_id')
+                             for episode_case in self.get_all_episode_cases(case)
+                             if episode_case.get_case_property('nikshay_id')
+                             ])
         elif column_name == "Event ID (as defined in BETS)":
             return self.get_bets_repeat_record_payload(case)['EventID']
         elif column_name == "Beneficiary Type (Lab or Chemist)":
@@ -127,6 +145,12 @@ class Command(BaseDataDump):
             person = self.get_person(voucher_case)
         except IncorrectVoucherType:
             return False
+        except ENikshayCaseNotFound as e:
+            print("----ENikshayCaseNotFound----")
+            print(e)
+            print(voucher_case.case_id)
+            print("-----------------------------")
+            return False
         return (
             person and
             person.get_case_property('dataset') == 'real' and
@@ -146,9 +170,16 @@ class Command(BaseDataDump):
 
     def get_occurrence(self, voucher_case):
         if 'occurrence' not in self.context:
-            episode_case = self.get_episode(voucher_case)
-            occurrence_case = get_first_parent_of_case(episode_case.domain,
-                                                       episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            if self._is_prescription_voucher(voucher_case):
+                episode_case = self.get_episode(voucher_case)
+                occurrence_case = get_first_parent_of_case(episode_case.domain,
+                                                           episode_case.case_id, CASE_TYPE_OCCURRENCE)
+            elif self._is_lab_voucher(voucher_case):
+                test_case = self.get_test(voucher_case)
+                occurrence_case = get_first_parent_of_case(test_case.domain,
+                                                           test_case.case_id, CASE_TYPE_OCCURRENCE)
+            else:
+                raise IncorrectVoucherType("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
             self.context['occurrence'] = occurrence_case
         if not self.context['occurrence']:
             raise Exception("could not find occurrence for voucher %s" % voucher_case.case_id)
@@ -165,7 +196,7 @@ class Command(BaseDataDump):
         return self.context['prescription']
 
     def get_test(self, voucher_case):
-        if not self.context['test']:
+        if 'test' not in self.context:
             test_case = get_first_parent_of_case(voucher_case.domain, voucher_case.case_id,
                                                  CASE_TYPE_TEST)
             self.context['test'] = test_case
@@ -174,13 +205,9 @@ class Command(BaseDataDump):
         return self.context['test']
 
     def get_episode(self, voucher_case):
+        assert self._is_prescription_voucher(voucher_case)
         if 'episode' not in self.context:
-            if self._is_prescription_voucher(voucher_case):
-                host_case = self.get_prescription(voucher_case)
-            elif self._is_lab_voucher(voucher_case):
-                host_case = self.get_test(voucher_case)
-            else:
-                raise IncorrectVoucherType("Voucher id %s case neither lab or prescription" % voucher_case.case_id)
+            host_case = self.get_prescription(voucher_case)
             episode_case = get_first_parent_of_case(host_case.domain, host_case.case_id,
                                                     CASE_TYPE_EPISODE)
             self.context['episode'] = episode_case
