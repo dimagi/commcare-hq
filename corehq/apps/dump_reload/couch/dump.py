@@ -7,7 +7,7 @@ from collections import Counter
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider, \
-    SyncLogIDProvider, DomainKeyGenerator, DomainInListKeyGenerator
+    DomainKeyGenerator, DomainInListKeyGenerator
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.feature_previews import all_previews
@@ -45,7 +45,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureDataItem']),
     ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
-    SyncLogIDProvider(),
 }
 
 
