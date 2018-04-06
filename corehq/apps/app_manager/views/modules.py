@@ -122,7 +122,7 @@ def _get_shared_module_view_context(app, module, case_property_builder, lang=Non
     context = {
         'details': _get_module_details_context(app, module, case_property_builder, case_type),
         'case_list_form_options': _case_list_form_options(app, module, case_type, lang),
-        'valid_parent_modules': _get_valid_parent_modules(app, module),
+        'valid_parents_for_child_module': _get_valid_parents_for_child_module(app, module),
         'js_options': {
             'fixture_columns_by_type': _get_fixture_columns_by_type(app.domain),
             'is_search_enabled': case_search_enabled_for_domain(app.domain),
@@ -180,7 +180,8 @@ def _get_advanced_module_view_context(app, module):
 
 def _get_basic_module_view_context(app, module, case_property_builder):
     return {
-        'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
+        'parent_case_modules': _get_modules_with_parent_case_type(
+            app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
             toggles.BASIC_CHILD_MODULE.enabled(app.domain)
@@ -282,7 +283,8 @@ def _setup_case_property_builder(app):
     return builder
 
 
-def _get_parent_modules(app, module, case_property_builder, case_type_):
+# Parent case selection in case list: get modules whose case type is the parent of the given module's case type
+def _get_modules_with_parent_case_type(app, module, case_property_builder, case_type_):
         parent_types = case_property_builder.get_parent_types(case_type_)
         modules = app.modules
         parent_module_ids = [mod.unique_id for mod in modules
@@ -294,7 +296,8 @@ def _get_parent_modules(app, module, case_property_builder, case_type_):
         } for mod in app.modules if mod.case_type != case_type_ and mod.unique_id != module.unique_id]
 
 
-def _get_valid_parent_modules(app, module):
+# Parent/child modules: get modules that may be used as parents of the given module
+def _get_valid_parents_for_child_module(app, module):
     # If this module already has a child, it can't also have a parent
     for m in app.modules:
         if module.unique_id == getattr(m, 'root_module_id', None):
