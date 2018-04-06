@@ -5,17 +5,23 @@ from django.test.client import Client
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
 from mock import mock
 import json
 
 
 class TestTwoFactorCheck(TestCase):
+    domain_name = "test_domain"
 
     def setUp(self):
-        self.domain = create_domain("test_domain")
+
+        self.domain = create_domain(self.domain_name)
         self.domain.two_factor_auth = False
         self.request = self.create_request(request_url="/account/")
+
+    # def tearDown(self):
+    #     Domain.get_by_name(self.domain_name).delete()
 
     @classmethod
     def create_request(cls, request_url):
