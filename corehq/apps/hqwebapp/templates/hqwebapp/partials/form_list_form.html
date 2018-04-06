@@ -112,7 +112,8 @@
             };
         }
 
-        var tableModel = new TableModel({{ row_spec|JSON }}, {{ rows|JSON }});
+        var formContext = hqImport("hqwebapp/js/initial_page_data").get("form_context"),
+            tableModel = new TableModel(formContext.row_spec, formContext.rows);
         ko.applyBindings(tableModel, $('#table-form').get(0));
     });
 </script>
