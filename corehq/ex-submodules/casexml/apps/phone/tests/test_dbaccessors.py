@@ -5,7 +5,6 @@ import datetime
 from django.test import TestCase
 
 from casexml.apps.case.tests.util import delete_all_sync_logs
-from casexml.apps.phone.analytics import update_analytics_indexes
 from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_for_user, get_synclogs_for_user
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog
 from casexml.apps.phone.exceptions import MissingSyncLog
@@ -32,7 +31,6 @@ class DBAccessorsTest(TestCase, DocTestMixin):
         cls.docs = cls.sync_logs + sync_logs_other
         for doc in cls.docs:
             doc.save()
-        update_analytics_indexes()
 
     @classmethod
     def tearDownClass(cls):
@@ -57,7 +55,6 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
         cls.docs = []
         super(SyncLogPruneTest, cls).setUpClass()
         delete_all_sync_logs()
-        update_analytics_indexes()
 
     @classmethod
     def tearDownClass(cls):
@@ -87,18 +84,12 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
 
 
 class SyncLogQueryTest(TestCase):
-    def _sql_count(self):
+    def _count(self):
         return SyncLogSQL.objects.count()
-
-    def _couch_count(self):
-        return len(SyncLog.view("phone/sync_logs_by_user", include_docs=False).all())
 
     def test_default(self):
         synclog = SyncLog(domain='test', user_id='user1', date=datetime.datetime(2015, 7, 1, 0, 0))
         synclog.save()
-        self.assertEqual(self._sql_count(), 1)
-        self.assertEqual(self._couch_count(), 0)
-
+        self.assertEqual(self._count(), 1)
         delete_synclog(synclog._id)
-        self.assertEqual(self._sql_count(), 0)
-        self.assertEqual(self._couch_count(), 0)
+        self.assertEqual(self._count(), 0)
