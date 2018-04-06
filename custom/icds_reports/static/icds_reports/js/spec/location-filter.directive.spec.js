@@ -418,3 +418,568 @@ describe('Location Modal Controller', function () {
         assert.equal(expected, result);
     });
 });
+
+describe('Location Modal Controller restrictions', function () {
+
+    beforeEach(module('icdsApp', function ($provide) {
+        $provide.constant("userLocationId", null);
+    }));
+
+    var scope, modalInstance, controller, $location;
+
+    var mockHierarchy = [['awc', ['supervisor']], {'selected': null},
+        ['block', ['district']], {'selected': null},
+        ['district', ['state']], {'selected': null},
+        ['state', [null]], {'selected': null},
+        ['supervisor', ['block']], {'selected': null},
+    ];
+
+    beforeEach(function () {
+        inject(function ($rootScope, $controller, _$uibModal_, _$location_, locationsService) {
+            $location = _$location_;
+            scope = $rootScope.$new();
+
+            modalInstance = {
+                close: sinon.spy(),
+                dismiss: sinon.spy(),
+                result: {
+                    then: sinon.spy(),
+                },
+            };
+
+            controller = $controller(LocationModalController, {
+                $scope: scope,
+                $uibModalInstance: modalInstance,
+                $location: $location,
+                locationsService: locationsService,
+                selectedLocationId: '',
+                hierarchy: mockHierarchy,
+                selectedLocations: [],
+                locationsCache: [],
+                maxLevel: 5,
+                userLocationId: null,
+                showMessage: true,
+            });
+        });
+    });
+
+    it('tests disabled dropdowns if user assign to awc', function () {
+        var mockLocationCache = {
+            'root': [{
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_state': [{
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_district': [{
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_block': [{
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_sector': [{
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }]
+        };
+
+        var mockSelectedLocations = [
+            {
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            },
+        ];
+        controller.selectedLocations = mockSelectedLocations;
+        controller.locationsCache = mockLocationCache;
+        controller.userLocationId = 'test_awc';
+        controller.selectedLocationId = 'test_awc';
+        assert.equal(true, controller.disabled(0));
+        assert.equal(true, controller.disabled(1));
+        assert.equal(true, controller.disabled(2));
+        assert.equal(true, controller.disabled(3));
+        assert.equal(true, controller.disabled(4));
+    });
+
+    it('tests disabled dropdowns if user assign to sector', function () {
+        var mockLocationCache = {
+            'root': [{
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_state': [{
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_district': [{
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_block': [{
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }],
+            'test_sector': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc_1",
+                name: "Test AWC 1",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+        };
+
+        var mockSelectedLocations = [
+            {
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            },
+        ];
+        controller.selectedLocations = mockSelectedLocations;
+        controller.locationsCache = mockLocationCache;
+        controller.userLocationId = 'test_sector';
+        controller.selectedLocationId = 'test_sector';
+        assert.equal(true, controller.disabled(0));
+        assert.equal(true, controller.disabled(1));
+        assert.equal(true, controller.disabled(2));
+        assert.equal(true, controller.disabled(3));
+        assert.equal(false, controller.disabled(4));
+    });
+
+    it('tests disabled dropdowns if user assign to block', function () {
+        var mockLocationCache = {
+            'root': [{
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_state': [{
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_district': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_block': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_sector': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc_1",
+                name: "Test AWC 1",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+        };
+
+        var mockSelectedLocations = [
+            {
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }
+        ];
+        controller.selectedLocations = mockSelectedLocations;
+        controller.locationsCache = mockLocationCache;
+        controller.userLocationId = 'test_block';
+        controller.selectedLocationId = 'test_block';
+        assert.equal(true, controller.disabled(0));
+        assert.equal(true, controller.disabled(1));
+        assert.equal(false, controller.disabled(2));
+        assert.equal(false, controller.disabled(3));
+        assert.equal(false, controller.disabled(4));
+    });
+
+    it('tests disabled dropdowns if user assign to district', function () {
+        var mockLocationCache = {
+            'root': [{
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }],
+            'test_state': [{
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }],
+            'test_district': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_block': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_sector': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc_1",
+                name: "Test AWC 1",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+        };
+
+        var mockSelectedLocations = [
+            {
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 0,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            },
+        ];
+        controller.selectedLocations = mockSelectedLocations;
+        controller.locationsCache = mockLocationCache;
+        controller.userLocationId = 'test_district';
+        controller.selectedLocationId = 'test_district';
+        assert.equal(true, controller.disabled(0));
+        assert.equal(true, controller.disabled(1));
+        assert.equal(false, controller.disabled(2));
+        assert.equal(false, controller.disabled(3));
+        assert.equal(false, controller.disabled(4));
+    });
+
+    it('tests disabled dropdowns if user assign to state', function () {
+        var mockLocationCache = {
+            'root': [{
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }],
+            'test_state': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_district': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_block': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+            'test_sector': [{
+                name: 'All',
+                location_id: 'all',
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc_1",
+                name: "Test AWC 1",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }],
+        };
+
+        var mockSelectedLocations = [
+            {
+                location_type_name: "state",
+                parent_id: null,
+                location_id: "test_state",
+                name: "Test State",
+                user_have_access: 1,
+                user_have_access_to_parent: 1,
+            }, {
+                location_type_name: "district",
+                parent_id: "test_state",
+                location_id: "test_district",
+                name: "Test District",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "block",
+                parent_id: "test_district",
+                location_id: "test_block",
+                name: "Test Block",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "sector",
+                parent_id: "test_block",
+                location_id: "test_sector",
+                name: "Test Sector",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            }, {
+                location_type_name: "awc",
+                parent_id: "test_sector",
+                location_id: "test_awc",
+                name: "Test AWC",
+                user_have_access: 1,
+                user_have_access_to_parent: 0,
+            },
+        ];
+        controller.selectedLocations = mockSelectedLocations;
+        controller.locationsCache = mockLocationCache;
+        controller.userLocationId = 'test_state';
+        controller.selectedLocationId = 'test_state';
+        assert.equal(true, controller.disabled(0));
+        assert.equal(false, controller.disabled(1));
+        assert.equal(false, controller.disabled(2));
+        assert.equal(false, controller.disabled(3));
+        assert.equal(false, controller.disabled(4));
+    });
+});
