@@ -63,7 +63,7 @@ hqDefine("reports/js/filters/main", [
             });
         });
 
-        // Single selects
+        // Selects
         $('.report-filter-single-option').each(function() {
             var $filter = $(this);
             $filter.parent().koApplyBindings({
@@ -110,6 +110,63 @@ hqDefine("reports/js/filters/main", [
                     });
                 },
             });
+        });
+        $('.report-filter-multi-option').each(function() {
+            var $filter = $(this),
+                data = $filter.data();
+console.log("endpoint=" + data.endpoint);
+            $filter.parent().koApplyBindings({
+                select_params: data.options,
+                current_selection: ko.observableArray(data.selected),
+            });
+
+            if (!data.endpoint) {
+                $filter.select2();
+                return;
+            }
+
+            /*
+             * If there's an endpoint, this is a select2 widget using a
+             * remote endpoint for paginated, infinite scrolling options.
+             * Check out EmwfOptionsView as an example
+             * The endpoint should return json in this form:
+             * {
+             *     "total": 9935,
+             *     "results": [
+             *         {
+             *             "text": "kingofthebritains (Arthur Pendragon)",
+             *             "id": "a242ly1b392b270qp"
+             *         },
+             *         {
+             *             "text": "thebrave (Sir Lancelot)",
+             *             "id": "92b270qpa242ly1b3"
+             *         }
+             *      ]
+             * }
+             */
+            $filter.select2({
+                ajax: {
+                    url: data.endpoint,
+                    dataType: 'json',
+                    data: function (term, page) {
+                        return {
+                            q: term,
+                            page_limit: 10,
+                            page: page,
+                         };
+                    },
+                    results: function (data, page) {
+                        var more = data.more || (page * 10) < data.total;
+                        return {results: data.results, more: more};
+                    }
+                },
+                initSelection: function (element, callback) {
+                    var data = data.selected;
+                    callback(data);
+                },
+                multiple: true,
+                escapeMarkup: function (m) { return m; },
+            }).select2('val', data.selected);
         });
 
         // Submission type (Raw Forms, Errors, & Duplicates)
