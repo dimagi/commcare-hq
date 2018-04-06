@@ -38,18 +38,17 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var reference_controller = new MultimediaReferenceController(
-            {{ references|JSON }},
-            {{ object_map|JSON }},
-            {{ totals|JSON }}
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
+            referenceController = new MultimediaReferenceController(
+                initialPageData("references"),
+                initialPageData("object_map"),
+                initialPageData("totals")
         );
-        reference_controller.render();
-        $("#multimedia-reference-checker").koApplyBindings(reference_controller);
+        referenceController.render();
+        $("#multimedia-reference-checker").koApplyBindings(referenceController);
 
         $('.preview-media').tooltip();
     </script>
-    {% url "download_multimedia_zip" domain app.get_id as media_url%}
-    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
 
 {% block page_name %}
@@ -70,8 +69,11 @@
 {% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'object_map' object_map %}
+{% initial_page_data 'references' references %}
 {% initial_page_data 'sessionid' request.COOKIES.sessionid %}
 {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+{% initial_page_data 'totals' totals %}
 {% initial_page_data 'uploaders' uploaders_js %}
 
 <div id="multimedia-reference-checker">
@@ -188,4 +190,9 @@
     {% endif %}
 </div>
 
+{% endblock %}
+
+{% block modals %}{{ block.super }}
+    {% url "download_multimedia_zip" domain app.get_id as media_url%}
+    {% include 'app_manager/partials/download_async_modal.html' with element_id='multimedia-zip-modal' url=media_url%}
 {% endblock %}
