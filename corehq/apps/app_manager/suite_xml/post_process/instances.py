@@ -150,8 +150,11 @@ def commcare_fixture_instances(domain, instance_name):
 
 
 def _commcare_reports_instances(domain, instance_name, prefix):
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
     if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+        instance_id = instance_name[len(prefix):]
+        uuid = get_uuids_by_instance_id(domain).get(instance_id, instance_id)
+        return Instance(id=instance_name, src='jr://fixture/{}{}'.format(prefix, uuid))
 
 
 @register_factory('commcare-reports')
