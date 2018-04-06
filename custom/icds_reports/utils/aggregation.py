@@ -10,6 +10,7 @@ from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
+    AGG_CHILD_HEALTH_THR_TABLE,
     DASHBOARD_DOMAIN
 )
 
@@ -439,3 +440,42 @@ class PostnatalCareFormsCcsRecordAggregationHelper(BaseICDSAggregationHelper):
             "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
             "state_id": self.state_id
         }
+
+
+class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_thr_forms'
+    aggregate_parent_table = AGG_CHILD_HEALTH_THR_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_thr_form_'
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, days_ration_given_child
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            DISTINCT child_health_case_id AS case_id,
+            MAX(latest_time_end) AS latest_time_end_processed,
+            SUM(days_ration_given_child) AS days_ration_given_child
+          FROM "{ucr_tablename}"
+          WHERE state_id = %(state_id) AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                child_health_case_id IS NOT NULL
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            tablename=tablename
+        ), query_params
