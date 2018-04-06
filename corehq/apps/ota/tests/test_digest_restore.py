@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import time
 from python_digest import build_authorization_request, calculate_nonce
 from django.test import TestCase, Client

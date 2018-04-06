@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
 from copy import deepcopy, copy
 from couchdbkit import ResourceNotFound
@@ -663,6 +664,9 @@ class LatestAppInfo(object):
 def get_form_source_download_url(xform):
     """Returns the download url for the form source for a submitted XForm
     """
+    if not xform.build_id:
+        return None
+
     from corehq.apps.app_manager.models import Application
     app = Application.get(xform.build_id)
     try:

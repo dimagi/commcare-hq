@@ -1,6 +1,5 @@
-from __future__ import absolute_import, unicode_literals
-
-from collections import defaultdict
+from __future__ import absolute_import
+from __future__ import unicode_literals
 
 from corehq.apps.products.models import SQLProduct
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
@@ -18,10 +17,9 @@ def get_values_by_product(domain, case_id, ledger_section, product_codes):
         for product in products
     }
 
-    ledger_values = defaultdict(lambda: 0)
-    for ledger in ledgers:
-        if ledger.section_id == ledger_section and ledger.entry_id in entry_id_to_code:
-            product_code = entry_id_to_code[ledger.entry_id]
-            ledger_values[product_code] = ledger.stock_on_hand
-
-    return ledger_values
+    return {
+        entry_id_to_code[ledger.entry_id]: ledger.stock_on_hand
+        for ledger in ledgers
+        if (ledger.section_id == ledger_section
+            and ledger.entry_id in entry_id_to_code)
+    }

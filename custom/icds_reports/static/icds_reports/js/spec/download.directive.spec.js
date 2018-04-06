@@ -227,8 +227,15 @@ describe('Download Directive', function () {
         });
 
         it('tests isAWCsSelected - AWC selected', function () {
-            controller.selectedAWCs = ['awc_1', 'awc_@'];
+            controller.selectedAWCs = ['awc_1', 'awc_2'];
             var result = controller.isAWCsSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isCombinedPDFSelected', function () {
+            controller.selectedIndicator = 7;
+            controller.selectedPDFFormat = 'one';
+            var result = controller.isCombinedPDFSelected();
             assert.isTrue(result);
         });
 

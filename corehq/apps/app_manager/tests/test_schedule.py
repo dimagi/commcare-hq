@@ -1,5 +1,6 @@
 # encoding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from mock import patch
 import copy
 from django.test import SimpleTestCase
@@ -36,9 +37,9 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self._add_form_detail_variable()
 
     def _add_form_abbreviations(self):
-        self.form_1.schedule_form_id = u"हिन्दी"
-        self.form_2.schedule_form_id = u"a983e9"
-        self.form_3.schedule_form_id = u"39f0ea"
+        self.form_1.schedule_form_id = "हिन्दी"
+        self.form_2.schedule_form_id = "a983e9"
+        self.form_3.schedule_form_id = "39f0ea"
 
     def _add_form_schedules(self):
         self.form_1.schedule = FormSchedule(
@@ -263,7 +264,7 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             )
         ]
 
-        expected_fixture = u"""
+        expected_fixture = """
              <partial>
              <fixture id="schedule:m2:p1:f0">
                  <schedule expires="" allow_unscheduled="False">
@@ -297,23 +298,23 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             ).format(current_schedule_phase=current_schedule_phase)
 
             within_form_relevancy = (
-                u"today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
-                u"({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires)))"
+                "today() &gt;= (date({anchor}) + int({schedule}/@starts)) and "
+                "({schedule}/@expires = '' or today() &lt;= (date({anchor}) + int({schedule}/@expires)))"
             ).format(schedule=schedule, anchor=anchor)
 
             next_valid_schedules = (
-                u"{current_phase_query} and "
+                "{current_phase_query} and "
                 "{anchor} != '' and "
                 "({within_form_relevancy})"
             ).format(current_phase_query=current_phase_query, anchor=anchor,
                      within_form_relevancy=within_form_relevancy)
 
             allow_unscheduled = (
-                u"{schedule}/@allow_unscheduled = 'True'"
+                "{schedule}/@allow_unscheduled = 'True'"
             ).format(schedule=schedule)
 
             upcoming_scheduled_visits = (
-                u"{visit}"
+                "{visit}"
                 "[{case}/last_visit_number_{form_id} = '' or "
                     "if(@repeats = 'True', @id &gt;= {case}/last_visit_number_{form_id},"
                         " @id &gt; {case}/last_visit_number_{form_id})]"
@@ -327,15 +328,15 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
             ).format(visit=visit, case=case[form_num], form_id=form_id, anchor=anchor)
 
             visit_allowed = (
-                u"{allow_unscheduled} or "
+                "{allow_unscheduled} or "
                 "count({upcoming_scheduled_visits}) &gt; 0"
             ).format(allow_unscheduled=allow_unscheduled, upcoming_scheduled_visits=upcoming_scheduled_visits)
 
             filter_condition = (
-                u"({next_valid_schedules}) and ({visit_allowed})"
+                "({next_valid_schedules}) and ({visit_allowed})"
             ).format(next_valid_schedules=next_valid_schedules, visit_allowed=visit_allowed)
 
-            partial = u"""
+            partial = """
             <partial>
                 <command id='m1-f{form_num}' relevant="{filter_condition}" />
             </partial>
@@ -404,7 +405,7 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self._fetch_sources()
         self._apply_schedule_phases()
 
-        current_schedule_phase_partial = u"""
+        current_schedule_phase_partial = """
         <partial>
             <bind type="xs:integer"
                   nodeset="/data/case_load_clinic0/case/update/current_schedule_phase"
@@ -425,7 +426,7 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
 
     def test_last_visit_number(self):
         """ Increment the visit number for that particular form. If it is empty, set it to 1 """
-        last_visit_number_partial = u"""
+        last_visit_number_partial = """
         <partial>
             <bind nodeset="/data/case_case_clinic/case/update/last_visit_number_{form_id}"
                   calculate="/data/current_visit_number"
@@ -440,14 +441,14 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_number_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find(u'./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_number_{}"]'
+            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_number_{}"]'
                                      .format(form_id)).render()),
             '.'
         )
 
     def test_last_visit_date(self):
         """ Set the date of the last visit when a form gets submitted """
-        last_visit_date_partial = u"""
+        last_visit_date_partial = """
         <partial>
             <bind nodeset="/data/case_case_clinic/case/update/last_visit_date_{form_id}"
                   type="xsd:dateTime"
@@ -463,14 +464,14 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         self.form_1.add_stuff_to_xform(xform_1)
         self.assertXmlPartialEqual(
             last_visit_date_partial.format(form_id=form_id, xmlns=self.xmlns),
-            (xform_1.model_node.find(u'./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_date_{}"]'
+            (xform_1.model_node.find('./bind[@nodeset="/data/case_case_clinic/case/update/last_visit_date_{}"]'
                                      .format(form_id)).render()),
             '.'
         )
 
     def test_next_visit_date(self):
         """ add next_visit_date to each form """
-        next_visit_date_partial = u"""
+        next_visit_date_partial = """
         <partial>
             <bind nodeset="/data/next_visit_date"
                   calculate="date(min({form_names}))"
@@ -482,16 +483,16 @@ class ScheduleTest(SimpleTestCase, TestXmlMixin):
         phase_forms = [self.form_1, self.form_2]
         xform_1 = self.form_1.wrapped_xform()
         self.form_1.add_stuff_to_xform(xform_1)
-        form_names = [u"/data/next_{}".format(f.schedule_form_id) for f in phase_forms]
+        form_names = ["/data/next_{}".format(f.schedule_form_id) for f in phase_forms]
 
         self.assertXmlPartialEqual(
             next_visit_date_partial.format(form_names=",".join(form_names), xmlns=self.xmlns),
-            xform_1.model_node.find(u'./bind[@nodeset="/data/next_visit_date"]').render(),
+            xform_1.model_node.find('./bind[@nodeset="/data/next_visit_date"]').render(),
             '.'
         )
 
         for form in phase_forms:
             self.assertTrue(
-                len(xform_1.model_node.find(u"./bind[@nodeset='/data/next_{}']"
+                len(xform_1.model_node.find("./bind[@nodeset='/data/next_{}']"
                                             .format(form.schedule_form_id)).render())
                 > 0)

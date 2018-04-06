@@ -12,6 +12,7 @@
         "airsmozambique",
         "airskenya",
         "airs-testing",
+        "vectorlink-benin",
         "vectorlink-uganda"
     ],
     "data_source_table":"static-sms-indicators-001",

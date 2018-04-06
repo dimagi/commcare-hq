@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import six
 from couchdbkit import ResourceConflict
 from django.utils.translation import ugettext as _
@@ -129,25 +130,25 @@ def _restoring_as_yourself(couch_user, as_user_obj):
 
 def _ensure_valid_domain(domain, couch_user):
     if not couch_user.is_member_of(domain):
-        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(couch_user.username, domain))
+        raise RestorePermissionDenied(_("{} was not in the domain {}").format(couch_user.username, domain))
 
 
 def _ensure_valid_restore_as_user(domain, couch_user, as_user_obj):
     if not as_user_obj.is_member_of(domain):
-        raise RestorePermissionDenied(_(u"{} was not in the domain {}").format(as_user_obj.username, domain))
+        raise RestorePermissionDenied(_("{} was not in the domain {}").format(as_user_obj.username, domain))
 
 
 def _ensure_accessible_location(domain, couch_user, as_user_obj):
     if not user_can_access_other_user(domain, couch_user, as_user_obj):
         raise RestorePermissionDenied(
-            _(u'Restore user {} not in allowed locations').format(as_user_obj.username)
+            _('Restore user {} not in allowed locations').format(as_user_obj.username)
         )
 
 
 def _ensure_edit_data_permission(domain, couch_user):
     if couch_user.is_commcare_user() and not couch_user.has_permission(domain, 'edit_commcare_users'):
         raise RestorePermissionDenied(
-            _(u'{} does not have permission to edit commcare users').format(couch_user.username)
+            _('{} does not have permission to edit commcare users').format(couch_user.username)
         )
 
 

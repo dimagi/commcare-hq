@@ -22,7 +22,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
-from corehq.apps.users.tasks import bulk_deactivate_users
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
 
@@ -249,7 +248,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         num_allowed = user_rate.monthly_limit
         if num_users > num_allowed:
             # offloads deactivation onto a separate thread
-            bulk_deactivate_users.delay(domain)
+            # there should be a task that deactivates users here
+            pass
         return True
 
 
