@@ -267,7 +267,6 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
     build_id = StringProperty()  # this is only added as of 11/2016 and only works with app-aware sync
 
     previous_log_id = StringProperty()  # previous sync log, forming a chain
-    previous_log_removed = BooleanProperty(default=False)
     duration = IntegerProperty()  # in seconds
     log_format = StringProperty()
 
@@ -336,7 +335,7 @@ class AbstractSyncLog(SafeSaveDocument, UnicodeMixIn):
         """
         Get the previous sync log, if there was one.  Otherwise returns nothing.
         """
-        if self.previous_log_removed or not self.previous_log_id:
+        if not self.previous_log_id:
             return
 
         try:
