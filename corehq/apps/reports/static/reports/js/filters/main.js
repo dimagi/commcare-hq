@@ -114,7 +114,6 @@ hqDefine("reports/js/filters/main", [
         $('.report-filter-multi-option').each(function() {
             var $filter = $(this),
                 data = $filter.data();
-console.log("endpoint=" + data.endpoint);
             $filter.parent().koApplyBindings({
                 select_params: data.options,
                 current_selection: ko.observableArray(data.selected),

@@ -398,9 +398,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             val = obj.get(lang)
             if val:
                 return val
-        if len(list(obj)):
-            return obj.get(list(obj)[0], _('Untitled'))
-        return _('Untitled')
+        return obj.get(list(obj)[0], _('Untitled'))
 
     @staticmethod
     def _formatted_name_from_app(display_lang, app):
