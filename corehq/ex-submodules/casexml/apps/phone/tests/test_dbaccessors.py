@@ -69,8 +69,8 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
         self.docs = [
             SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=125)),
             SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=95)),
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=90)),
-            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=85))
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=85)),
+            SyncLog(date=datetime.datetime.today() - datetime.timedelta(days=70))
         ]
         for doc in self.docs:
             doc.domain = self.domain
