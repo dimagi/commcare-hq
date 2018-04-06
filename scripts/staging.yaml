@@ -59,7 +59,6 @@ branches:
   - np/flavor  # NP 4/5
   - sr-couch-synclogs  # Sravan April 6
   - ce/auto-batches # Cal April 6
-  - ce/warehouse-app-status # Cal April 6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
