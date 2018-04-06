@@ -20,8 +20,8 @@ class TestTwoFactorCheck(TestCase):
         self.domain.two_factor_auth = False
         self.request = self.create_request(request_url="/account/")
 
-    # def tearDown(self):
-    #     Domain.get_by_name(self.domain_name).delete()
+    def tearDown(self):
+        Domain.get_by_name(self.domain_name).delete()
 
     @classmethod
     def create_request(cls, request_url):
