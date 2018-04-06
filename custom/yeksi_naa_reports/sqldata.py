@@ -2,7 +2,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountUniqueColumn
+
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn
 from sqlagg.filters import EQ, BETWEEN
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.userreports.util import get_table_name
@@ -189,53 +190,66 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     def calculate_total_row(self, rows):
         total_row = ['Availability (%)']
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'pps_is_outstock': 0,
-                'pps_count': 0
-            }
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        if row['pps_is_outstock']:
-                            data[i]['pps_is_outstock'] += row['pps_is_outstock']['html']
-                        if row['pps_count']:
-                            data[i]['pps_count'] += row['pps_count']['html']
-                        break
+        if self.loc_id == 'pps_id':
+            data = {}
+            for i in range(len(self.months)):
+                data[i] = {
+                    'pps_is_outstock': 0,
+                    'pps_count': 0
+                }
+            for row in rows:
+                if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
+                    for i in range(len(self.months)):
+                        if row['real_date'] < self.months[i] + relativedelta(months=1):
+                            if row['pps_is_outstock']:
+                                data[i]['pps_is_outstock'] += row['pps_is_outstock']['html']
+                            if row['pps_count']:
+                                data[i]['pps_count'] += row['pps_count']['html']
+                            break
 
-        for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['pps_is_outstock'],
-                    monthly_data['pps_count']
+            for monthly_data in data.values():
+                total_row.append(
+                    self.percent_fn(
+                        monthly_data['pps_is_outstock'],
+                        monthly_data['pps_count']
+                    )
                 )
-            )
-        if data:
-            total_row.append(
-                "{:.2f}%".format(
-                    sum([100 * float(month['pps_is_outstock'] or 0) / float(month['pps_count'] or 1)
-                         for month in data.values()
-                         if month and month != 'no data entered'])
-                    / len(data)
+            if data:
+                total_row.append(
+                    "{:.2f}%".format(
+                        sum([100 * float(month['pps_is_outstock'] or 0) / float(month['pps_count'] or 1)
+                             for month in data.values()
+                             if month and month != 'no data entered'])
+                        / len(data)
+                    )
                 )
-            )
+        else:
+            for i in range(len(self.months)):
+                nominator = 0
+                denominator = 0
+                for location in rows:
+                    nominator += sum(rows[location][i].values())
+                    denominator += len(rows[location][i])
+                total_row.append(
+                    self.percent_fn(nominator, denominator)
+                )
         return total_row
 
     @property
     def group_by(self):
-        return ['real_date', self.loc_id, self.loc_name]
+        group_by = ['real_date', 'pps_id', self.loc_name]
+        if self.loc_id != 'pps_id':
+            group_by.append(self.loc_id)
+        return group_by
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
-            DatabaseColumn("Number of PPS without stockout", MaxColumn('pps_is_outstock')),
-            DatabaseColumn("Total number of PPS visited", CountUniqueColumn('pps_id', alias='pps_count')),
+            DatabaseColumn("Number of PPS with stockout", MaxColumn('pps_is_outstock')),
         ]
         if self.loc_id == 'pps_id':
-            columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
             columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
         elif self.loc_id == 'district_id':
             columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
@@ -250,21 +264,46 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         rows = self.get_data()
         data = {}
         loc_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
+        if self.loc_id == 'pps_id':
+            for row in rows:
+                if row['real_date'] < self.months[0] or \
+                        self.months[-1] + relativedelta(months=1) <= row['real_date']:
+                    continue
                 if row[self.loc_id] not in data:
                     data[row[self.loc_id]] = ['no data entered'] * len(self.months)
                     loc_names[row[self.loc_id]] = row[self.loc_name]
                 for i in range(len(self.months)):
                     if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        if self.loc_id == 'pps_id':
-                            data[row[self.loc_id]][i] = \
-                                row['pps_is_outstock']['html'] if row['pps_is_outstock'] else None
-                        else:
-                            data[row[self.loc_id]][i] = self.percent_fn(
-                                row['pps_is_outstock']['html'] if row['pps_is_outstock'] else None,
-                                row['pps_count']['html'] if row['pps_count'] else None)
+                        data[row[self.loc_id]][i] = 0 if row['pps_is_outstock']['html'] == 1 else 1
                         break
+        else:
+            new_data = {}
+            for row in rows:
+                if row['real_date'] < self.months[0] or \
+                        self.months[-1] + relativedelta(months=1) <= row['real_date']:
+                    continue
+                if row[self.loc_id] not in data:
+                    data[row[self.loc_id]] = [{}] * len(self.months)
+                    loc_names[row[self.loc_id]] = row[self.loc_name]
+                for i in range(len(self.months)):
+                    if row['real_date'] < self.months[i] + relativedelta(months=1):
+                        if data[row[self.loc_id]][i].get(row['pps_id']) and \
+                                data[row[self.loc_id]][i][row['pps_id']] == 0:
+                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock'][
+                                                                                'html'] == 1 else 1
+                        else:
+                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock'][
+                                                                                'html'] == 1 else 1
+                        break
+            for location in data:
+                new_data[location] = ['no data entered'] * len(self.months)
+                for i in range(len(self.months)):
+                    if data[location][i]:
+                        new_data[location][i] = self.percent_fn(
+                            sum(data[location][i].values()),
+                            len(data[location][i]))
+            tmp = data
+            data = new_data
 
         new_rows = []
         for loc_id in data:
@@ -275,7 +314,10 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 / len(data[loc_id])
             ))
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        if self.loc_id == 'pps_id':
+            self.total_row = self.calculate_total_row(rows)
+        else:
+            self.total_row = self.calculate_total_row(tmp)
         return new_rows
 
     @property
