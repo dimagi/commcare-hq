@@ -16,11 +16,11 @@ hqDefine("reports/js/filters/main", [
             var $filterRange = $(this);
             if ($filterRange.data("init")) {
                 var separator = $filterRange.data('separator');
-                var report_labels = $filterRange.data('reportLabels');
+                var reportLabels = $filterRange.data('reportLabels');
                 var standardHQReport = standardHQReportModule.getStandardHQReport();
 
                 $filterRange.createDateRangePicker(
-                    report_labels, separator,
+                    reportLabels, separator,
                     $filterRange.data('startDate'),
                     $filterRange.data('endDate')
                 );

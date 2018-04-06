@@ -35,8 +35,6 @@ hqDefine("reports/js/filters/select2s", function() {
                             results: data.items,
                             more: hasMore,
                         };
-                    } else {
-                        console.log(data.error);
                     }
                 },
             },
@@ -92,12 +90,12 @@ hqDefine("reports/js/filters/select2s", function() {
                         q: term,
                         page_limit: 10,
                         page: page,
-                     };
+                    };
                 },
                 results: function (data, page) {
                     var more = data.more || (page * 10) < data.total;
                     return {results: data.results, more: more};
-                }
+                },
             },
             initSelection: function (element, callback) {
                 var data = data.selected;
