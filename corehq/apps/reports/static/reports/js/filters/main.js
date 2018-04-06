@@ -73,7 +73,7 @@ hqDefine("reports/js/filters/main", [
 
         // Selects
         $('.report-filter-single-option').each(function() {
-            select2Filter.initMulti(this);
+            select2Filter.initSingle(this);
         });
         $('.report-filter-single-option-paginated').each(function() {
             select2Filter.initSinglePaginated(this);
