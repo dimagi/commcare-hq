@@ -65,107 +65,13 @@ hqDefine("reports/js/filters/main", [
 
         // Selects
         $('.report-filter-single-option').each(function() {
-            var $filter = $(this);
-            $filter.parent().koApplyBindings({
-                select_params: $filter.data("selectOptions"),
-                current_selection: ko.observable($filter.data("selected")),
-            });
-            $filter.select2();
+            hqImport("reports/js/filters/select2s").initMulti(this);
         });
         $('.report-filter-single-option-paginated').each(function() {
-            var $filter = $(this);
-            $filter.select2({
-                ajax: {
-                    url: $filter.data('url'),
-                    type: 'POST',
-                    dataType: 'json',
-                    quietMills: 250,
-                    data: function (term, page) {
-                        return {
-                            q: term,
-                            page: page,
-                            handler: $filter.data('handler'),
-                            action: $filter.data('action'),
-                        };
-                    },
-                    results: function (data, page) {
-                        if (data.success) {
-                            var limit = data.limit;
-                            var hasMore = (page * limit) < data.total;
-                            return {
-                                results: data.items,
-                                more: hasMore,
-                            };
-                        } else {
-                            console.log(data.error);
-                        }
-                    },
-                },
-                allowClear: true,
-                initSelection: function (elem, callback) {
-                    var val = $(elem).val();
-                    callback({
-                        id: val,
-                        text: val,
-                    });
-                },
-            });
+            hqImport("reports/js/filters/select2s").initSinglePaginated(this);
         });
         $('.report-filter-multi-option').each(function() {
-            var $filter = $(this),
-                data = $filter.data();
-            $filter.parent().koApplyBindings({
-                select_params: data.options,
-                current_selection: ko.observableArray(data.selected),
-            });
-
-            if (!data.endpoint) {
-                $filter.select2();
-                return;
-            }
-
-            /*
-             * If there's an endpoint, this is a select2 widget using a
-             * remote endpoint for paginated, infinite scrolling options.
-             * Check out EmwfOptionsView as an example
-             * The endpoint should return json in this form:
-             * {
-             *     "total": 9935,
-             *     "results": [
-             *         {
-             *             "text": "kingofthebritains (Arthur Pendragon)",
-             *             "id": "a242ly1b392b270qp"
-             *         },
-             *         {
-             *             "text": "thebrave (Sir Lancelot)",
-             *             "id": "92b270qpa242ly1b3"
-             *         }
-             *      ]
-             * }
-             */
-            $filter.select2({
-                ajax: {
-                    url: data.endpoint,
-                    dataType: 'json',
-                    data: function (term, page) {
-                        return {
-                            q: term,
-                            page_limit: 10,
-                            page: page,
-                         };
-                    },
-                    results: function (data, page) {
-                        var more = data.more || (page * 10) < data.total;
-                        return {results: data.results, more: more};
-                    }
-                },
-                initSelection: function (element, callback) {
-                    var data = data.selected;
-                    callback(data);
-                },
-                multiple: true,
-                escapeMarkup: function (m) { return m; },
-            }).select2('val', data.selected);
+            hqImport("reports/js/filters/select2s").initMulti(this);
         });
 
         // Submission type (Raw Forms, Errors, & Duplicates)
