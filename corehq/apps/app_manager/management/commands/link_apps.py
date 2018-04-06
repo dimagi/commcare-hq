@@ -32,5 +32,5 @@ class Command(BaseCommand):
 
         linked_app = Application.get(linked_id)
 
-        link_app(linked_app, master_app.domain, master_app.domain)
+        link_app(linked_app, master_app.domain, master_id)
         update_linked_app(linked_app, 'system')
