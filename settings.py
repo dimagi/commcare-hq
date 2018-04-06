@@ -429,6 +429,8 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
 
+# set to True or False in localsettings to override the value set way down below
+IS_LOCATION_CTE_ENABLED = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -2345,8 +2347,10 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
-IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
-    'localdev',
-    'changeme',  # default value in localsettings.example.py
-    'staging',
-]
+if IS_LOCATION_CTE_ENABLED is None:
+    IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+    ]
