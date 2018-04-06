@@ -525,17 +525,16 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     def export_table(self):
-        try:
-            return self.report_export.get_table()
-        except UserReportsError as e:
-            return self.render_json_response({'error': six.text_type(e)})
+        return self.report_export.get_table()
 
     @property
     @memoized
     def email_response(self):
         with closing(BytesIO()) as temp:
-            self.report_export.create_export(temp, Format.HTML)
-
+            try:
+                self.report_export.create_export(temp, Format.HTML)
+            except UserReportsError as e:
+                return self.render_json_response({'error': six.text_type(e)})
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
             }), content_type='application/json')
