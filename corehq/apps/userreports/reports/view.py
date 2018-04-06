@@ -520,14 +520,22 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def report_export(self):
+        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
+
+    @property
     def export_table(self):
-        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values).get_table()
+        try:
+            return self.report_export.get_table()
+        except UserReportsError as e:
+            return self.render_json_response({'error': six.text_type(e)})
 
     @property
     @memoized
     def email_response(self):
         with closing(BytesIO()) as temp:
-            export_from_tables(self.export_table, temp, Format.HTML)
+            self.report_export.create_export(temp, Format.HTML)
+
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
             }), content_type='application/json')
@@ -536,15 +544,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @memoized
     def excel_response(self):
         file = BytesIO()
-        export_from_tables(self.export_table, file, Format.XLS_2007)
+        self.report_export.create_export(file, Format.XLS_2007)
         return file
 
     @property
     @memoized
     def export_response(self):
         download = DownloadBase()
-        report_export = ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
-        res = export_ucr_async.delay(report_export, download.download_id, self.title, self.request.couch_user)
+        res = export_ucr_async.delay(self.report_export, download.download_id, self.request.couch_user)
         download.set_task(res)
         return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 

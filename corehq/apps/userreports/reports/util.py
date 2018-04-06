@@ -4,12 +4,14 @@ from __future__ import unicode_literals
 from datetime import datetime
 
 from django.utils.translation import ugettext as _
+from memoized import memoized
 
 from corehq.apps.userreports.columns import get_expanded_column_config
 from corehq.apps.userreports.exceptions import UserReportsError
 from corehq.apps.userreports.models import get_report_config
 from corehq.toggles import INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
 from corehq.util.timezones.utils import get_timezone_for_domain
+from couchexport.export import export_from_tables
 
 
 def get_expanded_columns(column_configs, data_source_config):
@@ -37,6 +39,8 @@ def has_location_filter(view_fn, *args, **kwargs):
 
 
 class ReportExport(object):
+    """Export all the rows of a UCR report
+    """
 
     def __init__(self, domain, title, report_config, lang, filter_values):
         self.domain = domain
@@ -46,38 +50,42 @@ class ReportExport(object):
         self.filter_values = filter_values
 
     @property
+    @memoized
     def data_source(self):
-        # The datasource needs to be built again as the ConfigurableReportDataSource object cannot be pickled
         from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
         data_source = ConfigurableReportDataSource.from_spec(self.report_config, include_prefilters=True)
         data_source.lang = self.lang
+        data_source.set_filter_values(self.filter_values)
+        data_source.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
         return data_source
 
+    def create_export(self, file_path, format_):
+        """Save this report to a file
+        :param file_path: The path to the file the report should be saved
+        :param format_: The format of the resulting export
+        """
+        return export_from_tables(self.get_table(), file_path, format_)
+
+    @memoized
     def get_table(self):
-        try:
-            data = self.data_source
-            data.set_filter_values(self.filter_values)
-            data.set_order_by([(o['field'], o['order']) for o in self.report_config.sort_expression])
-        except UserReportsError as e:
-            return self.render_json_response({
-                'error': e,
-            })
-
-        raw_rows = list(data.get_data())
-
+        """Generate a table of all rows of this report
+        """
         headers = [
             column.header
             for column in self.data_source.inner_columns if column.data_tables_column.visible
         ]
 
-        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
+        column_id_to_expanded_column_ids = get_expanded_columns(
+            self.data_source.top_level_columns,
+            self.data_source.config
+        )
         column_ids = []
         for column in self.report_config.report_columns:
             if column.visible:
                 column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
 
-        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
-        total_rows = [data.get_total_row()] if data.has_total_row else []
+        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in self.data_source.get_data()]
+        total_rows = [self.data_source.get_total_row()] if self.data_source.has_total_row else []
 
         export_table = [
             [
