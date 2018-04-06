@@ -295,13 +295,42 @@ BEGIN
     'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_initiation_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
+    -- This will end up being a seq scan on the tasks table. Ok for now, but will likely need to be optimized with temp table later
+    -- Can check documentation on immunizations: https://confluence.dimagi.com/display/ICDS/Due+List+Details
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'immunization_in_month = 1 ' ||
     'FROM ' || quote_ident(_ucr_child_tasks_table) || ' ut ' ||
     'WHERE chm_monthly.case_id = ut.child_health_case_id AND (' ||
       'ut.due_list_date_1g_dpt_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
       'ut.due_list_date_2g_dpt_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
-      'ut.due_list_date_3g_dpt_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) ||
+      'ut.due_list_date_3g_dpt_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_5g_dpt_booster BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_5g_dpt_booster1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_7gdpt_booster_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_0g_hep_b_0 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_1g_hep_b_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_2g_hep_b_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_3g_hep_b_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_3g_ipv BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_4g_je_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_5g_je_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_5g_measles_booster BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_4g_measles BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_1g_penta_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_2g_penta_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_3g_penta_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_1g_rv_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_2g_rv_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_3g_rv_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_4g_vit_a_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_5g_vit_a_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_4 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_5 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_6 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_7 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_6g_vit_a_8 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_7g_vit_a_9 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) ||
     ') ';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
