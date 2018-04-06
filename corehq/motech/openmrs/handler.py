@@ -70,7 +70,7 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
                 CreatePersonAddressTask(requests, info, openmrs_config, patient['person'])
             )
         workflow.append(
-            CreateVisitsTask(
+            CreateVisitsEncountersObsTask(
                 requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
         )
@@ -167,7 +167,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
         return subtasks
 
 
-class CreateVisitsTask(WorkflowTask):
+class CreateVisitsEncountersObsTask(WorkflowTask):
 
     def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
         self.requests = requests
