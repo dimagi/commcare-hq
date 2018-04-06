@@ -1,6 +1,12 @@
 {% extends "reports/async/default.html" %}
 {% load i18n %}
 {% load case_tags %}
+
+{% block js %}{{ block.super }}
+    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
+{% endblock %}
+
 {% block reportcontent %}
     {% block patient_header %}
             <div>
