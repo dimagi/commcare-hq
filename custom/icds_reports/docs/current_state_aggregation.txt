@@ -24,6 +24,7 @@
 
 [UCR - Complementary Feeding Forms] --> [Child Health Monthly]
 [UCR - Child Health Monthly Tableau] --> [Child Health Monthly]
+[UCR - THR Forms] --> [Child Health Monthly]
 [UCR - Child Tasks Cases] --> [Child Health Monthly]
 [UCR - CCS Record Monthly Tableau] --> [CCS Record Monthly]
 [UCR - Pregnancy Tasks Cases] --> [CCS Record Monthly]
