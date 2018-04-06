@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Enrolled Women Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('enrolled_women', 'enrolled_women');
@@ -27,11 +28,15 @@ describe('Enrolled Women Directive', function () {
         });
         var element = window.angular.element("<enrolled-women data='test'></enrolled-women>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('enrolledWomen');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -192,6 +197,20 @@ describe('Enrolled Women Directive', function () {
             + "<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>100.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Number of pregnant women who are enrolled for Anganwadi Services: <strong>0</strong>' +
+            '<div>Total number of pregnant women who are registered: <strong>25</strong>' +
+            '<div>Percentage of registered pregnant women who are enrolled for Anganwadi Services: <strong>NaN%</strong>' +
+            '</div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 });

@@ -447,7 +447,7 @@
                 <br/>
                 <p style="text-align: right; padding-right: 100px;">* Signature of AWW</p>
                 <div class="row" style="bottom: 0;">
-                    <img src="data:image/png;base64,{{ data.qrcode_64 }}" width="150" alt="QR Code"/>
+                    <img src="data:image/png;base64,{{ data.report.agg_awc_monthly_data.awc_site_code|icds_qr_code }}" width="150" alt="QR Code"/>
                 </div>
             </div>
         {% endfor %}

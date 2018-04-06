@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from decimal import Decimal
 import jsonfield
@@ -327,7 +328,7 @@ class SQLProduct(models.Model):
     active_objects = OnlyActiveProductManager()
 
     def __unicode__(self):
-        return u"{} ({})".format(self.name, self.domain)
+        return "{} ({})".format(self.name, self.domain)
 
     def __repr__(self):
         return "<SQLProduct(domain=%s, name=%s)>" % (
