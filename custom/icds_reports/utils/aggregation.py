@@ -467,13 +467,14 @@ class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
-            DISTINCT child_health_case_id AS case_id,
-            MAX(latest_time_end) AS latest_time_end_processed,
+            child_health_case_id AS case_id,
+            MAX(timeend) AS latest_time_end_processed,
             SUM(days_ration_given_child) AS days_ration_given_child
           FROM "{ucr_tablename}"
-          WHERE state_id = %(state_id) AND
+          WHERE state_id = %(state_id)s AND
                 timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
                 child_health_case_id IS NOT NULL
+          GROUP BY child_health_case_id
         )
         """.format(
             ucr_tablename=self.ucr_tablename,
