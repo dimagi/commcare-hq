@@ -51,13 +51,13 @@ from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_TIMEOUT,
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
-    ASYNC_RETRY_AFTER,
     CLEAN_OWNERS,
     LIVEQUERY,
 )
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.util.retry_time import RedisExponentialBackoff
 
 
 logger = logging.getLogger(__name__)
@@ -193,7 +193,7 @@ class AsyncRestoreResponse(object):
         self.progress = {
             'done': task_info.get('done', 0),
             'total': task_info.get('total', 0),
-            'retry_after': task_info.get('retry-after', ASYNC_RETRY_AFTER),
+            'retry_after': RedisExponentialBackoff.get_next_time("%s.%s" % (task.id, username)),
         }
 
     def compile_response(self):
@@ -633,6 +633,8 @@ class RestoreConfig(object):
             self.async_restore_task_id_cache.set_value(task.id)
         try:
             response = task.get(timeout=self._get_task_timeout(new_task))
+            RedisExponentialBackoff.clear_key(
+                "%s.%s" % (task, self.restore_user.username))
         except TimeoutError:
             # return a 202 with progress
             response = AsyncRestoreResponse(task, self.restore_user.username)
