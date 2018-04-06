@@ -93,7 +93,7 @@
 
                     {% if case.has_indices %}
                     <div class="tab-pane" id="related">
-                        {% render_case_hierarchy case case_hierarchy_options %}
+                        {% include "case/partials/case_hierarchy.html" %}
                     </div>
                     {% endif %}
 
