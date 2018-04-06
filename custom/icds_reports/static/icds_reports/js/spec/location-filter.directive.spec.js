@@ -504,7 +504,7 @@ describe('Location Modal Controller restrictions', function () {
                 name: "Test AWC",
                 user_have_access: 1,
                 user_have_access_to_parent: 1,
-            }]
+            }],
         };
 
         var mockSelectedLocations = [
@@ -749,7 +749,7 @@ describe('Location Modal Controller restrictions', function () {
                 name: "Test AWC",
                 user_have_access: 1,
                 user_have_access_to_parent: 0,
-            }
+            },
         ];
         controller.selectedLocations = mockSelectedLocations;
         controller.locationsCache = mockLocationCache;
