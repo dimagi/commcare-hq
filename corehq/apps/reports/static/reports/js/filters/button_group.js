@@ -3,7 +3,7 @@
  * See the user filter for sample usage.
  */
 hqDefine("reports/js/filters/button_group", function() {
-    var link = function (groupIdOrEl, can_be_empty) {
+    var link = function (groupIdOrEl, canBeEmpty) {
         var $el = typeof groupIdOrEl === "string" ? $("#" + groupIdOrEl) : $(groupIdOrEl);
         $el.find("button").click(function(e) {
             e.preventDefault();
@@ -18,7 +18,7 @@ hqDefine("reports/js/filters/button_group", function() {
             }
             $activeCheckbox.trigger('change');
 
-            if((!$el.children().hasClass('btn-success')) && !can_be_empty) {
+            if((!$el.children().hasClass('btn-success')) && !canBeEmpty) {
                 var $firstChild = $el.children().first();
                 $firstChild.addClass('btn-success');
                 $('#'+$firstChild.data("checkfilter")).prop("checked", true);
