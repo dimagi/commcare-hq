@@ -6,6 +6,7 @@ import datetime
 import numbers
 import pytz
 
+from couchdbkit import ResourceNotFound
 from django.urls import reverse
 from django.utils.translation import ugettext as _
 
@@ -155,8 +156,7 @@ def process_case_hierarchy(case_output, get_case_url, type_info):
         }
         data = type_info.get(case.type, {})
         if 'description_property' in data:
-            data['description'] = getattr(
-                    case, data['description_property'], None)
+            data['description'] = getattr(case, data['description_property'], None)
         if 'edit_session_data' in data:
             data['session_data'].update(data['edit_session_data'])
         data.update(common_data)
@@ -204,12 +204,12 @@ def get_case_hierarchy(case, type_info):
         descendant_types = list(set(descendant_types))
 
         children = sorted(children, key=partial(sortkey, type_info=type_info))
-       
+
         # set parent_case_id used by flat display
         for c in children:
             if not hasattr(c['case'], 'treetable_parent_node_id'):
                 c['case'].treetable_parent_node_id = case.case_id
-      
+
         child_cases = []
         for c in children:
             child_cases.extend(c['case_list'])

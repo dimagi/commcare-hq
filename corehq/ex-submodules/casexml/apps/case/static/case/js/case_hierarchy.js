@@ -2,7 +2,7 @@ hqDefine("case/js/case_hierarchy", function() {
     $(function() {
         var tree = $("#related_cases").treetable({
             expandable: true,
-            initialState: "expanded"
+            initialState: "expanded",
         });
 
         $(".case-closed").each(function () {
