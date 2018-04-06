@@ -129,12 +129,16 @@ DECLARE
   _tablename text;
   _ucr_child_monthly_table text;
   _agg_complementary_feeding_table text;
+  _ucr_child_tasks_table text;
   _start_date date;
+  _end_date date;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
+  _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'child_health_monthly' || '_' || _start_date;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
+  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
 
   EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
@@ -287,9 +291,18 @@ BEGIN
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
-    '  cf_initiation_in_month = COALESCE(agg.comp_feeding_ever, 0) ' ||
+      'cf_initiation_in_month = COALESCE(agg.comp_feeding_ever, 0) ' ||
     'FROM ' || quote_ident(_agg_complementary_feeding_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.cf_initiation_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'immunization_in_month = 1 ' ||
+    'FROM ' || quote_ident(_ucr_child_tasks_table) || ' ut ' ||
+    'WHERE chm_monthly.case_id = ut.child_health_case_id AND (' ||
+      'ut.due_list_date_1g_dpt_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_2g_dpt_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_3g_dpt_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) ||
+    ') ';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 END;
@@ -303,11 +316,15 @@ $BODY$
 DECLARE
   _tablename text;
   _ucr_ccs_record_table text;
+  _ucr_pregnant_tasks_table text;
   _start_date date;
+  _end_date date;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
+  _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'ccs_record_monthly' || '_' || _start_date;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
+  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('pregnant_tasks') INTO _ucr_pregnant_tasks_table;
 
   EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || '(SELECT ' ||
@@ -360,6 +377,18 @@ BEGIN
     'institutional_delivery_in_month, ' ||
     'add ' ||
     'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
+
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || '(case_id)';
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' ccs_monthly SET ' ||
+      'anc_in_month = 1 ' ||
+    'FROM ' || quote_ident(_ucr_pregnant_tasks_table) || ' ut ' ||
+    'WHERE ccs_monthly.case_id = ut.ccs_record_case_id AND (' ||
+      'ut.due_list_date_anc_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_anc_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_anc_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
+      'ut.due_list_date_anc_4 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) ||
+    ') ';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
         -- There may be better indexes to put here. Should investigate what tableau queries
@@ -1389,11 +1418,13 @@ BEGIN
   -- Update child_health cases_person_has_aadhaar and cases_person_beneficiary
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person_has_aadhaar_v2 = ut.child_has_aadhar, ' ||
-    'cases_person_beneficiary_v2 = ut.child_beneficiary ' ||
+    'cases_person_beneficiary_v2 = ut.child_beneficiary, ' ||
+    'num_children_immunized = ut.num_children_immunized ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'sum(has_aadhar_id) as child_has_aadhar, ' ||
-    'count(*) as child_beneficiary ' ||
+    'count(*) as child_beneficiary, ' ||
+    'sum(immunization_in_month) AS num_children_immunized ' ||
     'FROM ' || quote_ident(_child_health_monthly_tablename) || ' ' ||
     'WHERE valid_in_month = 1' ||
     'GROUP BY awc_id) ut ' ||
@@ -1403,11 +1434,13 @@ BEGIN
   -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person_has_aadhaar_v2 = cases_person_has_aadhaar_v2 + ut.ccs_has_aadhar, ' ||
-    'cases_person_beneficiary_v2 = cases_person_beneficiary_v2 + ut.ccs_beneficiary ' ||
+    'cases_person_beneficiary_v2 = cases_person_beneficiary_v2 + ut.ccs_beneficiary, ' ||
+    'num_anc_visits = ut.num_anc_visits ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'sum(has_aadhar_id) as ccs_has_aadhar, ' ||
-    'count(*) as ccs_beneficiary ' ||
+    'count(*) as ccs_beneficiary, ' ||
+    'sum(anc_in_month) AS num_anc_visits ' ||
     'FROM ' || quote_ident(_ccs_record_monthly_tablename) || ' ' ||
     'WHERE pregnant = 1 OR lactating = 1 ' ||
     'GROUP BY awc_id) ut ' ||

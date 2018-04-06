@@ -34,6 +34,8 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
     'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
     'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
+    'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
+    'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
 }
 
 
