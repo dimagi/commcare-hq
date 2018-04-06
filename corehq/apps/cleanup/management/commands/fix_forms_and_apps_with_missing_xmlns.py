@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import uuid
 import re
 from collections import defaultdict
@@ -339,6 +340,6 @@ def get_xmlns(form_unique_id, app_id, domain):
 def name_matches(xform_name, form_names):
     if xform_name in list(form_names.values()):
         return True
-    if xform_name in [u"{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
+    if xform_name in ["{} [{}]".format(v, k) for k, v in six.iteritems(form_names)]:
         return True
     return False

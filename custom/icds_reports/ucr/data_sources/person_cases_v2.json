@@ -2357,6 +2357,41 @@
             "property_name": "no_exist"
           }
         }
+      },
+      {
+        "column_id": "age_marriage",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_name",
+          "property_name": "age_marriage"
+        }
+      },
+      {
+        "column_id": "marital_status",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_name",
+            "property_name": "marital_status"
+          },
+          "cases": {
+            "married": {
+              "type": "constant",
+              "constant": 1
+            },
+            "other": {
+              "type": "constant",
+              "constant": 0
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": null
+          }
+        }
       }
     ],
     "named_expressions": {},

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from eulxml.xmlmap import (
     IntegerField, NodeField, NodeListField,
     SimpleBooleanField, StringField, XmlObject,
@@ -437,7 +438,7 @@ class Entry(OrderedXmlObject, XmlObject):
         for instance_id in instance_ids:
             if instance_id not in covered_ids:
                 raise UnknownInstanceError(
-                    u"Instance reference not recognized: {} in xpath \"{}\""
+                    "Instance reference not recognized: {} in xpath \"{}\""
                     # to get xpath context to show in this error message
                     # make instance_id a unicode subclass with an xpath property
                     .format(instance_id, getattr(instance_id, 'xpath', "(Xpath Unknown)")))

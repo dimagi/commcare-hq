@@ -1,4 +1,5 @@
 from __future__ import absolute_import, division
+from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import reverse
 from django.http import HttpResponseRedirect

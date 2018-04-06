@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, HttpResponseRedirect, Http404

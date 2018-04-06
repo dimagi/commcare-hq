@@ -14,7 +14,7 @@
               media="all"
               href="{% static 'font-awesome/css/font-awesome.css' %}"/>
 
-        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3/src/nv.d3.css' %}">
+        <link type="text/css" rel="stylesheet" media="all" href="{% static 'nvd3-1.8.6/build/nv.d3.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/css/angular-datatables.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'angular-datatables/dist/plugins/bootstrap/datatables.bootstrap.min.css' %}">
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'leaflet/dist/leaflet.css' %}">
@@ -23,7 +23,7 @@
         <link type="text/css" rel="stylesheet" media="all" href="{% static 'css/icds_dashboard.css' %}"/>
         
         {% javascript_libraries underscore=True hq=True %}
-        <script type="text/javascript" src="{% static 'nvd3/lib/d3.v3.js' %}"></script>
+        <script type="text/javascript" src="{% static 'd3-3.5.17/d3.js' %}"></script>
         <script type="text/javascript" src="{% static 'datatables/media/js/jquery.dataTables.min.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedcolumns/js/dataTables.fixedColumns.js'%}"></script>
         <script type="text/javascript" src="{% static 'datatables-fixedheader/js/dataTables.fixedHeader.js'%}"></script>
@@ -37,7 +37,7 @@
         <script type="text/javascript" src="{% static 'angular-busy/dist/angular-busy.min.js' %}"></script>
         <script type="text/javascript" src="{% static 'ui-select/dist/select.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-sanitize/angular-sanitize.js' %}"></script>
-        <script type="text/javascript" src="{% static 'nvd3/nv.d3.js' %}"></script>
+        <script type="text/javascript" src="{% static 'nvd3-1.8.6/build/nv.d3.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-nvd3/dist/angular-nvd3.js' %}"></script>
         <script type="text/javascript" src="{% static 'moment/min/moment-with-locales.min.js' %}"> </script>
         <script type="text/javascript" src="{% static 'angular-leaflet-directive/dist/angular-leaflet-directive.js' %}"></script>
@@ -103,6 +103,7 @@
         <script type="text/javascript" src="{% static 'js/directives/medicine-kit/medicine-kit.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/infants-weight-scale/infants-weight-scale.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/adult-weight-scale/adult-weight-scale.directive.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/directives/access-denied/access-denied.directive.js' %}"></script>
 </head>
 <body>
 <div id="app">
@@ -248,6 +249,7 @@
                     {% registerurl 'awc_locations' domain %}
                     {% registerurl 'issnip_pdf_status' domain %}
                     {% registerurl 'icds_export_indicator' domain %}
+                    {% registerurl 'have_access_to_location' domain %}
                     <div class="ng-view"></div>
                 </div>
             </div>
@@ -258,7 +260,7 @@
             <h3 class="modal-title" id="modal-title">Report an Issue<i style="float: right;" ng-click="$dismiss()" class="fa fa-close pointer"></i></h3>
         </div>
         <div class="modal-body" id="modal-body">
-            Please contact ICDS-CAS HelpDesk staff at your location in order to report an issue with the dashboard
+            Please contact icds-support@dimagi.com in order to report an issue with the Dashboard
         </div>
         <div class="modal-footer">
            <button ng-click="$dismiss()" class="btn btn-primary">Close</button>

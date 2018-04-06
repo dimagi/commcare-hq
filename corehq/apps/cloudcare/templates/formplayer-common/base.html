@@ -92,6 +92,7 @@
 
 
         {% if less_debug %}
+        {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
         <script>
             less = {
                 env: "development",
@@ -140,6 +141,14 @@
         {% include 'formplayer/dependencies.html' %}
         {% include 'formplayer/query_view.html' %}
 
+        {% block js %}{% endblock %}
+        {% block js-inline %}{% endblock %}
+
+        <div class="initial-page-data" class="hide">
+        {% block initial_page_data %}
+            {# do not override this block, use initial_page_data template tag to populate #}
+        {% endblock %}
+        </div>
         <div class="commcarehq-urls" class="hide">
         {% block registered_urls %}
             {# do not override this block, use registerurl template tag to populate #}
@@ -156,9 +165,6 @@
             {# do not override this block, use analytics_ab_test template tag to populate #}
         {% endblock %}
         </div>
-
-        {% block js %}{% endblock %}
-        {% block js-inline %}{% endblock %}
     </body>
 </html>
 

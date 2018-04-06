@@ -139,7 +139,12 @@ describe('Location Filter Controller', function () {
                 "user_have_access": 1,
                 "user_have_access_to_parent": 0,
             },
-            {"name": "All", "location_id": "all"},
+            {
+                "name": "All",
+                "location_id": "all",
+                "user_have_access": 0,
+                "user_have_access_to_parent": 1,
+            },
             null,
             null,
         ];
@@ -348,7 +353,14 @@ describe('Location Modal Controller', function () {
 
     it('tests reset when user id not exist', function () {
         controller.userLocationId = null;
-        var expected = [{"name": "All", "location_id": "all"}];
+        var expected = [
+            {
+                "name": "All",
+                "location_id": "all",
+                "user_have_access": 0,
+                "user_have_access_to_parent": 1,
+            },
+        ];
 
         controller.reset();
         var result = controller.selectedLocations;
@@ -374,7 +386,11 @@ describe('Location Modal Controller', function () {
                 "user_have_access": 1,
                 "user_have_access_to_parent": 0,
             },
-            {"name": "All", "location_id": "all"},
+            {   "name": "All",
+                "location_id": "all",
+                "user_have_access": 0,
+                "user_have_access_to_parent": 1,
+            },
         ];
 
         controller.reset();

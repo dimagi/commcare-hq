@@ -2015,13 +2015,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                 tooltip.contentGenerator(function (d) {
 
                     var day = _.find(vm.data.charts[1][0].values, function (num) {
-                        return d3.time.format('%d/%m/%Y')(new Date(num['x'])) === d.value;
+                        return num['x'] === d.value;
                     });
 
                     var attended = day ? day.attended : '0';
                     var eligible = day ? day.eligible : '0';
 
-                    var tooltip_content = "<p><strong>" + d.value + "</strong></p><br/>";
+                    var tooltip_content = "<p><strong>" + d3.time.format('%b %Y')(new Date(d.value)) + "</strong></p><br/>";
                     tooltip_content += "<div>Number of children who attended PSE: <strong>" + attended + "</strong></div>";
                     tooltip_content += "<div>Number of children who were eligible to attend PSE: <strong>" + eligible + "</strong></div>";
 

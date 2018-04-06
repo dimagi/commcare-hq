@@ -4,8 +4,11 @@ hqDefine("locations/js/location", function() {
     var LocationModels = hqImport('locations/js/location_drilldown');
     var insert_new_user = function(user) {
         var $select = $('#id_users-selected_ids');
-        $select.multiSelect('addOption', { value: user.user_id, text: user.text });
-        $select.multiSelect('select', user.user_id);
+        // Add the newly created user to the users that are already at the location.
+        var currentUsers = $select.select2('data');
+        currentUsers.push({ "text": user.text, "id": user.user_id });
+        // Push the updated list of currentUsers to the ui
+        $select.select2("data", currentUsers);
     };
     var TEMPLATE_STRINGS = {
         new_user_success: _.template(gettext("User <%= name %> added successfully. " +
@@ -48,15 +51,6 @@ hqDefine("locations/js/location", function() {
             });
         });
 
-        // Multiselect widget
-        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-
-        multiselect_utils.createFullMultiselectWidget(
-            'id_products-selected_ids',
-            gettext("Available Products"),
-            gettext("Products at Location"),
-            gettext("Search Products...")
-        );
     });
     $(function() {
 

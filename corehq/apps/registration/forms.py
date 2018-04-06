@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from captcha.fields import CaptchaField
 from django import forms
 from django.conf import settings
@@ -47,11 +48,11 @@ class RegisterWebUserForm(forms.Form):
         required=False,
         widget=forms.RadioSelect,
         choices=(
-            (u"M&E", _("Monitor and evaluate a program")),
-            (u"Improve Delivery", _("Improve delivery of services")),
-            (u"Research", _("Collect data for a research project")),
-            (u"IT", _("Build a technology solution for my team/clients")),
-            (u"Other", _("Other")),
+            ("M&E", _("Monitor and evaluate a program")),
+            ("Improve Delivery", _("Improve delivery of services")),
+            ("Research", _("Collect data for a research project")),
+            ("IT", _("Build a technology solution for my team/clients")),
+            ("Other", _("Other")),
         )
     )
     persona_other = forms.CharField(

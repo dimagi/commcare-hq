@@ -8,12 +8,15 @@ See `README.md`__ for more context.
 from __future__ import absolute_import
 from __future__ import division
 
+from __future__ import unicode_literals
 from collections import namedtuple
 from operator import eq
 from pprint import pformat
 
+import six
 from jsonpath_rw import Child, parse, Fields, Slice, Where
 
+from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.jsonpath import Cmp
 from dimagi.ext.couchdbkit import (
     DecimalProperty,
@@ -258,48 +261,14 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 weight = property_weight['weight']
 
                 matches = self._property_map[prop].jsonpath.find(patient)
-                if matches:
-                    assert len(matches) == 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                        self._property_map[prop].jsonpath
-                    )
-                    patient_value = matches[0].value
+                for match in matches:
+                    patient_value = match.value
                     value_map = self._property_map[prop].value_map
                     case_value = case.get_case_property(prop)
                     is_equal = value_map.get(patient_value, patient_value) == case_value
                     yield weight if is_equal else 0
-                else:
-                    yield 0
 
         return sum(weights())
-
-    def save_match_id(self, case, case_config, patient):
-        """
-        If we are confident of the patient matched to a case, save
-        the patient's ID to the case.
-        """
-        from casexml.apps.case.mock import CaseBlock
-        from corehq.apps.hqcase.utils import submit_case_blocks
-        from corehq.motech.openmrs.repeater_helpers import PERSON_UUID_IDENTIFIER_TYPE_ID
-
-        case_config_ids = case_config['patient_identifiers']
-        case_update = {}
-        id_type_uuid = PERSON_UUID_IDENTIFIER_TYPE_ID
-        if id_type_uuid in case_config_ids:
-            case_property = case_config_ids[id_type_uuid]['case_property']
-            value = patient['uuid']
-            case_update[case_property] = value
-        for identifier in patient['identifiers']:
-            id_type_uuid = identifier['identifierType']['uuid']
-            if id_type_uuid in case_config_ids:
-                case_property = case_config_ids[id_type_uuid]['case_property']
-                value = identifier['identifier']
-                case_update[case_property] = value
-        case_block = CaseBlock(
-            case_id=case.get_id,
-            create=False,
-            update=case_update,
-        )
-        submit_case_blocks([case_block.as_string()], case.domain)
 
     def find_patients(self, requests, case, case_config):
         """
@@ -328,20 +297,18 @@ class WeightedPropertyPatientFinder(PatientFinder):
             return []
         if len(candidates) == 1:
             patient = list(candidates.values())[0].patient
-            self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to ONLY patient candidate: \n%s',
                 case.name, case.get_id, pformat(patient, indent=2),
             )
             return [patient]
-        patients_scores = sorted(candidates.values(), key=lambda candidate: candidate.score, reverse=True)
+        patients_scores = sorted(six.itervalues(candidates), key=lambda candidate: candidate.score, reverse=True)
         if patients_scores[0].score / patients_scores[1].score > 1 + self.confidence_margin:
             # There is more than a `confidence_margin` difference
             # (defaults to 10%) in score between the best-ranked
             # patient and the second-best-ranked patient. Let's go with
             # Patient One.
             patient = patients_scores[0].patient
-            self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to BEST patient candidate: \n%s',
                 case.name, case.get_id, pformat(patients_scores, indent=2),

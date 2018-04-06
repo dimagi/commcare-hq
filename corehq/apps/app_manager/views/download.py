@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import os
 
@@ -237,6 +238,9 @@ def download_file(request, domain, app_id, path):
     except KeyError:
         content_type = None
     response = HttpResponse(content_type=content_type)
+
+    if request.GET.get('download') == 'true':
+        response['Content-Disposition'] = "attachment; filename={}".format(path)
 
     build_profile = request.GET.get('profile')
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)

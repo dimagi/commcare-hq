@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import textwrap
 from django.contrib.auth.management.commands.createsuperuser import Command as CreatesuperuserCommand
 import time
@@ -17,11 +18,11 @@ class Command(CreatesuperuserCommand):
             super(Command, self).handle(*args, **options)
         else:
             print()
-            print(u"The createsuperuser command isn't recommended for use in this project.")
+            print("The createsuperuser command isn't recommended for use in this project.")
             print()
             time.sleep(2)
             print(textwrap.dedent(
-                u"""
+                """
                 Please use `./manage.py make_superuser` instead.
 
                 If you really want to use the django built-in createsuperuser management command,

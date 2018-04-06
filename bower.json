@@ -7,7 +7,7 @@
     "angular-bootstrap-legacy": "0.11.2",
     "angular-datamaps": "^0.1.2",
     "angular-datatables": "0.5.6",
-    "angular-nvd3": "^0.1.1",
+    "angular-nvd3": "1.0.9",
     "angular-route": "1.4.4",
     "angular-resource": "1.4.4",
     "angular-message-format": "1.4.4",
@@ -36,6 +36,7 @@
     "jquery-form": "4.2.2",
     "jquery-migrate": "1.2.1",
     "jquery.rmi": "dimagi/jquery.rmi#8c34f32817",
+    "jquery-textchange": "0.2.3",
     "jquery-timeago": "1.2.0",
     "jquery-tiny-pubsub": "https://github.com/cowboy/jquery-tiny-pubsub.git#~0.7.0",
     "jquery-treetable": "^3.2.0",
@@ -60,6 +61,8 @@
     "nprogress": "0.2.0",
     "d3": "3.1",
     "nvd3": "1.1.10-beta",
+    "d3-3.5.17": "d3#3.5.17",
+    "nvd3-1.8.6": "nvd3#1.8.6",
     "codemirror": "5.5.0",
     "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
     "zxcvbn": "4.2.0",
@@ -94,6 +97,8 @@
     "d3": "3.1",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "nvd3": "1.1.10-beta"
+    "nvd3": "1.1.10-beta",
+    "d3-3.5.17": "d3#3.5.17",
+    "nvd3-1.8.6": "nvd3#1.8.6"
   }
 }

@@ -1,7 +1,5 @@
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-)
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from __future__ import print_function
 
 from corehq.apps.users.models import CommCareUser
@@ -41,8 +39,17 @@ class Command(BaseDataDump):
             get_last_episode(case)
         )
         if not self.context['last_episode']:
-            return Exception("could not find last episode for person %s" % case.case_id)
+            raise Exception("could not find last episode for person %s" % case.case_id)
         return self.context['last_episode']
+
+    def get_last_occurrence(self, case):
+        self.context['last_occurrence'] = (
+            self.context.get('last_occurrence') or
+            get_last_occurrence(case)
+        )
+        if not self.context['last_occurrence']:
+            raise Exception("could not find last occurrence for person %s" % case.case_id)
+        return self.context['last_occurrence']
 
     def get_custom_value(self, column_name, case):
         if column_name == "Commcare UUID":
@@ -54,7 +61,7 @@ class Command(BaseDataDump):
                 user = CommCareUser.get_by_user_id(user_id, DOMAIN)
                 return user.username
             except Exception as e:
-                return Exception("Could not get username. case opened by %s, %s" % (user_id, e))
+                raise Exception("Could not get username. case opened by %s, %s" % (user_id, e))
         elif column_name == "Created by User ID":
             return case.opened_by
         elif column_name == "Date of creation":
@@ -80,11 +87,10 @@ class Command(BaseDataDump):
 
     def get_case_reference_value(self, case_reference, case, calculation):
         if case_reference == 'last_episode':
-            try:
-                return self.get_last_episode(case).get_case_property(calculation)
-            except Exception as e:
-                return str(e)
-        return Exception("unknown case reference %s" % case_reference)
+            return self.get_last_episode(case).get_case_property(calculation)
+        elif case_reference == "last_occurrence":
+            return self.get_last_occurrence(case).get_case_property(calculation)
+        raise Exception("unknown case reference %s" % case_reference)
 
     def get_case_ids_query(self, case_type):
         """
@@ -103,6 +109,39 @@ def get_all_episode_cases_from_person(domain, person_case_id):
         case for case in CaseAccessors(domain).get_reverse_indexed_cases(
             [c.case_id for c in occurrence_cases], case_types=[CASE_TYPE_EPISODE])
     ]
+
+
+def get_all_episode_cases_from_occurrence(domain, occurrence_case_id):
+    return CaseAccessors(domain).get_reverse_indexed_cases(
+        [occurrence_case_id], case_types=[CASE_TYPE_EPISODE])
+
+
+def get_last_occurrence(person_case):
+    occurrence_cases = get_all_occurrence_cases_from_person(person_case.domain, person_case.case_id)
+    open_occurrence_cases = [
+        occurrence_case for occurrence_case in occurrence_cases
+        if not occurrence_case.closed
+    ]
+    if len(open_occurrence_cases) > 1:
+        raise Exception("Multiple open occurrence cases for person %s" % person_case.case_id)
+    elif len(open_occurrence_cases) == 1:
+        return open_occurrence_cases[0]
+    else:
+        # dict to maintain episodes ids to occurrence case mapping to avoid fetching occurrence again
+        # later from latest episode case
+        episode_id_to_occurrence = {}
+        all_episode_cases = []
+        for occurrence_case in occurrence_cases:
+            episodes = get_all_episode_cases_from_occurrence(occurrence_case.domain, occurrence_case.case_id)
+            if episodes:
+                all_episode_cases.extend(episodes)
+                for episode in episodes:
+                    episode_id_to_occurrence[episode.case_id] = occurrence_case
+        last_episode = get_case_recently_modified(all_episode_cases)
+        if last_episode:
+            return episode_id_to_occurrence[last_episode.case_id]
+        else:
+            return "No Occurrences"
 
 
 def get_last_episode(person_case):

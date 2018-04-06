@@ -35,11 +35,11 @@ class TestICDSCASReach(TestCase):
                             )
                         },
                         {
-                            "all": 0,
+                            "all": 50,
                             "format": "div",
                             "color": "green",
-                            "percent": "Data in the previous reporting period was 0",
-                            "value": 0,
+                            "percent": 127.27272727272728,
+                            "value": 50,
                             "label": "Number of AWCs open for at least one day in month",
                             "frequency": "day",
                             "help_text": (

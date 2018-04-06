@@ -255,6 +255,12 @@ This is sufficient for projects that import their patient cases from
 OpenMRS, because each CommCare case will have a corresponding OpenMRS
 patient, and its ID, or IDs, will have been set by OpenMRS.
 
+**NOTE**: MOTECH has the ability to create or update the values of
+patient identifiers. If an app offers this ability to users, then that
+identifier should not be included in `match_on_ids`. If the case was
+originally matched using only that identifier and its value changes,
+MOTECH may be unable to match that patient again.
+
 For projects where patient cases can be registered in CommCare, there
 needs to be a way of finding a corresponding patient, if one exists.
 

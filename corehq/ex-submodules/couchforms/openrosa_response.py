@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from xml.etree import cElementTree as ElementTree
 from django.http import HttpResponse
 from django.utils.translation import ugettext_lazy as _
@@ -71,11 +72,11 @@ class OpenRosaResponse(object):
 
 def get_openarosa_success_response(message=None):
     if not message:
-        message = _(u'   √   ')
+        message = _('   √   ')
     return get_openrosa_reponse(message, ResponseNature.SUBMIT_SUCCESS, 201)
 
 SUBMISSION_IGNORED_RESPONSE = get_openrosa_reponse(
-    u'√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
+    '√ (this submission was ignored)', ResponseNature.SUBMIT_SUCCESS, 201
 )
 BLACKLISTED_RESPONSE = get_openrosa_reponse(
     message=(

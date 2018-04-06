@@ -4,6 +4,7 @@
 <html lang="{{ LANGUAGE_CODE }}">
     <head>
         {% if ANALYTICS_IDS.GTM_ID %}
+            {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
             <!-- Google Tag Manager -->
             <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
             new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -186,6 +187,7 @@
         {% block head %}
         {% endblock %}
 
+        {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
         <script>
             // hqModules.js uses `typeof define` and `define.amd` to determine whether or not to use RequireJS, but
             // this fails for form designer, which currently uses RequireJS for vellum but not for the surrounding page.
@@ -193,10 +195,7 @@
         </script>
 
         {% if less_debug %}
-            <!--
-                This is not inside RequireJS because it has no dependencies
-                and ought to happen immediately on page load.
-            -->
+            {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
             <script>
                 less = {
                     env: "development",
@@ -287,7 +286,7 @@
             {% endif %}
 
             <!--[if IE]>
-                <div id="unsupported-browser" class="alert alert-error alert-block alert-full">
+                <div id="unsupported-browser" class="alert alert-danger alert-block alert-full">
                     <p><i class="fa fa-warning-sign"></i><strong>{% trans 'CommCare HQ does not work well with Internet Explorer.'%}</strong></p>
                     <p>
                         {% blocktrans %}
@@ -523,6 +522,7 @@
 
         {% if request.maps_prefer_canvas and not requirejs_main %}
         {% addtoblock js-inline %}
+        {# This is fine as an inline script; this flag is only used by custom reports which we're not currently externalizing #}
         <script>L_PREFER_CANVAS = true;</script>
         {% endaddtoblock %}
         {% endif %}

@@ -39,6 +39,12 @@ class Schedule(models.Model):
     # If True, include all users at that location or at any descendant locations as recipients
     include_descendant_locations = models.BooleanField(default=False)
 
+    # Only matters when include_descendant_locations is True.
+    # If this is an empty list, it's ignored.
+    # Otherwise, only the SQLLocations whose LocationType foreign keys are in this list
+    # will be considered when expanding the recipients of the schedule instance.
+    location_type_filter = jsonfield.JSONField(default=list)
+
     # If None, the list of languages defined in the project for messaging will be
     # inspected and the default language there will be used.
     default_language_code = models.CharField(max_length=126, null=True)

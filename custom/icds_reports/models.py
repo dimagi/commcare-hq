@@ -684,39 +684,51 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
         help_text="The latest form.meta.timeEnd that has been processed for this case"
     )
     counsel_increase_food_bf = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling on increasing food intake has ever been completed"
     )
     counsel_breast = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling on managing breast problems has ever been completed"
     )
     skin_to_skin = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling on skin to skin care has ever been completed"
     )
     is_ebf = models.PositiveSmallIntegerField(
+        null=True,
         help_text="is_ebf set in the last form submitted this month"
     )
     water_or_milk = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Child given water or milk in the last form submitted this month"
     )
     other_milk_to_child = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Child given something other than milk in the last form submitted this month"
     )
     tea_other = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Child given tea or other liquid in the last form submitted this month"
     )
     eating = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Child given something to eat in the last form submitted this month"
     )
     counsel_exclusive_bf = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling about exclusive breastfeeding has ever occurred"
     )
     counsel_only_milk = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling about avoiding other than breast milk has ever occurred"
     )
     counsel_adequate_bf = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling about adequate breastfeeding has ever occurred"
     )
     not_breastfeeding = models.CharField(
+        null=True,
         max_length=126,
         help_text="The reason the mother is not able to breastfeed"
     )
@@ -770,6 +782,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
         help_text="The latest form.meta.timeEnd that has been processed for this case"
     )
     counsel_methods = models.PositiveSmallIntegerField(
+        null=True,
         help_text="Counseling about family planning methods has ever occurred"
     )
 

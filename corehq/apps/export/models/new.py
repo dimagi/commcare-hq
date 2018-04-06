@@ -21,6 +21,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
@@ -156,6 +157,8 @@ class ExportItem(DocumentSchema):
     tag = StringProperty()
     last_occurrences = DictProperty()
     transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
+    # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
+    datatype = StringProperty()
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -206,6 +209,7 @@ class ExportItem(DocumentSchema):
             path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
+            datatype=get_form_indicator_data_type(question['type'])
         )
 
     @classmethod
@@ -1103,9 +1107,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{} ({})'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
-            datetime.now().strftime('%Y-%m-%d')
+        return _('{name} (created {date})').format(
+            name=xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
+            date=datetime.now().strftime('%Y-%m-%d')
         )
 
     @staticmethod
@@ -1138,7 +1142,10 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return '{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+        return _('{name} (created {date})').format(
+            name=schema.case_type,
+            date=datetime.now().strftime('%Y-%m-%d')
+        )
 
 
 class SMSExportInstanceDefaults(ExportInstanceDefaults):
@@ -1151,7 +1158,7 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return 'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
+        return _('Messages (created {date})').format(date=datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):

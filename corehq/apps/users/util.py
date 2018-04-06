@@ -8,6 +8,7 @@ from django.utils import html, safestring
 
 from couchdbkit.resource import ResourceNotFound
 from corehq import privileges, toggles
+from corehq.apps.callcenter.const import CALLCENTER_USER
 from corehq.util.quickcache import quickcache
 
 from django.core.cache import cache
@@ -26,6 +27,7 @@ WEIRD_USER_IDS = [
     UNOWNED_EXTENSION_OWNER_ID,
     SYSTEM_USER_ID,
     ARCHIVED_CASE_OWNER_ID,
+    CALLCENTER_USER
 ]
 
 

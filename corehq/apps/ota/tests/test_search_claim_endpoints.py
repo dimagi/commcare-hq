@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from uuid import uuid4
 
@@ -514,7 +515,7 @@ class CaseClaimEndpointTests(TestCase):
                                         'path': 'case_properties',
                                         'query': {
                                             'filtered': {
-                                                'filter': {'term': {'case_properties.key': u'name'}},
+                                                'filter': {'term': {'case_properties.key': 'name'}},
                                                 'query': {
                                                     'match': {
                                                         'case_properties.value': {

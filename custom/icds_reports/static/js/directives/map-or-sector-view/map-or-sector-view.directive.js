@@ -46,19 +46,21 @@ function MapOrSectorController($location, storageService, locationsService) {
                 },
                 axisLabelDistance: 20,
             },
-            tooltip: function (x, y) {
-                if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[y]) {
-                    return 'NA';
-                }
+            tooltip: {
+                contentGenerator: function(d) {
+                    if (!vm.data.mapData.tooltips_data || !vm.data.mapData.tooltips_data[d.value]) {
+                        return 'NA';
+                    }
 
-                return vm.templatePopup({
-                    loc: {
-                        properties: {
-                            name: y,
+                    return vm.templatePopup({
+                        loc: {
+                            properties: {
+                                name: d.value,
+                            },
                         },
-                    },
-                    row: vm.data.mapData.tooltips_data[y],
-                });
+                        row: vm.data.mapData.tooltips_data[d.value],
+                    });
+                },
             },
             callback: function(chart) {
                 var height = 550;
@@ -66,7 +68,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                 vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
-                    locationsService.getLocationByNameAndParent(e.point[0], location_id).then(function (locations) {
+                    locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
                         var location = locations[0];
                         $location.search('location_name', location.name);
                         $location.search('location_id', location.location_id);

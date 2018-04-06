@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from lxml import etree
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.exceptions import SuiteValidationError

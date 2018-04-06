@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager.models import Application
 from corehq.apps.app_manager.tests.util import TestXmlMixin
 from django.test import SimpleTestCase
