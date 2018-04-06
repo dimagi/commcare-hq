@@ -4,6 +4,7 @@ from __future__ import division
 from __future__ import unicode_literals
 import csv
 from django.core.management import BaseCommand
+from django.core.management.base import CommandError
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.couch.database import iter_docs
 
@@ -11,11 +12,12 @@ from dimagi.utils.couch.database import iter_docs
 class Command(BaseCommand):
     """
     Generate profile output for sync logs.
-    # Doesn't work since this queries from Couch
-    # Todo: Migrate to SQL
     """
 
     def handle(self, filename, *args, **kwargs):
+        # Doesn't work since this queries from Couch
+        # Todo: Migrate to SQL
+        raise CommandError("This doesn't work since the synclogs are now migrated to SQL")
         database = SyncLog.get_db()
         all_sync_log_ids = [
             row['id'] for row in
