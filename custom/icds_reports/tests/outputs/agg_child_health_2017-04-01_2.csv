@@ -1,6 +1,6 @@
 state_id,district_id,block_id,supervisor_id,awc_id,month,gender,age_tranche,caste,disabled,minority,resident,valid_in_month,nutrition_status_weighed,nutrition_status_unweighed,nutrition_status_normal,nutrition_status_moderately_underweight,nutrition_status_severely_underweight,wer_eligible,thr_eligible,rations_21_plus_distributed,pse_eligible,pse_attended_16_days,born_in_month,low_birth_weight_in_month,bf_at_birth,ebf_eligible,ebf_in_month,cf_eligible,cf_in_month,cf_diet_diversity,cf_diet_quantity,cf_demo,cf_handwashing,counsel_increase_food_bf,counsel_manage_breast_problems,counsel_ebf,counsel_adequate_bf,counsel_pediatric_ifa,counsel_play_cf_video,fully_immunized_eligible,fully_immunized_on_time,fully_immunized_late,has_aadhar_id,aggregation_level,pnc_eligible,height_eligible,wasting_moderate,wasting_severe,stunting_moderate,stunting_severe,cf_initiation_in_month,cf_initiation_eligible,height_measured_in_month,wasting_normal,stunting_normal,valid_all_registered_in_month,ebf_no_info_recorded,weighed_and_height_measured_in_month,weighed_and_born_in_month,days_ration_given_child
 st2,d2,All,All,All,2017-04-01,M,36,All,All,All,All,15,10,5,10,0,0,15,15,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,15,0,0,2,2,0,15,0,0,0,0,0,0,0,0,0,15,0,0,0,
-st1,d1,All,All,All,2017-04-01,F,12,All,All,All,All,9,8,1,5,3,0,9,9,0,0,0,0,0,0,0,0,9,4,2,3,1,2,0,0,0,0,0,2,3,0,0,0,2,0,9,0,0,0,0,3,4,0,0,0,9,0,0,0,
+st1,d1,All,All,All,2017-04-01,F,12,All,All,All,All,9,8,1,5,3,0,9,9,0,0,0,0,0,0,0,0,9,4,2,3,1,2,0,0,0,0,0,2,3,0,0,0,2,0,9,0,0,0,0,3,4,0,0,0,9,0,0,0,4
 st2,d2,All,All,All,2017-04-01,M,24,All,All,All,All,25,11,14,6,3,2,25,25,5,0,0,0,0,0,0,0,25,6,6,6,0,6,0,0,0,0,6,5,27,0,0,1,2,0,25,0,0,0,0,0,0,1,0,1,25,0,1,0,
 st2,d2,All,All,All,2017-04-01,M,6,All,All,All,All,8,5,3,5,0,0,8,2,0,0,0,0,0,0,8,1,2,0,0,0,0,0,0,0,4,4,0,0,0,0,0,0,2,0,2,0,0,0,0,0,2,0,0,0,8,4,0,0,
 st2,d2,All,All,All,2017-04-01,M,0,All,All,All,All,1,1,0,1,0,0,1,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,2,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,
@@ -37,7 +37,7 @@ st2,d2,All,All,All,2017-04-01,M,60,All,All,All,All,44,34,10,27,6,1,44,0,0,44,4,0
 st2,d3,All,All,All,2017-04-01,M,36,All,All,All,All,14,8,6,8,0,0,14,14,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,14,3,0,1,2,0,14,0,0,0,0,0,0,0,0,0,14,0,0,0,
 st1,d1,All,All,All,2017-04-01,M,36,All,All,All,All,40,29,11,18,10,1,40,40,0,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,40,7,0,5,2,0,40,0,0,0,1,0,0,1,0,0,40,0,1,0,
 st1,d1,All,All,All,2017-04-01,M,0,All,All,All,All,2,0,2,0,0,0,2,0,0,0,0,2,0,0,2,1,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,2,2,0,0,0,0,0,0,0,0,0,0,2,1,0,0,
-st1,d1,All,All,All,2017-04-01,M,6,All,All,All,All,17,5,12,4,1,0,17,3,0,0,0,1,0,0,17,10,3,2,2,2,2,2,3,0,15,15,0,1,0,0,0,0,2,4,3,0,0,0,0,2,3,0,0,0,17,6,0,0,
+st1,d1,All,All,All,2017-04-01,M,6,All,All,All,All,17,5,12,4,1,0,17,3,0,0,0,1,0,0,17,10,3,2,2,2,2,2,3,0,15,15,0,1,0,0,0,0,2,4,3,0,0,0,0,2,3,0,0,0,17,6,0,0,5
 st2,d3,All,All,All,2017-04-01,M,24,All,All,All,All,13,13,0,8,4,1,13,13,0,0,0,0,0,0,0,0,13,9,9,9,0,9,0,0,0,0,9,9,13,2,2,2,2,0,13,0,0,0,0,0,0,0,0,0,13,0,0,0,
 st2,d3,All,All,All,2017-04-01,M,6,All,All,All,All,8,4,4,4,0,0,8,3,0,0,0,0,0,0,8,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,3,0,0,0,0,0,3,0,0,0,8,8,0,0,
 st2,d3,All,All,All,2017-04-01,M,0,All,All,All,All,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,

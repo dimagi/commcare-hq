@@ -1,0 +1,7 @@
+doc_id,inserted_at,repeat_iteration,timeend,state_id,received_on,days_ration_given_mother,ccs_record_case_id,child_health_case_id,days_ration_given_child
+thr_form_1,2018-04-01,0,2017-03-01,st1,2017-04-01,,ccs_record_1,c0750e4e-8ad1-4480-be94-81bdc530502a,6
+thr_form_2,2018-04-01,0,2017-03-01,st1,2017-04-01,,ccs_record_1,3ba117e5-b65c-4747-9107-646a1fd64e88,7
+thr_form_3,2018-04-01,0,2017-04-01,st1,2017-04-01,,ccs_record_1,c0750e4e-8ad1-4480-be94-81bdc530502a,4
+thr_form_4,2018-04-01,0,2017-04-01,st1,2017-04-01,,ccs_record_1,3ba117e5-b65c-4747-9107-646a1fd64e88,5
+thr_form_5,2018-04-01,0,2017-05-01,st1,2017-04-01,,ccs_record_1,c0750e4e-8ad1-4480-be94-81bdc530502a,8
+thr_form_6,2018-04-01,0,2017-05-01,st1,2017-04-01,,ccs_record_1,3ba117e5-b65c-4747-9107-646a1fd64e88,9
