@@ -12,31 +12,31 @@ hqDefine("commtrack/js/stock_levels", function() {
         return self;
     };
 
-    var tableModel = function(row_spec, raw_rows) {
+    var tableModel = function(rowSpec, rawRows) {
         var self = {};
-        self.keys = row_spec.map(function(spec) {
+        self.keys = rowSpec.map(function(spec) {
             return spec['key'];
         });
         self.rows = ko.observableArray();
 
-        for (var i = 0; i < raw_rows.length; i++) {
-            self.rows.push(rowModel(raw_rows[i], self.keys));
+        for (var i = 0; i < rawRows.length; i++) {
+            self.rows.push(rowModel(rawRows[i], self.keys));
         }
 
         self.serialize = function() {
             return self.rows().map(function(row) {
-                var serialized_row = {};
+                var serializedRow = {};
                 self.keys.forEach(function(key) {
-                    serialized_row[key] = row.data[key]();
+                    serializedRow[key] = row.data[key]();
                 });
-                return serialized_row;
+                return serializedRow;
             });
         };
 
-        self.submit_table = function(table_form) {
+        self.submit_table = function(form) {
             var tableForm = $("<form>")
                 .attr("method", "POST")
-                .attr("action", table_form.action);
+                .attr("action", form.action);
             $('<input type="hidden">')
                 .attr('name', 'child_form_data')
                 .attr('value', JSON.stringify(self.serialize()))
