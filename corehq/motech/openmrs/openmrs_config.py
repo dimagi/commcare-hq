@@ -121,6 +121,15 @@ class FormQuestionMap(FormQuestion):
             return None
 
 
+class FormQuestionConcept(FormQuestionMap):
+    # This alias for FormQuestionMap allows us to easily manually
+    # migrate the OpenmrsConfig of the *two* domains that use
+    # FormQuestionConcept on prod.
+    #
+    # TODO: NH 2018-04-06: Drop after deploy and config edited.
+    pass
+
+
 class OpenmrsCaseConfig(DocumentSchema):
 
     # "patient_identifiers": {
