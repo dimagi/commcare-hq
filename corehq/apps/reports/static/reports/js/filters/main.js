@@ -3,12 +3,20 @@ hqDefine("reports/js/filters/main", [
     'knockout',
     'hqwebapp/js/main',
     'reports/js/standard_hq_report',
+    'reports/js/filters/select2s',
+    'reports/js/filters/phone_number',
+    'reports/js/filters/button_group',
+    'reports/js/filters/schedule_instance',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
     ko,
     hqMain,
-    standardHQReportModule
+    standardHQReportModule,
+    select2Filter,
+    phoneNumberFilter,
+    buttonGroup,
+    scheduleInstanceFilter
 ) {
     var init = function() {
         // Datespans
@@ -65,18 +73,18 @@ hqDefine("reports/js/filters/main", [
 
         // Selects
         $('.report-filter-single-option').each(function() {
-            hqImport("reports/js/filters/select2s").initMulti(this);
+            select2Filter.initMulti(this);
         });
         $('.report-filter-single-option-paginated').each(function() {
-            hqImport("reports/js/filters/select2s").initSinglePaginated(this);
+            select2Filter.initSinglePaginated(this);
         });
         $('.report-filter-multi-option').each(function() {
-            hqImport("reports/js/filters/select2s").initMulti(this);
+            select2Filter.initMulti(this);
         });
 
         // Submission type (Raw Forms, Errors, & Duplicates)
         $('.report-filter-button-group').each(function() {
-            hqImport("reports/js/filters/button_group").link(this);
+            buttonGroup.link(this);
         });
 
         // Tags (to filter by CC version in global device logs soft asserts report)
@@ -92,7 +100,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-message-type-configuration").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = hqImport("reports/js/filters/schedule_instance").scheduleInstanceFilterViewModel(data.initialValue, data.conditionalAlertChoices);
+            var model = scheduleInstanceFilter.model(data.initialValue, data.conditionalAlertChoices);
             $el.koApplyBindings(model);
 
             $('[name=rule_id]').each(function(i, el) {
@@ -105,7 +113,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-phone-number").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = hqImport("reports/js/filters/phone_number").phoneNumberFilterViewModel(data.initialValue, data.groups);
+            var model = phoneNumberFilter.model(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {

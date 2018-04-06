@@ -1,4 +1,4 @@
-hqDefine("reports/js/filters/phone_number", function() {
+hqDefine("reports/js/filters/phone_number", ['knockout'], function(ko) {
     var phoneNumberFilterViewModel = function (initialValue, groups) {
         var PHONE_NUMBER_SELECT_OPTIONS =
             [
@@ -46,6 +46,6 @@ hqDefine("reports/js/filters/phone_number", function() {
     };
 
     return {
-        phoneNumberFilterViewModel: phoneNumberFilterViewModel,
+        model: phoneNumberFilterViewModel,
     };
 });

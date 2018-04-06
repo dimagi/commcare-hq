@@ -2,7 +2,7 @@
  * This is used to initialize the buttongroup filters.
  * See the user filter for sample usage.
  */
-hqDefine("reports/js/filters/button_group", function() {
+hqDefine("reports/js/filters/button_group", ['jquery'], function($) {
     var link = function (groupIdOrEl, canBeEmpty) {
         var $el = typeof groupIdOrEl === "string" ? $("#" + groupIdOrEl) : $(groupIdOrEl);
         $el.find("button").click(function(e) {
