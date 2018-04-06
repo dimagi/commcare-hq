@@ -66,7 +66,7 @@ class Command(BaseDataDump):
             return case.case_id
         elif column_name == "Date of Episode creation":
             return self.get_episode(case).opened_on
-        elif column_name == "Issued product name":
+        elif column_name == "Issued Product Name":
             voucher_case = self.get_voucher(case, raise_if_none=False)
             if voucher_case:
                 return voucher_case.get_case_property("drugs_ordered_readable")
