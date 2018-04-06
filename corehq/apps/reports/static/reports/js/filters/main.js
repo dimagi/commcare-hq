@@ -10,7 +10,6 @@ hqDefine("reports/js/filters/main", [
     hqMain,
     standardHQReportModule
 ) {
-    console.log("for the first time");
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.
@@ -38,71 +37,6 @@ hqDefine("reports/js/filters/main", [
                     return false;
                 }
             }
-        });
-    };
-    var ScheduleInstanceFilterViewModel = function(initial, conditionalAlertChoices) {
-        var self = this;
-        var all = [{'id': '', 'name': gettext('All')}];
-        self.date_selector_type = ko.observable(initial.date_selector_type);
-        self.next_event_due_after = ko.observable(initial.next_event_due_after);
-        self.configuration_type = ko.observable(initial.configuration_type);
-        self.rule_id = ko.observable(initial.rule_id);
-        self.conditional_alert_choices = ko.observableArray(all.concat(conditionalAlertChoices));
-        self.active = ko.observable(initial.active);
-        self.case_id = ko.observable(initial.case_id);
-
-        $(function() {
-            $('#id_next_event_due_after').daterangepicker(
-                {
-                    locale: {
-                        format: 'YYYY-MM-DD',
-                    },
-                    singleDatePicker: true,
-                }
-            );
-        });
-    };
-    var SMSPhoneNumberFilterViewModel = function (initial_value, groups) {
-        var PHONE_NUMBER_SELECT_OPTIONS =
-            [
-                { id: "has_phone_number", text: gettext("That have phone numbers") },
-                { id: "no_phone_number", text: gettext("That do not have phone numbers") },
-            ],
-            model = this;
-
-        this.filter_type = ko.observable(initial_value.filter_type || 'phone_number');
-        this.phone_number_filter = ko.observable(initial_value.phone_number_filter);
-        this.has_phone_number = ko.observable(initial_value.has_phone_number);
-        this.contact_type = ko.observable(initial_value.contact_type);
-        this.groups = ko.observableArray(groups);
-        this.selected_group = ko.observable(initial_value.selected_group);
-        this.verification_status = ko.observable(initial_value.verification_status);
-
-        this.phone_number_options = ko.pureComputed(function () {
-            if (model.contact_type() === 'cases') {
-                return [PHONE_NUMBER_SELECT_OPTIONS[0]];
-            }
-            return PHONE_NUMBER_SELECT_OPTIONS;
-        });
-
-        this.show_phone_filter = ko.pureComputed(function () {
-            return model.filter_type() === 'phone_number';
-        });
-
-        this.show_contact_filter = ko.pureComputed(function () {
-            return model.filter_type() === 'contact';
-        });
-
-        this.show_group_filter = ko.pureComputed(function () {
-            return model.show_contact_filter() && model.contact_type() === 'users';
-        });
-
-        this.can_edit_has_phone_number = ko.pureComputed(function () {
-            return model.show_contact_filter() && model.contact_type() === 'cases';
-        });
-
-        this.show_verification_filter = ko.pureComputed(function () {
-            return model.show_contact_filter() && model.has_phone_number() === 'has_phone_number';
         });
     };
 
@@ -221,7 +155,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-message-type-configuration").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = new ScheduleInstanceFilterViewModel(data.initialValue, data.conditionalAlertChoices);
+            var model = hqImport("reports/js/filters/schedule_instance").scheduleInstanceFilterViewModel(data.initialValue, data.conditionalAlertChoices);
             $el.koApplyBindings(model);
 
             $('[name=rule_id]').each(function(i, el) {
@@ -234,7 +168,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-phone-number").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = new SMSPhoneNumberFilterViewModel(data.initialValue, data.groups);
+            var model = hqImport("reports/js/filters/phone_number").phoneNumberFilterViewModel(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {
