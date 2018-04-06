@@ -1293,7 +1293,8 @@ def get_properly_wrapped_sync_log(doc_id):
     """
     try:
         synclog = SyncLogSQL.objects.filter(synclog_id=doc_id).first()
-        return properly_wrap_sync_log(synclog.doc)
+        if synclog:
+            return properly_wrap_sync_log(synclog.doc)
     except ValidationError:
         # this occurs if doc_id is not a valid UUID
         pass

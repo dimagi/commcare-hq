@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
@@ -36,7 +37,6 @@ from casexml.apps.phone.models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
-    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -437,7 +437,7 @@ class RestoreState(object):
     def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
         new_synclog = SimplifiedSyncLog(
-            _id=SyncLog.get_db().server.next_uuid(),
+            _id=uuid.uuid1().hex.lower(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
