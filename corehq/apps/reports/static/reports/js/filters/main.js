@@ -117,6 +117,11 @@ hqDefine("reports/js/filters/main", [
             hqImport("reports/js/filters/button_group").link(this);
         });
 
+        // Tags (to filter by CC version in global device logs soft asserts report)
+        $('.report-filter-tags').each(function() {
+            $(this).select2({tags: $(this).data("tags"), allowClear: true});
+        });
+
         // Initialize any help bubbles
         $('.hq-help-template').each(function () {
             hqMain.transformHelpTemplate($(this), true);
