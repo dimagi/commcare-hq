@@ -77,9 +77,6 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
         prune_synclogs()
         self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.docs[2])
 
-    def test_get_last_synclog_for_user(self):
-        self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.sync_logs[0])
-
 
 class SyncLogQueryTest(TestCase):
     def _sql_count(self):

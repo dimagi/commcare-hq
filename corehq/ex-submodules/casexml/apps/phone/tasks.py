@@ -91,3 +91,4 @@ def prune_synclogs():
         )
         drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
         get_cursor(SyncLogSQL).execute(drop_query)
+        oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
