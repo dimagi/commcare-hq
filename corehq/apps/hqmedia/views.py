@@ -578,7 +578,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         ))
         return download.get_start_response()
 
-    @method_decorator(safe_cached_download)
+    # @method_decorator(safe_cached_download)
     def dispatch(self, request, *args, **kwargs):
         return super(DownloadMultimediaZip, self).dispatch(request, *args, **kwargs)
 
