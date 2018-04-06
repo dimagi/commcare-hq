@@ -33,22 +33,8 @@
     <!-- todo add the media player back in -->
     <script src="{% static 'hqmedia/js/jquery.jplayer.min.js' %}"></script>
     <script src="{% static 'hqmedia/js/hqmedia.reference_controller.js' %}"></script>
+    <script src="{% static 'hqmedia/js/references_main.js' %}"></script>
     <script src="{% static 'app_manager/js/download_async_modal.js' %}"></script>
-{% endblock %}
-
-{% block js-inline %} {{ block.super }}
-    <script>
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            referenceController = new MultimediaReferenceController(
-                initialPageData("references"),
-                initialPageData("object_map"),
-                initialPageData("totals")
-        );
-        referenceController.render();
-        $("#multimedia-reference-checker").koApplyBindings(referenceController);
-
-        $('.preview-media').tooltip();
-    </script>
 {% endblock %}
 
 {% block page_name %}
