@@ -1,3 +1,4 @@
+/* globals MultimediaReferenceController */
 hqDefine("hqmedia/js/references_main", function() {
     $(function() {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
@@ -5,7 +6,7 @@ hqDefine("hqmedia/js/references_main", function() {
                 initialPageData("references"),
                 initialPageData("object_map"),
                 initialPageData("totals")
-        );
+            );
         referenceController.render();
         $("#multimedia-reference-checker").koApplyBindings(referenceController);
 
