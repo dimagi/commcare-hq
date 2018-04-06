@@ -289,11 +289,11 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     if row['real_date'] < self.months[i] + relativedelta(months=1):
                         if data[row[self.loc_id]][i].get(row['pps_id']) and \
                                 data[row[self.loc_id]][i][row['pps_id']] == 0:
-                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock'][
-                                                                                'html'] == 1 else 1
+                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock']['html'] == 1 \
+                                else 1
                         else:
-                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock'][
-                                                                                'html'] == 1 else 1
+                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock']['html'] == 1 \
+                                else 1
                         break
             for location in data:
                 new_data[location] = ['no data entered'] * len(self.months)
