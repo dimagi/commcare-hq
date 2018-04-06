@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import division
 import math
 from corehq.apps.es import queries
+from corehq.apps.locations.models import SQLLocation
 
 from custom.enikshay.case_utils import (
     CASE_TYPE_EPISODE,
@@ -12,7 +13,7 @@ from custom.enikshay.const import (
     ENROLLED_IN_PRIVATE,
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
-from custom.enikshay.management.commands.base_data_dump import BaseDataDump
+from custom.enikshay.management.commands.base_data_dump import BaseDataDump, PRIVATE_SECTOR_ID_MAPPING
 from django.utils.dateparse import parse_date
 
 DOMAIN = "enikshay"
@@ -101,7 +102,7 @@ class Command(BaseDataDump):
             total_expected_doses_taken = doses_per_week * (
                 math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
             )
-            return int(adherence_total_doses_taken) - total_expected_doses_taken
+            return total_expected_doses_taken - int(adherence_total_doses_taken)
         elif column_name == "Total Adherence Score":
             adherence_latest_date_recorded = episode.get_case_property('adherence_latest_date_recorded')
             if not adherence_latest_date_recorded:
@@ -125,6 +126,18 @@ class Command(BaseDataDump):
                 math.ceil((adherence_latest_date_recorded - adherence_schedule_date_start).days / 7)
             )
             return (int(adherence_total_doses_taken) / total_expected_doses_taken) * 100
+        elif column_name == "Organisation":
+            person_case = self.get_person(episode)
+            owner_id = person_case.owner_id
+            location = SQLLocation.active_objects.get_or_None(location_id=owner_id)
+            if location:
+                private_sector_org_id = location.metadata.get('private_sector_org_id')
+                if private_sector_org_id:
+                    return PRIVATE_SECTOR_ID_MAPPING.get(private_sector_org_id, private_sector_org_id)
+                else:
+                    raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
+            else:
+                raise Exception("Location not found for id %s" % owner_id)
         raise Exception("unknown custom column %s" % column_name)
 
     def get_person(self, episode):
