@@ -449,6 +449,7 @@ def is_valid_mobile_select_filter_type(ui_filter):
     return isinstance(ui_filter, DynamicChoiceListFilter) or isinstance(ui_filter, ChoiceListFilter)
 
 
+@quickcache(['domain'])
 def get_uuids_by_instance_id(domain):
     """
     map ReportAppConfig.uuids to user-defined ReportAppConfig.instance_ids
