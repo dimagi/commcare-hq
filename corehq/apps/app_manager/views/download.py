@@ -222,7 +222,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
-@safe_cached_download
+# @safe_cached_download
 def download_file(request, domain, app_id, path):
     download_target_version = request.GET.get('download_target_version') == 'true'
     if download_target_version:
