@@ -10,7 +10,9 @@ from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_last_synclog_fo
 from casexml.apps.phone.models import SyncLog, SyncLogSQL, SimplifiedSyncLog, delete_synclog
 from casexml.apps.phone.exceptions import MissingSyncLog
 from corehq.util.test_utils import DocTestMixin
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from casexml.apps.phone.tasks import prune_synclogs
+
 
 class DBAccessorsTest(TestCase, DocTestMixin):
     maxDiff = None
@@ -74,8 +76,14 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
             doc.domain = self.domain
             doc.user_id = self.user_id
             doc.save()
+        self.assert_docs_equal(self._oldest_synclog(self.user_id), self.docs[0])
         prune_synclogs()
-        self.assert_docs_equal(get_last_synclog_for_user(self.user_id), self.docs[2])
+        self.assert_docs_equal(self._oldest_synclog(self.user_id), self.docs[2])
+
+    def _oldest_synclog(self, user_id):
+        result = SyncLogSQL.objects.filter(user_id=user_id).order_by('date').first()
+        if result:
+            return properly_wrap_sync_log(result.doc)
 
 
 class SyncLogQueryTest(TestCase):
