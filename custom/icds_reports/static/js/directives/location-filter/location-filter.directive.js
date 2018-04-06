@@ -16,8 +16,8 @@ function LocationModalController($uibModalInstance, $location, locationsService,
     var ALL_OPTION = {
         name: 'All',
         location_id: 'all',
-        "user_have_access": 0,
-        "user_have_access_to_parent": 1,
+        user_have_access: 0,
+        user_have_access_to_parent: 1,
     };
 
     vm.locationsCache = locationsCache;
@@ -258,7 +258,14 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                             return location.location_id === userLocationId;
                         });
 
-                        if (["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations && (parentId === 'root' || parentId === selectedLocation.parent_id || userLocationInSorted.length > 0 )) {
+                        var haveAccessToAllLocationsForLevel = true;
+                        window.angular.forEach(sortedLocations, function (location) {
+                            if (!location.user_have_access) {
+                                haveAccessToAllLocationsForLevel = false;
+                            }
+                        });
+
+                        if (["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations && !haveAccessToAllLocationsForLevel || userLocationInSorted.length > 0) {
                             vm.locationsCache[parentId] = sortedLocations;
                         } else if (selectedLocation.user_have_access) {
                             vm.locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
