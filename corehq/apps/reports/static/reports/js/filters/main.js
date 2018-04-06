@@ -1,4 +1,4 @@
-hqDefine("reports/js/filters", [
+hqDefine("reports/js/filters/main", [
     'jquery',
     'knockout',
     'hqwebapp/js/main',
@@ -10,6 +10,7 @@ hqDefine("reports/js/filters", [
     hqMain,
     standardHQReportModule
 ) {
+    console.log("for the first time");
     var linkButtonGroup = function (groupIdOrEl, can_be_empty) {
         // this is used to initialize the buttongroup filters
         // see the user filter for sample usage.
