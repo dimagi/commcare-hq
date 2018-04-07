@@ -84,11 +84,15 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "block"
+          },
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
       },

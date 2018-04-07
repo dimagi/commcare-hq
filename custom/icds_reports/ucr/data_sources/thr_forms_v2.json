@@ -47,11 +47,15 @@
         "create_index": true,
         "column_id": "supervisor_id",
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "type": "named",
             "name": "user_location_id"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "supervisor"
+          },
+          "type": "ancestor_location"
         }
       },
       {

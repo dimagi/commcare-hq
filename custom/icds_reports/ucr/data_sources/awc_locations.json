@@ -494,33 +494,49 @@
         "property_name": "_id"
       },
       "supervisor_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
           "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": {
+            "type": "constant",
+            "constant": "supervisor"
+        }
+        "type": "ancestor_location"
       },
       "block_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "supervisor_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": {
+            "type": "constant",
+            "constant": "block"
+        }
+        "type": "ancestor_location"
       },
       "district_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "block_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
+        "location_type": {
+            "type": "constant",
+            "constant": "district"
+        }
+        "type": "ancestor_location"
       },
       "state_id": {
-        "location_id_expression": {
+        "location_id": {
           "type": "named",
-          "name": "district_id"
+          "name": "awc_id"
         },
-        "type": "location_parent_id"
-      }
+        "location_type": {
+            "type": "constant",
+            "constant": "state"
+        }
+        "type": "ancestor_location"
+      },
     },
     "referenced_doc_type": "Location",
     "table_id": "static-awc_location",

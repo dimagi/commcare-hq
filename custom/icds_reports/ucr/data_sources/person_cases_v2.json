@@ -63,8 +63,9 @@
         "is_nullable": true,
         "is_primary_key": false,
         "column_id": "supervisor_id",
+        "create_index": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -72,7 +73,11 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "supervisor"
+          },
+          "type": "ancestor_location"
         }
       },
       {
@@ -82,21 +87,21 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": false,
         "column_id": "block_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "block"
+          },
+          "type": "ancestor_location"
         }
       },
       {
@@ -106,24 +111,21 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": false,
         "column_id": "district_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "district"
+          },
+          "type": "ancestor_location"
         }
       },
       {
@@ -133,27 +135,21 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "create_index": true,
         "column_id": "state_id",
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "state"
+          },
+          "type": "ancestor_location"
         }
       },
       {

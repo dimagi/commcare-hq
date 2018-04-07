@@ -173,7 +173,7 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
+          "location_id": {
             "expression": {
               "datatype": null,
               "type": "property_name",
@@ -181,7 +181,11 @@
             },
             "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "supervisor"
+          },
+          "type": "ancestor_location"
         },
         "column_id": "supervisor_id"
       },
@@ -193,18 +197,19 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "expression": {
-                "datatype": null,
-                "type": "property_name",
-                "property_name": "owner_id"
-              },
-              "type": "root_doc"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "block"
+          },
+          "type": "ancestor_location"
         },
         "column_id": "block_id"
       },
@@ -216,21 +221,19 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "expression": {
-                  "datatype": null,
-                  "type": "property_name",
-                  "property_name": "owner_id"
-                },
-                "type": "root_doc"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "district"
+          },
+          "type": "ancestor_location"
         },
         "column_id": "district_id"
       },
@@ -242,24 +245,19 @@
         "transform": {},
         "is_nullable": true,
         "expression": {
-          "location_id_expression": {
-            "location_id_expression": {
-              "location_id_expression": {
-                "location_id_expression": {
-                  "expression": {
-                    "datatype": null,
-                    "type": "property_name",
-                    "property_name": "owner_id"
-                  },
-                  "type": "root_doc"
-                },
-                "type": "location_parent_id"
-              },
-              "type": "location_parent_id"
+          "location_id": {
+            "expression": {
+              "datatype": null,
+              "type": "property_name",
+              "property_name": "owner_id"
             },
-            "type": "location_parent_id"
+            "type": "root_doc"
           },
-          "type": "location_parent_id"
+          "location_type": {
+              "type": "constant",
+              "constant": "state"
+          },
+          "type": "ancestor_location"
         },
         "column_id": "state_id"
       },
