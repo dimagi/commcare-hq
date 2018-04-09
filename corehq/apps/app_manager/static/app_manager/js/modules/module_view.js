@@ -31,7 +31,7 @@ hqDefine("app_manager/js/modules/module_view", function() {
                     lang: moduleBrief.lang,
                     langs: moduleBrief.langs,
                     saveUrl: hqImport('hqwebapp/js/initial_page_data').reverse('edit_module_detail_screens'),
-                    parentModules: initial_page_data('parent_modules'),
+                    parentModules: initial_page_data('parent_case_modules'),
                     childCaseTypes: detail.subcase_types,
                     fixture_columns_by_type: options.fixture_columns_by_type || {},
                     parentSelect: detail.parent_select,

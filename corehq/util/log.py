@@ -327,5 +327,4 @@ def get_traceback_string():
 
 
 def send_HTML_email(subject, recipient, html_content, *args, **kwargs):
-    kwargs['ga_track'] = kwargs.get('ga_track', False) and analytics_enabled_for_email(recipient)
     return _send_HTML_email(subject, recipient, html_content, *args, **kwargs)

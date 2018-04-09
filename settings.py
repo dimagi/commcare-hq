@@ -116,7 +116,6 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
-DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -933,10 +932,6 @@ DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
-# Allow overriding the synclog DB
-# This allows us to periodically rotate the synclog DB to remove deleted docs
-CUSTOM_SYNCLOGS_DB = None
-
 from env_settings import *
 
 try:
@@ -1211,15 +1206,7 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        },
-        'debug_user_save': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': DEBUG_USER_SAVE_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 5  # Backup 50 MB of logs
-        },
+        }
     },
     'root': {
         'level': 'INFO',
@@ -1336,11 +1323,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'debug_user_save': {
-            'handlers': ['debug_user_save'],
-            'level': 'INFO' if SERVER_ENVIRONMENT == 'localdev' else 'ERROR',
-            'propagate': False,
-        }
     }
 }
 
@@ -1387,8 +1369,6 @@ DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
-
-SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
 
 META_DB = 'meta'
 
@@ -1476,9 +1456,6 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
-
-    # sync logs
-    ('phone', SYNCLOGS_DB),
 
     # applications
     ('app_manager', APPS_DB),
