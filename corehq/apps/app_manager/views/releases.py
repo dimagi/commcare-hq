@@ -103,6 +103,7 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
         app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
+        app['target_commcare_flavor'] = SavedAppBuild.get(app['_id']).target_commcare_flavor
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -317,18 +318,27 @@ def delete_copy(request, domain, app_id):
 
 
 def odk_install(request, domain, app_id, with_media=False):
+    download_target_version = request.GET.get('download_target_version') == 'true'
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_url if not with_media else app.odk_media_profile_url
+    kwargs = []
     if build_profile_id is not None:
-        profile_url += '?profile={profile}'.format(profile=build_profile_id)
+        kwargs.append('profile={profile}'.format(profile=build_profile_id))
+    if download_target_version:
+        kwargs.append('download_target_version=true')
+    if kwargs:
+        profile_url += '?' + '&'.join(kwargs)
     context = {
         "domain": domain,
         "app": app,
         "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
-                           params={'profile': build_profile_id}),
+                           params={
+                               'profile': build_profile_id,
+                               'download_target_version': 'true' if download_target_version else 'false',
+                           }),
         "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)
@@ -336,13 +346,19 @@ def odk_install(request, domain, app_id, with_media=False):
 
 def odk_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        with_media=True, build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 
