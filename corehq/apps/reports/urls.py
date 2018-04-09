@@ -110,7 +110,7 @@ urlpatterns = [
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_.]+)/$',
+    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_\-.]+)/$',
         case_property_changes, name="case_property_changes"),
 
     # Download and view form data
