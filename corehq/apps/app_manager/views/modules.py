@@ -26,7 +26,8 @@ from corehq.apps.reports.daterange import get_simple_dateranges
 
 from dimagi.utils.logging import notify_exception
 
-from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits
+from corehq.apps.app_manager.views.utils import back_to_main, bail, get_langs, handle_custom_icon_edits, \
+    clear_xmlns_app_id_cache
 from corehq import toggles
 from corehq.apps.app_manager.templatetags.xforms_extras import trans
 from corehq.apps.app_manager.const import (
@@ -629,6 +630,7 @@ def delete_module(request, domain, app_id, module_unique_id):
             extra_tags='html'
         )
         app.save()
+        clear_xmlns_app_id_cache(domain)
     return back_to_main(request, domain, app_id=app_id)
 
 
