@@ -21,6 +21,7 @@ def notify_form_changed(domain, couch_user, app_id, form_unique_id):
 
 
 def notify_event(domain, couch_user, app_id, form_unique_id, message):
+    return
     message_obj = RedisMessage(json.dumps({
         'domain': domain,
         'user_id': couch_user._id,
