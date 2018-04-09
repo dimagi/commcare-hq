@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import contextlib
 
 from django.db.utils import InternalError
@@ -65,7 +66,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
     def testSubmitDuplicate(self):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)
-        self.assertIn(u"   √   ".encode('utf-8'), res.content)
+        self.assertIn("   √   ".encode('utf-8'), res.content)
 
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)

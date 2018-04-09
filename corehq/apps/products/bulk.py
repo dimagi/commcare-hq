@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.products.models import Product, SQLProduct
 from django.utils.translation import ugettext as _
 from corehq.apps.programs.models import Program
@@ -24,7 +25,7 @@ def import_products(domain, importer):
             p = Product.from_excel(row, custom_data_validator)
         except Exception as e:
             results['errors'].append(
-                _(u'Failed to import product {name}: {ex}'.format(
+                _('Failed to import product {name}: {ex}'.format(
                     name=row['name'] or '',
                     ex=e,
                 ))
@@ -41,7 +42,7 @@ def import_products(domain, importer):
         elif p.domain != domain:
             # don't let user import against another domains products
             results['errors'].append(
-                _(u"Product {product_name} belongs to another domain and was not updated").format(
+                _("Product {product_name} belongs to another domain and was not updated").format(
                     product_name=p.name
                 )
             )
@@ -50,7 +51,7 @@ def import_products(domain, importer):
         if p.code:
             if (p.code in codes and codes[p.code] != p.get_id) or (p.code in seen_codes):
                 results['errors'].append(_(
-                    u"Product {product_name} could not be imported \
+                    "Product {product_name} could not be imported \
                     since its product ID is already assigned to another product"
                 ).format(
                     product_name=p.name
@@ -62,7 +63,7 @@ def import_products(domain, importer):
 
         if p.program_id and p.program_id not in program_ids:
             results['errors'].append(_(
-                u"Product {product_name} references a program that doesn't exist: {program_id}"
+                "Product {product_name} references a program that doesn't exist: {program_id}"
             ).format(
                 product_name=p.name,
                 program_id=p.program_id

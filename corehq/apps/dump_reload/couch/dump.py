@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import itertools
 import json
 from collections import Counter
@@ -70,7 +71,7 @@ class CouchDataDumper(DataDumper):
             count += 1
             doc = _get_doc_with_attachments(couch_db, doc)
             json.dump(doc, output_stream)
-            output_stream.write('\n')
+            output_stream.write(b'\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
         return Counter({model_label: count})
 
@@ -92,7 +93,7 @@ class ToggleDumper(DataDumper):
         for toggle in self._get_toggles_to_migrate():
             count += 1
             json.dump(toggle, output_stream)
-            output_stream.write('\n')
+            output_stream.write(b'\n')
 
         self.stdout.write('Dumped {} Toggles\n'.format(count))
         return Counter({'Toggle': count})
