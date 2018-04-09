@@ -3,6 +3,8 @@
 [UCR - CCS Record Monthly Tableau]
 [UCR - Person Cases]
 [UCR - Household Cases]
+[UCR - Pregnancy Tasks Cases]
+[UCR - Child Tasks Cases]
 
 [UCR - Usage Forms]
 [UCR - VHND Forms]
@@ -22,11 +24,14 @@
 
 [UCR - Complementary Feeding Forms] --> [Child Health Monthly]
 [UCR - Child Health Monthly Tableau] --> [Child Health Monthly]
+[UCR - Child Tasks Cases] --> [Child Health Monthly]
 [UCR - CCS Record Monthly Tableau] --> [CCS Record Monthly]
+[UCR - Pregnancy Tasks Cases] --> [CCS Record Monthly]
 
 [UCR - Daily Feeding Forms] --> [Daily Attendance]
 
 [UCR - Child Health Monthly Tableau] --> [Agg Child Health]
+[Child Health Monthly] --> [Agg Child Health]
 [UCR - CCS Record Monthly Tableau] --> [Agg CCS Record]
 [Agg Child Health] --> [Agg THR Data]
 [Agg CCS Record] --> [Agg THR Data]
