@@ -4,15 +4,17 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 EXPONENTIAL_RATE = 2
 BASE_TIME = 5
+MAX_TIME = 60
 
 
 class RedisExponentialBackoff(object):
     @classmethod
-    def get_next_time(cls, event_key, base_time=BASE_TIME):
+    def get_next_time(cls, event_key, base_time=BASE_TIME, max_time=MAX_TIME):
         if not event_key:
             return base_time
         repeat_number = cls.redis_client().incr(cls.format_key(event_key)) - 1
-        return cls.exponential(base_time, EXPONENTIAL_RATE, repeat_number)
+        exponential = cls.exponential(base_time, EXPONENTIAL_RATE, repeat_number)
+        return exponential if exponential < MAX_TIME else max_time
 
     @classmethod
     def invalidate(cls, event_key):
