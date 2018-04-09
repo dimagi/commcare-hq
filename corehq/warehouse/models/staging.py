@@ -374,6 +374,7 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
+        # Todo: Migrate to SQL
         synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
         return iter_docs(SyncLog.get_db(), synclog_ids)
 
