@@ -264,6 +264,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
+        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
     }
     return context
 
