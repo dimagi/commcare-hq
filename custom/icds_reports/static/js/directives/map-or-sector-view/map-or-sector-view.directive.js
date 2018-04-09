@@ -68,8 +68,8 @@ function MapOrSectorController($location, storageService, locationsService) {
             },
             callback: function(chart) {
                 var height = 550;
-                var calc_height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
-                vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
+                var calcHeight = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
+                vm.chartOptions.chart.height = calcHeight > height ? calcHeight : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
                     locationsService.getLocationByNameAndParent(e.data[0], location_id).then(function (locations) {
@@ -84,7 +84,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                     });
                 });
 
-                d3.selectAll(".nv-x.nv-axis .tick text").each(function(i, e) {
+                d3.selectAll(".nv-x.nv-axis .tick text").each(function() {
                     var text = d3.select(this),
                         words = text.text().split(/\s+/).reverse(),
                         word, line = [],
@@ -94,7 +94,8 @@ function MapOrSectorController($location, storageService, locationsService) {
                         dy = parseFloat(text.attr("dy")),
                         tspan = text.text(null).append("tspan").attr("x", -5).attr("y", -y).attr("dy", dy + "em");
 
-                    while (word = words.pop()) {
+                    word = words.pop();
+                    while (word) {
                         line.push(word);
                         tspan.text(line.join(" "));
                         if (tspan.node().getComputedTextLength() > 100) {
@@ -103,6 +104,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                             line = [word];
                             tspan = text.append("tspan").attr("x", -5).attr("y", -y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
                         }
+                        word = words.pop();
                     }
                 });
 
