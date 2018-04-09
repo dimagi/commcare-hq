@@ -109,7 +109,7 @@ class FormProcessorSQL(object):
         from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         interface = FormProcessorInterface(xform.domain)
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
-        new_form = XFormInstance.wrap(existing_form.to_json())
+        new_form = XFormInstanceSQL.wrap(existing_form.to_json())
 
         xml = xform.get_xml_element()
         dirty = False
