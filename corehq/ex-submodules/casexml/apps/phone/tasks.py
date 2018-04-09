@@ -8,7 +8,7 @@ from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
 from casexml.apps.phone.utils import delete_sync_logs, delete_sql_synclogs
-from corehq.util.retry_time import RedisExponentialBackoff
+from corehq.util.cache_utils import ExponentialGrowth
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -44,7 +44,7 @@ def get_async_restore_payload(restore_config):
 
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.async_restore_task_id_cache.invalidate()
-    RedisExponentialBackoff.invalidate(
+    ExponentialGrowth.invalidate(
         "async_restore.%s.%s" % (task, restore_config.restore_user.username))
 
     return response
