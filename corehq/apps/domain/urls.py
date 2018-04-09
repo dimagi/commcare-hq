@@ -40,6 +40,7 @@ from corehq.apps.domain.views import (
     EditMyProjectSettingsView,
     EditOpenClinicaSettingsView,
     EditPrivacySecurityView,
+    TwoFactorTokenForUserView,
     EmailOnDowngradeView,
     ExchangeSnapshotsView,
     FlagsAndPrivilegesView,
@@ -121,13 +122,19 @@ urlpatterns = [
         name='password_reset_complete')
 ]
 
-
+from corehq.apps.users.views.mobile.users import CreateCommCareUserModal
 domain_settings = [
+
+    url(r'^commcare/new_mobile_worker_modal/$',
+        CreateCommCareUserModal.as_view(),
+        name=CreateCommCareUserModal.urlname),
+
     url(r'^$', DefaultProjectSettingsView.as_view(), name=DefaultProjectSettingsView.urlname),
     url(r'^my_settings/$', EditMyProjectSettingsView.as_view(), name=EditMyProjectSettingsView.urlname),
     url(r'^basic/$', EditBasicProjectInfoView.as_view(), name=EditBasicProjectInfoView.urlname),
     url(r'^call_center_owner_options/', CallCenterOwnerOptionsView.as_view(),
         name=CallCenterOwnerOptionsView.url_name),
+    url(r'^generate_two_factor_token_for_user/$', TwoFactorTokenForUserView.as_view(), name=TwoFactorTokenForUserView.urlname),
     url(r'^privacy/$', EditPrivacySecurityView.as_view(), name=EditPrivacySecurityView.urlname),
     url(r'^openclinica/$', EditOpenClinicaSettingsView.as_view(), name=EditOpenClinicaSettingsView.urlname),
     url(r'^subscription/change/$', SelectPlanView.as_view(), name=SelectPlanView.urlname),

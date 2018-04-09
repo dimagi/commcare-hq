@@ -1,0 +1,13 @@
+{% extends "domain/admin/info_base.html" %}
+{% load hq_shared_tags %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+
+
+{% block page_content %}
+    <h1>TEST HEADER IN MODAL!!!!!!!</h1>
+    <button type="button" class="btn btn-default" data-dismiss="modal">
+        {% trans "TEST BUTTON IN MODAL!!!!!" %}
+    </button>
+{% endblock %}

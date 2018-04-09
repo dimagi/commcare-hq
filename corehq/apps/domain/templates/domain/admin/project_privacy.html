@@ -6,4 +6,50 @@
 
 {% block page_content %}
     {% crispy privacy_form %}
+    <p>
+
+
+
+    <form method="POST">
+        {% csrf_token %}
+        <input type="text" name="textfield">
+
+        <a class="btn btn-primary" href="{% url 'two_factor_token_for_user_modal' domain%}">CLICK TO GET NEW TOKEN!!!</a>
+    </form>
+
+
+
+
+      <a href="#generate_two_factor_token_for_user" role="button" class="btn btn-info" data-toggle="modal">
+        <i class="fa fa-plus"></i> {% trans "Generate Two Factor Token for a user_1" %}
+      </a>
+    </p>
 {% endblock %}
+
+
+
+
+
+
+    {% block modals %}{{ block.super }}
+
+    <div id="generate_two_factor_token_for_user" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button"
+                            class="close"
+                            data-dismiss="modal"
+                            aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">{% trans "New Mobile Worker at This Location_1" %}</h4>
+                </div>
+                <a class="btn btn-primary" href="{% url 'two_factor_token_for_user_modal' domain%}">Button-Text</a>
+            </div>
+        </div>
+    </div>
+    {% endblock %}
+
+
+

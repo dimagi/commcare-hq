@@ -1337,6 +1337,31 @@ class SelectPlanView(DomainAccountingSettings):
         }
 
 
+from django.views import View
+class TwoFactorTokenForUserView(View):
+    template_name = "domain/admin/generate_two_factor_token_for_user.html"
+    urlname = "two_factor_token_for_user_modal"
+    page_title = ugettext_lazy("Generate Two Factor Token For User")
+
+    def get(self, request, *args, **kwargs):
+        return HttpResponse('<h1>Preethis page was found: {}</h1>'.format(request.get['']))
+
+    @method_decorator(domain_admin_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(TwoFactorTokenForUserView, self).dispatch(request, *args, **kwargs)
+    #
+    # def render_form(self, status):
+    #     return self.render_json_response({
+    #         "status": status,
+    #         "form_html": render_to_string(self.template_name, {
+    #             'form': TwoFactorTokenForUserForm(),
+    #         }, request=self.request)
+    #     })
+    #
+    # def get(self, request, *args, **kwargs):
+    #     return self.render_form("success")
+
+
 class EditPrivacySecurityView(BaseAdminProjectSettingsView):
     template_name = "domain/admin/project_privacy.html"
     urlname = "privacy_info"
