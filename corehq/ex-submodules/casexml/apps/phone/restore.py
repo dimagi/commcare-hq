@@ -51,6 +51,7 @@ from casexml.apps.phone.const import (
     INITIAL_SYNC_CACHE_TIMEOUT,
     INITIAL_SYNC_CACHE_THRESHOLD,
     INITIAL_ASYNC_TIMEOUT_THRESHOLD,
+    ASYNC_RETRY_AFTER,
     CLEAN_OWNERS,
     LIVEQUERY,
 )
@@ -58,7 +59,6 @@ from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.cache_utils import ExponentialGrowth
-from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 
 
 logger = logging.getLogger(__name__)
