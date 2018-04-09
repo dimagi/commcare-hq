@@ -72,6 +72,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
 from six.moves import map
 
 logger = logging.getLogger(__name__)
@@ -257,7 +258,7 @@ def _get_report_module_context(app, module):
             'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
-            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
+            'mobileUcrVersion': app.mobile_ucr_restore_version,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
@@ -265,6 +266,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
+        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
     }
     return context
 
@@ -920,6 +922,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
+    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 

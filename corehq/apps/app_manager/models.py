@@ -4045,6 +4045,7 @@ class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
+    # ID of the ReportConfiguration
     report_id = StringProperty(required=True)
     header = DictProperty()
     localized_description = DictProperty()
@@ -4054,7 +4055,9 @@ class ReportAppConfig(DocumentSchema):
     complete_graph_configs = DictProperty(GraphConfiguration)
 
     filters = SchemaDictProperty(ReportAppFilter)
+    # Unique ID of this mobile report config
     uuid = StringProperty(required=True)
+    report_slug = StringProperty(required=False)  # optional, user-provided
     sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
@@ -4083,6 +4086,10 @@ class ReportAppConfig(DocumentSchema):
             from corehq.apps.userreports.models import get_report_config
             self._report = get_report_config(self.report_id, domain)[0]
         return self._report
+
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
 
 
 class ReportModule(ModuleBase):
