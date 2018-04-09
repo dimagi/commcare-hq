@@ -26,6 +26,9 @@ describe('Enrolled Women Directive', function () {
         $httpBackend.expectGET('enrolled_women').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<enrolled-women data='test'></enrolled-women>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

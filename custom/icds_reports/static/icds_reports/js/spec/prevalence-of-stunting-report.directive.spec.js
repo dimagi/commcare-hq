@@ -41,6 +41,9 @@ describe('Prevalence Of Stunting Directive', function () {
         $httpBackend.expectGET('prevalence_of_stunting').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<prevalence-of-stunting data='test'></prevalence-of-stunting>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

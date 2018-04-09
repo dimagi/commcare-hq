@@ -31,6 +31,9 @@ describe('Early Initiation Breastfeeding Directive', function () {
         $httpBackend.expectGET('early_initiation').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<early-initiation-breastfeeding data='test'></early-initiation-breastfeeding>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

@@ -26,6 +26,9 @@ describe('Registered Household Directive', function () {
         $httpBackend.expectGET('registered_household').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<registered-household data='test'></registered-household>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

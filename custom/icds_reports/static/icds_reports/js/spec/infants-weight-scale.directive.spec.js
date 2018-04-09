@@ -26,6 +26,9 @@ describe('Infants Weight Scale Directive', function () {
         $httpBackend.expectGET('infants_weight_scale').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<infants_weight_scale data='test'></infants_weight_scale>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
