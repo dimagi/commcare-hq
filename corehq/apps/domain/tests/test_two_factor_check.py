@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import TestCase
-from django.test.client import Client
+from django.test import TestCase, RequestFactory
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -25,7 +24,7 @@ class TestTwoFactorCheck(TestCase):
 
     @classmethod
     def create_request(cls, request_url):
-        request = Client().get(request_url).wsgi_request
+        request = RequestFactory().get(request_url)
         request.couch_user = CouchUser()
         return request
 
