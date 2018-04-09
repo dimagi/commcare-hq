@@ -5,6 +5,7 @@ from collections import namedtuple, defaultdict
 from datetime import timedelta
 from itertools import chain
 import re
+import six
 
 from six.moves import zip
 
@@ -94,7 +95,7 @@ def serialize(data):
     """
     # We can get away with not worrying about namespaces because these
     # property names are fixed and unique.
-    serializers = dict(chain(ADDRESS_PROPERTIES.items(), NAME_PROPERTIES.items(), PERSON_PROPERTIES.items()))
+    serializers = dict(chain(six.iteritems(ADDRESS_PROPERTIES), six.iteritems(NAME_PROPERTIES), six.iteritems(PERSON_PROPERTIES)))
     return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
