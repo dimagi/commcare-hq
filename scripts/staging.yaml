@@ -51,7 +51,7 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - jls/privacy-policy  # Jenny 3/19
-#  - jls/data-corrections-forms  # Jenny 3/27
+  - jls/data-corrections-forms  # Jenny 3/27
   - fr/property-changes-paginated # FR 29/3
   - np/training-module  # NP 4/2
   - je/report-builder-button # J$ 4/3
