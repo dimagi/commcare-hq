@@ -11,9 +11,11 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_GROWTH_MONITORING_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
+    GrowthMonitoringFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
@@ -938,3 +940,88 @@ class ChildHealthMonthly(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'child_health_monthly'
+
+
+class AggregateGrowthMonitoringForms(models.Model):
+    """Aggregated data based on AWW App
+
+    376FA2E1 -> Delivery
+    b183124a -> Growth Monitoring
+    7a557541 -> Advanced Growth Monitoring
+
+    A child table exists for each state_id and month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+
+    weight_child = models.DecimalField(
+        max_digits=64, decimal_places=16,
+        help_text="Last recorded weight_child case property"
+    )
+    weight_child_last_recorded = models.DateTimeField(
+        help_text="Time when weight_child was last recorded"
+    )
+    height_child = models.DecimalField(
+        max_digits=64, decimal_places=16,
+        help_text="Last recorded height_child case property"
+    )
+    height_child_last_recorded = models.DateTimeField(
+        help_text="Time when height_child was last recorded"
+    )
+
+    zscore_grading_wfa = models.PositiveSmallIntegerField(
+        help_text="Last value of zscore_grading_wfa in this month"
+    )
+    zscore_grading_wfa_last_recorded = models.DateTimeField(
+        help_text="Time when zscore_grading_wfa was last recorded"
+    )
+
+    zscore_grading_hfa = models.PositiveSmallIntegerField(
+        help_text="Last value of zscore_grading_hfa in this month"
+    )
+    zscore_grading_hfa_last_recorded = models.DateTimeField(
+        help_text="Time when zscore_grading_hfa was last recorded"
+    )
+
+    zscore_grading_wfh = models.PositiveSmallIntegerField(
+        help_text="Current value of zscore_grading_wfh in this month"
+    )
+    zscore_grading_wfh_last_recorded = models.DateTimeField(
+        help_text="Time when zscore_grading_wfh was last recorded"
+    )
+
+    class Meta(object):
+        db_table = AGG_GROWTH_MONITORING_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        aggregate_queries = helper.aggregation_queries()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            for query, params in aggregate_queries:
+                cursor.execute(query, params)
+
+    @classmethod
+    def compare_with_old_data(cls, state_id, month):
+        helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
+        query, params = helper.compare_with_old_data_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(query, params)
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.child_health_case_id for row in rows]

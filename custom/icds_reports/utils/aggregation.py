@@ -11,6 +11,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_GROWTH_MONITORING_TABLE,
     DASHBOARD_DOMAIN
 )
 
@@ -480,3 +481,165 @@ class THRFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ucr_tablename=self.ucr_tablename,
             tablename=tablename
         ), query_params
+
+
+class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_growth_monitoring_forms'
+    aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
+    aggregate_child_table_prefix = 'icds_db_gm_form_'
+
+    @property
+    def _old_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    def _data_from_ucr_query(self, column=None):
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+        if column is not None:
+            select_line = ", LAST_VALUE({column}) OVER w AS {column}".format(column=column)
+            where_line = " AND {column} IS NOT NULL".format(column=column)
+        else:
+            select_line, where_line = '', ''
+
+        return """
+        SELECT DISTINCT child_health_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end
+        {select_line}
+        FROM "{ucr_tablename}"
+        WHERE timeend >= %(current_month_start)s AND
+              timeend < %(next_month_start)s AND
+              state_id = %(state_id)s {where_line}
+        WINDOW w AS (
+            PARTITION BY child_health_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            select_line=select_line,
+            where_line=where_line
+        ), {
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+            "state_id": self.state_id,
+        }
+
+    def data_from_ucr_query(self, column=None):
+        return self._data_from_ucr_query(column)
+
+    def _inital_aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
+        ), query_params
+
+    def _aggregation_query_for_column(self, column):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query(column)
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id,
+        }
+        query_params.update(ucr_query_params)
+        update_line = "{column} = ut.{column}, {column}_last_recorded = ut.{column}_last_recorded".format(
+            column=column)
+
+        select_line = """
+            COALESCE(ucr.{column}, prev_month.{column}) AS {column},
+            GREATEST(ucr.latest_time_end, prev_month.{column}_last_recorded) AS {column}_last_recorded
+        """.format(column=column)
+
+        return """
+        UPDATE "{tablename}" AS agg_table SET
+            {update_line}
+        FROM (
+          SELECT
+            %(state_id)s::text AS state_id,
+            %(month)s::date AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            {select_line}
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        ) ut
+        WHERE ut.state_id = agg_table.state_id AND ut.month = agg_table.month AND ut.case_id = agg_table.case_id
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename,
+            update_line=update_line,
+            select_line=select_line
+        ), query_params
+
+    def aggregation_queries(self):
+        columns = (
+            'weight_child',
+            'height_child',
+            'zscore_grading_wfa',
+            'zscore_grading_hfa',
+            'zscore_grading_wfh'
+        )
+
+        initial_query = self._inital_aggregation_query()
+        return [initial_query] + [
+            self._aggregation_query_for_column(column) for column in columns
+        ]
+
+    def compare_with_old_data_query(self):
+        """Compares data from the complementary feeding forms aggregate table
+        to the the old child health monthly UCR table that current aggregate
+        script uses
+        """
+        month = self.month.replace(day=1)
+        return """
+        SELECT agg.case_id
+        FROM "{child_health_monthly_ucr}" chm_ucr
+        FULL OUTER JOIN "{new_agg_table}" agg
+        ON chm_ucr.doc_id = agg.case_id AND chm_ucr.month = agg.month AND agg.state_id = chm_ucr.state_id
+        WHERE chm_ucr.month = %(month)s and agg.state_id = %(state_id)s AND (
+              (chm_ucr.cf_eligible = 1 AND (
+                  chm_ucr.cf_in_month != agg.comp_feeding_latest OR
+                  chm_ucr.cf_diet_diversity != agg.diet_diversity OR
+                  chm_ucr.cf_diet_quantity != agg.diet_quantity OR
+                  chm_ucr.cf_handwashing != agg.hand_wash OR
+                  chm_ucr.cf_demo != agg.demo_comp_feeding OR
+                  chm_ucr.counsel_pediatric_ifa != agg.counselled_pediatric_ifa OR
+                  chm_ucr.counsel_comp_feeding_vid != agg.play_comp_feeding_vid
+              )) OR (chm_ucr.cf_initiation_eligible = 1 AND chm_ucr.cf_initiated != agg.comp_feeding_ever)
+        )
+        """.format(
+            child_health_monthly_ucr=self._old_ucr_tablename,
+            new_agg_table=self.aggregate_parent_table,
+        ), {
+            "month": month.strftime('%Y-%m-%d'),
+            "state_id": self.state_id
+        }
