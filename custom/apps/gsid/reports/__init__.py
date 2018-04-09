@@ -4,8 +4,7 @@ from corehq.apps.fixtures.models import FixtureDataItem, FixtureDataType
 from corehq.apps.reports.dont_use.fields import ReportSelectField
 from corehq.apps.reports.filters.base import BaseDrilldownOptionFilter
 from corehq.apps.reports.filters.dates import DatespanFilter
-from corehq.apps.reports.filters.fixtures import MultiLocationFilter
-
+from custom.reports.mc.reports.models import AsyncDrillableFilter
 from custom.apps.gsid.reports.sql_reports import (
     GSIDSQLByAgeReport,
     GSIDSQLByDayReport,
@@ -16,13 +15,15 @@ from custom.apps.gsid.reports.sql_reports import (
 from .util import get_unique_combinations
 
 
-class AsyncClinicField(MultiLocationFilter):
+class AsyncClinicField(AsyncDrillableFilter):
     label = "Location"
     slug = "clinic"
+    template = "custom/apps/gsid/templates/multi_location.html"  # allows multiple selected locations
     hierarchy = [{"type": "country", "display": "country_name"},
                  {"type": "province", "parent_ref": "country_id", "references": "country_id", "display": "province_name"},
                  {"type": "district", "parent_ref": "province_id", "references": "province_id", "display": "district_name"},
                  {"type": "clinic", "parent_ref": "district_id", "references": "district_id", "display": "clinic_name"}]
+
 
 
 class TestField(BaseDrilldownOptionFilter):
@@ -33,24 +34,24 @@ class TestField(BaseDrilldownOptionFilter):
     def drilldown_map(self):
         diseases = []
         disease_fixtures = FixtureDataItem.by_data_type(
-            self.domain, 
+            self.domain,
             FixtureDataType.by_domain_tag(self.domain, "diseases").one()
         )
         for d in disease_fixtures:
             disease = dict(
-                val="%(name)s:%(uid)s" % {'name': d.fields_without_attributes["disease_id"], 'uid': d.get_id}, 
+                val="%(name)s:%(uid)s" % {'name': d.fields_without_attributes["disease_id"], 'uid': d.get_id},
                 text=d.fields_without_attributes["disease_name"]
             )
             tests = []
             test_fixtures = FixtureDataItem.by_field_value(
-                self.domain, 
+                self.domain,
                 FixtureDataType.by_domain_tag(self.domain, "test").one(),
                 "disease_id",
                 d.fields_without_attributes["disease_id"]
             )
             for t in test_fixtures:
                 tests.append(dict(
-                    val="%(name)s:%(uid)s" % {'name': t.fields_without_attributes["test_name"], 'uid': t.get_id}, 
+                    val="%(name)s:%(uid)s" % {'name': t.fields_without_attributes["test_name"], 'uid': t.get_id},
                     text=t.fields_without_attributes["visible_test_name"])
                 )
             disease['next'] = tests
