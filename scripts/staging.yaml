@@ -57,6 +57,7 @@ branches:
   - np/training-module  # NP 4/2
   - je/report-builder-button # J$ 4/3
   - np/flavor  # NP 4/5
+  - sr-couch-synclogs+ce/user-loc-query # cal April 9
   - sr-couch-synclogs  # Sravan April 6
   - ce/auto-batches # Cal April 6
   - jls/externalize-js-more-report-filters # Jenny April 6
