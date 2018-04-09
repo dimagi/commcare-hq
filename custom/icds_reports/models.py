@@ -20,6 +20,12 @@ from custom.icds_reports.utils.aggregation import (
 )
 
 
+class AggregateSQLProfile(models.Model):
+    script_name = models.TextField()
+    line_num = models.PositiveSmallIntegerField()
+    occurrence_time = models.DateTimeField()
+
+
 class AwcLocation(models.Model):
     doc_id = models.TextField(primary_key=True)
     awc_name = models.TextField(blank=True, null=True)
