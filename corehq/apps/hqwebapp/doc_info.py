@@ -196,7 +196,7 @@ def case_docinfo(domain, doc_id, name, is_deleted):
 
 def get_case_url(domain, case_id):
     return reverse(
-        'case_details',
+        'case_data',
         args=[domain, case_id],
     )
 

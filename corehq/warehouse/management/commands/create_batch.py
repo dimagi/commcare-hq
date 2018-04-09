@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.core.management import BaseCommand, CommandError
 from dimagi.utils.parsing import string_to_utc_datetime
 from corehq.warehouse.models import Batch

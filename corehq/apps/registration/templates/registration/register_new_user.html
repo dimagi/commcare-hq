@@ -9,6 +9,7 @@
 {% block head %}{{ block.super }}
     {% if is_saas_environment %}
     <!-- Facebook Pixel Code -->
+    {# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
     <script>
     !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;

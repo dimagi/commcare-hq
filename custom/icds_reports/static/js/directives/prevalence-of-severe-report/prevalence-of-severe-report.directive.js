@@ -205,7 +205,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        return _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return _.find(values, function(num) { return num['x'] === date; });
                     };
 
                     var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -214,7 +214,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     var total_measured = findValue(vm.chartData[0].values, d.value).total_measured;
                     var total_weighed = findValue(vm.chartData[0].values, d.value).total_weighed;
                     var height_eligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
-                    return vm.tooltipContent(d.value, normal, moderate, severe, total_weighed, total_measured, height_eligible);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, total_weighed, total_measured, height_eligible);
                 });
                 return chart;
             },

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime
 import hashlib
@@ -225,7 +226,7 @@ class ExportColumn(DocumentSchema):
             return super(ExportColumn, self).wrap(data)
 
     def get_display(self):
-        return u'{primary}{extra}'.format(
+        return '{primary}{extra}'.format(
             primary=self.display,
             extra=" [sensitive]" if self.is_sensitive else ''
         )
@@ -288,7 +289,7 @@ class SplitColumn(ComplexExportColumn):
     ignore_extras = False
 
     def get_headers(self):
-        header = self.display if '{option}' in self.display else u"{name} | {option}"
+        header = self.display if '{option}' in self.display else "{name} | {option}"
         for option in self.options:
             yield header.format(
                 name=self.display,

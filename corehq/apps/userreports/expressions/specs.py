@@ -19,7 +19,7 @@ from corehq.apps.users.models import CommCareUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.couch import get_db_by_doc_type
 from corehq.apps.userreports.expressions.getters import transform_from_datatype, safe_recursive_lookup
-from corehq.apps.userreports.indicators.specs import DataTypeProperty
+from corehq.apps.userreports.datatypes import DataTypeProperty
 from corehq.apps.userreports.specs import TypeProperty, EvaluationContext
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
@@ -336,7 +336,7 @@ class DictExpressionSpec(JsonObject):
 class EvalExpressionSpec(JsonObject):
     type = TypeProperty('evaluator')
     statement = StringProperty(required=True)
-    context_variables = DictProperty(required=True)
+    context_variables = DictProperty()
     datatype = DataTypeProperty(required=False)
 
     def configure(self, context_variables):

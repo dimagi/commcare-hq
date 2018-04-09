@@ -2738,6 +2738,15 @@ class FactSheetsReport(object):
 class AWCInfrastructureUCR(SqlData):
     engine_id = 'icds-test-ucr'
 
+    def __init__(self, config):
+        self.awcs = config['awc_id']
+        super(AWCInfrastructureUCR, self).__init__(config)
+
+    @property
+    def filter_values(self):
+        clean_IN_filter_value(self.config, 'awc_id')
+        return self.config
+
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], 'static-infrastructure_form')
@@ -2745,20 +2754,21 @@ class AWCInfrastructureUCR(SqlData):
     @property
     def filters(self):
         return [
-            EQ('awc_id', 'awc_id'),
+            IN('awc_id', get_INFilter_bindparams('awc_id', self.awcs)),
             EQ('month', 'month')
         ]
 
     @property
     def group_by(self):
         return [
-            'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
+            'awc_id', 'where_housed', 'provided_building', 'other_building', 'kitchen', 'toilet_facility',
             'type_toilet', 'preschool_kit_available', 'preschool_kit_usable'
         ]
 
     @property
     def columns(self):
         return [
+            DatabaseColumn('awc_id', SimpleColumn('awc_id')),
             DatabaseColumn('where_housed', SimpleColumn('where_housed')),
             DatabaseColumn('provided_building', SimpleColumn('provided_building')),
             DatabaseColumn('other_building', SimpleColumn('other_building')),
@@ -2773,6 +2783,15 @@ class AWCInfrastructureUCR(SqlData):
 class VHNDFormUCR(SqlData):
     engine_id = 'icds-test-ucr'
 
+    def __init__(self, config):
+        self.awcs = config['awc_id']
+        super(VHNDFormUCR, self).__init__(config)
+
+    @property
+    def filter_values(self):
+        clean_IN_filter_value(self.config, 'awc_id')
+        return self.config
+
     @property
     def table_name(self):
         return get_table_name(self.config['domain'], 'static-vhnd_form')
@@ -2780,13 +2799,13 @@ class VHNDFormUCR(SqlData):
     @property
     def filters(self):
         return [
-            EQ('awc_id', 'awc_id'),
+            IN('awc_id', get_INFilter_bindparams('awc_id', self.awcs)),
             EQ('month', 'month')
         ]
 
     @property
     def group_by(self):
-        return ['submitted_on', 'vhsnd_date_past_month', 'local_leader', 'aww_present']
+        return ['awc_id', 'submitted_on', 'vhsnd_date_past_month', 'local_leader', 'aww_present']
 
     @property
     def order_by(self):
@@ -2795,6 +2814,7 @@ class VHNDFormUCR(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn('awc_id', SimpleColumn('awc_id')),
             DatabaseColumn('vhsnd_date_past_month', SimpleColumn('vhsnd_date_past_month')),
             DatabaseColumn('local_leader', SimpleColumn('local_leader')),
             DatabaseColumn('aww_present', SimpleColumn('aww_present'))
@@ -2814,7 +2834,13 @@ class CcsRecordMonthlyURC(SqlData):
             'yes': 'yes',
             'twentyone': 21
         })
+        self.awcs = config['awc_id']
         super(CcsRecordMonthlyURC, self).__init__(config)
+
+    @property
+    def filter_values(self):
+        clean_IN_filter_value(self.config, 'awc_id')
+        return self.config
 
     @property
     def table_name(self):
@@ -2823,7 +2849,7 @@ class CcsRecordMonthlyURC(SqlData):
     @property
     def filters(self):
         return [
-            EQ('awc_id', 'awc_id'),
+            IN('awc_id', get_INFilter_bindparams('awc_id', self.awcs)),
             EQ('month', 'month')
         ]
 
@@ -2834,6 +2860,7 @@ class CcsRecordMonthlyURC(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn('awc_id', SimpleColumn('awc_id')),
             DatabaseColumn('sc_pregnant', CountUniqueColumn(
                 'doc_id',
                 alias='sc_pregnant',
@@ -2961,7 +2988,13 @@ class ChildHealthMonthlyURC(SqlData):
             'twentyone': 21,
             'yes': 'yes'
         })
+        self.awcs = config['awc_id']
         super(ChildHealthMonthlyURC, self).__init__(config)
+
+    @property
+    def filter_values(self):
+        clean_IN_filter_value(self.config, 'awc_id')
+        return self.config
 
     @property
     def table_name(self):
@@ -2970,7 +3003,7 @@ class ChildHealthMonthlyURC(SqlData):
     @property
     def filters(self):
         return [
-            EQ('awc_id', 'awc_id'),
+            IN('awc_id', get_INFilter_bindparams('awc_id', self.awcs)),
             EQ('month', 'month')
         ]
 
@@ -2985,6 +3018,7 @@ class ChildHealthMonthlyURC(SqlData):
     @property
     def columns(self):
         return [
+            DatabaseColumn('awc_id', SimpleColumn('awc_id')),
             DatabaseColumn('pre_sc_boys_36_72', CountUniqueColumn(
                 'doc_id',
                 alias='pre_sc_boys_36_72',

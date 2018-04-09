@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from dimagi.utils.parsing import json_format_datetime
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 

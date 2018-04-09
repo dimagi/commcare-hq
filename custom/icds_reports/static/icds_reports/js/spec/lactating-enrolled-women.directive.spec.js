@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('Lactating Enrolled Women Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('lactating_enrolled_women', 'lactating_enrolled_women');
@@ -27,11 +28,15 @@ describe('Lactating Enrolled Women Directive', function () {
         });
         var element = window.angular.element("<lactating_enrolled_women data='test'></lactating_enrolled_women>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('lactatingEnrolledWomen');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -191,6 +196,21 @@ describe('Lactating Enrolled Women Directive', function () {
             + "<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>";
 
         var result = controller.tooltipContent(month.value, data);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>0</strong>' +
+            '<div>Total number of lactating women who are registered: <strong>25</strong>' +
+            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>NaN%</strong>' +
+            '</div>'
+;
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 });

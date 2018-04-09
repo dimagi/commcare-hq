@@ -159,18 +159,22 @@ define([
         };
 
         self.newCaseProperty = function () {
-            var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
-            prop.dataType.subscribe(changeSaveButton);
-            prop.description.subscribe(changeSaveButton);
-            prop.deprecated.subscribe(changeSaveButton);
-            self.newPropertyName('');
-            self.casePropertyList.push(prop);
+            if (_.isString(self.newPropertyName())) {
+                var prop = propertyListItem(self.newPropertyName(), false, '', self.activeCaseType());
+                prop.dataType.subscribe(changeSaveButton);
+                prop.description.subscribe(changeSaveButton);
+                prop.deprecated.subscribe(changeSaveButton);
+                self.newPropertyName(undefined);
+                self.casePropertyList.push(prop);
+            }
         };
 
         self.newGroup = function () {
-            var group = propertyListItem(self.newGroupName(), true, '', self.activeCaseType());
-            self.casePropertyList.push(group);
-            self.newGroupName('');
+            if (_.isString(self.newGroupName())) {
+                var group = propertyListItem(self.newGroupName(), true, '', self.activeCaseType());
+                self.casePropertyList.push(group);
+                self.newGroupName(undefined);
+            }
         };
 
         self.toggleGroup = function (group) {

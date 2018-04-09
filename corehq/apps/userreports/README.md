@@ -1037,6 +1037,9 @@ soh_aspirin | soh_bandaids | soh_gauze
  67         |  32          |  9
 
 
+If the ledger you're using is a due list and you wish to save the dates instead of integers, you can change the "type" from "ledger_balances" to "due_list_dates".
+
+
 ### Practical notes for creating indicators
 
 These are some practical notes for how to choose what indicators to create.

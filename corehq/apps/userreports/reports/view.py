@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 import json
 from io import BytesIO
 from contextlib import contextmanager, closing
-from datetime import datetime
 
 from django.http.response import HttpResponseServerError
 from django.shortcuts import redirect, render
@@ -22,9 +21,8 @@ from corehq.apps.hqwebapp.decorators import (
 from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY, \
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE, UCR_LABORATORY_BACKEND
 from corehq.apps.userreports.tasks import export_ucr_async
-from corehq.util.timezones.utils import get_timezone_for_domain
 
-from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR, INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS
+from corehq.toggles import DISABLE_COLUMN_LIMIT_IN_UCR
 from dimagi.utils.dates import DateSpan
 from dimagi.utils.modules import to_function
 from django.conf import settings
@@ -52,7 +50,7 @@ from corehq.apps.userreports.models import (
 )
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.reports.util import (
-    get_expanded_columns,
+    ReportExport,
     has_location_filter,
 )
 from corehq.apps.userreports.tasks import compare_ucr_dbs
@@ -522,55 +520,21 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
 
     @property
     @memoized
+    def report_export(self):
+        return ReportExport(self.domain, self.title, self.spec, self.lang, self.filter_values)
+
+    @property
     def export_table(self):
-        try:
-            data = self.data_source
-            data.set_filter_values(self.filter_values)
-            data.set_order_by([(o['field'], o['order']) for o in self.spec.sort_expression])
-        except UserReportsError as e:
-            return self.render_json_response({
-                'error': e.message,
-            })
-
-        raw_rows = list(data.get_data())
-
-        headers = [
-            column.header
-            for column in self.data_source.inner_columns if column.data_tables_column.visible
-        ]
-
-        column_id_to_expanded_column_ids = get_expanded_columns(data.top_level_columns, data.config)
-        column_ids = []
-        for column in self.spec.report_columns:
-            if column.visible:
-                column_ids.extend(column_id_to_expanded_column_ids.get(column.column_id, [column.column_id]))
-
-        rows = [[raw_row[column_id] for column_id in column_ids] for raw_row in raw_rows]
-        total_rows = [data.get_total_row()] if data.has_total_row else []
-
-        export_table = [
-            [
-                self.title,
-                [headers] + rows + total_rows
-            ]
-        ]
-
-        if INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS.enabled(self.domain):
-            time_zone = get_timezone_for_domain(self.domain)
-            export_table.append([
-                'metadata',
-                [
-                    [_('Report Name'), self.title],
-                    [_('Generated On'), datetime.now(time_zone).strftime('%Y-%m-%d %H:%M')],
-                ] + list(self._get_filter_values())
-            ])
-        return export_table
+        return self.report_export.get_table()
 
     @property
     @memoized
     def email_response(self):
         with closing(BytesIO()) as temp:
-            export_from_tables(self.export_table, temp, Format.HTML)
+            try:
+                self.report_export.create_export(temp, Format.HTML)
+            except UserReportsError as e:
+                return self.render_json_response({'error': six.text_type(e)})
             return HttpResponse(json.dumps({
                 'report': temp.getvalue(),
             }), content_type='application/json')
@@ -579,14 +543,14 @@ class ConfigurableReportView(JSONResponseMixin, BaseDomainView):
     @memoized
     def excel_response(self):
         file = BytesIO()
-        export_from_tables(self.export_table, file, Format.XLS_2007)
+        self.report_export.create_export(file, Format.XLS_2007)
         return file
 
     @property
     @memoized
     def export_response(self):
         download = DownloadBase()
-        res = export_ucr_async.delay(self.export_table, download.download_id, self.title, self.request.couch_user)
+        res = export_ucr_async.delay(self.report_export, download.download_id, self.request.couch_user)
         download.set_task(res)
         return redirect(DownloadUCRStatusView.urlname, self.domain, download.download_id, self.report_config_id)
 

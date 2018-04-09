@@ -52,8 +52,6 @@ class ComparedQuerySet(object):
                 ids2 = [_identify(it) for it in items2]
                 if (finished and ids1 != ids2) or not ids1 == ids2[:len(ids1)]:
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
-                if finished:
-                    self.__len__()  # compares lengths -> reports diff if necessary
 
     def __len__(self):
         with _commit_timing(self):

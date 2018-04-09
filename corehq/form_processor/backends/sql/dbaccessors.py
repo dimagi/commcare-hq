@@ -23,6 +23,7 @@ from django.db.models import Q, F
 from django.db.models.functions import Greatest, Concat
 from django.db.models.expressions import Value
 
+from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.blobs import get_blob_db
 from corehq.form_processor.exceptions import (
     XFormNotFound,
@@ -582,6 +583,17 @@ class FormAccessorSQL(AbstractFormAccessor):
         return return_value
 
     @staticmethod
+    def modify_attachment_xml_and_metadata(form_data, form_attachment_new_xml, _):
+        attachment_metadata = form_data.get_attachment_meta("form.xml")
+        # Write the new xml to the database
+        attachment_metadata.write_content(form_attachment_new_xml)
+        attachment_metadata.save()
+        operation = XFormOperationSQL(user_id=SYSTEM_USER_ID, date=datetime.utcnow(),
+                                      operation=XFormOperationSQL.GDPR_SCRUB)
+        form_data.track_create(operation)
+        FormAccessorSQL.update_form(form_data)
+
+    @staticmethod
     def soft_delete_forms(domain, form_ids, deletion_date=None, deletion_id=None):
         from corehq.form_processor.change_publishers import publish_form_deleted
         assert isinstance(form_ids, list)
@@ -686,7 +698,11 @@ class FormAccessorSQL(AbstractFormAccessor):
                         model.form = form
                         model.save()
             else:
-                form.save()
+                with transaction.atomic(db_name):
+                    form.save()
+                    for operation in new_operations:
+                        operation.form = form
+                        operation.save()
 
         if publish_changes:
             publish_form_saved(form)

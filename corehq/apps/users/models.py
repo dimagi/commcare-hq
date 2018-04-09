@@ -2171,16 +2171,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self._get_fixture_statuses()
-
-    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
-    def _get_fixture_statuses(self):
-        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
-        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
-                          for choice in UserFixtureType.CHOICES}
-        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
-            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-        return last_modifieds
+        return get_fixture_statuses(self._id)
 
     def fixture_status(self, fixture_type):
         try:
@@ -2200,7 +2191,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        self._get_fixture_statuses.clear(self)
+        get_fixture_statuses.clear(self._id)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
@@ -2254,6 +2245,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
+
+
+def update_fixture_status_for_users(user_ids, fixture_type):
+    from corehq.apps.fixtures.models import UserFixtureStatus
+    from dimagi.utils.chunked import chunked
+
+    now = datetime.utcnow()
+    for ids in chunked(user_ids, 50):
+        (UserFixtureStatus.objects
+         .filter(user_id__in=ids,
+                 fixture_type=fixture_type)
+         .update(last_modified=now))
+    for user_id in user_ids:
+        get_fixture_statuses.clear(user_id)
+
+
+@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
+def get_fixture_statuses(user_id):
+    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+    last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                      for choice in UserFixtureType.CHOICES}
+    for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
+        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+    return last_modifieds
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

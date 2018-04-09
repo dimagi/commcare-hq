@@ -195,6 +195,50 @@ describe('Download Directive', function () {
 
             assert.equal(expected, result);
         });
+
+        it('tests isDistrictOrBelowSelected - state selected', function () {
+            controller.selectedLocations = ['state', 'all'];
+            var result = controller.isDistrictOrBelowSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isDistrictOrBelowSelected - district selected', function () {
+            controller.selectedLocations = ['state', 'district'];
+            var result = controller.isDistrictOrBelowSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isBlockOrBelowSelected - district selected', function () {
+            controller.selectedLocations = ['state', 'district', 'all'];
+            var result = controller.isBlockOrBelowSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isBlockOrBelowSelected - block selected', function () {
+            controller.selectedLocations = ['state', 'district', 'block'];
+            var result = controller.isBlockOrBelowSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isAWCsSelected - AWC not selected', function () {
+            controller.selectedAWCs = [];
+            var result = controller.isAWCsSelected();
+            assert.isFalse(result);
+        });
+
+        it('tests isAWCsSelected - AWC selected', function () {
+            controller.selectedAWCs = ['awc_1', 'awc_2'];
+            var result = controller.isAWCsSelected();
+            assert.isTrue(result);
+        });
+
+        it('tests isCombinedPDFSelected', function () {
+            controller.selectedIndicator = 7;
+            controller.selectedPDFFormat = 'one';
+            var result = controller.isCombinedPDFSelected();
+            assert.isTrue(result);
+        });
+
     });
 
     describe('Download Directive have access to features', function() {

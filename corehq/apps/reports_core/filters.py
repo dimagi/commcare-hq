@@ -352,7 +352,8 @@ class DynamicChoiceListFilter(BaseFilter):
     template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
     javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
 
-    def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider, css_id=None):
+    def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider,
+                 ancestor_expression=None, css_id=None):
         """
         url_generator should be a callable that takes a domain, report, and filter and returns a url.
         see userreports.reports.filters.dynamic_choice_list_url for an example.
@@ -368,6 +369,7 @@ class DynamicChoiceListFilter(BaseFilter):
         self.css_id = css_id or self.name
         self.url_generator = url_generator
         self.choice_provider = choice_provider
+        self.ancestor_expression = ancestor_expression or {}
 
     def context(self, request_params, request_user, lang=None):
         values = self.get_value(request_params, request_user)
@@ -419,7 +421,7 @@ class LocationDrilldownFilter(BaseFilter):
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,
-                 max_drilldown_levels, css_id=None):
+                 max_drilldown_levels, ancestor_expression, css_id=None):
         params = [
             FilterParam(name, True),
         ]
@@ -431,6 +433,7 @@ class LocationDrilldownFilter(BaseFilter):
         self.domain = domain
         self.include_descendants = include_descendants
         self.max_drilldown_levels = max_drilldown_levels
+        self.ancestor_expression = ancestor_expression
 
     @property
     def api_root(self):

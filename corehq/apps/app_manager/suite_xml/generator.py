@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
@@ -25,7 +29,7 @@ from corehq.apps.hqmedia.models import HQMediaMapItem
 
 
 class SuiteGenerator(object):
-    descriptor = u"Suite File"
+    descriptor = "Suite File"
 
     def __init__(self, app, build_profile_id=None):
         self.app = app
@@ -83,7 +87,7 @@ class SuiteGenerator(object):
 
 
 class MediaSuiteGenerator(object):
-    descriptor = u"Media Suite File"
+    descriptor = "Media Suite File"
 
     def __init__(self, app, build_profile_id=None):
         self.app = app
@@ -124,20 +128,20 @@ class MediaSuiteGenerator(object):
             # which is an alias to jr://file/commcare/media/
             # so we need to replace 'jr://file/' with '../../'
             # (this is a hack)
-            install_path = u'../../{}'.format(path)
-            local_path = u'./{}/{}'.format(path, name)
+            install_path = '../../{}'.format(path)
+            local_path = './{}/{}'.format(path, name)
 
             if not getattr(m, 'unique_id', None):
                 # lazy migration for adding unique_id to map_item
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
             descriptor = None
-            if self.app.build_version >= '2.9':
+            if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
                                 "CommCareVideo": "Video",
                                 "CommCareMultimedia": "Text"}
-                descriptor = u"{filetype} File: {name}".format(
+                descriptor = "{filetype} File: {name}".format(
                     filetype=type_mapping.get(m.media_type, "Media"),
                     name=name
                 )
