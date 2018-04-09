@@ -23,7 +23,7 @@ from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
-from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -109,7 +109,6 @@ class FormProcessorSQL(object):
         from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         interface = FormProcessorInterface(xform.domain)
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
-        new_form = XFormInstanceSQL.wrap(existing_form.to_json())
 
         xml = xform.get_xml_element()
         dirty = False
@@ -118,6 +117,8 @@ class FormProcessorSQL(object):
                 dirty = True
 
         if dirty:
+            form_json = convert_xform_to_json(xml)
+            new_form = interface.new_xform(form_json)
             from couchforms.const import ATTACHMENT_NAME
             from corehq.form_processor.models import Attachment
             from corehq.form_processor.parsers.form import apply_deprecation
