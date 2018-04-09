@@ -17,7 +17,7 @@ The `register()` method creates a `RepeatRecord` instance, and associates it wit
 
 Next we jump to [tasks.py](./tasks.py). The `check_repeaters()` function will run every `CHECK_REPEATERS_INTERVAL` (currently set to 5 minutes). Each RepeatRecord due to be processed will be added to the CELERY_REPEAT_RECORD_QUEUE.
 
-When it is pulled off the queue and processed, if its Repeater is paused it will either be postponed. If its Repeater is deleted it will be deleted. And if it's waiting to be sent, or resent, its `fire()` method will be called ... which will call its Repeater's `fire_for_record()` method.
+When it is pulled off the queue and processed, if its Repeater is paused it will be postponed. If its Repeater is deleted it will be deleted. And if it's waiting to be sent, or resent, its `fire()` method will be called ... which will call its Repeater's `fire_for_record()` method.
 
 The Repeater will transform the payload into the right format for the Repeater's class type and configuration, and then send the transformed data to the Repeater's destination URL.
 

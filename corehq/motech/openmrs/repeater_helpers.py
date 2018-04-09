@@ -278,19 +278,20 @@ class CreateVisitTask(WorkflowTask):
     def run(self):
         subtasks = []
         start_datetime = to_timestamp(self.visit_datetime)
-        stop_datetime = to_timestamp(
-            self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-        )
-        visit = {
-            'patient': self.person_uuid,
-            'visitType': self.visit_type,
-            'startDatetime': start_datetime,
-            'stopDatetime': stop_datetime,
-        }
-        if self.location_uuid:
-            visit['location'] = self.location_uuid
-        response = self.requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
-        self.visit_uuid = response.json()['uuid']
+        if self.visit_type:
+            stop_datetime = to_timestamp(
+                self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+            )
+            visit = {
+                'patient': self.person_uuid,
+                'visitType': self.visit_type,
+                'startDatetime': start_datetime,
+                'stopDatetime': stop_datetime,
+            }
+            if self.location_uuid:
+                visit['location'] = self.location_uuid
+            response = self.requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
+            self.visit_uuid = response.json()['uuid']
 
         subtasks.append(
             CreateEncounterTask(
@@ -327,8 +328,9 @@ class CreateEncounterTask(WorkflowTask):
             'patient': self.person_uuid,
             'form': self.openmrs_form,
             'encounterType': self.encounter_type,
-            'visit': self.visit_uuid,
         }
+        if self.visit_uuid:
+            encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
