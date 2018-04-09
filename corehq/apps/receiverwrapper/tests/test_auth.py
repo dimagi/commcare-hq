@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.urls import reverse
 from six.moves.urllib.parse import urlencode

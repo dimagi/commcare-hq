@@ -8,6 +8,7 @@ See `README.md`__ for more context.
 from __future__ import absolute_import
 from __future__ import division
 
+from __future__ import unicode_literals
 from collections import namedtuple
 from operator import eq
 from pprint import pformat
@@ -90,8 +91,8 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
         return {}
     if value_source['doc_type'] == 'CaseProperty':
         return {value_source['case_property']: JsonpathValuemap(jsonpath, {})}
-    if value_source['doc_type'] == 'CasePropertyConcept':
-        value_map = {v: k for k, v in value_source['value_concepts'].items()}
+    if value_source['doc_type'] == 'CasePropertyMap':
+        value_map = {v: k for k, v in value_source['value_map'].items()}
         return {value_source['case_property']: JsonpathValuemap(jsonpath, value_map)}
     raise ValueError(
         '"{}" is not a recognised ValueSource for setting OpenMRS patient values from CommCare case properties. '
@@ -182,9 +183,9 @@ class WeightedPropertyPatientFinder(PatientFinder):
         #                 "case_property": "caste"
         #             },
         #             "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-        #                 "doc_type": "CasePropertyConcept",
+        #                 "doc_type": "CasePropertyMap",
         #                 "case_property": "class",
-        #                 "value_concepts": {
+        #                 "value_map": {
         #                     "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
         #                     "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
         #                     "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",
@@ -260,47 +261,14 @@ class WeightedPropertyPatientFinder(PatientFinder):
                 weight = property_weight['weight']
 
                 matches = self._property_map[prop].jsonpath.find(patient)
-                if matches:
-                    assert len(matches) == 1, 'jsonpath "{}" did not uniquely match a patient value'.format(
-                        self._property_map[prop].jsonpath
-                    )
-                    patient_value = matches[0].value
+                for match in matches:
+                    patient_value = match.value
                     value_map = self._property_map[prop].value_map
                     case_value = case.get_case_property(prop)
                     is_equal = value_map.get(patient_value, patient_value) == case_value
                     yield weight if is_equal else 0
-                else:
-                    yield 0
 
         return sum(weights())
-
-    def save_match_id(self, case, case_config, patient):
-        """
-        If we are confident of the patient matched to a case, save
-        the patient's ID to the case.
-        """
-        from casexml.apps.case.mock import CaseBlock
-        from corehq.apps.hqcase.utils import submit_case_blocks
-
-        case_config_ids = case_config['patient_identifiers']
-        case_update = {}
-        id_type_uuid = PERSON_UUID_IDENTIFIER_TYPE_ID
-        if id_type_uuid in case_config_ids:
-            case_property = case_config_ids[id_type_uuid]['case_property']
-            value = patient['uuid']
-            case_update[case_property] = value
-        for identifier in patient['identifiers']:
-            id_type_uuid = identifier['identifierType']['uuid']
-            if id_type_uuid in case_config_ids:
-                case_property = case_config_ids[id_type_uuid]['case_property']
-                value = identifier['identifier']
-                case_update[case_property] = value
-        case_block = CaseBlock(
-            case_id=case.get_id,
-            create=False,
-            update=case_update,
-        )
-        submit_case_blocks([case_block.as_string()], case.domain)
 
     def find_patients(self, requests, case, case_config):
         """
@@ -329,7 +297,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
             return []
         if len(candidates) == 1:
             patient = list(candidates.values())[0].patient
-            self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to ONLY patient candidate: \n%s',
                 case.name, case.get_id, pformat(patient, indent=2),
@@ -342,7 +309,6 @@ class WeightedPropertyPatientFinder(PatientFinder):
             # patient and the second-best-ranked patient. Let's go with
             # Patient One.
             patient = patients_scores[0].patient
-            self.save_match_id(case, case_config, patient)
             logger.info(
                 'Matched case "%s" (%s) to BEST patient candidate: \n%s',
                 case.name, case.get_id, pformat(patients_scores, indent=2),

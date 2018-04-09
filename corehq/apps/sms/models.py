@@ -266,8 +266,12 @@ class SMS(SMSBase):
         return data
 
     def publish_change(self):
+        from corehq.apps.sms.change_publishers import publish_sms_saved
         from corehq.apps.sms.tasks import publish_sms_change
-        publish_sms_change.delay(self)
+        try:
+            publish_sms_saved(self)
+        except Exception:
+            publish_sms_change.delay(self)
 
     def requeue(self):
         if self.processed or self.direction != OUTGOING:

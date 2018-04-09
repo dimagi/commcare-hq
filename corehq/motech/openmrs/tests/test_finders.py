@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 
 from corehq.motech.openmrs.finders import PatientFinder, WeightedPropertyPatientFinder
@@ -88,9 +89,9 @@ class WeightedPropertyPatientFinderTests(SimpleTestCase):
             'person_attributes': {
                 'c1f4239f-3f10-11e4-adec-0800271c1b75': {'doc_type': 'CaseProperty', 'case_property': 'caste'},
                 'c1f455e7-3f10-11e4-adec-0800271c1b75': {
-                    'doc_type': 'CasePropertyConcept',
+                    'doc_type': 'CasePropertyMap',
                     'case_property': 'class',
-                    'value_concepts': {
+                    'value_map': {
                         'sc': 'c1fcd1c6-3f10-11e4-adec-0800271c1b75',
                         'general': 'c1fc20ab-3f10-11e4-adec-0800271c1b75',
                         'obc': 'c1fb51cc-3f10-11e4-adec-0800271c1b75',

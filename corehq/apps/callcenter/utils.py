@@ -175,7 +175,9 @@ def _get_user_case_fields(commcare_user, case_type, owner_id):
         'last_device_id_used': commcare_user.devices[0].device_id if commcare_user.devices else '',
         'owner_id': owner_id,
         'case_type': case_type,
-        'hq_user_id': commcare_user.get_id
+        'hq_user_id': commcare_user.get_id,
+        'first_name': commcare_user.first_name or '',
+        'last_name': commcare_user.last_name or '',
     })
 
     return fields

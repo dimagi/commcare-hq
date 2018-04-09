@@ -1,12 +1,13 @@
-/* global module, inject, chai */
+/* global module, inject, chai, _ */
 "use strict";
 
+var utils = hqImport('icds_reports/js/spec/utils');
 var pageData = hqImport('hqwebapp/js/initial_page_data');
 
 
 describe('AWCs Covered Directive', function () {
 
-    var $scope, $httpBackend, $location, controller;
+    var $scope, $httpBackend, $location, controller, controllermapOrSectorView;
 
     pageData.registerUrl('icds-ng-template', 'template');
     pageData.registerUrl('awcs_covered', 'awcs_covered');
@@ -27,11 +28,15 @@ describe('AWCs Covered Directive', function () {
         });
         var element = window.angular.element("<awcs-covered data='test'></awcs-covered>");
         var compiled = $compile(element)($scope);
+        var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
+        var mapOrSectorViewCompiled = $compile(mapOrSectorViewElement)($scope);
 
         $httpBackend.flush();
         $scope.$digest();
         controller = compiled.controller('awcsCovered');
         controller.step = 'map';
+        controllermapOrSectorView = mapOrSectorViewCompiled.controller('mapOrSectorView');
+        controllermapOrSectorView.data = _.clone(utils.controllerMapOrSectorViewData);
     }));
 
     it('tests instantiate the controller properly', function () {
@@ -194,6 +199,18 @@ describe('AWCs Covered Directive', function () {
             + '<div>Number of AWCs Launched: <strong>72</strong></div>';
 
         var result = controller.tooltipContent(month.value, data.y);
+        assert.equal(expected, result);
+    });
+
+    it('tests horizontal chart tooltip content', function () {
+        var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+            '<p>Ambah</p>' +
+            '<p>Total AWCs that have launched ICDS-CAS. AWCs are considered launched after submitting at least one Household Registration form.</p>' +
+            '<div>Number of AWCs Launched: <strong>0</strong></div>';
+        controllermapOrSectorView.templatePopup = function (d) {
+            return controller.templatePopup(d.loc, d.row);
+        };
+        var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
     });
 

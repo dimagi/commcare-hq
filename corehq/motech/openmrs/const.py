@@ -1,7 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import logging
+
 from django.utils.translation import ugettext_lazy as _
+
+from corehq.motech.openmrs.serializers import to_timestamp, to_name
 
 
 LOG_LEVEL_CHOICES = (
@@ -46,3 +50,43 @@ LOCATION_OPENMRS_UUID = 'openmrs_uuid'
 #     }
 #
 PERSON_UUID_IDENTIFIER_TYPE_ID = 'uuid'
+
+
+# Standard OpenMRS property names, and serializers
+PERSON_PROPERTIES = {
+    'gender': None,
+    'age': None,
+    'birthdate': to_timestamp,
+    'birthdateEstimated': None,
+    'dead': None,
+    'deathDate': to_timestamp,
+    'deathdateEstimated': None,
+    'causeOfDeath': None,
+}
+NAME_PROPERTIES = {
+    'givenName': to_name,
+    'familyName': to_name,
+    'middleName': to_name,
+    'familyName2': to_name,
+    'prefix': None,
+    'familyNamePrefix': None,
+    'familyNameSuffix': None,
+    'degree': None,
+}
+ADDRESS_PROPERTIES = {
+    'address1': None,
+    'address2': None,
+    'cityVillage': None,
+    'stateProvince': None,
+    'country': None,
+    'postalCode': None,
+    'latitude': None,
+    'longitude': None,
+    'countyDistrict': None,
+    'address3': None,
+    'address4': None,
+    'address5': None,
+    'address6': None,
+    'startDate': to_timestamp,
+    'endDate': to_timestamp,
+}
