@@ -362,7 +362,6 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
         return get_synclogs_by_date(start_datetime, end_datetime)
 
 
-
 class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
     '''
     Represents the staging table to dump data before loading into the ApplicationDim
