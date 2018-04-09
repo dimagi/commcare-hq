@@ -359,7 +359,7 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
-        return get_synclog_ids_by_date(start_datetime, end_datetime)
+        return get_synclogs_by_date(start_datetime, end_datetime)
 
 
 class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
