@@ -117,13 +117,16 @@ class FormProcessorSQL(object):
                 dirty = True
 
         if dirty:
-            form_json = convert_xform_to_json(xml)
+            new_xml = etree.tostring(xml)
+            form_json = convert_xform_to_json(new_xml)
             new_form = interface.new_xform(form_json)
+            new_form.domain = existing_form.domain
+            new_form.received_on = existing_form.received_on
+
             from couchforms.const import ATTACHMENT_NAME
             from corehq.form_processor.models import Attachment
             from corehq.form_processor.parsers.form import apply_deprecation
             existing_form, new_form = apply_deprecation(existing_form, new_form)
-            new_xml = etree.tostring(xml)
 
             interface.store_attachments(new_form, [
                 Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
