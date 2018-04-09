@@ -2,10 +2,12 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase, override_settings, Client
 
-
+from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.ota.tests.test_restore_user_check import _get_auth_header
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.domain.models import Domain
+from corehq.pillows.synclog import get_user_sync_history_pillow
 
 from corehq.util import reverse
 from corehq.util.test_utils import flag_enabled
@@ -33,7 +35,6 @@ class DeviceIdUpdateTest(ENikshayCaseStructureMixin, TestCase):
         super(DeviceIdUpdateTest, self).tearDown()
 
     def test_login_as(self):
-
         self.web_user.is_superuser = True
         self.web_user.save()
 
@@ -42,8 +43,14 @@ class DeviceIdUpdateTest(ENikshayCaseStructureMixin, TestCase):
         client = Client(HTTP_AUTHORIZATION=auth_header)
         device_id = "foo"
 
+        # get the seq id before the change is published
+        kafka_seq = get_topic_offset(topics.SYNCLOG_SQL)
+
         resp = client.get(restore_uri, data={'as': self.username, "device_id": device_id}, follow=True)
         self.assertEqual(resp.status_code, 200)
+
+        pillow = get_user_sync_history_pillow()
+        pillow.process_changes(since=kafka_seq, forever=False)
 
         restored_as_user = CommCareUser.get_by_username(self.username)
 
