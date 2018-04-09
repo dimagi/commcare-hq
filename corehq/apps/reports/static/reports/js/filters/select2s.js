@@ -105,8 +105,7 @@ hqDefine("reports/js/filters/select2s", [
                 },
             },
             initSelection: function (element, callback) {
-                var data = data.selected;
-                callback(data);
+                callback(data.selected);
             },
             multiple: true,
             escapeMarkup: function (m) { return m; },
