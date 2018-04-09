@@ -5,7 +5,7 @@ hqDefine('export/js/customize_export_new', function() {
         var customExportView = new ExportInstance(
             initialPageData.get('export_instance'),
             {
-                saveUrl: initialPageData.get('request.get_full_path'),
+                saveUrl: initialPageData.get('full_path'),
                 hasExcelDashboardAccess: initialPageData.get('has_excel_dashboard_access'),
                 hasDailySavedAccess: initialPageData.get('has_daily_saved_export_access'),
                 formatOptions: initialPageData.get('format_options'),
