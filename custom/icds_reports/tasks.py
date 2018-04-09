@@ -28,7 +28,11 @@ from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms
+from custom.icds_reports.models import (
+    AggChildHealthMonthly,
+    AggregateComplementaryFeedingForms,
+    AggregateChildHealthTHRForms,
+)
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file
 from dimagi.utils.chunked import chunked
@@ -136,8 +140,10 @@ def aggregate_tables(self, current_task, future_tasks):
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
 
+        agg_date = force_to_date(aggregation_date)
         for state_id in state_ids:
-            AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(aggregation_date))
+            AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
+            AggregateChildHealthTHRForms.aggregate(state_id, force_to_date(agg_date))
 
         with connections[db_alias].cursor() as cursor:
             with open(path, "r") as sql_file:
