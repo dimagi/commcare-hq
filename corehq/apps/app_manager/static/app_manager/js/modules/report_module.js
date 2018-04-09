@@ -255,8 +255,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
                 sync_delay: self.syncDelay(),
-                // only pass reportSlug if it was manually specified
-                report_slug: (self.reportSlug() && self.reportSlug() !== self.uuid) ? self.reportSlug() : null,
+                // only pass instanceId if it was manually specified
+                report_slug: (self.instanceId() && self.instanceId() !== self.uuid) ? self.instanceId() : null,
                 uuid: self.uuid,
             };
         };
