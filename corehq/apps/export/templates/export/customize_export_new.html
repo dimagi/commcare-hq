@@ -7,32 +7,18 @@
     <script src="{% static 'export/js/const.js' %}"></script>
     <script src="{% static 'export/js/utils.js' %}"></script>
     <script src="{% static 'export/js/models.js' %}"></script>
+    <script src="{% static 'export/js/customize_export_new.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var ExportInstance = hqImport('export/js/models').ExportInstance;
-            var customExportView = new ExportInstance(
-                {{ export_instance|JSON }},
-                {
-                    saveUrl: {{ request.get_full_path|safe|JSON }},
-                    hasExcelDashboardAccess: {{ has_excel_dashboard_access|JSON }},
-                    hasDailySavedAccess: {{ has_daily_saved_export_access|JSON }},
-                    formatOptions: {{ format_options|JSON }},
-                    numberOfAppsToProcess: {{ number_of_apps_to_process }},
-                }
-            );
-            hqImport('hqwebapp/js/initial_page_data').registerUrl(
-                "build_schema", "/a/---/data/export/build_full_schema/"
-            )
-            $('#customize-export').koApplyBindings(customExportView);
-            $('.export-tooltip').tooltip();
-        });
-    </script>
-{% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
+{% initial_page_data 'format_options' format_options %}
+{% initial_page_data 'has_daily_saved_export_access' has_daily_saved_export_access %}
+{% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
+{% initial_page_data 'request.get_full_path' full_path %}
+{% initial_page_data 'export_instance' export_instance %}
+
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if export_instance.type == 'case' %}
@@ -242,4 +228,3 @@
         {% endwith %}
     {% endif %}
 {% endblock %}
-
