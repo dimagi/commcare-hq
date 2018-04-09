@@ -212,7 +212,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.useXpathDescription = ko.observable(useXpathDescription);
         this.showDataTable = ko.observable(showDataTable);
         this.syncDelay = ko.observable(syncDelay);
-        this.reportSlug = ko.observable(reportSlug || uuid);
+        this.instanceId = ko.observable(reportSlug || uuid);
 
         this.reportId.subscribe(changeSaveButton);
         this.display.subscribe(changeSaveButton);
@@ -221,7 +221,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
         this.syncDelay.subscribe(changeSaveButton);
-        this.reportSlug.subscribe(changeSaveButton);
+        this.instanceId.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
             graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -244,8 +244,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
                 sync_delay: self.syncDelay(),
-                // only pass reportSlug if it was manually specified
-                report_slug: (self.reportSlug() && self.reportSlug() !== self.uuid) ? self.reportSlug() : null,
+                // only pass instanceId if it was manually specified
+                report_slug: (self.instanceId() && self.instanceId() !== self.uuid) ? self.instanceId() : null,
                 uuid: self.uuid,
             };
         };

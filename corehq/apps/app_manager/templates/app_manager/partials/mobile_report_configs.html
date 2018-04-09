@@ -72,7 +72,7 @@
                             <label>{% trans "Report code to use in custom expressions:" %}</label>
                             <span data-bind="visible: !$root.supportCustomUcrSlug, text: uuid"></span>
                             <input type="text" class="form-inline"
-                                    data-bind="visible: $root.supportCustomUcrSlug, value: reportSlug">
+                                    data-bind="visible: $root.supportCustomUcrSlug, value: instanceId">
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
