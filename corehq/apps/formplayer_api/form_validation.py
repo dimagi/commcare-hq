@@ -39,28 +39,28 @@ class FormValidationResult(object):
 
 
 def validate_form(form_xml):
-    try:
-        response = requests.post(
-            get_formplayer_url() + const.ENDPOINT_VALIDATE_FORM,
-            data=form_xml,
-            headers={'Content-Type': 'application/xml'}
-        )
-    except RequestException as e:
-        notify_exception(None, "Error calling Formplayer form validation endpoint")
-        raise FormplayerAPIException(e)
-
-    try:
-        response.raise_for_status()
-    except HTTPError:
-        notify_exception(None, "Error calling Formplayer form validation endpoint", details={
-            'status_code': response.status_code
-        })
-        raise FormplayerRequestException(response.status_code)
-
-    api_result = ValidationAPIResult(response.json())
+    # try:
+    #     response = requests.post(
+    #         get_formplayer_url() + const.ENDPOINT_VALIDATE_FORM,
+    #         data=form_xml,
+    #         headers={'Content-Type': 'application/xml'}
+    #     )
+    # except RequestException as e:
+    #     notify_exception(None, "Error calling Formplayer form validation endpoint")
+    #     raise FormplayerAPIException(e)
+    #
+    # try:
+    #     response.raise_for_status()
+    # except HTTPError:
+    #     notify_exception(None, "Error calling Formplayer form validation endpoint", details={
+    #         'status_code': response.status_code
+    #     })
+    #     raise FormplayerRequestException(response.status_code)
+    #
+    # api_result = ValidationAPIResult(response.json())
     result = FormValidationResult(
-        problems=[problem.to_json() for problem in api_result.problems],
-        success=api_result.validated,
-        fatal_error=api_result.fatal_error,
+        problems=[],
+        success=True,
+        fatal_error=None,
     )
     return result
