@@ -27,6 +27,9 @@ describe('Clean Water Directive', function () {
         $httpBackend.expectGET('clean_water').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<clean-water data='test'></clean-water>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

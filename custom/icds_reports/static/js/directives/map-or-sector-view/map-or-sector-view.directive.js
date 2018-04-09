@@ -4,7 +4,11 @@ function MapOrSectorController($location, storageService, locationsService) {
     var vm = this;
     var location_id = $location.search().location_id;
 
-    vm.showChart = parseInt($location.search().selectedLocationLevel) === 1;
+    if (['null', 'undefined', ''].indexOf(location_id) === -1) {
+        locationsService.getLocation(location_id).then(function (location) {
+            vm.showChart = location.location_type === 'district';
+        });
+    }
 
     vm.chartOptions = {
 
@@ -14,7 +18,7 @@ function MapOrSectorController($location, storageService, locationsService) {
             height: 550,
             margin: {
                 bottom: 40,
-                left: 350,
+                left: 100,
             },
             x: function (d) {
                 return d[0];
@@ -64,7 +68,7 @@ function MapOrSectorController($location, storageService, locationsService) {
             },
             callback: function(chart) {
                 var height = 550;
-                var calc_height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 50 : 0;
+                var calc_height = vm.data.mapData ? vm.data.mapData.chart_data[0].values.length * 60 : 0;
                 vm.chartOptions.chart.height = calc_height > height ? calc_height : height;
 
                 chart.multibar.dispatch.on('elementClick', function (e) {
@@ -79,6 +83,29 @@ function MapOrSectorController($location, storageService, locationsService) {
                         }
                     });
                 });
+
+                d3.selectAll(".nv-x.nv-axis .tick text").each(function(i, e) {
+                    var text = d3.select(this),
+                        words = text.text().split(/\s+/).reverse(),
+                        word, line = [],
+                        lineNumber = 0,
+                        lineHeight = 1.1, // ems
+                        y = 2.5 * parseInt(words.length),
+                        dy = parseFloat(text.attr("dy")),
+                        tspan = text.text(null).append("tspan").attr("x", -5).attr("y", -y).attr("dy", dy + "em");
+
+                    while (word = words.pop()) {
+                        line.push(word);
+                        tspan.text(line.join(" "));
+                        if (tspan.node().getComputedTextLength() > 100) {
+                            line.pop();
+                            tspan.text(line.join(" "));
+                            line = [word];
+                            tspan = text.append("tspan").attr("x", -5).attr("y", -y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                        }
+                    }
+                });
+
                 return chart;
             },
         },

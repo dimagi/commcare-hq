@@ -26,6 +26,9 @@ describe('Functional Toilet Directive', function () {
         $httpBackend.expectGET('functional_toilet').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<functional-toilet data='test'></functional-toilet>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
