@@ -23,7 +23,7 @@ from corehq.form_processor.interfaces.processor import CaseUpdateMetadata
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormAttachmentSQL, CaseTransaction,
     CommCareCaseSQL, FormEditRebuild, Attachment, XFormOperationSQL)
-from corehq.form_processor.utils import extract_meta_instance_id, extract_meta_user_id
+from corehq.form_processor.utils import convert_xform_to_json, extract_meta_instance_id, extract_meta_user_id
 from couchforms.const import ATTACHMENT_NAME
 from dimagi.utils.couch import acquire_lock, release_lock
 import six
@@ -105,6 +105,11 @@ class FormProcessorSQL(object):
     def update_responses(cls, xform, value_responses_map, user_id):
         from corehq.form_processor.utils.xform import update_response
 
+        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+        interface = FormProcessorInterface(xform.domain)
+        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+
         xml = xform.get_xml_element()
         dirty = False
         for question, response in value_responses_map.iteritems():
@@ -112,20 +117,21 @@ class FormProcessorSQL(object):
                 dirty = True
 
         if dirty:
-            # TODO: don't overwite XML
+            new_xml = etree.tostring(xml)
+            form_json = convert_xform_to_json(new_xml)
+            new_form = interface.new_xform(form_json)
+            new_form.domain = existing_form.domain
+            new_form.received_on = existing_form.received_on
+
             from couchforms.const import ATTACHMENT_NAME
-            form_attachment = xform.get_attachment(ATTACHMENT_NAME)
-            attachment = Attachment(
-                name=form_attachment.name,
-                raw_content=etree.tostring(xml),
-                content_type='text/xml',
-            )
-            form_attachment.write_content(attachment.content)
-            form_attachment.save()
-            operation = XFormOperationSQL(user_id=user_id, date=datetime.datetime.utcnow(),
-                                          operation=XFormOperationSQL.EDIT)
-            xform.history.append(operation)
-            xform.save()
+            from corehq.form_processor.models import Attachment
+            from corehq.form_processor.parsers.form import apply_deprecation
+            existing_form, new_form = apply_deprecation(existing_form, new_form)
+
+            interface.store_attachments(new_form, [
+                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+            ])
+            interface.save_processed_models([new_form, existing_form])
             return True
 
         return False
