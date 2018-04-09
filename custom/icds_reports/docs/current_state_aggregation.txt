@@ -11,7 +11,6 @@
 [UCR - AWC Mgmt Forms]
 [UCR - Daily Feeding Forms]
 [UCR - Infrastructure Forms]
-[UCR - THR Forms]
 [UCR - Complementary Feeding Forms]
 [Child Health Monthly]
 [CCS Record Monthly]
@@ -19,7 +18,6 @@
 [Agg Child Health]
 [Agg CCS Record]
 [Agg AWC]
-[Agg THR Data]
 [Agg AWC Daily]
 
 [UCR - Complementary Feeding Forms] --> [Child Health Monthly]
@@ -33,8 +31,6 @@
 [UCR - Child Health Monthly Tableau] --> [Agg Child Health]
 [Child Health Monthly] --> [Agg Child Health]
 [UCR - CCS Record Monthly Tableau] --> [Agg CCS Record]
-[Agg Child Health] --> [Agg THR Data]
-[Agg CCS Record] --> [Agg THR Data]
 
 [UCR - Daily Feeding Forms] --> [Agg AWC]
 [Agg Child Health] --> [Agg AWC]
