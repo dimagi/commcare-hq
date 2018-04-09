@@ -1512,3 +1512,11 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
     randomness=0.5
 )
+
+
+TRAINING_MODULE = StaticToggle(
+    'training-module',
+    'Training Modules',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
