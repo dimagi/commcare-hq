@@ -1,14 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from dimagi.utils.couch.cache.cache_core import get_redis_client
-from casexml.apps.phone.const import ASYNC_RETRY_AFTER
 
 EXPONENTIAL_RATE = 2
+BASE_TIME = 5
 
 
 class RedisExponentialBackoff(object):
     @classmethod
-    def get_next_time(cls, event_key, base_time=ASYNC_RETRY_AFTER):
+    def get_next_time(cls, event_key, base_time=BASE_TIME):
         if not event_key:
             return base_time
         repeat_number = cls.redis_client().incr(cls.format_key(event_key)) - 1
