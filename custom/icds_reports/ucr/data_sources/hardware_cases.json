@@ -67,10 +67,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "district"
-          },
+          "location_type": "district",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "transform": {},
@@ -93,10 +91,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "state"
-          },
+          "location_type": "state",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "transform": {},

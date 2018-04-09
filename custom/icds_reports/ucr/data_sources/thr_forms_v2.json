@@ -51,10 +51,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "supervisor"
-          },
+          "location_type": "supervisor",
+          "location_propery": "_id",
           "type": "ancestor_location"
         }
       },

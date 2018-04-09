@@ -67,10 +67,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "block"
-          },
+          "location_type": "block",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,

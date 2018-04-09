@@ -31,15 +31,13 @@
         "expression": {
           "type": "nested",
           "argument_expression": {
+            "location_propery": "_id",
             "type": "ancestor_location",
             "location_id": {
               "type": "named",
               "name": "user_location_id"
             },
-            "location_type": {
-              "type": "constant",
-              "constant": "state"
-            }
+            "location_type": "state"
           },
           "value_expression": {
             "type": "property_name",

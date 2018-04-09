@@ -163,10 +163,7 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "state"
-          },
+          "location_type": "state",
           "type": "ancestor_location"
         },
         "is_nullable": true,
@@ -187,10 +184,7 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "district"
-          },
+          "location_type": "district",
           "type": "ancestor_location"
         },
         "is_nullable": true,
@@ -211,10 +205,7 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "block"
-          },
+          "location_type": "block",
           "type": "ancestor_location"
         },
         "is_nullable": true,
@@ -236,10 +227,7 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "supervisor"
-          },
+          "location_type": "supervisor",
           "type": "ancestor_location"
         },
         "is_nullable": true,

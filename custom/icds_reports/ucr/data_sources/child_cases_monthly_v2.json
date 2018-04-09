@@ -224,10 +224,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "supervisor"
-          },
+          "location_type": "supervisor",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -248,10 +246,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "block"
-          },
+          "location_type": "block",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -272,10 +268,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "district"
-          },
+          "location_type": "district",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,
@@ -296,10 +290,8 @@
             },
             "type": "root_doc"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "state"
-          },
+          "location_type": "state",
+          "location_propery": "_id",
           "type": "ancestor_location"
         },
         "is_primary_key": false,

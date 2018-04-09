@@ -63,10 +63,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "supervisor"
-          },
+          "location_type": "supervisor",
+          "location_propery": "_id",
           "type": "ancestor_location"
         }
       },
@@ -83,10 +81,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "block"
-          },
+          "location_type": "block",
+          "location_propery": "_id",
           "type": "ancestor_location"
         }
       },
@@ -103,10 +99,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "district"
-          },
+          "location_type": "district",
+          "location_propery": "_id",
           "type": "ancestor_location"
         }
       },
@@ -123,10 +117,8 @@
             "type": "named",
             "name": "user_location_id"
           },
-          "location_type": {
-              "type": "constant",
-              "constant": "state"
-          },
+          "location_type": "state",
+          "location_propery": "_id",
           "type": "ancestor_location"
         }
       },
