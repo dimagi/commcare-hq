@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from datetime import datetime
-from functools import partial
+from functools import partial, wraps
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
@@ -303,7 +303,25 @@ class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
     pass
 
 
+def location_queryset(func):
+    @wraps(func)
+    def wrapper(self, *args, **kw):
+        result = func(self, *args, **kw)
+        if type(result) == CTEQuerySet:
+            result.__class__ = LocationQuerySet
+        return result
+    return wrapper
+
+
 class LocationManager(LocationQueriesMixin, AdjListManager):
+
+    @location_queryset
+    def cte_get_ancestors(self, *args, **kw):
+        return super(LocationManager, self).cte_get_ancestors(*args, **kw)
+
+    @location_queryset
+    def cte_get_descendants(self, *args, **kw):
+        return super(LocationManager, self).cte_get_descendants(*args, **kw)
 
     def get_or_None(self, **kwargs):
         try:
@@ -412,7 +430,10 @@ class SQLLocation(AdjListModel):
         """
         Returns the ancestor of given location_type_code of the location
         """
-        return self.get_ancestors().get(location_type__code=type_code)
+        try:
+            return self.get_ancestors().get(location_type__code=type_code)
+        except self.DoesNotExist:
+            return None
 
     @classmethod
     def get_sync_fields(cls):
@@ -514,6 +535,12 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
+        self.update_users_at_ancestor_locations()
+
+    def update_users_at_ancestor_locations(self):
+        from . tasks import update_users_at_locations
+        location_ids = list(self.get_ancestors().location_ids())
+        update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """

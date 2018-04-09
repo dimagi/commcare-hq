@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.const import OPENROSA_VERSION_MAP
 from corehq.apps.products.models import Product

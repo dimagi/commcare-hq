@@ -131,14 +131,21 @@ def _get_case_counts_by_user(domain, datespan, case_types=None, is_opened=True, 
     return case_query.run().aggregations.by_user.counts_by_bucket()
 
 
-def get_paged_forms_by_type(domain, doc_types, start=0, size=10):
+def get_paged_forms_by_type(
+        domain,
+        doc_types,
+        sort_col=None,
+        desc=True,
+        start=0,
+        size=10):
+    sort_col = sort_col or "received_on"
     query = (
         FormES()
         .domain(domain)
         .remove_default_filter('is_xform_instance')
         .remove_default_filter('has_user')
         .doc_type([doc_type.lower() for doc_type in doc_types])
-        .sort("received_on", desc=True)
+        .sort(sort_col, desc=desc)
         .start(start)
         .size(size)
     )

@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import mock
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.commcare_settings import get_commcare_settings_lookup, get_custom_commcare_settings
@@ -19,7 +20,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         self.app = Application(build_spec=BuildSpec(
             version='2.7.0'
             ),
-            name=u"TÉST ÁPP",
+            name="TÉST ÁPP",
             domain="potter",
             langs=['en']
         )
@@ -32,7 +33,7 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
     def _test_profile(self, app):
         profile = app.create_profile()
         assert isinstance(profile, bytes), type(profile)
-        assert u"TÉST ÁPP" in profile.decode('utf-8')
+        assert "TÉST ÁPP" in profile.decode('utf-8')
         profile_xml = ET.fromstring(profile)
         types = {
             'features': self._test_feature,

@@ -261,7 +261,7 @@ class EmailBulkPayload(forms.Form):
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-10'
         self.helper.offset_class = 'col-sm-offset-3 col-md-offset-2'
         self.fields['repeater_id'].choices = \
-            [(repeater.get_id, u'{}: {}'.format(
+            [(repeater.get_id, '{}: {}'.format(
                 repeater.doc_type,
                 repeater.url,
             )) for repeater in get_repeaters_by_domain(self.domain)]

@@ -30,7 +30,6 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     {case_block}
 </data>"""
 
-
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
     xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
@@ -45,14 +44,14 @@ class TestFormMetadata(jsonobject.JsonObject):
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
-def get_simple_form_xml(form_id, case_id=None, metadata=None):
+def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
     metadata = metadata or TestFormMetadata()
     case_block = ''
     if case_id:
         case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
+    form_xml = simple_form.format(uuid=form_id, case_block=case_block, **metadata.to_json())
 
     if not metadata.user_id:
         form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
@@ -60,11 +59,11 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None):
     return form_xml
 
 
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
+def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
     metadata = metadata or TestFormMetadata()
-    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    xml = get_simple_form_xml(form_id=form_id, metadata=metadata, simple_form=simple_form)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
     wrapped_form = interface.new_xform(form_json)

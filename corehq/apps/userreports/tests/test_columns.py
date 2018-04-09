@@ -7,7 +7,7 @@ from django.test import SimpleTestCase, TestCase, override_settings
 
 from casexml.apps.case.util import post_case_blocks
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager.helpers import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.columns import get_distinct_values
 from corehq.apps.userreports.const import (
     DEFAULT_MAXIMUM_EXPANSION, UCR_SQL_BACKEND, UCR_ES_BACKEND
@@ -195,7 +195,7 @@ class TestExpandedColumn(TestCase):
             domain=cls.domain,
             display_name='foo',
             referenced_doc_type='CommCareCase',
-            table_id=_clean_table_name(cls.domain, str(uuid.uuid4().hex)),
+            table_id=clean_table_name(cls.domain, str(uuid.uuid4().hex)),
             configured_filter={
                 "type": "boolean_expression",
                 "operator": "eq",

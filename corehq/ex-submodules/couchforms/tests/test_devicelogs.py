@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from django.test import SimpleTestCase, TestCase
 
@@ -125,12 +126,12 @@ class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):
         form_data = convert_xform_to_json(self.get_xml('single_node'))
         self.assertEqual(
             _get_logs(form_data, 'log_subreport', 'log'),
-            [{u'@date': u'2016-03-20T20:46:08.664+05:30',
-              u'msg': u'Logging out service login',
-              u'type': u'maintenance'},
-             {u'@date': u'2016-03-20T20:46:08.988+05:30',
-              u'msg': u'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
-              u'type': u'user'}]
+            [{'@date': '2016-03-20T20:46:08.664+05:30',
+              'msg': 'Logging out service login',
+              'type': 'maintenance'},
+             {'@date': '2016-03-20T20:46:08.988+05:30',
+              'msg': 'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
+              'type': 'user'}]
         )
 
     def test_single_entry(self):
@@ -156,13 +157,13 @@ class TestDeviceLogUtils(SimpleTestCase, TestFileMixin):
         form_data = convert_xform_to_json(self.get_xml('multiple_nodes'))
         self.assertEqual(
             _get_logs(form_data, 'log_subreport', 'log'),
-            [{u'@date': u'2016-03-20T20:46:08.664+05:30',
-              u'msg': u'Logging out service login',
-              u'type': u'maintenance'},
-             {u'@date': u'2016-03-20T20:46:08.988+05:30',
-              u'msg': u'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
-              u'type': u'user'},
-             {u'@date': u'2016-03-19T23:50:11.219+05:30',
-              u'msg': u'Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0',
-              u'type': u'resources'}]
+            [{'@date': '2016-03-20T20:46:08.664+05:30',
+              'msg': 'Logging out service login',
+              'type': 'maintenance'},
+             {'@date': '2016-03-20T20:46:08.988+05:30',
+              'msg': 'login|user.test|gxpg40k9lh9w7853w3gc91o1g7zu1wi8',
+              'type': 'user'},
+             {'@date': '2016-03-19T23:50:11.219+05:30',
+              'msg': 'Staging Sandbox: 7t3iyx01dxnn49a5xqt32916q5u7epn0',
+              'type': 'resources'}]
         )

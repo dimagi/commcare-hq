@@ -61,7 +61,7 @@
                     <div class="col-sm-4">
                         <select type="text" name="root_module_id" class="form-control">
                             <option value="">{% trans "No Parent" %}</option>
-                            {% for mod in valid_parent_modules %}
+                            {% for mod in valid_parents_for_child_module %}
                                 <option value="{{mod.unique_id}}"{% if mod.unique_id == module.root_module_id %} selected{% endif %}>
                                     {{ mod.name|trans:langs }}
                                 </option>

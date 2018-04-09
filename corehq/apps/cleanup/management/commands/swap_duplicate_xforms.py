@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import re
 from collections import defaultdict
 
@@ -53,7 +54,7 @@ class Command(BaseCommand):
         dry_run = options.get("dry_run", True)
         if not options.get('no_input', False) and not dry_run:
             confirm = input(
-                u"""
+                """
                 Are you sure you want to swap the given XFormInstances for duplicates?
                 This is NOT a dry run. y/N?
                 """

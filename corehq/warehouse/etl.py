@@ -3,6 +3,7 @@ This files defines ETL objects that all have a common "load" function.
 Each object is meant for transferring one type of data to another type.
 '''
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 from django.db import connections

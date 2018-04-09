@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from couchdbkit import ResourceNotFound
 from corehq.apps.casegroups.models import CommCareCaseGroup
@@ -64,11 +65,11 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         missing_forms.discard(xform.form_id)
 
         if xform.domain != domain:
-            response['errors'].append(_(u"XFORM {form_id} does not belong to domain {domain}").format(
+            response['errors'].append(_("XFORM {form_id} does not belong to domain {domain}").format(
                 form_id=xform.form_id, domain=domain))
             continue
 
-        xform_string = _(u"XFORM {form_id} for domain {domain} by user '{username}'").format(
+        xform_string = _("XFORM {form_id} for domain {domain} by user '{username}'").format(
             form_id=xform.form_id,
             domain=xform.domain,
             username=username)
@@ -76,14 +77,14 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         try:
             if archive_or_restore.is_archive_mode():
                 xform.archive(user_id=user_id)
-                message = _(u"Successfully archived {form}").format(form=xform_string)
+                message = _("Successfully archived {form}").format(form=xform_string)
             else:
                 xform.unarchive(user_id=user_id)
-                message = _(u"Successfully unarchived {form}").format(form=xform_string)
+                message = _("Successfully unarchived {form}").format(form=xform_string)
             response['success'].append(message)
             success_count = success_count + 1
         except Exception as e:
-            response['errors'].append(_(u"Could not archive {form}: {error}").format(
+            response['errors'].append(_("Could not archive {form}: {error}").format(
                 form=xform_string, error=e))
 
         if task:
@@ -91,7 +92,7 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
 
     for missing_form_id in missing_forms:
         response['errors'].append(
-            _(u"Could not find XForm {form_id}").format(form_id=missing_form_id))
+            _("Could not find XForm {form_id}").format(form_id=missing_form_id))
 
     if from_excel:
         return response

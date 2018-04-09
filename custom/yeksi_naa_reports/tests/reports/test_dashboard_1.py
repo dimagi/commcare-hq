@@ -32,9 +32,9 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Region 1', 'no data entered', 'no data entered', '50.00%', '16.67%'],
-                ['Dakar', 'no data entered', 'no data entered', '0.00%', '0.00%'],
-                ['Region Test', '0.00%', '0.00%', 'no data entered', '0.00%'],
-                ['Thies', 'no data entered', 'no data entered', '12.50%', '4.17%']
+                [u'Region 1', u'50.00%', u'50.00%', u'50.00%', u'50.00%'],
+                [u'Dakar', u'100.00%', u'100.00%', u'100.00%', u'100.00%'],
+                [u'Region Test', u'100.00%', u'100.00%', u'100.00%', u'100.00%'],
+                [u'Thies', u'87.50%', u'87.50%', u'87.50%', u'87.50%']
             ]
         )

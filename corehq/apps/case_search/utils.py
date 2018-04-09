@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 
 from corehq.apps.es.case_search import CaseSearchES
@@ -46,7 +47,7 @@ class CaseSearchCriteria(object):
             )
             _soft_assert(
                 False,
-                u"Someone in domain: {} tried accessing case search without a config".format(self.domain),
+                "Someone in domain: {} tried accessing case search without a config".format(self.domain),
                 e
             )
             config = CaseSearchConfig(domain=self.domain)
