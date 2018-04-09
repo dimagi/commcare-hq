@@ -45,7 +45,7 @@ def get_async_restore_payload(restore_config):
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.async_restore_task_id_cache.invalidate()
     RedisExponentialBackoff.invalidate(
-        "%s.%s" % (task, restore_config.restore_user.username))
+        "async_restore.%s.%s" % (task, restore_config.restore_user.username))
 
     return response
 

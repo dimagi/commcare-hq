@@ -194,7 +194,8 @@ class AsyncRestoreResponse(object):
         self.progress = {
             'done': task_info.get('done', 0),
             'total': task_info.get('total', 0),
-            'retry_after': RedisExponentialBackoff.get_next_time("%s.%s" % (task.id, username), ASYNC_RETRY_AFTER),
+            'retry_after': RedisExponentialBackoff.get_next_time(
+                "async_restore.%s.%s" % (task.id, username), ASYNC_RETRY_AFTER),
         }
 
     def compile_response(self):
