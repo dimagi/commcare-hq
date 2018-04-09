@@ -197,9 +197,9 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        [pps_data[i+1] for pps_data in rows if pps_data[i+1] != 'no data entered']
+                        [pps_data[i+1] for pps_data in rows if pps_data[i + 1] != 'no data entered']
                     ),
-                    'pps_count': sum([1 for pps_data in rows if pps_data[i+1] != 'no data entered'])
+                    'pps_count': sum([1 for pps_data in rows if pps_data[i + 1] != 'no data entered'])
                 }
                 if data[i]['pps_count']:
                     total_row.append(
