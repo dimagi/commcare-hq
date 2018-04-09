@@ -122,6 +122,21 @@ hqDefine("reports/js/filters/main", [
                 placeholder: gettext("Select a group"),
             });
         });
+<<<<<<< HEAD
+=======
+
+        $('.report-filter-user-filter').each(function(i, el) {
+            var $el = $(el), data = $el.data;
+            _.each(data.toggle_users, function (_, user) {
+                var currentUser = user;
+                $("#btn-user-filter-" + currentUser.type).on('applied-click', function (data) {
+                    if (document.getElementById("user-filter-" + currentUser.type).checked) {
+                        hqImport('analytix/js/google').track.event(data.event_category, 'Select "user type"', currentUser.name);
+                    }
+                });
+            });
+        });
+>>>>>>> externalize js filter users
     };
 
     return {
