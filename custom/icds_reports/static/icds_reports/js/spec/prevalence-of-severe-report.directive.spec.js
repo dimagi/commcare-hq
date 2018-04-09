@@ -41,6 +41,9 @@ describe('Prevalence Of Severe Directive', function () {
         $httpBackend.expectGET('prevalence_of_severe').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<prevalence-of-severe data='test'></prevalence-of-severe>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

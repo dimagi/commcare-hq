@@ -60,7 +60,11 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
             Datamap.prototype[vm.type] = BLOCK_TOPOJSON;
         }
         if (Datamap.prototype[vm.type].objects[vm.scope] !== void(0)) {
-            vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+            if ($location.$$path.indexOf('wasting') !== -1 && location.location_type === 'district') {
+                vm.mapHeight = 750;
+            } else {
+                vm.mapHeight = Datamap.prototype[vm.type].objects[vm.scope].height;
+            }
         }
     };
 
@@ -170,7 +174,7 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
                             .attr('class', '')
-                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1; margin-bottom: 80px')
+                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1')
                             .html(html.join(''));
                     }
                 },
