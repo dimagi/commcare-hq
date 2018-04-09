@@ -25,10 +25,6 @@
     </ul>
 {% endblock %}
 
-{% block stylesheets %}
-    <link rel="stylesheet" href="{% static 'data_dictionary/css/data_dictionary.css' %}">
-{% endblock %}
-
 {% block page_content %}
     {% registerurl 'data_dictionary_json' domain %}
     {% registerurl 'update_case_property' domain %}
