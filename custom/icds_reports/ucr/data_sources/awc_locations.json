@@ -501,7 +501,7 @@
         "location_type": {
             "type": "constant",
             "constant": "supervisor"
-        }
+        },
         "type": "ancestor_location"
       },
       "block_id": {
@@ -512,7 +512,7 @@
         "location_type": {
             "type": "constant",
             "constant": "block"
-        }
+        },
         "type": "ancestor_location"
       },
       "district_id": {
@@ -523,7 +523,7 @@
         "location_type": {
             "type": "constant",
             "constant": "district"
-        }
+        },
         "type": "ancestor_location"
       },
       "state_id": {
@@ -534,7 +534,7 @@
         "location_type": {
             "type": "constant",
             "constant": "state"
-        }
+        },
         "type": "ancestor_location"
       },
     },

@@ -386,7 +386,7 @@
         "location_type": {
             "type": "constant",
             "constant": "supervisor"
-        }
+        },
         "type": "ancestor_location"
       }
     },
