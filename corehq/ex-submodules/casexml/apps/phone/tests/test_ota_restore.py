@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
 from django.test import TestCase
 import os
 from django.test.utils import override_settings
@@ -10,9 +9,8 @@ from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from casexml.apps.case.tests.util import check_xml_line_by_line, delete_all_cases, delete_all_sync_logs, \
     delete_all_xforms
-from casexml.apps.phone.restore import RestoreConfig, CachedResponse
+from casexml.apps.phone.restore import CachedResponse
 from datetime import date
-from casexml.apps.phone.models import SyncLog, SimplifiedSyncLog
 from casexml.apps.phone import xml
 from casexml.apps.phone.tests import const
 from casexml.apps.phone.tests.utils import create_restore_user
@@ -24,7 +22,6 @@ from corehq.util.test_utils import TestFileMixin
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.custom_data_fields.models import SYSTEM_PREFIX
 from corehq.apps.domain.models import Domain
-from casexml.apps.phone.restore import RestoreParams, RestoreCacheSettings
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 
 
