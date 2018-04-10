@@ -1,6 +1,6 @@
 hqDefine("reports/js/base", function() {
     $(function() {
-        hqImport("reports/js/filters/main").init();
+        hqImport("reports/js/filters").init();
 
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var defaultConfig = initial_page_data('default_config') || {};
