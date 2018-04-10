@@ -7,6 +7,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
+    'locations/js/location_drilldown',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
@@ -16,7 +17,8 @@ hqDefine("reports/js/filters/main", [
     select2Filter,
     phoneNumberFilter,
     buttonGroup,
-    scheduleInstanceFilter
+    scheduleInstanceFilter,
+    locationDrilldown
 ) {
     var init = function() {
         // Datespans
@@ -122,11 +124,8 @@ hqDefine("reports/js/filters/main", [
                 placeholder: gettext("Select a group"),
             });
         });
-<<<<<<< HEAD
-=======
-
         $('.report-filter-user-filter').each(function(i, el) {
-            var $el = $(el), data = $el.data;
+            var $el = $(el), data = $el.data();
             _.each(data.toggle_users, function (_, user) {
                 var currentUser = user;
                 $("#btn-user-filter-" + currentUser.type).on('applied-click', function (data) {
@@ -136,7 +135,17 @@ hqDefine("reports/js/filters/main", [
                 });
             });
         });
->>>>>>> externalize js filter users
+        $('.report-filter-location-async').each(function(i, el) {
+            var $el = $(el), data = $el.data();
+            var model = locationDrilldown.LocationSelectViewModel({
+                "hierarchy": data.hierarchy,
+                "show_location_filter": data.makeOptional && (!data.locId || data.locId === "None") ? "n" : "y",
+                "loc_url": data.locationUrl,
+                "auto_drill": data.autoDrill,
+            });
+            $el.koApplyBindings(model);
+            model.load(data.locs, data.locId);
+        });
     };
 
     return {
