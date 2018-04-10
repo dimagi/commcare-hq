@@ -120,13 +120,17 @@ class FormProcessorSQL(object):
             new_xml = etree.tostring(xml)
             form_json = convert_xform_to_json(new_xml)
             new_form = interface.new_xform(form_json)
+            new_form.user_id = user_id
             new_form.domain = existing_form.domain
+            new_form.app_id = existing_form.app_id
+            new_form.xmlns = existing_form.xmlns
             new_form.received_on = existing_form.received_on
+            new_form.edited_on = datetime.datetime.utcnow()
 
             from couchforms.const import ATTACHMENT_NAME
             from corehq.form_processor.models import Attachment
-            from corehq.form_processor.parsers.form import apply_deprecation
-            existing_form, new_form = apply_deprecation(existing_form, new_form)
+            existing_form, new_form = cls.apply_deprecation(existing_form, new_form)
+            existing_form = cls.assign_new_id(existing_form)
 
             interface.store_attachments(new_form, [
                 Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
@@ -193,7 +197,7 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or 'unknown'
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or new_xform.user_id or 'unknown'
         operation = XFormOperationSQL(
             user_id=user_id,
             date=new_xform.edited_on,
