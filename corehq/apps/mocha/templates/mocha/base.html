@@ -41,17 +41,6 @@
       {% block fixtures %}{% endblock %}
       </div>
 
-      <div class="initial-page-data" class="hide">
-      {% block initial_page_data %}
-          {# do not override this block, use initial_page_data template tag to populate #}
-      {% endblock %}
-      </div>
-      <div class="commcarehq-urls" class="hide">
-      {% block registered_urls %}
-          {# do not override this block, use registerurl template tag to populate #}
-      {% endblock %}
-      </div>
-
       {% block mocha_tests %}{% endblock %}
       <script charset="utf-8">
   	      // Only tests run in real browser, injected script run if options.run == true
