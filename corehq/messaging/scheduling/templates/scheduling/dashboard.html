@@ -19,158 +19,164 @@
 
 {% block page_content %}
     {% registerurl 'messaging_dashboard' domain %}
-    {# Prevent flicker by hiding and using bindingApplied to make visible #}
-    <div id="messaging_dashboard" class="container-fluid" style="display: none;" data-bind="visible: bindingApplied">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <strong>{% trans "SMS Status:" %}</strong>
-                    <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "All Caught Up" %}</strong>
-                    <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Working" %}</strong>
-                    <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Paused" %}</strong>
-                    <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
-                        (<span data-bind="text: queued_sms_count"></span>
-                        {% trans "SMS queued" %})
-                    </span>
-                    <span data-bind="visible: !is_sms_currently_allowed()">
-                        <span class="hq-help-template"
-                              data-title="{% trans 'SMS Paused' %}"
-                              data-container="body"
-                              data-content="{% trans 'Messages will remain queued until the below conditions are cleared.' %}"
-                              data-placement="left">
+    <div id="messaging_dashboard" class="container-fluid">
+        <div data-bind="visible: !bindingApplied()">
+            <img src="/static/hqwebapp/images/ajax-loader.gif" />
+            <span>{% trans "Loading..." %}</span>
+        </div>
+        {# Prevent flicker by hiding and using bindingApplied to make visible #}
+        <div style="display: none;" data-bind="visible: bindingApplied">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <strong>{% trans "SMS Status:" %}</strong>
+                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "All Caught Up" %}</strong>
+                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Working" %}</strong>
+                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Paused" %}</strong>
+                        <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
+                            (<span data-bind="text: queued_sms_count"></span>
+                            {% trans "SMS queued" %})
                         </span>
-                    </span>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <div class="row">
-                    <div class="col-xs-2 col-lg-1">
-                        <span>{% trans "Daily Usage" %}</span>
-                    </div>
-                    <div class="col-xs-1 text-center">
-                       <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"></span>
-                       <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"></span>
-                    </div>
-                    <div class="col-xs-4">
-                        <div class="progress">
-                            <div class="progress-bar"
-                                 role="progressbar"
-                                 aria-valuemin="0"
-                                 aria-valuemax="100"
-                                 data-bind="
-                                    style: {width: percentage_daily_outbound_sms_used() + '%'},
-                                    css: {'progress-bar-success': outbound_sms_sent_today() < daily_outbound_sms_limit(),
-                                          'progress-bar-danger': outbound_sms_sent_today() >= daily_outbound_sms_limit()}
-                                 ">
+                        <span data-bind="visible: !is_sms_currently_allowed()">
+                            <span class="hq-help-template"
+                                  data-title="{% trans 'SMS Paused' %}"
+                                  data-container="body"
+                                  data-content="{% trans 'Messages will remain queued until the below conditions are cleared.' %}"
+                                  data-placement="left">
+                            </span>
+                        </span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="col-xs-2 col-lg-1">
+                            <span>{% trans "Daily Usage" %}</span>
+                        </div>
+                        <div class="col-xs-1 text-center">
+                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"></span>
+                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"></span>
+                        </div>
+                        <div class="col-xs-4">
+                            <div class="progress">
+                                <div class="progress-bar"
+                                     role="progressbar"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     data-bind="
+                                        style: {width: percentage_daily_outbound_sms_used() + '%'},
+                                        css: {'progress-bar-success': outbound_sms_sent_today() < daily_outbound_sms_limit(),
+                                              'progress-bar-danger': outbound_sms_sent_today() >= daily_outbound_sms_limit()}
+                                     ">
+                                </div>
                             </div>
                         </div>
+                        <div class="col-xs-4">
+                            <span data-bind="text: outbound_sms_sent_today"></span>
+                            <span>/</span>
+                            <span data-bind="text: daily_outbound_sms_limit"></span>
+                            <span class="hq-help-template"
+                                  data-title="{% trans 'Daily Usage' %}"
+                                  data-container="body"
+                                  data-content="{% trans 'The number of SMS sent today out of the total daily limit for your project.' %}"
+                                  data-placement="left">
+                            </span>
+                        </div>
                     </div>
-                    <div class="col-xs-4">
-                        <span data-bind="text: outbound_sms_sent_today"></span>
-                        <span>/</span>
-                        <span data-bind="text: daily_outbound_sms_limit"></span>
-                        <span class="hq-help-template"
-                              data-title="{% trans 'Daily Usage' %}"
-                              data-container="body"
-                              data-content="{% trans 'The number of SMS sent today out of the total daily limit for your project.' %}"
-                              data-placement="left">
-                        </span>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-xs-2 col-lg-1">
-                        <span>{% trans "Restricted Times" %}</span>
-                    </div>
-                    <div class="col-xs-1 text-center">
-                       <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"></span>
-                       <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"></span>
-                    </div>
-                    <div class="col-xs-9">
-                        <span data-bind="visible: !uses_restricted_time_windows()">
-                            {% blocktrans %}
-                            Your project currently does not restrict the times of day at which SMS can be sent.
-                            {% endblocktrans %}
-                        </span>
-                        <span data-bind="visible: uses_restricted_time_windows() && !within_allowed_sms_times()">
-                            {% blocktrans %}
-                            Your project restricts the times of day at which SMS can be sent. SMS will resume sending at
-                            <span data-bind="text: sms_resume_time"></span> (<span data-bind="text: project_timezone"></span>).
-                            {% endblocktrans %}
-                        </span>
-                        <span data-bind="visible: uses_restricted_time_windows() && within_allowed_sms_times()">
-                            {% blocktrans %}
-                            Your project restricts the times of day at which SMS can be sent, but no restrictions are currently active.
-                            {% endblocktrans %}
-                        </span>
-                        {% if request.couch_user.is_domain_admin %}
-                            <a target="_blank" href="{% url 'sms_settings' domain %}">{% trans "Update" %}</a>
-                        {% endif %}
+                    <div class="row">
+                        <div class="col-xs-2 col-lg-1">
+                            <span>{% trans "Restricted Times" %}</span>
+                        </div>
+                        <div class="col-xs-1 text-center">
+                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"></span>
+                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"></span>
+                        </div>
+                        <div class="col-xs-9">
+                            <span data-bind="visible: !uses_restricted_time_windows()">
+                                {% blocktrans %}
+                                Your project currently does not restrict the times of day at which SMS can be sent.
+                                {% endblocktrans %}
+                            </span>
+                            <span data-bind="visible: uses_restricted_time_windows() && !within_allowed_sms_times()">
+                                {% blocktrans %}
+                                Your project restricts the times of day at which SMS can be sent. SMS will resume sending at
+                                <span data-bind="text: sms_resume_time"></span> (<span data-bind="text: project_timezone"></span>).
+                                {% endblocktrans %}
+                            </span>
+                            <span data-bind="visible: uses_restricted_time_windows() && within_allowed_sms_times()">
+                                {% blocktrans %}
+                                Your project restricts the times of day at which SMS can be sent, but no restrictions are currently active.
+                                {% endblocktrans %}
+                            </span>
+                            {% if request.couch_user.is_domain_admin %}
+                                <a target="_blank" href="{% url 'sms_settings' domain %}">{% trans "Update" %}</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <strong>{% trans "Reminder Status:" %}</strong>
-                    <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
-                    <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
-                    <span data-bind="visible: events_pending() > 0">
-                        <span data-bind="text: events_pending"></span>
-                        {% trans "event(s) queued" %}
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <strong>{% trans "Reminder Status:" %}</strong>
+                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
+                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
+                        <span data-bind="visible: events_pending() > 0">
+                            <span data-bind="text: events_pending"></span>
+                            {% trans "event(s) queued" %}
+                        </span>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        {% blocktrans %}
+                        View <a target="_blank" href="{{ scheduled_events_url }}">scheduled events</a>
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <strong>{% trans "SMS Received, Sent" %}</strong>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        {% blocktrans %}
+                        View <a target="_blank" href="{{ message_log_url }}">SMS activity</a>
+                        {% endblocktrans %}
+                    </p>
+                    <div class="row">
+                        <div id="sms_count_chart"><svg height="300px"></svg></div>
+                    </div>
+                </div>
+            </div>
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <strong>{% trans "Messaging Events" %}</strong>
+                    </h3>
+                </div>
+                <div class="panel-body">
+                    <p>
+                        {% blocktrans %}
+                        View <a target="_blank" href="{{ messaging_history_url }}">Messaging History</a>
+                        {% endblocktrans %}
+                    </p>
+                    <div class="row">
+                        <div id="event_count_chart"><svg height="300px"></svg></div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <p>
+                    <span>{% trans "Last updated:" %}</span>
+                    <span data-bind="text: last_refresh_time"></span>
+                    <span>
+                        (<span data-bind="text: project_timezone"></span>)
                     </span>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    {% blocktrans %}
-                    View <a target="_blank" href="{{ scheduled_events_url }}">scheduled events</a>
-                    {% endblocktrans %}
                 </p>
             </div>
-        </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <strong>{% trans "SMS Received, Sent" %}</strong>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    {% blocktrans %}
-                    View <a target="_blank" href="{{ message_log_url }}">SMS activity</a>
-                    {% endblocktrans %}
-                </p>
-                <div class="row">
-                    <div id="sms_count_chart"><svg height="300px"></svg></div>
-                </div>
-            </div>
-        </div>
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <h3 class="panel-title">
-                    <strong>{% trans "Messaging Events" %}</strong>
-                </h3>
-            </div>
-            <div class="panel-body">
-                <p>
-                    {% blocktrans %}
-                    View <a target="_blank" href="{{ messaging_history_url }}">Messaging History</a>
-                    {% endblocktrans %}
-                </p>
-                <div class="row">
-                    <div id="event_count_chart"><svg height="300px"></svg></div>
-                </div>
-            </div>
-        </div>
-        <div>
-            <p>
-                <span>{% trans "Last updated:" %}</span>
-                <span data-bind="text: last_refresh_time"></span>
-                <span>
-                    (<span data-bind="text: project_timezone"></span>)
-                </span>
-            </p>
         </div>
     </div>
 {% endblock %}
