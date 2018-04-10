@@ -194,7 +194,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
     function ReportConfig(reportId, display,
         localizedDescription, xpathDescription, useXpathDescription,
-        showDataTable, syncDelay, uuid, availableReportIds,
+        showDataTable, syncDelay, reportSlug, uuid, availableReportIds,
         reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
         filterValues, reportFilters,
         language, languages, changeSaveButton) {
@@ -212,6 +212,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.useXpathDescription = ko.observable(useXpathDescription);
         this.showDataTable = ko.observable(showDataTable);
         this.syncDelay = ko.observable(syncDelay);
+        this.instanceId = ko.observable(reportSlug || uuid);
 
         this.reportId.subscribe(changeSaveButton);
         this.display.subscribe(changeSaveButton);
@@ -220,6 +221,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         this.useXpathDescription.subscribe(changeSaveButton);
         this.showDataTable.subscribe(changeSaveButton);
         this.syncDelay.subscribe(changeSaveButton);
+        this.instanceId.subscribe(changeSaveButton);
 
         self.graphConfig = new GraphConfig(this.reportId, this.display(), availableReportIds, reportCharts,
             graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -242,6 +244,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
                 sync_delay: self.syncDelay(),
+                // only pass instanceId if it was manually specified
+                report_slug: (self.instanceId() && self.instanceId() !== self.uuid) ? self.instanceId() : null,
                 uuid: self.uuid,
             };
         };
@@ -262,7 +266,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        self.supportSyncDelay = options.supportSyncDelay;
+        self.supportSyncDelay = options.mobileUcrVersion !== 1;
+        self.supportCustomUcrSlug = options.mobileUcrVersion >= 2;
         self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;
@@ -318,6 +323,13 @@ hqDefine('app_manager/js/modules/report_module', function () {
                         break;
                     }
                 }
+
+                var duplicatedSlugs = getDuplicatedSlugs();
+                if (duplicatedSlugs.length !== 0) {
+                    alert(gettext("Report codes must be unique.  The following codes are duplicates: ")
+                          + duplicatedSlugs.join(", "));
+                }
+
                 self.moduleName[self.lang] = self.currentModuleName();
 
                 var filter = self.currentModuleFilter().trim();
@@ -355,6 +367,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 options.use_xpath_description,
                 options.show_data_table,
                 options.sync_delay,
+                options.report_slug,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -388,6 +401,29 @@ hqDefine('app_manager/js/modules/report_module', function () {
         for (i = 0; i < currentReports.length; i += 1) {
             self.reports.push(newReport(currentReports[i]));
         }
+
+        // flag instance ids defined outside this module
+        var uuidsByInstanceId = hqImport('hqwebapp/js/initial_page_data').get('uuids_by_instance_id'),
+            instanceIdsInThisModule = _.map(self.reports(), function (r) {return r.instanceId();}),
+            instanceIdsElsewhere = _.filter(_.keys(uuidsByInstanceId), function (instanceId) {
+                return !_.contains(instanceIdsInThisModule, instanceId);
+            });
+
+        var getDuplicatedSlugs = function () {
+            var instanceIdsInThisModule = _.map(self.reports(), function (r) {return r.instanceId();}),
+                duplicatesWithElsewhere = _.filter(instanceIdsInThisModule, function(iid) {
+                    return _.contains(instanceIdsElsewhere, iid);
+                }),
+                duplicatesHere = _.chain(instanceIdsInThisModule)
+                    .countBy(_.identity)
+                    .pairs()
+                    .filter(function (countPair) {return countPair[1] > 1;})
+                    .map(_.first)
+                    .value();
+
+            return duplicatesHere.concat(duplicatesWithElsewhere);
+        };
+
     }
 
     $(function () {
