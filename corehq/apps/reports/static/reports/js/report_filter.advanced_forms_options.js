@@ -37,7 +37,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
         update: function(element, valueAccessor) {
             var value = valueAccessor();
             var knownForm = $(element).attr('data-known');
-            ko.utils.unwrapObservable(value) ? $(knownForm).hide() : $(known_form).show();
+            ko.utils.unwrapObservable(value) ? $(knownForm).hide() : $(knownForm).show();
         },
     };
 
