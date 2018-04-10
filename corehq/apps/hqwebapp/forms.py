@@ -52,12 +52,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+            if user and user.is_locked_out() and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
                 raise ValidationError(lockout_message)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+        if user and user.is_locked_out() and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
             raise ValidationError(lockout_message)
         return cleaned_data
 

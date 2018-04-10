@@ -25,9 +25,7 @@ def clear_failed_logins_and_unlock_account(sender, request, user, **kwargs):
 @receiver(user_login_failed)
 def add_failed_attempt(sender, credentials, **kwargs):
     user = CouchUser.get_by_username(credentials['username'])
-    if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
-        if user.is_locked_out():
-            return
+    if user and not user.is_locked_out() and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
         if user.attempt_date == date.today():
             user.login_attempts += 1
         else:

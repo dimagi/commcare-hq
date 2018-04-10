@@ -383,7 +383,7 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
-        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+        if user and user.is_locked_out() and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
             return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
