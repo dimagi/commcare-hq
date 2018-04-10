@@ -119,6 +119,11 @@ class Command(BaseDataDump):
                     raise Exception("Private Sector Organization ID not set for location %s" % owner_id)
             else:
                 raise Exception("Location not found for id %s" % owner_id)
+        elif column_name == "Voucher Approved Amount":
+            if case.get_case_property('state') in ['approved', 'paid']:
+                return case.get_case_property('amount_approved') or case.get_case_property('amount_fulfilled')
+            else:
+                return case.get_case_property('amount_approved')
         raise Exception("unknown custom column %s" % column_name)
 
     def get_case_ids_query(self, case_type):
