@@ -809,6 +809,87 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         return headers
 
 
+class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
+    slug = 'satisfaction_rate_after_delivery'
+    comment = '% products ordered vs. delivered'
+    title = 'Satisfaction Rate after delivery'
+    show_total = True
+    custom_total_calculate = True
+
+    def calculate_total_row(self, products):
+        total_row = ['Total (CFA)']
+        for i in range(len(self.months)):
+            total_row.append(self.percent_fn(
+                sum(
+                    products[product_id][i]['numerator'] for product_id in products if
+                    products[product_id][i]['numerator'] and products[product_id][i]['denominator']
+                ),
+                sum(
+                    products[product_id][i]['denominator'] for product_id in products if
+                    products[product_id][i]['numerator'] and products[product_id][i]['denominator']
+                )
+            ))
+        return total_row
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Quantity of the product  suggested", SumColumn('ideal_topup')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+        data = {}
+        product_names = {}
+        for row in rows:
+            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
+                if row['product_id'] not in data:
+                    data[row['product_id']] = []
+                    for i in range(len(self.months)):
+                        data[row['product_id']].append({
+                            'numerator': 0,
+                            'denominator': 0,
+                        })
+                    product_names[row['product_id']] = row['product_name']
+                for i in range(len(self.months)):
+                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
+                        if row['amt_delivered_convenience'] and row['ideal_topup']:
+                            data[row['product_id']][i]['numerator'] += row['amt_delivered_convenience']['html']
+                            data[row['product_id']][i]['denominator'] += row['ideal_topup']['html']
+                        break
+
+        new_rows = []
+        for product_id in data:
+            row = [product_names[product_id]]
+            for i in range(len(self.months)):
+                if data[product_id][i]['numerator'] and data[product_id][i]['denominator']:
+                    row.append(
+                        self.percent_fn(data[product_id][i]['numerator'], data[product_id][i]['denominator'])
+                    )
+                else:
+                    row.append('no data entered')
+            new_rows.append(row)
+        self.total_row = self.calculate_total_row(data)
+        return new_rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Product'))
+        for month in self.months:
+            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        return headers
+
+
 class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
     slug = 'valuation_of_pna_stock_per_product'
     comment = 'Stock value of available PNA products, per product'
