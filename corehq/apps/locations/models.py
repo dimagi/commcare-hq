@@ -7,6 +7,7 @@ from functools import partial
 from bulk_update.helper import bulk_update as bulk_update_helper
 
 import jsonfield
+from django.conf import settings
 from django.db import models, transaction
 from django_cte import CTEQuerySet
 from memoized import memoized
@@ -314,10 +315,10 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
             return None
 
     def get_queryset(self):
-        return (
-            LocationQuerySet(self.model, using=self._db)
-            .order_by(self.tree_id_attr, self.left_attr)  # mptt default
-        )
+        query = LocationQuerySet(self.model, using=self._db)
+        if not settings.IS_LOCATION_CTE_ONLY:
+            query = query.order_by(self.tree_id_attr, self.left_attr)  # mptt default
+        return query
 
     def get_from_user_input(self, domain, user_input):
         """

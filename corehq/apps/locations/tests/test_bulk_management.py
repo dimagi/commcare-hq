@@ -173,6 +173,10 @@ BIG_LOCATION_TREE = [
 ]
 
 
+def _codify(items):
+    return {it.site_code: it for it in items}
+
+
 class TestTreeUtils(SimpleTestCase):
     def test_no_issues(self):
         assert_no_cycles([
@@ -875,9 +879,9 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(tree))
 
-        locations = SQLLocation.objects.all()
-        self.assertEqual(locations[0].metadata, {'a': '1'})  # test that ints are coerced to strings
-        self.assertEqual(locations[1].metadata, {'国际字幕': '试验'})
+        locations = _codify(SQLLocation.objects.all())
+        self.assertEqual(locations["s1"].metadata, {'a': '1'})  # test that ints are coerced to strings
+        self.assertEqual(locations["c1"].metadata, {'国际字幕': '试验'})
 
     def test_custom_data_delete_uncategorized(self):
         data_model = get_location_data_model(self.domain.name)
@@ -892,9 +896,9 @@ class TestBulkManagement(TestCase):
             tree
         )
 
-        locations = SQLLocation.objects.all()
-        self.assertEqual(locations[0].metadata, {'a': '1'})
-        self.assertEqual(locations[1].metadata, {'b': 'test'})
+        locations = _codify(SQLLocation.objects.all())
+        self.assertEqual(locations["s1"].metadata, {'a': '1'})
+        self.assertEqual(locations["c1"].metadata, {'b': 'test'})
 
         tree = [
             ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, True),
@@ -905,9 +909,9 @@ class TestBulkManagement(TestCase):
             tree
         )
 
-        locations = SQLLocation.objects.all()
-        self.assertEqual(locations[0].metadata, {})  # uncategorized data get's removed
-        self.assertEqual(locations[1].metadata, {'b': 'test'})  # uncategorized data get's kept
+        locations = _codify(SQLLocation.objects.all())
+        self.assertEqual(locations["s1"].metadata, {})  # uncategorized data get's removed
+        self.assertEqual(locations["c1"].metadata, {'b': 'test'})  # uncategorized data get's kept
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case
