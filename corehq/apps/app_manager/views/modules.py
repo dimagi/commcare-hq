@@ -64,7 +64,6 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations,
-    TrainingModule,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -184,7 +183,7 @@ def _get_basic_module_view_context(app, module, case_property_builder):
         'parent_modules': _get_parent_modules(app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not isinstance(module, TrainingModule)
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
         ),
     }
 
@@ -608,7 +607,7 @@ def _new_shadow_module(request, domain, app, name, lang):
 
 def _new_training_module(request, domain, app, name, lang):
     name = name or 'Training'
-    module = app.add_module(TrainingModule.new_module(name, lang))
+    module = app.add_module(Module.new_training_module(name, lang))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
