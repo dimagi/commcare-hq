@@ -7,7 +7,6 @@ from custom.yeksi_naa_reports.reports import Dashboard3Report
 
 
 class TestDashboard3(YeksiTestCase):
-    maxDiff = None
 
     def test_satisfaction_rate_after_delivery_data_report(self):
         mock = MagicMock()
@@ -32,8 +31,8 @@ class TestDashboard3(YeksiTestCase):
             ['Product', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 [u'DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', u'no data entered', u'no data entered',
                  u'1462.40%'],
                 [u'NEVIRAPINE 200MG CP.', u'no data entered', u'no data entered', u'93.30%'],
@@ -61,7 +60,7 @@ class TestDashboard3(YeksiTestCase):
                 [u'ACT PETIT ENFANT', u'no data entered', u'no data entered', u'100.00%'],
                 [u'LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', u'no data entered', u'no data entered',
                  u'100.00%'], [u'Produit 1', u'no data entered', u'no data entered', u'no data entered']
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_valuation_of_pna_stock_per_product_data_report(self):
