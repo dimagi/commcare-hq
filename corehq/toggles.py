@@ -1512,3 +1512,19 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     namespaces=[NAMESPACE_USER],
     randomness=0.5
 )
+
+
+WAREHOUSE_APP_STATUS = StaticToggle(
+    'warehouse_app_status',
+    "User warehouse backend for the app status report. Currently only for sql domains",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
+TRAINING_MODULE = StaticToggle(
+    'training-module',
+    'Training Modules',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
