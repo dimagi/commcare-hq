@@ -131,6 +131,8 @@ class FormProcessorSQL(object):
             from corehq.form_processor.models import Attachment
             existing_form, new_form = cls.apply_deprecation(existing_form, new_form)
             existing_form = cls.assign_new_id(existing_form)
+            new_form.deprecated_form_id = existing_form.get_id
+            new_form.edited_on = datetime.datetime.utcnow()
 
             interface.store_attachments(new_form, [
                 Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
