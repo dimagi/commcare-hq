@@ -138,12 +138,18 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "SMS Received, Sent" %}</strong>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'SMS Received, Sent' %}"
+                              data-container="body"
+                              data-content="{% trans 'Summary of SMS activity. SMS sent represent SMS successfully handed off to an SMS gateway for delivery.' %}"
+                              data-placement="left">
+                        </span>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        View <a target="_blank" href="{{ message_log_url }}">SMS activity</a>
+                        Showing SMS activity over the last 30 days. <a target="_blank" href="{{ message_log_url }}">See all</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">
@@ -155,12 +161,18 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "Messaging Events" %}</strong>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'Messaging Events' %}"
+                              data-container="body"
+                              data-content="{% trans 'Shows the counts of messaging events that completed successfully as well as those that had errors.' %}"
+                              data-placement="left">
+                        </span>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        View <a target="_blank" href="{{ messaging_history_url }}">Messaging History</a>
+                        Summarizing messaging events over the last 30 days. <a target="_blank" href="{{ messaging_history_url }}">See all</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">
@@ -172,12 +184,18 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "Messaging Event Error Summary" %}</strong>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'Messaging Event Error Summary' %}"
+                              data-container="body"
+                              data-content="{% trans 'Gives a breakdown of messaging event errors and the counts of their occurrences. Hover over a bar to see the error.' %}"
+                              data-placement="left">
+                        </span>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <p>
                         {% blocktrans %}
-                        View <a target="_blank" href="{{ messaging_history_url }}">Messaging History</a>
+                        Summarizing errors over the last 30 days. <a target="_blank" href="{{ messaging_history_url }}">See all</a>
                         {% endblocktrans %}
                     </p>
                     <div class="row">
