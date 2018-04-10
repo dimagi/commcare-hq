@@ -21,7 +21,7 @@ from corehq.warehouse.const import (APPLICATION_STAGING_SLUG,
     USER_STAGING_SLUG, APPLICATION_DIM_SLUG, USER_DIM_SLUG, DOMAIN_DIM_SLUG)
 from corehq.warehouse.dbaccessors import (get_application_ids_by_last_modified,
     get_domain_ids_by_last_modified, get_forms_by_last_modified,
-    get_group_ids_by_last_modified, get_synclog_ids_by_date,
+    get_group_ids_by_last_modified, get_synclogs_by_date,
     get_user_ids_by_last_modified)
 from corehq.warehouse.etl import CouchToDjangoETLMixin, CustomSQLETLMixin
 from corehq.warehouse.models.shared import WarehouseTable
@@ -349,7 +349,7 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
     @classmethod
     def field_mapping(cls):
         return [
-            ('_id', 'sync_log_id'),
+            ('synclog_id', 'sync_log_id'),
             ('date', 'sync_date'),
             ('domain', 'domain'),
             ('user_id', 'user_id'),
@@ -359,9 +359,7 @@ class SyncLogStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     @classmethod
     def record_iter(cls, start_datetime, end_datetime):
-        # Todo: Migrate to SQL
-        synclog_ids = get_synclog_ids_by_date(start_datetime, end_datetime)
-        return iter_docs(SyncLog.get_db(), synclog_ids)
+        return get_synclogs_by_date(start_datetime, end_datetime)
 
 
 class ApplicationStagingTable(StagingTable, CouchToDjangoETLMixin):
