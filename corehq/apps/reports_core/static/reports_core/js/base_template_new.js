@@ -1,15 +1,15 @@
 hqDefine('reports_core/js/base_template_new', function() {
-var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-        var base_url = "initialPageData.get('url')";
-        function get_report_url() {
-            return base_url;
-        }
+    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+    var baseUrl = initialPageData.get('url');
+    function getReportUrl() {
+        return baseUrl;
+    }
     $(function() {
         var charts = hqImport('reports_core/js/charts');
-        var chartSpecs = initialPageData.get('report.spec.charts|JSON');
+        var chartSpecs = initialPageData.get('charts');
         var updateCharts = function (data) {
             if (chartSpecs !== null && chartSpecs.length > 0) {
-                var isReportBuilderReport = initialPageData.get('report.spec.report_meta.created_by_builder|JSON');
+                var isReportBuilderReport = initialPageData.get('created_by_builder');
                 if (data.iTotalRecords > 25 && isReportBuilderReport) {
                     $("#chart-warning").removeClass("hide");
                     charts.clear($("#chart-container"));
@@ -20,12 +20,12 @@ var initialPageData = hqImport('hqwebapp/js/initial_page_data');
             }
         };
 
-        var mapSpec = initialPageData.get('report.spec.map_config|JSON');
+        var mapSpec = initialPageData.get('map_config');
         var updateMap = function (data) {
             if (mapSpec) {
-                mapSpec.mapboxAccessToken = 'initialPageData.get('MAPBOX_ACCESS_TOKEN')';
-                var render_map = hqImport('reports_core/js/maps').render;
-                render_map(mapSpec, data.aaData, $("#map-container"));
+                mapSpec.mapboxAccessToken = initialPageData.get('MAPBOX_ACCESS_TOKEN');
+                var renderMap = hqImport('reports_core/js/maps').render;
+                renderMap(mapSpec, data.aaData, $("#map-container"));
             }
         };
 
@@ -65,25 +65,22 @@ var initialPageData = hqImport('hqwebapp/js/initial_page_data');
         };
 
         var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables({
-            dataTableElem: '#report_table_initialPageData.get('report.slug')',
-            defaultRows: initialPageData.get('report_table.default_rows|default:10'),
-            startAtRowNum: initialPageData.get('report_table.start_at_row|default:0'),
-            showAllRowsOption: initialPageData.get('report_table.show_all_rows|JSON'),
+            dataTableElem: '#report_table_' + initialPageData.get('report_slug'),
+            defaultRows: initialPageData.get('table_default_rows'),
+            startAtRowNum: initialPageData.get('table_start_at_row'),
+            showAllRowsOption: initialPageData.get('table_show_all_rows'),
             aaSorting: [],
-            initialPageData.get('if headers.render_aoColumns')aoColumns: {{ headers.render_aoColumns|JSON }},{% endif %}
-            autoWidth: initialPageData.get('headers.auto_width|JSON'),
-            initialPageData.get('if headers.custom_sort')customSort: {{ headers.custom_sort|JSON }},{% endif %}
-
-            ajaxSource: 'initialPageData.get('url')',
-            ajaxMethod: 'initialPageData.get('method')',
+            aoColumns: initialPageData.get('render_aoColumns'),
+            autoWidth: initialPageData.get('header_auto_width'),
+            customSort: initialPageData.get('custom_sort'),
+            ajaxSource: getReportUrl(),
+            ajaxMethod: initialPageData.get('ajax_method'),
             ajaxParams: function() {
                 return $('#paramSelectorForm').serializeArray();
             },
-            initialPageData.get('if report_table.left_col.is_fixed')
-                fixColumns: true,
-                fixColsNumLeft: initialPageData.get('report_table.left_col.fixed.num'),
-                fixColsWidth: initialPageData.get('report_table.left_col.fixed.width'),
-            initialPageData.get('endif')
+            fixColumns: initialPageData.get('left_col_is_fixed'),
+            fixColsNumLeft: initialPageData.get('left_col_fixed_num'),
+            fixColsWidth: initialPageData.get('left_col_fixed_width'),
             successCallbacks: [successCallback, updateCharts, updateMap, paginationNotice],
             errorCallbacks: [errorCallback]
         });
@@ -109,10 +106,11 @@ var initialPageData = hqImport('hqwebapp/js/initial_page_data');
 
     $(function () {
         // add any filter javascript dependencies
-        initialPageData.get('for filter in report.filters')
-            initialPageData.get('if filter.javascript_template')
-                initialPageData.get('include filter.javascript_template with filter=filter context_=filter_context|dict_lookup:filter.css_id')
-            initialPageData.get('endif')
-        initialPageData.get('endfor')
+        for (var filter in initialPageData.get('report_filters')) {
+            debugger
+        }
+        // initialPageData.get('if filter.javascript_template')
+        //     initialPageData.get('include filter.javascript_template with filter=filter context_=filter_context|dict_lookup:filter.css_id')
+        // initialPageData.get('endif')
     });
 });
