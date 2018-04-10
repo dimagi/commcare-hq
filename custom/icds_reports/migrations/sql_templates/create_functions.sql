@@ -2102,12 +2102,12 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION profile_line(script_name TEXT, line_num NUMERIC) RETURNS VOID AS
+CREATE OR REPLACE FUNCTION profile_line(script_name TEXT, query_name TEXT) RETURNS VOID AS
 $BODY$
 BEGIN
 	INSERT INTO "icds_reports_aggregatesqlprofile" (
 		script_name,
-		line_num,
+		query_name,
 		occurrence_time
 	) VALUES (
 		$1,

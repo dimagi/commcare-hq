@@ -1,7 +1,7 @@
 -- Update for each Month
 -- Need to replace / change the interval
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 3);
+	SELECT profile_line('update_monthly_aggregate_tables', 'start');
 COMMIT;
 
 BEGIN;
@@ -10,7 +10,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 12);
+	SELECT profile_line('update_monthly_aggregate_tables', 'update_months_table');
 COMMIT;
 
 BEGIN;
@@ -19,7 +19,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 21);
+	SELECT profile_line('update_monthly_aggregate_tables', 'insert_into_child_health_monthly');
 COMMIT;
 
 BEGIN;
@@ -28,7 +28,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 30);
+	SELECT profile_line('update_monthly_aggregate_tables', 'insert_into_ccs_record_monthly');
 COMMIT;
 
 BEGIN;
@@ -37,7 +37,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 39);
+	SELECT profile_line('update_monthly_aggregate_tables', 'insert_into_daily_attendance');
 COMMIT;
 
 BEGIN;
@@ -46,7 +46,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 47);
+	SELECT profile_line('update_monthly_aggregate_tables', 'aggregate_child_health');
 COMMIT;
 
 BEGIN;
@@ -55,12 +55,7 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 57);
-COMMIT;
-
-
-BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 66);
+	SELECT profile_line('update_monthly_aggregate_tables', 'aggregate_ccs_record');
 COMMIT;
 
 BEGIN;
@@ -69,5 +64,5 @@ BEGIN;
 COMMIT;
 
 BEGIN
-	SELECT profile_line('update_monthly_aggregate_tables', 75);
+	SELECT profile_line('update_monthly_aggregate_tables', 'aggregate_awc_data');
 COMMIT;
