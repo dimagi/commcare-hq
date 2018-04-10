@@ -229,6 +229,13 @@ hqDefine('app_manager/js/modules/report_module', function () {
         });
         this.filterConfig = new FilterConfig(reportId, this.reportId, filterValues, reportFilters, changeSaveButton);
 
+        this.validate = ko.computed(function() {
+            if (!self.display()) {
+                return gettext("Display text is required");
+            }
+            return "";
+        });
+
         this.toJSON = function () {
             self.fullDisplay[self.lang] = self.display();
             self.fullLocalizedDescription[self.lang] = self.localizedDescription() || "";
@@ -310,14 +317,6 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
-                // validate that all reports have valid data
-                var reports = self.reports();
-                for (var i = 0; i < reports.length; i++) {
-                    if (!reports[i].reportId() || !reports[i].display()) {
-                        alert(gettext('Reports must have all properties set!'));
-                        break;
-                    }
-                }
                 self.moduleName[self.lang] = self.currentModuleName();
 
                 var filter = self.currentModuleFilter().trim();
