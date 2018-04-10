@@ -379,7 +379,7 @@ def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
         username, password = get_username_and_password_from_request(request)
-        if not username or username.endswith('.commcarehq.org'):
+        if not username:
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
