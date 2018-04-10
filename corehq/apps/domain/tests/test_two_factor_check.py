@@ -21,7 +21,7 @@ class TestTwoFactorCheck(TestCase):
 
     def tearDown(self):
         Domain.get_by_name(self.domain_name).delete()
-#
+
     @classmethod
     def create_request(cls, request_url):
         request = RequestFactory().get(request_url)
