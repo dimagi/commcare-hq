@@ -1,8 +1,19 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from django.test import SimpleTestCase
+
 from corehq.apps.userreports.reports.view import ConfigurableReportView
+from corehq.apps.userreports.reports.util import ReportExport
+
+
+class VeryFakeReportExport(ReportExport):
+    def __init__(self, data):
+        self._data = data
+
+    def get_table(self):
+        return self._data
 
 
 class VeryFakeReportView(ConfigurableReportView):
@@ -12,8 +23,8 @@ class VeryFakeReportView(ConfigurableReportView):
         self._data = data
 
     @property
-    def export_table(self):
-        return self._data
+    def report_export(self):
+        return VeryFakeReportExport(self._data)
 
 
 class ReportRenderingTest(SimpleTestCase):

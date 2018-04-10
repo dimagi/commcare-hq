@@ -408,7 +408,6 @@ class LocationView(View):
             ]
         })
 
-
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -478,6 +477,20 @@ class AWCLocationView(View):
                 }
                 for location in awcs
             ]
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class HaveAccessToLocation(View):
+    def get(self, request, *args, **kwargs):
+        location_id = request.GET.get('location_id')
+        have_access = user_can_access_location_id(
+            self.kwargs['domain'],
+            request.couch_user, location_id
+        )
+        return JsonResponse(data={
+            'haveAccess': have_access
         })
 
 

@@ -94,7 +94,7 @@ hqDefine('app_manager/js/download_async_modal', function () {
         return self;
     };
 
-    window.download_application_zip = function() {
+    var downloadApplicationZip = function() {
         var $modal = $(".download-async-modal"),
             downloader = asyncDownloader($modal);
         downloader.generateDownload($modal.data("url"));
@@ -102,5 +102,6 @@ hqDefine('app_manager/js/download_async_modal', function () {
 
     return {
         asyncDownloader: asyncDownloader,
+        downloadApplicationZip: downloadApplicationZip,
     };
 });

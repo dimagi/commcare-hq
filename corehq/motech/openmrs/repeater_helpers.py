@@ -1,9 +1,11 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 from collections import namedtuple, defaultdict
 from datetime import timedelta
+from itertools import chain
 import re
+import six
 
 from six.moves import zip
 
@@ -13,50 +15,19 @@ from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.cases import get_wrapped_owner, get_owner_id
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.motech.openmrs.const import LOCATION_OPENMRS_UUID, PERSON_UUID_IDENTIFIER_TYPE_ID, XMLNS_OPENMRS
+from corehq.motech.openmrs.const import (
+    ADDRESS_PROPERTIES,
+    LOCATION_OPENMRS_UUID,
+    NAME_PROPERTIES,
+    PERSON_PROPERTIES,
+    PERSON_UUID_IDENTIFIER_TYPE_ID,
+    XMLNS_OPENMRS,
+)
 from corehq.motech.openmrs.finders import PatientFinder
 from corehq.motech.openmrs.logger import logger
+from corehq.motech.openmrs.serializers import to_timestamp
 from corehq.motech.openmrs.workflow import WorkflowTask
 from corehq.motech.utils import pformat_json
-
-PERSON_PROPERTIES = (
-    'gender',
-    'age',
-    'birthdate',
-    'birthdateEstimated',
-    'dead',
-    'deathDate',
-    'deathdateEstimated',
-    'causeOfDeath',
-)
-PERSON_SUBRESOURCES = ('attribute', 'address', 'name')
-NAME_PROPERTIES = (
-    'givenName',
-    'familyName',
-    'middleName',
-    'familyName2',
-    'prefix',
-    'familyNamePrefix',
-    'familyNameSuffix',
-    'degree',
-)
-ADDRESS_PROPERTIES = (
-    'address1',
-    'address2',
-    'cityVillage',
-    'stateProvince',
-    'country',
-    'postalCode',
-    'latitude',
-    'longitude',
-    'countyDistrict',
-    'address3',
-    'address4',
-    'address5',
-    'address6',
-    'startDate',
-    'endDate',
-)
 
 
 OpenmrsResponse = namedtuple('OpenmrsResponse', 'status_code reason content')
@@ -112,6 +83,20 @@ def parse_request_exception(err):
     err_content = pformat_json(err.response.content)  # pformat_json returns non-JSON values unchanged
     err_response = '\n\n'.join((str(err), err_content))
     return err_request, err_response
+
+
+def serialize(data):
+    """
+    Convert values in data to a format OpenMRS will accept.
+
+    >>> serialize({'birthdate': '2017-06-27'}) == {'birthdate': '2017-06-27T00:00:00.000+0000'}
+    True
+
+    """
+    # We can get away with not worrying about namespaces because these
+    # property names are fixed and unique.
+    serializers = dict(chain(six.iteritems(ADDRESS_PROPERTIES), six.iteritems(NAME_PROPERTIES), six.iteritems(PERSON_PROPERTIES)))
+    return {p: serializers[p](v) if serializers[p] else v for p, v in data.items()}
 
 
 def get_case_location(case):
@@ -216,11 +201,64 @@ class UpdatePersonAttributeTask(WorkflowTask):
         )
 
 
-def server_datetime_to_openmrs_timestamp(dt):
-    openmrs_timestamp = dt.isoformat()[:-3] + '+0000'
-    # todo: replace this with tests
-    assert len(openmrs_timestamp) == len('2017-06-27T09:36:47.000-0400'), openmrs_timestamp
-    return openmrs_timestamp
+class CreatePatientIdentifierTask(WorkflowTask):
+
+    def __init__(self, requests, patient_uuid, identifier_type_uuid, identifier):
+        self.requests = requests
+        self.patient_uuid = patient_uuid
+        self.identifier_type_uuid = identifier_type_uuid
+        self.identifier = identifier
+        self.identifier_uuid = None
+
+    def run(self):
+        response = self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier'.format(patient_uuid=self.patient_uuid),
+            json={'identifierType': self.identifier_type_uuid, 'identifier': self.identifier},
+        )
+        self.identifier_uuid = response.json()['uuid']
+
+    def rollback(self):
+        if self.identifier_uuid:
+            self.requests.delete(
+                '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                    patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+                ),
+                raise_for_status=True,
+            )
+
+
+class UpdatePatientIdentifierTask(WorkflowTask):
+
+    def __init__(self, requests, patient_uuid, identifier_uuid, identifier_type_uuid, identifier,
+                 existing_identifier):
+        self.requests = requests
+        self.patient_uuid = patient_uuid
+        self.identifier_uuid = identifier_uuid
+        self.identifier_type_uuid = identifier_type_uuid
+        self.identifier = identifier
+        self.existing_identifier = existing_identifier
+
+    def run(self):
+        self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+            ),
+            json={
+                'identifier': self.identifier,
+                'identifierType': self.identifier_type_uuid,
+            }
+        )
+
+    def rollback(self):
+        self.requests.post(
+            '/ws/rest/v1/patient/{patient_uuid}/identifier/{identifier_uuid}'.format(
+                patient_uuid=self.patient_uuid, identifier_uuid=self.identifier_uuid
+            ),
+            json={
+                'identifier': self.existing_identifier,
+                'identifierType': self.identifier_type_uuid,
+            }
+        )
 
 
 class CreateVisitTask(WorkflowTask):
@@ -240,20 +278,21 @@ class CreateVisitTask(WorkflowTask):
 
     def run(self):
         subtasks = []
-        start_datetime = server_datetime_to_openmrs_timestamp(self.visit_datetime)
-        stop_datetime = server_datetime_to_openmrs_timestamp(
-            self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
-        )
-        visit = {
-            'patient': self.person_uuid,
-            'visitType': self.visit_type,
-            'startDatetime': start_datetime,
-            'stopDatetime': stop_datetime,
-        }
-        if self.location_uuid:
-            visit['location'] = self.location_uuid
-        response = self.requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
-        self.visit_uuid = response.json()['uuid']
+        start_datetime = to_timestamp(self.visit_datetime)
+        if self.visit_type:
+            stop_datetime = to_timestamp(
+                self.visit_datetime + timedelta(days=1) - timedelta(seconds=1)
+            )
+            visit = {
+                'patient': self.person_uuid,
+                'visitType': self.visit_type,
+                'startDatetime': start_datetime,
+                'stopDatetime': stop_datetime,
+            }
+            if self.location_uuid:
+                visit['location'] = self.location_uuid
+            response = self.requests.post('/ws/rest/v1/visit', json=visit, raise_for_status=True)
+            self.visit_uuid = response.json()['uuid']
 
         subtasks.append(
             CreateEncounterTask(
@@ -290,8 +329,9 @@ class CreateEncounterTask(WorkflowTask):
             'patient': self.person_uuid,
             'form': self.openmrs_form,
             'encounterType': self.encounter_type,
-            'visit': self.visit_uuid,
         }
+        if self.visit_uuid:
+            encounter['visit'] = self.visit_uuid
         if self.location_uuid:
             encounter['location'] = self.location_uuid
         if self.provider_uuid:
@@ -426,7 +466,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -447,7 +487,7 @@ class UpdatePersonNameTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     name_uuid=self.name_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -471,7 +511,7 @@ class CreatePersonAddressTask(WorkflowTask):
         if properties:
             response = self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}/address/'.format(person_uuid=self.person_uuid),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
             self.address_uuid = response.json()['uuid']
@@ -509,7 +549,7 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -525,17 +565,9 @@ class UpdatePersonAddressTask(WorkflowTask):
                     person_uuid=self.person_uuid,
                     address_uuid=self.address_uuid,
                 ),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
-
-
-def get_subresource_instances(requests, person_uuid, subresource):
-    assert subresource in PERSON_SUBRESOURCES
-    return requests.get('/ws/rest/v1/person/{person_uuid}/{subresource}'.format(
-        person_uuid=person_uuid,
-        subresource=subresource,
-    )).json()['results']
 
 
 def save_match_ids(case, case_config, patient):
@@ -612,7 +644,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 
@@ -630,7 +662,7 @@ class UpdatePersonPropertiesTask(WorkflowTask):
         if properties:
             self.requests.post(
                 '/ws/rest/v1/person/{person_uuid}'.format(person_uuid=self.person['uuid']),
-                json=properties,
+                json=serialize(properties),
                 raise_for_status=True,
             )
 

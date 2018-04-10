@@ -1,13 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.repeater_helpers import (
     CaseTriggerInfo,
+    CreatePatientIdentifierTask,
     CreatePersonAddressTask,
     CreatePersonAttributeTask,
     CreateVisitTask,
     OpenmrsResponse,
+    UpdatePatientIdentifierTask,
     UpdatePersonAddressTask,
     UpdatePersonAttributeTask,
     UpdatePersonNameTask,
@@ -46,8 +49,17 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         # created/updated by the form. Execute a separate workflow to
         # update each patient.
         workflow = [
+            # Update name first. If the current name in OpenMRS fails
+            # validation, other API requests will be rejected.
+            UpdatePersonNameTask(requests, info, openmrs_config, patient['person']),
+            # Update identifiers second. If a current identifier fails
+            # validation, other API requests will be rejected.
+            SyncPatientIdentifiersTask(requests, info, openmrs_config, patient),
+            # Now we should be able to update the rest.
             UpdatePersonPropertiesTask(requests, info, openmrs_config, patient['person']),
-            UpdatePersonNameTask(requests, info, openmrs_config, patient['person'])
+            SyncPersonAttributesTask(
+                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
+            ),
         ]
         if patient['person']['preferredAddress']:
             workflow.append(
@@ -57,14 +69,12 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             workflow.append(
                 CreatePersonAddressTask(requests, info, openmrs_config, patient['person'])
             )
-        workflow.extend([
-            SyncPersonAttributesTask(
-                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
-            ),
-            CreateVisitsTask(
+        workflow.append(
+            CreateVisitsEncountersObsTask(
                 requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
-        ])
+        )
+
         errors.extend(
             execute_workflow(workflow)
         )
@@ -116,7 +126,48 @@ class SyncPersonAttributesTask(WorkflowTask):
         return subtasks
 
 
-class CreateVisitsTask(WorkflowTask):
+class SyncPatientIdentifiersTask(WorkflowTask):
+
+    def __init__(self, requests, info, openmrs_config, patient):
+        self.requests = requests
+        self.info = info
+        self.openmrs_config = openmrs_config
+        self.patient = patient
+
+    def run(self):
+        """
+        Returns WorkflowTasks for creating and updating OpenMRS patient identifiers.
+        """
+        subtasks = []
+        existing_patient_identifiers = {
+            identifier['identifierType']['uuid']: (identifier['uuid'], identifier['identifier'])
+            for identifier in self.patient['identifiers']
+        }
+        for patient_identifier_type, value_source in self.openmrs_config.case_config.patient_identifiers.items():
+            if patient_identifier_type == PERSON_UUID_IDENTIFIER_TYPE_ID:
+                # Don't try to sync the OpenMRS person UUID; It's not a
+                # user-defined identifier and it can't be changed.
+                continue
+            identifier = value_source.get_value(self.info)
+            if patient_identifier_type in existing_patient_identifiers:
+                identifier_uuid, existing_identifier = existing_patient_identifiers[patient_identifier_type]
+                if identifier != existing_identifier:
+                    subtasks.append(
+                        UpdatePatientIdentifierTask(
+                            self.requests, self.patient['uuid'], identifier_uuid, patient_identifier_type,
+                            identifier, existing_identifier
+                        )
+                    )
+            else:
+                subtasks.append(
+                    CreatePatientIdentifierTask(
+                        self.requests, self.patient['uuid'], patient_identifier_type, identifier
+                    )
+                )
+        return subtasks
+
+
+class CreateVisitsEncountersObsTask(WorkflowTask):
 
     def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
         self.requests = requests

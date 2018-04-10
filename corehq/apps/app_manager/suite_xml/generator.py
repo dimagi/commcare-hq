@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 
 from django.urls import reverse
@@ -133,7 +136,7 @@ class MediaSuiteGenerator(object):
                 m.unique_id = HQMediaMapItem.gen_unique_id(m.multimedia_id, unchanged_path)
 
             descriptor = None
-            if self.app.build_version >= b'2.9':
+            if self.app.build_version and self.app.build_version >= LooseVersion('2.9'):
                 type_mapping = {"CommCareImage": "Image",
                                 "CommCareAudio": "Audio",
                                 "CommCareVideo": "Video",

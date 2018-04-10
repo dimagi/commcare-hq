@@ -78,45 +78,45 @@ class ConstantString(ValueSource):
         return self.value
 
 
-class CasePropertyConcept(CaseProperty):
+class CasePropertyMap(CaseProperty):
     """
-    Maps case property values to OpenMRS concepts
+    Maps case property values to OpenMRS values or concept UUIDs
     """
     # Example "person_attribute" value::
     #
     #     {
     #       "00000000-771d-0000-0000-000000000000": {
-    #         "doc_type": "CasePropertyConcept",
+    #         "doc_type": "CasePropertyMap",
     #         "case_property": "pill"
-    #         "value_concepts": {
+    #         "value_map": {
     #           "red": "00ff0000-771d-0000-0000-000000000000",
     #           "blue": "000000ff-771d-0000-0000-000000000000",
     #         }
     #       }
     #     }
     #
-    value_concepts = DictProperty()
+    value_map = DictProperty()
 
     def get_value(self, case_trigger_info):
-        value = super(CasePropertyConcept, self).get_value(case_trigger_info)
+        value = super(CasePropertyMap, self).get_value(case_trigger_info)
         try:
-            return self.value_concepts[value]
+            return self.value_map[value]
         except KeyError:
             # We don't care if some CommCare answers are not mapped to OpenMRS concepts, e.g. when only the "yes"
             # value of a yes-no question in CommCare is mapped to a concept in OpenMRS.
             return None
 
 
-class FormQuestionConcept(FormQuestion):
+class FormQuestionMap(FormQuestion):
     """
-    Maps form question values to OpenMRS concepts
+    Maps form question values to OpenMRS values or concept UUIDs
     """
-    value_concepts = DictProperty()
+    value_map = DictProperty()
 
     def get_value(self, case_trigger_info):
-        value = super(FormQuestionConcept, self).get_value(case_trigger_info)
+        value = super(FormQuestionMap, self).get_value(case_trigger_info)
         try:
-            return self.value_concepts[value]
+            return self.value_map[value]
         except KeyError:
             return None
 
@@ -202,9 +202,9 @@ class OpenmrsCaseConfig(DocumentSchema):
     #         "case_property": "caste"
     #     },
     #     "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-    #         "doc_type": "CasePropertyConcept",
+    #         "doc_type": "CasePropertyMap",
     #         "case_property": "class",
-    #         "value_concepts": {
+    #         "value_map": {
     #             "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
     #             "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
     #             "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",

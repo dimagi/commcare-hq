@@ -32,11 +32,6 @@ BEGIN;
 COMMIT;
 
 BEGIN;
-	SELECT create_new_aggregate_table_for_month('agg_thr_data', (%(date)s)::date);
-	SELECT aggregate_thr_data((%(date)s)::date);
-COMMIT;
-
-BEGIN;
 	SELECT create_new_aggregate_table_for_month('agg_awc', (%(date)s)::date);
 	SELECT aggregate_awc_data((%(date)s)::date);
 

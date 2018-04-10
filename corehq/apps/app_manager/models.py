@@ -4989,7 +4989,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if self.build_version < b'2.8':
+        if not self.build_version or self.build_version < LooseVersion('2.8'):
             settings['Build-Number'] = self.version
         return settings
 
@@ -6094,7 +6094,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if self.build_version < yaml_setting.get("since", b"0"):
+        if not self.build_version or self.build_version < LooseVersion(yaml_setting.get("since", "0")):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting
