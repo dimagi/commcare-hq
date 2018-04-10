@@ -23,7 +23,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateSchedu
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reminders.views import ScheduledRemindersCalendarView
-from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING
+from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -93,7 +93,11 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        from corehq.apps.reports.standard.sms import ScheduleInstanceReport, MessageLogReport
+        from corehq.apps.reports.standard.sms import (
+            ScheduleInstanceReport,
+            MessageLogReport,
+            MessagingEventsReport,
+        )
 
         if self.domain_object.uses_new_reminders:
             scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
@@ -106,6 +110,10 @@ class MessagingDashboardView(BaseMessagingSectionView):
             'message_log_url': reverse(
                 MessageLogReport.dispatcher.name(), args=[],
                 kwargs={'domain': self.domain, 'report_slug': MessageLogReport.slug}
+            ),
+            'messaging_history_url': reverse(
+                MessagingEventsReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': MessagingEventsReport.slug}
             ),
         }
 
@@ -186,6 +194,38 @@ class MessagingDashboardView(BaseMessagingSectionView):
             {'key': _("Sent"), 'values': outbound_values},
         ]
 
+    def add_event_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = MessagingEvent.get_counts_by_date(self.domain, start_date, end_date, self.timezone.zone)
+
+        counts_dict = {
+            row.date: {'error': row.error_count, 'total': row.total_count}
+            for row in counts
+        }
+
+        error_values = []
+        success_values = []
+
+        for i in range(days):
+            dt = start_date + timedelta(days=i)
+            error_count = counts_dict.get(dt, {}).get('error', 0)
+            total_count = counts_dict.get(dt, {}).get('total', 0)
+
+            error_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': error_count,
+            })
+            success_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': total_count - error_count,
+            })
+
+        result['event_count_data'] = [
+            {'key': _("Error"), 'values': error_values},
+            {'key': _("Success"), 'values': success_values},
+        ]
+
     def get_ajax_response(self):
         result = {
             'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
@@ -194,6 +234,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         self.add_sms_status_info(result)
         self.add_reminder_status_info(result)
         self.add_sms_count_info(result, 30)
+        self.add_event_count_info(result, 30)
         return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):

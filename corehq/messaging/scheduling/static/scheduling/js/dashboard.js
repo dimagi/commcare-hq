@@ -36,6 +36,15 @@ hqDefine("scheduling/js/dashboard", function() {
                 .showControls(false)
                 .groupSpacing(0.1);
             self.sms_count_chart.yAxis.tickFormat(d3.format(',f'));
+
+            self.event_count_chart = nv.models.multiBarChart()
+                .color(['#ed1c24', '#008000'])
+                .transitionDuration(500)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .showControls(false)
+                .groupSpacing(0.1);
+            self.event_count_chart.yAxis.tickFormat(d3.format(',f'));
         };
 
         self.update = function(values) {
@@ -56,8 +65,14 @@ hqDefine("scheduling/js/dashboard", function() {
                 .transition()
                 .duration(500)
                 .call(self.sms_count_chart);
-
             nv.utils.windowResize(self.sms_count_chart.update);
+
+            d3.select('#event_count_chart svg')
+                .datum(values.event_count_data)
+                .transition()
+                .duration(500)
+                .call(self.event_count_chart);
+            nv.utils.windowResize(self.event_count_chart.update);
         }
     };
 

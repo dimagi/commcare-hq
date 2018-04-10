@@ -310,13 +310,13 @@ class SMS(SMSBase):
         query = """
         SELECT  (date AT TIME ZONE %s)::DATE AS date,
                 direction,
-                COUNT(*)
+                COUNT(*) AS sms_count
         FROM    sms_sms
         WHERE   domain = %s
         AND     date >= (%s + TIME '00:00') AT TIME ZONE %s
         AND     date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
         AND     (direction = 'I' OR (direction = 'O' and processed))
-        GROUP BY 1, 2;
+        GROUP BY 1, 2
         """
 
         with connection.cursor() as cursor:
@@ -1464,6 +1464,51 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=cls.STATUS_IN_PROGRESS
         )
         return qs.order_by('-date')[0] if qs.count() > 0 else None
+
+    @classmethod
+    def get_counts_by_date(cls, domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of messaging events at the subevent level over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, error_count, total_count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'error_count', 'total_count'])
+
+        query = """
+        SELECT      (A.date AT TIME ZONE %s)::DATE AS date,
+                    SUM(
+                        CASE
+                        WHEN B.status = 'ERR' OR C.error OR (B.id IS NULL AND A.status = 'ERR')
+                        THEN 1
+                        ELSE 0
+                        END
+                    ) AS error_count,
+                    COUNT(*) AS total_count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
 
 
 class MessagingSubEvent(models.Model, MessagingStatusMixin):
