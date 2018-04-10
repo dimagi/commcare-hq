@@ -33,7 +33,6 @@ from dimagi.utils.web import json_response
 from django_otp import match_token
 
 # CCHQ imports
-from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
@@ -383,7 +382,7 @@ def check_lockout(fn):
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
-        if user and user.is_locked_out() and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)):
+        if user and user.is_locked_out() and user.supports_lockout():
             return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)
