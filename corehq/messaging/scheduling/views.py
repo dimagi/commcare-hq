@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
-
+from collections import OrderedDict
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -23,7 +23,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateSchedu
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reminders.views import ScheduledRemindersCalendarView
-from corehq.apps.sms.models import QueuedSMS
+from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -93,7 +93,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
     @property
     def page_context(self):
-        from corehq.apps.reports.standard.sms import ScheduleInstanceReport
+        from corehq.apps.reports.standard.sms import ScheduleInstanceReport, MessageLogReport
 
         if self.domain_object.uses_new_reminders:
             scheduled_events_url = reverse(ScheduleInstanceReport.dispatcher.name(), args=[],
@@ -103,6 +103,10 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
         return {
             'scheduled_events_url': scheduled_events_url,
+            'message_log_url': reverse(
+                MessageLogReport.dispatcher.name(), args=[],
+                kwargs={'domain': self.domain, 'report_slug': MessageLogReport.slug}
+            ),
         }
 
     @cached_property
@@ -149,6 +153,39 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
         result['events_pending'] = events_pending
 
+    def add_sms_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = SMS.get_counts_by_date(self.domain, start_date, end_date, self.timezone.zone)
+
+        inbound_counts = {}
+        outbound_counts = {}
+
+        for row in counts:
+            if row.direction == INCOMING:
+                inbound_counts[row.date] = row.count
+            elif row.direction == OUTGOING:
+                outbound_counts[row.date] = row.count
+
+        inbound_values = []
+        outbound_values = []
+
+        for i in range(days):
+            dt = start_date + timedelta(days=i)
+            inbound_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': inbound_counts.get(dt, 0),
+            })
+            outbound_values.append({
+                'x': dt.strftime('%Y-%m-%d'),
+                'y': outbound_counts.get(dt, 0),
+            })
+
+        result['sms_count_data'] = [
+            {'key': _("Received"), 'values': inbound_values},
+            {'key': _("Sent"), 'values': outbound_values},
+        ]
+
     def get_ajax_response(self):
         result = {
             'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
@@ -156,6 +193,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         }
         self.add_sms_status_info(result)
         self.add_reminder_status_info(result)
+        self.add_sms_count_info(result, 30)
         return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):

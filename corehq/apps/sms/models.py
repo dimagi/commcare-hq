@@ -8,7 +8,7 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models, transaction, IntegrityError
+from django.db import models, transaction, IntegrityError, connection
 from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -289,6 +289,42 @@ class SMS(SMSBase):
             queued_sms.processed_timestamp = None
             self.delete()
             queued_sms.save()
+
+    @classmethod
+    def get_counts_by_date(cls, domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of SMS sent and received over the given date range
+        for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, direction, count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'direction', 'count'])
+
+        query = """
+        SELECT  (date AT TIME ZONE %s)::DATE AS date,
+                direction,
+                COUNT(*)
+        FROM    sms_sms
+        WHERE   domain = %s
+        AND     date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND     date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        AND     (direction = 'I' OR (direction = 'O' and processed))
+        GROUP BY 1, 2;
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
 
 
 class QueuedSMS(SMSBase):

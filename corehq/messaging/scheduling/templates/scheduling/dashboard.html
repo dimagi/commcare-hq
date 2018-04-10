@@ -122,9 +122,28 @@
                 </h3>
             </div>
             <div class="panel-body">
-                {% blocktrans %}
-                View <a target="_blank" href="{{ scheduled_events_url }}">scheduled events</a>
-                {% endblocktrans %}
+                <p>
+                    {% blocktrans %}
+                    View <a target="_blank" href="{{ scheduled_events_url }}">scheduled events</a>
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h3 class="panel-title">
+                    <strong>{% trans "SMS Received, Sent" %}</strong>
+                </h3>
+            </div>
+            <div class="panel-body">
+                <p>
+                    {% blocktrans %}
+                    View <a target="_blank" href="{{ message_log_url }}">SMS activity</a>
+                    {% endblocktrans %}
+                </p>
+                <div class="row">
+                    <div id="sms_count_chart"><svg height="300px"></svg></div>
+                </div>
             </div>
         </div>
         <div>

@@ -27,6 +27,17 @@ hqDefine("scheduling/js/dashboard", function() {
             return self.is_daily_usage_ok() && self.within_allowed_sms_times();
         });
 
+        self.init = function() {
+            self.sms_count_chart = nv.models.multiBarChart()
+                .color(['#ff7f27', '#0080c0'])
+                .transitionDuration(500)
+                .reduceXTicks(true)
+                .rotateLabels(0)
+                .showControls(false)
+                .groupSpacing(0.1);
+            self.sms_count_chart.yAxis.tickFormat(d3.format(',f'));
+        };
+
         self.update = function(values) {
             self.last_refresh_time(values.last_refresh_time);
             self.queued_sms_count(values.queued_sms_count);
@@ -38,9 +49,20 @@ hqDefine("scheduling/js/dashboard", function() {
             self.daily_outbound_sms_limit(values.daily_outbound_sms_limit);
             self.events_pending(values.events_pending);
         }
+
+        self.update_charts = function(values) {
+            d3.select('#sms_count_chart svg')
+                .datum(values.sms_count_data)
+                .transition()
+                .duration(500)
+                .call(self.sms_count_chart);
+
+            nv.utils.windowResize(self.sms_count_chart.update);
+        }
     };
 
     var dashboardViewModel = new DashboardViewModel();
+    dashboardViewModel.init();
 
     var updateDashboard = function() {
         $.getJSON(dashboardUrl, {action: 'raw'}).done(function(json) {
@@ -51,6 +73,8 @@ hqDefine("scheduling/js/dashboard", function() {
                 $('#messaging_dashboard').koApplyBindings(dashboardViewModel);
                 dashboardViewModel.bindingApplied(true);
             }
+            // updating charts must be done when everything is visible
+            dashboardViewModel.update_charts(json);
         });
         setTimeout(updateDashboard, 30000);
     }
