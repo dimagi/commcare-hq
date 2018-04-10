@@ -32,7 +32,7 @@ INSERT INTO {{ app_status_fact }} (
        user_dim_id,
        last_sync_log_date,
        domain,
-       app_dim_id
+       app_dim_id,
        batch_id
 )
 
