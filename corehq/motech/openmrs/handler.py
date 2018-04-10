@@ -49,8 +49,17 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
         # created/updated by the form. Execute a separate workflow to
         # update each patient.
         workflow = [
+            # Update name first. If the current name in OpenMRS fails
+            # validation, other API requests will be rejected.
+            UpdatePersonNameTask(requests, info, openmrs_config, patient['person']),
+            # Update identifiers second. If a current identifier fails
+            # validation, other API requests will be rejected.
+            SyncPatientIdentifiersTask(requests, info, openmrs_config, patient),
+            # Now we should be able to update the rest.
             UpdatePersonPropertiesTask(requests, info, openmrs_config, patient['person']),
-            UpdatePersonNameTask(requests, info, openmrs_config, patient['person'])
+            SyncPersonAttributesTask(
+                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
+            ),
         ]
         if patient['person']['preferredAddress']:
             workflow.append(
@@ -60,15 +69,12 @@ def send_openmrs_data(requests, domain, form_json, openmrs_config, case_trigger_
             workflow.append(
                 CreatePersonAddressTask(requests, info, openmrs_config, patient['person'])
             )
-        workflow.extend([
-            SyncPersonAttributesTask(
-                requests, info, openmrs_config, patient['person']['uuid'], patient['person']['attributes']
-            ),
-            SyncPatientIdentifiersTask(requests, info, openmrs_config, patient),
-            CreateVisitsTask(
+        workflow.append(
+            CreateVisitsEncountersObsTask(
                 requests, domain, info, form_json, form_question_values, openmrs_config, patient['person']['uuid']
             ),
-        ])
+        )
+
         errors.extend(
             execute_workflow(workflow)
         )
@@ -161,7 +167,7 @@ class SyncPatientIdentifiersTask(WorkflowTask):
         return subtasks
 
 
-class CreateVisitsTask(WorkflowTask):
+class CreateVisitsEncountersObsTask(WorkflowTask):
 
     def __init__(self, requests, domain, info, form_json, form_question_values, openmrs_config, person_uuid):
         self.requests = requests

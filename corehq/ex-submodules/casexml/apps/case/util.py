@@ -150,17 +150,6 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
 
 
-def prune_previous_log(sync_log):
-    previous_log = sync_log.get_previous_log()
-    if previous_log:
-        try:
-            previous_log.delete()
-            sync_log.previous_log_removed = True
-            sync_log.save()
-        except MissingSyncLog:
-            pass
-
-
 def get_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that they reference
