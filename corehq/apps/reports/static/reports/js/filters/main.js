@@ -164,6 +164,31 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
             model.init();
         });
+        $('.report-filter-logtag').each(function(i, el) {
+            var $el = $(el), data = $el.data();
+            if (data.defaultOn) {
+                $el.attr("name", "");
+                $el.change(function () {
+                    $el.attr("name", "logtag");
+                });
+            }
+            if (data.errorOnly) {
+                $("#device-log-errors-only-checkbox").change(function () {
+                    var multiSelect = $el;
+                    if ($el.prop('checked')) {
+                        $el.attr("name", "errors_only");
+                        multiSelect.attr("name", "");
+                        multiSelect.addClass("hide");
+                    } else {
+                        $el.attr("name", "");
+                        if (!data.defaultOn) {
+                            multiSelect.attr("name", "logtag");
+                        }
+                        multiSelect.removeClass("hide");
+                    }
+                });
+            }
+        });
     };
 
     return {
