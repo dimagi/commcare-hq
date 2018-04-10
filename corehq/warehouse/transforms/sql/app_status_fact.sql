@@ -40,7 +40,7 @@ SELECT
        sync_table.user_dim_id,
        sync_table.last_sync,
        sync_table.domain,
-       app_status.app_dim_id
+       app_status.app_dim_id,
        '{{ batch_id }}'
 FROM
     {{ app_status_synclog_staging }} as sync_table
