@@ -4,7 +4,7 @@ hqDefine("fixtures/js/view-table", [
     "hqwebapp/js/initial_page_data",
     "reports/js/standard_hq_report",
     "reports/js/config.dataTables.bootstrap",
-    "reports/js/filters",
+    "reports/js/filters/main",
     "datatables.fixedColumns",
 ], function(
     $,

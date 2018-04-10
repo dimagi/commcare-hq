@@ -1,5 +1,5 @@
 /* globals hqImport */
-// This file depends on reports/js/filters.js
+// This file depends on reports/js/filters/main.js
 var HQAsyncReport = function (o) {
     'use strict';
     var self = this;
@@ -36,7 +36,7 @@ var HQAsyncReport = function (o) {
         self.filterRequest = null;
         try {
             $('#hq-report-filters').html(data.filters);
-            hqImport("reports/js/filters").init();
+            hqImport("reports/js/filters/main").init();
         } catch (e) {
             console.log(e);
         }
