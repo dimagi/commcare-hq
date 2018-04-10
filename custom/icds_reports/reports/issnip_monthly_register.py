@@ -100,12 +100,12 @@ class ISSNIPMonthlyReport(object):
     @cached_property
     def infrastructure_data(self):
         data = AWCInfrastructureUCR(self.config.copy()).data
-        return data.values() if data else []
+        return list(data.values()) if data else []
 
     @cached_property
     def vhnd_data(self):
         data = VHNDFormUCR(self.config.copy()).data
-        return data.values() if data else []
+        return list(data.values()) if data else []
 
     @cached_property
     def ccs_record_monthly_ucr(self):

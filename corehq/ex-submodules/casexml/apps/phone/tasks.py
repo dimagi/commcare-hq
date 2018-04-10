@@ -1,13 +1,16 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import date, timedelta
+from datetime import datetime
+from django.db.models import Min
+
 from celery import current_task, current_app
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
-from casexml.apps.phone.utils import delete_sync_logs, delete_sql_synclogs
+from casexml.apps.phone.models import SyncLogSQL
+from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
@@ -74,10 +77,18 @@ def update_celery_state(sender=None, body=None, **kwargs):
     queue=getattr(settings, 'CELERY_PERIODIC_QUEUE', 'celery')
 )
 def prune_synclogs():
-    prune_date = date.today() - timedelta(days=30)
-    num_deleted = delete_sync_logs(prune_date)
-    while num_deleted != 0:
-        # couch
-        num_deleted = delete_sync_logs(prune_date)
-    # SQL
-    delete_sql_synclogs(prune_date)
+    """
+    Drops all partition tables containing data that's older than 91 days (13 weeks)
+    """
+    SYNCLOG_RETENTION_DAYS = 13 * 7  # 91 days
+    oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
+    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
+        year, week, _ = oldest_synclog.isocalendar()
+        table_name = "{base_name}_y{year}w{week}".format(
+            base_name=SyncLogSQL._meta.db_table,
+            year=year,
+            week="%02d" % week
+        )
+        drop_query = "DROP TABLE IF EXISTS {}".format(table_name)
+        get_cursor(SyncLogSQL).execute(drop_query)
+        oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']

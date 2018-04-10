@@ -54,7 +54,7 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -96,7 +96,7 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
-
+    clear_xmlns_app_id_cache(domain)
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 

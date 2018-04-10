@@ -91,8 +91,8 @@ def get_caseproperty_jsonpathvaluemap(jsonpath, value_source):
         return {}
     if value_source['doc_type'] == 'CaseProperty':
         return {value_source['case_property']: JsonpathValuemap(jsonpath, {})}
-    if value_source['doc_type'] == 'CasePropertyConcept':
-        value_map = {v: k for k, v in value_source['value_concepts'].items()}
+    if value_source['doc_type'] == 'CasePropertyMap':
+        value_map = {v: k for k, v in value_source['value_map'].items()}
         return {value_source['case_property']: JsonpathValuemap(jsonpath, value_map)}
     raise ValueError(
         '"{}" is not a recognised ValueSource for setting OpenMRS patient values from CommCare case properties. '
@@ -183,9 +183,9 @@ class WeightedPropertyPatientFinder(PatientFinder):
         #                 "case_property": "caste"
         #             },
         #             "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-        #                 "doc_type": "CasePropertyConcept",
+        #                 "doc_type": "CasePropertyMap",
         #                 "case_property": "class",
-        #                 "value_concepts": {
+        #                 "value_map": {
         #                     "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
         #                     "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
         #                     "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",

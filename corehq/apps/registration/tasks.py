@@ -47,6 +47,5 @@ def activation_24hr_reminder_email():
         send_html_email_async.delay(
             subject, request.new_user_username, message_html,
             text_content=message_plaintext,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=True
+            email_from=settings.DEFAULT_FROM_EMAIL
         )

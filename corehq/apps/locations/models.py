@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from datetime import datetime
-from functools import partial
+from functools import partial, wraps
 
 from bulk_update.helper import bulk_update as bulk_update_helper
 
@@ -303,7 +303,25 @@ class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
     pass
 
 
+def location_queryset(func):
+    @wraps(func)
+    def wrapper(self, *args, **kw):
+        result = func(self, *args, **kw)
+        if type(result) == CTEQuerySet:
+            result.__class__ = LocationQuerySet
+        return result
+    return wrapper
+
+
 class LocationManager(LocationQueriesMixin, AdjListManager):
+
+    @location_queryset
+    def cte_get_ancestors(self, *args, **kw):
+        return super(LocationManager, self).cte_get_ancestors(*args, **kw)
+
+    @location_queryset
+    def cte_get_descendants(self, *args, **kw):
+        return super(LocationManager, self).cte_get_descendants(*args, **kw)
 
     def get_or_None(self, **kwargs):
         try:
