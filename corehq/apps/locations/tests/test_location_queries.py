@@ -82,8 +82,8 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
         locs = SQLLocation.objects.get_queryset_descendants(empty)
         self.assertEqual(locs.count(), 0)
 
-    @override_settings(IS_LOCATION_CTE_ENABLED=False)
     def test_getitem_with_slice(self):
+        # remove this test when removing ComparedQuerySet
         locs = SQLLocation.objects.get(name='Suffolk').get_descendants()
         self.assertEqual([x.name for x in locs[:2]], ['Boston'])
 

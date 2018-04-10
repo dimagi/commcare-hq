@@ -221,8 +221,11 @@ def get_location_fixture_queryset(user):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
     timing = TimingContext("get_location_fixture_queryset")
-    with timing("mptt"):
-        mptt_set = mptt_get_location_fixture_queryset(user)
+    if settings.IS_LOCATION_CTE_ONLY:
+        mptt_set = None
+    else:
+        with timing("mptt"):
+            mptt_set = mptt_get_location_fixture_queryset(user)
     if settings.IS_LOCATION_CTE_ENABLED:
         with timing("cte"):
             cte_set = cte_get_location_fixture_queryset(user)

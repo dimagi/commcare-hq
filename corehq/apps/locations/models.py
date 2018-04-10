@@ -271,7 +271,7 @@ class LocationQueriesMixin(object):
         ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
         assert isinstance(ids_query, ComparedQuerySet), ids_query
         return ComparedQuerySet(
-            self.filter(id__in=ids_query._mptt_set),
+            self.filter(id__in=ids_query._mptt_set) if ids_query._mptt_set is not None else None,
             self.filter(id__in=ids_query._cte_set) if ids_query._cte_set is not None else None,
             ids_query,
         )

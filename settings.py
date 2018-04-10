@@ -430,6 +430,8 @@ LOGIN_REDIRECT_URL = 'homepage'
 
 # set to True or False in localsettings to override the value set way down below
 IS_LOCATION_CTE_ENABLED = None
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -2332,3 +2334,14 @@ if IS_LOCATION_CTE_ENABLED is None:
         'softlayer',
         'production',
     ]
+
+if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
+    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
+    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+    ]
+else:
+    IS_LOCATION_CTE_ONLY = False

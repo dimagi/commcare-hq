@@ -160,16 +160,17 @@ class AdjListManager(TreeManager):
                 ))
             ).filter(_exclude_dups=True).with_cte(xdups)
 
-        query = query.order_by(self.tree_id_attr, self.left_attr)
-        #.order_by(cte.col._cte_ordering)  # TODO use after removing MPTT
+        if settings.IS_LOCATION_CTE_ONLY:
+            query = query.order_by(cte.col._cte_ordering)
+        else:
+            query = query.order_by(self.tree_id_attr, self.left_attr)
         return query
 
     def cte_get_queryset_ancestors(self, node, include_self=False):
-        return (
-            self.cte_get_ancestors(node, include_self=include_self)
-            # TODO remove this order_by when removing MPTT
-            .order_by(self.tree_id_attr, self.left_attr)
-        )
+        query = self.cte_get_ancestors(node, include_self=include_self)
+        if not settings.IS_LOCATION_CTE_ONLY:
+            query = query.order_by(self.tree_id_attr, self.left_attr)
+        return query
 
     def cte_get_queryset_descendants(self, *args, **kw):
         return self.cte_get_descendants(*args, **kw)
@@ -190,8 +191,11 @@ class AdjListManager(TreeManager):
         if isinstance(queryset, ComparedQuerySet):
             mptt_qs = queryset._mptt_set
             cte_qs = queryset._cte_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
+        if settings.IS_LOCATION_CTE_ONLY:
+            mptt_set = None
+        else:
+            with timing("mptt"):
+                mptt_set = self.mptt_get_queryset_ancestors(mptt_qs, include_self)
         if settings.IS_LOCATION_CTE_ENABLED:
             with timing("cte"):
                 cte_set = self.cte_get_queryset_ancestors(cte_qs, include_self)
@@ -205,8 +209,11 @@ class AdjListManager(TreeManager):
         if isinstance(queryset, ComparedQuerySet):
             mptt_qs = queryset._mptt_set
             cte_qs = queryset._cte_set
-        with timing("mptt"):
-            mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
+        if settings.IS_LOCATION_CTE_ONLY:
+            mptt_set = None
+        else:
+            with timing("mptt"):
+                mptt_set = self.mptt_get_queryset_descendants(mptt_qs, include_self)
         if settings.IS_LOCATION_CTE_ENABLED:
             with timing("cte"):
                 cte_set = self.cte_get_queryset_descendants(cte_qs, include_self)
@@ -243,8 +250,11 @@ class AdjListModel(MPTTModel):
         Returns a Queryset of all ancestor locations of this location
         """
         timing = TimingContext("get_ancestors")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_ancestors(**kw)
+        if settings.IS_LOCATION_CTE_ONLY:
+            mptt_set = None
+        else:
+            with timing("mptt"):
+                mptt_set = self.mptt_get_ancestors(**kw)
         if settings.IS_LOCATION_CTE_ENABLED:
             with timing("cte"):
                 cte_set = type(self).objects.cte_get_ancestors(self, **kw)
@@ -257,8 +267,11 @@ class AdjListModel(MPTTModel):
         Returns a Queryset of all descendant locations of this location
         """
         timing = TimingContext("get_descendants")
-        with timing("mptt"):
-            mptt_set = self.mptt_get_descendants(**kw)
+        if settings.IS_LOCATION_CTE_ONLY:
+            mptt_set = None
+        else:
+            with timing("mptt"):
+                mptt_set = self.mptt_get_descendants(**kw)
         if settings.IS_LOCATION_CTE_ENABLED:
             with timing("cte"):
                 cte_set = type(self).objects.cte_get_descendants(self, **kw)
