@@ -89,13 +89,19 @@ class FormProcessorCouch(object):
     def update_responses(cls, xform, value_responses_map, user_id):
         from corehq.form_processor.utils.xform import update_response
 
-        xml = etree.fromstring(xform.fetch_attachment(ATTACHMENT_NAME))
+        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+        interface = FormProcessorInterface(xform.domain)
+        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        new_form = XFormInstance.wrap(existing_form.to_json())
+
+        xml = etree.fromstring(existing_form.fetch_attachment(ATTACHMENT_NAME))
         dirty = False
         for question, response in value_responses_map.iteritems():
-            if update_response(xml, question, response, xmlns=xform.xmlns):
+            if update_response(xml, question, response, xmlns=existing_form.xmlns):
                 dirty = True
 
-            data = xform.form_data
+            data = new_form.form_data
             i = XFormQuestionValueIterator(question)
             for (qid, repeat_index) in i:
                 data = data[qid]
@@ -104,11 +110,17 @@ class FormProcessorCouch(object):
             data[i.last()] = response
 
         if dirty:
-            # TODO: don't overwrite XML
-            xform.put_attachment(etree.tostring(xml), name=ATTACHMENT_NAME, content_type='text/xml')
-            operation = XFormOperation(user=user_id, date=datetime.datetime.utcnow(), operation='edit')
-            xform.history.append(operation)
-            xform.save()
+            from corehq.form_processor.models import Attachment
+            from corehq.form_processor.parsers.form import apply_deprecation
+            new_form._deferred_blobs = None     # will be re-populated by apply_deprecation
+            new_form.external_blobs.clear()     # will be re-populated by apply_deprecation
+            existing_form, new_form = apply_deprecation(existing_form, new_form)
+            new_xml = etree.tostring(xml)
+
+            interface.store_attachments(new_form, [
+                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+            ])
+            interface.save_processed_models([new_form, existing_form])
             return True
 
         return False
