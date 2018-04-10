@@ -396,7 +396,7 @@ def new_form(request, domain, app_id, module_unique_id):
         name = _('Register')
     elif case_action == 'update':
         name = _('Followup')
-    elif form_type == 'lesson':
+    elif module.is_training_module:
         name = _('Lesson')
     else:
         name = _('Survey')
