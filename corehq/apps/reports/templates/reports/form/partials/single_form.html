@@ -78,7 +78,7 @@
 {% if edit_info.is_edit %}
 <div class="alert alert-warning alert-full alert-block">
     {% url "render_form_data" domain edit_info.previous_version as previous_version_url %}
-    {% blocktrans with when=edit_info.edit_on|naturaltime %}
+    {% blocktrans with when=edit_info.edited_on|naturaltime %}
         This submission was edited from a previous version {{ when }}. You can view the previous version <a href="{{ previous_version_url }}">here</a>.
     {% endblocktrans %}
 </div>
