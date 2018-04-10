@@ -109,7 +109,7 @@ class Command(BaseDataDump):
             return episode.modified_on
         elif column_name == "Last Modified by":
             return episode.modified_by
-        elif column_name == "Date of submission of episode details form":
+        elif column_name == "Date of opening of episode case":
             return episode.opened_on
         return Exception("unknown custom column %s" % column_name)
 
