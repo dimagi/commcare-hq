@@ -1,12 +1,12 @@
 from __future__ import absolute_import
-from __future__ import unicode_literals
+# from __future__ import unicode_literals
 from django.test import TestCase, RequestFactory
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
-from mock import mock
+from mock import mock, Mock
 import json
 
 
@@ -21,7 +21,7 @@ class TestTwoFactorCheck(TestCase):
 
     def tearDown(self):
         Domain.get_by_name(self.domain_name).delete()
-
+#
     @classmethod
     def create_request(cls, request_url):
         request = RequestFactory().get(request_url)
@@ -44,14 +44,13 @@ class TestTwoFactorCheck(TestCase):
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_check_with_feature_flag(self):
-        def func_to_check_2fa_on(*_):
-            return 'Function was called!'
-
+        mock_fn_to_call = Mock()
+        mock_fn_to_call.__name__ = "test_name"
         request = self.request
         api_key = None
         view_func = "dummy_view_func"
         two_factor_check_fn = two_factor_check(view_func, api_key)
-        function_getting_checked_with_auth = two_factor_check_fn(func_to_check_2fa_on)
+        function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
         with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
@@ -59,15 +58,14 @@ class TestTwoFactorCheck(TestCase):
             self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
 
     def test_two_factor_check_without_feature_flag(self):
-        def func_to_check_2fa_on(*_):
-            return 'Function was called!'
-
+        mock_fn_to_call = Mock()
+        mock_fn_to_call.__name__ = "test_name"
         request = self.request
         api_key = None
         view_func = "dummy_view_func"
         two_factor_check_fn = two_factor_check(view_func, api_key)
-        function_getting_checked_with_auth = two_factor_check_fn(func_to_check_2fa_on)
+        function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
         with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
-            response = function_getting_checked_with_auth(request, self.domain.name)
-            self.assertEqual(response, 'Function was called!')
+            _ = function_getting_checked_with_auth(request, self.domain.name)
+            mock_fn_to_call.assert_called_once()
