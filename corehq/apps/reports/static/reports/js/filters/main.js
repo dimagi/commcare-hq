@@ -8,6 +8,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
     'locations/js/location_drilldown',
+    'reports/js/report_filter/drilldown_options',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
@@ -18,7 +19,8 @@ hqDefine("reports/js/filters/main", [
     phoneNumberFilter,
     buttonGroup,
     scheduleInstanceFilter,
-    locationDrilldown
+    locationDrilldown,
+    drilldownOptions
 ) {
     var init = function() {
         // Datespans
@@ -145,6 +147,18 @@ hqDefine("reports/js/filters/main", [
             });
             $el.koApplyBindings(model);
             model.load(data.locs, data.locId);
+        });
+        $('.report-filter-drilldown-options').each(function (i, el) {
+            var $el = $(el), data = $el.data();
+            if (data.isEmpty) return;
+            var model = drilldownOptions.DrilldownOptionFilterControl({
+                drilldown_map: data.optionMap,
+                controls: data.controls,
+                selected: data.selected,
+                notifications: data.notifications,
+            });
+            $el.koApplyBindings(model);
+            model.init();
         });
     };
 
