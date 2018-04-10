@@ -10,12 +10,13 @@
 
 
 
-    <form method="POST">
+    <form method="post" action="">
         {% csrf_token %}
-        <input type="text" name="textfield">
+        <input type="text" id="iputbox" name="textfield">
 
-        <a class="btn btn-primary" href="{% url 'two_factor_token_for_user_modal' domain%}">CLICK TO GET NEW TOKEN!!!</a>
     </form>
+
+    <a class="btn btn-primary" type="submit" value="submit" href="{% url 'two_factor_token_for_user_modal' domain%}">1C2LICK TO GET NEW TOKEN1!!!</a>
 
 
 

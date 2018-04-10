@@ -1337,14 +1337,46 @@ class SelectPlanView(DomainAccountingSettings):
         }
 
 
+from django_otp.plugins.otp_static.models import StaticToken
+from corehq.apps.users.models import WebUser
 from django.views import View
 class TwoFactorTokenForUserView(View):
     template_name = "domain/admin/generate_two_factor_token_for_user.html"
     urlname = "two_factor_token_for_user_modal"
     page_title = ugettext_lazy("Generate Two Factor Token For User")
 
+    def get_device(self, user):
+        return user.staticdevice_set.get_or_create(name='backup')[0]
+        # return self.request.user.staticdevice_set.get_or_create(name='backup')[0]
+
     def get(self, request, *args, **kwargs):
-        return HttpResponse('<h1>Preethis page was found: {}</h1>'.format(request.get['']))
+        # Create the master token
+        """
+        Delete existing backup codes and generate new ones.
+        """
+        username = 'super@test.com'
+        user = WebUser.get_by_username(username)
+        device = self.get_device(user)
+        device.token_set.all().delete()
+
+        token = StaticToken.random_token()
+        device.token_set.create(token=token)
+
+        def backup_token(self):
+            if Domain.get_by_name(self.request.domain).two_factor_auth:
+                device = self.editable_user.get_django_user().staticdevice_set.get_or_create(name='backup')[0]
+                token = device.token_set.first()
+                if token:
+                    return device.token_set.first().token
+                else:
+                    return device.token_set.create(token=StaticToken.random_token()).token
+            return None
+
+
+        return HttpResponse('<h1>Preethis page was found: {}</h1>')
+
+    def post(self, request, *args, **kwargs):
+        return HttpResponse('<h1>Preethis page was found: {}</h1>')
 
     @method_decorator(domain_admin_required)
     def dispatch(self, request, *args, **kwargs):
