@@ -190,38 +190,39 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     def calculate_total_row(self, rows):
         total_row = ['Availability (%)']
-        total_nominator = 0
-        total_denominator = 0
         if self.loc_id == 'pps_id':
             data = {}
             for i in range(len(self.months)):
                 data[i] = {
-                    'pps_is_available': sum(
-                        [pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered']
-                    ),
-                    'pps_count': sum([1 for pps_data in rows if pps_data[i + 1] != 'no data entered'])
+                    'pps_is_outstock': 0,
+                    'pps_count': 0
                 }
-                if data[i]['pps_count']:
-                    total_row.append(
-                        self.percent_fn(
-                            data[i]['pps_is_available'],
-                            data[i]['pps_count']
-                        )
-                    )
-                else:
-                    total_row.append('no data entered')
-                total_nominator += data[i]['pps_is_available']
-                total_denominator += data[i]['pps_count']
+            for row in rows:
+                if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
+                    for i in range(len(self.months)):
+                        if row['real_date'] < self.months[i] + relativedelta(months=1):
+                            if row['pps_is_outstock']:
+                                data[i]['pps_is_outstock'] += row['pps_is_outstock']['html']
+                            if row['pps_count']:
+                                data[i]['pps_count'] += row['pps_count']['html']
+                            break
 
-            if total_denominator:
+            for monthly_data in data.values():
                 total_row.append(
                     self.percent_fn(
-                        total_nominator,
-                        total_denominator
+                        monthly_data['pps_is_outstock'],
+                        monthly_data['pps_count']
                     )
                 )
-            else:
-                total_row.append('no data entered')
+            if data:
+                total_row.append(
+                    "{:.2f}%".format(
+                        sum([100 * float(month['pps_is_outstock'] or 0) / float(month['pps_count'] or 1)
+                             for month in data.values()
+                             if month and month != 'no data entered'])
+                        / len(data)
+                    )
+                )
         else:
             for i in range(len(self.months)):
                 nominator = 0
@@ -229,16 +230,9 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 for location in rows:
                     nominator += sum(rows[location][i].values())
                     denominator += len(rows[location][i])
-                total_nominator += nominator
-                total_denominator += denominator
-                if denominator:
-                    total_row.append(self.percent_fn(nominator, denominator))
-                else:
-                    total_row.append('no data entered')
-            if total_denominator:
-                total_row.append(self.percent_fn(total_nominator, total_denominator))
-            else:
-                total_row.append('no data entered')
+                total_row.append(
+                    self.percent_fn(nominator, denominator)
+                )
         return total_row
 
     @property
@@ -289,14 +283,15 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         self.months[-1] + relativedelta(months=1) <= row['real_date']:
                     continue
                 if row[self.loc_id] not in data:
-                    data[row[self.loc_id]] = []
-                    for i in range(len(self.months)):
-                        data[row[self.loc_id]].append({})
+                    data[row[self.loc_id]] = [{}] * len(self.months)
                     loc_names[row[self.loc_id]] = row[self.loc_name]
                 for i in range(len(self.months)):
                     if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        multiple_rows_per_pps_in_month = data[row[self.loc_id]][i].get(row['pps_id'])
-                        if not multiple_rows_per_pps_in_month or data[row[self.loc_id]][i][row['pps_id']] == 1:
+                        if data[row[self.loc_id]][i].get(row['pps_id']) and \
+                                data[row[self.loc_id]][i][row['pps_id']] == 0:
+                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock']['html'] == 1 \
+                                else 1
+                        else:
                             data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock']['html'] == 1 \
                                 else 1
                         break
@@ -314,25 +309,13 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            nominator = 0
-            denominator = 0
-            for month in data[loc_id]:
-                if month and month != 'no data entered':
-                    if self.loc_id == 'pps_id':
-                        nominator += float(month)
-                    else:
-                        nominator += float(month[:-1])
-                    denominator += 1
-            if denominator:
-                if self.loc_id == 'pps_id':
-                    row.append("{:.2f}%".format(nominator * 100 / denominator))
-                else:
-                    row.append("{:.2f}%".format(nominator / denominator))
-            else:
-                row.append('no data entered')
+            row.append("{:.2f}%".format(
+                sum([float(month[:-1]) for month in data[loc_id] if month and month != 'no data entered'])
+                / len(data[loc_id])
+            ))
             new_rows.append(row)
         if self.loc_id == 'pps_id':
-            self.total_row = self.calculate_total_row(new_rows)
+            self.total_row = self.calculate_total_row(rows)
         else:
             self.total_row = self.calculate_total_row(tmp)
         return new_rows
