@@ -126,6 +126,7 @@ hqDefine("reports/js/filters/main", [
                 placeholder: gettext("Select a group"),
             });
         });
+<<<<<<< HEAD
         $('.report-filter-user-filter').each(function(i, el) {
             var $el = $(el), data = $el.data();
             _.each(data.toggle_users, function (_, user) {
@@ -137,6 +138,9 @@ hqDefine("reports/js/filters/main", [
                 });
             });
         });
+=======
+
+>>>>>>> getting rid of filter_users
         $('.report-filter-location-async').each(function(i, el) {
             var $el = $(el), data = $el.data();
             var model = locationDrilldown.LocationSelectViewModel({
