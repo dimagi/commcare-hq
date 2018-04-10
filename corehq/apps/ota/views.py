@@ -33,6 +33,7 @@ from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from .models import SerialIdBucket
 from .utils import (
@@ -272,7 +273,10 @@ def heartbeat(request, domain, app_build_id):
         try:
             last_sync = adjust_text_to_datetime(last_sync_time)
         except iso8601.ParseError:
-            last_sync = None
+            try:
+                last_sync = string_to_utc_datetime(last_sync_time)
+            except (ValueError, OverflowError):
+                last_sync = None
         else:
             save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
 
