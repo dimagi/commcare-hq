@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from collections import defaultdict
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager import models
 from corehq.apps.app_manager.const import MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2
@@ -452,17 +453,17 @@ def is_valid_mobile_select_filter_type(ui_filter):
 @quickcache(['domain'])
 def get_uuids_by_instance_id(domain):
     """
-    map ReportAppConfig.uuids to user-defined ReportAppConfig.instance_ids
+    map ReportAppConfig.uuids list to user-defined ReportAppConfig.instance_ids
 
     This is per-domain, since registering instances (like
     commcare_reports_fixture_instances) is per-domain
     """
     apps = get_apps_in_domain(domain)
-    uuids_by_instance_id = {}
+    config_ids = defaultdict(list)
     for app in apps:
         if app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_2:
             for module in app.modules:
                 if module.module_type == 'report':
                     for report_config in module.report_configs:
-                        uuids_by_instance_id[report_config.instance_id] = report_config.uuid
-    return uuids_by_instance_id
+                        config_ids[report_config.instance_id].append(report_config.uuid)
+    return config_ids

@@ -331,12 +331,6 @@ hqDefine('app_manager/js/modules/report_module', function () {
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
 
-                var duplicatedSlugs = getDuplicatedSlugs();
-                if (duplicatedSlugs.length !== 0) {
-                    alert(gettext("Report codes must be unique.  The following codes are duplicates: ")
-                          + duplicatedSlugs.join(", "));
-                }
-
                 self.moduleName[self.lang] = self.currentModuleName();
 
                 var filter = self.currentModuleFilter().trim();
@@ -409,26 +403,27 @@ hqDefine('app_manager/js/modules/report_module', function () {
             self.reports.push(newReport(currentReports[i]));
         }
 
-        // flag instance ids defined outside this module
+        var getInstanceIdsInThisModule = function () {
+            return _.map(self.reports(), function (r) {return r.instanceId();});
+        };
+
+        // flag instance ids with uuids outside this module
         var uuidsByInstanceId = hqImport('hqwebapp/js/initial_page_data').get('uuids_by_instance_id'),
-            instanceIdsInThisModule = _.map(self.reports(), function (r) {return r.instanceId();}),
-            instanceIdsElsewhere = _.filter(_.keys(uuidsByInstanceId), function (instanceId) {
-                return !_.contains(instanceIdsInThisModule, instanceId);
-            });
+            uuidsInThisModule = _.pluck(self.reports(), 'uuid'),
+            instanceIdsElsewhere = _.chain(uuidsByInstanceId)
+                .pairs()
+                .filter(function (idPair) { return _.difference(idPair[1], uuidsInThisModule).length; })
+                .map(_.first)
+                .value();
 
-        var getDuplicatedSlugs = function () {
-            var instanceIdsInThisModule = _.map(self.reports(), function (r) {return r.instanceId();}),
-                duplicatesWithElsewhere = _.filter(instanceIdsInThisModule, function(iid) {
-                    return _.contains(instanceIdsElsewhere, iid);
-                }),
-                duplicatesHere = _.chain(instanceIdsInThisModule)
-                    .countBy(_.identity)
-                    .pairs()
-                    .filter(function (countPair) {return countPair[1] > 1;})
-                    .map(_.first)
-                    .value();
-
-            return duplicatesHere.concat(duplicatesWithElsewhere);
+        self.validateSlug = function (instanceId) {
+            var allInstanceIds = instanceIdsElsewhere.concat(getInstanceIdsInThisModule()),
+                isDuplicate = _.filter(allInstanceIds, function (iid) {return iid === instanceId;})
+                              .length > 1;
+            if (isDuplicate) {
+                return gettext("This code is used in multiple places.");
+            }
+            return "";
         };
 
         return self;

@@ -69,10 +69,14 @@
                             <select class="form-control"
                                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                             </select>
-                            <label>{% trans "Report code to use in custom expressions:" %}</label>
-                            <span data-bind="visible: !$root.supportCustomUcrSlug, text: uuid"></span>
-                            <input type="text" class="form-inline"
-                                    data-bind="visible: $root.supportCustomUcrSlug, value: instanceId">
+                            <div data-bind="css: { 'has-error': $root.validateSlug(instanceId()) }">
+                                <label>{% trans "Report code to use in custom expressions:" %}</label>
+                                <span data-bind="visible: !$root.supportCustomUcrSlug, text: uuid"></span>
+                                <input type="text" class="form-inline"
+                                       data-bind="visible: $root.supportCustomUcrSlug,
+                                                  value: instanceId">
+                                <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
+                            </div>
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
