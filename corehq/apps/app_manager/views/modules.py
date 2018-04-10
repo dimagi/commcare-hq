@@ -309,7 +309,8 @@ def _get_valid_parent_modules(app, module):
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
     return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
-            and not parent_module == module and parent_module.doc_type != "ShadowModule"]
+            and not parent_module == module and parent_module.doc_type != "ShadowModule"
+            and not parent_module.is_training_module]
 
 
 def _case_list_form_options(app, module, case_type_, lang=None):
