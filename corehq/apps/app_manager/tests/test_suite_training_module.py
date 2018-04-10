@@ -11,7 +11,9 @@ class TrainingModuleSuiteTest(SimpleTestCase, TestXmlMixin):
 
     def test_training_module(self):
         app = Application.new_app('domain', 'Untitled Application')
-        training_module = app.add_module(TrainingModule.new_module('training module', None))
+        training_module = TrainingModule.new_module('training module', None)
+        training_module.put_in_root = True
+        app.add_module(training_module)
         app.new_form(training_module.id, "Untitled Form", None)
         self.assertXmlPartialEqual(
             """
