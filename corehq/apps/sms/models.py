@@ -1511,6 +1511,48 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             return [CountTuple(*row) for row in cursor.fetchall()]
 
 
+    @classmethod
+    def get_counts_of_errors(cls, domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of errors at the event, subevent, or sms levels over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when filtering,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A dictionary with each key being an error code and each value
+        being the count of that error's occurrences
+        """
+
+        query = """
+        SELECT      COALESCE(C.system_error_message, B.error_code, A.error_code) AS error,
+                    COUNT(*) AS count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [domain, start_date, time_zone, end_date, time_zone]
+            )
+            return {
+                error: count
+                for error, count in cursor.fetchall()
+                if error and error != cls.ERROR_SUBEVENT_ERROR
+            }
+
+
 class MessagingSubEvent(models.Model, MessagingStatusMixin):
     """
     Used to track the status of a MessagingEvent for each of its recipients.

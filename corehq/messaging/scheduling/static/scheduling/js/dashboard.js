@@ -34,7 +34,8 @@ hqDefine("scheduling/js/dashboard", function() {
                 .reduceXTicks(true)
                 .rotateLabels(0)
                 .showControls(false)
-                .groupSpacing(0.1);
+                .groupSpacing(0.3)
+                .forceY([0, 10]);
             self.sms_count_chart.yAxis.tickFormat(d3.format(',f'));
 
             self.event_count_chart = nv.models.multiBarChart()
@@ -43,8 +44,22 @@ hqDefine("scheduling/js/dashboard", function() {
                 .reduceXTicks(true)
                 .rotateLabels(0)
                 .showControls(false)
-                .groupSpacing(0.1);
+                .groupSpacing(0.3)
+                .forceY([0, 10]);
             self.event_count_chart.yAxis.tickFormat(d3.format(',f'));
+
+            self.error_count_chart = nv.models.discreteBarChart()
+                .x(function(d) { return d.label; })
+                .y(function(d) { return d.value; })
+                .tooltips(true)
+                .showValues(true)
+                .color(['#ed1c24'])
+                .transitionDuration(500)
+                .showXAxis(false)
+                .valueFormat(d3.format(',f'))
+                .forceY([0, 10])
+                .noData(gettext("(no errors over the given date range)"));
+            self.error_count_chart.yAxis.tickFormat(d3.format(',f'));
         };
 
         self.update = function(values) {
@@ -73,6 +88,13 @@ hqDefine("scheduling/js/dashboard", function() {
                 .duration(500)
                 .call(self.event_count_chart);
             nv.utils.windowResize(self.event_count_chart.update);
+
+            d3.select('#error_count_chart svg')
+                .datum(values.error_count_data)
+                .transition()
+                .duration(500)
+                .call(self.error_count_chart);
+            nv.utils.windowResize(self.error_count_chart.update);
         }
     };
 

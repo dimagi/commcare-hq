@@ -15,7 +15,6 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
-from collections import OrderedDict
 from corehq import privileges
 from corehq import toggles
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
@@ -226,6 +225,29 @@ class MessagingDashboardView(BaseMessagingSectionView):
             {'key': _("Success"), 'values': success_values},
         ]
 
+    def get_error_message(self, error_code):
+        if error_code in SMS.ERROR_MESSAGES:
+            return _(SMS.ERROR_MESSAGES[error_code])
+        elif error_code in MessagingEvent.ERROR_MESSAGES:
+            return _(MessagingEvent.ERROR_MESSAGES[error_code])
+        else:
+            return _("Other")
+
+    def add_error_count_info(self, result, days):
+        end_date = self.domain_now.date()
+        start_date = end_date - timedelta(days=days - 1)
+        counts = MessagingEvent.get_counts_of_errors(self.domain, start_date, end_date, self.timezone.zone)
+
+        sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+        result['error_count_data'] = [
+            {
+                'values': [
+                    {'label': self.get_error_message(error), 'value': count}
+                    for error, count in sorted_counts
+                ],
+            },
+        ]
+
     def get_ajax_response(self):
         result = {
             'last_refresh_time': self.domain_now.strftime('%Y-%m-%d %H:%M:%S'),
@@ -235,6 +257,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         self.add_reminder_status_info(result)
         self.add_sms_count_info(result, 30)
         self.add_event_count_info(result, 30)
+        self.add_error_count_info(result, 30)
         return JsonResponse(result)
 
     def get(self, request, *args, **kwargs):
