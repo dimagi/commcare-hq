@@ -44,7 +44,7 @@ class TestTwoFactorCheck(TestCase):
 
     @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
     def test_two_factor_check_with_feature_flag(self):
-        mock_fn_to_call = Mock()
+        mock_fn_to_call = Mock(return_value="Function was called!")
         mock_fn_to_call.__name__ = "test_name"
         request = self.request
         api_key = None
@@ -55,10 +55,11 @@ class TestTwoFactorCheck(TestCase):
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
             data = json.loads(response.content)
+            mock_fn_to_call.assert_not_called()
             self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
 
     def test_two_factor_check_without_feature_flag(self):
-        mock_fn_to_call = Mock()
+        mock_fn_to_call = Mock(return_value="Function was called!")
         mock_fn_to_call.__name__ = "test_name"
         request = self.request
         api_key = None
@@ -67,5 +68,6 @@ class TestTwoFactorCheck(TestCase):
         function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
         with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
-            _ = function_getting_checked_with_auth(request, self.domain.name)
+            response = function_getting_checked_with_auth(request, self.domain.name)
+            self.assertEqual(response, 'Function was called!')
             mock_fn_to_call.assert_called_once()
