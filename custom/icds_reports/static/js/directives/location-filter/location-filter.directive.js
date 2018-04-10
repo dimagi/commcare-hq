@@ -270,7 +270,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                             }
                         });
 
-                        if (((["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations) || userLocationInSorted.length > 0) && !haveAccessToAllLocationsForLevel) {
+                        if (((["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocationsForLevel) || userLocationInSorted.length > 0) && !haveAccessToAllLocations) {
                             vm.locationsCache[parentId] = sortedLocations;
                         } else if (selectedLocation.user_have_access) {
                             vm.locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
