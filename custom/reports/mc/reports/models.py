@@ -68,8 +68,13 @@ class AsyncDrillableFilter(BaseReportFilter):
             if i < index or i >= len(self.hierarchy) - 1:
                 continue
             real_index = len(self.hierarchy) - (i + 1)
-            lineage.insert(0, FixtureDataItem.by_field_value(self.domain, self.data_types(real_index - 1),
-                                                             h["references"], lineage[0].fields_without_attributes[h["parent_ref"]]).one())
+            lineage.insert(
+                0, FixtureDataItem.by_field_value(
+                    self.domain,
+                    self.data_types(real_index - 1),
+                    h["references"],
+                    lineage[0].fields_without_attributes[h["parent_ref"]]
+                ).one())
 
         return lineage
 
