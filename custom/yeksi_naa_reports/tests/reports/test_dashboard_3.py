@@ -7,6 +7,7 @@ from custom.yeksi_naa_reports.reports import Dashboard3Report
 
 
 class TestDashboard3(YeksiTestCase):
+    maxDiff = None
 
     def test_satisfaction_rate_after_delivery_data_report(self):
         mock = MagicMock()
@@ -33,9 +34,9 @@ class TestDashboard3(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                [u'NEVIRAPINE 200MG CP.', u'no data entered', u'no data entered', u'93.30%'],
                 [u'DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', u'no data entered', u'no data entered',
                  u'1462.40%'],
+                [u'NEVIRAPINE 200MG CP.', u'no data entered', u'no data entered', u'93.30%'],
                 [u'RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', u'no data entered',
                  u'no data entered', u'100.00%'],
                 [u'TEST RAPIDE HIV 1/2 (SD BIOLINE)', u'no data entered', u'no data entered', u'100.00%'],
