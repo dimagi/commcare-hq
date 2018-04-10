@@ -406,7 +406,7 @@ class AppStatusFormStaging(StagingTable, CustomSQLETLMixin):
     slug = APP_STATUS_FORM_STAGING_SLUG
 
     domain = models.CharField(max_length=255, default=None, db_index=True)
-    app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT)
+    app_dim = models.ForeignKey(ApplicationDim, on_delete=models.PROTECT, null=True)
     user_dim = models.ForeignKey(UserDim, on_delete=models.PROTECT)
     last_submission = models.DateTimeField(db_index=True)
     submission_build_version = models.CharField(max_length=255, null=True, db_index=True)
