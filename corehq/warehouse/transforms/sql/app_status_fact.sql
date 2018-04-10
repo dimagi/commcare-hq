@@ -43,10 +43,10 @@ SELECT
        app_status.app_dim_id
        '{{ batch_id }}'
 FROM
-    {{ app_status_synclog_staging ]} as sync_table
+    {{ app_status_synclog_staging }} as sync_table
 LEFT JOIN {{ app_status_fact }} as app_status
 ON app_status.user_dim_id=sync_table.user_dim_id
-ON CONFLICT (app_dim_id, user_dim_id)
+ON CONFLICT (app_dim_id, user_dim_id) DO UPDATE
 SET last_sync_log_date = EXCLUDED.last_sync_log_date,
     domain = EXCLUDED.domain,
     batch_id = EXCLUDED.batch_id;
