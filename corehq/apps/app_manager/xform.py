@@ -1952,18 +1952,21 @@ VELLUM_TYPES = {
         'type': 'xsd:date',
         'icon': 'icon-calendar',
         'icon_bs3': 'fa fa-calendar',
+        'editable': True,
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:dateTime',
         'icon': 'icon-vellum-datetime',
         'icon_bs3': 'fcc fcc-fd-datetime',
+        'editable': True,
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
         'icon': 'icon-vellum-decimal',
         'icon_bs3': 'fcc fcc-fd-decimal',
+        'editable': True,
     },
     "FieldList": {
         'tag': 'group',
@@ -1976,6 +1979,7 @@ VELLUM_TYPES = {
         'type': 'geopoint',
         'icon': 'icon-map-marker',
         'icon_bs3': 'fa fa-map-marker',
+        'editable': True,
     },
     "Group": {
         'tag': 'group',
@@ -1994,17 +1998,20 @@ VELLUM_TYPES = {
         'type': ('xsd:int', 'xsd:integer'),
         'icon': 'icon-vellum-numeric',
         'icon_bs3': 'fcc fcc-fd-numeric',
+        'editable': True,
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
         'icon': 'icon-vellum-long',
         'icon_bs3': 'fcc fcc-fd-long',
+        'editable': True,
     },
     "MSelect": {
         'tag': 'select',
         'icon': 'icon-vellum-multi-select',
         'icon_bs3': 'fcc fcc-fd-multi-select',
+        'editable': True,
     },
     "PhoneNumber": {
         'tag': 'input',
@@ -2012,6 +2019,7 @@ VELLUM_TYPES = {
         'appearance': 'numeric',
         'icon': 'icon-signal',
         'icon_bs3': 'fa fa-signal',
+        'editable': True,
     },
     "Repeat": {
         'tag': 'repeat',
@@ -2029,23 +2037,27 @@ VELLUM_TYPES = {
         'type': ('xsd:string', None),
         'icon': 'icon-key',
         'icon_bs3': 'fa fa-key',
+        'editable': True,
     },
     "Select": {
         'tag': 'select1',
         'icon': 'icon-vellum-single-select',
         'icon_bs3': 'fcc fcc-fd-single-select',
+        'editable': True,
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'icon': "icon-vellum-text",
         'icon_bs3': 'fcc fcc-fd-text',
+        'editable': True,
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
         'icon_bs3': 'a fa-clock-o',
+        'editable': True,
     },
     "Trigger": {
         'tag': 'trigger',
