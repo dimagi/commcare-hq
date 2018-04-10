@@ -163,9 +163,9 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
         for row in counts:
             if row.direction == INCOMING:
-                inbound_counts[row.date] = row.count
+                inbound_counts[row.date] = row.sms_count
             elif row.direction == OUTGOING:
-                outbound_counts[row.date] = row.count
+                outbound_counts[row.date] = row.sms_count
 
         inbound_values = []
         outbound_values = []

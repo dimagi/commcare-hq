@@ -305,7 +305,7 @@ class SMS(SMSBase):
         :return: A list of (date, direction, count) named tuples
         """
 
-        CountTuple = namedtuple('CountTuple', ['date', 'direction', 'count'])
+        CountTuple = namedtuple('CountTuple', ['date', 'direction', 'sms_count'])
 
         query = """
         SELECT  (date AT TIME ZONE %s)::DATE AS date,
