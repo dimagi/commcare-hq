@@ -76,9 +76,9 @@
                             {% include 'app_manager/partials/filter_configs.html' %}
                             {% include 'app_manager/partials/graph_configs.html' %}
                         </td>
-                        <td data-bind="css: { 'has-error': validate }">
+                        <td data-bind="css: { 'has-error': validateDisplay }">
                             <input type="text" class="form-control" data-bind="value: display">
-                            <p class="help-block" data-bind="text: validate"></p>
+                            <p class="help-block" data-bind="text: validateDisplay"></p>
                         </td>
                         <td>
                             <input type="text" class="form-control"

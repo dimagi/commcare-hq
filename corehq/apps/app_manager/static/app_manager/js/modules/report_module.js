@@ -235,7 +235,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         });
         self.filterConfig = filterConfigModel(reportId, self.reportId, filterValues, reportFilters, changeSaveButton);
 
-        self.validate = ko.computed(function() {
+        self.validateDisplay = ko.computed(function() {
             if (!self.display()) {
                 return gettext("Display text is required");
             }
@@ -396,10 +396,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
             return report;
         }
-        this.addReport = function () {
+        self.addReport = function () {
             self.reports.push(newReport());
         };
-        this.removeReport = function (report) {
+        self.removeReport = function (report) {
             self.reports.remove(report);
             self.changeSaveButton();
         };
