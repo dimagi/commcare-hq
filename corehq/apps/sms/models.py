@@ -1510,7 +1510,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             )
             return [CountTuple(*row) for row in cursor.fetchall()]
 
-
     @classmethod
     def get_counts_of_errors(cls, domain, start_date, end_date, time_zone):
         """

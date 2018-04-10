@@ -72,7 +72,7 @@ hqDefine("scheduling/js/dashboard", function() {
             self.outbound_sms_sent_today(values.outbound_sms_sent_today);
             self.daily_outbound_sms_limit(values.daily_outbound_sms_limit);
             self.events_pending(values.events_pending);
-        }
+        };
 
         self.update_charts = function(values) {
             d3.select('#sms_count_chart svg')
@@ -95,7 +95,7 @@ hqDefine("scheduling/js/dashboard", function() {
                 .duration(500)
                 .call(self.error_count_chart);
             nv.utils.windowResize(self.error_count_chart.update);
-        }
+        };
     };
 
     var dashboardViewModel = new DashboardViewModel();
@@ -114,7 +114,7 @@ hqDefine("scheduling/js/dashboard", function() {
             dashboardViewModel.update_charts(json);
         });
         setTimeout(updateDashboard, 30000);
-    }
+    };
 
     $(function() {
         updateDashboard();
