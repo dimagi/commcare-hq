@@ -574,6 +574,9 @@ class SQLLocation(AdjListModel):
             ('tree_id', 'lft', 'rght')
         ]
 
+    class MPTTMeta:
+        order_insertion_by = ['name']
+
     def __unicode__(self):
         return "{} ({})".format(self.name, self.domain)
 
