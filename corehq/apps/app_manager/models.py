@@ -4162,6 +4162,16 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
+    def has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.report_configs)
+
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
@@ -4172,6 +4182,11 @@ class ReportModule(ModuleBase):
         elif not self.reports:
             errors.append({
                 'type': 'no reports',
+                'module': self.get_module_info(),
+            })
+        if self.has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
                 'module': self.get_module_info(),
             })
         return errors
