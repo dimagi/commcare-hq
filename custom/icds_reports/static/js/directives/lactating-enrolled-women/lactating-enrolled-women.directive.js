@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function LactatingEnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, haveAccessToAllLocations) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -206,6 +206,18 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         },
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
+        return i;
+    };
+
     vm.tooltipContent = function(monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
             + "<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
@@ -218,7 +230,7 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
     };
 }
 
-LactatingEnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+LactatingEnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('lactatingEnrolledWomen', function() {
     return {

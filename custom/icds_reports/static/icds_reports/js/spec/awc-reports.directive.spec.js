@@ -15,6 +15,7 @@ describe('AWC Reports Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     var mockBeneficiaryDetails = {

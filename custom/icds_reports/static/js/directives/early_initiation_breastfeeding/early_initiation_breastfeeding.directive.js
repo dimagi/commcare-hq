@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function EarlyInitiationBreastfeedingController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+                                             locationsService, userLocationId, storageService, genders, haveAccessToAllLocations) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -222,6 +222,18 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         }
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
+        return i;
+    };
+
     vm.resetAdditionalFilter = function() {
         vm.filtersData.gender = '';
         $location.search('gender', null);
@@ -232,7 +244,7 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
     };
 }
 
-EarlyInitiationBreastfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+EarlyInitiationBreastfeedingController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('earlyInitiationBreastfeeding', function() {
     return {

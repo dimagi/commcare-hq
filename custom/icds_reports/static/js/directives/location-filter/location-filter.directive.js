@@ -132,7 +132,12 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     vm.userLocationId = userLocationId;
     vm.animationsEnabled = true;
-    vm.selectedLocationId = ['', 'undefined', 'null'].indexOf($location.search()['location_id']) === -1 ? $location.search()['location_id'] : vm.userLocationId;
+    var emptyValues = ['undefined', 'null'];
+    if (!haveAccessToAllLocations) {
+        emptyValues.push('');
+    }
+    vm.selectedLocationId = emptyValues.indexOf($location.search()['location_id']) === -1 ? $location.search()['location_id'] : vm.userLocationId;
+
     vm.locationsCache = {};
     vm.selectedLocations = [];
     vm.hierarchy = [];
@@ -265,7 +270,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
                             }
                         });
 
-                        if (["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations && !haveAccessToAllLocationsForLevel || userLocationInSorted.length > 0) {
+                        if (((["null", "undefined"].indexOf(userLocationId) === -1 && !haveAccessToAllLocations) || userLocationInSorted.length > 0) && !haveAccessToAllLocationsForLevel) {
                             vm.locationsCache[parentId] = sortedLocations;
                         } else if (selectedLocation.user_have_access) {
                             vm.locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);

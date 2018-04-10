@@ -2,7 +2,7 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdolescentWomenController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService) {
+                                             locationsService, userLocationId, storageService, haveAccessToAllLocations) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -209,6 +209,18 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
         },
     };
 
+    vm.getDisableIndex = function () {
+        var i = -1;
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
+        return i;
+    };
+
     vm.tooltipContent = function (monthName, day) {
         return "<p><strong>" + monthName + "</strong></p><br/>"
             + "<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>" + $filter('indiaNumbers')(day.y) + "</strong></div>"
@@ -221,7 +233,7 @@ function AdolescentWomenController($scope, $routeParams, $location, $filter, dem
     };
 }
 
-AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+AdolescentWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('adolescentGirls', function() {
     return {

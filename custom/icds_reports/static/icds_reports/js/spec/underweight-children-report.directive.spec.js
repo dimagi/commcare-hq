@@ -30,6 +30,7 @@ describe('Underweight Children Directive', function () {
             {id: '72', name: '60-72 months'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
