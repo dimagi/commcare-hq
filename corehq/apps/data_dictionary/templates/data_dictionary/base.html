@@ -25,10 +25,6 @@
     </ul>
 {% endblock %}
 
-{% block stylesheets %}
-    <link rel="stylesheet" href="{% static 'data_dictionary/css/data_dictionary.css' %}">
-{% endblock %}
-
 {% block page_content %}
     {% registerurl 'data_dictionary_json' domain %}
     {% registerurl 'update_case_property' domain %}
@@ -82,7 +78,7 @@
                             "></select>
                         </td>
                         <td>
-                            <textarea class="form-control" data-bind="
+                            <textarea class="form-control vertical-resize" data-bind="
                               value: $data.description,
                               rows: 1,
                               placeholder: '{% trans "Click here to add a description" %}',

@@ -64,10 +64,10 @@
       <div id="mocha-sandbox"></div>
       {% block mocha_tests %}{% endblock %}
       <script charset="utf-8">
-	// Only tests run in real browser, injected script run if options.run == true
-	if (navigator.userAgent.indexOf('PhantomJS') < 0) {
-	  mocha.run();
-	}
+  	      // Only tests run in real browser, injected script run if options.run == true
+	      if (navigator.userAgent.indexOf('PhantomJS') < 0) {
+	          mocha.run();
+	      }
       </script>
   </body>
 </html>
