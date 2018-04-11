@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import timedelta
 
 from django.conf import settings
@@ -34,7 +35,7 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
     def get_items_to_be_processed(cls, utcnow):
         _record_datadog_metrics()
         queued_threshold = utcnow - timedelta(minutes=ENQUEUING_TIMEOUT)
-        queue_filter = Q(saved=False) & (Q(date_queued__isnull=True) | Q(date_queued__lte=queued_threshold))
+        queue_filter = Q(date_queued__isnull=True) | Q(date_queued__lte=queued_threshold)
         query = UnfinishedSubmissionStub.objects.filter(queue_filter).order_by('timestamp')
         stub_ids = list(query.values_list('id', flat=True)[:1000])
         if stub_ids:

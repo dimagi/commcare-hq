@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import contextlib
 
 from django.db.utils import InternalError
@@ -65,7 +66,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
     def testSubmitDuplicate(self):
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)
-        self.assertIn(u"   √   ".encode('utf-8'), res.content)
+        self.assertIn("   √   ".encode('utf-8'), res.content)
 
         file, res = self._submit('simple_form.xml')
         self.assertEqual(201, res.status_code)
@@ -89,10 +90,10 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
             file, res = self._submit("simple_form.xml", openrosa_version)
             if openrosa_version == OPENROSA_VERSION_3:
                 self.assertEqual(422, res.status_code)
-                self.assertIn(ResponseNature.POST_PROCESSING_FAILURE, res.content)
+                self.assertIn(ResponseNature.POST_PROCESSING_FAILURE.encode('utf-8'), res.content)
             else:
                 self.assertEqual(201, res.status_code)
-                self.assertIn(ResponseNature.SUBMIT_SUCCESS, res.content)
+                self.assertIn(ResponseNature.SUBMIT_SUCCESS.encode('utf-8'), res.content)
 
             form_id = 'ad38211be256653bceac8e2156475664'
             form = FormAccessors(self.domain.name).get_form(form_id)

@@ -58,6 +58,8 @@ Once all the dependencies are in order, please do the following:
     $ workon commcare-hq  # if your "commcare-hq" virtualenv is not already activated
     $ pip install -r requirements/requirements.txt
 
+(If the last command fails you may need to [install lxml's dependencies](https://stackoverflow.com/a/5178444/8207).)
+
 There is also a separate collection of Dimagi dev oriented tools that you can install:
 
     $ pip install -r requirements/dev-requirements.txt

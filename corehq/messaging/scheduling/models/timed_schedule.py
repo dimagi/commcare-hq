@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import calendar
 import hashlib
 import json
@@ -407,6 +408,7 @@ class TimedSchedule(Schedule):
             self.total_iterations = total_iterations
             self.ui_type = Schedule.UI_TYPE_MONTHLY
             self.start_offset = 0
+            self.start_day_of_week = self.ANY_DAY
             self.set_extra_scheduling_options(extra_options)
             self.save()
 

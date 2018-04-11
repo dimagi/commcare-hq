@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import codecs
 import tempfile
 
@@ -148,10 +149,22 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         ("module1", (
           ("case_list_form_label", "list", "Register Mother", "Inscrivez-Mère"),
           ("name", "list", "Name", "Nom"),
+          ("Tab 0", "detail", "Name", "Nom"),
+          ("Tab 1", "detail", "Other", "Autre"),
           ("name", "detail", "", "Nom"),
           ("other-prop (ID Mapping Text)", "detail", "Other Prop", ""),
           ("foo (ID Mapping Value)", "detail", "bar", "french bar"),
           ("baz (ID Mapping Value)", "detail", "quz", ""),
+          ("mood (ID Mapping Text)", "detail", "Mood", ""),
+          (". < 3 (ID Mapping Value)", "detail", ":(", ":--("),
+          (". >= 3 (ID Mapping Value)", "detail", ":)", ":--)"),
+          ("energy (ID Mapping Text)", "detail", "Energy", ""),
+          (". < 3 (ID Mapping Value)", "detail",
+              "jr://file/commcare/image/module1_list_icon_energy_high_english.jpg",
+              "jr://file/commcare/image/module1_list_icon_energy_high_french.jpg"),
+          (". >= 3 (ID Mapping Value)", "detail",
+              "jr://file/commcare/image/module1_list_icon_energy_low_english.jpg",
+              "jr://file/commcare/image/module1_list_icon_energy_low_french.jpg"),
         )),
         ("module1_form1", (
           ("question1-label", "in english", "it's in french", "", "", "", "", "", ""),
@@ -163,7 +176,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ("question3/question4-label", 'question6: <output value="/data/question6"/>', 'question6: <output value="/data/question6"/>', "", "", "", "", "", ""),
           ("question3/question5-label", "English Label", "English Label", "", "", "", "", "", ""),
           ("question7-label", 'question1: <output value="/data/question1"/> &lt; 5', "question7", "", "", "", "", "", ""),
-          ('add_markdown-label', 'add_markdown: ~~new \u0939\u093f markdown~~', 'add_markdown: ~~new \u0939\u093f markdown~~', '', '', '', '', '', ''),
+          ('add_markdown-label', 'add_markdown: ~~new \\u0939\\u093f markdown~~', 'add_markdown: ~~new \\u0939\\u093f markdown~~', '', '', '', '', '', ''),
           ('update_markdown-label', '## smaller_markdown', '## smaller_markdown', '', '', '', '', '', ''),
           ('vetoed_markdown-label', '*i just happen to like stars a lot*', '*i just happen to like stars a lot*', '', '', '', '', '', ''),
         ))
@@ -184,7 +197,17 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('name', 'detail', 'Name', ''),
           ('other-prop (ID Mapping Text)', 'detail', 'Other Prop', 'Autre Prop'),
           ('foo (ID Mapping Value)', 'detail', 'bar', ''),
-          ('baz (ID Mapping Value)', 'detail', 'quz', ''))),
+          ('baz (ID Mapping Value)', 'detail', 'quz', ''),
+          ('mood (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail', ':(', ':-('),
+          ('. >= 3 (ID Mapping Value)', 'detail', ':)', ':-)'),
+          ('energy (ID Mapping Text)', 'detail', 'Other Prop', ''),
+          ('. < 3 (ID Mapping Value)', 'detail',
+              'jr://file/commcare/image/module1_list_icon_energy_high.jpg',
+              'jr://file/commcare/image/module1_list_icon_energy_high_french.jpg'),
+          ('. >= 3 (ID Mapping Value)', 'detail',
+              'jr://file/commcare/image/module1_list_icon_energy_low.jpg',
+              'jr://file/commcare/image/module1_list_icon_energy_low_french.jpg'))),
         ('module1_form1',
          (('question1-label', 'question1', 'question1', '', '', '', '', '', ''),
           ('question2-label', 'question2', 'question2', '', '', '', '', '', ''),
@@ -224,12 +247,28 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
         module = self.app.get_module(0)
         self.assertEqual(
+            module.case_details.long.tabs[0].header['en'],
+            'Name'
+        )
+        self.assertEqual(
+            module.case_details.long.tabs[1].header['fra'],
+            'Autre'
+        )
+        self.assertEqual(
             module.case_details.long.columns[1].enum[0].value['fra'],
             'french bar'
         )
         self.assertEqual(
             module.case_details.short.columns[0].header['fra'],
             'Nom'
+        )
+        self.assertEqual(
+            module.case_details.long.columns[2].enum[0].value['fra'],
+            ':--('
+        )
+        self.assertEqual(
+            module.case_details.long.columns[3].enum[0].value['en'],
+            'jr://file/commcare/image/module1_list_icon_energy_high_english.jpg'
         )
 
         # Test special characters and output refs
@@ -241,7 +280,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         self.assert_question_label("", 0, 0, "en", "/data/blank_value_node")
 
         # Test markdown
-        self.assert_question_label("add_markdown: ~~new \u0939\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
+        self.assert_question_label("add_markdown: ~~new \\u0939\\u093f markdown~~", 0, 0, "en", "/data/add_markdown")
         self.assert_question_label("## smaller_markdown", 0, 0, "en", "/data/update_markdown")
         self.assert_question_label("*i just happen to like stars a lot*", 0, 0, "en", "/data/vetoed_markdown")
         form = self.app.get_module(0).get_form(0)
@@ -260,29 +299,29 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                u'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
+                'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
 
-                u'Sheet "module1" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "module1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "module1" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
-                u"You must provide at least one translation of the case property 'name'",
+                'Sheet "module1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
+                "You must provide at least one translation of the case property 'name'",
 
-                u'Sheet "module1_form1" has fewer columns than expected. Sheet '
-                u'will be processed but the following translations will be '
-                u'unchanged: default_fra',
+                'Sheet "module1_form1" has fewer columns than expected. Sheet '
+                'will be processed but the following translations will be '
+                'unchanged: default_fra',
 
-                u'Sheet "module1_form1" has unrecognized columns. Sheet will '
-                u'be processed but ignoring the following columns: default-fra',
+                'Sheet "module1_form1" has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra',
 
-                u'App Translations Updated!'
+                'App Translations Updated!'
             ]
         )
 

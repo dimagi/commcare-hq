@@ -22,8 +22,8 @@
         var selected = '{{ loc_id }}';
         var hierarchy = {{ hierarchy|JSON }};
         var location_url = '{{ api_root }}';
-
-        var model = new hqImport('locations/js/location_drilldown').LocationSelectViewModel({
+        var locationDrilldown = hqImport('locations/js/location_drilldown');
+        var model = new locationDrilldown.LocationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": false,
             "auto_drill": null,

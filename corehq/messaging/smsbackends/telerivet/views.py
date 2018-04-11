@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from corehq.apps.sms.models import SMS, SQLMobileBackend, SQLMobileBackendMapping
 from corehq.apps.sms.util import clean_phone_number
@@ -16,7 +17,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.utils.translation import ugettext as _, ugettext_lazy
-from djangular.views.mixins import JSONResponseMixin, allow_remote_invocation
+from djangular.views.mixins import allow_remote_invocation
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin
 import six
 
 
@@ -47,7 +49,7 @@ def incoming_message(request):
     return HttpResponse()
 
 
-class TelerivetSetupView(JSONResponseMixin, BaseMessagingSectionView):
+class TelerivetSetupView(HQJSONResponseMixin, BaseMessagingSectionView):
     template_name = 'telerivet/telerivet_setup.html'
     urlname = 'telerivet_setup'
     page_title = ugettext_lazy("Telerivet Setup")

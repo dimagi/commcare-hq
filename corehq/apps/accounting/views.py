@@ -16,6 +16,8 @@ from django.http import (
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
+from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -74,6 +76,7 @@ from django_prbac.models import Role, Grant
 from six.moves.urllib.parse import urlencode
 
 
+@require_superuser
 @requires_privilege_raise404(privileges.ACCOUNTING_ADMIN)
 def accounting_default(request):
     return HttpResponseRedirect(AccountingInterface.get_url())
@@ -86,6 +89,7 @@ class AccountingSectionView(BaseSectionPageView):
     def section_url(self):
         return reverse('accounting_default')
 
+    @method_decorator(require_superuser)
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     @use_select2
     def dispatch(self, request, *args, **kwargs):
@@ -967,6 +971,7 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         SoftwarePlanAsyncHandler,
     ]
 
+    @method_decorator(require_superuser)
     @method_decorator(requires_privilege_raise404(privileges.ACCOUNTING_ADMIN))
     def dispatch(self, request, *args, **kwargs):
         return super(AccountingSingleOptionResponseView, self).dispatch(request, *args, **kwargs)

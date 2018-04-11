@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import mimetypes
 import os
@@ -455,10 +456,13 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
             content_readable = StringIO(content)
         elif isinstance(content, six.binary_type):
             content_readable = BytesIO(content)
-
         db = get_blob_db()
         bucket = self.blobdb_bucket()
-        info = db.put(content_readable, get_short_identifier(), bucket=bucket)
+        if self.blob_id:
+            # Overwrite and rewrite the existing entry in the database with this identifier
+            info = db.put(content_readable, self.blob_id, bucket=bucket)
+        else:
+            info = db.put(content_readable, get_short_identifier(), bucket=bucket)
         self.md5 = info.md5_hash
         self.content_length = info.length
         self.blob_id = info.identifier
@@ -551,11 +555,12 @@ class XFormOperationSQL(PartitionedModel, SaveStateMixin, models.Model):
     UNARCHIVE = 'unarchive'
     EDIT = 'edit'
     UUID_DATA_FIX = 'uuid_data_fix'
+    GDPR_SCRUB = 'gdpr_scrub'
 
     form = models.ForeignKey(XFormInstanceSQL, to_field='form_id', on_delete=models.CASCADE)
     user_id = models.CharField(max_length=255, null=True)
     operation = models.CharField(max_length=255, default=None)
-    date = models.DateTimeField(auto_now_add=True)
+    date = models.DateTimeField(null=False)
 
     def natural_key(self):
         # necessary for dumping models from a sharded DB so that we exclude the
@@ -1433,10 +1438,7 @@ class LedgerValue(PartitionedModel, SaveStateMixin, models.Model, TrackRelatedCh
     @memoized
     def location(self):
         from corehq.apps.locations.models import SQLLocation
-        try:
-            return SQLLocation.objects.get(supply_point_id=self.case_id)
-        except SQLLocation.DoesNotExist:
-            return None
+        return SQLLocation.objects.get_or_None(supply_point_id=self.case_id)
 
     @property
     def location_id(self):

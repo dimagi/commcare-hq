@@ -4,8 +4,20 @@ from __future__ import unicode_literals
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models
 
+from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
-from custom.icds_reports.utils.aggregation import ComplementaryFormsAggregationHelper
+from custom.icds_reports.const import (
+    AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_PNC_TABLE,
+    AGG_CHILD_HEALTH_PNC_TABLE,
+    AGG_CHILD_HEALTH_THR_TABLE,
+)
+from custom.icds_reports.utils.aggregation import (
+    ComplementaryFormsAggregationHelper,
+    PostnatalCareFormsChildHealthAggregationHelper,
+    PostnatalCareFormsCcsRecordAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
+)
 
 
 class AwcLocation(models.Model):
@@ -28,6 +40,8 @@ class AwcLocation(models.Model):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -111,6 +125,8 @@ class AggAwcMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    aww_name = models.DateField(blank=True, null=True)
+    contact_phone_number = models.DateField(blank=True, null=True)
     is_launched = models.TextField(blank=True, null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
@@ -419,6 +435,8 @@ class AwcLocationMonths(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -626,7 +644,7 @@ class AggregateComplementaryFeedingForms(models.Model):
     )
 
     class Meta(object):
-        db_table = 'icds_dashboard_comp_feed_form'
+        db_table = AGG_COMP_FEEDING_TABLE
 
     @classmethod
     def aggregate(cls, state_id, month):
@@ -643,7 +661,6 @@ class AggregateComplementaryFeedingForms(models.Model):
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
-        from corehq.form_processor.utils.sql import fetchall_as_namedtuple
         helper = ComplementaryFormsAggregationHelper(state_id, month)
         query, params = helper.compare_with_old_data_query()
 
@@ -651,3 +668,194 @@ class AggregateComplementaryFeedingForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class AggregateChildHealthPostnatalCareForms(models.Model):
+    """Aggregated data for child health cases based on
+    AWW App, Home Visit Scheduler module,
+    Post Natal Care and Exclusive Breastfeeding forms.
+
+    A child table exists for each state_id and month.
+
+    A row exists for every case that has ever had a Complementary Feeding Form
+    submitted against it.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    counsel_increase_food_bf = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling on increasing food intake has ever been completed"
+    )
+    counsel_breast = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling on managing breast problems has ever been completed"
+    )
+    skin_to_skin = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling on skin to skin care has ever been completed"
+    )
+    is_ebf = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="is_ebf set in the last form submitted this month"
+    )
+    water_or_milk = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Child given water or milk in the last form submitted this month"
+    )
+    other_milk_to_child = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Child given something other than milk in the last form submitted this month"
+    )
+    tea_other = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Child given tea or other liquid in the last form submitted this month"
+    )
+    eating = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Child given something to eat in the last form submitted this month"
+    )
+    counsel_exclusive_bf = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling about exclusive breastfeeding has ever occurred"
+    )
+    counsel_only_milk = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling about avoiding other than breast milk has ever occurred"
+    )
+    counsel_adequate_bf = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling about adequate breastfeeding has ever occurred"
+    )
+    not_breastfeeding = models.CharField(
+        null=True,
+        max_length=126,
+        help_text="The reason the mother is not able to breastfeed"
+    )
+
+    class Meta(object):
+        db_table = AGG_CHILD_HEALTH_PNC_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+    @classmethod
+    def compare_with_old_data(cls, state_id, month):
+        helper = PostnatalCareFormsChildHealthAggregationHelper(state_id, month)
+        query, params = helper.compare_with_old_data_query()
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute(query, params)
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.child_health_case_id for row in rows]
+
+
+class AggregateCcsRecordPostnatalCareForms(models.Model):
+    """Aggregated data for ccs record cases based on
+    AWW App, Home Visit Scheduler module,
+    Post Natal Care and Exclusive Breastfeeding forms.
+
+    A child table exists for each state_id and month.
+
+    A row exists for every case that has ever had a Complementary Feeding Form
+    submitted against it.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    counsel_methods = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Counseling about family planning methods has ever occurred"
+    )
+
+    class Meta(object):
+        db_table = AGG_CCS_RECORD_PNC_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+    @classmethod
+    def compare_with_old_data(cls, state_id, month):
+        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
+        query, params = helper.compare_with_old_data_query()
+
+        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
+            cursor.execute(query, params)
+            rows = fetchall_as_namedtuple(cursor)
+            return [row.child_health_case_id for row in rows]
+
+
+class AggregateChildHealthTHRForms(models.Model):
+    """Aggregated data for child_health cases based on
+    Take Home Ration forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every child_health case that has had a THR Form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    days_ration_given_child = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child has been given rations this month"
+    )
+
+    class Meta(object):
+        db_table = AGG_CHILD_HEALTH_THR_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = THRFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)

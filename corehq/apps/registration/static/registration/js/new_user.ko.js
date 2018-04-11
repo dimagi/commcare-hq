@@ -13,6 +13,7 @@ hqDefine('registration/js/new_user.ko', function () {
     var module = {};
 
     var _private = {},
+        _appcues = hqImport('analytix/js/appcues'),
         _kissmetrics = hqImport('analytix/js/kissmetrix');
 
     _private.rmiUrl = null;
@@ -50,6 +51,18 @@ hqDefine('registration/js/new_user.ko', function () {
             if (_private.isAbPhoneNumber) {
                 _kissmetrics.track.event("Phone Number Field Filled Out");
             }
+
+            var appcuesEvent = "Assigned user to Appcues test",
+                appcuesData = {
+                    'Appcues test': data.appcuesAbTest,
+                };
+
+            _appcues.identify(data.email, appcuesData);
+            _appcues.trackEvent(appcuesEvent, appcuesData);
+
+            _kissmetrics.identify(data.email);
+            _kissmetrics.identifyTraits(appcuesData);
+            _kissmetrics.track.event(appcuesEvent, appcuesData);
         };
     });
 
@@ -90,7 +103,7 @@ hqDefine('registration/js/new_user.ko', function () {
 
     module.FormViewModel = function (defaults, containerSelector, steps) {
         var self = this;
-        
+
         module.onModuleLoad();
 
         // add a short delay to some of the validators so that
@@ -324,6 +337,8 @@ hqDefine('registration/js/new_user.ko', function () {
         self.showThirdTimeout = ko.observable(false);
         self.showFourthTimeout = ko.observable(false);
 
+        self.isMobileExperience = ko.observable(false);
+
         self.submitForm = function () {
             self.showFirstTimeout(false);
             self.showSecondTimeout(false);
@@ -368,7 +383,11 @@ hqDefine('registration/js/new_user.ko', function () {
                         } else if (response.success) {
                             self.isSubmitting(false);
                             self.isSubmitSuccess(true);
-                            _private.submitSuccessAnalytics(submitData);
+                            self.isMobileExperience(response.is_mobile_experience);
+                            _private.submitSuccessAnalytics(_.extend({}, submitData, {
+                                email: self.email(),
+                                appcuesAbTest: response.appcues_ab_test ? 'On' : 'Off',
+                            }));
                         }
                     },
                     error: function () {

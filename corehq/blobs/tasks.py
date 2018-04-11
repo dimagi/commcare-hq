@@ -1,4 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+
+import logging
 from datetime import datetime
 
 from celery.task import periodic_task
@@ -7,6 +10,8 @@ from celery.schedules import crontab
 from corehq.util.datadog.gauges import datadog_counter
 from corehq.blobs.models import BlobExpiration
 from corehq.blobs import get_blob_db
+
+log = logging.getLogger(__name__)
 
 
 @periodic_task(run_every=crontab(minute=0, hour='0,12'))
@@ -23,7 +28,8 @@ def delete_expired_blobs():
         bytes_deleted += blob_expiration.length
 
     db.bulk_delete(paths)
-    BlobExpiration.objects.filter(id__in=deleted_ids).update(deleted=True)
+    log.info("deleted expired blobs: %r", paths)
+    BlobExpiration.objects.filter(id__in=deleted_ids).delete()
     datadog_counter('commcare.temp_blobs.bytes_deleted', value=bytes_deleted)
     if blob_expirations.exists():
         delete_expired_blobs.delay()

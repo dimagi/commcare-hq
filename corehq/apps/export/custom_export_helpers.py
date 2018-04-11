@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from django_prbac.utils import has_privilege
 from corehq import privileges

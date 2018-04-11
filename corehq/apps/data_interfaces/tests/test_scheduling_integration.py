@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager.models import (
     AdvancedModule,
     AdvancedForm,
@@ -37,7 +38,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseTimedScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_alert_schedules, delete_timed_schedules
-from corehq.messaging.tasks import run_messaging_rule
+from corehq.messaging.tasks import run_messaging_rule, sync_case_for_messaging_rule
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from datetime import datetime, date, time
 from django.db.models import Q
@@ -470,6 +471,103 @@ class CaseRuleSchedulingIntegrationTest(TestCase):
             update_case(self.domain, case.case_id, case_properties={'appointment_date': 'xyz'})
             instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
             self.assertEqual(instances.count(), 0)
+
+    @run_with_all_backends
+    @patch('corehq.messaging.scheduling.util.utcnow')
+    def test_timed_schedule_specific_start_date(self, utcnow_patch):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'}),
+            total_iterations=1,
+        )
+
+        rule = create_empty_rule(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='start_sending',
+            property_value='Y',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+
+        action, definition = rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            timed_schedule_id=schedule.schedule_id,
+            recipients=(('CommCareUser', self.user.get_id),),
+            specific_start_date=date(2018, 3, 1),
+        )
+
+        AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+        utcnow_patch.return_value = datetime(2018, 2, 28, 7, 0)
+        with create_case(self.domain, 'person') as case:
+            # Rule does not match, no instances created
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 0)
+
+            # Make the rule match. On the first iteration, the instance is created. On the second,
+            # no new instance is created since it already exists.
+            for minute in [1, 2]:
+                utcnow_patch.return_value = datetime(2018, 2, 28, 7, minute)
+                update_case(self.domain, case.case_id, case_properties={'start_sending': 'Y'})
+
+                instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+                self.assertEqual(instances.count(), 1)
+
+                self.assertEqual(instances[0].case_id, case.case_id)
+                self.assertEqual(instances[0].rule_id, rule.pk)
+                self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+                self.assertEqual(instances[0].start_date, date(2018, 3, 1))
+                self.assertEqual(instances[0].domain, self.domain)
+                self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+                self.assertEqual(instances[0].recipient_id, self.user.get_id)
+                self.assertEqual(instances[0].current_event_num, 0)
+                self.assertEqual(instances[0].schedule_iteration_num, 1)
+                self.assertEqual(instances[0].next_event_due, datetime(2018, 3, 1, 14, 0))
+                self.assertTrue(instances[0].active)
+
+            # Update start date. Instance is updated with new start date.
+            definition.specific_start_date = date(2018, 4, 1)
+            definition.save()
+            AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+            sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2018, 4, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 1)
+            self.assertEqual(instances[0].next_event_due, datetime(2018, 4, 1, 13, 0))
+            self.assertTrue(instances[0].active)
+
+            # Set start date to the past. Instance is updated with new start date and is inactive.
+            definition.specific_start_date = date(2018, 2, 1)
+            definition.save()
+            AutomaticUpdateRule.clear_caches(self.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
+
+            sync_case_for_messaging_rule(self.domain, case.case_id, rule.pk)
+            instances = get_case_timed_schedule_instances_for_schedule(case.case_id, schedule)
+            self.assertEqual(instances.count(), 1)
+
+            self.assertEqual(instances[0].case_id, case.case_id)
+            self.assertEqual(instances[0].rule_id, rule.pk)
+            self.assertEqual(instances[0].timed_schedule_id, schedule.schedule_id)
+            self.assertEqual(instances[0].start_date, date(2018, 2, 1))
+            self.assertEqual(instances[0].domain, self.domain)
+            self.assertEqual(instances[0].recipient_type, 'CommCareUser')
+            self.assertEqual(instances[0].recipient_id, self.user.get_id)
+            self.assertEqual(instances[0].current_event_num, 0)
+            self.assertEqual(instances[0].schedule_iteration_num, 2)
+            self.assertEqual(instances[0].next_event_due, datetime(2018, 2, 2, 14, 0))
+            self.assertFalse(instances[0].active)
 
     @run_with_all_backends
     @patch('corehq.messaging.scheduling.util.utcnow')

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from datetime import timedelta
 from corehq.apps.sms.util import strip_plus

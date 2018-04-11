@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from tastypie import fields
 from tastypie.bundle import Bundle
 from tastypie.constants import ALL

@@ -11,7 +11,7 @@ from custom.icds_reports.reports.functional_toilet import get_functional_toilet_
 from custom.icds_reports.const import ChartColors, MapColors
 
 
-@override_settings(SERVER_ENVIRONMENT='icds')
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 class TestFunctionalToilet(TestCase):
     maxDiff = None
 

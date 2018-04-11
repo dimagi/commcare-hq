@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import itertools
 import json
 from collections import Counter
@@ -6,7 +7,7 @@ from collections import Counter
 from couchdbkit import ResourceNotFound
 
 from corehq.apps.dump_reload.couch.id_providers import DocTypeIDProvider, ViewIDProvider, UserIDProvider, \
-    SyncLogIDProvider, DomainKeyGenerator, DomainInListKeyGenerator
+    DomainKeyGenerator, DomainInListKeyGenerator
 from corehq.apps.dump_reload.exceptions import DomainDumpError
 from corehq.apps.dump_reload.interface import DataDumper
 from corehq.feature_previews import all_previews
@@ -44,7 +45,6 @@ DOC_PROVIDERS = {
     DocTypeIDProvider(['FixtureDataItem']),
     ViewIDProvider('Repeater', 'repeaters/repeaters', DomainInListKeyGenerator()),
     ViewIDProvider('RepeatRecord', 'repeaters/repeat_records', DomainInListKeyGenerator([None])),
-    SyncLogIDProvider(),
 }
 
 
@@ -71,7 +71,7 @@ class CouchDataDumper(DataDumper):
             count += 1
             doc = _get_doc_with_attachments(couch_db, doc)
             json.dump(doc, output_stream)
-            output_stream.write('\n')
+            output_stream.write(b'\n')
         self.stdout.write('Dumped {} {}\n'.format(count, model_label))
         return Counter({model_label: count})
 
@@ -93,7 +93,7 @@ class ToggleDumper(DataDumper):
         for toggle in self._get_toggles_to_migrate():
             count += 1
             json.dump(toggle, output_stream)
-            output_stream.write('\n')
+            output_stream.write(b'\n')
 
         self.stdout.write('Dumped {} Toggles\n'.format(count))
         return Counter({'Toggle': count})

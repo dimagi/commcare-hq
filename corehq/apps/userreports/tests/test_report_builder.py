@@ -6,14 +6,15 @@ from django.test import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.models import Application, Module
-from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_FORM, DATA_SOURCE_TYPE_CASE
 from corehq.apps.userreports.dbaccessors import delete_all_report_configs
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+
 from corehq.apps.userreports.reports.builder.columns import MultiselectQuestionColumnOption
 from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
-)
+    DataSourceBuilder)
 
 
 def read(rel_path):
@@ -22,18 +23,16 @@ def read(rel_path):
         return f.read()
 
 
-factory = AppFactory()
-module1, form1 = factory.new_basic_module('my_slug', 'my_case_type')
-form1.source = read(['data', 'forms', 'simple.xml'])
-
-
 class ReportBuilderDBTest(TestCase):
+    domain = 'domain'
+    case_type = 'report_builder_case_type'
 
     @classmethod
     def setUpClass(cls):
         super(ReportBuilderDBTest, cls).setUpClass()
-        cls.app = Application.new_app('domain', 'Untitled Application')
+        cls.app = Application.new_app(cls.domain, 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
+        module.case_type = cls.case_type
         cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
         cls.app.save()
 
@@ -44,6 +43,41 @@ class ReportBuilderDBTest(TestCase):
             config.delete()
         delete_all_report_configs()
         super(ReportBuilderDBTest, cls).tearDownClass()
+
+
+class DataSourceBuilderTest(ReportBuilderDBTest):
+
+    def test_builder_bad_type(self):
+        with self.assertRaises(AssertionError):
+            DataSourceBuilder(self.domain, self.app, 'invalid-type', self.form.unique_id)
+
+    def test_builder_for_forms(self):
+        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_FORM, self.form.unique_id)
+        self.assertEqual('XFormInstance', builder.source_doc_type)
+        expected_filter = {
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "xmlns"
+            },
+            "type": "boolean_expression",
+            "property_value": "http://openrosa.org/formdesigner/8C8E527C-C0DE-470A-A8A9-8348FFB0B904"
+        }
+        self.assertEqual(expected_filter, builder.filter)
+
+    def test_builder_for_cases(self):
+        builder = DataSourceBuilder(self.domain, self.app, DATA_SOURCE_TYPE_CASE, self.case_type)
+        self.assertEqual('CommCareCase', builder.source_doc_type)
+        expected_filter = {
+            "operator": "eq",
+            "expression": {
+                "type": "property_name",
+                "property_name": "type"
+            },
+            "type": "boolean_expression",
+            "property_value": self.case_type,
+        }
+        self.assertEqual(expected_filter, builder.filter)
 
 
 class ReportBuilderTest(ReportBuilderDBTest):

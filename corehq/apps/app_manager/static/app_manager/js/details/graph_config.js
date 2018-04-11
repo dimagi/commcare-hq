@@ -15,8 +15,8 @@ hqDefine('app_manager/js/details/graph_config', function() {
      * Object corresponding to a graph configuration saved in couch.
      * @constructor
      */
-    var GraphConfigurationUiElement = function(moduleOptions, serverRepresentationOfGraph) {
-        var self = this;
+    var graphConfigurationUiElement = function(moduleOptions, serverRepresentationOfGraph) {
+        var self = {};
         moduleOptions = moduleOptions || {};
 
         var $editButtonDiv = $(
@@ -29,17 +29,17 @@ hqDefine('app_manager/js/details/graph_config', function() {
         );
 
         self.ui = $editButtonDiv;
-        self.graphViewModel = new GraphViewModel(moduleOptions);
-        self.graphViewModel.populate(getGraphViewModelJS(serverRepresentationOfGraph, moduleOptions));
+        self.graphView = graphViewModel(moduleOptions);
+        self.graphView.populate(getGraphViewJS(serverRepresentationOfGraph, moduleOptions));
 
         self.openModal = function(uiElementViewModel) {
 
             // make a copy of the view model
-            var graphViewModelCopy = new GraphViewModel(moduleOptions);
-            graphViewModelCopy.populate(ko.toJS(uiElementViewModel.graphViewModel));
+            var graphViewCopy = graphViewModel(moduleOptions);
+            graphViewCopy.populate(ko.toJS(uiElementViewModel.graphView));
             // Replace the original with the copy if save is clicked, otherwise discard it
-            graphViewModelCopy.onSave = function() {
-                uiElementViewModel.graphViewModel = graphViewModelCopy;
+            graphViewCopy.onSave = function() {
+                uiElementViewModel.graphView = graphViewCopy;
                 self.fire("change");
             };
 
@@ -47,7 +47,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             var $modalDiv = $(document.createElement("div"));
             $modalDiv.attr("data-bind", "template: 'graph_configuration_modal'");
 
-            $modalDiv.koApplyBindings(graphViewModelCopy);
+            $modalDiv.koApplyBindings(graphViewCopy);
 
             var $modal = $modalDiv.find('.modal');
             $modal.appendTo('body');
@@ -57,7 +57,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             });
         };
         self.setName = function(name) {
-            self.graphViewModel.graphDisplayName(name);
+            self.graphView.graphDisplayName(name);
         };
 
         self.ui.koApplyBindings(self);
@@ -69,7 +69,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
          * @returns {{}}
          */
         self.val = function() {
-            var graphViewModelAsPOJS = ko.toJS(self.graphViewModel);
+            var graphViewAsPOJS = ko.toJS(self.graphView);
             var ret = {};
 
             /**
@@ -88,9 +88,9 @@ hqDefine('app_manager/js/details/graph_config', function() {
                 return ret;
             };
 
-            ret.graph_name = graphViewModelAsPOJS.graphDisplayName;
-            ret.graph_type = graphViewModelAsPOJS.selectedGraphType;
-            ret.series = _.map(graphViewModelAsPOJS.series, function(s) {
+            ret.graph_name = graphViewAsPOJS.graphDisplayName;
+            ret.graph_type = graphViewAsPOJS.selectedGraphType;
+            ret.series = _.map(graphViewAsPOJS.series, function(s) {
                 var series = {};
                 // Only take the keys from the series that we care about
                 series.data_path = s.dataPath;
@@ -113,18 +113,18 @@ hqDefine('app_manager/js/details/graph_config', function() {
                 }, {});
                 return series;
             });
-            ret.annotations = _.map(graphViewModelAsPOJS.annotations, function(obj) {
+            ret.annotations = _.map(graphViewAsPOJS.annotations, function(obj) {
                 obj.display_text = omitNulls(obj.values);
                 delete obj.displayText;
                 return obj;
             });
             ret.locale_specific_config = _.reduce(
-                graphViewModelAsPOJS.axisTitleConfigurations,
+                graphViewAsPOJS.axisTitleConfigurations,
                 function(memo, conf) {
                     memo[conf.property] = omitNulls(conf.values);
                     return memo;
                 }, {});
-            ret.config = _.reduce(graphViewModelAsPOJS.configPairs, function(memo, pair) {
+            ret.config = _.reduce(graphViewAsPOJS.configPairs, function(memo, pair) {
                 memo[pair.property] = pair.value;
                 return memo;
             }, {});
@@ -133,7 +133,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
 
         /**
          * Returns an object in in the same form as that returned by
-         * ko.toJS(GraphViewModel_instance).
+         * ko.toJS(graphViewModel_instance).
          * @param serverGraphObject
          * An object in the form returned of that returned by self.val(). That is,
          * in the same form as the the graph configuration saved in couch.
@@ -142,10 +142,10 @@ hqDefine('app_manager/js/details/graph_config', function() {
          * langs, childCaseTypes, and fixtures.
          * @returns {{}}
          */
-        function getGraphViewModelJS(serverGraphObject, moduleOptions) {
+        function getGraphViewJS(serverGraphObject, moduleOptions) {
             // This line is needed because old Columns that don't have a
             // graph_configuration will still call:
-            //      this.graph_extra = new GraphConfigurationUiElement(..., this.original.graph_configuration)
+            //      this.graph_extra = graphConfigurationUiElement(..., this.original.graph_configuration)
             serverGraphObject = serverGraphObject || {};
             var ret = {};
 
@@ -210,15 +210,17 @@ hqDefine('app_manager/js/details/graph_config', function() {
 
             return ret;
         }
+
+        return self;
     };
 
     // private
-    var PairConfiguration = function(original) {
-        var self = this;
+    var pairConfiguration = function(original) {
+        var self = {};
         original = original || {};
 
         self.configPairs = ko.observableArray(_.map(original.configPairs || [], function(pair) {
-            return new ConfigPropertyValuePair(pair);
+            return configPropertyValuePair(pair);
         }));
         self.configPropertyOptions = [];
         self.configPropertyHints = {};
@@ -227,23 +229,27 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.configPairs.remove(configPair);
         };
         self.addConfigPair = function() {
-            self.configPairs.push(new ConfigPropertyValuePair());
+            self.configPairs.push(configPropertyValuePair());
         };
+
+        return self;
     };
 
     // private
-    var ConfigPropertyValuePair = function(original) {
-        var self = this;
+    var configPropertyValuePair = function(original) {
+        var self = {};
         original = original || {};
 
         self.property = ko.observable(original.property === undefined ? "" : original.property);
         self.value = ko.observable(original.value === undefined ? "" : original.value);
+
+        return self;
     };
 
     // private
     // TODO: Rename values to value (throughout the stack) to maintain consistency with enums!!
-    var LocalizableValue = function(original) {
-        var self = this;
+    var localizableValue = function(original) {
+        var self = {};
         original = original || {};
 
         // These values should always be provided
@@ -288,24 +294,24 @@ hqDefine('app_manager/js/details/graph_config', function() {
             }
             return backup;
         };
+
+        return self;
     };
 
     // private
-    var LocalizedConfigPropertyValuePair = function(original) {
-        LocalizableValue.apply(this, [original]);
-        var self = this;
+    var localizedConfigPropertyValuePair = function(original) {
+        var self = localizableValue(original);
         original = original || {};
 
         // This should always be provided
         self.property = original.property;
+
+        return self;
     };
-    LocalizedConfigPropertyValuePair.prototype = new LocalizableValue();
-    LocalizedConfigPropertyValuePair.prototype.constructor = LocalizedConfigPropertyValuePair;
 
     // private
-    var GraphViewModel = function(moduleOptions) {
-        PairConfiguration.apply(this);
-        var self = this;
+    var graphViewModel = function(moduleOptions) {
+        var self = pairConfiguration();
         moduleOptions = moduleOptions || {};
 
         self.lang = moduleOptions.lang;
@@ -320,7 +326,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             // If you add to this list, don't forget to update theOrder in populate() (I know this is gross)
             ['x-title', 'y-title', 'secondary-y-title'],
             function(s) {
-                return new LocalizedConfigPropertyValuePair({
+                return localizedConfigPropertyValuePair({
                     'property': s,
                     'lang': self.lang,
                     'langs': self.langs,
@@ -380,10 +386,10 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.lang = moduleOptions.lang;
         self.langs = moduleOptions.langs;
 
-        self.selectedGraphType.subscribe(function(newValue) {
+        self.selectedGraphType.subscribe(function() {
             // Recreate the series objects to be of the correct type.
             self.series(_.map(self.series(), function(series) {
-                return new(self.getSeriesConstructor())(ko.toJS(series), self.childCaseTypes, self.fixtures, self.lang, self.langs);
+                return self.createSeries(ko.toJS(series), self.childCaseTypes, self.fixtures, self.lang, self.langs);
             }));
         });
 
@@ -391,15 +397,15 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.graphDisplayName(obj.graphDisplayName);
             self.selectedGraphType(obj.selectedGraphType);
             self.series(_.map(obj.series, function(o) {
-                return new(self.getSeriesConstructor())(o, self.childCaseTypes, self.fixtures, self.lang, self.langs);
+                return self.createSeries(o, self.childCaseTypes, self.fixtures, self.lang, self.langs);
             }));
             self.annotations(_.map(obj.annotations, function(o) {
-                return new Annotation(o);
+                return annotation(o);
             }));
 
             if (obj.axisTitleConfigurations.length !== 0) {
                 self.axisTitleConfigurations(_.map(obj.axisTitleConfigurations, function(o) {
-                    return new LocalizedConfigPropertyValuePair(o);
+                    return localizedConfigPropertyValuePair(o);
                 }));
             }
             // This is dumb:
@@ -414,7 +420,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
             });
 
             self.configPairs(_.map(obj.configPairs, function(pair) {
-                return new ConfigPropertyValuePair(pair);
+                return configPropertyValuePair(pair);
             }));
 
             self.childCaseTypes = obj.childCaseTypes.slice(0);
@@ -424,23 +430,23 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.removeSeries = function(series) {
             self.series.remove(series);
         };
-        self.addSeries = function(series) {
-            self.series.push(new(self.getSeriesConstructor())({}, self.childCaseTypes, self.fixtures, self.lang, self.langs));
+        self.addSeries = function() {
+            self.series.push(self.createSeries({}, self.childCaseTypes, self.fixtures, self.lang, self.langs));
         };
         /**
          * Return the proper Series object constructor based on the current state
          * of the view model.
          */
-        self.getSeriesConstructor = function() {
+        self.createSeries = function() {
             if (!_.contains(self.availableGraphTypes(), self.selectedGraphType())) {
-                throw "Invalid selectedGraphType";
+                throw new Error("Invalid selectedGraphType: " + self.selectedGraphType());
             }
             if (self.selectedGraphType() === "bubble") {
-                return BubbleGraphSeries;
+                return bubbleGraphSeries.apply(undefined, arguments);
             } else if (self.selectedGraphType() === "bar") {
-                return BarGraphSeries;
+                return barGraphSeries.apply(undefined, arguments);
             } else {
-                return XYGraphSeries;
+                return xyGraphSeries.apply(undefined, arguments);
             }
         };
 
@@ -448,30 +454,29 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.annotations.remove(annotation);
         };
         self.addAnnotation = function() {
-            self.annotations.push(new Annotation({
+            self.annotations.push(annotation({
                 lang: self.lang,
                 langs: self.langs,
             }));
         };
+
+        return self;
     };
-    GraphViewModel.prototype = new PairConfiguration();
 
     // private
-    var Annotation = function(original) {
-        LocalizableValue.apply(this, [original]);
-        var self = this;
+    var annotation = function(original) {
+        var self = localizableValue(original);
         original = original || {};
 
         self.x = ko.observable(original.x === undefined ? undefined : original.x);
         self.y = ko.observable(original.y === undefined ? undefined : original.y);
+
+        return self;
     };
-    Annotation.prototype = new LocalizableValue();
-    Annotation.prototype.constructor = Annotation;
 
     // private
-    var GraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
-        PairConfiguration.apply(this, [original]);
-        var self = this;
+    var graphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
+        var self = pairConfiguration(original);
         original = original || {};
         childCaseTypes = childCaseTypes || [];
         fixtures = fixtures || [];
@@ -493,11 +498,11 @@ hqDefine('app_manager/js/details/graph_config', function() {
          * @returns {string}
          */
         self.getDefaultDataPath = function(source) {
-            if (source.type == "custom") {
+            if (source.type === "custom") {
                 return "instance('name')/root/path-to-point/point";
-            } else if (source.type == 'case') {
+            } else if (source.type === 'case') {
                 return "instance('casedb')/casedb/case[@case_type='" + source.name + "'][@status='open'][index/parent=current()/@case_id]";
-            } else if (source.type == 'fixture') {
+            } else if (source.type === 'fixture') {
                 return "instance('" + self.getFixtureInstanceId(source.name) + "')/" + source.name + "_list/" + source.name;
             }
         };
@@ -609,7 +614,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         self.localeSpecificConfigurations = ko.observableArray(_.map(
             ['name', 'x-name'],
             function(s) {
-                return new LocalizedConfigPropertyValuePair({
+                return localizedConfigPropertyValuePair({
                     'property': s,
                     'lang': self.lang,
                     'langs': self.langs,
@@ -618,7 +623,7 @@ hqDefine('app_manager/js/details/graph_config', function() {
         ));
         if (original.localeSpecificConfigurations && original.localeSpecificConfigurations.length !== 0) {
             self.localeSpecificConfigurations(_.map(original.localeSpecificConfigurations, function(o) {
-                return new LocalizedConfigPropertyValuePair(o);
+                return localizedConfigPropertyValuePair(o);
             }));
         }
         self.localeSpecificConfigurations.sort();
@@ -627,54 +632,50 @@ hqDefine('app_manager/js/details/graph_config', function() {
             self.showDataPath(!self.showDataPath());
         };
         self.selectedSource.subscribe(function(newValue) {
-            if (newValue.value == "custom") {
+            if (newValue.value === "custom") {
                 self.showDataPath(true);
             }
             self.dataPath(self.getDefaultDataPath(newValue.value));
         });
+
+        return self;
     };
-    GraphSeries.prototype = new PairConfiguration();
-    GraphSeries.prototype.constructor = GraphSeries;
 
     // private
-    var XYGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
-        var self = this;
+    var xyGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
+        var self = graphSeries(original, childCaseTypes, fixtures, lang, langs);
         self.configPropertyOptions = self.configPropertyOptions.concat(['is-data', 'point-style', 'secondary-y']);
         self.configPropertyHints['is-data'] = 'true() or false()';
         // triangle-up and triangle-down are also options
         self.configPropertyHints['point-style'] = "'none', 'circle', 'cross', 'diamond', ...";
         self.configPropertyHints['secondary-y'] = 'true() or false()';
+        return self;
     };
-    XYGraphSeries.prototype = new GraphSeries();
-    XYGraphSeries.constructor = XYGraphSeries;
 
     // private
-    var BarGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
-        GraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
-        var self = this;
+    var barGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
+        var self = graphSeries(original, childCaseTypes, fixtures, lang, langs);
 
         self.xLabel = "Label";
         self.yLabel = "Value";
         self.configPropertyOptions = self.configPropertyOptions.concat(['bar-color']);
         self.configPropertyHints['bar-color'] = "if(x > 100, '#55ff00ff', 'ffff00ff')";
+
+        return self;
     };
-    BarGraphSeries.prototype = new GraphSeries();
-    BarGraphSeries.constructor = BarGraphSeries;
 
     // private
-    var BubbleGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
-        XYGraphSeries.apply(this, [original, childCaseTypes, fixtures, lang, langs]);
-        var self = this;
+    var bubbleGraphSeries = function(original, childCaseTypes, fixtures, lang, langs) {
+        var self = xyGraphSeries(original, childCaseTypes, fixtures, lang, langs);
 
         self.radiusFunction = ko.observable(original.radiusFunction === undefined ? "" : original.radiusFunction);
         self.configPropertyOptions = self.configPropertyOptions.concat(['max-radius']);
         self.configPropertyHints['max-radius'] = 'ex: 7';
 
+        return self;
     };
-    BubbleGraphSeries.prototype = new GraphSeries();
-    BubbleGraphSeries.prototype.constructor = BubbleGraphSeries;
+
     return {
-        GraphConfigurationUiElement: GraphConfigurationUiElement,
+        graphConfigurationUiElement: graphConfigurationUiElement,
     };
 });

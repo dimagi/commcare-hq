@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.hqcase.utils import update_case
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.models import WORKFLOW_KEYWORD

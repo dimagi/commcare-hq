@@ -1,4 +1,5 @@
 {% if ANALYTICS_IDS.FULLSTORY_ID and not request.project.restrict_superusers %}
+{# This is fine as an inline script; it's independent of all HQ code and all third-party libraries #}
 <script>
         window['_fs_debug'] = false;
         window['_fs_host'] = 'www.fullstory.com';

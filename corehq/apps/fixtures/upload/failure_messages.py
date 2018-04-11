@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 
 
@@ -16,6 +17,9 @@ FAILURE_MESSAGES = {
     "duplicate_tag": ugettext_noop(
         "Lookup-tables should have unique 'table_id'. "
         "There are two rows with table_id '{tag}' in 'types' sheet."
+    ),
+    "invalid_table_id": ugettext_noop(
+        "table_id '{tag}' should not contain spaces or special characters, or start with a number."
     ),
     "has_no_field_column": ugettext_noop(
         "Excel-sheet '{tag}' does not contain the column 'field: {field}' "

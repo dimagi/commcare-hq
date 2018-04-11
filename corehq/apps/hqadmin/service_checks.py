@@ -3,12 +3,11 @@ A collection of functions which test the most basic operations of various servic
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple
 from io import BytesIO
+import attr
 import datetime
 import json
 import logging
-import time
 
 from django.core import cache
 from django.conf import settings
@@ -18,10 +17,12 @@ from django.db.utils import OperationalError
 from restkit import Resource
 from celery import Celery
 import requests
+
+from corehq.util.timer import TimingContext
 from soil import heartbeat
 
 from corehq.apps.hqadmin.escheck import check_es_cluster_health
-from corehq.apps.nimbus_api.utils import get_nimbus_url
+from corehq.apps.formplayer_api.utils import get_formplayer_url
 from corehq.apps.app_manager.models import Application
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.es import GroupES
@@ -31,7 +32,17 @@ from corehq.elastic import send_to_elasticsearch, refresh_elasticsearch_index
 from corehq.util.decorators import change_log_level
 from corehq.apps.hqadmin.utils import parse_celery_workers, parse_celery_pings
 
-ServiceStatus = namedtuple("ServiceStatus", "success msg")
+
+@attr.s
+class ServiceStatus(object):
+    success = attr.ib()
+    msg = attr.ib()
+    exception = attr.ib(default=None)
+    duration = attr.ib(default=None)
+
+
+class UnknownCheckException(Exception):
+    pass
 
 
 def check_redis():
@@ -201,7 +212,7 @@ def check_couch():
 
 def check_formplayer():
     try:
-        res = requests.get('{}/serverup'.format(get_nimbus_url()), timeout=5)
+        res = requests.get('{}/serverup'.format(get_formplayer_url()), timeout=5)
     except requests.exceptions.ConnectTimeout:
         return ServiceStatus(False, "Could not establish a connection in time")
     except requests.ConnectionError:
@@ -211,16 +222,67 @@ def check_formplayer():
         return ServiceStatus(res.ok, msg)
 
 
+def run_checks(checks_to_do):
+    statuses = []
+    with TimingContext() as timer:
+        for check_name in checks_to_do:
+            if check_name not in CHECKS:
+                raise UnknownCheckException(check_name)
+
+            check_info = CHECKS[check_name]
+            with timer(check_name):
+                try:
+                    status = check_info['check_func']()
+                except Exception as e:
+                    status = ServiceStatus(False, "{} raised an error".format(check_name), e)
+                status.duration = timer.peek().duration
+            statuses.append((check_name, status))
+    return statuses
+
+
 CHECKS = {
-    'kafka': check_kafka,
-    'redis': check_redis,
-    'postgres': check_postgres,
-    'couch': check_couch,
-    'celery': check_celery,
-    'heartbeat': check_heartbeat,
-    'touchforms': check_touchforms,
-    'elasticsearch': check_elasticsearch,
-    'blobdb': check_blobdb,
-    'formplayer': check_formplayer,
-    'rabbitmq': check_rabbitmq,
+    'kafka': {
+        "always_check": True,
+        "check_func": check_kafka,
+    },
+    'redis': {
+        "always_check": True,
+        "check_func": check_redis,
+    },
+    'postgres': {
+        "always_check": True,
+        "check_func": check_postgres,
+    },
+    'couch': {
+        "always_check": True,
+        "check_func": check_couch,
+    },
+    'celery': {
+        "always_check": True,
+        "check_func": check_celery,
+    },
+    'heartbeat': {
+        "always_check": False,
+        "check_func": check_heartbeat,
+    },
+    'touchforms': {
+        "always_check": True,
+        "check_func": check_touchforms,
+    },
+    'elasticsearch': {
+        "always_check": True,
+        "check_func": check_elasticsearch,
+    },
+    'blobdb': {
+        "always_check": True,
+        "check_func": check_blobdb,
+    },
+    'formplayer': {
+        "always_check": True,
+        "check_func": check_formplayer,
+    },
+    'rabbitmq': {
+        "always_check": True,
+        "check_func": check_rabbitmq,
+    },
 }

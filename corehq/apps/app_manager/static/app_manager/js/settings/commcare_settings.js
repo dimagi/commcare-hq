@@ -90,7 +90,7 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
                         }
                     }
                     function isInArray(array, search) {
-                        return (array.indexOf(search) >= 0) ? true : false;
+                        return (array.indexOf(search) >= 0);
                     }
                     if (results && results.length > 0) {
                         if (isInArray(results, true)) {
@@ -478,6 +478,10 @@ hqDefine('app_manager/js/settings/commcare_settings', function () {
 
     // text_input has the same behavior as a select widget but uses a different template
     CommcareSettings.widgets.text_input = CommcareSettings.widgets.select;
+
+    $(function() {
+        hqImport('app_manager/js/app_manager').setPrependedPageTitle(gettext("Settings"));
+    });
 
     return {
         CommcareSettings: CommcareSettings,

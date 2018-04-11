@@ -991,8 +991,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         import and return the python module corresponding to domain_name, or
         None if it doesn't exist.
         """
-        from corehq.apps.domain.utils import get_domain_module_map
-        module_name = get_domain_module_map().get(domain_name, domain_name)
+        module_name = settings.DOMAIN_MODULE_MAP.get(domain_name, domain_name)
 
         try:
             return import_module(module_name) if module_name else None

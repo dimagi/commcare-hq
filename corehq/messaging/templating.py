@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 from corehq.form_processor.utils import is_commcarecase
 from corehq.apps.groups.models import Group
@@ -30,6 +31,15 @@ def _get_mobile_user_template_info(user):
         'first_name': user.first_name,
         'last_name': user.last_name,
         'phone_number': user.default_phone_number or '',
+    }
+
+
+def _get_system_user_template_info():
+    return {
+        'name': 'System',
+        'first_name': 'System',
+        'last_name': '',
+        'phone_number': '',
     }
 
 
@@ -206,6 +216,10 @@ class CaseMessagingTemplateParam(SimpleDictTemplateParam):
         so we cache the result using a private attribute.
         """
         if self.__last_modified_by_result:
+            return self.__last_modified_by_result
+
+        if self.__case.modified_by == 'system':
+            self.__last_modified_by_result = SimpleDictTemplateParam(_get_system_user_template_info())
             return self.__last_modified_by_result
 
         try:

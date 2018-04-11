@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 
 from celery.task import task
@@ -166,3 +167,16 @@ def import_locations_async(domain, file_ref_id):
     return {
         'messages': results
     }
+
+
+@task
+def update_users_at_locations(location_ids):
+    """
+    Update location fixtures for users given locations
+    """
+    from corehq.apps.users.models import update_fixture_status_for_users
+    from corehq.apps.locations.dbaccessors import user_ids_at_locations
+    from corehq.apps.fixtures.models import UserFixtureType
+
+    user_ids = user_ids_at_locations(location_ids)
+    update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)

@@ -24,6 +24,7 @@ published on the exchange, but those are quite infrequent.
 """
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -76,6 +77,7 @@ from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
 from corehq.util.quickcache import quickcache
+from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
 from django_prbac.exceptions import PermissionDenied
@@ -1179,7 +1181,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1197,7 +1199,7 @@ class FormBase(DocumentSchema):
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
-                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1230,7 +1232,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1441,12 +1443,20 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @classmethod
     def wrap(cls, data):
-        # ToDo - Remove after migration
+        # Lazy migration from single-language media to localizable media
         for media_attr in ('media_image', 'media_audio'):
             old_media = data.get(media_attr, None)
-            if old_media and isinstance(old_media, six.string_types):
-                new_media = {'default': old_media}
-                data[media_attr] = new_media
+            if old_media:
+                # Single-language media was stored in a plain string.
+                # Convert this to a dict, using a dummy key because we
+                # don't know the app's supported or default lang yet.
+                if isinstance(old_media, six.string_types):
+                    new_media = {'default': old_media}
+                    data[media_attr] = new_media
+                elif isinstance(old_media, dict):
+                    # Once the media has localized data, discard the dummy key
+                    if 'default' in old_media and len(old_media) > 1:
+                        old_media.pop('default')
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
@@ -1477,13 +1487,27 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
     @property
     def default_media_image(self):
-        # For older apps that were migrated
-        return self.icon_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_image')
+        return self.icon_by_language('')
 
     @property
     def default_media_audio(self):
-        # For older apps that were migrated
-        return self.audio_by_language('default')
+        # For older apps that were migrated: just return the first available item
+        self._assert_unexpected_default_media_call('media_audio')
+        return self.audio_by_language('')
+
+    def _assert_unexpected_default_media_call(self, media_attr):
+        assert media_attr in ('media_image', 'media_audio')
+        media = getattr(self, media_attr)
+        if isinstance(media, dict) and list(media) == ['default']:
+            from corehq.util.view_utils import get_request
+            request = get_request()
+            url = ''
+            if request:
+                url = request.META.get('HTTP_REFERER')
+            _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
+            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
@@ -1942,16 +1966,16 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
+            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return u'k{key}'.format(key=self.key)
+            return 'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return u"{condition}".format(condition=condition)
+            return "{condition}".format(condition=condition)
         else:
-            return u"{property} = '{key}'".format(
+            return "{property} = '{key}'".format(
                 property=property,
                 key=self.key
             )
@@ -2820,7 +2844,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in six.iteritems(by_type):
-            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+            action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
 
@@ -3178,7 +3202,7 @@ class ShadowForm(AdvancedForm):
 
     def get_shadow_parent_options(self):
         options = [
-            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
@@ -4312,7 +4336,7 @@ class LazyBlobDoc(BlobMixin):
         return self
 
     def __attachment_cache_key(self, name):
-        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+        return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
     def __set_cached_attachment(self, name, content, timeout=60*60*24):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
@@ -4958,7 +4982,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if self.build_version < '2.8':
+        if not self.build_version or self.build_version < LooseVersion('2.8'):
             settings['Build-Number'] = self.version
         return settings
 
@@ -5555,7 +5579,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.master_id,
             'name': self.name,
-            'descriptor': u"Profile File",
+            'descriptor': "Profile File",
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
@@ -5710,7 +5734,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -6063,7 +6087,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if self.build_version < yaml_setting.get("since", "0"):
+        if not self.build_version or self.build_version < LooseVersion(yaml_setting.get("since", "0")):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting

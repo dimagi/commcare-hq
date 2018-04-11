@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import csv
 import os
 from celery.schedules import crontab
@@ -87,7 +88,7 @@ def _track_on_hubspot(webuser, properties):
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
         _hubspot_post(
-            url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 six.moves.urllib.parse.quote(webuser.get_email())
             ),
             data=json.dumps(
@@ -101,7 +102,7 @@ def _track_on_hubspot(webuser, properties):
 def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
-        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+        url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
             six.moves.urllib.parse.quote(email)
         ),
         data=json.dumps(
@@ -119,7 +120,7 @@ def set_analytics_opt_out(webuser, analytics_enabled):
     (ironically) ignore the analytics_enabled flag.
     """
     _hubspot_post(
-        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+        url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
             six.moves.urllib.parse.quote(webuser.get_email())
         ),
         data=json.dumps(
@@ -148,7 +149,7 @@ def batch_track_on_hubspot(users_json):
     ]
     :return:
     """
-    _hubspot_post(url=u'https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
+    _hubspot_post(url='https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
 
 
 def _hubspot_post(url, data):
@@ -178,7 +179,7 @@ def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key and webuser.analytics_enabled:
         req = requests.get(
-            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+            "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 six.moves.urllib.parse.quote(webuser.username)
             ),
             params={'hapikey': api_key},
@@ -199,7 +200,7 @@ def _get_client_ip(meta):
     return ip
 
 
-def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, email=False):
+def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=None, email=False):
     """
     This sends hubspot the user's first and last names and tracks everything they did
     up until the point they signed up.
@@ -210,9 +211,8 @@ def _send_form_to_hubspot(form_id, webuser, cookies, meta, extra_fields=None, em
         return
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
-    hubspot_cookie = cookies.get(HUBSPOT_COOKIE)
     if hubspot_id and hubspot_cookie:
-        url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
             hubspot_id=hubspot_id,
             form_id=form_id
         )
@@ -245,7 +245,7 @@ def update_hubspot_properties(webuser, properties):
 
 
 @analytics_task()
-def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     from corehq.apps.registration.views import ProcessRegistrationView
     if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
@@ -263,8 +263,8 @@ def track_user_sign_in_on_hubspot(webuser, cookies, meta, path):
             })
         tracking_dict.update(get_ab_test_properties(webuser))
         _track_on_hubspot(webuser, tracking_dict)
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, cookies, meta)
-    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, cookies, meta)
+        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
+    _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
 @analytics_task()
@@ -300,19 +300,19 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES, meta)
+        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, cookies, meta):
-    _send_form_to_hubspot(form_id, web_user, cookies, meta)
+def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
 
 @analytics_task()
-def track_clicked_deploy_on_hubspot(webuser, cookies, meta):
+def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
     ab = {
         'a_b_variable_deploy': 'A' if deterministic_random(webuser.username + 'a_b_variable_deploy') > 0.5 else 'B',
     }
-    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, cookies, meta, extra_fields=ab)
+    _send_form_to_hubspot(HUBSPOT_CLICKED_DEPLOY_FORM_ID, webuser, hubspot_cookie, meta, extra_fields=ab)
 
 
 @analytics_task()
@@ -324,13 +324,7 @@ def track_job_candidate_on_hubspot(user_email):
 
 
 @analytics_task()
-def track_saved_app_on_hubspot(couchuser, cookies, meta):
-    if couchuser.is_web_user():
-        _send_form_to_hubspot(HUBSPOT_SAVED_APP_FORM_ID, couchuser, cookies, meta)
-
-
-@analytics_task()
-def track_clicked_signup_on_hubspot(email, cookies, meta):
+def track_clicked_signup_on_hubspot(email, hubspot_cookie, meta):
     data = {'lifecyclestage': 'subscriber'}
     number = deterministic_random(email + 'a_b_test_variable_newsletter')
     if number < 0.33:
@@ -340,7 +334,10 @@ def track_clicked_signup_on_hubspot(email, cookies, meta):
     else:
         data['a_b_test_variable_newsletter'] = 'C'
     if email:
-        _send_form_to_hubspot(HUBSPOT_CLICKED_SIGNUP_FORM, None, cookies, meta, extra_fields=data, email=email)
+        _send_form_to_hubspot(
+            HUBSPOT_CLICKED_SIGNUP_FORM, None, hubspot_cookie,
+            meta, extra_fields=data, email=email
+        )
 
 
 def track_workflow(email, event, properties=None):
@@ -409,7 +406,7 @@ def track_periodic_data():
     users_to_domains = (UserES().web_users()
                         .last_logged_in(gte=six_months_ago).source(['domains', 'email', 'date_joined'])
                         .analytics_enabled()
-                        .scroll())
+                        .run().hits)
     # users_to_domains is a list of dicts
     domains_to_forms = FormES().terms_aggregation('domain', 'domain').size(0).run()\
         .aggregations.domain.counts_by_bucket()
@@ -524,7 +521,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         except requests.exceptions.HTTPError as e:
             _hubspot_failure_soft_assert(False, e.response.content)
         except Exception as e:
-            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
+            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.signals import user_logged_in
 from corehq.apps.accounting.utils import ensure_domain_instance
@@ -163,4 +164,4 @@ def track_user_login(sender, request, user, **kwargs):
                 return
 
         meta = get_meta(request)
-        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES, meta, request.path)
+        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)

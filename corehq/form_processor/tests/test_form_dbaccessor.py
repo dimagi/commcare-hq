@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from datetime import datetime
 
@@ -349,6 +350,22 @@ class FormAccessorTestsSQL(TestCase):
         self.assertEqual(XFormInstanceSQL.ERROR, saved_form.state)
         self.assertEqual(problem, saved_form.problem)
         self.assertEqual(original_domain, saved_form.domain)
+
+    def test_update_form(self):
+        form = create_form_for_test(DOMAIN)
+        form.user_id = 'user2'
+        operation_date = datetime.utcnow()
+        form.track_create(XFormOperationSQL(
+            user_id='user2',
+            date=operation_date,
+            operation=XFormOperationSQL.EDIT
+        ))
+        FormAccessorSQL.update_form(form)
+
+        saved_form = FormAccessorSQL.get_form(form.form_id)
+        self.assertEqual('user2', saved_form.user_id)
+        self.assertEqual(1, len(saved_form.history))
+        self.assertEqual(operation_date, saved_form.history[0].date)
 
     def _validate_deprecation(self, existing_form, new_form):
         saved_new_form = FormAccessorSQL.get_form(new_form.form_id)

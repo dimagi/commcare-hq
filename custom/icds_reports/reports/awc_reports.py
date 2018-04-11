@@ -236,7 +236,7 @@ def get_awc_reports_pse(config, month, domain, show_test=False):
 
             tmp_image.append({
                 'id': idx,
-                'image': absolute_reverse('api_form_attachment', args=(domain, doc_id, image_name)),
+                'image': absolute_reverse('icds_image_accessor', args=(domain, doc_id, image_name)),
                 'date': date_str
             })
         else:

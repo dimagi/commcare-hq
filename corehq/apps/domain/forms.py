@@ -785,8 +785,7 @@ class PrivacySecurityForm(forms.Form):
     two_factor_auth = BooleanField(
         label=ugettext_lazy("Two Factor Authentication"),
         required=False,
-        help_text=ugettext_lazy("All web users on this project will be required to enable two factor "
-                                "authentication")
+        help_text=ugettext_lazy("All users on this project will be required to enable two factor authentication")
     )
     strong_mobile_passwords = BooleanField(
         label=ugettext_lazy("Require Strong Passwords for Mobile Workers"),
@@ -1607,7 +1606,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         adjustment_method=SubscriptionAdjustmentMethod.USER,
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
-                        skip_auto_downgrade=False,
                         do_not_invoice=False,
                         no_invoice_reason='',
                         date_delay_invoicing=None,
@@ -1620,7 +1618,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         service_type=SubscriptionType.PRODUCT,
                         pro_bono_status=ProBonoStatus.NO,
                         funding_source=FundingSource.CLIENT,
-                        skip_auto_downgrade=False,
                     )
                 return True
         except Exception as e:
@@ -1869,7 +1866,6 @@ class InternalSubscriptionManagementForm(forms.Form):
     def subscription_default_fields(self):
         return {
             'internal_change': True,
-            'skip_auto_downgrade': False,
             'web_user': self.web_user,
         }
 

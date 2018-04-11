@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.case_importer.tracking.filestorage import transient_file_store, persistent_file_store
 from corehq.util.files import file_extention_from_filename

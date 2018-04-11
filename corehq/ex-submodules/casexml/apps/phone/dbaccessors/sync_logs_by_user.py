@@ -1,55 +1,19 @@
 from __future__ import absolute_import
-from datetime import date
-from casexml.apps.phone.exceptions import CouldNotRetrieveSyncLogIds
-from casexml.apps.phone.models import SyncLog, properly_wrap_sync_log
-from restkit.errors import RequestFailed
-from six.moves import range
+from __future__ import unicode_literals
+from casexml.apps.phone.models import SyncLogSQL, properly_wrap_sync_log
 
 
 def get_last_synclog_for_user(user_id):
-    result = SyncLog.view(
-        "phone/sync_logs_by_user",
-        startkey=[user_id, {}],
-        endkey=[user_id],
-        descending=True,
-        limit=1,
-        reduce=False,
-        include_docs=True,
-        wrap_doc=False
-    )
+    result = SyncLogSQL.objects.filter(user_id=user_id).order_by('date').last()
     if result:
-        row, = result
-        return properly_wrap_sync_log(row['doc'])
+        return properly_wrap_sync_log(result.doc)
 
 
-def get_synclogs_for_user(user_id, limit=10):
-    result = SyncLog.view(
-        "phone/sync_logs_by_user",
-        startkey=[user_id, {}],
-        endkey=[user_id],
-        descending=True,
-        limit=limit,
-        reduce=False,
-        include_docs=True,
-        wrap_doc=False
-    )
-    return result
+def get_synclogs_for_user(user_id, limit=10, wrap=True):
+    synclogs = SyncLogSQL.objects.filter(user_id=user_id).order_by('date')[:limit]
+    docs = [synclog.doc for synclog in synclogs]
 
-
-def get_synclog_ids_before_date(before_date, limit=1000, num_tries=10):
-    if isinstance(before_date, date):
-        before_date = before_date.strftime("%Y-%m-%d")
-
-    for i in range(num_tries):
-        try:
-            return [r['id'] for r in SyncLog.view(
-                "sync_logs_by_date/view",
-                endkey=[before_date],
-                limit=limit,
-                reduce=False,
-                include_docs=False
-            )]
-        except RequestFailed:
-            pass
-
-    raise CouldNotRetrieveSyncLogIds()
+    if wrap:
+        return [properly_wrap_sync_log(doc) for doc in docs]
+    else:
+        return [doc for doc in docs]

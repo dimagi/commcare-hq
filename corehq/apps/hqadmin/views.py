@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import itertools
 import six.moves.html_parser
 import json
 import socket
@@ -57,6 +59,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
+from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.ota.views import get_restore_response, get_restore_params
@@ -105,6 +108,7 @@ from .models import HqDeploy
 from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from .utils import get_celery_stats
 import six
+from six.moves import filter
 
 
 @require_superuser
@@ -343,18 +347,19 @@ def system_ajax(request):
 @require_superuser_or_developer
 def check_services(request):
 
-    def run_test(service_name, test):
-        try:
-            result = test()
-        except Exception as e:
+    def get_message(service_name, result):
+        if result.exception:
             status = "EXCEPTION"
-            msg = repr(e)
+            msg = repr(result.exception)
         else:
             status = "SUCCESS" if result.success else "FAILURE"
             msg = result.msg
-        return "{} {}: {}<br/>".format(status, service_name, msg)
+        return "{} (Took {:6.2f}s) {:15}: {}<br/>".format(status, result.duration, service_name, msg)
 
-    results = [run_test(service_name, test) for service_name, test in service_checks.CHECKS.items()]
+    statuses = run_checks(list(service_checks.CHECKS))
+    results = [
+        get_message(name, status) for name, status in statuses
+    ]
     return HttpResponse("<pre>" + "".join(results) + "</pre>")
 
 
@@ -512,22 +517,30 @@ class AdminRestoreView(TemplateView):
         response, timing_context = self._get_restore_response()
         timing_context = timing_context or TimingContext(self.user.username)
         if isinstance(response, StreamingHttpResponse):
-            string_payload = ''.join(response.streaming_content)
+            string_payload = b''.join(response.streaming_content)
             xml_payload = etree.fromstring(string_payload)
             restore_id_element = xml_payload.find('{{{0}}}Sync/{{{0}}}restore_id'.format(SYNC_XMLNS))
             cases = xml_payload.findall('{http://commcarehq.org/case/transaction/v2}case')
             num_cases = len(cases)
-            case_type_counts = dict(Counter(
-                case.find(
-                    '{http://commcarehq.org/case/transaction/v2}create/'
-                    '{http://commcarehq.org/case/transaction/v2}case_type'
-                ).text for case in cases
-            ))
+
+            create_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}create/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            update_case_type = filter(None, [case.find(
+                '{http://commcarehq.org/case/transaction/v2}update/'
+                '{http://commcarehq.org/case/transaction/v2}case_type'
+            ) for case in cases])
+            case_type_counts = dict(Counter([
+                case.type for case in itertools.chain(create_case_type, update_case_type)
+            ]))
+
             locations = xml_payload.findall(
                 "{{{0}}}fixture[@id='locations']/{{{0}}}locations/{{{0}}}location".format(RESPONSE_XMLNS)
             )
             num_locations = len(locations)
             location_type_counts = dict(Counter(location.attrib['type'] for location in locations))
+
             reports = xml_payload.findall(
                 "{{{0}}}fixture[@id='commcare:reports']/{{{0}}}reports/".format(RESPONSE_XMLNS)
             )
@@ -537,6 +550,7 @@ class AdminRestoreView(TemplateView):
                 for report in reports
                 if 'report_id' in report.attrib
             }
+
             num_ledger_entries = len(xml_payload.findall(
                 "{{{0}}}balance/{{{0}}}entry".format(COMMTRACK_REPORT_XMLNS)
             ))
@@ -1209,7 +1223,6 @@ def _get_submodules():
     """
     returns something like
     ['corehq/apps/hqmedia/static/hqmedia/MediaUploader',
-     'corehq/apps/prelogin',
      'submodules/auditcare-src',
      ...]
     """

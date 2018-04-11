@@ -3,6 +3,7 @@ Some of these constants correspond to constants set in corehq/apps/export/static
 so if changing a value, ensure that both places reflect the change
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchexport.deid import (
     deid_ID,
     deid_date

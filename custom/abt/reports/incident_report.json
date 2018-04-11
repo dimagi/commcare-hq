@@ -11,7 +11,9 @@
     "airsbenin",
     "airsmozambique",
     "airskenya",
-    "airs-testing"
+    "airs-testing",
+    "vectorlink-benin",
+    "vectorlink-uganda"
   ],
   "data_source_table": "supervisory-005",
   "report_id": "incident-report",

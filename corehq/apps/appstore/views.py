@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from datetime import date
 from six.moves.urllib.parse import urlencode

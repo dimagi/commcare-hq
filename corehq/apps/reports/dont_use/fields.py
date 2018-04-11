@@ -23,7 +23,7 @@ class ReportField(object):
     def __init__(self, request, domain=None, timezone=pytz.utc, parent_report=None,
                  css_label=None, css_field=None):
         warnings.warn(
-            "ReportField (%s) is deprecated. Use ReportFilter instead." % (
+            "ReportField (%s) is deprecated." % (
                 self.__class__.__name__
             ),
             DeprecationWarning,

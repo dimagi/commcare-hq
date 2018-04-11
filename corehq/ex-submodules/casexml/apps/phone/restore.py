@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import logging
 import os
 import shutil
 import tempfile
+import uuid
 from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
@@ -14,13 +16,12 @@ from xml.etree import cElementTree as ElementTree
 import six
 from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
-from couchdbkit import ResourceNotFound
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
-    MissingSyncLog, InvalidSyncLogException, SyncLogUserMismatch,
+    InvalidSyncLogException, SyncLogUserMismatch,
     BadStateException, RestoreException
 )
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
@@ -31,13 +32,11 @@ from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
 from memoized import memoized
-from dimagi.utils.parsing import json_format_datetime
 from casexml.apps.phone.models import (
     get_properly_wrapped_sync_log,
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
-    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -377,13 +376,11 @@ class RestoreState(object):
     def last_sync_log(self):
         if self._last_sync_log is Ellipsis:
             if self.params.sync_log_id:
-                try:
-                    sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
-                except ResourceNotFound:
-                    # if we are in loose mode, return an HTTP 412 so that the phone will
-                    # just force a fresh sync
-                    raise MissingSyncLog('No sync log with ID {} found'.format(self.params.sync_log_id))
-                if sync_log.doc_type != 'SyncLog':
+                # if we are in loose mode, return an HTTP 412 so that the phone will
+                # just force a fresh sync
+                # This raises MissingSyncLog exception if synclog not found
+                sync_log = get_properly_wrapped_sync_log(self.params.sync_log_id)
+                if sync_log.doc_type not in ('SyncLog', 'SimplifiedSyncLog'):
                     raise InvalidSyncLogException('Bad sync log doc type for {}'.format(self.params.sync_log_id))
                 elif sync_log.user_id != self.restore_user.user_id:
                     raise SyncLogUserMismatch('Sync log {} does not match user id {} (was {})'.format(
@@ -439,19 +436,16 @@ class RestoreState(object):
 
     def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
-        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
-        last_seq = str(get_db().info()["update_seq"])
         new_synclog = SimplifiedSyncLog(
-            _id=SyncLog.get_db().server.next_uuid(),
+            _id=uuid.uuid1().hex.lower(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
-            last_seq=last_seq,
             owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id,
-            previous_log_rev=previous_log_rev,
             extensions_checked=True,
+            device_id=self.params.device_id,
         )
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY
@@ -558,8 +552,8 @@ class RestoreConfig(object):
 
         cached_response = self.get_cached_response()
         tags = [
-            u'domain:{}'.format(self.domain),
-            u'is_initial:{}'.format(not bool(self.sync_log)),
+            'domain:{}'.format(self.domain),
+            'is_initial:{}'.format(not bool(self.sync_log)),
         ]
         if cached_response:
             datadog_counter('commcare.restores.cache_hits.count', tags=tags)
@@ -712,12 +706,12 @@ class RestoreConfig(object):
             )
         is_webapps = device_id and device_id.startswith("WebAppsLogin")
         tags = [
-            u'status_code:{}'.format(status),
-            u'device_type:{}'.format('webapps' if is_webapps else 'other'),
+            'status_code:{}'.format(status),
+            'device_type:{}'.format('webapps' if is_webapps else 'other'),
         ]
         env = settings.SERVER_ENVIRONMENT
         if (env, self.domain) in settings.RESTORE_TIMING_DOMAINS:
-            tags.append(u'domain:{}'.format(self.domain))
+            tags.append('domain:{}'.format(self.domain))
         if timing is not None:
             timer_buckets = (5, 20, 60, 120)
             for timer in timing.to_list(exclude_root=True):

@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
 import inspect
 from datetime import datetime
@@ -22,7 +21,6 @@ from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -83,32 +81,9 @@ import six
 from six.moves import range
 from six.moves import map
 
-debug_save_logger = logging.getLogger('debug_user_save')
-
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
-
-
-def log_user_save(type_, doc):
-    """function to log a user save event for debugging purposes"""
-    if debug_save_logger.isEnabledFor(logging.INFO):
-        try:
-            caller = None
-            for tb in inspect.stack():
-                frame, filename, lineno, function, context, index = tb
-                if filename != __file__:
-                    caller = '%s:%s:%s' % (filename, lineno, function)
-                    break
-            req_path = ''
-            request = get_request()
-            if request:
-                req_path = request.path
-            debug_save_logger.info(
-                "%s,%s,%s,%s,%s", type_, doc['_id'], doc['_rev'], caller, req_path
-            )
-        except Exception:
-            debug_save_logger.exception('Error attempting to log user save')
 
 
 def _add_to_list(list, obj, default):
@@ -897,6 +872,12 @@ class DeviceIdLastUsed(DocumentSchema):
     def get_meta_for_app(self, app_id):
         return filter_by_app(self.app_meta, app_id)
 
+    def get_last_used_app_meta(self):
+        try:
+            return max(self.app_meta, key=lambda a: a.last_request)
+        except ValueError:
+            pass
+
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
@@ -949,6 +930,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     # this is the real list of devices
     devices = SchemaListProperty(DeviceIdLastUsed)
+    # most recent device with most recent app for easy reporting
+    last_device = SchemaProperty(DeviceIdLastUsed)
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
@@ -1481,7 +1464,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
-            log_user_save('bulk', doc)
         super(CouchUser, cls).save_docs(docs, **kwargs)
 
     bulk_save = save_docs
@@ -1489,7 +1471,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
-        log_user_save('single', self)
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -1893,10 +1874,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     def sql_location(self):
         from corehq.apps.locations.models import SQLLocation
         if self.location_id:
-            try:
-                return SQLLocation.objects.get(location_id=self.location_id)
-            except SQLLocation.DoesNotExist:
-                pass
+            return SQLLocation.objects.get_or_None(location_id=self.location_id)
         return None
 
     def get_location_ids(self, domain):
@@ -2174,16 +2152,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     @property
     def fixture_statuses(self):
         """Returns all of the last modified times for each fixture type"""
-        return self._get_fixture_statuses()
-
-    @quickcache(['self._id'], lambda _: settings.UNIT_TESTING)
-    def _get_fixture_statuses(self):
-        from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
-        last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
-                          for choice in UserFixtureType.CHOICES}
-        for fixture_status in UserFixtureStatus.objects.filter(user_id=self._id):
-            last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
-        return last_modifieds
+        return get_fixture_statuses(self._id)
 
     def fixture_status(self, fixture_type):
         try:
@@ -2203,7 +2172,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         if not new:
             user_fixture_sync.last_modified = now
             user_fixture_sync.save()
-        self._get_fixture_statuses.clear(self)
+        get_fixture_statuses.clear(self._id)
 
     def __repr__(self):
         return ("{class_name}(username={self.username!r})".format(
@@ -2235,16 +2204,34 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         device = self.get_device(device_id)
         if device:
+            do_update = False
             if when.date() > device.last_used.date():
+                do_update = True
+            elif device_app_meta:
+                existing_app_meta = device.get_meta_for_app(device_app_meta.app_id)
+                if not existing_app_meta:
+                    do_update = True
+                else:
+                    last_request = device_app_meta.last_request
+                    do_update = (
+                        last_request
+                        and existing_app_meta.last_request
+                        and last_request > existing_app_meta.last_request.date()
+                    )
+
+            if do_update:
                 device.last_used = when
                 device.update_meta(commcare_version, device_app_meta)
+
+                self.last_device = DeviceIdLastUsed.wrap(self.get_last_used_device().to_json())
+                meta = self.last_device.get_last_used_app_meta()
+                self.last_device.app_meta = [meta] if meta else []
                 return True
-            else:
-                return False
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
+            self.last_device = device
             return True
 
     def get_last_used_device(self):
@@ -2257,6 +2244,30 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         for device in self.devices:
             if device.device_id == device_id:
                 return device
+
+
+def update_fixture_status_for_users(user_ids, fixture_type):
+    from corehq.apps.fixtures.models import UserFixtureStatus
+    from dimagi.utils.chunked import chunked
+
+    now = datetime.utcnow()
+    for ids in chunked(user_ids, 50):
+        (UserFixtureStatus.objects
+         .filter(user_id__in=ids,
+                 fixture_type=fixture_type)
+         .update(last_modified=now))
+    for user_id in user_ids:
+        get_fixture_statuses.clear(user_id)
+
+
+@quickcache(['user_id'], skip_arg=lambda user_id: settings.UNIT_TESTING)
+def get_fixture_statuses(user_id):
+    from corehq.apps.fixtures.models import UserFixtureType, UserFixtureStatus
+    last_modifieds = {choice[0]: UserFixtureStatus.DEFAULT_LAST_MODIFIED
+                      for choice in UserFixtureType.CHOICES}
+    for fixture_status in UserFixtureStatus.objects.filter(user_id=user_id):
+        last_modifieds[fixture_status.fixture_type] = fixture_status.last_modified
+    return last_modifieds
 
 
 class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):

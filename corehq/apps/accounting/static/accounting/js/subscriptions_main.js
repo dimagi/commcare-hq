@@ -9,8 +9,8 @@ hqDefine('accounting/js/subscriptions_main', [
     widgets
 ) {
     $(function () {
-        var AsyncSelect2Handler = widgets.AsyncSelect2Handler;
-        var new_plan_version = new AsyncSelect2Handler('new_plan_version');
+        var asyncSelect2Handler = widgets.asyncSelect2Handler;
+        var new_plan_version = asyncSelect2Handler('new_plan_version');
         new_plan_version.init();
         new_plan_version.getAdditionalData = function () {
             return {

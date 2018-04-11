@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from xml.sax import saxutils
 from xml.etree import cElementTree as ElementTree
@@ -115,6 +116,17 @@ def get_registration_element(restore_user):
     root.append(safe_element("username", restore_user.username))
     root.append(safe_element("password", restore_user.password))
     root.append(safe_element("uuid", restore_user.user_id))
+    root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
+    root.append(get_data_element('user_data', restore_user.user_session_data))
+    return root
+
+
+def get_registration_element_for_case(restore_user, case_id):
+    root = safe_element("Registration")
+    root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
+    root.append(safe_element("username", restore_user.username))
+    root.append(safe_element("password", restore_user.password))
+    root.append(safe_element("uuid", case_id))
     root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
     root.append(get_data_element('user_data', restore_user.user_session_data))
     return root

@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import logging
 from copy import copy
 from datetime import datetime
@@ -20,6 +21,7 @@ from corehq.apps.app_manager.app_schemas.case_properties import ParentCaseProper
     get_case_properties
 
 from corehq.apps.reports.models import HQUserType
+from corehq.apps.userreports.app_manager.data_source_meta import get_form_indicator_data_type
 from corehq.blobs import get_blob_db
 from corehq.blobs.atomic import AtomicBlobs
 from corehq.blobs.exceptions import NotFound
@@ -155,6 +157,8 @@ class ExportItem(DocumentSchema):
     tag = StringProperty()
     last_occurrences = DictProperty()
     transform = StringProperty(choices=list(TRANSFORM_FUNCTIONS))
+    # this is not used by exports, but other things that use this schema (e.g. app-based UCRs)
+    datatype = StringProperty()
 
     # True if this item was inferred from different actions in HQ (i.e. case upload)
     # False if the item was found in the application structure
@@ -205,6 +209,7 @@ class ExportItem(DocumentSchema):
             path=_question_path_to_path_nodes(question['value'], repeats),
             label=question['label'],
             last_occurrences={app_id: app_version},
+            datatype=get_form_indicator_data_type(question['type'])
         )
 
     @classmethod
@@ -330,7 +335,7 @@ class ExportColumn(DocumentSchema):
             column = SplitExportColumn(**constructor_args)
         elif isinstance(item, CaseIndexItem):
             column = CaseIndexExportColumn(
-                help_text=_(u'The ID of the associated {} case type').format(item.case_type),
+                help_text=_('The ID of the associated {} case type').format(item.case_type),
                 **constructor_args
             )
         elif get_request_domain() and feature_previews.SPLIT_MULTISELECT_CASE_EXPORT.enabled(get_request_domain()):
@@ -376,7 +381,7 @@ class ExportColumn(DocumentSchema):
 
     def get_headers(self, split_column=False):
         if self.is_deidentifed:
-            return [u"{} {}".format(self.label, "[sensitive]")]
+            return ["{} {}".format(self.label, "[sensitive]")]
         else:
             return [self.label]
 
@@ -940,7 +945,7 @@ class ExportInstance(BlobMixin, Document):
     def copy_export(self):
         export_json = self.to_json()
         del export_json['_id']
-        export_json['name'] = u'{} - Copy'.format(self.name)
+        export_json['name'] = '{} - Copy'.format(self.name)
         new_export = self.__class__.wrap(export_json)
         return new_export
 
@@ -1102,9 +1107,9 @@ class FormExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{} ({})'.format(
-            xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
-            datetime.now().strftime('%Y-%m-%d')
+        return _('{name} (created {date})').format(
+            name=xmlns_to_name(schema.domain, schema.xmlns, schema.app_id, separator=" - "),
+            date=datetime.now().strftime('%Y-%m-%d')
         )
 
     @staticmethod
@@ -1137,7 +1142,10 @@ class CaseExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'{}: {}'.format(schema.case_type, datetime.now().strftime('%Y-%m-%d'))
+        return _('{name} (created {date})').format(
+            name=schema.case_type,
+            date=datetime.now().strftime('%Y-%m-%d')
+        )
 
 
 class SMSExportInstanceDefaults(ExportInstanceDefaults):
@@ -1150,7 +1158,7 @@ class SMSExportInstanceDefaults(ExportInstanceDefaults):
 
     @staticmethod
     def get_default_instance_name(schema):
-        return u'Messages: {}'.format(datetime.now().strftime('%Y-%m-%d'))
+        return _('Messages (created {date})').format(date=datetime.now().strftime('%Y-%m-%d'))
 
 
 class ExportRow(object):
@@ -1770,7 +1778,7 @@ class FormExportDataSchema(ExportDataSchema):
         def _add_to_group_schema(path, label, transform=None):
             group_schema.items.append(ExportItem(
                 path=_question_path_to_path_nodes(path, repeats),
-                label=u'{}.{}'.format(label_prefix, label),
+                label='{}.{}'.format(label_prefix, label),
                 last_occurrences=group_schema.last_occurrences,
                 tag=PROPERTY_TAG_CASE,
                 transform=transform
@@ -1778,7 +1786,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         # Add case attributes
         for case_attribute in CASE_ATTRIBUTES:
-            path = u'{}/case/{}'.format(root_path, case_attribute)
+            path = '{}/case/{}'.format(root_path, case_attribute)
             _add_to_group_schema(path, case_attribute)
 
         # Add case updates
@@ -1795,18 +1803,18 @@ class FormExportDataSchema(ExportDataSchema):
                 path_suffix = case_path[len(repeat_context) + 1:]
             else:
                 path_suffix = case_property
-            path = u'{}/case/update/{}'.format(root_path, path_suffix)
-            _add_to_group_schema(path, u'update.{}'.format(case_property))
+            path = '{}/case/update/{}'.format(root_path, path_suffix)
+            _add_to_group_schema(path, 'update.{}'.format(case_property))
 
         # Add case create properties
         if create:
             for case_create_element in CASE_CREATE_ELEMENTS:
-                path = u'{}/case/create/{}'.format(root_path, case_create_element)
-                _add_to_group_schema(path, u'create.{}'.format(case_create_element))
+                path = '{}/case/create/{}'.format(root_path, case_create_element)
+                _add_to_group_schema(path, 'create.{}'.format(case_create_element))
 
         if close:
-            path = u'{}/case/close'.format(root_path)
-            _add_to_group_schema(path, u'close', transform=CASE_CLOSE_TO_BOOLEAN)
+            path = '{}/case/close'.format(root_path)
+            _add_to_group_schema(path, 'close', transform=CASE_CLOSE_TO_BOOLEAN)
 
         # Add case index information
         if case_indices:
@@ -1816,8 +1824,8 @@ class FormExportDataSchema(ExportDataSchema):
                     props = props + ('@relationship',)
                 for prop in props:
                     identifier = index.reference_id or 'parent'
-                    path = u'{}/case/index/{}/{}'.format(root_path, identifier, prop)
-                    _add_to_group_schema(path, u'index.{}'.format(prop))
+                    path = '{}/case/index/{}/{}'.format(root_path, identifier, prop)
+                    _add_to_group_schema(path, 'index.{}'.format(prop))
 
     @classmethod
     def _generate_schema_from_repeat_subcases(cls, xform, repeats_with_subcases, langs, app_id, app_version):
@@ -2258,7 +2266,7 @@ class SplitUserDefinedExportColumn(ExportColumn):
         if self.split_type == PLAIN_USER_DEFINED_SPLIT_TYPE:
             return super(SplitUserDefinedExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else u"{name} | {option}"
+        header_template = header if '{option}' in header else "{name} | {option}"
         headers = []
         for option in self.user_defined_options:
             headers.append(
@@ -2291,7 +2299,7 @@ class MultiMediaExportColumn(ExportColumn):
 
         download_url = absolute_reverse('api_form_attachment', args=(domain, doc_id, value))
         if transform_dates:
-            download_url = u'=HYPERLINK("{}")'.format(download_url)
+            download_url = '=HYPERLINK("{}")'.format(download_url)
 
         return download_url
 
@@ -2304,10 +2312,10 @@ class SplitGPSExportColumn(ExportColumn):
             return super(SplitGPSExportColumn, self).get_headers()
         header = self.label
         header_templates = [
-            _(u'{}: latitude (degrees)'),
-            _(u'{}: longitude (degrees)'),
-            _(u'{}: altitude (meters)'),
-            _(u'{}: accuracy (meters)'),
+            _('{}: latitude (degrees)'),
+            _('{}: longitude (degrees)'),
+            _('{}: altitude (meters)'),
+            _('{}: accuracy (meters)'),
         ]
         return [header_template.format(header) for header_template in header_templates]
 
@@ -2393,7 +2401,7 @@ class SplitExportColumn(ExportColumn):
         if not split_column:
             return super(SplitExportColumn, self).get_headers()
         header = self.label
-        header_template = header if '{option}' in header else u"{name} | {option}"
+        header_template = header if '{option}' in header else "{name} | {option}"
         headers = []
         for option in self.item.options:
             headers.append(
@@ -2540,7 +2548,7 @@ class StockExportColumn(ExportColumn):
 
     def get_headers(self, **kwargs):
         for product_id, section in self._column_tuples:
-            yield u"{product} ({section})".format(
+            yield "{product} ({section})".format(
                 product=self._get_product_name(product_id),
                 section=section
             )

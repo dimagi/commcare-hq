@@ -1,6 +1,7 @@
 # coding=utf-8
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import contextlib
 import datetime
 import logging
@@ -150,7 +151,7 @@ class SubmissionPost(object):
         '''
 
         if not instance.metadata or instance.metadata.deviceID != FORMPLAYER_DEVICE_ID:
-            return u'   √   '
+            return '   √   '
 
         messages = []
         user = CouchUser.get_by_user_id(instance.user_id)
@@ -158,7 +159,7 @@ class SubmissionPost(object):
             return _('Form successfully saved!')
 
         from corehq.apps.export.views import CaseExportListView, FormExportListView
-        from corehq.apps.reports.views import CaseDetailsView, FormDataView
+        from corehq.apps.reports.views import CaseDataView, FormDataView
         form_link = case_link = form_export_link = case_export_link = None
         form_view = 'corehq.apps.reports.standard.inspect.SubmitHistory'
         if has_permission_to_view_report(user, instance.domain, form_view):
@@ -166,10 +167,10 @@ class SubmissionPost(object):
         case_view = 'corehq.apps.reports.standard.cases.basic.CaseListReport'
         if cases and has_permission_to_view_report(user, instance.domain, case_view):
             if len(cases) == 1:
-                case_link = reverse(CaseDetailsView.urlname, args=[instance.domain, cases[0].case_id])
+                case_link = reverse(CaseDataView.urlname, args=[instance.domain, cases[0].case_id])
             else:
                 case_link = ", ".join(["[{}]({})".format(
-                    c.name, reverse(CaseDetailsView.urlname, args=[instance.domain, c.case_id])
+                    c.name, reverse(CaseDataView.urlname, args=[instance.domain, c.case_id])
                 ) for c in cases])
         if can_view_form_exports(user, instance.domain):
             form_export_link = reverse(FormExportListView.urlname, args=[instance.domain])
@@ -470,7 +471,7 @@ class SubmissionPost(object):
     @staticmethod
     def get_exception_response_and_log(error_instance, path):
         logging.exception(
-            u"Problem receiving submission to %s. Doc id: %s, Error %s" % (
+            "Problem receiving submission to %s. Doc id: %s, Error %s" % (
                 path,
                 error_instance.form_id,
                 error_instance.problem
@@ -484,7 +485,7 @@ class SubmissionPost(object):
 
 
 def _transform_instance_to_error(interface, exception, instance):
-    error_message = u'{}: {}'.format(type(exception).__name__, six.text_type(exception))
+    error_message = '{}: {}'.format(type(exception).__name__, six.text_type(exception))
     return interface.xformerror_from_xform_instance(instance, error_message)
 
 

@@ -1,9 +1,11 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 from corehq.apps.fixtures.exceptions import FixtureUploadError
 from corehq.apps.fixtures.models import FixtureTypeField
 from corehq.apps.fixtures.upload.const import DELETE_HEADER
 from corehq.apps.fixtures.upload.failure_messages import FAILURE_MESSAGES
+from corehq.apps.fixtures.utils import is_identifier_invalid
 from corehq.util.workbook_json.excel import WorkbookJSONReader, InvalidExcelFileException, \
     HeaderValueError, JSONReaderError, WorksheetNotFound
 import six
@@ -71,6 +73,10 @@ class _FixtureTableDefinition(object):
         if tag is None:
             raise FixtureUploadError([
                 _(FAILURE_MESSAGES['has_no_column']).format(column_name='table_id')])
+        if is_identifier_invalid(tag):
+            raise FixtureUploadError([
+                _(FAILURE_MESSAGES['invalid_table_id']).format(tag=tag)
+            ])
 
         field_names = row_dict.get('field')
         item_attributes = row_dict.get('property')

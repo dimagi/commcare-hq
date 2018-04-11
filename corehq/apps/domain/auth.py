@@ -89,7 +89,7 @@ def get_username_and_password_from_request(request):
         except UnicodeDecodeError:
             pass
     elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(':', 1)
+        username, password = base64.b64decode(auth[1]).split(b':', 1)
         # decode password submitted from mobile app login
         password = decode_password(password)
         username, password = _decode(username), _decode(password)

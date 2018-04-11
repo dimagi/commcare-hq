@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from contextlib import contextmanager
 import json
 from tempfile import NamedTemporaryFile
@@ -327,7 +328,7 @@ class UploadItemLists(TemplateView):
             validate_fixture_file_format(file_ref.get_filename())
         except FixtureUploadError as e:
             messages.error(
-                request, _(u'Please fix the following formatting issues in your excel file: %s') %
+                request, _('Please fix the following formatting issues in your excel file: %s') %
                 '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
                 extra_tags='html'
             )
@@ -430,7 +431,7 @@ def _upload_fixture_api(request, domain):
         except FixtureUploadError as e:
             return UploadFixtureAPIResponse(
                 'fail',
-                _(u'Please fix the following formatting issues in your excel file: %s')
+                _('Please fix the following formatting issues in your excel file: %s')
                 % '\n'.join(e.errors))
 
         result = upload_fixture_file(domain, filename, replace=replace)
@@ -469,12 +470,12 @@ def _get_fixture_upload_args_from_request(request, domain):
             replace = False
     except Exception:
         raise FixtureAPIRequestError(
-            u"Invalid post request."
-            u"Submit the form with field 'file-to-upload' and POST parameter 'replace'")
+            "Invalid post request."
+            "Submit the form with field 'file-to-upload' and POST parameter 'replace'")
 
     if not request.couch_user.has_permission(domain, Permissions.edit_data.name):
         raise FixtureAPIRequestError(
-            u"User {} doesn't have permission to upload fixtures"
+            "User {} doesn't have permission to upload fixtures"
             .format(request.couch_user.username))
 
     return _excel_upload_file(upload_file), replace

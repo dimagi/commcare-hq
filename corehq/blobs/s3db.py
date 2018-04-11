@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import weakref
 from contextlib import contextmanager
@@ -83,24 +84,25 @@ class S3BlobDB(AbstractBlobDB):
         path = self.get_path(identifier, bucket)
         s3_bucket = self._s3_bucket()
         with maybe_not_found():
+            success = True
             if identifier is None:
                 summaries = s3_bucket.objects.filter(Prefix=path + "/")
                 pages = ([{"Key": o.key} for o in page]
                          for page in summaries.pages())
                 deleted_bytes = sum(o.size for page in summaries.pages()
                                     for o in page)
-            else:
-                pages = [[{"Key": path}]]
-                # may raise a not found error -> return False
-                deleted_bytes = s3_bucket.Object(path).content_length
-            success = True
-            deleted_count = 0
-            for objects in pages:
-                resp = s3_bucket.delete_objects(Delete={"Objects": objects})
-                if success:
+                deleted_count = 0
+                for objects in pages:
+                    resp = s3_bucket.delete_objects(Delete={"Objects": objects})
                     deleted = set(d["Key"] for d in resp.get("Deleted", []))
-                    success = all(o["Key"] in deleted for o in objects)
+                    success = success and all(o["Key"] in deleted for o in objects)
                     deleted_count += len(deleted)
+            else:
+                obj = s3_bucket.Object(path)
+                deleted_count = 1
+                # may raise a not found error -> return False
+                deleted_bytes = obj.content_length
+                obj.delete()
             datadog_counter('commcare.blobs.deleted.count', value=deleted_count)
             datadog_counter('commcare.blobs.deleted.bytes', value=deleted_bytes)
             return success
@@ -162,7 +164,7 @@ def safepath(path):
             "/../" in path or
             path.endswith("/..") or
             not SAFENAME.match(path)):
-        raise BadName(u"unsafe path name: %r" % path)
+        raise BadName("unsafe path name: %r" % path)
     return path
 
 

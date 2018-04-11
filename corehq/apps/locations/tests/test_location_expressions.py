@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -226,3 +227,19 @@ class TestAncestorLocationExpression(LocationHierarchyTest):
 
         ancestor_location = expression({}, context)
         self.assertIsNone(ancestor_location)
+
+    def test_ancestor_location_property(self):
+        context = EvaluationContext({'domain': self.domain})
+        expression = ExpressionFactory.from_spec({
+            'type': 'ancestor_location',
+            'location_id': self.city.location_id,
+            'location_type': "continent",
+            'location_property': "_id"
+        }, context)
+
+        ancestor_location_property = expression({}, context)
+        self.assertIsNotNone(ancestor_location_property)
+        self.assertEqual(
+            ancestor_location_property,
+            self.continent.location_id
+        )

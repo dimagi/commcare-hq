@@ -73,18 +73,18 @@ def get_lactating_enrolled_women_data_map(domain, config, loc_level, show_test=F
             )),
             "extended_info": [
                 {
-                    'indicator': 'Number of pregnant women who are enrolled for Anganwadi Services:',
+                    'indicator': 'Number of lactating women who are enrolled for Anganwadi Services:',
                     'value': indian_formatted_number(total_valid)
                 },
                 {
                     'indicator': (
-                        'Total number of pregnant women who are registered:'
+                        'Total number of lactating women who are registered:'
                     ),
                     'value': indian_formatted_number(total)
                 },
                 {
                     'indicator': (
-                        'Percentage of registered pregnant women who are enrolled for Anganwadi Services:'
+                        'Percentage of registered lactating women who are enrolled for Anganwadi Services:'
                     ),
                     'value': '%.2f%%' % (total_valid * 100 / float(total or 1))
                 }

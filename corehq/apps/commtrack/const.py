@@ -1,4 +1,6 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
+import six
 import uuid
 
 COMMTRACK_USERNAME = 'commtrack-system'
@@ -10,7 +12,7 @@ META_XMLNS = 'http://openrosa.org/jr/xforms'
 SMS_XMLNS = 'http://commtrack.org/sms_submission'
 
 
-MOBILE_WORKER_UUID_NS = uuid.UUID(uuid.uuid5(uuid.NAMESPACE_URL, 'www.commcarehq.org/mobile_worker').hex)
+MOBILE_WORKER_UUID_NS = uuid.UUID(uuid.uuid5(uuid.NAMESPACE_URL, b'www.commcarehq.org/mobile_worker').hex)
 
 
 def is_supply_point_form(form):
@@ -43,7 +45,7 @@ PARENT_CASE_REF = 'parent'
 
 
 def enum(**enums):
-    return type('Enum', (), enums)
+    return type('Enum' if six.PY3 else b'Enum', (), enums)
 
 StockActions = enum(
     STOCKONHAND='stockonhand',

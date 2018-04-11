@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import os
 from xml.sax.saxutils import escape
@@ -172,8 +173,6 @@ class DetailContributor(SectionContributor):
                     detail_type=detail_type, *column_info
                 ).fields
                 for field in fields:
-                    if column_info.column.useXpathExpression:
-                        field.template.text.xpath_function = column_info.column.field
                     d.fields.append(field)
 
             # Add actions

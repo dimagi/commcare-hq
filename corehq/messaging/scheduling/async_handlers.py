@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain, get_latest_released_app
 from corehq.apps.app_manager.models import AdvancedForm
@@ -6,7 +7,7 @@ from corehq.apps.casegroups.dbaccessors import search_case_groups_in_domain
 from corehq.apps.es import GroupES
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler
 from corehq.apps.hqwebapp.encoders import LazyEncoder
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.users.analytics import get_search_users_in_domain_es_query
 from corehq.util.quickcache import quickcache
 from django.utils.translation import ugettext as _
@@ -50,6 +51,7 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         'schedule_user_recipients',
         'schedule_user_group_recipients',
         'schedule_user_organization_recipients',
+        'schedule_location_types',
         'schedule_case_group_recipients',
     ]
 
@@ -112,6 +114,22 @@ class MessagingRecipientHandler(BaseAsyncHandler):
         ]
 
     @property
+    def schedule_location_types_response(self):
+        domain = self.request.domain
+        query = self.data.get('searchString')
+
+        qs = LocationType.objects.filter(domain=domain)
+        if query:
+            qs = qs.filter(name__icontains=query)
+
+        qs = qs.order_by('name').values_list('id', 'name')
+
+        return [
+            {'id': row[0], 'text': row[1]}
+            for row in qs[:10]
+        ]
+
+    @property
     def schedule_case_group_recipients_response(self):
         domain = self.request.domain
         query = self.data.get('searchString')
@@ -131,6 +149,7 @@ class ConditionalAlertAsyncHandler(MessagingRecipientHandler):
         'schedule_user_recipients',
         'schedule_user_group_recipients',
         'schedule_user_organization_recipients',
+        'schedule_location_types',
         'schedule_case_group_recipients',
         'schedule_visit_scheduler_app_and_form_unique_id',
     ]

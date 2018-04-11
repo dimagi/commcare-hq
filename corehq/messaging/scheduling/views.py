@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from functools import wraps
 from django.contrib import messages
 from django.db import transaction
@@ -75,7 +76,7 @@ def _requires_new_reminder_framework():
 class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
     template_name = 'scheduling/broadcasts_list.html'
     urlname = 'new_list_broadcasts'
-    page_title = ugettext_lazy('Schedule a Message')
+    page_title = ugettext_lazy('Broadcasts')
 
     LIST_SCHEDULED = 'list_scheduled'
     LIST_IMMEDIATE = 'list_immediate'
@@ -194,7 +195,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
 
 class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_schedule'
-    page_title = ugettext_lazy('Schedule a Message')
+    page_title = ugettext_lazy('New Broadcast')
     template_name = 'scheduling/create_schedule.html'
     async_handlers = [MessagingRecipientHandler]
     read_only_mode = False
@@ -268,7 +269,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditScheduleView(CreateScheduleView):
     urlname = 'edit_schedule'
-    page_title = ugettext_lazy('Edit Scheduled Message')
+    page_title = ugettext_lazy('Edit Broadcast')
 
     IMMEDIATE_BROADCAST = 'immediate'
     SCHEDULED_BROADCAST = 'scheduled'
@@ -335,7 +336,7 @@ class EditScheduleView(CreateScheduleView):
 class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin):
     template_name = 'scheduling/conditional_alert_list.html'
     urlname = 'conditional_alert_list'
-    page_title = ugettext_lazy('Schedule a Conditional Message')
+    page_title = ugettext_lazy('Conditional Alerts')
 
     LIST_CONDITIONAL_ALERTS = 'list_conditional_alerts'
     ACTION_ACTIVATE = 'activate'
@@ -443,7 +444,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
 
 class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     urlname = 'create_conditional_alert'
-    page_title = ugettext_lazy('New Conditional Message')
+    page_title = ugettext_lazy('New Conditional Alert')
     template_name = 'scheduling/conditional_alert.html'
     async_handlers = [ConditionalAlertAsyncHandler]
     read_only_mode = False
@@ -574,7 +575,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
 class EditConditionalAlertView(CreateConditionalAlertView):
     urlname = 'edit_conditional_alert'
-    page_title = ugettext_lazy('Edit Conditional Message')
+    page_title = ugettext_lazy('Edit Conditional Alert')
 
     @property
     def page_url(self):

@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple, OrderedDict
+import datetime
 from itertools import chain
 import json
 import uuid
@@ -12,6 +13,8 @@ from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _
 from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
+from corehq.apps.userreports.app_manager.data_source_meta import DATA_SOURCE_TYPE_CHOICES, \
+    get_data_source_doc_type, make_case_data_source_filter, make_form_data_source_filter, get_app_data_source_meta
 
 from corehq.apps.userreports.reports.builder.columns import (
     QuestionColumnOption,
@@ -34,7 +37,7 @@ from corehq.apps.app_manager.models import (
 )
 from corehq.apps.app_manager.xform import XForm
 from corehq.apps.userreports import tasks
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import (
     DataSourceBuildInformation,
     DataSourceConfiguration,
@@ -45,8 +48,6 @@ from corehq.apps.userreports.models import (
 from corehq.apps.userreports.reports.builder import (
     DEFAULT_CASE_PROPERTY_DATATYPES,
     FORM_METADATA_PROPERTIES,
-    make_case_data_source_filter,
-    make_form_data_source_filter,
     get_filter_format_from_question_type,
 )
 from corehq.apps.userreports.exceptions import BadBuilderConfigError
@@ -320,9 +321,10 @@ class DataSourceBuilder(object):
         self.source_type = source_type
         # source_id is a case type of form id
         self.source_id = source_id
+        self.data_source_meta = get_app_data_source_meta(self.domain, self.source_type, self.source_id)
         if self.source_type == 'form':
-            self.source_form = Form.get_form(self.source_id)
-            self.source_xform = XForm(self.source_form.source)
+            self.source_form = self.data_source_meta.source_form
+            self.source_xform = self.data_source_meta.source_xform
         if self.source_type == 'case':
             prop_map = get_case_properties(
                 self.app, [self.source_id], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES),
@@ -333,10 +335,7 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def source_doc_type(self):
-        if self.source_type == "case":
-            return "CommCareCase"
-        if self.source_type == "form":
-            return "XFormInstance"
+        return self.data_source_meta.get_doc_type()
 
     @property
     @memoized
@@ -344,10 +343,7 @@ class DataSourceBuilder(object):
         """
         Return the filter configuration for the DataSourceConfiguration.
         """
-        if self.source_type == "case":
-            return make_case_data_source_filter(self.source_id)
-        if self.source_type == "form":
-            return make_form_data_source_filter(self.source_xform.data_node.tag_xmlns)
+        return self.data_source_meta.get_filter()
 
     def base_item_expression(self, is_multiselect_chart_report, multiselect_field=None):
         """
@@ -619,10 +615,11 @@ class DataSourceBuilder(object):
     @property
     @memoized
     def data_source_name(self):
+        today = datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
         if self.source_type == 'form':
-            return "{} (v{})".format(self.source_form.default_name(), self.app.version)
+            return "{} (v{}) {}".format(self.source_form.default_name(), self.app.version, today)
         if self.source_type == 'case':
-            return "{} (v{})".format(self.source_id, self.app.version)
+            return "{} (v{}) {}".format(self.source_id, self.app.version, today)
 
     def _ds_config_kwargs(self, indicators, is_multiselect_chart_report=False, multiselect_field=None):
         if is_multiselect_chart_report:
@@ -668,7 +665,7 @@ class DataSourceForm(forms.Form):
         # TODO: Map reports.
         self.app_source_helper = ApplicationDataSourceUIHelper()
         self.app_source_helper.source_type_field.label = _('Forms or Cases')
-        self.app_source_helper.source_type_field.choices = [("case", _("Cases")), ("form", _("Forms"))]
+        self.app_source_helper.source_type_field.choices = DATA_SOURCE_TYPE_CHOICES
         self.app_source_helper.source_field.label = '<span data-bind="text: labelMap[sourceType()]"></span>'
         self.app_source_helper.bootstrap(self.domain)
         report_source_fields = self.app_source_helper.get_fields()
@@ -842,7 +839,7 @@ class ConfigureNewReportBase(forms.Form):
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
             # The uuid gets truncated, so it's not really universally unique.
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
             **self._get_data_source_configuration_kwargs()
         )
         data_source_config.validate()
@@ -943,7 +940,7 @@ class ConfigureNewReportBase(forms.Form):
 
         data_source_config = DataSourceConfiguration(
             domain=self.domain,
-            table_id=_clean_table_name(self.domain, uuid.uuid4().hex),
+            table_id=clean_table_name(self.domain, uuid.uuid4().hex),
             **self.ds_builder.get_temp_ds_config_kwargs(columns, filters)
         )
         data_source_config.validate()
@@ -1056,7 +1053,7 @@ class ConfigureNewReportBase(forms.Form):
 
     def _get_view_model(self, filter):
         """
-        Given a ReportFilter, return a FilterViewModel representing
+        Given a filter_spec, return a FilterViewModel representing
         the knockout view model representing this filter in the report builder.
 
         """

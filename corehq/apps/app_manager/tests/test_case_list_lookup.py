@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.app_manager.models import Application, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
@@ -61,7 +62,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
         module.case_details.short.lookup_autolaunch = True
         module.case_details.short.lookup_action = action
 
-        expected = u"""
+        expected = """
             <partial>
                 <lookup action="{action}" auto_launch="true"/>
             </partial>
@@ -76,7 +77,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
     def test_case_list_lookup_w_name(self):
         action = "callout.commcarehq.org.dummycallout.LAUNCH"
         image = "jr://file/commcare/image/callout"
-        name = u"ιтѕ α тяαρ ʕ •ᴥ•ʔ"
+        name = "ιтѕ α тяαρ ʕ •ᴥ•ʔ"
 
         app = Application.new_app('domain', 'Untitled Application')
         module = app.add_module(Module.new_module('Untitled Module', None))
@@ -86,7 +87,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
         module.case_details.short.lookup_image = image
         module.case_details.short.lookup_name = name
 
-        expected = u"""
+        expected = """
             <partial>
                 <lookup name="{}" action="{}" image="{}"/>
             </partial>

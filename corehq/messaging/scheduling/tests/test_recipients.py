@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
 from corehq.apps.data_interfaces.tests.util import create_case
@@ -26,11 +27,15 @@ class SchedulingRecipientTest(TestCase):
         cls.domain_obj = create_domain(cls.domain)
 
         cls.location_types = setup_location_types(cls.domain, ['country', 'state', 'city'])
-        cls.state_location = make_loc('ma', domain=cls.domain, type='state')
+        cls.country_location = make_loc('usa', domain=cls.domain, type='country')
+        cls.state_location = make_loc('ma', domain=cls.domain, type='state', parent=cls.country_location)
         cls.city_location = make_loc('boston', domain=cls.domain, type='city', parent=cls.state_location)
 
         cls.mobile_user = CommCareUser.create(cls.domain, 'mobile', 'abc')
         cls.mobile_user.set_location(cls.city_location)
+
+        cls.mobile_user2 = CommCareUser.create(cls.domain, 'mobile2', 'abc')
+        cls.mobile_user2.set_location(cls.state_location)
 
         cls.web_user = WebUser.create(cls.domain, 'web', 'abc')
 
@@ -81,39 +86,20 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Owner')
             self.assertIsNone(instance.recipient)
 
-    def test_expand_location_recipients(self):
-        schedule_without_descendants = TimedSchedule.create_simple_daily_schedule(
+    def test_expand_location_recipients_without_descendants(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
             TimedEvent(time=time(9, 0)),
             SMSContent(message={'en': 'Hello'})
         )
-        schedule_without_descendants.include_descendant_locations = False
-        schedule_without_descendants.save()
-
-        schedule_with_descendants = TimedSchedule.create_simple_daily_schedule(
-            self.domain,
-            TimedEvent(time=time(9, 0)),
-            SMSContent(message={'en': 'Hello'})
-        )
-        schedule_with_descendants.include_descendant_locations = True
-        schedule_with_descendants.save()
+        schedule.include_descendant_locations = False
+        schedule.save()
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
-            timed_schedule_id=schedule_without_descendants.schedule_id,
+            timed_schedule_id=schedule.schedule_id,
             recipient_type='Location',
-            recipient_id=self.city_location.location_id
-        )
-        self.assertEqual(
-            self.user_ids(instance.expand_recipients()),
-            [self.mobile_user.get_id]
-        )
-
-        instance = CaseTimedScheduleInstance(
-            domain=self.domain,
-            timed_schedule_id=schedule_without_descendants.schedule_id,
-            recipient_type='Location',
-            recipient_id=self.state_location.location_id
+            recipient_id=self.country_location.location_id
         )
         self.assertEqual(
             list(instance.expand_recipients()),
@@ -122,11 +108,52 @@ class SchedulingRecipientTest(TestCase):
 
         instance = CaseTimedScheduleInstance(
             domain=self.domain,
-            timed_schedule_id=schedule_with_descendants.schedule_id,
+            timed_schedule_id=schedule.schedule_id,
             recipient_type='Location',
             recipient_id=self.state_location.location_id
         )
         self.assertEqual(
+            self.user_ids(instance.expand_recipients()),
+            [self.mobile_user2.get_id]
+        )
+
+    def test_expand_location_recipients_with_descendants(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.include_descendant_locations = True
+        schedule.save()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Location',
+            recipient_id=self.state_location.location_id
+        )
+        self.assertItemsEqual(
+            self.user_ids(instance.expand_recipients()),
+            [self.mobile_user.get_id, self.mobile_user2.get_id]
+        )
+
+    def test_expand_location_recipients_with_location_type_filter(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(9, 0)),
+            SMSContent(message={'en': 'Hello'})
+        )
+        schedule.include_descendant_locations = True
+        schedule.location_type_filter = [self.city_location.location_type_id]
+        schedule.save()
+
+        instance = CaseTimedScheduleInstance(
+            domain=self.domain,
+            timed_schedule_id=schedule.schedule_id,
+            recipient_type='Location',
+            recipient_id=self.country_location.location_id
+        )
+        self.assertItemsEqual(
             self.user_ids(instance.expand_recipients()),
             [self.mobile_user.get_id]
         )
