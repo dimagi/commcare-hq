@@ -17,7 +17,6 @@ import six
 
 class Command(BaseCommand):
 
-
     def handle(self, **kwargs):
         domains_by_module = defaultdict(list)
         for domain, module in settings.DOMAIN_MODULE_MAP.items():
