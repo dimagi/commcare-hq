@@ -252,13 +252,16 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
         first = self.pagination.start
         last = first + self.pagination.count
         for user in users[first:last]:
+            app_name = '---'
+            if user.app_dim is not None:
+                app_name = self.get_app_name(user.app_dim.app_id) or '---'
             rows.append([
                 user_display_string(user.user_dim.username,
                                     user.user_dim.first_name,
                                     user.user_dim.last_name),
                 _fmt_date(user.last_form_submission_date, fmt_for_export),
                 _fmt_date(user.last_sync_log_date, fmt_for_export),
-                self.get_app_name(user.app_dim.app_id) or '---',
+                app_name,
                 user.last_form_app_build_version,
                 user.last_form_app_commcare_version
             ])
