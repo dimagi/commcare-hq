@@ -2,14 +2,25 @@
 
 describe('Data Corrections', function () {
     var $fixture = $("#data-corrections-fixture").remove(),
-        options = {
-            saveUrl: '',
-            properties: {
-                'black': 'darjeeling',
-                'green': 'genmaicha',
-                'white': 'silver needle',
-            },
-            propertyNames: ['black', 'green', 'white'],
+        thingList = function(count) {
+            // Generate a list "thing01, thing02, ..." from 1 to count, with
+            // numbers properly zero-padded so they sort
+            var logCount = Math.log10(count);
+            return _.map(_.range(count), function(n) {
+                n = n + 1;
+                var zeroes = _.map(_.range(logCount - Math.log10(n)), function() { return "0"; }).join("");
+                return "thing" + zeroes + n;
+            });
+        },
+        generateOptions = function(properties) {
+            return {
+                saveUrl: '',
+                properties: properties,
+                propertyNames: _.sortBy(_.keys(properties)),
+            };
+        },
+        getModal = function() {
+            return $(".data-corrections-modal");
         },
         openModal = function() {
             $(".data-corrections-trigger").click();
@@ -20,19 +31,27 @@ describe('Data Corrections', function () {
         updateProperty = function(name, newValue) {
             $(".data-corrections-modal [data-name='" + name + "']").val(newValue).change();
         },
+        search = function(query) {
+            $(".data-corrections-modal .modal-header input").val(query).change();
+        },
         assertProperty = function(name, value) {
             assert.equal($(".data-corrections-modal [data-name='" + name + "']").val(), value);
         },
-        initModel = function(options) {
+        assertVisibleProperties = function(expected) {
+            assert.sameMembers(expected, _.map($(".data-corrections-modal .modal-body .form-group input:visible"), function(i) { return $(i).data("name"); }));
+        },
+        initModel = function(properties) {
             return hqImport('reports/js/data_corrections').init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
-                options
+                generateOptions(properties)
             );
         };
 
     beforeEach(function() {
-        $("#mocha-sandbox").append($fixture.clone());
+        var $clone = $fixture.clone();
+        $clone.find(".modal").data("backdrop", 0);
+        $("#mocha-sandbox").append($clone);
     });
 
     afterEach(function() {
@@ -41,7 +60,7 @@ describe('Data Corrections', function () {
 
     describe('Modal', function () {
         it('should appear on trigger and disappear on close', function () {
-            initModel(options);
+            initModel({ 'name': 'value' });
             var $modal = $(".data-corrections-modal");
             assert(!$modal.is(":visible"));
             openModal();
@@ -51,7 +70,11 @@ describe('Data Corrections', function () {
         });
 
         it('should reset properties on close and re-open', function () {
-            var model = initModel(options);
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
             openModal();
             assertProperty("green", "genmaicha");
             updateProperty("green", "gunpowder");
@@ -64,18 +87,43 @@ describe('Data Corrections', function () {
     });
 
     describe('Inside modal', function() {
-        beforeEach(function() {
-            hqImport('reports/js/data_corrections').init($trigger, $modal, options);
-            $trigger.click();
+        it('should search by property name', function () {
+            initModel({
+                'black': 'darjeeling',
+                'green': 'genmaicha',
+                'white': 'silver needle',
+            });
+            openModal();
+
+            search("green");
+            assertVisibleProperties(["green"]);
+            search("");
+            assertVisibleProperties(["black", "green", "white"]);
+            search("xyz");
+            assertVisibleProperties([]);
         });
 
-        afterEach(function() {
-            $close.click();
+        it('should display multiple pages when there are many properties', function() {
+            var itemCount = 100,
+                names = thingList(itemCount),
+                model = initModel(_.object(names, names));
+            openModal();
+
+            assert.equal(model.totalPages(), Math.ceil(itemCount / model.itemsPerPage()));
+            assertVisibleProperties(names.slice(0, model.itemsPerPage()));
+
+            model.currentPage(model.totalPages());
+            assertVisibleProperties(names.slice((model.totalPages() - 1) * model.itemsPerPage()));
         });
 
-        // TODO: search
-        // TODO: paging
-        // TODO: modal sizing
+        it('should search across multiple pages', function() {
+            var names = thingList(100);
+            initModel(_.object(names, names));
+            openModal();
+            search("10");
+            assertVisibleProperties(["thing010", "thing100"]);
+        });
+
         // TODO: display multiple property attributes, search
     });
 });
