@@ -23,6 +23,7 @@ from corehq.apps.users.util import format_username
 from corehq.apps.locations.models import SQLLocation
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.util.workbook_reading import open_any_workbook, Workbook, \
     SpreadsheetFileEncrypted, SpreadsheetFileNotFound, SpreadsheetFileInvalidError
 from couchexport.export import SCALAR_NEVER_WAS
@@ -416,8 +417,11 @@ def get_case_properties_for_case_type(domain, case_type):
         case_type,
     )
     group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
-    if group_schemas:
-        return sorted(set([item.path[0].name for item in group_schemas[0].items]))
+    case_properties = set([item.path[0].name for item in group_schemas[0].items]) if group_schemas else set()
+    if not should_use_sql_backend(domain):
+        from corehq.apps.hqcase.dbaccessors import get_case_properties
+        case_properties |= set(get_case_properties(domain, case_type))
+    return sorted(case_properties)
 
 
 def get_importer_error_message(e):
