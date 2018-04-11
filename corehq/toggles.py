@@ -1433,14 +1433,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_LIVEQUERY = PredictablyRandomToggle(
-    'icds_livequery',
-    'ICDS: Enable livequery case sync for a random subset of ICDS users',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    randomness=0.0,
-)
-
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
     'remote_request_quetion_type',
     'Enikshay: Enable remote request question type in the form builder',
