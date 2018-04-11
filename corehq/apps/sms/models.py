@@ -290,8 +290,8 @@ class SMS(SMSBase):
             self.delete()
             queued_sms.save()
 
-    @classmethod
-    def get_counts_by_date(cls, domain, start_date, end_date, time_zone):
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
         """
         Retrieves counts of SMS sent and received over the given date range
         for the given domain.
@@ -1465,8 +1465,8 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         )
         return qs.order_by('-date')[0] if qs.count() > 0 else None
 
-    @classmethod
-    def get_counts_by_date(cls, domain, start_date, end_date, time_zone):
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
         """
         Retrieves counts of messaging events at the subevent level over the
         given date range for the given domain.
