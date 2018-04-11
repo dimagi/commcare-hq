@@ -92,7 +92,7 @@ describe('Children Initiated Directive', function () {
             '<p>test</p>'
             + '<div>Total number of children between age 6 - 8 months: <strong>10</strong></div>'
             + '<div>Total number of children (6-8 months) given timely introduction to sold or semi-solid food in the given month: <strong>5</strong></div>'
-            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>50.00%</strong></div></div>');
+            + '<div>% children (6-8 months) given timely introduction to solid or semi-solid food in the given month: <strong>50.00%</strong></div>');
     });
 
     it('tests location change', function () {
