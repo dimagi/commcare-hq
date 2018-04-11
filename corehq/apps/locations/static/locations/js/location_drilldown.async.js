@@ -16,7 +16,7 @@ hqDefine('locations/js/location_drilldown', function() {
         model.default_caption = options.default_caption || 'All';
         model.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
         model.loc_filter = options.loc_filter || function() { return true; };
-        model.func = typeof options.func !== 'undefined' ? options.func : LocationModel;
+        model.func = typeof options.func !== 'undefined' ? options.func : locationModel;
         model.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
 
         model.root = ko.observable();
@@ -112,7 +112,7 @@ hqDefine('locations/js/location_drilldown', function() {
         loc.children = ko.observableArray();
         loc.depth = depth || 0;
         loc.children_loaded = false;
-        loc.func = typeof func !== 'undefined' ? func : LocationModel;
+        loc.func = typeof func !== 'undefined' ? func : locationModel;
         loc.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
 
         loc.auto_drill = data.auto_drill;

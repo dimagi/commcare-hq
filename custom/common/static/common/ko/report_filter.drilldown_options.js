@@ -1,3 +1,5 @@
+/* globals drilldownFinalNotification */
+
 //probably we need clear this file
 //copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/report_filter.drilldown_options.js
 
@@ -112,14 +114,14 @@ var drilldownOptionFilterControl = function (options) {
 
 };
 
-var drilldownOption = function (select, drilldown_map) {
+var drilldownOption = function (select, drilldownMap) {
     var self = {};
     self.label = select.label;
     self.default_text = select.default_text;
     self.slug = select.slug;
     self.level = select.level;
 
-    self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
+    self.control_options = ko.observableArray((self.level === 0) ? drilldownMap : []);
     self.selected = ko.observableArray();
 
     self.is_visible = ko.computed(function () {
@@ -135,7 +137,7 @@ var drilldownOption = function (select, drilldown_map) {
     self.show_next_drilldown = ko.computed(function () {
         return !(self.control_options().length);
     });
-    return {}
+    return {};
 };
 
 $.fn.drilldownOptionFilter = function (options) {

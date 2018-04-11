@@ -1,4 +1,4 @@
-/* global drilldownFinalNotification */
+/* globals drilldownFinalNotification */
 ko.bindingHandlers.select2 = {
     init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
       ko.utils.domNodeDisposal.addDisposeCallback(el, function() {
