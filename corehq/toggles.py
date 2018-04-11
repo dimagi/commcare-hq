@@ -1473,7 +1473,8 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 LINKED_DOMAINS = StaticToggle(
