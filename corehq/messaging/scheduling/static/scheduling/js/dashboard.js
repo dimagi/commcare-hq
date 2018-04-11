@@ -102,20 +102,21 @@ hqDefine("scheduling/js/dashboard", function() {
     dashboardViewModel.init();
 
     var updateDashboard = function() {
-        $.getJSON(dashboardUrl, {action: 'raw'}).done(function(json) {
-            dashboardViewModel.update(json);
-            if(!dashboardViewModel.bindingApplied()) {
-                // We have to do this on the async ajax thread otherwise there
-                // still might be a flicker on the page.
-                $('#messaging_dashboard').koApplyBindings(dashboardViewModel);
-                dashboardViewModel.bindingApplied(true);
-            }
-            // updating charts must be done when everything is visible
-            dashboardViewModel.update_charts(json);
-        })
-        .always(function() {
-            setTimeout(updateDashboard, 30000);
-        });
+        $.getJSON(dashboardUrl, {action: 'raw'})
+            .done(function(json) {
+                dashboardViewModel.update(json);
+                if(!dashboardViewModel.bindingApplied()) {
+                    // We have to do this on the async ajax thread otherwise there
+                    // still might be a flicker on the page.
+                    $('#messaging_dashboard').koApplyBindings(dashboardViewModel);
+                    dashboardViewModel.bindingApplied(true);
+                }
+                // updating charts must be done when everything is visible
+                dashboardViewModel.update_charts(json);
+            })
+            .always(function() {
+                setTimeout(updateDashboard, 30000);
+            });
     };
 
     $(function() {
