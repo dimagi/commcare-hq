@@ -103,7 +103,7 @@ describe('Prevalence Of Severe Directive', function () {
             '<div>Number of Children (6 - 60 months) unmeasured: <strong>15</strong></div>' +
             '<div>% Severely Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
             '<div>% Moderately Acute Malnutrition (6 - 60 months): <strong>33.33%</strong></div>' +
-            '<div>% Normal (6 - 60 months): <strong>33.33%</strong></div></div>');
+            '<div>% Normal (6 - 60 months): <strong>33.33%</strong></div>');
     });
 
     it('tests location change', function () {
