@@ -144,11 +144,6 @@ class MenuContributor(SuiteContributorByModule):
                     if len(menu.commands):
                         menus.append(menu)
 
-            if any(id_module.is_training_module for id_module in id_modules):
-                menu = LocalizedMenu(id='training-root')
-                menu.text = Text(locale_id=id_strings.training_module_locale())
-                menus.append(menu)
-
         if self.app.grid_display_for_all_modules() or \
                 self.app.grid_display_for_some_modules() and module.grid_display_style():
             self._give_non_root_menus_grid_style(menus)
