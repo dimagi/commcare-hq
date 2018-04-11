@@ -157,7 +157,7 @@ describe('Data Corrections', function () {
             openModal();
 
             var assertVisibleText = function(expected) {
-                assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function(p) { return p.innerText }));
+                assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function(p) { return p.innerText; }));
             };
 
             // Display and search english values
@@ -168,11 +168,11 @@ describe('Data Corrections', function () {
 
             // Display spanish values
             model.updateDisplayProperty("spanish");
-            assertVisibleText(["anaranjado", "rojo", "amarillo"])
+            assertVisibleText(["anaranjado", "rojo", "amarillo"]);
 
             // Display french, but search based on spanish values
             model.updateDisplayProperty("french");
-            assertVisibleText(["orange", "rouge", "jaune"])
+            assertVisibleText(["orange", "rouge", "jaune"]);
             search("rojo");
             assertVisibleProperties(["red"]);
         });
