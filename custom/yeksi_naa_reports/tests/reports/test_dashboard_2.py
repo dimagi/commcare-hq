@@ -29,13 +29,13 @@ class TestDashboard2(YeksiTestCase):
             ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
         )
         self.assertEqual(
-            rows,
-            [
-                ['Region 1', 'no data entered', 'no data entered', '1000.00%'],
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
+                ['Region 1', 'no data entered', 'no data entered', '1500.00%'],
                 ['Dakar', 'no data entered', 'no data entered', '52200.00%'],
                 ['Region Test', 'no data entered', '2000.00%', 'no data entered'],
                 ['Thies', 'no data entered', 'no data entered', '2300.00%']
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_expiration_rate_report(self):
@@ -59,13 +59,13 @@ class TestDashboard2(YeksiTestCase):
             ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 ['Region 1', 'no data entered', 'no data entered', '0.00%'],
                 ['Dakar', 'no data entered', 'no data entered', '0.00%'],
                 ['Region Test', 'no data entered', '0.00%', 'no data entered'],
                 ['Thies', 'no data entered', 'no data entered', '0.00%']
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_recovery_rate_by_pps_report(self):
@@ -89,10 +89,10 @@ class TestDashboard2(YeksiTestCase):
             ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 ['test pps 1', '0.00%', 'no data entered', 'no data entered']
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_recovery_rate_by_district_report(self):
@@ -116,8 +116,8 @@ class TestDashboard2(YeksiTestCase):
             ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 ['District Sud', 'no data entered', 'no data entered', '100.00%'],
                 ['District Khombole', 'no data entered', 'no data entered', '100.00%'],
                 ['District Joal Fadiouth', 'no data entered', 'no data entered', '100.00%'],
@@ -131,7 +131,7 @@ class TestDashboard2(YeksiTestCase):
                 ['District Mbao', 'no data entered', 'no data entered', '100.00%'],
                 ['District Centre', 'no data entered', 'no data entered', '0.00%'],
                 ['District Test', '100.00%', 'no data entered', 'no data entered']
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_rupture_rate_by_pps_report(self):
@@ -155,8 +155,8 @@ class TestDashboard2(YeksiTestCase):
             ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 ['test pps 1', '0.00%', 'no data entered', 'no data entered'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 3', 'no data entered', 'no data entered', '0.00%'],
@@ -180,5 +180,5 @@ class TestDashboard2(YeksiTestCase):
                 ['PPS 2', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%']
-            ]
+            ], key=lambda x: x[0])
         )

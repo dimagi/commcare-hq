@@ -86,7 +86,7 @@ describe('AWC Daily Status Directive', function () {
             '<p>test</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>5</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>10</strong></div>' +
-            '<div>% of AWCs open yesterday: <strong>50.00%</strong></div>';
+            '<div>% of AWCs open yesterday: <strong>50.00%</strong></div></div>';
 
         assert.equal(result, expected);
     });
