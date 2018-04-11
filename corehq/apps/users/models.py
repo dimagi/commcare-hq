@@ -2237,6 +2237,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.devices.append(device)
             self.last_device = device
             return True
+        return False
 
     def get_last_used_device(self):
         if not self.devices:
