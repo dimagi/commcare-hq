@@ -45,6 +45,7 @@ To write the outbound backend code:
     get_form_class
         should return a subclass of `corehq.apps.sms.forms.BackendForm <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/forms.py>`_,
         which should:
+
          * have form fields for each of the fields in get_available_extra_fields, and
          * implement the gateway_specific_fields property, which should return a crispy forms rendering of those fields
     send
@@ -95,12 +96,14 @@ To write the inbound backend code:
 
 #. Create a subclass of `corehq.apps.sms.views.IncomingBackendView <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/views.py>`_,
    and implement the unimplemented property:
-    backend_class
-        should return the subclass of SQLSMSBackend that was written above
+
+   backend_class
+       should return the subclass of SQLSMSBackend that was written above
 
 #. Implement either the get() or post() method on the view based on the gateway's API. The only requirement of
    the framework is that this method call the `corehq.apps.sms.api.incoming <https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/sms/api.py>`_
    function, but you should also:
+
     * pass self.backend_couch_id as the backend_id kwarg to incoming()
     * if the gateway gives you a unique identifier for the SMS in their system, pass that identifier as the
       backend_message_id kwarg to incoming(); this can help later with debugging

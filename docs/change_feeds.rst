@@ -37,7 +37,7 @@ Topics
 ~~~~~~
 
 Topics are a kafka concept that are used to create logical groups (or "topics") of data.
-In the HQ codebase we use topics primarily as a 1:N mapping to HQ document classes (or ``doc_type``s).
+In the HQ codebase we use topics primarily as a 1:N mapping to HQ document classes (or ``doc_type`` s).
 Forms and cases currently have their own topics, while everything else is lumped in to a "meta" topic.
 This allows certain pillows to subscribe to the exact category of change/data they are interested in (e.g. a pillow that sends cases to elasticsearch would only subscribe to the "cases" topic).
 

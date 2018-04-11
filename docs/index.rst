@@ -41,6 +41,8 @@ Welcome to CommCareHQ's documentation!
    messaging/messaging
    locations
    caching_and_memoization
+   restore-logic
+   couchdb
 
 Tips for documenting
 --------------------
