@@ -249,17 +249,23 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
 
     def process_users(self, users, fmt_for_export=False):
         rows = []
-        for user in users[self.pagination.start:self.pagination.end]:
+        first = self.pagination.start
+        last = first + self.pagination.count
+        for user in users[first:last]:
+            app_name = '---'
+            if user.app_dim is not None:
+                app_name = self.get_app_name(user.app_dim.app_id) or '---'
             rows.append([
                 user_display_string(user.user_dim.username,
                                     user.user_dim.first_name,
                                     user.user_dim.last_name),
                 _fmt_date(user.last_form_submission_date, fmt_for_export),
                 _fmt_date(user.last_sync_log_date, fmt_for_export),
-                self.get_app_name(user.app_dim.app_id) or '---',
+                app_name,
                 user.last_form_app_build_version,
                 user.last_form_app_commcare_version
             ])
+        return rows
 
     def get_sql_sort(self):
         res = None
@@ -305,12 +311,14 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 mobile_user_and_group_slugs,
                 self.request.couch_user,
             ).values_list('_id', flat=True)
+            print users
             sort_clause = self.get_sql_sort()
             rows = ApplicationStatusFact.objects.filter(
                 user_dim__user_id__in=users
             ).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
                 rows.filter(app_dim__app_id=self.selected_app_id)
+            self._total_records = len(rows)
             return self.process_users(rows)
         else:
             users = self.user_query().run()
