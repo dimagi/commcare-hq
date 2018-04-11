@@ -13,7 +13,7 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-right checklist">
             <li class="dropdown-header">{% trans "Show" %}</li>
-            {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+            {% if not module.is_training_module and (child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys) %}
                 <li>
                     <a href="#" data-slug="menu">
                         <i class="fa fa-check"></i>{% trans "Menu" %}
@@ -40,7 +40,7 @@
         {% block settings_fields %}
 
 
-          {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
+          {% if not module.is_training_module and (child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys) %}
           <div class="panel panel-appmanager" data-slug="menu">
             <div class="panel-heading">
               <h4 class="panel-title panel-title-nolink">{% trans "Menu" %}</h4>
