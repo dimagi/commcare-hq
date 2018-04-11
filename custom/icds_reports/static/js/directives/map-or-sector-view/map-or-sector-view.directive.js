@@ -10,6 +10,36 @@ function MapOrSectorController($location, storageService, locationsService) {
         });
     }
 
+    function wrapXAxisLabels() {
+        //This wrap te text on the xAxis label if text length is longer than 100
+        //Found on stackoverflow: https://stackoverflow.com/questions/16701522/how-to-linebreak-an-svg-text-within-javascript/28553412#28553412
+        //Replace svg text element to:
+        //<text><tspan></tspan><tspan></tspan>...<text>
+        d3.selectAll(".nv-x.nv-axis .tick text").each(function() {
+            var text = d3.select(this),
+                words = text.text().split(/\s+/).reverse(),
+                word, line = [],
+                lineNumber = 0,
+                lineHeight = 1.1, // ems
+                y = 2.5 * parseInt(words.length),
+                dy = parseFloat(text.attr("dy")),
+                tspan = text.text(null).append("tspan").attr("x", -5).attr("y", -y).attr("dy", dy + "em");
+
+            word = words.pop();
+            while (word) {
+                line.push(word);
+                tspan.text(line.join(" "));
+                if (tspan.node().getComputedTextLength() > 100) {
+                    line.pop();
+                    tspan.text(line.join(" "));
+                    line = [word];
+                    tspan = text.append("tspan").attr("x", -5).attr("y", -y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
+                }
+                word = words.pop();
+            }
+        });
+    }
+
     vm.chartOptions = {
 
         chart: {
@@ -84,29 +114,7 @@ function MapOrSectorController($location, storageService, locationsService) {
                     });
                 });
 
-                d3.selectAll(".nv-x.nv-axis .tick text").each(function() {
-                    var text = d3.select(this),
-                        words = text.text().split(/\s+/).reverse(),
-                        word, line = [],
-                        lineNumber = 0,
-                        lineHeight = 1.1, // ems
-                        y = 2.5 * parseInt(words.length),
-                        dy = parseFloat(text.attr("dy")),
-                        tspan = text.text(null).append("tspan").attr("x", -5).attr("y", -y).attr("dy", dy + "em");
-
-                    word = words.pop();
-                    while (word) {
-                        line.push(word);
-                        tspan.text(line.join(" "));
-                        if (tspan.node().getComputedTextLength() > 100) {
-                            line.pop();
-                            tspan.text(line.join(" "));
-                            line = [word];
-                            tspan = text.append("tspan").attr("x", -5).attr("y", -y).attr("dy", ++lineNumber * lineHeight + dy + "em").text(word);
-                        }
-                        word = words.pop();
-                    }
-                });
+                wrapXAxisLabels();
 
                 return chart;
             },
