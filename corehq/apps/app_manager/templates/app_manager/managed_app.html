@@ -148,6 +148,14 @@
             </button>
           </div>
         {% endif %}
+        {% if show_training_modules %}
+          <div class="pull-left">
+            <button type="button" class="popover-additem-option new-module" data-type="training">
+              <i class="fa fa-graduation-cap"></i> {% trans "Training" %}
+              <p>{% blocktrans %}Content for training users.{% endblocktrans %}</p>
+            </button>
+          </div>
+        {% endif %}
       </div>
     </script>
 
@@ -158,6 +166,14 @@
                   <button type="button" class="popover-additem-option js-new-form appnav-responsive"
                           data-case-action="none" data-type="survey" data-form-type="form">
                       <i class="fa fa-file-o"></i> {% trans "Survey" %}
+                  </button>
+              </div>
+          <% } %>
+          <% if (showTraining) { %>
+              <div class="pull-left">
+                  <button type="button" class="popover-additem-option js-new-form appnav-responsive"
+                          data-case-action="none" data-type="lesson" data-form-type="form">
+                      <i class="fa fa-file-o"></i> {% trans "Lesson" %}
                   </button>
               </div>
           <% } %>
