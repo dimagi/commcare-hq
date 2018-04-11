@@ -112,8 +112,10 @@ hqDefine("scheduling/js/dashboard", function() {
             }
             // updating charts must be done when everything is visible
             dashboardViewModel.update_charts(json);
+        })
+        .always(function() {
+            setTimeout(updateDashboard, 30000);
         });
-        setTimeout(updateDashboard, 30000);
     };
 
     $(function() {
