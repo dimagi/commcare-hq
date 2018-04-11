@@ -1,5 +1,5 @@
 hqDefine('reports/js/report_filter/advanced_forms_options', function() {
-    var DeletedFormsControl = function (options) {
+    var deletedFormsControl = function (options) {
         var self = {};
         self.show = ko.observable();
         self.is_unknown_shown = ko.observable((options.is_unknown_shown) ? 'yes': '');
@@ -12,7 +12,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
     };
 
     var advancedFormsOptions = function ($el, options) {
-        var viewModel = new DeletedFormsControl(options);
+        var viewModel = deletedFormsControl(options);
         $el.koApplyBindings(viewModel);
         var $cssClass = $('.' + viewModel.css_class);
         $cssClass.each(function() {
@@ -37,7 +37,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
         update: function(element, valueAccessor) {
             var value = valueAccessor();
             var knownForm = $(element).attr('data-known');
-            ko.utils.unwrapObservable(value) ? $(knownForm).hide() : $(known_form).show();
+            ko.utils.unwrapObservable(value) ? $(knownForm).hide() : $(knownForm).show();
         },
     };
 
