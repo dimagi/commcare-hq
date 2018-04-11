@@ -103,7 +103,7 @@ describe('Prevalence Of Stunting Directive', function () {
             '<div>Number of children (6 - 60 months) unmeasured: <strong>5</strong></div>' +
             '<div>% children (6 - 60 months) with severely stunted growth: <strong>33.33%</strong></div>' +
             '<div>% children (6 - 60 months) with moderate stunted growth: <strong>33.33%</strong></div>' +
-            '<div>% children (6 - 60 months) with normal stunted growth: <strong>33.33%</strong></div>');
+            '<div>% children (6 - 60 months) with normal stunted growth: <strong>33.33%</strong></div></div>');
     });
 
     it('tests location change', function () {
