@@ -12,6 +12,7 @@
 # serve to show the default.
 
 from __future__ import absolute_import
+import django
 import sys, os
 from mock import MagicMock
 import sphinx_rtd_theme
@@ -21,6 +22,7 @@ from ..manage import init_hq_python_path
 
 init_hq_python_path()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+django.setup()
 
 # -- Custom configuration -----------------------------------------------------
 
