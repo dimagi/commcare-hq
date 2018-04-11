@@ -375,8 +375,11 @@ def fixture_session_var(module):
 def menu_id(module, suffix=""):
     put_in_root = getattr(module, 'put_in_root', False)
     if put_in_root:
-        # handle circular calls, if bad module workflow setup
-        return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
+        if module.is_training_module:
+            return 'training-root'
+        else:
+            # handle circular calls, if bad module workflow setup
+            return menu_id(module.root_module) if getattr(module, 'root_module', False) else ROOT
     else:
         if suffix:
             suffix = ".{}".format(suffix)
