@@ -95,6 +95,7 @@
 
 {% if hq %}
     {% compress js %}
+        <script src="{% static 'hqwebapp/js/assert_properties.js' %}"></script>
         <script src="{% static 'hqwebapp/js/hq.helpers.js' %}"></script>
     {% endcompress %}
 {% endif %}
