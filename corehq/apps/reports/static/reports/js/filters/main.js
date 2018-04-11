@@ -215,7 +215,7 @@ hqDefine("reports/js/filters/main", [
             }
 
             if (data.unknownAvailable || data.displayAppType) {
-                advancedFormsOptions.advanceFormsOptions(
+                advancedFormsOptions.advancedFormsOptions(
                     $el.find('#report_filter_form-advanced-options'),
                     {
                         show: data.showAdvanced,
