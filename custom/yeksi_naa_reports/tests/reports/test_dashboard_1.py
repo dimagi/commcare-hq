@@ -30,11 +30,11 @@ class TestDashboard1(YeksiTestCase):
             ['Region', 'January 2018', 'February 2018', 'March 2018', 'Avg. Availability']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 [u'Region 1', u'no data entered', u'no data entered', u'50.00%', u'50.00%'],
                 [u'Dakar', u'no data entered', u'no data entered', u'100.00%', u'100.00%'],
                 [u'Region Test', u'100.00%', u'100.00%', u'no data entered', u'100.00%'],
                 [u'Thies', u'no data entered', u'no data entered', u'87.50%', u'87.50%']
-            ]
+            ], key=lambda x: x[0])
         )
