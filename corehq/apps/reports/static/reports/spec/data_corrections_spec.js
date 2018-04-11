@@ -19,9 +19,6 @@ describe('Data Corrections', function () {
                 propertyNames: _.sortBy(_.keys(properties)),
             };
         },
-        getModal = function() {
-            return $(".data-corrections-modal");
-        },
         openModal = function() {
             $(".data-corrections-trigger").click();
         },
@@ -40,11 +37,12 @@ describe('Data Corrections', function () {
         assertVisibleProperties = function(expected) {
             assert.sameMembers(expected, _.map($(".data-corrections-modal .modal-body .form-group input:visible"), function(i) { return $(i).data("name"); }));
         },
-        initModel = function(properties) {
+        initModel = function(properties, additionalOptions) {
+            additionalOptions = additionalOptions || {};
             return hqImport('reports/js/data_corrections').init(
                 $(".data-corrections-trigger"),
                 $(".data-corrections-modal"),
-                generateOptions(properties)
+                _.extend(generateOptions(properties), additionalOptions)
             );
         };
 
@@ -124,6 +122,59 @@ describe('Data Corrections', function () {
             assertVisibleProperties(["thing010", "thing100"]);
         });
 
-        // TODO: display multiple property attributes, search
+        it('should display multiple attributes of each property', function() {
+            var model = initModel({
+                red: {
+                    value: 'ff0000',
+                    spanish: 'rojo',
+                    french: 'rouge',
+                },
+                orange: {
+                    value: 'ff6600',
+                    spanish: 'anaranjado',
+                    french: 'orange',
+                },
+                yellow: {
+                    value: 'ffff00',
+                    spanish: 'amarillo',
+                    french: 'jaune',
+                },
+            }, {
+                displayProperties: [{
+                    property: 'name',
+                    name: 'English',
+                }, {
+                    property: 'spanish',
+                    name: 'Spanish',
+                }, {
+                    property: 'french',
+                    name: 'French',
+                    search: 'spanish',
+                }],
+                propertyPrefix: "<div class='test-property'>",
+                propertySuffix: "</div>",
+            });
+            openModal();
+
+            var assertVisibleText = function(expected) {
+                assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function(p) { return p.innerText }));
+            };
+
+            // Display and search english values
+            model.updateDisplayProperty("name");
+            assertVisibleText(["orange", "red", "yellow"]);
+            search("yellow");
+            assertVisibleProperties(["yellow"]);
+
+            // Display spanish values
+            model.updateDisplayProperty("spanish");
+            assertVisibleText(["anaranjado", "rojo", "amarillo"])
+
+            // Display french, but search based on spanish values
+            model.updateDisplayProperty("french");
+            assertVisibleText(["orange", "rouge", "jaune"])
+            search("rojo");
+            assertVisibleProperties(["red"]);
+        });
     });
 });
