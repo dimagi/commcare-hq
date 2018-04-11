@@ -18,7 +18,8 @@
     <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
     <script src="{% static 'reports/js/maps_utils.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-            <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
+    <script src="{% static 'reports/js/filters/main.js' %}"></script>
+    <script src="{% static 'reports_core/js/base_template_new.js' %}"></script>
 {% endblock %}
 
 {% block head %}{{ block.super }}
@@ -35,7 +36,6 @@
 {% block page_title %}{% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'report_filters' report.filters %}
     {% initial_page_data 'left_col_fixed_width' report_table.left_col.fixed.width %}
     {% initial_page_data 'left_col_fixed_num' report_table.left_col.fixed.num %}
     {% initial_page_data 'left_col_is_fixed' report_table.left_col.is_fixed %}

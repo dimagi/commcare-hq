@@ -82,7 +82,7 @@ hqDefine('reports_core/js/base_template_new', function() {
             fixColsNumLeft: initialPageData.get('left_col_fixed_num'),
             fixColsWidth: initialPageData.get('left_col_fixed_width'),
             successCallbacks: [successCallback, updateCharts, updateMap, paginationNotice],
-            errorCallbacks: [errorCallback]
+            errorCallbacks: [errorCallback],
         });
         $('#paramSelectorForm').submit(function(event) {
             $('#reportHint').remove();
@@ -98,19 +98,13 @@ hqDefine('reports_core/js/base_template_new', function() {
             $('.header-popover').popover({
                 trigger: 'hover',
                 placement: 'bottom',
-                container: 'body'
+                container: 'body',
             });
         });
 
-    });
-
-    $(function () {
-        // add any filter javascript dependencies
-        for (var filter in initialPageData.get('report_filters')) {
-            debugger
-        }
-        // initialPageData.get('if filter.javascript_template')
-        //     initialPageData.get('include filter.javascript_template with filter=filter context_=filter_context|dict_lookup:filter.css_id')
-        // initialPageData.get('endif')
+        // filter init
+        $(function() {
+            hqImport("reports/js/filters/main").init();
+        });
     });
 });
