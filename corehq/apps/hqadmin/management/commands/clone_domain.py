@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import uuid
 
 from django.core.management.base import BaseCommand, CommandError
+from django.db.models.query import Q
 
 from corehq.apps.app_manager.models import Application
 from corehq.apps.calendar_fixture.models import CalendarFixtureSettings
@@ -175,9 +176,13 @@ class Command(BaseCommand):
             location_types_map[old_id] = new_id
 
         if not types_only:
-            # MPTT sorts this queryset so we can just save in the same order
+            # use get_descendants, which sorts locations hierarchically,
+            # so we can save in the same order
+            locs = SQLLocation.objects.get_queryset_descendants(
+                Q(domain=self.existing_domain, parent_id__isnull=True)
+            ).filter(is_archived=False)
             new_loc_pks_by_code = {}
-            for loc in SQLLocation.active_objects.filter(domain=self.existing_domain):
+            for loc in locs:
                 # start with a new location so we don't inadvertently copy over a bunch of foreign keys
                 new_loc = SQLLocation()
                 for field in ["name", "site_code", "external_id", "metadata",
