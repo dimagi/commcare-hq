@@ -6,8 +6,8 @@ from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclogs_for_us
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.receiverwrapper.util import get_version_and_app_from_build_id
-from corehq.apps.users.models import CouchUser, CommCareUser, WebUser
-from corehq.apps.users.util import update_latest_builds, update_last_sync
+from corehq.apps.users.models import CouchUser, CommCareUser, WebUser, DeviceAppMeta
+from corehq.apps.users.util import update_latest_builds, update_last_sync, update_device_meta
 from corehq.util.doc_processor.interface import BaseDocProcessor, DocumentProcessorController
 from corehq.util.doc_processor.couch import CouchDocumentProvider
 
@@ -66,8 +66,16 @@ class UserSyncHistoryProcessor(PillowProcessor):
             save = update_last_sync(user, app_id, sync_date, version)
             if version:
                 save |= update_latest_builds(user, app_id, sync_date, version)
+
+            app_meta = None
+            device_id = synclog.get('device_id')
+            if device_id:
+                if app_id:
+                    app_meta = DeviceAppMeta(app_id=app_id, build_id=build_id, last_sync=sync_date)
+                save |= update_device_meta(user, device_id, device_app_meta=app_meta, save=False)
+
             if save:
-                user.save()
+                user.save(fire_signals=False)
 
 
 class UserSyncHistoryReindexerDocProcessor(BaseDocProcessor):

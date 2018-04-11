@@ -51,17 +51,16 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - jls/privacy-policy  # Jenny 3/19
-#  - jls/data-corrections-forms  # Jenny 3/27
+  - fr/property-changes-paginated+jls/data-corrections-forms # Jenny April 9
+  - jls/data-corrections-forms  # Jenny 3/27
   - fr/property-changes-paginated # FR 29/3
-#  - nh/orms/sync_identifiers  # NH --04-01
+  - ce/app-status-staging+np/training-module # CE 4/10
   - np/training-module  # NP 4/2
   - je/report-builder-button # J$ 4/3
   - np/flavor  # NP 4/5
-  - sr-couch-synclogs+ce/user-loc-query # cal April 9
-  - sr-couch-synclogs  # Sravan April 6
   - ce/auto-batches # Cal April 6
-  - jls/externalize-js-more-report-filters # Jenny April 6
-  - ce/user-loc-query # Cal April 9
+  - ce/app-status-staging # Cal April 9
+  - es/mobile-ucr-slugs  # Ethan April 9
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

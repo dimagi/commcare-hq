@@ -76,8 +76,8 @@ def undo_form_edits(form_tuples, logger):
         for form in (live_form, deprecated_form):
             form.track_create(XFormOperationSQL(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX),
-                date=operation_date
+                operation=XFormOperationSQL.UUID_DATA_FIX,
+                date=operation_date)
             )
             FormAccessorSQL.update_form(form)
 

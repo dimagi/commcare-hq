@@ -13,7 +13,7 @@ from nose.tools import nottest
 from unittest2 import skipIf, skipUnless
 
 from casexml.apps.case.models import CommCareCase
-from casexml.apps.phone.models import SyncLogSQL, SyncLog
+from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import (
     CaseAccessorSQL, LedgerAccessorSQL, LedgerReindexAccessor,
     iter_all_rows)
@@ -21,7 +21,6 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, CaseTransaction, Attachment
 from corehq.form_processor.utils.general import should_use_sql_backend
-from corehq.sql_db.config import get_sql_db_aliases_in_use
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.test_utils import unit_testing_only, run_with_multiple_configs, RunConfig
 from couchforms.models import XFormInstance, all_known_formlike_doc_types
@@ -104,7 +103,6 @@ class FormProcessorTestUtils(object):
     @unit_testing_only
     def delete_all_sync_logs(cls):
         SyncLogSQL.objects.all().delete()
-        cls._delete_all_from_view(SyncLog.get_db(), 'phone/sync_logs_by_user')
 
     @staticmethod
     @unit_testing_only
