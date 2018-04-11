@@ -2343,6 +2343,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
 
     @property
     def is_surveys(self):
@@ -2354,8 +2355,6 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
             doc_type = data['doc_type']
             if doc_type == 'Module':
                 return Module.wrap(data)
-            elif doc_type == 'TrainingModule':
-                return TrainingModule.wrap(data)
             elif doc_type == 'AdvancedModule':
                 return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
@@ -2721,6 +2720,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
         module.get_or_create_unique_id()
         return module
 
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
+        return module
+
     def new_form(self, name, lang, attachment=Ellipsis):
         from corehq.apps.app_manager.views.utils import get_blank_form_xml
         lang = lang if lang else "en"
@@ -2809,10 +2814,6 @@ class Module(ModuleBase, ModuleDetailsMixin):
 
     def grid_display_style(self):
         return self.display_style == 'grid'
-
-
-class TrainingModule(Module):
-    doc_type = 'TrainingModule'
 
 
 class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):

@@ -15,8 +15,6 @@ from memoized import memoized
 class MenuContributor(SuiteContributorByModule):
 
     def get_module_contributions(self, module):
-        from corehq.apps.app_manager.models import TrainingModule
-
         def get_commands(excluded_form_ids):
             @memoized
             def module_uses_case():
@@ -103,7 +101,7 @@ class MenuContributor(SuiteContributorByModule):
                 for root_module in root_modules:
                     menu_kwargs = {}
                     suffix = ""
-                    if isinstance(id_module, TrainingModule):
+                    if id_module.is_training_module:
                         menu_kwargs.update({'root': 'training-root'})
                     elif root_module:
                         menu_kwargs.update({'root': id_strings.menu_id(root_module)})
@@ -146,11 +144,6 @@ class MenuContributor(SuiteContributorByModule):
 
                     if len(menu.commands):
                         menus.append(menu)
-
-            if any(isinstance(id_module, TrainingModule) for id_module in id_modules):
-                menu = LocalizedMenu(id='training-root')
-                menu.text = Text(locale_id=id_strings.training_module_locale())
-                menus.append(menu)
 
         if self.app.grid_display_for_all_modules() or \
                 self.app.grid_display_for_some_modules() and module.grid_display_style():
