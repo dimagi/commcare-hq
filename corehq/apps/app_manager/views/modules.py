@@ -68,7 +68,6 @@ from corehq.apps.app_manager.models import (
     UpdateCaseAction,
     FixtureSelect,
     DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations,
-    TrainingModule,
 )
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
@@ -189,7 +188,7 @@ def _get_basic_module_view_context(app, module, case_property_builder):
             app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not isinstance(module, TrainingModule)
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
         ),
     }
 
@@ -317,7 +316,8 @@ def _get_valid_parents_for_child_module(app, module):
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
     return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
-            and not parent_module == module and parent_module.doc_type != "ShadowModule"]
+            and not parent_module == module and parent_module.doc_type != "ShadowModule"
+            and not parent_module.is_training_module]
 
 
 def _case_list_form_options(app, module, case_type_, lang=None):
@@ -615,7 +615,7 @@ def _new_shadow_module(request, domain, app, name, lang):
 
 def _new_training_module(request, domain, app, name, lang):
     name = name or 'Training'
-    module = app.add_module(TrainingModule.new_module(name, lang))
+    module = app.add_module(Module.new_training_module(name, lang))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
