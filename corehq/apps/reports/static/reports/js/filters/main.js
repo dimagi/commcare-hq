@@ -268,7 +268,7 @@ hqDefine("reports/js/filters/main", [
                     data: choiceListUtils.getApiQueryParams,
                     results: choiceListUtils.formatPageForSelect2,
                     cache: true,
-                }
+                },
             });
             $el.select2('data', initialValues);
         });
