@@ -84,7 +84,7 @@ describe('Clean Water Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {in_month: 10, all: 100});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Number of AWCs that reported having a source of clean drinking water: <strong>10</strong></div>' +
-            '<div>% of AWCs that reported having a source of clean drinking water: <strong>10.00%</strong></div></div>';
+            '<div>% of AWCs that reported having a source of clean drinking water: <strong>10.00%</strong></div>';
 
         assert.equal(result, expected);
     });
