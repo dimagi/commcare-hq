@@ -2,10 +2,6 @@
 {% load i18n %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'domain/js/confirm_plan.js' %}"></script>
-{% endblock %}
-
 {% block form_content %}
     <p class="lead">
         {% blocktrans with plan.name as p %}
@@ -80,27 +76,12 @@
             Clicking the 'Select this Plan' button below will bring you to a page where you can enter basic billing information.
             {% endblocktrans %}
         </p>
-        <div class="checkbox">
-            <label  style="font-weight: bold;">
-                <input type="checkbox" id="confirm-product-agreement" name="confirm_legal" />
-                {% url "product_agreement" as pa_url %}
-                {% blocktrans %}
-                    I have read and agree to the <a href="{{ pa_url }}" target="_blank">
-                    Software Product Subscription Agreement</a>.
-                {% endblocktrans %}
-            </label>
-        </div>
         <div class="form-actions">
             <div class="col-sm-6">
                 <a href="{% url 'domain_select_plan' domain %}" class="btn btn-default">{% trans 'Select different plan' %}</a>
-                <button type="submit" class="btn btn-primary disabled" id="submit-button-pa" disabled="disabled">
+                <button type="submit" class="btn btn-primary">
                     {% trans 'Select this Plan' %}
                 </button>
-                <span class="label label-info label-lg" id="submit-button-help-qa">
-                    {% blocktrans %}
-                    Please agree to the Product Subscription Agreement above before continuing.
-                    {% endblocktrans %}
-                </span>
             </div>
         </div>
     </form>
