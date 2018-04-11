@@ -56,7 +56,7 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
                           .filter_by_user_input(self.domain, "Boston"))
 
         self.assertItemsEqual(
-            [loc.name for loc in boston_matches[0].mptt_get_ancestors()],
+            [loc.name for loc in boston_matches[0].get_ancestors()],
             ['Suffolk', 'Massachusetts']
         )
 
