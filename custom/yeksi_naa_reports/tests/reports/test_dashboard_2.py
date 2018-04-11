@@ -31,7 +31,7 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['Region 1', 'no data entered', 'no data entered', '1000.00%'],
+                ['Region 1', 'no data entered', 'no data entered', '1500.00%'],
                 ['Dakar', 'no data entered', 'no data entered', '52200.00%'],
                 ['Region Test', 'no data entered', '2000.00%', 'no data entered'],
                 ['Thies', 'no data entered', 'no data entered', '2300.00%']
