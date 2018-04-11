@@ -9,7 +9,7 @@ hqDefine('locations/js/location_drilldown', function() {
         });
     }
 
-    function LocationSelectViewModel(options) {
+    function locationSelectViewModel(options) {
         var model = {};
 
         model.loc_url = options.loc_url;
@@ -102,7 +102,7 @@ hqDefine('locations/js/location_drilldown', function() {
         return model;
     }
 
-    function LocationModel(data, root, depth, func, withAllOption) {
+    function locationModel(data, root, depth, func, withAllOption) {
         var loc = {};
 
         loc.name = ko.observable();
@@ -239,7 +239,7 @@ hqDefine('locations/js/location_drilldown', function() {
     }
 
     return {
-        LocationSelectViewModel: LocationSelectViewModel,
-        LocationModel: LocationModel,
+        locationSelectViewModel: locationSelectViewModel,
+        locationModel: locationModel,
     };
 });

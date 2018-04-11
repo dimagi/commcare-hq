@@ -1,10 +1,10 @@
 hqDefine('reports/js/report_filter/drilldown_options', function() {
-    var DrilldownOptionFilterControl = function (options) {
+    var drilldownOptionFilterControl = function (options) {
         var self = {};
 
-        self.notification = DrilldownFinalNotification(options.notifications);
+        self.notification = drilldownFinalNotification(options.notifications);
         self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
-            return DrilldownOption(select, options.drilldown_map);
+            return drilldownOption(select, options.drilldown_map);
         }));
 
         self.init = function () {
@@ -42,7 +42,7 @@ hqDefine('reports/js/report_filter/drilldown_options', function() {
         return self;
     };
 
-    var DrilldownFinalNotification = function (notifications) {
+    var drilldownFinalNotification = function (notifications) {
         var self = {};
         self.notifications = notifications;
         self.message = ko.observable();
@@ -58,7 +58,7 @@ hqDefine('reports/js/report_filter/drilldown_options', function() {
         return self;
     };
 
-    var DrilldownOption = function (select, drilldownMap) {
+    var drilldownOption = function (select, drilldownMap) {
         var self = {};
         self.label = select.label;
         self.default_text = select.default_text;
@@ -78,5 +78,5 @@ hqDefine('reports/js/report_filter/drilldown_options', function() {
         return self;
     };
 
-    return { DrilldownOptionFilterControl: DrilldownOptionFilterControl };
+    return { drilldownOptionFilterControl: drilldownOptionFilterControl };
 });
