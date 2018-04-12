@@ -198,9 +198,6 @@ class Select2Ajax(forms.TextInput):
             'data-multiple': '1' if self.multiple else '0',
         })
         output = super(Select2Ajax, self).render(name, value, attrs)
-        output += render_to_string(
-            'hqwebapp/select_2_ajax_widget.html',
-        )
         return mark_safe(output)
 
 
