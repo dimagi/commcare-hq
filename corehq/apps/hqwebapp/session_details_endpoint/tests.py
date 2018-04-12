@@ -53,7 +53,7 @@ class SessionDetailsViewTest(TestCase):
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = base64.b64encode(hmac.new('123abc', data, hashlib.sha256).digest())
+        header_value = base64.b64encode(hmac.new(b'123abc', data, hashlib.sha256).digest())
         response = Client().post(
             self.url,
             data,
