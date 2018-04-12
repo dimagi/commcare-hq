@@ -58,6 +58,7 @@ from casexml.apps.phone.const import (
 from casexml.apps.phone.xml import get_sync_element, get_progress_element
 from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
+from corehq.util.cache_utils import ExponentialGrowth
 
 
 logger = logging.getLogger(__name__)
@@ -193,7 +194,8 @@ class AsyncRestoreResponse(object):
         self.progress = {
             'done': task_info.get('done', 0),
             'total': task_info.get('total', 0),
-            'retry_after': task_info.get('retry-after', ASYNC_RETRY_AFTER),
+            'retry_after': ExponentialGrowth.get_next_time(
+                "async_restore.%s.%s" % (task.id, username), ASYNC_RETRY_AFTER),
         }
 
     def compile_response(self):

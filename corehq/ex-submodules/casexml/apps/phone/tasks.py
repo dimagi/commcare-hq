@@ -9,6 +9,7 @@ from celery.task import periodic_task, task
 from celery.signals import after_task_publish
 from django.conf import settings
 from casexml.apps.phone.cleanliness import set_cleanliness_flags_for_all_domains
+from corehq.util.cache_utils import ExponentialGrowth
 from casexml.apps.phone.models import SyncLogSQL
 from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 
@@ -46,6 +47,8 @@ def get_async_restore_payload(restore_config):
 
     # delete the task id from the task, since the payload can now be fetched from the cache
     restore_config.async_restore_task_id_cache.invalidate()
+    ExponentialGrowth.invalidate(
+        "async_restore.%s.%s" % (task, restore_config.restore_user.username))
 
     return response
 
