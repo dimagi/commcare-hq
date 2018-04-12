@@ -191,7 +191,7 @@ class Select2Ajax(forms.TextInput):
 
     def render(self, name, value, attrs=None):
         attrs.update({
-            'class': 'hqwebapp-select2-ajax',
+            'class': 'form-control hqwebapp-select2-ajax',
             'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
             'data-endpoint': self.url,
             'data-page-size': self.page_size,
