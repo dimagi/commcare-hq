@@ -1,7 +1,5 @@
 from __future__ import absolute_import
-from collections import namedtuple
 
-from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -19,82 +17,9 @@ DOMAIN_DOC_TYPES = ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE')
 
 SYNCLOG_DOC_TYPES = ('SyncLog', 'SimplifiedSyncLog')
 
-CASE = 'case'
-FORM = 'form'
-DOMAIN = 'domain'
-META = 'meta'
-COMMCARE_USER = 'commcare-user'
-WEB_USER = 'web-user'
-GROUP = 'group'
-APP = 'app'
-
-
-DocumentMetadata = namedtuple(
-    'DocumentMetadata', ['raw_doc_type', 'primary_type', 'subtype', 'domain', 'is_deletion']
-)
-
-
-def get_doc_meta_object_from_document(document):
-    raw_doc_type = _get_document_type(document)
-    if raw_doc_type:
-        primary_type = _get_primary_type(raw_doc_type)
-        return _make_document_type(raw_doc_type, primary_type, document)
-
-
-def _get_primary_type(raw_doc_type):
-    if raw_doc_type in CASE_DOC_TYPES:
-        return CASE
-    elif raw_doc_type in all_known_formlike_doc_types():
-        return FORM
-    elif raw_doc_type in DOMAIN_DOC_TYPES:
-        return DOMAIN
-    elif raw_doc_type in MOBILE_USER_DOC_TYPES:
-        return COMMCARE_USER
-    elif raw_doc_type in WEB_USER_DOC_TYPES:
-        return WEB_USER
-    elif raw_doc_type in GROUP_DOC_TYPES:
-        return GROUP
-    elif raw_doc_type in app_doc_types():
-        return APP
-    else:
-        # at some point we may want to make this more granular
-        return META
-
-
-def _make_document_type(raw_doc_type, primary_type, document):
-    if primary_type == CASE:
-        return _case_doc_type_constructor(raw_doc_type, document)
-    elif primary_type == FORM:
-        return _form_doc_type_constructor(raw_doc_type, document)
-    elif primary_type == DOMAIN:
-        return _domain_doc_type_constructor(raw_doc_type, document)
-    else:
-        return DocumentMetadata(
-            raw_doc_type, primary_type, None, _get_domain(document), is_deletion(raw_doc_type)
-        )
-
 
 def _get_document_type(document_or_none):
     return document_or_none.get('doc_type', None) if document_or_none else None
-
-
-def _case_doc_type_constructor(raw_doc_type, document):
-    return DocumentMetadata(
-        raw_doc_type, CASE, document.get('type', None), _get_domain(document), is_deletion(raw_doc_type)
-    )
-
-
-def _form_doc_type_constructor(raw_doc_type, document):
-    return DocumentMetadata(
-        raw_doc_type, FORM, document.get('xmlns', None), _get_domain(document), is_deletion(raw_doc_type)
-    )
-
-
-def _domain_doc_type_constructor(raw_doc_type, document):
-    is_deletion_ = raw_doc_type == 'Domain-DUPLICATE' or is_deletion(raw_doc_type)
-    return DocumentMetadata(
-        raw_doc_type, DOMAIN, None, document.get('name', None), is_deletion_
-    )
 
 
 def _get_subtype(doc_type, document):

@@ -6,14 +6,12 @@ from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
 from couchforms.models import all_known_formlike_doc_types
-from .document_types import CASE, FORM, DOMAIN, META, APP
 
-# this is redundant but helps avoid import warnings until nothing references these
-CASE = CASE
-FORM = FORM
-DOMAIN = DOMAIN
-META = META
-APP = APP
+CASE = 'case'
+FORM = 'form'
+DOMAIN = 'domain'
+META = 'meta'
+APP = 'app'
 
 # new models
 CASE_SQL = 'case-sql'
