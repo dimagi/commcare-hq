@@ -28,8 +28,8 @@ def get_case_data_source(app, case_type):
     # the first two (row number and case id) are redundant/export specific,
     meta_properties_to_use = MAIN_CASE_TABLE_PROPERTIES[2:]
     # anything with a transform should also be removed
-    is_usable_property_def = lambda property_def: property_def.item.transform is None
-    meta_properties_to_use = filter(is_usable_property_def, meta_properties_to_use)
+    meta_properties_to_use = list(filter(lambda property_def: property_def.item.transform is None,
+                                         meta_properties_to_use))
     meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
     return DataSourceConfiguration(

@@ -77,12 +77,15 @@ class AppManagerDataSourceConfigTest(TestCase):
             {'doc_type': 'CommCareCase', 'domain': self.domain, 'type': 'wrong-type'}))
 
         # check the indicators
-        datetime_columns = ["last_modified_date", "opened_date", "closed_date", "inserted_at", "server_last_modified_date"]
+        datetime_columns = ["last_modified_date", "opened_date", "closed_date", "inserted_at",
+                            "server_last_modified_date"]
         expected_columns = set(
             datetime_columns +
-            ["doc_id", "case_type", "last_modified_by_user_id", "opened_by_user_id",
-             "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id"] +
-             list(self.case_properties.keys())
+            [
+                "doc_id", "case_type", "last_modified_by_user_id", "opened_by_user_id",
+                "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id"
+            ] +
+            list(self.case_properties.keys())
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
