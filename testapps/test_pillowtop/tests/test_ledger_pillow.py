@@ -43,6 +43,11 @@ class LedgerPillowTestCouch(TestCase):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
         initialize_index_and_mapping(get_es_new(), LEDGER_INDEX_INFO)
 
+        if should_use_sql_backend(self.domain):
+            self.topic = topics.LEDGER_V2
+        else:
+            self.topic = topics.LEDGER
+
     def tearDown(self):
         ensure_index_deleted(LEDGER_INDEX_INFO.index)
         FormProcessorTestUtils.delete_all_ledgers(self.domain)
@@ -53,9 +58,9 @@ class LedgerPillowTestCouch(TestCase):
         factory = CaseFactory(domain=self.domain)
         case = factory.create_case()
 
-        consumer = get_test_kafka_consumer(topics.LEDGER)
+        consumer = get_test_kafka_consumer(self.topic)
         # have to get the seq id before the change is processed
-        kafka_seq = get_topic_offset(topics.LEDGER)
+        kafka_seq = get_topic_offset(self.topic)
 
         from corehq.apps.commtrack.tests.util import get_single_balance_block
         from corehq.apps.hqcase.utils import submit_case_blocks
@@ -84,7 +89,7 @@ class LedgerPillowTestCouch(TestCase):
         # confirm change made it to elasticserach
         self._assert_ledger_in_es(ref)
 
-        kafka_seq = get_topic_offset(topics.LEDGER)
+        kafka_seq = get_topic_offset(self.topic)
 
         xform.archive()
 

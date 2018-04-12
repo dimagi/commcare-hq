@@ -36,7 +36,7 @@ class KafkaPublishingSQLTest(TestCase):
         self.ledger_pillow = ConstructedPillow(
             name='test-kafka-ledger-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='test-kafka-ledger-feed'),
+            change_feed=KafkaChangeFeed(topics=[topics.LEDGER, topics.LEDGER_V2], group_id='test-kafka-ledger-feed'),
             processor=self.processor
         )
 
@@ -125,7 +125,7 @@ class KafkaPublishingTest(TestCase):
         self.ledger_pillow = ConstructedPillow(
             name='test-kafka-ledger-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.LEDGER], group_id='test-kafka-ledger-feed'),
+            change_feed=KafkaChangeFeed(topics=[topics.LEDGER, topics.LEDGER_V2], group_id='test-kafka-ledger-feed'),
             processor=self.processor
         )
 

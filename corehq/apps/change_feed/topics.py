@@ -20,6 +20,7 @@ CASE_SQL = 'case-sql'
 FORM_SQL = 'form-sql'
 SMS = 'sms'
 LEDGER = 'ledger'
+LEDGER_V2 = 'ledger-v2'
 COMMCARE_USER = 'commcare-user'
 GROUP = 'group'
 WEB_USER = 'web-user'
@@ -39,6 +40,7 @@ ALL = (
     FORM_SQL,
     GROUP,
     LEDGER,
+    LEDGER_V2,
     META,
     SMS,
     WEB_USER,

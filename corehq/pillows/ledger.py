@@ -62,14 +62,14 @@ def _get_daily_consumption_for_ledger(ledger):
 def get_ledger_to_elasticsearch_pillow(pillow_id='LedgerToElasticsearchPillow', num_processes=1,
                                        process_num=0, **kwargs):
     assert pillow_id == 'LedgerToElasticsearchPillow', 'Pillow ID is not allowed to change'
-    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO, [topics.LEDGER])
+    checkpoint = get_checkpoint_for_elasticsearch_pillow(pillow_id, LEDGER_INDEX_INFO, [topics.LEDGER, topics.LEDGER_V2])
     processor = ElasticProcessor(
         elasticsearch=get_es_new(),
         index_info=LEDGER_INDEX_INFO,
         doc_prep_fn=_prepare_ledger_for_es
     )
     change_feed = KafkaChangeFeed(
-        topics=[topics.LEDGER], group_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
+        topics=[topics.LEDGER, topics.LEDGER_V2], group_id='ledgers-to-es', num_processes=num_processes, process_num=process_num
     )
     return ConstructedPillow(
         name=pillow_id,

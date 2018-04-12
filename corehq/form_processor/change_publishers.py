@@ -81,7 +81,7 @@ def publish_case_deleted(domain, case_id):
 
 
 def publish_ledger_v2_saved(ledger_value):
-    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(
+    producer.send_change(topics.LEDGER_V2, change_meta_from_ledger_v2(
         ledger_value.ledger_reference, ledger_value.domain
     ))
 
@@ -91,14 +91,13 @@ def publish_ledger_v2_deleted(domain, case_id, section_id, entry_id):
     ref = UniqueLedgerReference(
         case_id=case_id, section_id=section_id, entry_id=entry_id
     )
-    producer.send_change(topics.LEDGER, change_meta_from_ledger_v2(ref, domain, True))
+    producer.send_change(topics.LEDGER_V2, change_meta_from_ledger_v2(ref, domain, True))
 
 
 def change_meta_from_ledger_v2(ledger_ref, domain, deleted=False):
     return ChangeMeta(
         document_id=ledger_ref.as_id(),
-        data_source_type=data_sources.LEDGER_V2,
-        data_source_name='ledger-v2',  # todo: this isn't really needed.
+        document_type=topics.LEDGER_V2,
         domain=domain,
         is_deletion=deleted,
     )
@@ -111,8 +110,7 @@ def publish_ledger_v1_saved(stock_state, deleted=False):
 def change_meta_from_ledger_v1(stock_state, deleted=False):
     return ChangeMeta(
         document_id=stock_state.pk,
-        data_source_type=data_sources.LEDGER_V1,
-        data_source_name='ledger-v1',  # todo: this isn't really needed.
+        document_type=topics.LEDGER,
         domain=stock_state.domain,
         is_deletion=deleted,
     )
@@ -131,15 +129,16 @@ def _publish_ledgers_from_form(domain, form):
         for helper in get_all_stock_report_helpers_from_form(form)
         for transaction in helper.transactions
     }
+    topic = topics.LEDGER_V2 if form.backend_id == 'sql' else topics.LEDGER
     for ledger_reference in unique_references:
-        producer.send_change(topics.LEDGER, _change_meta_from_ledger_reference(domain, ledger_reference))
+        change_meta = _change_meta_from_ledger_reference(domain, ledger_reference, topic)
+        producer.send_change(topic, change_meta)
 
 
-def _change_meta_from_ledger_reference(domain, ledger_reference):
+def _change_meta_from_ledger_reference(domain, ledger_reference, topic):
     return ChangeMeta(
         document_id=ledger_reference.as_id(),
-        data_source_type=data_sources.LEDGER_V2,
-        data_source_name='ledger-v2',  # todo: this isn't really needed.
+        document_type=topic,
         domain=domain,
         is_deletion=False,
     )
