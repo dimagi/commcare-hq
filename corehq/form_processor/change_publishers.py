@@ -2,8 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from casexml.apps.case.xform import get_case_ids_from_form
 from corehq.apps.change_feed import topics
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed import data_sources
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.signals import sql_case_post_save
 from pillowtop.feed.interface import ChangeMeta
@@ -22,27 +22,14 @@ def republish_all_changes_for_form(domain, form_id):
 
 
 def publish_form_saved(form):
-    producer.send_change(topics.FORM_SQL, change_meta_from_sql_form(form))
-
-
-def change_meta_from_sql_form(form):
-    return ChangeMeta(
-        document_id=form.form_id,
-        data_source_type=data_sources.FORM_SQL,
-        data_source_name='form-sql',  # todo: this isn't really needed.
-        document_type=form.doc_type,
-        document_subtype=form.xmlns,
-        domain=form.domain,
-        is_deletion=form.is_deleted,
-    )
+    producer.send_change(topics.FORM_SQL, change_meta_from_doc(form.to_json()))
 
 
 def publish_form_deleted(domain, form_id):
     producer.send_change(topics.FORM_SQL, ChangeMeta(
         document_id=form_id,
-        data_source_type=data_sources.FORM_SQL,
-        data_source_name='form-sql',
         document_type='XFormInstance-Deleted',
+        backend_id='sql',
         domain=domain,
         is_deletion=True,
     ))
@@ -52,29 +39,16 @@ def publish_case_saved(case, send_post_save_signal=True):
     """
     Publish the change to kafka and run case post-save signals.
     """
-    producer.send_change(topics.CASE_SQL, change_meta_from_sql_case(case))
+    producer.send_change(topics.CASE_SQL, change_meta_from_doc(case.to_json()))
     if send_post_save_signal:
         sql_case_post_save.send(case.__class__, case=case)
-
-
-def change_meta_from_sql_case(case):
-    return ChangeMeta(
-        document_id=case.case_id,
-        data_source_type=data_sources.CASE_SQL,
-        data_source_name='case-sql',  # todo: this isn't really needed.
-        document_type='CommCareCase',
-        document_subtype=case.type,
-        domain=case.domain,
-        is_deletion=case.is_deleted,
-    )
 
 
 def publish_case_deleted(domain, case_id):
     producer.send_change(topics.CASE_SQL, ChangeMeta(
         document_id=case_id,
-        data_source_type=data_sources.CASE_SQL,
-        data_source_name='case-sql',  # todo: this isn't really needed.
         document_type='CommCareCase-Deleted',
+        backend_id='sql',
         domain=domain,
         is_deletion=True,
     ))

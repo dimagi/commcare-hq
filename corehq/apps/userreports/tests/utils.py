@@ -10,7 +10,6 @@ import uuid
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
-from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
@@ -84,8 +83,6 @@ def doc_to_change(doc):
         document=doc,
         metadata=ChangeMeta(
             document_id=doc['_id'],
-            data_source_type=data_sources.COUCH,
-            data_source_name=CommCareCase.get_db().dbname,
             document_type=doc['doc_type'],
             document_subtype=doc.get('type'),
             domain=doc['domain'],
