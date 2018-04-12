@@ -20,6 +20,7 @@ describe('Newborn Low Weight Directive', function () {
             {id: 'F', name: 'Female'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
