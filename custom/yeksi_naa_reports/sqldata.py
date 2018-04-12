@@ -378,8 +378,8 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['pna_final_stock']:
-                data[month_index]['pna_final_stock'] += record['pna_final_stock']['html']
+            if record['final_pna_stock']:
+                data[month_index]['final_pna_stock'] += record['final_pna_stock']['html']
                 if record['loss_amt']:
                     data[month_index]['loss_amt'] += record['loss_amt']['html']
 
@@ -395,7 +395,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             total_row.append(
                 self.percent_fn(
                     monthly_data['loss_amt'],
-                    monthly_data['pna_final_stock']
+                    monthly_data['final_pna_stock']
                 )
             )
         return total_row
@@ -409,7 +409,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
         columns = [
             DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
             DatabaseColumn("Total number of PNA lost product", SumColumn('loss_amt')),
-            DatabaseColumn("PNA final stock", SumColumn('pna_final_stock')),
+            DatabaseColumn("PNA final stock", SumColumn('final_pna_stock')),
         ]
         if self.loc_id == 'pps_id':
             columns.append(DatabaseColumn("PPS ID", SimpleColumn('pps_id')))
@@ -432,10 +432,10 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['pna_final_stock'] and record['pna_final_stock']['html']:
+            if record['final_pna_stock'] and record['final_pna_stock']['html']:
                 data[record[self.loc_id]][month_index] = self.percent_fn(
                     record['loss_amt']['html'] if record['loss_amt'] else 0,
-                    record['pna_final_stock']['html']
+                    record['final_pna_stock']['html']
                 )
         return loc_names, data
 

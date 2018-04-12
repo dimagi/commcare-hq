@@ -31,7 +31,7 @@ class TestVisiteDeLOperatourPerProduct(TestDataSourceExpressions):
                                 'loss_amt': 0,
                                 'expired_pna_valuation': 0
                             },
-                            'pna_final_stock': 1,
+                            'final_pna_stock': 1,
                             'final_pna_stock_valuation': 1,
                             'real_date_repeat': '2018-03-07',
                             'product_name': 'EFAVIRENZ 600MG CP.',
@@ -44,7 +44,7 @@ class TestVisiteDeLOperatourPerProduct(TestDataSourceExpressions):
                                 'loss_amt': 0,
                                 'expired_pna_valuation': 0
                             },
-                            'pna_final_stock': 1,
+                            'final_pna_stock': 1,
                             'final_pna_stock_valuation': 1,
                             'real_date_repeat': '2018-03-07',
                             'product_name': 'NEVIRAPINE 200MG CP.',
@@ -81,7 +81,7 @@ class TestVisiteDeLOperatourPerProduct(TestDataSourceExpressions):
 
         loss_amt = self.get_expression('loss_amt', 'integer')
         expired_pna_valuation = self.get_expression('expired_pna_valuation', 'integer')
-        pna_final_stock = self.get_expression('pna_final_stock', 'integer')
+        final_pna_stock = self.get_expression('final_pna_stock', 'integer')
         final_pna_stock_valuation = self.get_expression('final_pna_stock_valuation', 'integer')
         real_date_repeat = self.get_expression('real_date_repeat', 'date')
         product_name = self.get_expression('product_name', 'string')
@@ -97,7 +97,7 @@ class TestVisiteDeLOperatourPerProduct(TestDataSourceExpressions):
 
         self.assertEquals(loss_amt(repeat_items[0], EvaluationContext(repeat_items[0], 0)), 0)
         self.assertEquals(expired_pna_valuation(repeat_items[0], EvaluationContext(repeat_items[0], 0)), 0)
-        self.assertEquals(pna_final_stock(repeat_items[0], EvaluationContext(repeat_items[0], 0)), 1)
+        self.assertEquals(final_pna_stock(repeat_items[0], EvaluationContext(repeat_items[0], 0)), 1)
         self.assertEquals(final_pna_stock_valuation(repeat_items[0], EvaluationContext(repeat_items[0], 0)), 1)
         self.assertEquals(
             real_date_repeat(repeat_items[0], EvaluationContext(repeat_items[0], 0)),
@@ -118,7 +118,7 @@ class TestVisiteDeLOperatourPerProduct(TestDataSourceExpressions):
         self.assertEquals(PPS_name(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 'PPS 1')
         self.assertEquals(loss_amt(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 0)
         self.assertEquals(expired_pna_valuation(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 0)
-        self.assertEquals(pna_final_stock(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 1)
+        self.assertEquals(final_pna_stock(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 1)
         self.assertEquals(final_pna_stock_valuation(repeat_items[1], EvaluationContext(repeat_items[1], 0)), 1)
         self.assertEquals(
             real_date_repeat(repeat_items[1], EvaluationContext(repeat_items[1], 0)),
