@@ -955,7 +955,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
                 product_names[record['product_id']] = record['product_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if record['final_pna_stock_valuation']:
-                data[record['product_id']][month_index] += record['final_pna_stock_valuation']
+                data[record['product_id']][month_index] += record['final_pna_stock_valuation']['html']
 
         new_rows = []
         for product_id in data:
