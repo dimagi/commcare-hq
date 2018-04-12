@@ -186,7 +186,7 @@ def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     try:
         document_store = get_document_store_for_change_meta(change_meta)
-    except (UnknownDocumentStore, AssertionError):
+    except UnknownDocumentStore:
         document_store = None
         if change_meta.version == 1:
             msg = "Unknown document store: {} ({})".format(change_meta.document_type, change_meta.backend_id)
