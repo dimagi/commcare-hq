@@ -11,7 +11,6 @@ from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
@@ -101,7 +100,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         # send to kafka
         topic = topics.FORM_SQL if settings.TESTS_SHOULD_USE_SQL_BACKEND else topics.FORM
         since = self._get_kafka_seq()
-        producer.send_change(topic, _form_to_change_meta(form))
+        producer.send_change(topic, change_meta_from_doc(form.to_json()))
 
         # send to elasticsearch
         pillow = get_unknown_users_pillow()
@@ -121,10 +120,3 @@ class UnknownUserPillowTest(UserPillowTestBase):
 
     def _get_kafka_seq(self):
         return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
-
-
-def _form_to_change_meta(form):
-    if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-        return change_meta_from_sql_form(form)
-    else:
-        return change_meta_from_doc(form.to_json())

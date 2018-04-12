@@ -40,7 +40,7 @@ class DomainPillowTest(TestCase):
 
         # send to kafka
         since = get_topic_offset(topics.DOMAIN)
-        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain.to_json))
+        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain.to_json()))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -58,7 +58,7 @@ class DomainPillowTest(TestCase):
 
         # send to kafka
         since = get_topic_offset(topics.DOMAIN)
-        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain_obj.to_json))
+        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain_obj.to_json()))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
