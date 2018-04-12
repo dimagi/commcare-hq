@@ -90,19 +90,19 @@ def _get_document_store_from_topic(topic, domain):
                 return None
             raise
 
-    if topic == FORM_SQL:
+    if topic == topics.FORM_SQL:
         return ReadonlyFormDocumentStore(domain)
-    elif topic == CASE_SQL:
+    elif topic == topics.CASE_SQL:
         return ReadonlyCaseDocumentStore(domain)
     elif topic == SMS:
         return ReadonlySMSDocumentStore()
-    elif topic == LEDGER_V2:
+    elif topic == topics.LEDGER_V2:
         return ReadonlyLedgerV2DocumentStore(domain)
-    elif topic == LEDGER_V1:
+    elif topic == topics.LEDGER:
         return LedgerV1DocumentStore(domain)
-    elif topic == LOCATION:
+    elif topic == topics.LOCATION:
         return ReadonlyLocationDocumentStore(domain)
-    elif topic == SYNCLOG_SQL:
+    elif topic == topics.SYNCLOG_SQL:
         return ReadonlySyncLogDocumentStore()
     else:
         raise UnknownDocumentStore(
