@@ -35,6 +35,7 @@ class CaseDisplayWrapper(object):
                         {
                             "expr": "name",
                             "name": _("Name"),
+                            "has_history": True,
                         },
                         {
                             "expr": "opened_on",
@@ -70,6 +71,7 @@ class CaseDisplayWrapper(object):
                             "expr": "owner_id",
                             "name": _("Owner"),
                             "process": 'doc_info',
+                            "has_history": True,
                         },
                         {
                             "expr": "_id",
