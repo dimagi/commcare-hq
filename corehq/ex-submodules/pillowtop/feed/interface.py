@@ -19,13 +19,13 @@ class ChangeMeta(jsonobject.JsonObject):
 
     document_id = DefaultProperty(required=True)
     document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
-    data_source_type = jsonobject.StringProperty(required=True)
-    data_source_name = jsonobject.StringProperty(required=True)
-    document_type = DefaultProperty()
+    data_source_type = jsonobject.StringProperty()
+    data_source_name = jsonobject.StringProperty()
+    document_type = DefaultProperty(required=True)
     document_subtype = jsonobject.StringProperty()
     backend_id = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
-    is_deletion = jsonobject.BooleanProperty()
+    is_deletion = jsonobject.BooleanProperty(default=False)
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
 

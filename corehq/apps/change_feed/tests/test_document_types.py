@@ -7,7 +7,19 @@ from corehq.util.test_utils import generate_cases
 
 
 class DocumentTypeTest(SimpleTestCase):
-    pass
+
+    def test_change_from_doc_success(self):
+        change_meta = change_meta_from_doc({
+            '_id': 'id',
+            'doc_type': 'CommCareCase',
+            'domain': 'test-domain',
+            'type': 'person'
+        })
+        self.assertEqual(change_meta.document_id, 'id')
+        self.assertEqual(change_meta.document_type, 'CommCareCase')
+        self.assertEqual(change_meta.document_subtype, 'person')
+        self.assertEqual(change_meta.domain, 'test-domain')
+        self.assertEqual(change_meta.is_deletion, False)
 
 
 @generate_cases([
@@ -57,19 +69,36 @@ def test_document_meta(self, raw_doc, expected_primary_type, expected_subtype=No
 ], DocumentTypeTest)
 def test_change_from_doc_failures(self, doc):
     with self.assertRaises(MissingMetaInformationError):
-        change_meta_from_doc(doc, 'dummy-data-source', 'dummy-data-source-name')
+        change_meta_from_doc(doc)
 
 
 @generate_cases([
-    ({'_id': 'id', 'doc_type': 'CommCareCase', 'domain': 'test-domain'}, 'id'),
+    # subtype tests
+    ({'doc_type': 'CommCareCase', 'type': 'person'}, 'person'),
+    ({'doc_type': 'XFormInstance', 'xmlns': 'my-xmlns'}, 'my-xmlns'),
+    # domain tests
+    ({'doc_type': 'CommCareCase', 'domain': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'XFormInstance', 'domain': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'name': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'domain': 'wrong', 'name': 'right'}, None, 'right'),
+    # deletion tests
+    ({'doc_type': 'CommCareCase-Deleted'}, None, None, True),
+    ({'doc_type': 'XFormInstance-Deleted'}, None, None, True),
+    ({'doc_type': 'Domain-Deleted'}, None, None, True),
+    ({'doc_type': 'Domain-DUPLICATE'}, None, None, True),
+    ({'doc_type': 'CommCareUser-Deleted'}, None, None, True),
+    ({'doc_type': 'WebUser-Deleted'}, None, None, True),
+    ({'doc_type': 'Group-Deleted'}, None, None, True),
+    # backend id tests
+    ({'doc_type': 'CommCareCase', 'backend_id': 'couch'}, None, None, False, 'couch'),
+    ({'doc_type': 'CommCareCase', 'backend_id': 'sql'}, None, None, False, 'sql'),
 ], DocumentTypeTest)
-def test_change_from_doc_success(self, doc, expected_id):
-    change_meta = change_meta_from_doc(doc, 'dummy-data-source', 'dummy-data-source-name')
-    doc_meta = get_doc_meta_object_from_document(doc)
-    self.assertEqual(expected_id, change_meta.document_id)
-    self.assertEqual('dummy-data-source', change_meta.data_source_type)
-    self.assertEqual('dummy-data-source-name', change_meta.data_source_name)
-    self.assertEqual(doc_meta.raw_doc_type, change_meta.document_type)
-    self.assertEqual(doc_meta.subtype, change_meta.document_subtype)
-    self.assertEqual(doc_meta.domain, change_meta.domain)
-    self.assertEqual(doc_meta.is_deletion, change_meta.is_deletion)
+def test_change_meta(self, raw_doc, expected_subtype=None,
+                     expected_domain=None, expected_deletion=False,
+                     expected_backend_id=None):
+    raw_doc['_id'] = 'id'
+    change_meta = change_meta_from_doc(raw_doc)
+    self.assertEqual(change_meta.document_subtype, expected_subtype)
+    self.assertEqual(change_meta.domain, expected_domain)
+    self.assertEqual(change_meta.is_deletion, expected_deletion)
+    self.assertEqual(change_meta.backend_id, expected_backend_id)

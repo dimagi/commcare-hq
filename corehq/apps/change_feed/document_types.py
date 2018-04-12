@@ -85,12 +85,36 @@ def _domain_doc_type_constructor(raw_doc_type, document):
     )
 
 
-def change_meta_from_doc(document, data_source_type, data_source_name):
+def _get_subtype(doc_type, document):
+    if doc_type in ('CommCareCase', 'CommCareCase-Deleted'):
+        return document.get('type', None)
+    elif doc_type in all_known_formlike_doc_types():
+        return document.get('xmlns', None)
+    return None
+
+
+def change_meta_from_doc(document):
     if document is None:
         raise MissingMetaInformationError('No document!')
 
-    doc_meta = get_doc_meta_object_from_document(document)
-    return change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type, data_source_name)
+    doc_id = document.get('_id', None)
+    if not doc_id:
+        raise MissingMetaInformationError("No doc ID!!")
+
+    doc_type = _get_document_type(document)
+    if not doc_type:
+        raise MissingMetaInformationError("No doc_type: {}".format(doc_id))
+
+    is_deletion_ = doc_type == 'Domain-DUPLICATE' or is_deletion(doc_type)
+    return ChangeMeta(
+        document_id=doc_id or document['_id'],
+        document_rev=document.get('_rev', None),
+        document_type=doc_type,
+        document_subtype=_get_subtype(doc_type, document),
+        domain=_get_domain(document),
+        is_deletion=is_deletion_,
+        backend_id=document.get('backend_id', None)
+    )
 
 
 def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type, data_source_name, doc_id=None):
