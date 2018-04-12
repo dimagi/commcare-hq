@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import base64
 import hashlib
 import hmac
@@ -27,12 +28,12 @@ class SessionDetailsViewTest(TestCase):
         cls.url = reverse('session_details')
 
         cls.expected_response = {
-            u'username': cls.sql_user.username,
-            u'djangoUserId': cls.sql_user.pk,
-            u'superUser': cls.sql_user.is_superuser,
-            u'authToken': None,
-            u'domains': [u'toyland'],
-            u'anonymous': False
+            'username': cls.sql_user.username,
+            'djangoUserId': cls.sql_user.pk,
+            'superUser': cls.sql_user.is_superuser,
+            'authToken': None,
+            'domains': ['toyland'],
+            'anonymous': False
         }
 
     @classmethod
