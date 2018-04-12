@@ -423,26 +423,26 @@ class AutoPayInvoicePaymentHandler(object):
         err = body.get('error', {})
 
         log_accounting_error(
-            "[Autopay] An automatic payment failed for invoice: {} "
+            "[Autopay] An automatic payment failed for invoice: {invoice} ({domain})"
             "because the card was declined. This invoice will not be automatically paid. "
             "Not necessarily actionable, but be aware that this happened. "
-            "error = {}"
-            .format(invoice.id, err)
+            "error = {error}"
+            .format(invoice=invoice.id, domain=invoice.get_domain(), error=err)
         )
         send_autopay_failed.delay(invoice, payment_method)
 
     @staticmethod
     def _handle_card_errors(invoice, e):
         log_accounting_error(
-            "[Autopay] An automatic payment failed for invoice: {invoice} "
+            "[Autopay] An automatic payment failed for invoice: {invoice} ({domain})"
             "because the of {error}. This invoice will not be automatically paid."
-            .format(invoice=invoice.id, error=e)
+            .format(invoice=invoice.id, domain=invoice.get_domain(), error=e)
         )
 
     @staticmethod
     def _handle_email_failure(payment_record):
         log_accounting_error(
             "[Autopay] During an automatic payment, sending a payment receipt failed"
-            " for Payment Record: {}. Everything else succeeded"
-            .format(payment_record.id)
+            " for Payment Record: {payment_record}. Everything else succeeded"
+            .format(payment_record=payment_record.id)
         )

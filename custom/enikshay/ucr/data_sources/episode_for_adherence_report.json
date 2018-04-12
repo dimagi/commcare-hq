@@ -1,9 +1,11 @@
 {
     "domains": [
-        "enikshay"
+        "enikshay",
+        "enikshay-test"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",

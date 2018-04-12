@@ -155,7 +155,3 @@ class OptionalAsyncLocationFilter(AsyncLocationFilter):
     value will be blank.
     """
     make_optional = True
-
-
-class MultiLocationFilter(AsyncDrillableFilter):
-    template = "reports/filters/multi_location.html"

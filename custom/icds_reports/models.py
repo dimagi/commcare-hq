@@ -10,11 +10,13 @@ from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
+    AGG_CHILD_HEALTH_THR_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
 )
 
 
@@ -38,6 +40,8 @@ class AwcLocation(models.Model):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -121,6 +125,8 @@ class AggAwcMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    aww_name = models.DateField(blank=True, null=True)
+    contact_phone_number = models.DateField(blank=True, null=True)
     is_launched = models.TextField(blank=True, null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
@@ -429,6 +435,8 @@ class AwcLocationMonths(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -811,3 +819,43 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class AggregateChildHealthTHRForms(models.Model):
+    """Aggregated data for child_health cases based on
+    Take Home Ration forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every child_health case that has had a THR Form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    days_ration_given_child = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child has been given rations this month"
+    )
+
+    class Meta(object):
+        db_table = AGG_CHILD_HEALTH_THR_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = THRFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)

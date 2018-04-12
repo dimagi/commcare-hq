@@ -10,7 +10,6 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 from django.utils.safestring import mark_safe
 
-from corehq import toggles
 from corehq.apps.domain.forms import NoAutocompleteMixin
 from corehq.apps.users.models import CouchUser
 
@@ -52,12 +51,12 @@ class EmailAuthenticationForm(NoAutocompleteMixin, AuthenticationForm):
             cleaned_data = super(EmailAuthenticationForm, self).clean()
         except ValidationError:
             user = CouchUser.get_by_username(username)
-            if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+            if user and user.is_locked_out() and user.supports_lockout():
                 raise ValidationError(lockout_message)
             else:
                 raise
         user = CouchUser.get_by_username(username)
-        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+        if user and user.is_locked_out() and user.supports_lockout():
             raise ValidationError(lockout_message)
         return cleaned_data
 

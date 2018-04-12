@@ -30,6 +30,7 @@ describe('Enrolled Children Directive', function () {
             {id: '72', name: '60-72 months'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -40,6 +41,9 @@ describe('Enrolled Children Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('enrolled_children').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<enrolled-children data='test'></enrolled-children>");
         var compiled = $compile(element)($scope);
@@ -237,5 +241,20 @@ describe('Enrolled Children Directive', function () {
         controller.resetOnlyAgeAdditionalFilter();
         assert.equal(controller.filtersData.gender, 'test');
         assert.equal(controller.filtersData.age, null);
+    });
+
+    it('tests disable locations for user', function () {
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
+        controller.selectedLocations.push(
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
+        );
+        var index = controller.getDisableIndex();
+        assert.equal(index, 2);
     });
 });

@@ -20,15 +20,16 @@ class ComparedQuerySet(object):
     """Compare results and times of MPTT and CTE queries"""
 
     def __init__(self, mptt_set, cte_set, timing_context):
-        self._mptt_set = mptt_set
+        self._mptt_set = None if settings.IS_LOCATION_CTE_ONLY else mptt_set
         self._cte_set = cte_set if settings.IS_LOCATION_CTE_ENABLED else None
+        assert self._mptt_set is not None or self._cte_set is not None
         if isinstance(timing_context, ComparedQuerySet):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context
 
     def __str__(self):
         return "MPTT query: {}\n\nCTE query: {}".format(
-            self._mptt_set.query,
+            self._mptt_set.query if self._mptt_set is not None else None,
             self._cte_set.query if self._cte_set is not None else None,
         )
 
@@ -36,6 +37,12 @@ class ComparedQuerySet(object):
         items1 = []
         finished = False
         with _commit_timing(self):
+            if self._mptt_set is None:
+                with self._timing("cte") as timer1:
+                    for item in self._cte_set:
+                        with timer1.pause():
+                            yield item
+                return
             try:
                 with self._timing("mptt") as timer1:
                     for item in self._mptt_set:
@@ -52,16 +59,17 @@ class ComparedQuerySet(object):
                 ids2 = [_identify(it) for it in items2]
                 if (finished and ids1 != ids2) or not ids1 == ids2[:len(ids1)]:
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
-                if finished:
-                    self.__len__()  # compares lengths -> reports diff if necessary
 
     def __len__(self):
         with _commit_timing(self):
-            with self._timing("mptt"):
-                len1 = len(self._mptt_set)
+            if self._mptt_set is not None:
+                with self._timing("mptt"):
+                    len1 = len(self._mptt_set)
             if self._cte_set is not None:
                 with self._timing("cte"):
                     len2 = len(self._cte_set)
+        if self._mptt_set is None:
+            return len2
         if self._cte_set is not None and len1 != len2:
             ids1 = [_identify(it) for it in self._mptt_set]
             ids2 = [_identify(it) for it in self._cte_set]
@@ -70,17 +78,22 @@ class ComparedQuerySet(object):
 
     def __getitem__(self, key):
         with _commit_timing(self):
-            with self._timing("mptt"):
-                mptt_result = self._mptt_set.__getitem__(key)
+            if self._mptt_set is not None:
+                with self._timing("mptt"):
+                    mptt_result = self._mptt_set.__getitem__(key)
             if self._cte_set is not None:
                 with self._timing("cte"):
                     cte_result = self._cte_set.__getitem__(key)
-        if isinstance(mptt_result, QuerySet):
-            if self._cte_set is None:
+        if isinstance(cte_result if self._mptt_set is None else mptt_result, QuerySet):
+            if self._mptt_set is None:
+                mptt_result = None
+            elif self._cte_set is None:
                 cte_result = None
             elif not isinstance(cte_result, QuerySet):
                 _report_diff(self, mptt_result, cte_result)
             return ComparedQuerySet(mptt_result, cte_result, self)
+        if self._mptt_set is None:
+            return cte_result
         if self._cte_set is not None:
             if isinstance(mptt_result, list) and isinstance(cte_result, list):
                 ids1 = [_identify(it) for it in mptt_result]
@@ -94,11 +107,14 @@ class ComparedQuerySet(object):
 
     def exists(self, *args, **kw):
         with _commit_timing(self):
-            with self._timing("mptt"):
-                ex1 = self._mptt_set.exists(*args, **kw)
+            if self._mptt_set is not None:
+                with self._timing("mptt"):
+                    ex1 = self._mptt_set.exists(*args, **kw)
             if self._cte_set is not None:
                 with self._timing("cte"):
                     ex2 = self._cte_set.exists(*args, **kw)
+        if self._mptt_set is None:
+            return ex2
         if self._cte_set is not None and ex1 != ex2:
             _report_diff(self, ex1, ex2)
         return ex1
@@ -109,7 +125,7 @@ class ComparedQuerySet(object):
         other_cte = [qs._cte_set if isinstance(qs, ComparedQuerySet) else qs
             for qs in other_qs]
         return ComparedQuerySet(
-            self._mptt_set.union(*other_mptt, **kwargs),
+            self._mptt_set.union(*other_mptt, **kwargs) if self._mptt_set is not None else None,
             self._cte_set.union(*other_cte, **kwargs) if self._cte_set is not None else None,
             self,
         )
@@ -128,7 +144,7 @@ class ComparedQuerySet(object):
         ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
         assert isinstance(ids_query, ComparedQuerySet), ids_query
         result = ComparedQuerySet(
-            self._mptt_set.filter(id__in=ids_query._mptt_set),
+            self._mptt_set.filter(id__in=ids_query._mptt_set) if self._mptt_set is not None else None,
             self._cte_set.filter(id__in=ids_query._cte_set) if self._cte_set is not None else None,
             TimingContext("accessible_to_user"),
         )
@@ -143,11 +159,14 @@ def _identify(item):
 def _make_get_method(name):
     def method(self, *args, **kw):
         with _commit_timing(self):
-            with self._timing("mptt"):
-                obj1 = getattr(self._mptt_set, name)(*args, **kw)
+            if self._mptt_set is not None:
+                with self._timing("mptt"):
+                    obj1 = getattr(self._mptt_set, name)(*args, **kw)
             if self._cte_set is not None:
                 with self._timing("cte"):
                     obj2 = getattr(self._cte_set, name)(*args, **kw)
+        if self._mptt_set is None:
+            return obj2
         if self._cte_set is not None and _identify(obj1) != _identify(obj2):
             _report_diff(self, obj1, obj2)
         return obj1
@@ -158,7 +177,7 @@ def _make_get_method(name):
 def _make_qs_method(name):
     def method(self, *args, **kw):
         return ComparedQuerySet(
-            getattr(self._mptt_set, name)(*args, **kw),
+            getattr(self._mptt_set, name)(*args, **kw) if self._mptt_set is not None else None,
             getattr(self._cte_set, name)(*args, **kw) if self._cte_set is not None else None,
             self,
         )
@@ -207,11 +226,12 @@ def _report_diff(cqs, obj1, obj2, context=""):
 @contextmanager
 def _commit_timing(queryset):
     # only send to datadog on initial query evaluation
-    commit = queryset._mptt_set._result_cache is None
+    result_set = queryset._mptt_set if queryset._mptt_set is not None else queryset._cte_set
+    commit = result_set._result_cache is None
     try:
         yield
     finally:
-        if commit and queryset._mptt_set._result_cache is not None:
+        if commit and result_set._result_cache is not None:
             timing = queryset._timing
             for key in timing.timers:
                 bucket = bucket_value(timing.duration(key), TIME_BUCKETS, "s")

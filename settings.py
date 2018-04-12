@@ -116,7 +116,6 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
-DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -340,7 +339,6 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -428,6 +426,10 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
 
+# set to True or False in localsettings to override the value set way down below
+IS_LOCATION_CTE_ENABLED = None
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -930,10 +932,6 @@ DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
-# Allow overriding the synclog DB
-# This allows us to periodically rotate the synclog DB to remove deleted docs
-CUSTOM_SYNCLOGS_DB = None
-
 from env_settings import *
 
 try:
@@ -1208,15 +1206,7 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        },
-        'debug_user_save': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': DEBUG_USER_SAVE_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 5  # Backup 50 MB of logs
-        },
+        }
     },
     'root': {
         'level': 'INFO',
@@ -1333,11 +1323,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'debug_user_save': {
-            'handlers': ['debug_user_save'],
-            'level': 'INFO' if SERVER_ENVIRONMENT == 'localdev' else 'ERROR',
-            'propagate': False,
-        }
     }
 }
 
@@ -1384,8 +1369,6 @@ DOMAINS_DB = NEW_DOMAINS_DB
 
 NEW_APPS_DB = 'apps'
 APPS_DB = NEW_APPS_DB
-
-SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
 
 META_DB = 'meta'
 
@@ -1443,7 +1426,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'gsid',
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
@@ -1473,9 +1455,6 @@ COUCHDB_APPS = [
 
     # domains
     ('domain', DOMAINS_DB),
-
-    # sync logs
-    ('phone', SYNCLOGS_DB),
 
     # applications
     ('app_manager', APPS_DB),
@@ -2000,7 +1979,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
-    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
@@ -2186,8 +2164,6 @@ DOMAIN_MODULE_MAP = {
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
-    'gsid': 'custom.apps.gsid',
-    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2344,8 +2320,22 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
-IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
-    'localdev',
-    'changeme',  # default value in localsettings.example.py
-    'staging',
-]
+if IS_LOCATION_CTE_ENABLED is None:
+    IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+        'production',
+    ]
+
+if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
+    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
+    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+    ]
+else:
+    IS_LOCATION_CTE_ONLY = False

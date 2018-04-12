@@ -76,8 +76,8 @@ def undo_form_edits(form_tuples, logger):
         for form in (live_form, deprecated_form):
             form.track_create(XFormOperationSQL(
                 user_id='system',
-                operation=XFormOperationSQL.UUID_DATA_FIX),
-                date=operation_date
+                operation=XFormOperationSQL.UUID_DATA_FIX,
+                date=operation_date)
             )
             FormAccessorSQL.update_form(form)
 
@@ -128,7 +128,7 @@ def update_case_transactions_for_form(case_cache, live_case_updates, deprecated_
             ledger_transactions.append(transaction)
 
     if affected_cases:
-        LedgerAccessorSQL.delete_ledger_transactions_for_form(affected_cases, live_form.form_id)
+        LedgerAccessorSQL.delete_ledger_transactions_for_form(list(affected_cases), live_form.form_id)
 
     for transaction in ledger_transactions:
         transaction.save()
