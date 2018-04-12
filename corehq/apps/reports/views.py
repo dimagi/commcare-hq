@@ -678,24 +678,6 @@ def should_update_export(last_accessed):
 
 @login_or_digest
 @require_form_export_permission
-@require_POST
-def hq_update_saved_export(req, domain):
-    group_id = req.POST['group_export_id']
-    index = int(req.POST['index'])
-    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
-    config, schema = group_config.all_exports[index]
-    rebuild_export_task.delay(group_id, index)
-    messages.success(
-        req,
-        _('Data update for {} has started and the saved export will be automatically updated soon. '
-          'Please refresh the page periodically to check the status.').format(config.name)
-    )
-    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                        args=[domain, req.POST['report_slug']]))
-
-
-@login_or_digest
-@require_form_export_permission
 @require_GET
 def export_all_form_metadata(req, domain):
     """
