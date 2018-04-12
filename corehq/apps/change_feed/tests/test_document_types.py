@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from django.test import SimpleTestCase
-from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, META, DOMAIN, \
+from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, DOMAIN, \
     change_meta_from_doc, COMMCARE_USER, WEB_USER, GROUP
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.util.test_utils import generate_cases

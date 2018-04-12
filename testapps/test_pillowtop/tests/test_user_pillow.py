@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
-from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
@@ -61,7 +60,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to kafka
         since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        producer.send_change(document_types.COMMCARE_USER, change_meta_from_doc(user.to_json()))
 
         # send to elasticsearch
         pillow = get_user_pillow()
@@ -75,7 +74,7 @@ class UserPillowTest(UserPillowTestBase):
 
         # send to kafka
         since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        producer.send_change(document_types.COMMCARE_USER, change_meta_from_doc(user.to_json()))
 
         # send to elasticsearch
         pillow = get_user_pillow()
@@ -130,17 +129,4 @@ def _form_to_change_meta(form):
     if settings.TESTS_SHOULD_USE_SQL_BACKEND:
         return change_meta_from_sql_form(form)
     else:
-        return change_meta_from_doc(
-            document=form.to_json(),
-            data_source_type=data_sources.COUCH,
-            data_source_name=XFormInstance.get_db().dbname,
-        )
-
-
-def _user_to_change_meta(user):
-    user_doc = user.to_json()
-    return change_meta_from_doc(
-        document=user_doc,
-        data_source_type=data_sources.COUCH,
-        data_source_name=CommCareUser.get_db().dbname,
-    )
+        return change_meta_from_doc(form.to_json())

@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.change_feed import data_sources
 from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
@@ -41,7 +40,7 @@ class DomainPillowTest(TestCase):
 
         # send to kafka
         since = get_topic_offset(document_types.DOMAIN)
-        producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain))
+        producer.send_change(document_types.DOMAIN, change_meta_from_doc(domain.to_json))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -59,7 +58,7 @@ class DomainPillowTest(TestCase):
 
         # send to kafka
         since = get_topic_offset(document_types.DOMAIN)
-        producer.send_change(document_types.DOMAIN, _domain_to_change_meta(domain_obj))
+        producer.send_change(document_types.DOMAIN, change_meta_from_doc(domain_obj.to_json))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -75,12 +74,3 @@ class DomainPillowTest(TestCase):
         domain_doc = results.hits[0]
         self.assertEqual(domain_name, domain_doc['name'])
         self.assertEqual('Domain', domain_doc['doc_type'])
-
-
-def _domain_to_change_meta(domain):
-    domain_doc = domain.to_json()
-    return change_meta_from_doc(
-        document=domain_doc,
-        data_source_type=data_sources.COUCH,
-        data_source_name=Domain.get_db().dbname,
-    )
