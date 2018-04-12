@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.change_feed import document_types
+from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
@@ -39,8 +39,8 @@ class DomainPillowTest(TestCase):
             domain = create_domain(domain_name)
 
         # send to kafka
-        since = get_topic_offset(document_types.DOMAIN)
-        producer.send_change(document_types.DOMAIN, change_meta_from_doc(domain.to_json))
+        since = get_topic_offset(topics.DOMAIN)
+        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain.to_json))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()
@@ -57,8 +57,8 @@ class DomainPillowTest(TestCase):
         domain_obj.doc_type = 'Domain-DUPLICATE'
 
         # send to kafka
-        since = get_topic_offset(document_types.DOMAIN)
-        producer.send_change(document_types.DOMAIN, change_meta_from_doc(domain_obj.to_json))
+        since = get_topic_offset(topics.DOMAIN)
+        producer.send_change(topics.DOMAIN, change_meta_from_doc(domain_obj.to_json))
 
         # send to elasticsearch
         pillow = get_domain_kafka_to_elasticsearch_pillow()

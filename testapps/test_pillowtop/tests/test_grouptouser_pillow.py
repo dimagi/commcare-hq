@@ -4,9 +4,9 @@ import uuid
 from django.test import SimpleTestCase, TestCase
 from elasticsearch.exceptions import ConnectionError
 
-from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset, GROUP
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
 from corehq.apps.hqcase.management.commands.ptop_reindexer_v2 import reindex_and_clean
