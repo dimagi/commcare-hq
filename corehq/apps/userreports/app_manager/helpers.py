@@ -86,7 +86,7 @@ def _export_column_to_ucr_indicator(export_column):
     """
     return {
         "type": "expression",
-        "column_id": get_column_name(export_column.label),
+        "column_id": get_column_name(export_column.label, add_hash=False),
         "display_name": export_column.label,
         "datatype": export_column.item.datatype or 'string',
         "expression": {
@@ -104,7 +104,7 @@ def _export_item_to_ucr_indicator(export_item):
     """
     return {
         "type": "expression",
-        "column_id": get_column_name(export_item.readable_path),
+        "column_id": get_column_name(export_item.readable_path, add_hash=False),
         "display_name": export_item.path[-1].name,
         "datatype": export_item.datatype or 'string',
         "expression": {
