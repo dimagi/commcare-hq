@@ -50,7 +50,7 @@ common patterns used in this example class:
        def get_object_by_key(self, key):
            if key not in self._objects_by_key:
                result = do_a_bunch_of_stuff(key)
-               self._objects_by_key[result]
+               self._objects_by_key[key] = result
            return self._objects_by_key[key]
 
 With the memoized decorator, this becomes:
@@ -238,17 +238,14 @@ memoize rather than quickcache. You could split it apart like this:
 .. code-block:: python
 
     @memoized
-    def _count_users_forms_by_device(self, domain, device_ids):
-        return {
-            FormAccessors(domain.name).count_forms_by_device(device_id)
-            for device_id in device_ids
-        }
+    def _count_users_forms_by_device(self, domain, device_id):
+        return FormAccessors(domain).count_forms_by_device(device_id)
 
     def count_users_forms_by_device(self, domain_obj, user):
-        return self._count_users_forms_by_device(
-            domain_obj.name,
-            [device.device_id for device in user.devices]
-        )
+        return {
+            self._count_users_forms_by_device(domain_obj.name, device.device_id)
+            for device in user.devices
+        }
 
 
 What can be cached
@@ -262,7 +259,7 @@ Memoized:
 
 Quickcache:
     All vary_on values must be “basic” types (all the way down, if they are
-    collections): string, bool, number, list/tuple (treated as interchangeable),
+    collections): string types, bool, number, list/tuple (treated as interchangeable),
     dict, set, None. Arbitrary objects are not allowed, nor are
     lists/tuples/dicts/sets containing objects, etc.
 
@@ -279,7 +276,7 @@ Invalidation
     and naming things" (and off-by-one errors)
 
 Memoized doesn’t allow invalidation except by blowing away the whole cache for
-all parameters. Use <function>.reset_cache()
+all parameters. Use ``<function>.reset_cache()``
 
 One of quickcache’s killer features is the ability to invalidate the cache for a
 specific function call. To invalidate the cache for ``<function>(*args,
