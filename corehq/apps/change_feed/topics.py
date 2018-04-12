@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from kafka.common import OffsetRequest
 from kafka.util import kafka_bytestring
 
+from corehq.apps.app_manager.util import app_doc_types
 from corehq.apps.change_feed.connection import get_kafka_client
 from corehq.apps.change_feed.exceptions import UnavailableKafkaOffset
+from couchforms.models import all_known_formlike_doc_types
 from .document_types import CASE, FORM, DOMAIN, META, APP
 
 # this is redundant but helps avoid import warnings until nothing references these
@@ -44,6 +46,30 @@ ALL = (
     LOCATION,
     SYNCLOG_SQL,
 )
+
+
+def get_topic_for_doc_type(doc_type, backend_id):
+    if doc_type in ('CommCareCase', 'CommCareCase-Deleted'):
+        return CASE_SQL if backend_id == 'sql' else CASE
+    elif doc_type in all_known_formlike_doc_types():
+        return FORM_SQL if backend_id == 'sql' else FORM
+    elif doc_type in ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE'):
+        return DOMAIN
+    elif doc_type in ('CommCareUser', 'CommCareUser-Deleted'):
+        return COMMCARE_USER
+    elif doc_type in ('WebUser', 'WebUser-Deleted'):
+        return WEB_USER
+    elif doc_type in ('Group', 'Group-Deleted'):
+        return GROUP
+    elif doc_type in ('SyncLog', 'SimplifiedSyncLog'):
+        return SYNCLOG_SQL
+    elif doc_type in app_doc_types():
+        return APP
+    elif doc_type in ALL:  # ledger, sms, location
+        return doc_type
+    else:
+        # at some point we may want to make this more granular
+        return META
 
 
 def get_topic(document_type_object):

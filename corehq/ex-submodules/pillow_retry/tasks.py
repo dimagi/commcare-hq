@@ -9,7 +9,7 @@ from celery.utils.log import get_task_logger
 from django.conf import settings
 from django.db.models import Count
 
-from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_change_meta
 from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
@@ -50,11 +50,7 @@ def process_pillow_retry(error_doc_id):
     try:
         change_metadata = change.metadata
         if change_metadata:
-            document_store = get_document_store(
-                data_source_type=change_metadata.data_source_type,
-                data_source_name=change_metadata.data_source_name,
-                domain=change_metadata.domain
-            )
+            document_store = get_document_store_for_change_meta(change_metadata)
             change.document_store = document_store
         pillow.process_change(change)
     except Exception:
