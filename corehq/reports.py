@@ -298,12 +298,6 @@ def get_report_builder_count(domain):
     return len(report_builder_reports)
 
 
-DATA_INTERFACES = (
-    (ugettext_lazy("Export Data"), (
-        export.DeidExportReport,
-    )),
-)
-
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
         CaseReassignmentInterface,
