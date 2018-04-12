@@ -220,7 +220,8 @@ class HqdbContext(DatabaseContext):
             assert db["NAME"].startswith(TEST_DATABASE_PREFIX), db["NAME"]
             try:
                 connection.ensure_connection()
-            except OperationalError:
+            except OperationalError as e:
+                sys.__stderr__.write(str(e))
                 return False
             old_names.append((connection, db["NAME"], True))
 
