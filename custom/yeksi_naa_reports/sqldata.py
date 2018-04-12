@@ -274,72 +274,88 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_availability_data_per_month_per_pps(self, records):
         data = {}
         loc_names = {}
-        if self.loc_id == 'pps_id':
-            for record in records:
-                if not self.date_in_selected_date_range(record['real_date']):
-                    continue
-                if record[self.loc_id] not in data:
-                    data[record[self.loc_id]] = ['no data entered'] * len(self.months)
-                    loc_names[record[self.loc_id]] = record[self.loc_name]
-                month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-                data[record[self.loc_id]][month_index] = 0 if record['pps_is_outstock']['html'] == 1 else 1
-        else:
-            new_data = {}
-            for record in records:
-                if not self.date_in_selected_date_range(record['real_date']):
-                    continue
-                if record[self.loc_id] not in data:
-                    data[record[self.loc_id]] = []
-                    for i in range(len(self.months)):
-                        data[record[self.loc_id]].append({})
-                    loc_names[record[self.loc_id]] = record[self.loc_name]
-                month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-                multiple_rows_per_pps_in_month = data[record[self.loc_id]][month_index].get(record['pps_id'])
-                if not multiple_rows_per_pps_in_month or \
-                        data[record[self.loc_id]][month_index][record['pps_id']] == 1:
-                    data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
-                        record['pps_is_outstock']['html'] == 1 else 1
-            for location in data:
-                new_data[location] = ['no data entered'] * len(self.months)
-                for i in range(len(self.months)):
-                    if data[location][i]:
-                        new_data[location][i] = self.percent_fn(
-                            sum(data[location][i].values()),
-                            len(data[location][i]))
-            tmp = data
-            data = new_data
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            if record[self.loc_id] not in data:
+                data[record[self.loc_id]] = ['no data entered'] * len(self.months)
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            data[record[self.loc_id]][month_index] = 0 if record['pps_is_outstock']['html'] == 1 else 1
+        return loc_names, data
 
-        new_rows = []
+    def get_availability_data_per_month_aggregated(self, records):
+        data = defaultdict(list)
+        loc_names = {}
+        new_data = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            if record[self.loc_id] not in data:
+                for i in range(len(self.months)):
+                    data[record[self.loc_id]].append(defaultdict(int))
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            multiple_rows_per_pps_in_month = data[record[self.loc_id]][month_index].get(record['pps_id'])
+            if not multiple_rows_per_pps_in_month or \
+                    data[record[self.loc_id]][month_index][record['pps_id']] == 1:
+                data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
+                    record['pps_is_outstock']['html'] == 1 else 1
+
+        for location in data:
+            new_data[location] = ['no data entered'] * len(self.months)
+            for month_index in range(len(self.months)):
+                if data[location][month_index]:
+                    new_data[location][month_index] = self.percent_fn(
+                        sum(data[location][month_index].values()),
+                        len(data[location][month_index])
+                    )
+        return loc_names, new_data, data
+
+    def get_average_availability_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month != 'no data entered':
+                if self.loc_id == 'pps_id':
+                    numerator += float(data_in_month)
+                else:
+                    numerator += float(data_in_month[:-1])
+                denominator += 1
+        if denominator:
+            if self.loc_id == 'pps_id':
+                return "{:.2f}%".format(numerator * 100 / denominator)
+            else:
+                return "{:.2f}%".format(numerator / denominator)
+        else:
+            return 'no data entered'
+
+    def parse_availability_data_to_rows(self, loc_names, data):
+        rows = []
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            numerator = 0
-            denominator = 0
-            for month in data[loc_id]:
-                if month and month != 'no data entered':
-                    if self.loc_id == 'pps_id':
-                        numerator += float(month)
-                    else:
-                        numerator += float(month[:-1])
-                    denominator += 1
-            if denominator:
-                if self.loc_id == 'pps_id':
-                    row.append("{:.2f}%".format(numerator * 100 / denominator))
-                else:
-                    row.append("{:.2f}%".format(numerator / denominator))
-            else:
-                row.append('no data entered')
-            new_rows.append(row)
+            row.append(self.get_average_availability_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
+    @property
+    def rows(self):
+        records = self.get_data()
+
         if self.loc_id == 'pps_id':
-            self.total_row = self.calculate_total_row(new_rows)
+            loc_names, data = self.get_availability_data_per_month_per_pps(records)
         else:
+            loc_names, data, tmp = self.get_availability_data_per_month_aggregated(records)
             self.total_row = self.calculate_total_row(tmp)
-        return new_rows
+
+        rows = self.parse_availability_data_to_rows(loc_names, data)
+        if self.loc_id == 'pps_id':
+            self.total_row = self.calculate_total_row(rows)
+        return rows
 
     @property
     def headers(self):

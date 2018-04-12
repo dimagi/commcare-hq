@@ -7,6 +7,7 @@ from custom.yeksi_naa_reports.reports import Dashboard2Report
 
 
 class TestDashboard2(YeksiTestCase):
+    maxDiff = None
 
     def test_loss_rate_report(self):
         mock = MagicMock()
@@ -166,10 +167,10 @@ class TestDashboard2(YeksiTestCase):
                 ['PPS 2', 'no data entered', 'no data entered', '0.00%'],
                 ['Virage 1', '0.00%', 'no data entered', 'no data entered'],
                 ['PPS 3', 'no data entered', '0.00%', 'no data entered'],
-                ['Virage 1', 'no data entered', 'no data entered', '20.00%'],
+                ['Virage 1', 'no data entered', 'no data entered', '100.00%'],
                 ['PPS 2', 'no data entered', '0.00%', 'no data entered'],
                 ['PPS 1', 'no data entered', '46.15%', 'no data entered'],
-                ['PPS 3', 'no data entered', 'no data entered', '50.00%'],
+                ['PPS 3', 'no data entered', 'no data entered', '100.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
