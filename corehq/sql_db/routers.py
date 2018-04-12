@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 
+from memoized import memoized
+
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
 from .config import partition_config
 
@@ -97,5 +99,25 @@ def db_for_read_write(model, write=True):
         if not write:
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
+    elif app_label in settings.LOAD_BALANCED_APPS:
+        if not write:
+            return get_load_balanced_read_db(app_label)
     else:
         return partition_config.get_main_db()
+
+
+def get_load_balanced_read_db(app):
+    dbs = read_database_mapping(app)
+    if dbs:
+        return random.choice(dbs)
+    return 'default'
+
+
+@memoized
+def read_database_mapping(app):
+    dbs = []
+    weights = settings.LOAD_BALANCED_APPS.get(app)
+    if weights is not None:
+        for db, weight in weights:
+            dbs.extend([db] * weight)
+    return dbs
