@@ -226,10 +226,15 @@ class OutboundDailyCounter(object):
 
     def __init__(self, domain_object=None):
         self.domain_object = domain_object
-        self.utc_date = datetime.utcnow().date()
+
+        if domain_object:
+            self.date = ServerTime(datetime.utcnow()).user_time(domain_object.get_default_timezone()).done().date()
+        else:
+            self.date = datetime.utcnow().date()
+
         self.key = 'outbound-daily-count-for-%s-%s' % (
             domain_object.name if domain_object else '',
-            self.utc_date.strftime('%Y-%m-%d')
+            self.date.strftime('%Y-%m-%d')
         )
 
         # We need access to the raw redis client because calling incr on
@@ -249,6 +254,10 @@ class OutboundDailyCounter(object):
 
     def decrement(self):
         return self.client.decr(self.key)
+
+    @property
+    def current_usage(self):
+        return self.client.get(self.key) or 0
 
     @property
     def daily_limit(self):
@@ -276,7 +285,7 @@ class OutboundDailyCounter(object):
             # Log the fact that we reached this limit
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
                 self.domain_object.name if self.domain_object else '',
-                self.utc_date
+                self.date
             )
             return False
 

@@ -33,6 +33,9 @@ describe('Children Initiated Directive', function () {
         $httpBackend.expectGET('children_initiated').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<children-initiated data='test'></children-initiated>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");

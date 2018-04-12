@@ -330,7 +330,7 @@ http://openrosa.org/formdesigner/BBBA67FC-4E25-46B4-AB64-56F820D48A9E:
     warning_fr: "Problème constaté : Il faut confirmer les modifications du véhicule avant de signer le contrat."
 # Form 3
 http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
-  - question: [q2_action]
+  - question: [q3_ecoaction]
     flag_name: "SOs fed and hydrated? "
     flag_name_por: "Roceadores alimentados e hidratados?"
     flag_name_fr: "Operateurs nourri et hydraté ?"
@@ -340,31 +340,31 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_fr: "Problème signalé : Le ou les opérateurs de pulvérisation ne sont pas alimentés ou hydratés de manière appropriée avant de revêtir leur EPI."
     warning_question: ~
     # answer and warning_question are optional
-  - question: [q3]
+  - question: [q4]
     flag_name: "SOs in PPE?"
     flag_name_por: "Roceadors vestiram EPI?"
     flag_name_fr: "Operateurs en PPE ?"
     warning_type: "unchecked"
-    comment: [q3_comments_action]
+    comment: [q4_comments_action]
     ignore: ["none"]
     warning: "Problem reported: Spray operator(s) not wearing {msg} before boarding transport."
     warning_por: "Problema relatado: Roceador/es não usararam {msg} antes de subir no transporte"
     warning_fr: "Problème signalé : Le ou les opérateurs de pulvérisation ne portent pas {msg} avant de prendre place dans le véhicule de transport."
-  - question: [q4_action]
+  - question: [q5_ecoaction]
     flag_name: "Eating in PPE?"
     flag_name_por: "Alimentaram-se usando o EPI?"
     flag_name_fr: "Manger en EPI"
     warning: "Problem reported: Spray operator(s) eating or drinking after donning PPE."
     warning_por: "Problema relatado: Roceador/es comeram ou beberam depois de vestirem o EPI."
     warning_fr: "Problème signalé : Un ou des opérateurs de pulvérisation mangent ou boivent après avoir revêtu leur EPI."
-  - question: [q5_action]
+  - question: [q2_ecoaction]
     flag_name: "TLs inspecting SOs?"
     flag_name_por: "Os Chefes de Equipa inspeccionaram os Roceadores?"
     flag_name_fr: "TL inspection operateurs ?"
     warning: "Problem reported: Team Leaders not conducting casual physical inspection of SOs in the morning."
     warning_por: "Problema relatado: Chefes de equipa não realizam inspeção física causal dos roceadores na parte da manhã"
     warning_fr: "Problème signalé : Les chefs d’équipe ne procèdent pas à une inspection physique informelle des opérateurs de pulvérisation le matin."
-  - question: [q6_action]
+  - question: [q6_ecoaction]
     flag_name: "Pumps filled properly?"
     flag_name_por: "Bombas enchidas correctamente?"
     flag_name_fr: "Pompes remplis correctement ?"

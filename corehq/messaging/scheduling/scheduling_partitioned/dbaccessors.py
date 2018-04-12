@@ -66,6 +66,29 @@ def delete_timed_schedule_instance(instance):
     instance.delete()
 
 
+def get_count_of_active_schedule_instances_due(domain, due_before):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        AlertScheduleInstance,
+        TimedScheduleInstance,
+        CaseAlertScheduleInstance,
+        CaseTimedScheduleInstance,
+    )
+
+    classes = (AlertScheduleInstance, TimedScheduleInstance, CaseAlertScheduleInstance, CaseTimedScheduleInstance)
+
+    result = 0
+
+    for db_alias in get_db_aliases_for_partitioned_query():
+        for cls in classes:
+            result += cls.objects.using(db_alias).filter(
+                domain=domain,
+                active=True,
+                next_event_due__lt=due_before
+            ).count()
+
+    return result
+
+
 def get_active_schedule_instance_ids(cls, due_before, due_after=None):
     from corehq.messaging.scheduling.scheduling_partitioned.models import (
         AlertScheduleInstance,

@@ -199,16 +199,16 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     def calculate_total_row(self, rows):
         total_row = ['Availability (%)']
-        total_nominator = 0
+        total_numerator = 0
         total_denominator = 0
         if self.loc_id == 'pps_id':
             data = {}
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        [pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered']
+                        pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered'
                     ),
-                    'pps_count': sum([1 for pps_data in rows if pps_data[i + 1] != 'no data entered'])
+                    'pps_count': sum(1 for pps_data in rows if pps_data[i + 1] != 'no data entered')
                 }
                 if data[i]['pps_count']:
                     total_row.append(
@@ -219,13 +219,13 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     )
                 else:
                     total_row.append('no data entered')
-                total_nominator += data[i]['pps_is_available']
+                total_numerator += data[i]['pps_is_available']
                 total_denominator += data[i]['pps_count']
 
             if total_denominator:
                 total_row.append(
                     self.percent_fn(
-                        total_nominator,
+                        total_numerator,
                         total_denominator
                     )
                 )
@@ -233,19 +233,19 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 total_row.append('no data entered')
         else:
             for i in range(len(self.months)):
-                nominator = 0
+                numerator = 0
                 denominator = 0
                 for location in rows:
-                    nominator += sum(rows[location][i].values())
+                    numerator += sum(rows[location][i].values())
                     denominator += len(rows[location][i])
-                total_nominator += nominator
+                total_numerator += numerator
                 total_denominator += denominator
                 if denominator:
-                    total_row.append(self.percent_fn(nominator, denominator))
+                    total_row.append(self.percent_fn(numerator, denominator))
                 else:
                     total_row.append('no data entered')
             if total_denominator:
-                total_row.append(self.percent_fn(total_nominator, total_denominator))
+                total_row.append(self.percent_fn(total_numerator, total_denominator))
             else:
                 total_row.append('no data entered')
         return total_row
@@ -318,20 +318,20 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            nominator = 0
+            numerator = 0
             denominator = 0
             for month in data[loc_id]:
                 if month and month != 'no data entered':
                     if self.loc_id == 'pps_id':
-                        nominator += float(month)
+                        numerator += float(month)
                     else:
-                        nominator += float(month[:-1])
+                        numerator += float(month[:-1])
                     denominator += 1
             if denominator:
                 if self.loc_id == 'pps_id':
-                    row.append("{:.2f}%".format(nominator * 100 / denominator))
+                    row.append("{:.2f}%".format(numerator * 100 / denominator))
                 else:
-                    row.append("{:.2f}%".format(nominator / denominator))
+                    row.append("{:.2f}%".format(numerator / denominator))
             else:
                 row.append('no data entered')
             new_rows.append(row)
@@ -728,7 +728,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         for i in range(len(self.months)):
             data[i] = {
                 'nb_products_stockout': 0,
-                'pps_nb_products': 0
+                'count_products_select': 0
             }
         for record in records:
             if not self.date_in_selected_date_range(record['real_date']):
@@ -736,8 +736,8 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             if record['nb_products_stockout']:
                 data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
-            if record['pps_nb_products']:
-                data[month_index]['pps_nb_products'] += record['pps_nb_products']['html']
+            if record['count_products_select']:
+                data[month_index]['count_products_select'] += record['count_products_select']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -751,7 +751,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             total_row.append(
                 self.percent_fn(
                     monthly_data['nb_products_stockout'],
-                    monthly_data['pps_nb_products']
+                    monthly_data['count_products_select']
                 )
             )
         return total_row
@@ -767,7 +767,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Number of stockout products", SumColumn('nb_products_stockout')),
-            DatabaseColumn("Number of products in pps", SumColumn('pps_nb_products')),
+            DatabaseColumn("Number of products in pps", SumColumn('count_products_select')),
         ]
         return columns
 
@@ -785,7 +785,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             data[record['pps_id']][month_index] = self.percent_fn(
                 record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
-                record['pps_nb_products']['html'] if record['pps_nb_products'] else None
+                record['count_products_select']['html'] if record['count_products_select'] else None
             )
 
         new_rows = []

@@ -26,6 +26,9 @@ describe('Institutional Deliveries Directive', function () {
         $httpBackend.expectGET('institutional_deliveries').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<institutional_deliveries data='test'></institutional_deliveries>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
