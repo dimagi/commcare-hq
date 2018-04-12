@@ -911,21 +911,17 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
     def calculate_total_row(self, records):
         total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'final_pna_stock_valuation': 0
-            }
+        data = defaultdict(int)
         for record in records:
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if record['final_pna_stock_valuation']:
-                data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
+                data[month_index] += record['final_pna_stock_valuation']['html']
 
         total_row.append('Total (CFA)')
         for monthly_data in data.values():
-            total_row.append('{:.2f}'.format(monthly_data['final_pna_stock_valuation']))
+            total_row.append('{:.2f}'.format(monthly_data))
         return total_row
 
     @property
@@ -942,9 +938,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         ]
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_product_valuation_of_pna_stock_per_month(self, records):
         data = {}
         product_names = {}
         for record in records:
@@ -956,14 +950,20 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if record['final_pna_stock_valuation']:
                 data[record['product_id']][month_index] += record['final_pna_stock_valuation']['html']
+        return product_names, data
 
-        new_rows = []
+    @property
+    def rows(self):
+        records = self.get_data()
+        product_names, data = self.get_product_valuation_of_pna_stock_per_month(records)
+
+        rows = []
         for product_id in data:
             row = [product_names[product_id]]
             row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @property
     def headers(self):
