@@ -13,12 +13,14 @@
         </a>
         <ul class="dropdown-menu dropdown-menu-right checklist">
             <li class="dropdown-header">{% trans "Show" %}</li>
+            {% if not module.is_training_module %}
             {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
                 <li>
                     <a href="#" data-slug="menu">
                         <i class="fa fa-check"></i>{% trans "Menu" %}
                     </a>
                 </li>
+            {% endif %}
             {% endif %}
             <li>
                 <a href="#" data-slug="multimedia" data-collapse="1">
@@ -39,7 +41,7 @@
     <fieldset>
         {% block settings_fields %}
 
-
+          {% if not module.is_training_module %}
           {% if child_module_enabled or module.module_type == 'shadow' or add_ons.menu_mode or app.grid_display_for_some_modules or module.module_filter or not module.is_surveys %}
           <div class="panel panel-appmanager" data-slug="menu">
             <div class="panel-heading">
@@ -146,6 +148,7 @@
 
             </div>
           </div>
+          {% endif %}
           {% endif %}
 
           <div class="panel panel-appmanager" data-slug="multimedia">
