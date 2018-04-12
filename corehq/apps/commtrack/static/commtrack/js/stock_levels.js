@@ -34,16 +34,13 @@ hqDefine("commtrack/js/stock_levels", function() {
         };
 
         self.submit_table = function(form) {
-            var tableForm = $("<form>")
-                .attr("method", "POST")
+            var tableForm = $("#table-form")
                 .attr("action", form.action);
             $('<input type="hidden">')
                 .attr('name', 'child_form_data')
                 .attr('value', JSON.stringify(self.serialize()))
                 .appendTo(tableForm);
-            $("{% csrf_token %}").appendTo(tableForm);
-            tableForm.appendTo("body");
-            tableForm.submit();
+            return true;
         };
 
         return self;
