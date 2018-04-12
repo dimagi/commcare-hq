@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 
 from django.db import models
@@ -30,7 +31,7 @@ class MaintenanceAlert(models.Model):
         return mark_up_urls(self.text)
 
     def __repr__(self):
-        return u"MaintenanceAlert(text='{}', active='{}')".format(self.text, self.active)
+        return "MaintenanceAlert(text='{}', active='{}')".format(self.text, self.active)
 
 
 from .signals import *
