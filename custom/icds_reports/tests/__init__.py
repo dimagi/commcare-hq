@@ -17,6 +17,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
+from custom.icds_reports.const import AGG_COMP_FEEDING_TABLE, AGG_CHILD_HEALTH_THR_TABLE
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -32,11 +33,11 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'ucr_table_name_mapping': 'ucr_table_name_mapping',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
-    'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
+    'complementary_feeding': AGG_COMP_FEEDING_TABLE,
     'aww_user': 'config_report_icds-cas_static-commcare_user_cases_85763310',
     'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
     'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
-    'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
+    'thr_form': AGG_CHILD_HEALTH_THR_TABLE,
 }
 
 
