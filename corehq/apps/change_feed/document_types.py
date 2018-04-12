@@ -149,6 +149,8 @@ def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type,
 
 
 def _get_domain(document):
+    if document.get('doc_type', None) in DOMAIN_DOC_TYPES:
+        return document.get('name')
     return document.get('domain', None)
 
 
