@@ -37,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
 logger = logging.getLogger(__name__)
 
@@ -311,7 +311,7 @@ def two_factor_check(view_func, api_key):
 
 
 def _two_factor_required(view_func, domain, couch_user):
-    if toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
+    if TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
         return not getattr(view_func, 'two_factor_exempt', False)
     return (
         not getattr(view_func, 'two_factor_exempt', False)
