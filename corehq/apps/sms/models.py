@@ -978,7 +978,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
     ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
-    ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
@@ -1025,8 +1024,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
             ugettext_noop('Internal Server Error'),
-        ERROR_GATEWAY_ERROR:
-            ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
         ERROR_GATEWAY_NOT_FOUND:
