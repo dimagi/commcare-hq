@@ -2778,6 +2778,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 'module': self.get_module_info(),
             })
 
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
+                'module': self.get_module_info(),
+            })
+
         return errors
 
     def requires(self):
