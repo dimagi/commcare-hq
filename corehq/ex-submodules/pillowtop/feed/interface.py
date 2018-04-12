@@ -15,6 +15,8 @@ class ChangeMeta(jsonobject.JsonObject):
 
     This is only used in kafka-based pillows.
     """
+    version = jsonobject.IntegerProperty(default=1)
+
     document_id = DefaultProperty(required=True)
     document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
     data_source_type = jsonobject.StringProperty(required=True)
@@ -25,6 +27,12 @@ class ChangeMeta(jsonobject.JsonObject):
     is_deletion = jsonobject.BooleanProperty()
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
+
+    @classmethod
+    def wrap(cls, doc):
+        if 'version' not in doc:
+            doc['version'] = 0
+        super(ChangeMeta, cls).wrap(doc)
 
 
 class Change(object):
