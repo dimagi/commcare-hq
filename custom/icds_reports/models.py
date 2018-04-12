@@ -125,8 +125,8 @@ class AggAwcMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
-    aww_name = models.DateField(blank=True, null=True)
-    contact_phone_number = models.DateField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     is_launched = models.TextField(blank=True, null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
@@ -406,6 +406,7 @@ class AggChildHealthMonthly(models.Model):
     fully_immunized_late = models.IntegerField(blank=True, null=True)
     weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
     weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
+    days_ration_given_child = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -575,6 +576,8 @@ class CcsRecordMonthly(models.Model):
     lactating = models.IntegerField(blank=True, null=True)
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    add = models.DateField(blank=True, null=True)
+    anc_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

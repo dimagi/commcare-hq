@@ -62,8 +62,8 @@
                                     <td>*Name Of Supervisor: </td>
                                 </tr>
                                 <tr>
-                                    <td>*Name of AWW:</td>
-                                    <td>Mobile number of AWW:</td>
+                                    <td>Name of AWW: {{ data.report.agg_awc_monthly_data|icds_format:"aww_name" }}</td>
+                                    <td>Mobile number of AWW: {{ data.report.agg_awc_monthly_data|icds_format:"contact_phone_number" }}</td>
                                     <td>*Name of AW Helper: </td>
                                 </tr>
                             </tbody>
@@ -370,12 +370,12 @@
                                     <td>{{ data.report.vhnd_data.aww_present|icds_yesno }}</td>
                                 </tr>
                                 <tr>
-                                    <td>* Number of antenatal check- ups conducted during the Month </td>
-                                    <td></td>
+                                    <td>How many Antenatal Check- ups conducted this month?</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"num_anc_visits" }}</td>
                                 </tr>
                                 <tr>
-                                    <td>* Total children Immunized during Month</td>
-                                    <td></td>
+                                    <td>Total children Immunized during Month</td>
+                                    <td>{{ data.report.agg_awc_monthly_data|icds_format:"num_children_immunized" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Did Village leaders/VHSNC members participated in VHSND?</td>
