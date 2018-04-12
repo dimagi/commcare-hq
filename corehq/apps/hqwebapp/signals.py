@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import date
 
 from django.contrib.auth.signals import user_logged_in, user_login_failed
