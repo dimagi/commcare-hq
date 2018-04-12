@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 # http://www.gevent.org/gevent.monkey.html#module-gevent.monkey
+from __future__ import unicode_literals
 from gevent import monkey
 monkey.patch_all()
 
