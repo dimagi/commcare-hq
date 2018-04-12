@@ -410,20 +410,6 @@ def get_id_from_name(name, domain, cache):
     return id
 
 
-def get_case_properties_for_case_type(domain, case_type):
-    schema = CaseExportDataSchema.generate_schema_from_builds(
-        domain,
-        None,
-        case_type,
-    )
-    group_schemas = [gs for gs in schema.group_schemas if gs.path == MAIN_TABLE]
-    case_properties = set([item.path[0].name for item in group_schemas[0].items]) if group_schemas else set()
-    if not should_use_sql_backend(domain):
-        from corehq.apps.hqcase.dbaccessors import get_case_properties
-        case_properties |= set(get_case_properties(domain, case_type))
-    return sorted(case_properties)
-
-
 def get_importer_error_message(e):
     if isinstance(e, ImporterRefError):
         # I'm not totally sure this is the right error, but it's what was being
