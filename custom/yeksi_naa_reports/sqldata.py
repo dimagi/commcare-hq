@@ -378,7 +378,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['final_pna_stock']:
+            if record['final_pna_stock'] and record['final_pna_stock']['html']:
                 data[month_index]['final_pna_stock'] += record['final_pna_stock']['html']
                 if record['loss_amt']:
                     data[month_index]['loss_amt'] += record['loss_amt']['html']
@@ -476,9 +476,9 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['expired_pna_valuation']:
-                data[month_index]['expired_pna_valuation'] += record['expired_pna_valuation']['html']
-            if record['final_pna_stock_valuation']:
+            if record['final_pna_stock_valuation'] and record['final_pna_stock_valuation']['html']:
+                if record['expired_pna_valuation']:
+                    data[month_index]['expired_pna_valuation'] += record['expired_pna_valuation']['html']
                 data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
@@ -520,9 +520,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_expiration_rate_per_month(self, records):
         data = {}
         loc_names = {}
         for record in records:
@@ -532,18 +530,25 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            data[record[self.loc_id]][month_index] = self.percent_fn(
-                record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
-                record['final_pna_stock_valuation']['html'] if record['final_pna_stock_valuation'] else None
-            )
+            if record['final_pna_stock_valuation'] and record['final_pna_stock_valuation']['html']:
+                data[record[self.loc_id]][month_index] = self.percent_fn(
+                    record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
+                    record['final_pna_stock_valuation']['html']
+                )
+        return loc_names, data
 
-        new_rows = []
+    @property
+    def rows(self):
+        records = self.get_data()
+        loc_names, data = self.get_expiration_rate_per_month(records)
+
+        rows = []
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @property
     def headers(self):
@@ -570,9 +575,9 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['pps_total_amt_paid']:
-                data[month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']['html']
-            if record['pps_total_amt_owed']:
+            if record['pps_total_amt_owed'] and record['pps_total_amt_owed']['html']:
+                if record['pps_total_amt_paid']:
+                    data[month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']['html']
                 data[month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
@@ -607,9 +612,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         ]
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_recovery_rate_by_pps_per_month(self, records):
         data = {}
         pps_names = {}
         for record in records:
@@ -619,18 +622,25 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record['pps_id']] = ['no data entered'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            data[record['pps_id']][month_index] = self.percent_fn(
-                record['pps_total_amt_paid']['html'] if record['pps_total_amt_paid'] else None,
-                record['pps_total_amt_owed']['html'] if record['pps_total_amt_owed'] else None
-            )
+            if record['pps_total_amt_owed'] and record['pps_total_amt_owed']['html']:
+                data[record['pps_id']][month_index] = self.percent_fn(
+                    record['pps_total_amt_paid']['html'] if record['pps_total_amt_paid'] else None,
+                    record['pps_total_amt_owed']['html']
+                )
+        return pps_names, data
 
-        new_rows = []
+    @property
+    def rows(self):
+        records = self.get_data()
+        pps_names, data = self.get_recovery_rate_by_pps_per_month(records)
+
+        rows = []
         for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @cached_property
     def loc_id(self):
@@ -661,9 +671,9 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
             if not self.date_in_selected_date_range(record['opened_on']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
-            if record['montant_paye']:
-                data[month_index]['montant_paye'] += record['montant_paye']['html']
-            if record['montant_reel_a_payer']:
+            if record['montant_reel_a_payer'] and record['montant_reel_a_payer']['html']:
+                if record['montant_paye']:
+                    data[month_index]['montant_paye'] += record['montant_paye']['html']
                 data[month_index]['montant_reel_a_payer'] += record['montant_reel_a_payer']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
@@ -706,10 +716,11 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 data[record['district_id']] = ['no data entered'] * len(self.months)
                 district_names[record['district_id']] = record['district_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
-            data[record['district_id']][month_index] = self.percent_fn(
-                record['montant_paye']['html'] if record['montant_paye'] else None,
-                record['montant_reel_a_payer']['html'] if record['montant_reel_a_payer'] else None
-            )
+            if record['montant_reel_a_payer'] and record['montant_reel_a_payer']['html']:
+                data[record['district_id']][month_index] = self.percent_fn(
+                    record['montant_paye']['html'] if record['montant_paye'] else None,
+                    record['montant_reel_a_payer']['html']
+                )
         return district_names, data
 
     @property
@@ -750,9 +761,9 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['nb_products_stockout']:
-                data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
-            if record['count_products_select']:
+            if record['count_products_select'] and record['count_products_select']['html']:
+                if record['nb_products_stockout']:
+                    data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
                 data[month_index]['count_products_select'] += record['count_products_select']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
@@ -799,18 +810,19 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record['pps_id']] = ['no data entered'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            data[record['pps_id']][month_index] = self.percent_fn(
-                record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
-                record['count_products_select']['html'] if record['count_products_select'] else None
-            )
+            if record['count_products_select'] and record['count_products_select']['html']:
+                data[record['pps_id']][month_index] = self.percent_fn(
+                    record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
+                    record['count_products_select']['html']
+                )
 
-        new_rows = []
+        rows = []
         for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @cached_property
     def loc_id(self):
@@ -870,9 +882,10 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
                     data[record['product_id']].append(defaultdict(int))
                 product_names[record['product_id']] = record['product_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['amt_delivered_convenience'] and record['ideal_topup']:
-                data[record['product_id']][month_index]['amt_delivered_convenience'] += \
-                    record['amt_delivered_convenience']['html']
+            if record['ideal_topup'] and record['ideal_topup']['html']:
+                if record['amt_delivered_convenience']:
+                    data[record['product_id']][month_index]['amt_delivered_convenience'] += \
+                        record['amt_delivered_convenience']['html']
                 data[record['product_id']][month_index]['ideal_topup'] += record['ideal_topup']['html']
         return product_names, data
 
