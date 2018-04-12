@@ -373,20 +373,15 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
 
     def calculate_total_row(self, records):
         total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'loss_amt': 0,
-                'pna_final_stock': 0
-            }
+        data = defaultdict(lambda: defaultdict(int))
         for record in records:
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['loss_amt']:
-                data[month_index]['loss_amt'] += record['loss_amt']['html']
             if record['pna_final_stock']:
                 data[month_index]['pna_final_stock'] += record['pna_final_stock']['html']
+                if record['loss_amt']:
+                    data[month_index]['loss_amt'] += record['loss_amt']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -427,9 +422,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_loss_rate_per_month(self, records):
         data = {}
         loc_names = {}
         for record in records:
@@ -439,17 +432,24 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            data[record[self.loc_id]][month_index] = self.percent_fn(
-                record['loss_amt']['html'] if record['loss_amt'] else None,
-                record['pna_final_stock']['html'] if record['pna_final_stock'] else None)
+            if record['pna_final_stock'] and record['pna_final_stock']['html']:
+                data[record[self.loc_id]][month_index] = self.percent_fn(
+                    record['loss_amt']['html'] if record['loss_amt'] else 0,
+                    record['pna_final_stock']['html']
+                )
+        return loc_names, data
 
-        new_rows = []
+    @property
+    def rows(self):
+        records = self.get_data()
+        loc_names, data = self.get_loss_rate_per_month(records)
+        rows = []
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @property
     def headers(self):
