@@ -4,6 +4,7 @@ import base64
 import hashlib
 import hmac
 from functools import wraps
+import six
 
 from django.conf import settings
 from django.http import HttpResponse
@@ -40,7 +41,10 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             if not expected_digest or not shared_key:
                 return HttpResponse(status=401)
 
-            hm = hmac.new(shared_key, request.body, hashlib.sha256)
+            hm = hmac.new(
+                shared_key.encode('utf-8') if isinstance(shared_key, six.text_type) else shared_key,
+                request.body, hashlib.sha256
+            )
             digest = base64.b64encode(hm.digest())
 
             if expected_digest != digest:
