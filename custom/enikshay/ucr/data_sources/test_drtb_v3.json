@@ -3,10 +3,12 @@
         "enikshay",
         "sheel-enikshay",
         "enikshay-reports-qa",
-        "enikshay-performance-test"
+        "enikshay-performance-test",
+        "enikshay-test"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "config": {
         "referenced_doc_type": "CommCareCase",
