@@ -103,7 +103,8 @@ def _publish_ledgers_from_form(domain, form):
         for helper in get_all_stock_report_helpers_from_form(form)
         for transaction in helper.transactions
     }
-    topic = topics.LEDGER_V2 if form.backend_id == 'sql' else topics.LEDGER
+
+    topic = topics.LEDGER_V2 if form.to_json()['backend_id'] == 'sql' else topics.LEDGER
     for ledger_reference in unique_references:
         change_meta = _change_meta_from_ledger_reference(domain, ledger_reference, topic)
         producer.send_change(topic, change_meta)
