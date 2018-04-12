@@ -190,16 +190,16 @@ class Select2Ajax(forms.TextInput):
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
+        attrs.update({
+            'class': 'hqwebapp-select2-ajax',
+            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
+            'data-endpoint': self.url,
+            'data-page-size': self.page_size,
+            'data-multiple': '1' if self.multiple else '0',
+        })
         output = super(Select2Ajax, self).render(name, value, attrs)
         output += render_to_string(
             'hqwebapp/select_2_ajax_widget.html',
-            {
-                'id': attrs.get('id'),
-                'initial': self._initial if self._initial is not None else self._clean_initial(value),
-                'endpoint': self.url,
-                'page_size': self.page_size,
-                'multiple': self.multiple,
-            }
         )
         return mark_safe(output)
 
