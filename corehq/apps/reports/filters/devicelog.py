@@ -34,7 +34,7 @@ class DeviceLogTagFilter(BaseReportFilter):
             'errors_only_slug': self.errors_only_slug,
             'default_on': show_all,
             'logtags': tags,
-            'errors_css_id': 'device-log-errors-only-checkbox',
+            'errors_css_id': 'device_log_errors_only_checkbox',
             self.errors_only_slug: errors_only,
         }
         return context

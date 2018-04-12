@@ -1,70 +1,70 @@
 /* globals REQUIRED */
 hqDefine('locations/js/location_drilldown', function() {
-    function apiGetChildren(locUuid, callback, locUrl) {
-        var params = (locUuid ? {parent_id: locUuid} : {});
+    function api_get_children(loc_uuid, callback, loc_url) {
+        var params = (loc_uuid ? {parent_id: loc_uuid} : {});
         $('#loc_ajax').show().removeClass('hide');
-        $.getJSON(locUrl, params, function(allData) {
+        $.getJSON(loc_url, params, function(allData) {
             $('#loc_ajax').hide().addClass('hide');
             callback(allData.objects);
         });
     }
 
-    function locationSelectViewModel(options) {
-        var model = {};
+    function LocationSelectViewModel(options) {
+        var model = this;
 
-        model.loc_url = options.loc_url;
-        model.default_caption = options.default_caption || 'All';
-        model.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
-        model.loc_filter = options.loc_filter || function() { return true; };
-        model.func = typeof options.func !== 'undefined' ? options.func : locationModel;
-        model.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
+        this.loc_url = options.loc_url;
+        this.default_caption = options.default_caption || 'All';
+        this.auto_drill = (_.isBoolean(options.auto_drill) ? options.auto_drill : true);
+        this.loc_filter = options.loc_filter || function() { return true; };
+        this.func = typeof options.func !== 'undefined' ? options.func : LocationModel;
+        this.show_location_filter = ko.observable((typeof options.show_location_filter !== 'undefined') ? options.show_location_filter : 'y');
 
-        model.root = ko.observable();
-        model.selected_path = ko.observableArray();
+        this.root = ko.observable();
+        this.selected_path = ko.observableArray();
 
-        model.location_types = $.map(options.hierarchy, function(e) {
+        this.location_types = $.map(options.hierarchy, function(e) {
             return {type: e[0], allowed_parents: e[1]};
         });
         // max allowed drilldown levels
-        model.max_drill_depth = options.max_drill_depth || model.location_types.length;
+        this.max_drill_depth = options.max_drill_depth || this.location_types.length;
 
-        model.show_location_filter_bool = ko.computed(function() {
+        this.show_location_filter_bool = ko.computed(function() {
             return model.show_location_filter() === 'y';
         });
 
         // currently selected location in the tree (or null)
-        model.selected_location = ko.computed(function() {
-            for (var i = model.selected_path().length - 1; i >= 0; i--) {
-                var loc = model.selected_path()[i];
+        this.selected_location = ko.computed(function() {
+            for (var i = this.selected_path().length - 1; i >= 0; i--) {
+                var loc = this.selected_path()[i];
                 if (loc.selected_is_valid()) {
                     return loc.selected_child();
                 }
             }
             return null;
-        }, model);
+        }, this);
         // uuid of currently selected location (or null)
-        model.selected_locid = ko.computed(function() {
+        this.selected_locid = ko.computed(function() {
             if(!model.show_location_filter_bool()) {
                 return null;
             }
-            return model.selected_location() ? model.selected_location().uuid() : null;
-        }, model);
+            return this.selected_location() ? this.selected_location().uuid() : null;
+        }, this);
 
         // add a new level of drill-down to the tree
-        model.path_push = function(loc) {
-            if (model.selected_path().length !== model.location_types.length &&
-                model.selected_path.indexOf(loc) === -1 &&
-                model.selected_path().length < model.max_drill_depth) {
-                model.selected_path.push(loc);
-                if (model.auto_drill && loc.num_children() === 1) {
+        this.path_push = function(loc) {
+            if (this.selected_path().length !== this.location_types.length &&
+                this.selected_path.indexOf(loc) === -1 &&
+                this.selected_path().length < this.max_drill_depth) {
+                this.selected_path.push(loc);
+                if (this.auto_drill && loc.num_children() === 1) {
                     loc.selected_child(loc.get_child(0));
                 }
             }
         };
 
         // search for a location within the tree by uuid; return path to location if found
-        model.find_loc = function(uuid, loc) {
-            loc = loc || model.root();
+        this.find_loc = function(uuid, loc) {
+            loc = loc || this.root();
 
             if (loc.uuid() === uuid) {
                 return [loc];
@@ -83,53 +83,52 @@ hqDefine('locations/js/location_drilldown', function() {
         };
 
         // load location hierarchy and set initial path
-        model.load = function(locs, selected) {
-            model.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, model));
-            model.path_push(model.root());
+        this.load = function(locs, selected) {
+            this.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, this));
+            this.path_push(this.root());
 
             if (selected) {
                 // this relies on the hierarchy of the selected location being pre-populated
                 // in the initial locations set from the server (i.e., no location of the
                 // pre-selected location's lineage is loaded asynchronously
-                var selPath = model.find_loc(selected);
-                if (selPath) {
-                    for (var i = 1; i < selPath.length; i++) {
-                        selPath[i - 1].selected_child(selPath[i]);
+                var sel_path = this.find_loc(selected);
+                if (sel_path) {
+                    for (var i = 1; i < sel_path.length; i++) {
+                        sel_path[i - 1].selected_child(sel_path[i]);
                     }
                 }
             }
         };
-        return model;
     }
 
-    function locationModel(data, root, depth, func, withAllOption) {
-        var loc = {};
+    function LocationModel(data, root, depth, func, withAllOption) {
+        var loc = this;
 
-        loc.name = ko.observable();
-        loc.type = ko.observable();
-        loc.uuid = ko.observable();
-        loc.can_edit = ko.observable();
-        loc.children = ko.observableArray();
-        loc.depth = depth || 0;
-        loc.children_loaded = false;
-        loc.func = typeof func !== 'undefined' ? func : locationModel;
-        loc.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
+        this.name = ko.observable();
+        this.type = ko.observable();
+        this.uuid = ko.observable();
+        this.can_edit = ko.observable();
+        this.children = ko.observableArray();
+        this.depth = depth || 0;
+        this.children_loaded = false;
+        this.func = typeof func !== 'undefined' ? func : LocationModel;
+        this.withAllOption = typeof withAllOption !== 'undefined' ? withAllOption : true;
 
-        loc.auto_drill = data.auto_drill;
+        this.auto_drill = data.auto_drill;
 
-        loc.children_are_editable = function() {
-            return _.every(loc.children(), function(child) {
+        this.children_are_editable = function() {
+            return _.every(this.children(), function(child) {
                 return child.name() === '_all' || child.can_edit();
             });
         };
 
-        loc.display_name = ko.computed(function() {
-            return loc.name() === '_all' ? root.default_caption : loc.name();
-        }, loc);
+        this.display_name = ko.computed(function() {
+            return this.name() === '_all' ? root.default_caption : this.name();
+        }, this);
 
-        loc.selected_child = ko.observable();
+        this.selected_child = ko.observable();
         // when a location is selected, update the drill-down tree
-        loc.selected_child.subscribe(function(val) {
+        this.selected_child.subscribe(function(val) {
             if (!val) {
                 return;
             }
@@ -140,45 +139,45 @@ hqDefine('locations/js/location_drilldown', function() {
                 e.selected_child(null);
             });
 
-            var postChildrenLoaded = function(parent) {
+            var post_children_loaded = function(parent) {
                 if (parent.num_children()) {
                     root.path_push(parent);
                 }
             };
 
             if (!!val.uuid() && !val.children_loaded) {
-                val.load_children_async(postChildrenLoaded);
+                val.load_children_async(post_children_loaded);
             } else {
-                postChildrenLoaded(val);
+                post_children_loaded(val);
             }
-        }, loc);
-        loc.selected_is_valid = ko.computed(function() {
-            return loc.selected_child() && loc.selected_child().name() !== '_all';
-        }, loc);
+        }, this);
+        this.selected_is_valid = ko.computed(function() {
+            return this.selected_child() && this.selected_child().name() !== '_all';
+        }, this);
 
         // helpers to account for the 'all' meta-entry
-        loc.num_children = ko.computed(function() {
-            var length = loc.children().length;
-            if (loc.withAllOption && length !== 0) {
+        this.num_children = ko.computed(function() {
+            var length = this.children().length;
+            if (this.withAllOption && length !== 0) {
                 length -= 1;
             }
             return length;
-        }, loc);
-        loc.get_child = function(i) {
-            return loc.children()[i + 1];
+        }, this);
+        this.get_child = function(i) {
+            return this.children()[i + 1];
         };
 
-        loc.load = function(data) {
-            loc.name(data.name);
-            loc.type(data.location_type);
-            loc.uuid(data.uuid);
-            loc.can_edit(_.isBoolean(data.can_edit) ? data.can_edit : true);
+        this.load = function(data) {
+            this.name(data.name);
+            this.type(data.location_type);
+            this.uuid(data.uuid);
+            this.can_edit(_.isBoolean(data.can_edit) ? data.can_edit : true);
             if (data.children) {
-                loc.set_children(data.children);
+                this.set_children(data.children);
             }
         };
 
-        loc.set_children = function(data) {
+        this.set_children = function(data) {
             var children = [];
             if (data) {
                 children = _.sortBy(data, function(e) { return e.name; });
@@ -189,23 +188,24 @@ hqDefine('locations/js/location_drilldown', function() {
                 if(loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED))
                     children.splice(0, 0, {name: '_all', auto_drill: loc.auto_drill});
             }
-            loc.children($.map(children, function(e) {
+            this.children($.map(children, function(e) {
                 e.auto_drill = loc.auto_drill;
                 var child = new loc.func(e, root, loc.depth + 1);
                 return (child.filter() ? child : null);
             }));
-            loc.children_loaded = true;
+            this.children_loaded = true;
         };
 
-        loc.load_children_async = function(callback) {
-            apiGetChildren(loc.uuid(), function(resp) {
+        this.load_children_async = function(callback) {
+            api_get_children(this.uuid(), function(resp) {
                 loc.set_children(resp);
                 callback(loc);
             }, root.loc_url);
         };
 
         //warning: duplicate code with location_tree.async.js
-        loc.allowed_child_types = ko.computed(function() {
+        this.allowed_child_types = ko.computed(function() {
+            var loc = this;
             var types = [];
             $.each(root.location_types, function(i, loc_type) {
                 $.each(loc_type.allowed_parents, function(i, parent_type) {
@@ -216,30 +216,28 @@ hqDefine('locations/js/location_drilldown', function() {
                 });
             });
             return types;
-        }, loc);
+        }, this);
 
-        loc.can_have_children = ko.computed(function() {
-            return (loc.allowed_child_types().length > 0);
-        }, loc);
+        this.can_have_children = ko.computed(function() {
+            return (this.allowed_child_types().length > 0);
+        }, this);
 
-        loc.filter = function() {
-            return loc.name() === '_all' || root.loc_filter(loc);
+        this.filter = function() {
+            return this.name() === '_all' || root.loc_filter(this);
         };
 
-        loc.can_edit_children = function() {
+        this.can_edit_children = function() {
             // Are there more than one editable options?
-            return loc.children().filter(function(child) {
+            return this.children().filter(function(child) {
                 return ((!loc.auto_drill || child.name() !== '_all') && child.can_edit());
             }).length > 1;
         };
 
-        loc.load(data);
-
-        return loc;
+        this.load(data);
     }
 
     return {
-        locationSelectViewModel: locationSelectViewModel,
-        locationModel: locationModel,
+        LocationSelectViewModel: LocationSelectViewModel,
+        LocationModel: LocationModel,
     };
 });

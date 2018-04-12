@@ -154,7 +154,7 @@ hqDefine("reports/js/filters/main", [
         });
         $('.report-filter-location-async').each(function(i, el) {
             var $el = $(el), data = $el.data();
-            var model = locationDrilldown.locationSelectViewModel({
+            var model = locationDrilldown.LocationSelectViewModel({
                 "hierarchy": data.hierarchy,
                 "show_location_filter": data.makeOptional && !data.locId ? "n" : "y",
                 "loc_url": data.locationUrl,
@@ -167,7 +167,7 @@ hqDefine("reports/js/filters/main", [
         $('.report-filter-drilldown-options').each(function (i, el) {
             var $el = $(el), data = $el.data();
             if (data.isEmpty) return;
-            var model = drilldownOptions.drilldownOptionFilterControl({
+            var model = drilldownOptions.DrilldownOptionFilterControl({
                 drilldown_map: data.optionMap,
                 controls: data.controls,
                 selected: data.selected,
@@ -181,7 +181,7 @@ hqDefine("reports/js/filters/main", [
             // http://manage.dimagi.com/default.asp?231773
             var $el = $(el), data = $el.data();
             if (!data.isEmpty) {
-                var model = drilldownOptions.drilldownOptionFilterControl({
+                var model = drilldownOptions.DrilldownOptionFilterControl({
                     drilldown_map: data.optionMap,
                     controls: data.controls,
                     selected: data.selected,

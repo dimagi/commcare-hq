@@ -1,5 +1,3 @@
-/* globals drilldownFinalNotification */
-
 //probably we need clear this file
 //copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/report_filter.drilldown_options.js
 
@@ -63,12 +61,12 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-var drilldownOptionFilterControl = function (options) {
-    var self = {};
+var DrilldownOptionFilterControl = function (options) {
+    var self = this;
 
-    self.notification = drilldownFinalNotification(options.notifications);
+    self.notification = new DrilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
-        return drilldownOption(select, options.drilldown_map);
+        return new DrilldownOption(select, options.drilldown_map);
     }));
 
     self.init = function () {
@@ -114,14 +112,14 @@ var drilldownOptionFilterControl = function (options) {
 
 };
 
-var drilldownOption = function (select, drilldownMap) {
-    var self = {};
+var DrilldownOption = function (select, drilldown_map) {
+    var self = this;
     self.label = select.label;
     self.default_text = select.default_text;
     self.slug = select.slug;
     self.level = select.level;
 
-    self.control_options = ko.observableArray((self.level === 0) ? drilldownMap : []);
+    self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
     self.selected = ko.observableArray();
 
     self.is_visible = ko.computed(function () {
@@ -137,11 +135,10 @@ var drilldownOption = function (select, drilldownMap) {
     self.show_next_drilldown = ko.computed(function () {
         return !(self.control_options().length);
     });
-    return {};
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    var viewModel = new drilldownOptionFilterControl(options);
+    var viewModel = new DrilldownOptionFilterControl(options);
     $(this).koApplyBindings(viewModel);
     viewModel.init();
 };

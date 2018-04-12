@@ -21,13 +21,13 @@
         var hierarchy = {{ hierarchy|JSON }};
         var location_url = '{{ api_root }}';
 
-        var model = hqImport('locations/js/location_drilldown').locationSelectViewModel({
+        var model = new (hqImport('locations/js/location_drilldown')).LocationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": false,
             "auto_drill": true,
             "loc_filter": false,
             "loc_url": location_url,
-            "func": hqImport('locations/js/location_drilldown').locationModel,
+            "func": hqImport('locations/js/location_drilldown').LocationModel
         });
 
         $('#group_{{ control_slug }}').koApplyBindings(model);
