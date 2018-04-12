@@ -113,7 +113,9 @@ var HQAsyncReport = function (o) {
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
 
+                // Assorted UI cleanup/initialization
                 $('.hq-report-time-notice').removeClass('hide');
+                $(".timeago").timeago();
 
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
