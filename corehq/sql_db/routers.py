@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import random
 from django.conf import settings
 
 from memoized import memoized
