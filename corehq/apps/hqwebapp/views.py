@@ -55,7 +55,7 @@ from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -361,6 +361,7 @@ def _login(req, domain_name, template_name):
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
+@two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
     # this view, and the one below, is overridden because
@@ -412,6 +413,7 @@ class CloudCareLoginView(HQLoginView):
     ]
 
 
+@two_factor_exempt
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
