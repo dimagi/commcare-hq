@@ -279,8 +279,8 @@ class AsyncRestoreTestSQL(AsyncRestoreTest):
 class TestAsyncRestoreResponse(TestXmlMixin, SimpleTestCase):
     def setUp(self):
         self.task = mock.MagicMock()
-        self.retry_after = 25
-        self.task.info = {'done': 25, 'total': 100, 'retry-after': 25}
+        self.retry_after = 5
+        self.task.info = {'done': 25, 'total': 100, 'retry-after': 5}
         self.username = 'mclovin'
 
         self.response = AsyncRestoreResponse(self.task, self.username)
