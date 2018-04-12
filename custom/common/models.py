@@ -15,7 +15,7 @@ class LineChart(Chart):
         marginBottom: Bottom Margin in pixels
 
     """
-    template_partial = 'reports/partials/graphs/line_chart.html'
+    template_partial = 'custom/common/templates/common/line_chart.html'
 
     def __init__(self, title, x_axis, y_axis):
         self.title = title
