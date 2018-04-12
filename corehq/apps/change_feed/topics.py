@@ -53,10 +53,10 @@ ALL = (
 def get_topic_for_doc_type(doc_type, backend_id=None):
     from corehq.apps.change_feed import document_types
     if doc_type in document_types.CASE_DOC_TYPES:
-        assert backend_id in ('sql', 'couch')
+        assert backend_id in ('sql', 'couch'), backend_id
         return CASE_SQL if backend_id == 'sql' else CASE
     elif doc_type in all_known_formlike_doc_types():
-        assert backend_id in ('sql', 'couch')
+        assert backend_id in ('sql', 'couch'), backend_id
         return FORM_SQL if backend_id == 'sql' else FORM
     elif doc_type in document_types.DOMAIN_DOC_TYPES:
         return DOMAIN

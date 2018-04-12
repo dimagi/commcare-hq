@@ -39,6 +39,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
 
     def test_process_change(self):
         document = {
+            '_id': 'test-id',
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': 'kafka-test-domain',
@@ -47,8 +48,6 @@ class ChangeFeedPillowTest(SimpleTestCase):
         message = next(self.consumer)
 
         change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(COUCH, change_meta.data_source_type)
-        self.assertEqual(self._fake_couch.dbname, change_meta.data_source_name)
         self.assertEqual('test-id', change_meta.document_id)
         self.assertEqual(document['doc_type'], change_meta.document_type)
         self.assertEqual(document['type'], change_meta.document_subtype)
@@ -60,6 +59,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
 
     def test_process_change_with_unicode_domain(self):
         document = {
+            '_id': 'test-id',
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': u'हिंदी',
@@ -71,6 +71,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
 
     def test_no_domain(self):
         document = {
+            '_id': 'test-id',
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': None,
@@ -78,10 +79,11 @@ class ChangeFeedPillowTest(SimpleTestCase):
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = next(self.consumer)
         change_meta = change_meta_from_kafka_message(message.value)
-        self.assertEqual(document['domain'], change_meta.domain)
+        self.assertIsNone(change_meta.domain)
 
     def test_publish_timestamp(self):
         document = {
+            '_id': 'test-id',
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': None,
@@ -107,6 +109,7 @@ class TestElasticProcessorPillows(TestCase):
         then we throw an error
         """
         document = {
+            '_id': 'test-id',
             'doc_type': 'CommCareCase',
             'type': 'mother',
             'domain': 'rev-domain',
@@ -115,27 +118,23 @@ class TestElasticProcessorPillows(TestCase):
         broken_metadata = ChangeMeta(
             document_id='test-id',
             document_rev='mismatched',
-            data_source_type='couch',
-            data_source_name='test_commcarehq'
+            document_type='CommCareCase',
         )
         good_metadata = ChangeMeta(
             document_id='test-id',
             document_rev='3-me',
-            data_source_type='couch',
-            data_source_name='test_commcarehq'
+            document_type='CommCareCase',
         )
         newer_metadata = ChangeMeta(
             document_id='test-id',
             # Rev is lower than the rev in the fetched document and we should not throw an error
             document_rev='2-me',
-            data_source_type='couch',
-            data_source_name='test_commcarehq'
+            document_type='CommCareCase',
         )
         stale_metadata = ChangeMeta(
             document_id='test-id',
             document_rev='4-me',  # Rev is higher than the rev in the fetched document so it is stale
-            data_source_type='couch',
-            data_source_name='test_commcarehq'
+            document_type='CommCareCase',
         )
 
         with self.assertRaises(DocumentMismatchError):
