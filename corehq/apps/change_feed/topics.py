@@ -49,19 +49,20 @@ ALL = (
 
 
 def get_topic_for_doc_type(doc_type, backend_id):
-    if doc_type in ('CommCareCase', 'CommCareCase-Deleted'):
+    from corehq.apps.change_feed import document_types
+    if doc_type in document_types.CASE_DOC_TYPES:
         return CASE_SQL if backend_id == 'sql' else CASE
     elif doc_type in all_known_formlike_doc_types():
         return FORM_SQL if backend_id == 'sql' else FORM
-    elif doc_type in ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE'):
+    elif doc_type in document_types.DOMAIN_DOC_TYPES:
         return DOMAIN
-    elif doc_type in ('CommCareUser', 'CommCareUser-Deleted'):
+    elif doc_type in document_types.MOBILE_USER_DOC_TYPES:
         return COMMCARE_USER
-    elif doc_type in ('WebUser', 'WebUser-Deleted'):
+    elif doc_type in document_types.WEB_USER_DOC_TYPES:
         return WEB_USER
-    elif doc_type in ('Group', 'Group-Deleted'):
+    elif doc_type in document_types.GROUP_DOC_TYPES:
         return GROUP
-    elif doc_type in ('SyncLog', 'SimplifiedSyncLog'):
+    elif doc_type in document_types.SYNCLOG_DOC_TYPES:
         return SYNCLOG_SQL
     elif doc_type in app_doc_types():
         return APP

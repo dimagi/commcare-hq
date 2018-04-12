@@ -7,6 +7,18 @@ from couchforms.models import all_known_formlike_doc_types
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.feed.interface import ChangeMeta
 
+GROUP_DOC_TYPES = ('Group', 'Group-Deleted')
+
+WEB_USER_DOC_TYPES = ('WebUser', 'WebUser-Deleted')
+
+MOBILE_USER_DOC_TYPES = ('CommCareUser', 'CommCareUser-Deleted')
+
+CASE_DOC_TYPES = ('CommCareCase', 'CommCareCase-Deleted')
+
+DOMAIN_DOC_TYPES = ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE')
+
+SYNCLOG_DOC_TYPES = ('SyncLog', 'SimplifiedSyncLog')
+
 CASE = 'case'
 FORM = 'form'
 DOMAIN = 'domain'
@@ -30,17 +42,17 @@ def get_doc_meta_object_from_document(document):
 
 
 def _get_primary_type(raw_doc_type):
-    if raw_doc_type in ('CommCareCase', 'CommCareCase-Deleted'):
+    if raw_doc_type in CASE_DOC_TYPES:
         return CASE
     elif raw_doc_type in all_known_formlike_doc_types():
         return FORM
-    elif raw_doc_type in ('Domain', 'Domain-Deleted', 'Domain-DUPLICATE'):
+    elif raw_doc_type in DOMAIN_DOC_TYPES:
         return DOMAIN
-    elif raw_doc_type in ('CommCareUser', 'CommCareUser-Deleted'):
+    elif raw_doc_type in MOBILE_USER_DOC_TYPES:
         return COMMCARE_USER
-    elif raw_doc_type in ('WebUser', 'WebUser-Deleted'):
+    elif raw_doc_type in WEB_USER_DOC_TYPES:
         return WEB_USER
-    elif raw_doc_type in ('Group', 'Group-Deleted'):
+    elif raw_doc_type in GROUP_DOC_TYPES:
         return GROUP
     elif raw_doc_type in app_doc_types():
         return APP
