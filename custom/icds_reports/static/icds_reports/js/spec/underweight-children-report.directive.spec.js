@@ -41,6 +41,9 @@ describe('Underweight Children Directive', function () {
         $httpBackend.expectGET('underweight_children').respond(200, {
             report_data: ['report_test_data'],
         });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
+        });
         var element = window.angular.element("<underweight-children-report data='test'></underweight-children-report>");
         var compiled = $compile(element)($scope);
         var mapOrSectorViewElement = window.angular.element("<map-or-sector-view data='test'></map-or-sector-view>");
