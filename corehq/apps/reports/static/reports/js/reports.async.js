@@ -115,7 +115,9 @@ var HQAsyncReport = function (o) {
 
                 // Assorted UI cleanup/initialization
                 $('.hq-report-time-notice').removeClass('hide');
-                $(".timeago").timeago();
+                if ($.timeago) {
+                    $(".timeago").timeago();
+                }
 
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();
