@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.conf.urls import include, url
 from corehq.apps.domain.views import PublicSMSRatesView
 from corehq.apps.settings.views import (
