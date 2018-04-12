@@ -243,12 +243,12 @@
           "type": "property_path",
           "property_path": [
             "form",
-            "count_products_select"
+            "pps_nb_products"
           ]
         },
         "datatype": "integer",
         "is_primary_key": false,
-        "column_id": "count_products_select",
+        "column_id": "pps_nb_products",
         "is_nullable": true,
         "type": "expression"
       },
