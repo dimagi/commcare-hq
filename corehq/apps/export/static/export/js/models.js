@@ -194,7 +194,7 @@ hqDefine('export/js/models', function () {
         } else if (format === constants.EXPORT_FORMATS.XLS) {
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
-            return gettext('Excel 2007');
+            return gettext('Excel 2007+');
         }
     };
 
