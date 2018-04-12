@@ -6,6 +6,8 @@ import operator
 from operator import contains, eq
 
 from couchdbkit import NoResultFound, MultipleResultsFound, ResourceNotFound, QueryMixin
+
+from corehq.apps.change_feed import topics
 from dimagi.ext.couchdbkit import StringProperty, DateProperty, DictProperty, Document
 from django.db import models
 from casexml.apps.case.models import CommCareCase
@@ -15,8 +17,6 @@ import fluff
 from fluff.filters import ORFilter
 from fluff.pillow import get_multi_fluff_pillow
 from corehq.fluff.calculators.xform import FormPropertyFilter
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-from corehq.apps.change_feed.topics import get_topic
 from custom.m4change.user_calcs import anc_hmis_report_calcs, ld_hmis_report_calcs, immunization_hmis_report_calcs,\
     all_hmis_report_calcs, project_indicators_report_calcs, mcct_monthly_aggregate_report_calcs, \
     form_passes_filter_date_delivery
@@ -508,7 +508,7 @@ def M4ChangeFormFluffPillow(delete_filtered=False):
             AllHmisCaseFluff,
         ],
         name='M4ChangeFormFluff',
-        kafka_topic=get_topic(get_doc_meta_object_from_document(XFormInstance().to_json())),
+        kafka_topic=topics.FORM,
         delete_filtered=delete_filtered
     )
 
