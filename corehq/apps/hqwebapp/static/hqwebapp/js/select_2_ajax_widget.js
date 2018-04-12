@@ -1,8 +1,9 @@
 hqDefine("hqwebapp/js/select_2_ajax_widget", function() {
     $(function(){
         $(".hqwebapp-select2-ajax").each(function() {
-            var data = $(this).data();
-            $(this).select2({
+            var $select = $(this),
+                data = $select.data();
+            $select.select2({
                 multiple: data.multiple,
                 ajax: {
                     url: data.endpoint,
