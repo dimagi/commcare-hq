@@ -83,7 +83,7 @@ def _get_document_store_from_topic(topic, domain):
 
     if couch_db_name != Ellipsis:
         try:
-            return CouchDocumentStore(couch_config.get_db_for_db_name(couch_db_name))
+            return CouchDocumentStore(couch_config.get_db(couch_db_name))
         except DatabaseNotFound:
             # in debug mode we may be flipping around our databases so don't fail hard here
             if settings.DEBUG:
