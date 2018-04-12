@@ -454,7 +454,6 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
     @property
     def headers(self):
         headers = super(LossRateData, self).headers
-        headers.add_column(DataTablesColumn("Target"))
         return headers
 
 
@@ -549,7 +548,6 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
     @property
     def headers(self):
         headers = super(ExpirationRateData, self).headers
-        headers.add_column(DataTablesColumn("Target"))
         return headers
 
 
@@ -641,7 +639,6 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def headers(self):
         headers = super(RecoveryRateByPPSData, self).headers
-        headers.add_column(DataTablesColumn("Target"))
         return headers
 
 
@@ -727,7 +724,6 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
     @property
     def headers(self):
         headers = super(RecoveryRateByDistrictData, self).headers
-        headers.add_column(DataTablesColumn("Target"))
         return headers
 
 
@@ -819,7 +815,6 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def headers(self):
         headers = super(RuptureRateByPPSData, self).headers
-        headers.add_column(DataTablesColumn("Target"))
         return headers
 
 

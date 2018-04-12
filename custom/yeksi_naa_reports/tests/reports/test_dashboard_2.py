@@ -27,7 +27,7 @@ class TestDashboard2(YeksiTestCase):
         rows = loss_rate_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
@@ -57,7 +57,7 @@ class TestDashboard2(YeksiTestCase):
         rows = expiration_rate_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
@@ -87,7 +87,7 @@ class TestDashboard2(YeksiTestCase):
         rows = recovery_rate_by_pps_report['rows']
         self.assertEqual(
             headers,
-            ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['PPS', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
@@ -114,7 +114,7 @@ class TestDashboard2(YeksiTestCase):
         rows = recovery_rate_by_district_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
@@ -153,7 +153,7 @@ class TestDashboard2(YeksiTestCase):
         rows = rupture_rate_by_pps_report['rows']
         self.assertEqual(
             headers,
-            ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['PPS', 'January 2018', 'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
