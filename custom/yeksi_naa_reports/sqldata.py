@@ -696,9 +696,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         ]
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
+    def get_recovery_rate_by_district_per_month(self, records):
         data = {}
         district_names = {}
         for record in records:
@@ -712,14 +710,20 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 record['montant_paye']['html'] if record['montant_paye'] else None,
                 record['montant_reel_a_payer']['html'] if record['montant_reel_a_payer'] else None
             )
+        return district_names, data
 
-        new_rows = []
+    @property
+    def rows(self):
+        records = self.get_data()
+        district_names, data = self.get_recovery_rate_by_district_per_month(records)
+
+        rows = []
         for district in data:
             row = [district_names[district]]
             row.extend(data[district])
-            new_rows.append(row)
+            rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return new_rows
+        return rows
 
     @property
     def headers(self):
