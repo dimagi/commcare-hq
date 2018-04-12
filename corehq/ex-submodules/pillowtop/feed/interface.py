@@ -33,7 +33,7 @@ class ChangeMeta(jsonobject.JsonObject):
     def wrap(cls, doc):
         if 'version' not in doc:
             doc['version'] = 0
-        super(ChangeMeta, cls).wrap(doc)
+        return super(ChangeMeta, cls).wrap(doc)
 
 
 class Change(object):
