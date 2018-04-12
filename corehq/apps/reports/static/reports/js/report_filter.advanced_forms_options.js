@@ -12,7 +12,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
     };
 
     var advancedFormsOptions = function ($el, options) {
-        var viewModel = new deletedFormsControl(options);
+        var viewModel = deletedFormsControl(options);
         $el.koApplyBindings(viewModel);
         var $cssClass = $('.' + viewModel.css_class);
         $cssClass.each(function() {

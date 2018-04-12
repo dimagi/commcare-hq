@@ -1866,8 +1866,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(len(domain_obj.restricted_sms_times) > 0),
                 "restricted_sms_times_json":
                     [w.to_json() for w in domain_obj.restricted_sms_times],
-                "send_to_duplicated_case_numbers":
-                    enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
                 "sms_survey_date_format":
                     domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
@@ -1942,8 +1940,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "default_sms_response"),
                 ("custom_case_username",
                  "custom_case_username"),
-                ("send_to_duplicated_case_numbers",
-                 "send_to_duplicated_case_numbers"),
                 ("sms_survey_date_format",
                  "sms_survey_date_format"),
                 ("sms_conversation_length",

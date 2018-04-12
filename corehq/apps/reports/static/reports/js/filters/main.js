@@ -176,6 +176,36 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
             model.init();
         });
+        $('.report-filter-form-drilldown').each(function (i, el) {
+            // This is copied from drilldown-options above because the order matters
+            // http://manage.dimagi.com/default.asp?231773
+            var $el = $(el), data = $el.data();
+            if (!data.isEmpty) {
+                var model = drilldownOptions.drilldownOptionFilterControl({
+                    drilldown_map: data.optionMap,
+                    controls: data.controls,
+                    selected: data.selected,
+                    notifications: data.notifications,
+                });
+                $el.koApplyBindings(model);
+                model.init();
+            }
+
+            if (data.unknownAvailable || data.displayAppType) {
+                advancedFormsOptions.advancedFormsOptions(
+                    $el.find('#' + data.cssId + '-advanced-options'),
+                    {
+                        show: data.showAdvanced,
+                        is_unknown_shown: data.unknown.show,
+                        selected_unknown_form: data.unknown.selected,
+                        all_unknown_forms: data.unknown.options,
+                        caption_text: data.unknown.defaultText,
+                        css_id: data.cssId,
+                        css_class: data.cssClass,
+                    }
+                );
+            }
+        });
         $('.report-filter-logtag').each(function(i, el) {
             var $el = $(el), data = $el.data();
             if (data.defaultOn) {
@@ -199,34 +229,6 @@ hqDefine("reports/js/filters/main", [
                         multiSelect.removeClass("hide");
                     }
                 });
-            }
-        });
-        $('.report-filter-form-drilldown').each(function(i, el) {
-            var $el = $(el), data = $el.data();
-            if (!data.isEmpty) {
-                var model = drilldownOptions.drilldownOptionFilterControl({
-                    drilldown_map: data.optionMap,
-                    controls: data.controls,
-                    selected: data.selected,
-                    notifications: data.notifications,
-                });
-                $el.koApplyBindings(model);
-                model.init();
-            }
-
-            if (data.unknownAvailable || data.displayAppType) {
-                advancedFormsOptions.advancedFormsOptions(
-                    $el.find('#report_filter_form-advanced-options'),
-                    {
-                        show: data.showAdvanced,
-                        is_unknown_shown: data.unknown.show,
-                        selected_unknown_form: data.unknown.selected,
-                        all_unknown_forms: data.unknown.options,
-                        caption_text: data.unknown.defaultText,
-                        css_id: data.cssId,
-                        css_class: data.cssClass,
-                    }
-                );
             }
         });
 

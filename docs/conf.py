@@ -12,6 +12,7 @@
 # serve to show the default.
 
 from __future__ import absolute_import
+import django
 import sys, os
 from mock import MagicMock
 import sphinx_rtd_theme
@@ -21,18 +22,14 @@ from ..manage import init_hq_python_path
 
 init_hq_python_path()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "settings")
+django.setup()
 
 # -- Custom configuration -----------------------------------------------------
-
-class Mock(MagicMock):
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
 
 # mock out stubborn modules that are hard to pip install
 # https://docs.readthedocs.org/en/latest/faq.html#i-get-import-errors-on-libraries-that-depend-on-c-modules
 MOCK_MODULES = ["PIL.Image", "PIL"]
-sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
+sys.modules.update((mod_name, MagicMock()) for mod_name in MOCK_MODULES)
 
 
 # -- General configuration -----------------------------------------------------
@@ -142,7 +139,7 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.
