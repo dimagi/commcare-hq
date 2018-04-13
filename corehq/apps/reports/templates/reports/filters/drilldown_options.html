@@ -38,17 +38,3 @@
  </div>
  {% endif %}
 {% endblock %}
-{% block filter_js %}
-{% if not is_empty %}
-<script>
-    $.getScript("{% static 'reports/js/report_filter.drilldown_options.js' %}", function () {
-       $('#{{ css_id }}').drilldownOptionFilter({
-           drilldown_map: {{ option_map|JSON }},
-           controls: {{ controls|JSON }},
-           selected: {{ selected|JSON }},
-           notifications: {{ notifications|JSON }},
-       });
-    });
-</script>
-{% endif %}
-{% endblock %}
