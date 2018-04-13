@@ -87,10 +87,10 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
     send_immediately):
     try:
         handler.process_rule(schedule_changed, prev_definition, send_immediately)
+        handler.save(unlock=True)
     except Exception:
         notify_exception(None,
             message="Error processing reminder rule for handler %s" % handler._id)
-    handler.save(unlock=True)
 
 
 @no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
