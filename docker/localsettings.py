@@ -100,10 +100,10 @@ COUCH_DATABASES = {
     b'default': {
         # for production this ought to be set to true on your configured couch instance
         b'COUCH_HTTPS': False,
-        b'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        b'COUCH_USERNAME': '',
-        b'COUCH_PASSWORD': '',
-        b'COUCH_DATABASE_NAME': 'commcarehq'
+        b'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
+        b'COUCH_USERNAME': b'',
+        b'COUCH_PASSWORD': b'',
+        b'COUCH_DATABASE_NAME': b'commcarehq'
     }
 }
 
