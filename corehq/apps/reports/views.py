@@ -109,7 +109,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
