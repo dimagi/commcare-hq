@@ -5,11 +5,13 @@ from copy import copy
 from datetime import datetime
 
 from django.test import TestCase
-from mock import patch, Mock
+from mock import patch
+
+from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
-from dimagi.utils.parsing import json_format_datetime
 
 
 class AppManagerDataSourceConfigTest(TestCase):
@@ -51,7 +53,6 @@ class AppManagerDataSourceConfigTest(TestCase):
         self.is_usercase_in_use_patch.stop()
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', Mock(return_value={}))
     def test_simple_case_management(self, datetime_mock):
         fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
         datetime_mock.utcnow.return_value = fake_time_now
@@ -76,20 +77,25 @@ class AppManagerDataSourceConfigTest(TestCase):
             {'doc_type': 'CommCareCase', 'domain': self.domain, 'type': 'wrong-type'}))
 
         # check the indicators
+        datetime_columns = ["last_modified_date", "opened_date", "closed_date", "inserted_at",
+                            "server_last_modified_date"]
         expected_columns = set(
-            ["doc_id", "modified_on", "user_id", "opened_on",
-             "owner_id", 'inserted_at', 'name'] + list(self.case_properties.keys())
+            datetime_columns +
+            [
+                "doc_id", "case_type", "last_modified_by_user_id", "opened_by_user_id",
+                "closed", "closed_by_user_id", "owner_id", "name", "state", "external_id"
+            ] +
+            list(self.case_properties.keys())
         )
         self.assertEqual(expected_columns, set(col_back.id for col_back in data_source.get_columns()))
 
         modified_on = datetime(2014, 11, 12, 15, 37, 49)
         opened_on = datetime(2014, 11, 11, 23, 34, 34, 25)
-        sample_doc = dict(
+        sample_doc = CommCareCase(
             _id='some-doc-id',
-            doc_type="CommCareCase",
-            modified_on=json_format_datetime(modified_on),
+            modified_on=modified_on,
+            opened_on=opened_on,
             user_id="23407238074",
-            opened_on=json_format_datetime(opened_on),
             owner_id="0923409230948",
             name="priority ticket",
             domain=app.domain,
@@ -98,24 +104,32 @@ class AppManagerDataSourceConfigTest(TestCase):
             last_name='test last',
             children='3',
             dob='2001-01-01',
-        )
+        ).to_json()
+
 
         def _get_column_property(column):
-            return column.id if column.id != 'doc_id' else '_id'
+            # this is the mapping of column id to case property path
+            property_map = {
+                c.label: c.item.path[0].name for c in MAIN_CASE_TABLE_PROPERTIES
+            }
+            property_map.update({
+                'doc_id': '_id',
+            })
+            return property_map.get(column.id, column.id)
 
         default_case_property_datatypes = DEFAULT_CASE_PROPERTY_DATATYPES
         [row] = data_source.get_all_values(sample_doc)
         for result in row:
+            if result.column.id in datetime_columns:
+                self.assertEqual(result.column.datatype, 'datetime')
+
             if result.column.id == "inserted_at":
-                self.assertEqual(result.column.datatype, 'datetime')
                 self.assertEqual(fake_time_now, result.value)
-            elif result.column.id == "modified_on":
-                self.assertEqual(result.column.datatype, 'datetime')
+            elif result.column.id == "last_modified_date":
                 self.assertEqual(modified_on, result.value)
-            elif result.column.id == "opened_on":
-                self.assertEqual(result.column.datatype, 'datetime')
+            elif result.column.id == "opened_date":
                 self.assertEqual(opened_on, result.value)
-            elif result.column.id not in ["repeat_iteration", "inserted_at"]:
+            elif result.column.id not in ["repeat_iteration", "inserted_at", 'closed']:
                 self.assertEqual(sample_doc[_get_column_property(result.column)], result.value)
                 if result.column.id in default_case_property_datatypes:
                     self.assertEqual(

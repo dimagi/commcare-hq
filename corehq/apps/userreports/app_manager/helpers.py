@@ -1,16 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.app_manager.app_schemas.case_properties import get_case_properties
 from corehq.apps.app_manager.xform import XForm
-from corehq.apps.export.models import FormExportDataSchema
-from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES
+from corehq.apps.export.models import FormExportDataSchema, CaseExportDataSchema
+from corehq.apps.export.system_properties import BOTTOM_MAIN_FORM_TABLE_PROPERTIES, MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.data_source_meta import make_form_data_source_filter, \
     make_case_data_source_filter
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.reports.builder import (
-    DEFAULT_CASE_PROPERTY_DATATYPES,
-    make_case_property_indicator,
-)
 from corehq.apps.userreports.sql import get_column_name
 import unidecode
 
@@ -24,16 +19,26 @@ def get_case_data_sources(app):
 
 
 def get_case_data_source(app, case_type):
-    prop_map = get_case_properties(app, [case_type], defaults=list(DEFAULT_CASE_PROPERTY_DATATYPES))
+    schema = CaseExportDataSchema.generate_schema_from_builds(
+        app.domain,
+        app._id,
+        case_type,
+        only_process_current_builds=True,
+    )
+    # the first two (row number and case id) are redundant/export specific,
+    meta_properties_to_use = MAIN_CASE_TABLE_PROPERTIES[2:]
+    # anything with a transform should also be removed
+    meta_properties_to_use = list(filter(lambda property_def: property_def.item.transform is None,
+                                         meta_properties_to_use))
+    meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
+    dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
         table_id=clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter=make_case_data_source_filter(case_type),
-        configured_indicators=[
-            make_case_property_indicator(property) for property in prop_map[case_type]
-        ]
+        configured_indicators=meta_indicators + dynamic_indicators,
     )
 
 
@@ -45,8 +50,8 @@ def get_form_data_sources(app):
     """
     forms = {}
 
-    for module in app.modules:
-        for form in module.forms:
+    for module in app.get_modules():
+        for form in module.get_forms():
             forms = {form.xmlns: get_form_data_source(app, form)}
 
     return forms
@@ -60,9 +65,8 @@ def get_form_data_source(app, form):
         xform.data_node.tag_xmlns,
         only_process_current_builds=True,
     )
-    main_schema = schema.group_schemas[0]
     meta_properties = [_export_column_to_ucr_indicator(c) for c in BOTTOM_MAIN_FORM_TABLE_PROPERTIES]
-    dynamic_properties = [_export_item_to_ucr_indicator(i) for i in main_schema.items]
+    dynamic_properties = _get_dynamic_indicators_from_export_schema(schema)
     form_name = form.default_name()
     return DataSourceConfiguration(
         domain=app.domain,
@@ -74,6 +78,11 @@ def get_form_data_source(app, form):
     )
 
 
+def _get_dynamic_indicators_from_export_schema(schema):
+    main_schema = schema.group_schemas[0]
+    return [_export_item_to_ucr_indicator(i) for i in main_schema.items]
+
+
 def _export_column_to_ucr_indicator(export_column):
     """
     Converts an ExportColumn (from exports module) to a UCR indicator definition.
@@ -82,7 +91,7 @@ def _export_column_to_ucr_indicator(export_column):
     """
     return {
         "type": "expression",
-        "column_id": get_column_name(export_column.label),
+        "column_id": get_column_name(export_column.label, add_hash=False),
         "display_name": export_column.label,
         "datatype": export_column.item.datatype or 'string',
         "expression": {
@@ -100,7 +109,7 @@ def _export_item_to_ucr_indicator(export_item):
     """
     return {
         "type": "expression",
-        "column_id": get_column_name(export_item.readable_path),
+        "column_id": get_column_name(export_item.readable_path, add_hash=False),
         "display_name": export_item.path[-1].name,
         "datatype": export_item.datatype or 'string',
         "expression": {
