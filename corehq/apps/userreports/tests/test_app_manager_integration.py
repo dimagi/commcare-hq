@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
 from copy import copy
 from datetime import datetime
 
@@ -12,6 +11,7 @@ from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
 from corehq.apps.userreports.reports.builder import DEFAULT_CASE_PROPERTY_DATATYPES
+from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
 class AppManagerDataSourceConfigTest(TestCase):
@@ -29,9 +29,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         super(AppManagerDataSourceConfigTest, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
         m0, f0 = factory.new_basic_module('A Module', cls.case_type)
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'forms', 'simple.xml')) as f:
-            form_source = f.read()
-        f0.source = form_source
+        f0.source = get_simple_xform()
         cls.form = f0
         factory.form_requires_case(f0, case_type=cls.case_type, update={
             cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
