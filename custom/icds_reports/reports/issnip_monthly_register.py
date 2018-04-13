@@ -36,8 +36,8 @@ class ISSNIPMonthlyReport(object):
         ).values(
             'block_name', 'awc_id', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
             'cases_ccs_pregnant_all', 'cases_ccs_lactating_all', 'awc_days_open', 'awc_days_pse_conducted',
-            'usage_num_home_visit', 'cases_person_referred', 'num_anc_visits', 'num_children_immunized', 'aww_name',
-            'contact_phone_number'
+            'usage_num_home_visit', 'cases_person_referred', 'num_anc_visits', 'num_children_immunized',
+            'aww_name', 'contact_phone_number'
         )
         return {row['awc_id']: row for row in data}
 

@@ -159,7 +159,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a3'):
             data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly']
-        print data
+
         self.assertEquals(data['obc_boys_48_72'], 0)
         self.assertEquals(data['general_boys_48_72'], 0)
         self.assertEquals(data['total_boys_48_72'], 0)
