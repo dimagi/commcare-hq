@@ -56,7 +56,6 @@ branches:
   - fr/property-changes-paginated # FR 29/3
   - ce/app-status-staging+np/training-module # CE 4/10
   - je/report-builder-button # J$ 4/3
-  - np/flavor  # NP 4/5
   - np/flavor-testing  # NP 4/12
   - ce/auto-batches # Cal April 6
   - ce/app-status-staging # Cal April 9
