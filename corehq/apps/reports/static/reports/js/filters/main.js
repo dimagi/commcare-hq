@@ -169,12 +169,12 @@ hqDefine("reports/js/filters/main", [
             if ($el.parents('.report-filter-form-drilldown').length > 0) return;
             if (data.isEmpty) return;
             var model = drilldownOptions.drilldownOptionFilterControl({
-                drilldown_map: data.optionMap,
+                drilldown_map: data.drilldownMap,
                 controls: data.controls,
                 selected: data.selected,
                 notifications: data.notifications,
             });
-            $el.koApplyBindings(model);
+            $el.find('#' + data.cssId).koApplyBindings(model);
             model.init();
         });
         $('.report-filter-form-drilldown').each(function (i, el) {
@@ -183,12 +183,12 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el), data = $el.data();
             if (!data.isEmpty) {
                 var model = drilldownOptions.drilldownOptionFilterControl({
-                    drilldown_map: data.optionMap,
+                    drilldown_map: data.drilldownMap,
                     controls: data.controls,
                     selected: data.selected,
                     notifications: data.notifications,
                 });
-                $el.koApplyBindings(model);
+                $el.find('#' + data.cssId).koApplyBindings(model);
                 model.init();
             }
 
