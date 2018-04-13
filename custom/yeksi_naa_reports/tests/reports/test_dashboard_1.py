@@ -32,9 +32,9 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                [u'Region 1', u'no data entered', u'no data entered', u'50.00%', u'50.00%'],
-                [u'Dakar', u'no data entered', u'no data entered', u'100.00%', u'100.00%'],
-                [u'Region Test', u'100.00%', u'100.00%', u'no data entered', u'100.00%'],
-                [u'Thies', u'no data entered', u'no data entered', u'87.50%', u'87.50%']
+                ['Region 1', 'no data entered', 'no data entered', '50.00%', '50.00%'],
+                ['Dakar', 'no data entered', 'no data entered', '100.00%', '100.00%'],
+                ['Region Test', '100.00%', '100.00%', 'no data entered', '100.00%'],
+                ['Thies', 'no data entered', 'no data entered', '87.50%', '87.50%']
             ], key=lambda x: x[0])
         )
