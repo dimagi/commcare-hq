@@ -13,8 +13,8 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'month_start': '1',
-            'year_start': '2018',
+            'month_start': '10',
+            'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
         }
@@ -26,15 +26,24 @@ class TestDashboard2(YeksiTestCase):
         rows = loss_rate_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['Region 1', 'no data entered', 'no data entered', '1500.00%'],
-                ['Dakar', 'no data entered', 'no data entered', '52200.00%'],
-                ['Region Test', 'no data entered', '2000.00%', 'no data entered'],
-                ['Thies', 'no data entered', 'no data entered', '2300.00%']
+                [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Saint-Louis', u'6.36%', u'9.88%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered'],
+                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Fatick', u'no data entered', u'9.69%', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
 
@@ -43,8 +52,8 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'month_start': '1',
-            'year_start': '2018',
+            'month_start': '10',
+            'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
         }
@@ -56,15 +65,24 @@ class TestDashboard2(YeksiTestCase):
         rows = expiration_rate_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['Region 1', 'no data entered', 'no data entered', '0.00%'],
-                ['Dakar', 'no data entered', 'no data entered', '0.00%'],
-                ['Region Test', 'no data entered', '0.00%', 'no data entered'],
-                ['Thies', 'no data entered', 'no data entered', '0.00%']
+                [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Saint-Louis', u'6.50%', u'8.55%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered'],
+                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Fatick', u'no data entered', u'7.75%', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
 
@@ -73,8 +91,8 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'f400d0ba6bdb456bb2d5f9843eb766fe',
-            'month_start': '1',
-            'year_start': '2018',
+            'month_start': '10',
+            'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
         }
@@ -86,12 +104,14 @@ class TestDashboard2(YeksiTestCase):
         rows = recovery_rate_by_pps_report['rows']
         self.assertEqual(
             headers,
-            ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['test pps 1', '0.00%', 'no data entered', 'no data entered']
+                [u'test pps 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
 
@@ -100,8 +120,8 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'month_start': '1',
-            'year_start': '2018',
+            'month_start': '10',
+            'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
         }
@@ -113,24 +133,46 @@ class TestDashboard2(YeksiTestCase):
         rows = recovery_rate_by_district_report['rows']
         self.assertEqual(
             headers,
-            ['Region', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['District Sud', 'no data entered', 'no data entered', '100.00%'],
-                ['District Khombole', 'no data entered', 'no data entered', '100.00%'],
-                ['District Joal Fadiouth', 'no data entered', 'no data entered', '100.00%'],
-                ['Dakar', 'no data entered', 'no data entered', '0.00%'],
-                ['District Tivaoune', 'no data entered', 'no data entered', '100.00%'],
-                ['District Pikine', 'no data entered', 'no data entered', '100.00%'],
-                ['District Gu\xe9diawaye', 'no data entered', 'no data entered', '100.00%'],
-                ['District M\xe9kh\xe9', 'no data entered', 'no data entered', '100.00%'],
-                ['DISTRICT PNA', 'no data entered', '100.00%', '100.00%'],
-                ['District Thiadiaye', 'no data entered', 'no data entered', '100.00%'],
-                ['District Mbao', 'no data entered', 'no data entered', '100.00%'],
-                ['District Centre', 'no data entered', 'no data entered', '0.00%'],
-                ['District Test', '100.00%', 'no data entered', 'no data entered']
+                [u'District Sud', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'100.00%'],
+                [u'District Khombole', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'District Joal Fadiouth', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'District Test 2', u'0.00%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Thies', u'100.00%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'District Mbao', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'100.00%'],
+                [u'District Tivaoune', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'District Pikine', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'District Gu\xe9diawaye', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'District M\xe9kh\xe9', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'DISTRICT PNA', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'100.00%', u'100.00%'],
+                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'0.00%'],
+                [u'District Thiadiaye', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'100.00%'],
+                [u'New York', u'19.15%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Dakar', u'0.00%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'District Centre', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered', u'0.00%'],
+                [u'District Test', u'100.00%', u'no data entered', u'no data entered', u'100.00%',
+                 u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
 
@@ -139,8 +181,8 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'month_start': '1',
-            'year_start': '2018',
+            'month_start': '10',
+            'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
         }
@@ -152,33 +194,83 @@ class TestDashboard2(YeksiTestCase):
         rows = rupture_rate_by_pps_report['rows']
         self.assertEqual(
             headers,
-            ['PPS', 'January 2018', 'February 2018', 'March 2018', 'Target']
+            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
         )
+        expected = [
+            [u'test pps 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'P2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'F2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS Alexis', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'G1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Virage 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 3', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'46.15%', u'no data entered'],
+            [u'SL2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'F1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Ngor', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 3', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'SL1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'P1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 3', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Virage 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Pps test 2 bbb', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Virage 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'District Test 2', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered', u'no data entered'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'Virage 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered']
+        ]
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
-            sorted([
-                ['test pps 1', '0.00%', 'no data entered', 'no data entered'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 3', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['Pps test 2 bbb', '0.00%', '0.00%', 'no data entered'],
-                ['PPS Alexis', '0.00%', 'no data entered', 'no data entered'],
-                ['PPS 2', 'no data entered', 'no data entered', '0.00%'],
-                ['Virage 1', '0.00%', 'no data entered', 'no data entered'],
-                ['PPS 3', 'no data entered', '0.00%', 'no data entered'],
-                ['Virage 1', 'no data entered', 'no data entered', '20.00%'],
-                ['PPS 2', 'no data entered', '0.00%', 'no data entered'],
-                ['PPS 1', 'no data entered', '46.15%', 'no data entered'],
-                ['PPS 3', 'no data entered', 'no data entered', '50.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['Virage 2', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 2', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
-                ['PPS 1', 'no data entered', 'no data entered', '0.00%']
-            ], key=lambda x: x[0])
+            len(rows),
+            len(expected)
         )
+        for row in expected:
+            self.assertIn(
+                row,
+                rows
+            )
