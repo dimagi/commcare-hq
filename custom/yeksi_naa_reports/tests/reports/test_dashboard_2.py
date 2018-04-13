@@ -197,9 +197,7 @@ class TestDashboard2(YeksiTestCase):
             ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
              'February 2018', 'March 2018']
         )
-        self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
-            sorted([
+        expected = [
                 [u'test pps 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'no data entered'],
                 [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -266,5 +264,13 @@ class TestDashboard2(YeksiTestCase):
                  u'no data entered', u'no data entered'],
                 [u'Virage 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'no data entered']
-            ], key=lambda x: x[0])
+            ]
+        self.assertEqual(
+            len(rows),
+            len(expected)
         )
+        for row in expected:
+            self.assertIn(
+                row,
+                rows
+            )
