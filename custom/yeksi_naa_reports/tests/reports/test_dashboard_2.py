@@ -33,6 +33,7 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
+                [u'New Test Region', u'43.41%', u'16.59%', u'7.56%', u'3.17%', u'1.95%', u'0.73%'],
                 [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'no data entered'],
                 [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -49,8 +50,7 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Rate by Country', u'6.36%', u'9.79%', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered']
+            [u'Rate by Country', u'21.93%', u'11.79%', u'7.56%', u'3.17%', u'1.95%', u'0.73%']
         )
 
     def test_expiration_rate_report(self):
@@ -78,6 +78,7 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
+                [u'New Test Region', u'38.77%', u'29.67%', u'17.14%', u'13.19%', u'7.76%', u'1.32%'],
                 [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'no data entered'],
                 [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -94,7 +95,7 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Rate by Country', u'6.50%', u'8.17%', u'0.00%', u'0.00%', u'0.00%', u'0.00%']
+            [u'Rate by Country', u'16.76%', u'12.79%', u'17.14%', u'13.19%', u'7.76%', u'1.32%']
         )
 
     def test_recovery_rate_by_district_report(self):
@@ -188,6 +189,7 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
+                [u'New Test Region', u'77.30%', u'63.63%', u'53.65%', u'55.93%', u'63.43%', u'90.75%'],
                 [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'28.12%', u'no data entered'],
                 [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -204,7 +206,7 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Rate by Country', u'68.82%', u'90.47%', u'0.00%', u'0.00%', u'28.12%', u'70.76%']
+            [u'Rate by Country', u'71.97%', u'69.87%', u'53.65%', u'55.93%', u'56.75%', u'89.46%']
         )
 
     def test_recovery_rate_by_pps_report_pps_level(self):
@@ -268,7 +270,8 @@ class TestDashboard2(YeksiTestCase):
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
-            [u'P2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+            [u'New Test PPS 1', u'35.00%', u'25.00%', u'20.00%', u'15.00%', u'5.00%', u'0.00%'],
+            [u'PPS 3', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
@@ -276,11 +279,11 @@ class TestDashboard2(YeksiTestCase):
              u'no data entered', u'no data entered'],
             [u'PPS Alexis', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
-            [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+            [u'Virage 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
-            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+            [u'SL2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
@@ -294,7 +297,7 @@ class TestDashboard2(YeksiTestCase):
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'7.69%', u'no data entered'],
-            [u'SL2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'F1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
@@ -302,7 +305,7 @@ class TestDashboard2(YeksiTestCase):
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
-            [u'PPS 3', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+            [u'P2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
@@ -314,21 +317,22 @@ class TestDashboard2(YeksiTestCase):
              u'no data entered', u'no data entered'],
             [u'Virage 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
-            [u'Pps test 2 bbb', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered'],
+            [u'Pps test 2 bbb', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'Virage 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
+            [u'District Test 2', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered', u'no data entered'],
+            [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
+            [u'New Test PPS 2', u'0.00%', u'0.00%', u'10.00%', u'20.00%', u'0.00%', u'0.00%'],
+            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered'],
-            [u'District Test 2', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered', u'no data entered'],
-            [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered'],
-            [u'Virage 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered']
         ]
         self.assertEqual(
@@ -337,5 +341,5 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Rate by Country', u'0.00%', u'0.00%', u'0.00%', u'0.00%', u'7.69%', u'0.00%']
+            [u'Rate by Country', u'23.33%', u'16.67%', u'16.67%', u'16.67%', u'4.65%', u'0.00%']
         )

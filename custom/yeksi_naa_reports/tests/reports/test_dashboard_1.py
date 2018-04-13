@@ -34,6 +34,7 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
+                [u'New Test Region', u'50.00%', u'50.00%', u'0.00%', u'0.00%', u'50.00%', u'100.00%', u'41.67%'],
                 [u'Region Test', u'100.00%', u'no data entered', u'100.00%', u'100.00%', u'100.00%',
                  u'no data entered', u'100.00%'],
                 [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -50,5 +51,5 @@ class TestDashboard1(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Availability (%)', u'90.00%', u'33.33%', u'100.00%', u'100.00%', u'100.00%', u'87.50%', u'86.84%']
+            [u'Availability (%)', u'83.33%', u'40.00%', u'33.33%', u'66.67%', u'83.33%', u'88.89%', u'76.00%']
         )

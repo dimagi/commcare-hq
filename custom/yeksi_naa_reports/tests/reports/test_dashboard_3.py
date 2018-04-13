@@ -61,6 +61,7 @@ class TestDashboard3(YeksiTestCase):
                  u'no data entered', u'no data entered', u'no data entered', u'101.21%'],
                 [u'Produit 15', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'100.00%'],
+                [u'Test Product 1', u'518.75%', u'592.86%', u'691.67%', u'345.83%', u'129.69%', u'98.44%'],
                 [u'Produit 14', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'90.00%'],
                 [u'ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', u'no data entered',
@@ -87,7 +88,7 @@ class TestDashboard3(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Total (CFA)', u'96.89%', u'95.77%', u'0.00%', u'0.00%', u'87.10%', u'189.91%']
+            [u'Total (CFA)', u'104.01%', u'104.28%', u'691.67%', u'345.83%', u'99.54%', u'188.90%']
         )
 
     def test_valuation_of_pna_stock_per_product_data_report(self):
@@ -132,7 +133,8 @@ class TestDashboard3(YeksiTestCase):
                 [u'EFAVIRENZ 600MG CP.', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
                 [u'RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
                 [u'Produit 15', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
-                [u'Produit 14', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
+                [u'Test Product 1', u'455000.00', u'455000.00', u'455000.00', u'455000.00', u'455000.00',
+                 u'455000.00'], [u'Produit 14', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
                 [u'ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', u'0.00', u'0.00',
                  u'0.00', u'0.00', u'0.00', u'0.00'],
                 [u'Produit 2', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
@@ -150,6 +152,5 @@ class TestDashboard3(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [u'Total (CFA)', u'976500.00', u'1661900.00', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered']
+            [u'Total (CFA)', u'1431500.00', u'2116900.00', u'455000.00', u'455000.00', u'455000.00', u'455000.00']
         )
