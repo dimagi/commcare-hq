@@ -133,6 +133,20 @@ def get_releases_context(request, domain, app_id):
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
+    is_in_mobile_experiment = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
+        request.couch_user.username
+    )
+    is_mobile_ab = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+        request.couch_user.username, toggles.NAMESPACE_USER
+    )
+    if is_in_mobile_experiment:
+        context.update({
+            'mobile_experience_ab_test': {
+                'name': 'mobile_signups_test_march2018test',
+                'version': 'variation' if is_mobile_ab else 'control',
+            },
+        })
+
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
@@ -150,12 +164,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'is_mobile_experience': (
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                request.couch_user.username, toggles.NAMESPACE_USER) and
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                request.couch_user.username, toggles.NAMESPACE_USER)
-        )
+        'is_mobile_experience': (is_in_mobile_experiment and is_mobile_ab),
     })
     if not app.is_remote_app():
         context.update({

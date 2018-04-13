@@ -158,7 +158,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
         "is_mobile_experience": (
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                recipient, toggles.NAMESPACE_USER) and
+                recipient) and
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                 recipient, toggles.NAMESPACE_USER)
         ),
