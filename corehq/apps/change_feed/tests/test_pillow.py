@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 from mock import patch
 from django.conf import settings
@@ -62,7 +63,7 @@ class ChangeFeedPillowTest(SimpleTestCase):
         document = {
             'doc_type': 'CommCareCase',
             'type': 'mother',
-            'domain': u'हिंदी',
+            'domain': 'हिंदी',
         }
         self.pillow.process_change(Change(id='test-id', sequence_id='3', document=document))
         message = next(self.consumer)
