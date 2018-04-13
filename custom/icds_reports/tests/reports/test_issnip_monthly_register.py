@@ -33,6 +33,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertIsNone(data['awc_days_pse_conducted'])
         self.assertEqual(data['usage_num_home_visit'], 0)
         self.assertEqual(data['cases_person_referred'], 0)
+        self.assertEqual(data['aww_name'], 'aww_name48')
+        self.assertEqual(data['contact_phone_number'], '91552222')
+        self.assertIsNone(data['num_anc_visits'])
+        self.assertIsNone(data['num_children_immunized'])
 
     def test_child_health_monthly_data(self):
         config = {
@@ -146,6 +150,28 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data['minority_boys_6_36_num'], 0)
         self.assertEqual(data['minority_girls_6_36_num'], 0)
 
+    def test_child_health_monthly(self):
+        config = {
+            'awc_id': ['a3'],
+            'month': datetime(2017, 5, 1).date(),
+            'domain': 'icds-cas'
+        }
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='a3'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly']
+        print data
+        self.assertEquals(data['obc_boys_48_72'], 0)
+        self.assertEquals(data['general_boys_48_72'], 0)
+        self.assertEquals(data['total_boys_48_72'], 0)
+        self.assertEquals(data['general_girls_48_72'], 0)
+        self.assertEquals(data['st_boys_48_72'], 0)
+        self.assertEquals(data['total_girls_48_72'], 0)
+        self.assertEquals(data['minority_girls_48_72_num'], 0)
+        self.assertEquals(data['obc_girls_48_72'], 0)
+        self.assertEquals(data['sc_girls_48_72'], 0)
+        self.assertEquals(data['sc_boys_48_72'], 0)
+        self.assertEquals(data['minority_boys_48_72_num'], 0)
+
     def test_agg_awc_monthly_data_multiple_locations(self):
         config = {
             'awc_id': ['a48', 'a3'],
@@ -153,11 +179,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
             'domain': 'icds-cas'
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['agg_awc_monthly_data']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['agg_awc_monthly_data']
+                        return_value='some awc'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['agg_awc_monthly_data']
+            data_a3 = data[1]['agg_awc_monthly_data']
         self.assertEqual(data_a48['block_name'], 'b4')
         self.assertEqual(data_a48['awc_name'], 'a48')
         self.assertEqual(data_a48['awc_site_code'], 'a48')
@@ -169,6 +194,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertIsNone(data_a48['awc_days_pse_conducted'])
         self.assertEqual(data_a48['usage_num_home_visit'], 0)
         self.assertEqual(data_a48['cases_person_referred'], 0)
+        self.assertEqual(data_a48['aww_name'], 'aww_name48')
+        self.assertEqual(data_a48['contact_phone_number'], '91552222')
+        self.assertIsNone(data_a48['num_anc_visits'])
+        self.assertIsNone(data_a48['num_children_immunized'])
 
         self.assertEqual(data_a3['block_name'], 'b2')
         self.assertEqual(data_a3['awc_name'], 'a3')
@@ -181,6 +210,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertIsNone(data_a3['awc_days_pse_conducted'])
         self.assertEqual(data_a3['usage_num_home_visit'], 2)
         self.assertEqual(data_a3['cases_person_referred'], 0)
+        self.assertIsNone(data_a3['aww_name'])
+        self.assertIsNone(data_a3['contact_phone_number'])
+        self.assertIsNone(data_a3['num_anc_visits'])
+        self.assertIsNone(data_a3['num_children_immunized'])
 
     def test_child_health_monthly_data_multiple_locations(self):
         config = {
@@ -189,7 +222,7 @@ class TestInstitutionalDeliveriesSector(TestCase):
             'domain': 'icds-cas'
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a48'):
+                        return_value='some value'):
             data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly_data']
         self.assertEqual(data['infants_0_6'], 4)
         self.assertEqual(data['children_6_36'], 9)
@@ -206,11 +239,10 @@ class TestInstitutionalDeliveriesSector(TestCase):
             'domain': 'icds-cas'
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['css_record_monthly']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['css_record_monthly']
+                        return_value='some value'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['css_record_monthly']
+            data_a3 = data[1]['css_record_monthly']
         self.assertEqual(data_a48['pregnant_women_thr'], 5)
         self.assertEqual(data_a48['lactating_women_thr'], 7)
         self.assertEqual(data_a3['pregnant_women_thr'], 2)
@@ -224,10 +256,9 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['vhnd_data']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['vhnd_data']
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['vhnd_data']
+            data_a3 = data[1]['vhnd_data']
 
         self.assertEqual(data_a48['vhsnd_date_past_month'], datetime(2017, 5, 13).date())
         self.assertEqual(data_a48['local_leader'], 1)
@@ -245,10 +276,9 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['ccs_record_monthly_ucr']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['ccs_record_monthly_ucr']
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['ccs_record_monthly_ucr']
+            data_a3 = data[1]['ccs_record_monthly_ucr']
         self.assertEqual(data_a48['obc_lactating'], 4)
         self.assertEqual(data_a48['total_lactating'], 4)
         self.assertEqual(data_a48['minority_lactating'], 4)
@@ -267,10 +297,9 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['child_health_monthly_ucr']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['child_health_monthly_ucr']
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['child_health_monthly_ucr']
+            data_a3 = data[1]['child_health_monthly_ucr']
         self.assertEqual(data_a48['awc_id'], 'a48')
 
         self.assertEqual(data_a3['pre_st_boys_36_72'], 1)
@@ -287,10 +316,9 @@ class TestInstitutionalDeliveriesSector(TestCase):
         }
         with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
                         return_value='a48'):
-            data_a48 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[0]['agg_child_health_monthly']
-        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
-                        return_value='a3'):
-            data_a3 = list(ISSNIPMonthlyReport(config=config).to_pdf_format)[1]['agg_child_health_monthly']
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['agg_child_health_monthly']
+            data_a3 = data[1]['agg_child_health_monthly']
 
         self.assertEqual(data_a48['boys_normal_0_3'], 0)
         self.assertEqual(data_a48['girls_normal_0_3'], 0)
@@ -357,3 +385,39 @@ class TestInstitutionalDeliveriesSector(TestCase):
         self.assertEqual(data_a3['total_girls_6_36'], 0)
         self.assertEqual(data_a3['minority_boys_6_36_num'], 0)
         self.assertEqual(data_a3['minority_girls_6_36_num'], 0)
+
+    def test_child_health_monthly_multiple_locations(self):
+        config = {
+            'awc_id': ['a48', 'a3'],
+            'month': datetime(2017, 5, 1).date(),
+            'domain': 'icds-cas'
+        }
+        with mock.patch('custom.icds_reports.reports.issnip_monthly_register.ISSNIPMonthlyReport.get_awc_name',
+                        return_value='some name'):
+            data = list(ISSNIPMonthlyReport(config=config).to_pdf_format)
+            data_a48 = data[0]['child_health_monthly']
+            data_a3 = data[1]['child_health_monthly']
+
+        self.assertEquals(data_a48['obc_boys_48_72'], 0)
+        self.assertEquals(data_a48['general_boys_48_72'], 0)
+        self.assertEquals(data_a48['total_boys_48_72'], 0)
+        self.assertEquals(data_a48['general_girls_48_72'], 0)
+        self.assertEquals(data_a48['st_boys_48_72'], 0)
+        self.assertEquals(data_a48['total_girls_48_72'], 0)
+        self.assertEquals(data_a48['minority_girls_48_72_num'], 0)
+        self.assertEquals(data_a48['obc_girls_48_72'], 0)
+        self.assertEquals(data_a48['sc_girls_48_72'], 0)
+        self.assertEquals(data_a48['sc_boys_48_72'], 0)
+        self.assertEquals(data_a48['minority_boys_48_72_num'], 0)
+
+        self.assertEquals(data_a3['obc_boys_48_72'], 0)
+        self.assertEquals(data_a3['general_boys_48_72'], 0)
+        self.assertEquals(data_a3['total_boys_48_72'], 0)
+        self.assertEquals(data_a3['general_girls_48_72'], 0)
+        self.assertEquals(data_a3['st_boys_48_72'], 0)
+        self.assertEquals(data_a3['total_girls_48_72'], 0)
+        self.assertEquals(data_a3['minority_girls_48_72_num'], 0)
+        self.assertEquals(data_a3['obc_girls_48_72'], 0)
+        self.assertEquals(data_a3['sc_girls_48_72'], 0)
+        self.assertEquals(data_a3['sc_boys_48_72'], 0)
+        self.assertEquals(data_a3['minority_boys_48_72_num'], 0)

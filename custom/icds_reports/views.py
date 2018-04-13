@@ -693,7 +693,8 @@ class ExportIndicatorView(View):
                 awcs,
                 pdf_format,
                 month,
-                year
+                year,
+                request.couch_user
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})
