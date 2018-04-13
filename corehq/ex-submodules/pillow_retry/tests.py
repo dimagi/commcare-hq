@@ -52,7 +52,7 @@ class GetDocProcessor(PillowProcessor):
 
 
 def create_error(change, message='message', attempts=0, pillow=None, ex_class=None):
-    change.metadata = ChangeMeta(data_source_type='couch', data_source_name='test_commcarehq', document_id=change.id)
+    change.metadata = ChangeMeta(document_type='CommCareCase', document_id=change.id)
     error = PillowError.get_or_create(change, pillow or FakePillow())
     for n in range(0, attempts):
         error.add_attempt(*get_ex_tb(message, ex_class=ex_class))
