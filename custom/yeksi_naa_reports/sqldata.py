@@ -42,6 +42,9 @@ class YeksiSqlData(SqlData):
     def date_in_selected_date_range(self, date):
         return self.months[0] <= date < self.months[-1] + relativedelta(months=1)
 
+    def denominator_exists(self, denominator):
+        return denominator and denominator['html']
+
     def get_index_of_month_in_selected_data_range(self, date):
         for index in range(len(self.months)):
             if date < self.months[index] + relativedelta(months=1):
@@ -378,7 +381,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['final_pna_stock'] and record['final_pna_stock']['html']:
+            if self.denominator_exists(record['final_pna_stock']):
                 data[month_index]['final_pna_stock'] += record['final_pna_stock']['html']
                 if record['loss_amt']:
                     data[month_index]['loss_amt'] += record['loss_amt']['html']
@@ -432,7 +435,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['final_pna_stock'] and record['final_pna_stock']['html']:
+            if self.denominator_exists(record['final_pna_stock']):
                 data[record[self.loc_id]][month_index] = self.percent_fn(
                     record['loss_amt']['html'] if record['loss_amt'] else 0,
                     record['final_pna_stock']['html']
@@ -476,7 +479,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['final_pna_stock_valuation'] and record['final_pna_stock_valuation']['html']:
+            if self.denominator_exists(record['final_pna_stock_valuation']):
                 if record['expired_pna_valuation']:
                     data[month_index]['expired_pna_valuation'] += record['expired_pna_valuation']['html']
                 data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
@@ -530,7 +533,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['final_pna_stock_valuation'] and record['final_pna_stock_valuation']['html']:
+            if self.denominator_exists(record['final_pna_stock_valuation']):
                 data[record[self.loc_id]][month_index] = self.percent_fn(
                     record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
                     record['final_pna_stock_valuation']['html']
@@ -575,7 +578,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['pps_total_amt_owed'] and record['pps_total_amt_owed']['html']:
+            if self.denominator_exists(record['pps_total_amt_owed']):
                 if record['pps_total_amt_paid']:
                     data[month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']['html']
                 data[month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']['html']
@@ -622,7 +625,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record['pps_id']] = ['no data entered'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['pps_total_amt_owed'] and record['pps_total_amt_owed']['html']:
+            if self.denominator_exists(record['pps_total_amt_owed']):
                 data[record['pps_id']][month_index] = self.percent_fn(
                     record['pps_total_amt_paid']['html'] if record['pps_total_amt_paid'] else None,
                     record['pps_total_amt_owed']['html']
@@ -671,7 +674,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
             if not self.date_in_selected_date_range(record['opened_on']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
-            if record['montant_reel_a_payer'] and record['montant_reel_a_payer']['html']:
+            if self.denominator_exists(record['montant_reel_a_payer']):
                 if record['montant_paye']:
                     data[month_index]['montant_paye'] += record['montant_paye']['html']
                 data[month_index]['montant_reel_a_payer'] += record['montant_reel_a_payer']['html']
@@ -716,7 +719,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 data[record['district_id']] = ['no data entered'] * len(self.months)
                 district_names[record['district_id']] = record['district_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
-            if record['montant_reel_a_payer'] and record['montant_reel_a_payer']['html']:
+            if self.denominator_exists(record['montant_reel_a_payer']):
                 data[record['district_id']][month_index] = self.percent_fn(
                     record['montant_paye']['html'] if record['montant_paye'] else None,
                     record['montant_reel_a_payer']['html']
@@ -761,7 +764,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['count_products_select'] and record['count_products_select']['html']:
+            if self.denominator_exists(record['count_products_select']):
                 if record['nb_products_stockout']:
                     data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
                 data[month_index]['count_products_select'] += record['count_products_select']['html']
@@ -810,7 +813,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record['pps_id']] = ['no data entered'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['count_products_select'] and record['count_products_select']['html']:
+            if self.denominator_exists(record['count_products_select']):
                 data[record['pps_id']][month_index] = self.percent_fn(
                     record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
                     record['count_products_select']['html']
@@ -882,7 +885,7 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
                     data[record['product_id']].append(defaultdict(int))
                 product_names[record['product_id']] = record['product_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if record['ideal_topup'] and record['ideal_topup']['html']:
+            if self.denominator_exists(record['ideal_topup']):
                 if record['amt_delivered_convenience']:
                     data[record['product_id']][month_index]['amt_delivered_convenience'] += \
                         record['amt_delivered_convenience']['html']
