@@ -21,6 +21,7 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -666,22 +667,19 @@ class ViewMultimediaFile(View):
 def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
     from dimagi.utils.logging import notify_exception
-    skip_files = (
-        'profile.xml', 'profile.ccpr', 'media_profile.xml'
-    ) + (
-        'profile-commcare.xml', 'profile-commcare.ccpr', 'media_profile-commcare.xml'
-    ) + (
-        'profile-commcare_lts.xml', 'profile-commcare_lts.ccpr', 'media_profile-commcare_lts.xml'
-    )
+    skip_files = [
+        text_format.format(suffix)
+        for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
+        for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
+    ]
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
     errors = []
 
     def _get_name(f):
         return {
-            'media_profile.ccpr': 'profile.ccpr',
-            'media_profile-commcare.ccpr': 'profile.ccpr',
-            'media_profile-commcare_lts.ccpr': 'profile.ccpr',
+            'media_profile{}.ccpr'.format(suffix): 'profile.ccpr'
+            for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
         }.get(f, f)
 
     def _encode_if_unicode(s):
@@ -692,7 +690,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
             if download_targeted_version and name == 'media_profile.ccpr':
                 continue
             elif not download_targeted_version and name in [
-                'media_profile-commcare.ccpr', 'media_profile-commcare_lts.ccpr'
+                'media_profile-{}.ccpr'.format(suffix) for suffix in [TARGET_COMMCARE, TARGET_COMMCARE_LTS]
             ]:
                 continue
             if build_profile_id is not None:

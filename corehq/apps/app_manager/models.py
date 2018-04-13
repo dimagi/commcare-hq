@@ -4726,7 +4726,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     target_commcare_flavor = StringProperty(
         default='none',
-        choices=['none', 'commcare', 'commcare_lts']
+        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
     )
 
     # Whether or not the Application has had any forms submitted against it
@@ -5601,8 +5601,8 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
         target_package_id = {
-            'commcare': 'org.commcare.dalvik',
-            'commcare_lts': 'org.commcare.lts',
+            TARGET_COMMCARE: 'org.commcare.dalvik',
+            TARGET_COMMCARE_LTS: 'org.commcare.lts',
         }.get(target_commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
