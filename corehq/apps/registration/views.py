@@ -131,6 +131,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         if self.request.user_agent.is_mobile:
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
 
+        track_workflow(email, "Requested new account")
         login(self.request, new_user)
 
     @allow_remote_invocation
