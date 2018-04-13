@@ -1,4 +1,3 @@
-/* globals nv, d3 */
 hqDefine("reports/js/charts/pie_chart", function() {
     var init = function(el) {
         var $el = $(el), data = $el.data();
