@@ -24,6 +24,7 @@ class TestDashboard2(YeksiTestCase):
         loss_rate_report = dashboard2_report.report_context['reports'][0]['report_table']
         headers = loss_rate_report['headers'].as_export_table[0]
         rows = loss_rate_report['rows']
+        total_row = loss_rate_report['total_row']
         self.assertEqual(
             headers,
             ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
@@ -46,6 +47,11 @@ class TestDashboard2(YeksiTestCase):
                  u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
+        self.assertEqual(
+            total_row,
+            [u'Rate by Country', u'6.36%', u'9.79%', u'no data entered', u'no data entered', u'no data entered',
+             u'no data entered']
+        )
 
     def test_expiration_rate_report(self):
         mock = MagicMock()
@@ -63,6 +69,7 @@ class TestDashboard2(YeksiTestCase):
         expiration_rate_report = dashboard2_report.report_context['reports'][1]['report_table']
         headers = expiration_rate_report['headers'].as_export_table[0]
         rows = expiration_rate_report['rows']
+        total_row = expiration_rate_report['total_row']
         self.assertEqual(
             headers,
             ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
@@ -85,34 +92,9 @@ class TestDashboard2(YeksiTestCase):
                  u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
-
-    def test_recovery_rate_by_pps_report(self):
-        mock = MagicMock()
-        mock.couch_user = self.user
-        mock.GET = {
-            'location_id': 'f400d0ba6bdb456bb2d5f9843eb766fe',
-            'month_start': '10',
-            'year_start': '2017',
-            'month_end': '3',
-            'year_end': '2018',
-        }
-
-        dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
-
-        recovery_rate_by_pps_report = dashboard2_report.report_context['reports'][2]['report_table']
-        headers = recovery_rate_by_pps_report['headers'].as_export_table[0]
-        rows = recovery_rate_by_pps_report['rows']
         self.assertEqual(
-            headers,
-            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
-        )
-        self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
-            sorted([
-                [u'test pps 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'no data entered']
-            ], key=lambda x: x[0])
+            total_row,
+            [u'Rate by Country', u'6.50%', u'8.17%', u'0.00%', u'0.00%', u'0.00%', u'0.00%']
         )
 
     def test_recovery_rate_by_district_report(self):
@@ -131,6 +113,7 @@ class TestDashboard2(YeksiTestCase):
         recovery_rate_by_district_report = dashboard2_report.report_context['reports'][2]['report_table']
         headers = recovery_rate_by_district_report['headers'].as_export_table[0]
         rows = recovery_rate_by_district_report['rows']
+        total_row = recovery_rate_by_district_report['total_row']
         self.assertEqual(
             headers,
             ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
@@ -175,6 +158,88 @@ class TestDashboard2(YeksiTestCase):
                  u'no data entered', u'no data entered']
             ], key=lambda x: x[0])
         )
+        self.assertEqual(
+            total_row,
+            [u'Rate by Country', u'44.46%', u'0.00%', u'0.00%', u'100.00%', u'100.00%', u'75.86%']
+        )
+
+    def test_recovery_rate_by_pps_report_country_level(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'location_id': '',
+            'month_start': '10',
+            'year_start': '2017',
+            'month_end': '3',
+            'year_end': '2018',
+        }
+
+        dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
+
+        recovery_rate_by_pps_report = dashboard2_report.report_context['reports'][3]['report_table']
+        headers = recovery_rate_by_pps_report['headers'].as_export_table[0]
+        rows = recovery_rate_by_pps_report['rows']
+        total_row = recovery_rate_by_pps_report['total_row']
+        self.assertEqual(
+            headers,
+            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
+        )
+        self.assertEqual(
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
+                [u'Region Test', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'28.12%', u'no data entered'],
+                [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'46.15%'],
+                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'0.00%'],
+                [u'Saint-Louis', u'68.82%', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Fatick', u'no data entered', u'90.47%', u'no data entered', u'no data entered',
+                 u'no data entered', u'no data entered'],
+                [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered', u'100.00%']
+            ], key=lambda x: x[0])
+        )
+        self.assertEqual(
+            total_row,
+            [u'Rate by Country', u'68.82%', u'90.47%', u'0.00%', u'0.00%', u'28.12%', u'70.76%']
+        )
+
+    def test_recovery_rate_by_pps_report_pps_level(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
+            'month_start': '10',
+            'year_start': '2017',
+            'month_end': '3',
+            'year_end': '2018',
+        }
+
+        dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
+
+        recovery_rate_by_pps_report = dashboard2_report.report_context['reports'][2]['report_table']
+        headers = recovery_rate_by_pps_report['headers'].as_export_table[0]
+        rows = recovery_rate_by_pps_report['rows']
+        total_row = recovery_rate_by_pps_report['total_row']
+        self.assertEqual(
+            headers,
+            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
+             'February 2018', 'March 2018']
+        )
+        self.assertEqual(
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
+                [u'P2', u'75.47%', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
+                 u'no data entered']
+            ], key=lambda x: x[0])
+        )
+        self.assertEqual(
+            total_row,
+            [u'Rate by PPS', u'75.47%', u'0.00%', u'0.00%', u'0.00%', u'0.00%', u'0.00%']
+        )
 
     def test_rupture_rate_by_pps_report(self):
         mock = MagicMock()
@@ -189,9 +254,10 @@ class TestDashboard2(YeksiTestCase):
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
 
-        rupture_rate_by_pps_report = dashboard2_report.report_context['reports'][3]['report_table']
+        rupture_rate_by_pps_report = dashboard2_report.report_context['reports'][4]['report_table']
         headers = rupture_rate_by_pps_report['headers'].as_export_table[0]
         rows = rupture_rate_by_pps_report['rows']
+        total_row = rupture_rate_by_pps_report['total_row']
         self.assertEqual(
             headers,
             ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
@@ -227,7 +293,7 @@ class TestDashboard2(YeksiTestCase):
             [u'PPS 2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'PPS 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-             u'46.15%', u'no data entered'],
+             u'7.69%', u'no data entered'],
             [u'SL2', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
              u'no data entered', u'no data entered'],
             [u'F1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
@@ -269,8 +335,7 @@ class TestDashboard2(YeksiTestCase):
             len(rows),
             len(expected)
         )
-        for row in expected:
-            self.assertIn(
-                row,
-                rows
-            )
+        self.assertEqual(
+            total_row,
+            [u'Rate by Country', u'0.00%', u'0.00%', u'0.00%', u'0.00%', u'7.69%', u'0.00%']
+        )

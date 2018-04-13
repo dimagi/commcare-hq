@@ -24,6 +24,7 @@ class TestDashboard1(YeksiTestCase):
         availability_report = dashboard1_report.report_context['reports'][0]['report_table']
         headers = availability_report['headers'].as_export_table[0]
         rows = availability_report['rows']
+        total_row = availability_report['total_row']
 
         self.assertEqual(
             headers,
@@ -46,4 +47,8 @@ class TestDashboard1(YeksiTestCase):
                 [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
                  u'no data entered', u'87.50%', u'87.50%']
             ], key=lambda x: x[0])
+        )
+        self.assertEqual(
+            total_row,
+            [u'Availability (%)', u'90.00%', u'33.33%', u'100.00%', u'100.00%', u'100.00%', u'87.50%', u'86.84%']
         )

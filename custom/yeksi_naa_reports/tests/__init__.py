@@ -58,8 +58,8 @@ def setUpModule():
 
     SQLLocation.objects.create(
         domain='test-pna',
-        name='Test PPS 1',
-        location_id='f400d0ba6bdb456bb2d5f9843eb766fe',
+        name='P2',
+        location_id='ccf4430f5c3f493797486d6ce1c39682',
         location_type=pps_location_type
     )
 

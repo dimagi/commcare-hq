@@ -25,6 +25,7 @@ class TestDashboard3(YeksiTestCase):
             dashboard3_report.report_context['reports'][0]['report_table']
         headers = satisfaction_rate_after_delivery_data_report['headers'].as_export_table[0]
         rows = satisfaction_rate_after_delivery_data_report['rows']
+        total_row = satisfaction_rate_after_delivery_data_report['total_row']
 
         self.assertEqual(
             headers,
@@ -84,6 +85,10 @@ class TestDashboard3(YeksiTestCase):
                  u'no data entered']
             ], key=lambda x: x[0])
         )
+        self.assertEqual(
+            total_row,
+            [u'Total (CFA)', u'96.89%', u'95.77%', u'0.00%', u'0.00%', u'87.10%', u'189.91%']
+        )
 
     def test_valuation_of_pna_stock_per_product_data_report(self):
         mock = MagicMock()
@@ -102,6 +107,7 @@ class TestDashboard3(YeksiTestCase):
             dashboard3_report.report_context['reports'][1]['report_table']
         headers = valuation_of_pna_stock_per_product_data_report['headers'].as_export_table[0]
         rows = valuation_of_pna_stock_per_product_data_report['rows']
+        total_row = valuation_of_pna_stock_per_product_data_report['total_row']
 
         self.assertEqual(
             headers,
@@ -141,4 +147,9 @@ class TestDashboard3(YeksiTestCase):
                 [u'TEST RAPIDE HIV 1/2 (SD BIOLINE)', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00', u'0.00'],
                 [u'Produit B', u'336000.00', u'558000.00', u'0.00', u'0.00', u'0.00', u'0.00']
             ], key=lambda x: x[0])
+        )
+        self.assertEqual(
+            total_row,
+            [u'Total (CFA)', u'976500.00', u'1661900.00', u'no data entered', u'no data entered',
+             u'no data entered', u'no data entered']
         )

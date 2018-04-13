@@ -394,13 +394,16 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             total_row.append('')
         else:
             total_row.append('Rate by Country')
-        for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['loss_amt'],
-                    monthly_data['final_pna_stock']
+        for month_index in range(len(self.months)):
+            if data[month_index]:
+                total_row.append(
+                    self.percent_fn(
+                        data[month_index]['loss_amt'],
+                        data[month_index]['final_pna_stock']
+                    )
                 )
-            )
+            else:
+                total_row.append('no data entered')
         return total_row
 
     @property
@@ -566,93 +569,102 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, records):
+    def get_total_row(self, data):
         total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'pps_total_amt_paid': 0,
-                'pps_total_amt_owed': 0
-            }
-        for record in records:
-            if not self.date_in_selected_date_range(record['real_date']):
-                continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if self.denominator_exists(record['pps_total_amt_owed']):
-                if record['pps_total_amt_paid']:
-                    data[month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']['html']
-                data[month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']['html']
-
-        if 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Rate by Region')
-        elif 'district_id' in self.config and self.config['district_id']:
+        if 'district_id' in self.config and self.config['district_id']:
             total_row.append('Rate by District')
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('')
+            total_row.append('Rate by PPS')
+        elif 'region_id' in self.config and self.config['region_id']:
+            total_row.append('Rate by Region')
         else:
             total_row.append('Rate by Country')
-        for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['pps_total_amt_paid'],
-                    monthly_data['pps_total_amt_owed']
+        for i in range(len(self.months)):
+            total_row.append(self.percent_fn(
+                sum(
+                    data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
+                    data[loc_id][i]['pps_total_amt_owed']
+                ),
+                sum(
+                    data[loc_id][i]['pps_total_amt_owed'] for loc_id in data if
+                    data[loc_id][i]['pps_total_amt_owed']
                 )
-            )
+            ))
         return total_row
 
     @property
     def group_by(self):
-        return ['real_date', 'pps_id', 'pps_name']
+        group_by = ['real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
+        if self.loc_id != 'pps_id':
+            group_by.append(self.loc_id)
+        return group_by
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
-            DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
-            DatabaseColumn("Total amount paid by PPS", SumColumn('pps_total_amt_paid')),
-            DatabaseColumn("Total amount owed by PPS", SumColumn('pps_total_amt_owed')),
+            DatabaseColumn("Total amount paid by PPS", SimpleColumn('pps_total_amt_paid')),
+            DatabaseColumn("Total amount owed by PPS", SimpleColumn('pps_total_amt_owed')),
         ]
+        if self.loc_id == 'pps_id':
+            columns.append(DatabaseColumn("PPS Name", SimpleColumn('pps_name')))
+        elif self.loc_id == 'district_id':
+            columns.append(DatabaseColumn("District ID", SimpleColumn('district_id')))
+            columns.append(DatabaseColumn("District Name", SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn("Region ID", SimpleColumn('region_id')))
+            columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
     def get_recovery_rate_by_pps_per_month(self, records):
-        data = {}
-        pps_names = {}
+        data = defaultdict(list)
+        loc_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
-            if record['pps_id'] not in data:
-                data[record['pps_id']] = ['no data entered'] * len(self.months)
-                pps_names[record['pps_id']] = record['pps_name']
+            if record[self.loc_id] not in data:
+                for i in range(len(self.months)):
+                    data[record[self.loc_id]].append(defaultdict(int))
+                loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if self.denominator_exists(record['pps_total_amt_owed']):
-                data[record['pps_id']][month_index] = self.percent_fn(
-                    record['pps_total_amt_paid']['html'] if record['pps_total_amt_paid'] else None,
-                    record['pps_total_amt_owed']['html']
+            if record['pps_total_amt_owed']:
+                if record['pps_total_amt_paid']:
+                    data[record[self.loc_id]][month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']
+                data[record[self.loc_id]][month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']
+        return loc_names, data
+
+    def parse_recovery_rate_by_pps_to_rows(self, loc_name, data):
+        row = [loc_name]
+        for i in range(len(self.months)):
+            if data[i]['pps_total_amt_owed']:
+                row.append(
+                    self.percent_fn(
+                        data[i]['pps_total_amt_paid'],
+                        data[i]['pps_total_amt_owed']
+                    )
                 )
-        return pps_names, data
+            else:
+                row.append('no data entered')
+        return row
 
     @property
     def rows(self):
         records = self.get_data()
-        pps_names, data = self.get_recovery_rate_by_pps_per_month(records)
+        loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
 
         rows = []
-        for pps in data:
-            row = [pps_names[pps]]
-            row.extend(data[pps])
-            rows.append(row)
-        self.total_row = self.calculate_total_row(records)
-        return rows
+        for loc_id in data:
+            rows.append(
+                self.parse_recovery_rate_by_pps_to_rows(loc_names[loc_id], data[loc_id])
+            )
 
-    @cached_property
-    def loc_id(self):
-        return 'pps_id'
+        self.total_row = self.get_total_row(data)
+        return rows
 
     @property
     def headers(self):
-        headers = super(RecoveryRateByPPSData, self).headers
-        return headers
+        return super(RecoveryRateByPPSData, self).headers
 
 
 class RecoveryRateByDistrictData(LogisticienDataSource):
@@ -764,10 +776,10 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if self.denominator_exists(record['count_products_select']):
+            if record['count_products_select']:
                 if record['nb_products_stockout']:
-                    data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
-                data[month_index]['count_products_select'] += record['count_products_select']['html']
+                    data[month_index]['nb_products_stockout'] += record['nb_products_stockout']
+                data[month_index]['count_products_select'] += record['count_products_select']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -788,7 +800,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        return ['real_date', 'pps_id', 'pps_name']
+        return ['real_date', 'pps_id', 'pps_name', 'nb_products_stockout', 'count_products_select']
 
     @property
     def columns(self):
@@ -796,8 +808,8 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
-            DatabaseColumn("Number of stockout products", SumColumn('nb_products_stockout')),
-            DatabaseColumn("Number of products in pps", SumColumn('count_products_select')),
+            DatabaseColumn("Number of stockout products", SimpleColumn('nb_products_stockout')),
+            DatabaseColumn("Number of products in pps", SimpleColumn('count_products_select')),
         ]
         return columns
 
@@ -813,10 +825,10 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record['pps_id']] = ['no data entered'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if self.denominator_exists(record['count_products_select']):
+            if record['count_products_select']:
                 data[record['pps_id']][month_index] = self.percent_fn(
-                    record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
-                    record['count_products_select']['html']
+                    record['nb_products_stockout'],
+                    record['count_products_select']
                 )
 
         rows = []
@@ -849,12 +861,12 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
         for i in range(len(self.months)):
             total_row.append(self.percent_fn(
                 sum(
-                    products[product_id][i]['numerator'] for product_id in products if
-                    products[product_id][i]['denominator']
+                    products[product_id][i]['amt_delivered_convenience'] for product_id in products if
+                    products[product_id][i]['ideal_topup']
                 ),
                 sum(
-                    products[product_id][i]['denominator'] for product_id in products if
-                    products[product_id][i]['denominator']
+                    products[product_id][i]['ideal_topup'] for product_id in products if
+                    products[product_id][i]['ideal_topup']
                 )
             ))
         return total_row
@@ -940,8 +952,13 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
                 data[month_index] += record['final_pna_stock_valuation']['html']
 
         total_row.append('Total (CFA)')
-        for monthly_data in data.values():
-            total_row.append('{:.2f}'.format(monthly_data))
+        for month_index in range(len(self.months)):
+            if data[month_index]:
+                total_row.append(
+                    '{:.2f}'.format(data[month_index])
+                )
+            else:
+                total_row.append('no data entered')
         return total_row
 
     @property
