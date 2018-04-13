@@ -1,6 +1,5 @@
 hqDefine("reports/js/charts/pie_chart", function() {
-    var init = function(el) {
-        var $el = $(el), data = $el.data();
+    var init = function(data) {
         nv.addGraph(function () {
             var chartConfig = data.configDict,
                 chartData = data.chartData,
