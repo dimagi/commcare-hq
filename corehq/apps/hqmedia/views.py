@@ -667,10 +667,11 @@ class ViewMultimediaFile(View):
 def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
     from dimagi.utils.logging import notify_exception
-    skip_files = list(itertools.chain(*[
-        ['profile{}.xml'.format(suffix), 'profile{}.ccpr'.format(suffix), 'media_profile{}.xml'.format(suffix)]
+    skip_files = [
+        text_format.format(suffix)
+        for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
         for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
-    ]))
+    ]
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
     errors = []
