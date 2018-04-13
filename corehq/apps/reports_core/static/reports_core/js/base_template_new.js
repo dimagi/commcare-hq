@@ -105,6 +105,7 @@ hqDefine('reports_core/js/base_template_new', function() {
         // filter init
         $(function() {
             hqImport("reports/js/filters/main").init();
+            hqImport("reports/js/charts/main").init();
         });
     });
 });
