@@ -1463,11 +1463,7 @@ class CaseDataView(BaseProjectReportSectionView):
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
-        context.update(case_hierarchy_context(self.case_instance, {
-            "show_view_buttons": True,
-            "get_case_url": _get_case_url,
-            "timezone": timezone,
-        }))
+        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
         return context
 
 

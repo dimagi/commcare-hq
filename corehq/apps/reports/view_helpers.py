@@ -14,14 +14,12 @@ from casexml.apps.case.views import get_wrapped_case
 from corehq.apps.hqwebapp.templatetags.proptable_tags import get_display_data
 
 
-def case_hierarchy_context(case, options):
-
+def case_hierarchy_context(case, get_case_url, show_view_buttons=True, timezone=None):
     wrapped_case = get_wrapped_case(case)
-    get_case_url = options.get('get_case_url')
-    timezone = options.get('timezone', pytz.utc)
-    columns = options.get('columns') or wrapped_case.related_cases_columns
-    show_view_buttons = options.get('show_view_buttons', True)
-    type_info = options.get('related_type_info', wrapped_case.related_type_info)
+    if timezone is None:
+        timezone = pytz.utc
+    columns = wrapped_case.related_cases_columns
+    type_info = wrapped_case.related_type_info
 
     descendent_case_list = get_flat_descendant_case_list(
         case, get_case_url, type_info=type_info
