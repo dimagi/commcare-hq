@@ -1,15 +1,17 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from contextlib import contextmanager
+
+from django.db import models
 from django.conf import settings
-from django.db.models import Field
 from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
-from mptt.models import MPTTModel, TreeManager
 
 from .queryutil import ComparedQuerySet, TimingContext
 
-field = Field()  # generic output field type
+field = models.Field()  # generic output field type
 
 
 class str_array(Func):
@@ -31,7 +33,7 @@ class array_length(Func):
     output_field = field
 
 
-class AdjListManager(TreeManager):
+class AdjListManager(models.Manager):
 
     def _cte_get_ancestors(self, node, ascending=False, include_self=False):
         """Query node ancestors
@@ -222,8 +224,24 @@ class AdjListManager(TreeManager):
             cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
+    @contextmanager
+    def delay_mptt_updates(self):
+        yield
 
-class AdjListModel(MPTTModel):
+
+class FakeMPTTModel(models.Model):
+    """Add defaults for MPTT fields until they can be dropped"""
+
+    class Meta:
+        abstract = True
+
+    tree_id = models.IntegerField(default=0)
+    lft = models.IntegerField(default=0)
+    rght = models.IntegerField(default=0)
+    level = models.IntegerField(default=0)
+
+
+class AdjListModel(FakeMPTTModel):
     """Base class for tree models implemented with adjacency list pattern
 
     For more on adjacency lists, see
@@ -279,6 +297,9 @@ class AdjListModel(MPTTModel):
         else:
             cte_set = None
         return ComparedQuerySet(mptt_set, cte_set, timing)
+
+    def get_children(self):
+        return self.children.all()
 
 
 def _is_empty(queryset):
