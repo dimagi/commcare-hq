@@ -21,6 +21,7 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -668,7 +669,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     from dimagi.utils.logging import notify_exception
     skip_files = list(itertools.chain(*[
         ['profile{}.xml'.format(suffix), 'profile{}.ccpr'.format(suffix), 'media_profile{}.xml'.format(suffix)]
-        for suffix in ['', '-commcare', '-commcare_lts']
+        for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
     ]))
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
@@ -677,7 +678,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
     def _get_name(f):
         return {
             'media_profile{}.ccpr'.format(suffix): 'profile.ccpr'
-            for suffix in ['', '-commcare', 'commcare_lts']
+            for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
         }.get(f, f)
 
     def _encode_if_unicode(s):
@@ -688,7 +689,7 @@ def iter_index_files(app, build_profile_id=None, download_targeted_version=False
             if download_targeted_version and name == 'media_profile.ccpr':
                 continue
             elif not download_targeted_version and name in [
-                'media_profile-{}.ccpr'.format(suffix) for suffix in ['commcare', 'commcare_lts']
+                'media_profile-{}.ccpr'.format(suffix) for suffix in [TARGET_COMMCARE, TARGET_COMMCARE_LTS]
             ]:
                 continue
             if build_profile_id is not None:
