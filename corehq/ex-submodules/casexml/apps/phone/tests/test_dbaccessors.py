@@ -83,6 +83,11 @@ class SyncLogPruneTest(TestCase, DocTestMixin):
 
 
 class SyncLogQueryTest(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super(SyncLogQueryTest, cls).setUpClass()
+        delete_all_sync_logs()
+
     def _count(self):
         return SyncLogSQL.objects.count()
 

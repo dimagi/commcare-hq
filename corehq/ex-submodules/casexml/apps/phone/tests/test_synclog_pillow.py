@@ -30,6 +30,7 @@ class SyncLogPillowTest(TestCase):
             date_joined=datetime.datetime.now(),
         )
         cls.ccuser.save()
+        delete_all_sync_logs()
 
     @classmethod
     def tearDownClass(cls):
