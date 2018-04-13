@@ -166,6 +166,7 @@ hqDefine("reports/js/filters/main", [
         });
         $('.report-filter-drilldown-options').each(function (i, el) {
             var $el = $(el), data = $el.data();
+            if ($el.parents('.report-filter-form-drilldown').length > 0) return;
             if (data.isEmpty) return;
             var model = drilldownOptions.drilldownOptionFilterControl({
                 drilldown_map: data.optionMap,
