@@ -27,7 +27,7 @@ class ParentCasePropertyBuilder(object):
 
     @property
     @memoized
-    def forms_info(self):
+    def _forms_info(self):
         """
         Pull out (module's case_type, form) for every form in the app
 
@@ -43,9 +43,9 @@ class ParentCasePropertyBuilder(object):
 
     @property
     @memoized
-    def case_sharing_app_forms_info(self):
+    def _case_sharing_app_forms_info(self):
         forms_info = []
-        for app in self.get_other_case_sharing_apps_in_domain():
+        for app in self._get_other_case_sharing_apps_in_domain():
             for module in app.get_modules():
                 for form in module.get_forms():
                     forms_info.append((module.case_type, form))
@@ -55,9 +55,9 @@ class ParentCasePropertyBuilder(object):
     def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
         parent_types = set()
         case_properties = set()
-        forms_info = self.forms_info
+        forms_info = self._forms_info
         if self.app.case_sharing and include_shared_properties:
-            forms_info += self.case_sharing_app_forms_info
+            forms_info += self._case_sharing_app_forms_info
 
         for m_case_type, form in forms_info:
             p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
@@ -71,7 +71,7 @@ class ParentCasePropertyBuilder(object):
         return set(p[0] for p in parent_types)
 
     @memoized
-    def get_other_case_sharing_apps_in_domain(self):
+    def _get_other_case_sharing_apps_in_domain(self):
         return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
@@ -83,8 +83,8 @@ class ParentCasePropertyBuilder(object):
 
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
-        for m_case_type, form in self.forms_info:
-            updates = self.get_case_updates(form, case_type)
+        for m_case_type, form in self._forms_info:
+            updates = self._get_case_updates(form, case_type)
             if include_parent_properties:
                 case_properties.update(updates)
             else:
@@ -93,7 +93,7 @@ class ParentCasePropertyBuilder(object):
                 # Currently if a property is only ever updated via parent property
                 # reference, then I think it will not appear in the schema.
                 case_properties.update(p for p in updates if "/" not in p)
-            case_properties.update(self.get_save_to_case_updates(form, case_type))
+            case_properties.update(self._get_save_to_case_updates(form, case_type))
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
             data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
@@ -114,7 +114,7 @@ class ParentCasePropertyBuilder(object):
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
         if self.app.case_sharing and include_shared_properties:
-            for app in self.get_other_case_sharing_apps_in_domain():
+            for app in self._get_other_case_sharing_apps_in_domain():
                 case_properties.update(
                     get_case_properties(
                         app, [case_type],
@@ -125,11 +125,11 @@ class ParentCasePropertyBuilder(object):
         return case_properties
 
     @memoized
-    def get_case_updates(self, form, case_type):
+    def _get_case_updates(self, form, case_type):
         return form.get_case_updates(case_type)
 
     @memoized
-    def get_save_to_case_updates(self, form, case_type):
+    def _get_save_to_case_updates(self, form, case_type):
         return form.get_save_to_case_updates(case_type)
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
