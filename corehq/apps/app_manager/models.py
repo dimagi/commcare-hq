@@ -1839,13 +1839,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             self.actions.load_from_form = PreloadAction()
 
     @memoized
-    def get_contributed_subcase_properties(self, child_case_type):
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            if subcase.case_type == child_case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
+            case_properties[subcase.case_type].update(subcase.case_properties.keys())
         return case_properties
 
     @memoized
@@ -3113,13 +3110,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return updates_by_case_type
 
     @memoized
-    def get_contributed_subcase_properties(self, child_case_type):
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == child_case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
+            case_properties[subcase.case_type].update(subcase.case_properties.keys())
         return case_properties
 
     @memoized

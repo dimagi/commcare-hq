@@ -72,7 +72,7 @@ class ParentCasePropertyBuilder(object):
         case_properties = set()
 
         for form in self._get_relevant_forms(include_shared_properties):
-            case_properties.update(form.get_contributed_subcase_properties(case_type))
+            case_properties.update(form.get_all_contributed_subcase_properties().get(case_type, set()))
         return case_properties
 
     def get_parent_types(self, case_type):
