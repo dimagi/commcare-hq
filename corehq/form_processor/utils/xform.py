@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+from lxml import etree
 
 import iso8601
 import pytz
@@ -64,6 +65,16 @@ class FormSubmissionBuilder(object):
         if not self.metadata.user_id:
             form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(self.metadata.user_id), '')
         return form_xml
+
+
+def build_form_xml_from_property_dict(form_properties, separator=''):
+    elements = []
+    for key, value in form_properties.items():
+        prop = etree.Element(key)
+        prop.text = value
+        elements.append(prop)
+
+    return separator.join(etree.tostring(e) for e in elements)
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
