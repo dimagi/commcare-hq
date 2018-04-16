@@ -209,7 +209,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered'
+                        1 for pps_data in rows if pps_data[i + 1] == '100%'
                     ),
                     'pps_count': sum(1 for pps_data in rows if pps_data[i + 1] != 'no data entered')
                 }
@@ -287,7 +287,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 data[record[self.loc_id]] = ['no data entered'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            data[record[self.loc_id]][month_index] = 0 if record['pps_is_outstock']['html'] == 1 else 1
+            data[record[self.loc_id]][month_index] = '0%' if record['pps_is_outstock']['html'] == 1 else '100%'
         return loc_names, data
 
     def get_availability_data_per_month_aggregated(self, records):
@@ -324,7 +324,8 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         for data_in_month in data_per_localization:
             if data_in_month and data_in_month != 'no data entered':
                 if self.loc_id == 'pps_id':
-                    numerator += float(data_in_month)
+                    if data_in_month == '100%':
+                        numerator += 1
                 else:
                     numerator += float(data_in_month[:-1])
                 denominator += 1
