@@ -1674,7 +1674,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = OrderedSet()
         for form in forms:
-            for update in form.get_case_updates(form.get_module().case_type):
+            for update in form.get_case_updates_by_case_type(form.get_module().case_type):
                 case_updates.add(update)
 
         for form in forms:
