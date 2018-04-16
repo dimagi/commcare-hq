@@ -78,7 +78,7 @@ def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE
     ).as_xml_string()
 
 
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True, simple_form=SIMPLE_FORM):
+def get_simple_wrapped_form(form_id, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
     metadata = metadata or TestFormMetadata()
