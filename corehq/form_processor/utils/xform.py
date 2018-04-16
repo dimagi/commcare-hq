@@ -18,7 +18,7 @@ from dimagi.utils.parsing import json_format_datetime
 SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
-    <dalmation_count>yes</dalmation_count>
+    {form_properties}
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>{device_id}</n1:deviceID>
         <n1:timeStart>{time_start}</n1:timeStart>
@@ -51,16 +51,19 @@ class FormSubmissionBuilder(object):
     Utility/helper object for building a form submission
     """
 
-    def __init__(self, form_id, metadata=None, case_blocks=None, form_template=SIMPLE_FORM):
+    def __init__(self, form_id, metadata=None, case_blocks=None, form_properties=None, form_template=SIMPLE_FORM):
         self.form_id = form_id
         self.metadata = metadata or TestFormMetadata()
         self.case_blocks = case_blocks or []
         self.form_template = form_template
+        self.form_properties = form_properties or {}
 
     def as_xml_string(self):
         case_block_xml = ''.join(cb.as_string() for cb in self.case_blocks)
+        form_properties_xml = build_form_xml_from_property_dict(self.form_properties)
         form_xml = self.form_template.format(
-            uuid=self.form_id, case_block=case_block_xml, **self.metadata.to_json()
+            uuid=self.form_id, form_properties=form_properties_xml, case_block=case_block_xml,
+            **self.metadata.to_json()
         )
         if not self.metadata.user_id:
             form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(self.metadata.user_id), '')

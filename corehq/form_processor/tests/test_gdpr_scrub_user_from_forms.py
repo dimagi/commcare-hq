@@ -16,6 +16,7 @@ DOMAIN = 'test-form-accessor'
 GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
+    {form_properties}
     <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
         <n0:deviceID>{device_id}</n0:deviceID>
         <n0:timeStart>{time_start}</n0:timeStart>
