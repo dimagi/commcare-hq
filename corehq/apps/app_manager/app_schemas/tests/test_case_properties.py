@@ -32,6 +32,25 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             })
             self.assertCaseProperties(factory.app, 'house', ['foo', 'bar'])
 
+    def test_case_sharing(self):
+        factory1 = AppFactory()
+        factory2 = AppFactory()
+        factory1.app.case_sharing = True
+        factory2.app.case_sharing = True
+
+        with patch('corehq.apps.app_manager.app_schemas.case_properties.get_case_sharing_apps_in_domain')\
+                as mock_sharing:
+            mock_sharing.return_value = [factory1.app, factory2.app]
+            a1m1, a1m1f1 = factory1.new_basic_module('open_patient', 'patient')
+            factory1.form_requires_case(a1m1f1, case_type='patient', update={
+                'app1': 'yes',
+            })
+            a2m1, a2m1f1 = factory2.new_basic_module('open_patient', 'patient')
+            factory1.form_requires_case(a2m1f1, case_type='patient', update={
+                'app2': 'yes',
+            })
+            self.assertCaseProperties(factory1.app, 'patient', ['app1', 'app2'])
+
     def test_scheduler_module(self):
         factory = AppFactory()
         m1, m1f1 = factory.new_basic_module('open_case', 'house')
