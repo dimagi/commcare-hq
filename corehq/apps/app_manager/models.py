@@ -3084,20 +3084,26 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
-        updates = set()
+        return self.get_all_case_updates().get(case_type, [])
+
+    def get_all_case_updates(self):
+        updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
-            if action.case_type == case_type:
-                updates.update(format_key(*item)
-                               for item in six.iteritems(action.case_properties))
+            case_type = action.case_type
+            updates_by_case_type[case_type].update(
+                format_key(*item) for item in six.iteritems(action.case_properties))
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
-            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+            scheduler_updates = xform.get_scheduler_case_updates()
         else:
-            scheduler_updates = set()
+            scheduler_updates = {}
 
-        return updates.union(scheduler_updates)
+        for case_type, updates in updates_by_case_type.items():
+            if case_type in scheduler_updates:
+                updates |= scheduler_updates[case_type]
+        return updates_by_case_type
 
     @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
