@@ -16,7 +16,7 @@ class TestLogisticien(TestDataSourceExpressions):
         case = {
             'district_id': '78f07d8fd2024dd48ecb45e4e9a64803',
             'district_name': 'THIES',
-            'opened_on': '2018-01-22',
+            'date_echeance': '2018-01-22',
             'montant_paye': 0,
             'montant_reel_a_payer': 0,
         }
@@ -35,10 +35,10 @@ class TestLogisticien(TestDataSourceExpressions):
         district_name = self.get_expression('district_name', 'string')
         montant_paye = self.get_expression('montant_paye', 'integer')
         montant_reel_a_payer = self.get_expression('montant_reel_a_payer', 'integer')
-        opened_on = self.get_expression('opened_on', 'date')
+        date_echeance = self.get_expression('date_echeance', 'date')
 
         self.assertEquals(district_id(case, EvaluationContext(case, 0)), '78f07d8fd2024dd48ecb45e4e9a64803')
         self.assertEquals(district_name(case, EvaluationContext(case, 0)), 'THIES')
         self.assertEquals(montant_paye(case, EvaluationContext(case, 0)), 0)
         self.assertEquals(montant_reel_a_payer(case, EvaluationContext(case, 0)), 0)
-        self.assertEquals(opened_on(case, EvaluationContext(case, 0)), date(2018, 1, 1))
+        self.assertEquals(date_echeance(case, EvaluationContext(case, 0)), date(2018, 1, 1))
