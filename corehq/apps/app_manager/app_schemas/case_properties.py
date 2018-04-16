@@ -68,15 +68,28 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
+        return (
+            self.get_contributed_parent_types(case_type, include_shared_properties),
+            self.get_contributed_subcase_properties(case_type, include_shared_properties)
+        )
+
+    @memoized
+    def get_contributed_parent_types(self, case_type, include_shared_properties=True):
         parent_types = set()
+        forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
+
+        for _, form in forms_info:
+            parent_types.update(form.get_contributed_parent_types(case_type))
+        return parent_types
+
+    @memoized
+    def get_contributed_subcase_properties(self, case_type, include_shared_properties=True):
         case_properties = set()
         forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
 
         for m_case_type, form in forms_info:
-            p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
-            parent_types.update(p_types)
-            case_properties.update(c_props)
-        return parent_types, case_properties
+            case_properties.update(form.get_contributed_subcase_properties(case_type))
+        return case_properties
 
     def get_parent_types(self, case_type):
         parent_types, _ = \
