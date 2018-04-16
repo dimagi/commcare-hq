@@ -1849,7 +1849,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return case_properties
 
     @memoized
-    def get_contributed_parent_types(self, child_case_type):
+    def get_contributed_case_relationships(self, child_case_type):
         parent_types = set()
         parent_case_type = self.get_module().case_type
         for subcase in self.actions.subcases:
@@ -3123,7 +3123,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return case_properties
 
     @memoized
-    def get_contributed_parent_types(self, child_case_type):
+    def get_contributed_case_relationships(self, child_case_type):
         parent_types = set()
         for subcase in self.actions.get_subcase_actions():
             if subcase.case_type == child_case_type:
