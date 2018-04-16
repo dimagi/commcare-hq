@@ -1795,15 +1795,19 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates(self, case_type):
+        return self.get_all_case_updates().get(case_type, [])
+
+    def get_all_case_updates(self):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
         # the usercase_update action, and for normal cases, use the
         # update_case action
-        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
-            format_key = self.get_case_property_name_formatter()
-            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in action.update.items()]
-        return []
+        case_type = self.get_module().case_type
+        format_key = self.get_case_property_name_formatter()
+        return {
+            case_type: [format_key(*item) for item in self.actions.update_case.update.items()],
+            USERCASE_TYPE: [format_key(*item) for item in self.actions.usercase_update.update.items()],
+        }
 
     @memoized
     def get_subcase_types(self):
