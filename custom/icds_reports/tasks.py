@@ -34,7 +34,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthTHRForms,
 )
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file
+from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -241,10 +241,11 @@ def _find_stagnant_cases(adapter):
 
 
 @task(queue='icds_dashboard_reports_queue')
-def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year):
+def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year, couch_user):
     selected_date = date(year, month, 1)
     report_context = {
-        'reports': []
+        'reports': [],
+        'user_have_access_to_features': icds_pre_release_features(couch_user),
     }
 
     pdf_files = []
