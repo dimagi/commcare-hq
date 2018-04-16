@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 
 from corehq.apps.app_manager.util import app_doc_types
@@ -95,11 +96,11 @@ def change_meta_from_doc(document, data_source_type, data_source_name):
 
 def change_meta_from_doc_meta_and_document(doc_meta, document, data_source_type, data_source_name, doc_id=None):
     if doc_meta is None:
-        raise MissingMetaInformationError(u"Couldn't guess document type for {}!".format(document))
+        raise MissingMetaInformationError("Couldn't guess document type for {}!".format(document))
 
     doc_id = doc_id or document.get('_id', None)
     if not doc_id:
-        raise MissingMetaInformationError(u"No doc ID!!".format(document))
+        raise MissingMetaInformationError("No doc ID!!".format(document))
     return ChangeMeta(
         document_id=doc_id or document['_id'],
         document_rev=document.get('_rev', None),

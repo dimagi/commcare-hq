@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, META, DOMAIN, \
     change_meta_from_doc, COMMCARE_USER, WEB_USER, GROUP
