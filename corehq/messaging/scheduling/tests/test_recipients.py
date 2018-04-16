@@ -183,16 +183,16 @@ class SchedulingRecipientTest(TestCase):
         self.addCleanup(user3.delete)
 
         self.assertIsNone(user1.memoized_usercase)
-        self.assertIsNone(Content.get_one_way_phone_number(user1))
+        self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
         with self.create_user_case(user2) as case:
             self.assertIsNotNone(user2.memoized_usercase)
-            self.assertIsNone(Content.get_one_way_phone_number(user2))
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
 
         with self.create_user_case(user3) as case:
             update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
             self.assertIsNotNone(user3.memoized_usercase)
-            self.assertEqual(Content.get_one_way_phone_number(user3), '12345678')
+            self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '12345678')
 
             user3.add_phone_number('87654321')
-            self.assertEqual(Content.get_one_way_phone_number(user3), '87654321')
+            self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '87654321')
