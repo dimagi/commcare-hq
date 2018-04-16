@@ -2035,7 +2035,8 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commcare_location_ids': user_location_data(location_ids)
             })
         else:
-            self.user_data.pop('commcare_location_ids')
+            if 'commcare_location_ids' in self.user_data:
+                self.user_data.pop('commcare_location_ids')
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
