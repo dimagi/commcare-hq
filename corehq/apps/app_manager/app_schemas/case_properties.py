@@ -59,6 +59,13 @@ class ParentCasePropertyBuilder(object):
         else:
             return self._forms_info
 
+    def _get_all_case_updates(self, include_shared_properties):
+        all_case_updates = defaultdict(set)
+        for _, form in self._get_all_forms_info(include_shared_properties=include_shared_properties):
+            for case_type, case_properties in form.get_all_case_updates().items():
+                all_case_updates[case_type] |= set(case_properties)
+        return all_case_updates
+
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
         parent_types = set()
