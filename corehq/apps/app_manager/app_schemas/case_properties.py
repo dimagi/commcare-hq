@@ -53,13 +53,17 @@ class ParentCasePropertyBuilder(object):
             forms_info.extend(_get_forms_info(app))
         return forms_info
 
+    def _get_all_forms_info(self, include_shared_properties):
+        if self.app.case_sharing and include_shared_properties:
+            return self._forms_info + self._case_sharing_app_forms_info
+        else:
+            return self._forms_info
+
     @memoized
     def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
         parent_types = set()
         case_properties = set()
-        forms_info = self._forms_info
-        if self.app.case_sharing and include_shared_properties:
-            forms_info += self._case_sharing_app_forms_info
+        forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
 
         for m_case_type, form in forms_info:
             p_types, c_props = form.get_parent_types_and_contributed_properties(m_case_type, case_type)
