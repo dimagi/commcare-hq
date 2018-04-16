@@ -30,6 +30,7 @@ SIMPLE_FORM = """<?xml version='1.0' ?>
     {case_block}
 </data>"""
 
+
 class TestFormMetadata(jsonobject.JsonObject):
     domain = jsonobject.StringProperty(required=False)
     xmlns = jsonobject.StringProperty(default='http://openrosa.org/formdesigner/form-processor')
@@ -44,19 +45,37 @@ class TestFormMetadata(jsonobject.JsonObject):
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
+class FormSubmissionBuilder(object):
+    """
+    Utility/helper object for building a form submission
+    """
+
+    def __init__(self, form_id, metadata=None, case_blocks=None, form_template=SIMPLE_FORM):
+        self.form_id = form_id
+        self.metadata = metadata or TestFormMetadata()
+        self.case_blocks = case_blocks or []
+        self.form_template = form_template
+
+    def as_xml_string(self):
+        case_block_xml = ''.join(cb.as_string() for cb in self.case_blocks)
+        form_xml = self.form_template.format(
+            uuid=self.form_id, case_block=case_block_xml, **self.metadata.to_json()
+        )
+        if not self.metadata.user_id:
+            form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(self.metadata.user_id), '')
+        return form_xml
+
+
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    metadata = metadata or TestFormMetadata()
-    case_block = ''
-    if case_id:
-        case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = simple_form.format(uuid=form_id, case_block=case_block, **metadata.to_json())
-
-    if not metadata.user_id:
-        form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
-
-    return form_xml
+    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
+    return FormSubmissionBuilder(
+        form_id=form_id,
+        metadata=metadata,
+        case_blocks=case_blocks,
+        form_template=simple_form,
+    ).as_xml_string()
 
 
 def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True, simple_form=SIMPLE_FORM):
