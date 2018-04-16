@@ -3118,21 +3118,32 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
                 updates |= scheduler_updates[case_type]
         return updates_by_case_type
 
-    @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
+        return (
+            self.get_contributed_parent_types(case_type),
+            self.get_contributed_subcase_properties(case_type)
+        )
+
+    @memoized
+    def get_contributed_subcase_properties(self, child_case_type):
         case_properties = set()
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == case_type:
+            if subcase.case_type == child_case_type:
                 case_properties.update(
                     list(subcase.case_properties.keys())
                 )
+        return case_properties
+
+    @memoized
+    def get_contributed_parent_types(self, child_case_type):
+        parent_types = set()
+        for subcase in self.actions.get_subcase_actions():
+            if subcase.case_type == child_case_type:
                 for case_index in subcase.case_indices:
                     parent = self.actions.get_action_from_tag(case_index.tag)
                     if parent:
                         parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
-
-        return parent_types, case_properties
+        return parent_types
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
