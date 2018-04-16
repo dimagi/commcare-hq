@@ -1804,10 +1804,17 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         # update_case action
         case_type = self.get_module().case_type
         format_key = self.get_case_property_name_formatter()
-        return {
-            case_type: [format_key(*item) for item in self.actions.update_case.update.items()],
-            USERCASE_TYPE: [format_key(*item) for item in self.actions.usercase_update.update.items()],
-        }
+        updates_by_case_type = defaultdict(set)
+
+        updates_by_case_type[case_type].update(
+            format_key(*item) for item in self.actions.update_case.update.items())
+        updates_by_case_type[USERCASE_TYPE].update(
+            format_key(*item) for item in self.actions.usercase_update.update.items())
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
 
     @memoized
     def get_subcase_types(self):
@@ -3104,9 +3111,12 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         else:
             scheduler_updates = {}
 
-        for case_type, updates in updates_by_case_type.items():
-            if case_type in scheduler_updates:
-                updates |= scheduler_updates[case_type]
+        for case_type, updates in scheduler_updates.items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
         return updates_by_case_type
 
     @memoized

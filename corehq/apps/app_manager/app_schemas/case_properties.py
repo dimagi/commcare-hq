@@ -67,14 +67,6 @@ class ParentCasePropertyBuilder(object):
             parent_types.update(form.get_contributed_case_relationships(case_type))
         return parent_types
 
-    @memoized
-    def get_contributed_subcase_properties(self, case_type, include_shared_properties=True):
-        case_properties = set()
-
-        for form in self._get_relevant_forms(include_shared_properties):
-            case_properties.update(form.get_all_contributed_subcase_properties().get(case_type, set()))
-        return case_properties
-
     def get_parent_types(self, case_type):
         parent_types = self.get_case_relationships(case_type)
         return set(p[0] for p in parent_types)
@@ -110,9 +102,6 @@ class ParentCasePropertyBuilder(object):
             case_properties |= {prop.name for prop in data_dict_props}
 
         parent_types = self.get_case_relationships(case_type, include_shared_properties)
-        contributed_properties = self.get_contributed_subcase_properties(
-            case_type, include_shared_properties)
-        case_properties.update(contributed_properties)
         if include_parent_properties:
             get_properties_recursive = functools.partial(
                 self.get_properties,
