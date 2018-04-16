@@ -500,7 +500,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/delete_application_dbs",
+            url: formplayer_url + "/update",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
@@ -518,9 +518,13 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             formplayerLoadingComplete(true);
             return;
         }
-
         formplayerLoadingComplete();
         $("#cloudcare-notifications").empty();
+        if (response.error) {
+            FormplayerFrontend.request('showError', response.message);
+        } else {
+            FormplayerFrontend.request('showSuccess', response.message);
+        }
         FormplayerFrontend.trigger('navigateHome');
     });
 });
