@@ -16,7 +16,6 @@ DOMAIN = 'test-form-accessor'
 GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
-    <dalmation_count>yes</dalmation_count>
     <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
         <n0:deviceID>{device_id}</n0:deviceID>
         <n0:timeStart>{time_start}</n0:timeStart>
@@ -31,7 +30,6 @@ GDPR_SIMPLE_FORM = """<?xml version='1.0' ?>
 EXPECTED_FORM_XML = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="New Form" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="http://openrosa.org/formdesigner/form-processor">
-    <dalmation_count>yes</dalmation_count>
     <n0:meta xmlns:n0="http://openrosa.org/jr/xforms">
         <n0:deviceID>DEV IL</n0:deviceID>
         <n0:timeStart>2013-04-19T16:53:02.000000Z</n0:timeStart>
