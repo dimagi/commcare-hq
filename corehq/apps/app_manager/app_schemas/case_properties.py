@@ -28,9 +28,11 @@ class ParentCasePropertyBuilder(object):
     @property
     @memoized
     def forms_info(self):
-        # unfortunate, but biggest speed issue is accessing couchdbkit properties
-        # so compute them once
+        """
+        Pull out (module's case_type, form) for every form in the app
 
+        This lets us handle just the info we care about more directly
+        """
         forms_info = []
         if self.app.doc_type == 'RemoteApp':
             return forms_info
