@@ -327,7 +327,8 @@ class Content(models.Model):
         metadata = self.get_sms_message_metadata(logged_subevent)
 
         if isinstance(phone_entry_or_number, PhoneNumber):
-            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata, logged_subevent=logged_subevent)
+            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
         else:
             send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
 
