@@ -70,9 +70,14 @@ def send_delayed_report(report_id):
     """
     Sends a scheduled report, via celery background task.
     """
-    if settings.SERVER_ENVIRONMENT == 'production' and ReportNotification.get(report_id).domain == 'ews-ghana':
-        # this is used because ews-ghana was spamming the queue:
+    if settings.SERVER_ENVIRONMENT == 'production':
+        # This is to prevent scheduled reports from clogging up the
+        # background queue.
         # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
+
+        # If this becomes a problem in other environments we should
+        # drop this `if` clause and use `send_report_throttled.delay()`
+        # always.
         send_report_throttled.delay(report_id)
     else:
         send_report.delay(report_id)
