@@ -13,6 +13,7 @@ from importlib import import_module
 from corehq.apps.accounting.models import Subscription, SoftwarePlanEdition
 from corehq.apps.domain.models import Domain
 import six
+from six.moves import map
 
 
 class Command(BaseCommand):
