@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import re
 from datetime import datetime, timedelta
 from dateutil.parser import parse
 import hashlib
@@ -64,14 +66,25 @@ from six.moves import filter
 
 logging = get_task_logger(__name__)
 EXPIRE_TIME = 60 * 60 * 24
+THROTTLED_DOMAINS_PATTERNS = (
+    # Regex patterns matching domains whose scheduled reports use a
+    # separate queue so that they don't hold up the background queue.
+    'ews-ghana$',
+    'mvp-',
+)
 
 
 def send_delayed_report(report_id):
     """
     Sends a scheduled report, via celery background task.
     """
-    if settings.SERVER_ENVIRONMENT == 'production' and ReportNotification.get(report_id).domain == 'ews-ghana':
-        # this is used because ews-ghana was spamming the queue:
+    domain = ReportNotification.get(report_id).domain
+    if (
+        settings.SERVER_ENVIRONMENT == 'production' and
+        any(re.match(pattern, domain) for pattern in THROTTLED_DOMAINS_PATTERNS)
+    ):
+        # This is to prevent a few scheduled reports from clogging up
+        # the background queue.
         # https://manage.dimagi.com/default.asp?270029#BugEvent.1457969
         send_report_throttled.delay(report_id)
     else:
