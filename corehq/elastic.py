@@ -5,6 +5,7 @@ import logging
 import time
 from six.moves.urllib.parse import unquote
 
+from dimagi.utils.chunked import chunked
 from django.conf import settings
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
@@ -227,6 +228,13 @@ def mget_query(index_name, ids, source):
         )['docs']
     except ElasticsearchException as e:
         raise ESError(e)
+
+
+def iter_es_docs(index_name, ids):
+    """Returns a generator which pulls documents from elasticsearch in chunks"""
+    for ids_chunk in chunked(ids, 100):
+        for result in mget_query(index_name, ids_chunk, source=True):
+            yield result['_source']
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
