@@ -97,7 +97,7 @@ class ParentCasePropertyBuilder(object):
 
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
-        for form in self._forms:
+        for form in self._get_all_forms(include_shared_properties):
             updates = self._get_case_updates(form, case_type)
             if include_parent_properties:
                 case_properties.update(updates)
@@ -127,15 +127,6 @@ class ParentCasePropertyBuilder(object):
             for parent_type in parent_types:
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
-        if self.app.case_sharing and include_shared_properties:
-            for app in self._get_other_case_sharing_apps_in_domain():
-                case_properties.update(
-                    get_case_properties(
-                        app, [case_type],
-                        include_shared_properties=False,
-                        include_parent_properties=include_parent_properties,
-                    ).get(case_type, [])
-                )
         return case_properties
 
     @memoized
