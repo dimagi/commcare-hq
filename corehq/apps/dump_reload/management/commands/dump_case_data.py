@@ -82,15 +82,15 @@ class Command(BaseCommand):
                         timestamp=datetime.utcnow().strftime(DATETIME_FORMAT))
                     with open(file_name, "w") as output:
                         c = db_conn.cursor()
-                        where_clause += "type='{case_type}' ".format(case_type=case_type)
+                        _where_clause = where_clause + "type='{case_type}' ".format(case_type=case_type)
                         copy_query = "copy (SELECT * FROM form_processor_commcarecasesql " \
-                                     "{where_clause})".format(where_clause=where_clause)
+                                     "{where_clause})".format(where_clause=_where_clause)
                         print("Query Being Run:")
                         print(copy_query)
                         c.copy_expert(
                             "{query} TO STDOUT DELIMITER ',' CSV HEADER;".format(query=copy_query), output)
-                with ZipFile(file_name + '.zip', 'w') as zip_file:
-                    zip_file.write(file_name, file_name)
-                    os.remove(file_name)
+                    with ZipFile(file_name + '.zip', 'w') as zip_file:
+                        zip_file.write(file_name, file_name)
+                        os.remove(file_name)
             else:
                 print("Ignoring {db}. It does not have the table form_processor_commcarecasesql".format(db=db))
