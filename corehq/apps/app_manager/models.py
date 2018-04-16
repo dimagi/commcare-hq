@@ -1838,21 +1838,34 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if self.actions.load_from_form.preload:
             self.actions.load_from_form = PreloadAction()
 
-    @memoized
     def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
+        return (
+            self.get_contributed_parent_types(case_type),
+            self.get_contributed_subcase_properties(case_type)
+        )
+
+    @memoized
+    def get_contributed_subcase_properties(self, child_case_type):
         case_properties = set()
         for subcase in self.actions.subcases:
-            if subcase.case_type == case_type:
+            if subcase.case_type == child_case_type:
                 case_properties.update(
                     list(subcase.case_properties.keys())
                 )
-                if case_type != module_case_type and (
+        return case_properties
+
+    @memoized
+    def get_contributed_parent_types(self, child_case_type):
+        parent_types = set()
+        parent_case_type = self.get_module().case_type
+        for subcase in self.actions.subcases:
+            if subcase.case_type == child_case_type:
+                if child_case_type != parent_case_type and (
                         self.actions.open_case.is_active() or
                         self.actions.update_case.is_active() or
                         self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
-        return parent_types, case_properties
+                    parent_types.add((parent_case_type, subcase.reference_id or 'parent'))
+        return parent_types
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
