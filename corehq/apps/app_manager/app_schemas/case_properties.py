@@ -18,19 +18,17 @@ import six
 logger = logging.getLogger(__name__)
 
 
-def _get_forms_info(app):
+def _get_forms(app):
     """
-    Pull out (module's case_type, form) for every form in the app
-
-    This lets us handle just the info we care about more directly
+    Return list of forms in the app
     """
     if app.doc_type == 'RemoteApp':
         return []
-    forms_info = []
+    forms = []
     for module in app.get_modules():
         for form in module.get_forms():
-            forms_info.append((module.case_type, form))
-    return forms_info
+            forms.append(form)
+    return forms
 
 
 class ParentCasePropertyBuilder(object):
@@ -42,26 +40,26 @@ class ParentCasePropertyBuilder(object):
 
     @property
     @memoized
-    def _forms_info(self):
-        return _get_forms_info(self.app)
+    def _forms(self):
+        return _get_forms(self.app)
 
     @property
     @memoized
-    def _case_sharing_app_forms_info(self):
-        forms_info = []
+    def _case_sharing_app_forms(self):
+        forms = []
         for app in self._get_other_case_sharing_apps_in_domain():
-            forms_info.extend(_get_forms_info(app))
-        return forms_info
+            forms.extend(_get_forms(app))
+        return forms
 
-    def _get_all_forms_info(self, include_shared_properties):
+    def _get_all_forms(self, include_shared_properties):
         if self.app.case_sharing and include_shared_properties:
-            return self._forms_info + self._case_sharing_app_forms_info
+            return self._forms + self._case_sharing_app_forms
         else:
-            return self._forms_info
+            return self._forms
 
     def _get_all_case_updates(self, include_shared_properties):
         all_case_updates = defaultdict(set)
-        for _, form in self._get_all_forms_info(include_shared_properties=include_shared_properties):
+        for form in self._get_all_forms(include_shared_properties):
             for case_type, case_properties in form.get_all_case_updates().items():
                 all_case_updates[case_type] |= set(case_properties)
         return all_case_updates
@@ -69,18 +67,16 @@ class ParentCasePropertyBuilder(object):
     @memoized
     def get_contributed_parent_types(self, case_type, include_shared_properties=True):
         parent_types = set()
-        forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
 
-        for _, form in forms_info:
+        for form in self._get_all_forms(include_shared_properties):
             parent_types.update(form.get_contributed_parent_types(case_type))
         return parent_types
 
     @memoized
     def get_contributed_subcase_properties(self, case_type, include_shared_properties=True):
         case_properties = set()
-        forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
 
-        for m_case_type, form in forms_info:
+        for form in self._get_all_forms(include_shared_properties):
             case_properties.update(form.get_contributed_subcase_properties(case_type))
         return case_properties
 
@@ -101,7 +97,7 @@ class ParentCasePropertyBuilder(object):
 
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
-        for m_case_type, form in self._forms_info:
+        for form in self._forms:
             updates = self._get_case_updates(form, case_type)
             if include_parent_properties:
                 case_properties.update(updates)
