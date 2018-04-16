@@ -173,6 +173,11 @@ class ParentCasePropertyBuilder(object):
         }
 
 
+def get_case_relationships(app):
+    builder = ParentCasePropertyBuilder(app)
+    return builder.get_parent_type_map(app.get_case_types())
+
+
 def get_case_properties(app, case_types, defaults=(),
                         include_shared_properties=True,
                         include_parent_properties=True):

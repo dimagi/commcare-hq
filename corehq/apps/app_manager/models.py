@@ -53,7 +53,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.app_schemas.case_properties import get_case_relationships
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -6154,8 +6154,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        builder = ParentCasePropertyBuilder(self)
-        case_relationships = builder.get_parent_type_map(self.get_case_types())
+        case_relationships = get_case_relationships(self)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
