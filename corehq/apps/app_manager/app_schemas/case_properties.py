@@ -18,6 +18,21 @@ import six
 logger = logging.getLogger(__name__)
 
 
+def _get_forms_info(app):
+    """
+    Pull out (module's case_type, form) for every form in the app
+
+    This lets us handle just the info we care about more directly
+    """
+    if app.doc_type == 'RemoteApp':
+        return []
+    forms_info = []
+    for module in app.get_modules():
+        for form in module.get_forms():
+            forms_info.append((module.case_type, form))
+    return forms_info
+
+
 class ParentCasePropertyBuilder(object):
 
     def __init__(self, app, defaults=(), per_type_defaults=None):
@@ -28,27 +43,14 @@ class ParentCasePropertyBuilder(object):
     @property
     @memoized
     def _forms_info(self):
-        """
-        Pull out (module's case_type, form) for every form in the app
-
-        This lets us handle just the info we care about more directly
-        """
-        forms_info = []
-        if self.app.doc_type == 'RemoteApp':
-            return forms_info
-        for module in self.app.get_modules():
-            for form in module.get_forms():
-                forms_info.append((module.case_type, form))
-        return forms_info
+        return _get_forms_info(self.app)
 
     @property
     @memoized
     def _case_sharing_app_forms_info(self):
         forms_info = []
         for app in self._get_other_case_sharing_apps_in_domain():
-            for module in app.get_modules():
-                for form in module.get_forms():
-                    forms_info.append((module.case_type, form))
+            forms_info.extend(_get_forms_info(app))
         return forms_info
 
     @memoized
