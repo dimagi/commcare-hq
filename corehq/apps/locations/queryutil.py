@@ -57,6 +57,8 @@ class ComparedQuerySet(object):
                     items2 = list(self._cte_set)
                 ids1 = [_identify(it) for it in items1]
                 ids2 = [_identify(it) for it in items2]
+                # Verify both sets contain the same items, ignoring sort order
+                # Note: it's possible that there are duplicate elements.
                 if (finished and Counter(ids1) != Counter(ids2)) or (
                         not finished and set(ids1) - set(ids2)):
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
