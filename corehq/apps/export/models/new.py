@@ -1989,10 +1989,7 @@ class CaseExportDataSchema(ExportDataSchema):
             [case_type],
             include_parent_properties=False
         )
-        parent_types, _ = (
-            ParentCasePropertyBuilder(app)
-            .get_parent_types_and_contributed_properties(case_type)
-        )
+        parent_types = ParentCasePropertyBuilder(app).get_contributed_parent_types(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,

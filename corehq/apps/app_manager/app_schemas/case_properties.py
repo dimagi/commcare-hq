@@ -67,13 +67,6 @@ class ParentCasePropertyBuilder(object):
         return all_case_updates
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, case_type, include_shared_properties=True):
-        return (
-            self.get_contributed_parent_types(case_type, include_shared_properties),
-            self.get_contributed_subcase_properties(case_type, include_shared_properties)
-        )
-
-    @memoized
     def get_contributed_parent_types(self, case_type, include_shared_properties=True):
         parent_types = set()
         forms_info = self._get_all_forms_info(include_shared_properties=include_shared_properties)
@@ -92,8 +85,7 @@ class ParentCasePropertyBuilder(object):
         return case_properties
 
     def get_parent_types(self, case_type):
-        parent_types, _ = \
-            self.get_parent_types_and_contributed_properties(case_type)
+        parent_types = self.get_contributed_parent_types(case_type)
         return set(p[0] for p in parent_types)
 
     @memoized
@@ -126,9 +118,9 @@ class ParentCasePropertyBuilder(object):
                                                           case_type__name=case_type, deprecated=False)
             case_properties |= {prop.name for prop in data_dict_props}
 
-        parent_types, contributed_properties = self.get_parent_types_and_contributed_properties(
-            case_type, include_shared_properties=include_shared_properties
-        )
+        parent_types = self.get_contributed_parent_types(case_type, include_shared_properties)
+        contributed_properties = self.get_contributed_subcase_properties(
+            case_type, include_shared_properties)
         case_properties.update(contributed_properties)
         if include_parent_properties:
             get_properties_recursive = functools.partial(
@@ -167,7 +159,7 @@ class ParentCasePropertyBuilder(object):
         """
         parent_map = defaultdict(dict)
         for case_type in case_types:
-            parent_types, _ = self.get_parent_types_and_contributed_properties(case_type)
+            parent_types = self.get_contributed_parent_types(case_type)
             rel_map = defaultdict(list)
             for parent_type, relationship in parent_types:
                 rel_map[relationship].append(parent_type)

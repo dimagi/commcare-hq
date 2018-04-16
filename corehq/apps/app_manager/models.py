@@ -1838,12 +1838,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         if self.actions.load_from_form.preload:
             self.actions.load_from_form = PreloadAction()
 
-    def get_parent_types_and_contributed_properties(self, case_type):
-        return (
-            self.get_contributed_parent_types(case_type),
-            self.get_contributed_subcase_properties(case_type)
-        )
-
     @memoized
     def get_contributed_subcase_properties(self, child_case_type):
         case_properties = set()
@@ -3117,12 +3111,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             if case_type in scheduler_updates:
                 updates |= scheduler_updates[case_type]
         return updates_by_case_type
-
-    def get_parent_types_and_contributed_properties(self, case_type):
-        return (
-            self.get_contributed_parent_types(case_type),
-            self.get_contributed_subcase_properties(case_type)
-        )
 
     @memoized
     def get_contributed_subcase_properties(self, child_case_type):
