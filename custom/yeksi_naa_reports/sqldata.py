@@ -155,7 +155,7 @@ class LogisticienDataSource(YeksiSqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("opened_on", "startdate", "enddate")]
+        filters = [BETWEEN("date_echeance", "startdate", "enddate")]
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -683,9 +683,9 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 'montant_reel_a_payer': 0
             }
         for record in records:
-            if not self.date_in_selected_date_range(record['opened_on']):
+            if not self.date_in_selected_date_range(record['date_echeance']):
                 continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
+            month_index = self.get_index_of_month_in_selected_data_range(record['date_echeance'])
             if self.denominator_exists(record['montant_reel_a_payer']):
                 if record['montant_paye']:
                     data[month_index]['montant_paye'] += record['montant_paye']['html']
@@ -708,14 +708,14 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
 
     @property
     def group_by(self):
-        return ['opened_on', 'district_id', 'district_name']
+        return ['date_echeance', 'district_id', 'district_name']
 
     @property
     def columns(self):
         columns = [
             DatabaseColumn("District ID", SimpleColumn('district_id')),
             DatabaseColumn("District Name", SimpleColumn('district_name')),
-            DatabaseColumn("Date", SimpleColumn('opened_on')),
+            DatabaseColumn("Date", SimpleColumn('date_echeance')),
             DatabaseColumn("Sum of the amounts paid by the district", SumColumn('montant_paye')),
             DatabaseColumn("Total amount owed by the district to PNA", SumColumn('montant_reel_a_payer')),
         ]
@@ -725,12 +725,12 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         data = {}
         district_names = {}
         for record in records:
-            if not self.date_in_selected_date_range(record['opened_on']):
+            if not self.date_in_selected_date_range(record['date_echeance']):
                 continue
             if record['district_id'] not in data:
                 data[record['district_id']] = ['no data entered'] * len(self.months)
                 district_names[record['district_id']] = record['district_name']
-            month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
+            month_index = self.get_index_of_month_in_selected_data_range(record['date_echeance'])
             if self.denominator_exists(record['montant_reel_a_payer']):
                 data[record['district_id']][month_index] = self.percent_fn(
                     record['montant_paye']['html'] if record['montant_paye'] else None,
