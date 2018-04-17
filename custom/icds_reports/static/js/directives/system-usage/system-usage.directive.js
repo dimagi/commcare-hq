@@ -2,7 +2,7 @@
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId) {
+function SystemUsageController($scope, $http, $log, $routeParams, $location, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "Program Summary";
@@ -66,11 +66,13 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -97,7 +99,7 @@ function SystemUsageController($scope, $http, $log, $routeParams, $location, sto
     vm.getDataForStep(vm.step);
 }
 
-SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId'];
+SystemUsageController.$inject = ['$scope', '$http', '$log', '$routeParams', '$location', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('systemUsage', function() {
     return {

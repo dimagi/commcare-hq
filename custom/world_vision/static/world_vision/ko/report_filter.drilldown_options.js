@@ -56,10 +56,10 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-var DrilldownOptionFilterControl = function (options) {
-    var self = this;
+var drilldownOptionFilterControl = function (options) {
+    var self = {};
 
-    self.notification = new DrilldownFinalNotification(options.notifications);
+    self.notification = drilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
         return new DrilldownOption(select, options.drilldown_map);
     }));
@@ -102,11 +102,11 @@ var DrilldownOptionFilterControl = function (options) {
             }
         }
     };
-
+    return self;
 };
 
-var DrilldownFinalNotification = function (notifications) {
-    var self = this;
+var drilldownFinalNotification = function (notifications) {
+    var self = {};
     self.notifications = notifications;
     self.message = ko.observable();
 
@@ -118,10 +118,11 @@ var DrilldownFinalNotification = function (notifications) {
         self.message(self.notifications[key]);
         $('.drilldown-notification-tooltip').tooltip();
     };
+    return self;
 };
 
 var DrilldownOption = function (select, drilldown_map) {
-    var self = this;
+    var self = {};
     self.label = select.label;
     self.default_text = select.default_text;
     self.slug = select.slug;
@@ -134,7 +135,7 @@ var DrilldownOption = function (select, drilldown_map) {
         if (!(self.control_options().length)) {
             self.selected.removeAll();
         }
-        
+
         if (self.selected.length === 0){
             self.selected.push(0);
         }
@@ -144,10 +145,11 @@ var DrilldownOption = function (select, drilldown_map) {
     self.show_next_drilldown = ko.computed(function () {
         return !(self.control_options().length);
     });
+    return self;
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    var viewModel = new DrilldownOptionFilterControl(options);
+    var viewModel = new drilldownOptionFilterControl(options);
     $(this).koApplyBindings(viewModel);
     viewModel.init();
 };

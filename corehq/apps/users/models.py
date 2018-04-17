@@ -14,6 +14,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -1058,6 +1059,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def is_web_user(self):
         return self._get_user_type() == 'web'
 
+    def supports_lockout(self):
+        return self.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(self.domain)
+
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
             return 'web'
@@ -2031,7 +2035,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commcare_location_ids': user_location_data(location_ids)
             })
         else:
-            self.user_data.pop('commcare_location_ids')
+            self.user_data.pop('commcare_location_ids', None)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
@@ -2233,6 +2237,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.devices.append(device)
             self.last_device = device
             return True
+        return False
 
     def get_last_used_device(self):
         if not self.devices:

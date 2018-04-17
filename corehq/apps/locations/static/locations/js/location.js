@@ -59,7 +59,7 @@ hqDefine("locations/js/location", function() {
         var hierarchy = initialPageData.get('hierarchy');
         var loc_types_with_users = initialPageData.get('loc_types_with_users');
 
-        var model = new LocationModels.LocationSelectViewModel({
+        var model = new LocationModels.locationSelectViewModel({
             "hierarchy": hierarchy,
             "default_caption": "\u2026",
             "auto_drill": false,

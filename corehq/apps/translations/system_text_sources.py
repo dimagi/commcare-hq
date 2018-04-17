@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 SOURCES = {
     "activity.task.error.generic": "CommCareAndroid",
     "app.handled.error.explanation": "CommCareAndroid",

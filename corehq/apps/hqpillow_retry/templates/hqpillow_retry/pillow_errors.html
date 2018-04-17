@@ -3,18 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        $(function() {
-            $('#check_all').click( function() {
-                var oTable = $('#report_table_{{ report.slug }}').dataTable();
-                $('input', oTable.fnGetNodes()).prop('checked', this.checked);
-            });
-        });
-    </script>
-{% endblock %}
-
-
 {% block reporttable %}
 {% if not report.needs_filters %}
     <form action="{% url "pillow_errors" %}" method="post">

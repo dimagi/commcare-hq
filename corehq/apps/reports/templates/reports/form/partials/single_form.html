@@ -108,7 +108,7 @@
         <br/>
         <ul class="list-inline">
             {% if instance.app_id %}<li><a href="{% url "view_app" domain instance.app_id %}">{% trans "View app" %}</a></li>{% endif %}
-            {% if request.user.is_superuser %}
+            {% if request|toggle_enabled:"SUPPORT" %}
                 {% if instance.build_id %}
                     <li><a href="{% url "download_index" domain instance.build_id %}">{% trans "View build" %}</a></li>
                 {% endif %}

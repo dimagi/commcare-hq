@@ -22,7 +22,7 @@ from corehq.apps.app_manager.suite_xml.sections.resources import(
 )
 from corehq.apps.app_manager.suite_xml.post_process.workflow import WorkflowHelper
 from corehq.apps.app_manager.suite_xml.sections.remote_requests import RemoteRequestContributor
-from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource
+from corehq.apps.app_manager.suite_xml.xml_models import Suite, MediaResource, LocalizedMenu, Text
 from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.util import split_path
 from corehq.apps.hqmedia.models import HQMediaMapItem
@@ -70,6 +70,11 @@ class SuiteGenerator(object):
             )
 
             self.suite.remote_requests.extend(remote_requests.get_module_contributions(module))
+
+        if any(module.is_training_module for module in self.modules):
+            training_menu = LocalizedMenu(id='training-root')
+            training_menu.text = Text(locale_id=id_strings.training_module_locale())
+            self.suite.menus.append(training_menu)
 
         self._add_sections([
             FixtureContributor(self.suite, self.app, self.modules),

@@ -69,6 +69,7 @@
     - properties.cc-inflation-target-density
     - hq.use_grid_menus
     - hq.grid_form_menus
+    - hq.target_commcare_flavor
 
 - title: 'Advanced'
   id: app-settings-advanced

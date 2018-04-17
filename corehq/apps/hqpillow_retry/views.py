@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime
 import re
 from django.contrib import messages
@@ -241,7 +242,7 @@ class EditPillowError(BasePageView):
         message = render_to_string('hqpillow_retry/fb.txt', context)
         subject = 'PillowTop error: {} - {}'.format(error.pillow, error.error_type)
 
-        reply_to = u'"{}" <{}>'.format(couch_user.full_name, couch_user.get_email())
+        reply_to = '"{}" <{}>'.format(couch_user.full_name, couch_user.get_email())
         email = EmailMessage(
             subject=subject,
             body=message,

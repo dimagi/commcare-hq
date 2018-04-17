@@ -76,6 +76,12 @@
                         {% case "no forms or case list" %}
                             <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms or case list.
+                        {% case "training module parent" %}
+                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
+                            cannot have a training module as a parent module.
+                        {% case "training module child" %}
+                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
+                            is a training module and therefore cannot have a parent module.
                         {% case "no reports" %}
                             <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                             has no reports.

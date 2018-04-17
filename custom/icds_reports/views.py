@@ -209,6 +209,9 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
+            self.kwargs['domain']
+        ).location_ids())
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -690,7 +693,8 @@ class ExportIndicatorView(View):
                 awcs,
                 pdf_format,
                 month,
-                year
+                year,
+                request.couch_user
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})

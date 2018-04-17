@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 from copy import copy
 
@@ -39,7 +40,7 @@ class KafkaChangeFeed(ChangeFeed):
         self.process_num = process_num
 
     def __unicode__(self):
-        return u'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
+        return 'KafkaChangeFeed: topics: {}, group: {}'.format(self._topics, self._group_id)
 
     @property
     def topics(self):

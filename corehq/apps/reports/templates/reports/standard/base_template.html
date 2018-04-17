@@ -21,6 +21,7 @@
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
     {% include 'reports/partials/filters_js.html' %}
     <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
+    <script src="{% static 'hqpillow_retry/js/pillow_errors.js' %}"></script>
     {% endcompress %}
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
@@ -88,6 +89,8 @@
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
     {% endif %}
+    {% initial_page_data 'slug' report.slug %}
+
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

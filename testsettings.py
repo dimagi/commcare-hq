@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from settings import *
 
 # note: the only reason these are prepended to INSTALLED_APPS is because of
