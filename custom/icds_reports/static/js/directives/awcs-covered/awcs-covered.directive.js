@@ -2,7 +2,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCasReachService,
-                                             locationsService, userLocationId, storageService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -131,11 +132,13 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -197,11 +200,11 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return num['x'] === date; });
                         return d3.format(",")(day['y']);
                     };
 
-                    var tooltipContent = vm.tooltipContent(d.value, findValue(vm.chartData[0].values, d.value));
+                    var tooltipContent = vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), findValue(vm.chartData[0].values, d.value));
                     return tooltipContent;
                 });
                 return chart;
@@ -229,7 +232,7 @@ function AWCSCoveredController($scope, $routeParams, $location, $filter, icdsCas
     };
 }
 
-AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService'];
+AWCSCoveredController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('awcsCovered', function() {
     return {

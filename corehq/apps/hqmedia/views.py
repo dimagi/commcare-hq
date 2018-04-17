@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from mimetypes import guess_all_extensions, guess_type
 import uuid
 import zipfile
@@ -20,6 +21,7 @@ from django.http import HttpResponse, Http404, HttpResponseServerError, HttpResp
 from django.shortcuts import render
 import shutil
 from corehq import privileges
+from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -501,7 +503,7 @@ def iter_media_files(media_objects):
     return _media_files(), errors
 
 
-def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None):
+def iter_app_files(app, include_multimedia_files, include_index_files, build_profile_id=None, download_targeted_version=False):
     file_iterator = []
     errors = []
     if include_multimedia_files:
@@ -511,7 +513,9 @@ def iter_app_files(app, include_multimedia_files, include_index_files, build_pro
             languages = app.build_profiles[build_profile_id].langs
         file_iterator, errors = iter_media_files(app.get_media_objects(languages=languages))
     if include_index_files:
-        index_files, index_file_errors = iter_index_files(app, build_profile_id=build_profile_id)
+        index_files, index_file_errors = iter_index_files(
+            app, build_profile_id=build_profile_id, download_targeted_version=download_targeted_version
+        )
         if index_file_errors:
             errors.extend(index_file_errors)
         file_iterator = itertools.chain(file_iterator, index_files)
@@ -562,6 +566,7 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
         build_profile_id = None
         if domain_has_privilege(request.domain, privileges.BUILD_PROFILES):
             build_profile_id = request.GET.get('profile')
+        download_targeted_version = request.GET.get('download_targeted_version') == 'true'
         download.set_task(build_application_zip.delay(
             include_multimedia_files=self.include_multimedia_files,
             include_index_files=self.include_index_files,
@@ -569,8 +574,9 @@ class DownloadMultimediaZip(View, ApplicationViewMixin):
             download_id=download.download_id,
             compress_zip=self.compress_zip,
             filename=self.zip_name,
-            build_profile_id=build_profile_id)
-        )
+            build_profile_id=build_profile_id,
+            download_targeted_version=download_targeted_version,
+        ))
         return download.get_start_response()
 
     @method_decorator(safe_cached_download)
@@ -658,22 +664,35 @@ class ViewMultimediaFile(View):
         return response
 
 
-def iter_index_files(app, build_profile_id=None):
+def iter_index_files(app, build_profile_id=None, download_targeted_version=False):
     from corehq.apps.app_manager.views.download import download_index_files
     from dimagi.utils.logging import notify_exception
-    skip_files = ('profile.xml', 'profile.ccpr', 'media_profile.xml')
+    skip_files = [
+        text_format.format(suffix)
+        for text_format in ['profile{}.xml', 'profile{}.ccpr', 'media_profile{}.xml']
+        for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
+    ]
     text_extensions = ('.xml', '.ccpr', '.txt')
     files = []
     errors = []
 
     def _get_name(f):
-        return {'media_profile.ccpr': 'profile.ccpr'}.get(f, f)
+        return {
+            'media_profile{}.ccpr'.format(suffix): 'profile.ccpr'
+            for suffix in ['', '-' + TARGET_COMMCARE, '-' + TARGET_COMMCARE_LTS]
+        }.get(f, f)
 
     def _encode_if_unicode(s):
         return s.encode('utf-8') if isinstance(s, six.text_type) else s
 
     def _files(files):
         for name, f in files:
+            if download_targeted_version and name == 'media_profile.ccpr':
+                continue
+            elif not download_targeted_version and name in [
+                'media_profile-{}.ccpr'.format(suffix) for suffix in [TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+            ]:
+                continue
             if build_profile_id is not None:
                 name = name.replace(build_profile_id + '/', '')
             if name not in skip_files:

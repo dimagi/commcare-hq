@@ -1,4 +1,4 @@
-var choiceListUtils = (function() {
+hqDefine('reports/js/choice_list_utils', function() {
     var module = {};
     // todo: we may need to support configuring this in the future
     var pageSize = 20;
@@ -13,7 +13,7 @@ var choiceListUtils = (function() {
     module.formatValueForSelect2 = function (val) {
         return {'id': val.value, 'text': val.display || ''};
     };
-    module.formatPageForSelect2 = function (data, page) {
+    module.formatPageForSelect2 = function (data) {
         // parse the results into the format expected by Select2.
         var formattedData = _.map(data, module.formatValueForSelect2);
         return {
@@ -22,4 +22,4 @@ var choiceListUtils = (function() {
         };
     };
     return module;
-})();
+});

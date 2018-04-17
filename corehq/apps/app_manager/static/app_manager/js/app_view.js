@@ -40,7 +40,7 @@ hqDefine("app_manager/js/app_view", function() {
         });
 
         // Multimedia content
-        var MultimediaTab = function () {
+        var multimediaTabModel = function () {
             var self = {};
             self.load_state = ko.observable(null);
             self.multimedia_page_html = ko.observable('');
@@ -63,7 +63,7 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new MultimediaTab();
+            var multimediaTab = new multimediaTabModel();
             $("#multimedia-tab").koApplyBindings(multimediaTab);
             $('[href="#multimedia-tab"]').on('shown.bs.tab', function () {
                 if (multimediaTab.load_state() === null) {

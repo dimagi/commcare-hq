@@ -2,7 +2,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AdultWeightScaleController($scope, $routeParams, $location, $filter, infrastructureService,
-                                             locationsService, userLocationId, storageService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -131,11 +132,13 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -191,8 +194,8 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, dataInMonth);
+                    var dataInMonth = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), dataInMonth);
                 });
                 return chart;
             },
@@ -221,7 +224,7 @@ function AdultWeightScaleController($scope, $routeParams, $location, $filter, in
     };
 }
 
-AdultWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService'];
+AdultWeightScaleController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('adultWeightScale', function() {
     return {

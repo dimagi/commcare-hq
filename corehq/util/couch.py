@@ -311,6 +311,13 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
     IterResults = namedtuple('IterResults', fields)
     results = IterResults(set(), set(), set(), set(), set())
 
+    def _get_updated_doc_id(doc_update):
+        if isinstance(doc_update.doc, dict):
+            updated_doc_id = doc_update.doc.get('_id')
+        else:
+            updated_doc_id = doc_update.doc._id
+        return updated_doc_id
+
     def _iter_update(doc_ids, try_num):
         with IterDB(db, chunksize=100) as iter_db:
             for chunk in chunked(set(doc_ids), 100):
@@ -325,7 +332,7 @@ def iter_update(db, fn, ids, max_retries=3, verbose=False):
                         if doc_update is None:
                             results.ignored_ids.add(doc_id)
                         elif (not isinstance(doc_update, DocUpdate)
-                              or doc_update.doc.get('_id') != doc_id):
+                              or _get_updated_doc_id(doc_update) != doc_id):
                             results.error_ids.add(doc_id)
                         elif doc_update.delete:
                             iter_db.delete(raw_doc)

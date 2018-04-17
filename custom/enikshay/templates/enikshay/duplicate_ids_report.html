@@ -34,7 +34,7 @@
                     <td>{{ case.case_id }}</td>
                     <td>{{ case.opened_on }}</td>
                     <td>
-                        <a href="{% url 'case_details' request.domain case.case_id %}">Case Details</a>
+                        <a href="{% url 'case_data' request.domain case.case_id %}">Case Details</a>
                     </td>
                     <td>{{ case.form_name }}</td>
                     <td>{{ case.username }}</td>

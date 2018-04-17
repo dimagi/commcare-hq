@@ -6,10 +6,10 @@ from couchdbkit.ext.django.schema import SchemaProperty, StringProperty
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-from corehq.apps.locations.models import SQLLocation
+from casexml.apps.case.xform import extract_case_blocks
 from corehq.motech.repeaters.models import CaseRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.toggles import OPENMRS_INTEGRATION
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
@@ -64,22 +64,37 @@ class OpenmrsRepeater(CaseRepeater):
         from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
         return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
 
-    def allowed_to_forward(self, case):
+    def allowed_to_forward(self, payload):
         """
-        Forward if superclass rules say it's OK, and if the last case
-        update did not come from OpenMRS, and if this repeater forwards
-        to the right server for this case.
+        Forward the payload if ...
+
+        * it did not come from OpenMRS, and
+        * CaseRepeater says it's OK for the case types and users of any
+          of the payload's cases, and
+        * this repeater forwards to the right OpenMRS server for any of
+          the payload's cases.
+
+        :param payload: An XFormInstance (not a case)
+
         """
-        if not super(OpenmrsRepeater, self).allowed_to_forward(case):
+        if payload.xmlns == XMLNS_OPENMRS:
+            # payload came from OpenMRS. Don't send it back.
             return False
-        last_form = FormAccessors(case.domain).get_form(case.xform_ids[-1])
-        if last_form.xmlns == XMLNS_OPENMRS:
-            # Case update came from OpenMRS. Don't send it back.
+
+        case_blocks = extract_case_blocks(payload)
+        case_ids = [case_block['@case_id'] for case_block in case_blocks]
+        cases = CaseAccessors(payload.domain).get_cases(case_ids, ordered=True)
+        if not any(CaseRepeater.allowed_to_forward(self, case) for case in cases):
+            # If none of the case updates in the payload are allowed to
+            # be forwarded, drop it.
             return False
-        repeaters = get_case_location_ancestor_repeaters(case)
+
+        repeaters = [repeater for case in cases for repeater in get_case_location_ancestor_repeaters(case)]
         if repeaters and self not in repeaters:
-            # self points to the wrong server for this case. Let the right repeater handle it.
+            # This repeater points to the wrong OpenMRS server for this
+            # payload. Let the right repeater handle it.
             return False
+
         return True
 
     def get_payload(self, repeat_record):

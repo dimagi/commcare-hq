@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import csv
 import os
 from celery.schedules import crontab
@@ -87,7 +88,7 @@ def _track_on_hubspot(webuser, properties):
     if webuser.analytics_enabled:
         # Note: Hubspot recommends OAuth instead of api key
         _hubspot_post(
-            url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+            url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
                 six.moves.urllib.parse.quote(webuser.get_email())
             ),
             data=json.dumps(
@@ -101,7 +102,7 @@ def _track_on_hubspot(webuser, properties):
 def _track_on_hubspot_by_email(email, properties):
     # Note: Hubspot recommends OAuth instead of api key
     _hubspot_post(
-        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+        url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
             six.moves.urllib.parse.quote(email)
         ),
         data=json.dumps(
@@ -119,7 +120,7 @@ def set_analytics_opt_out(webuser, analytics_enabled):
     (ironically) ignore the analytics_enabled flag.
     """
     _hubspot_post(
-        url=u"https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
+        url="https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/{}".format(
             six.moves.urllib.parse.quote(webuser.get_email())
         ),
         data=json.dumps(
@@ -148,7 +149,7 @@ def batch_track_on_hubspot(users_json):
     ]
     :return:
     """
-    _hubspot_post(url=u'https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
+    _hubspot_post(url='https://api.hubapi.com/contacts/v1/contact/batch/', data=users_json)
 
 
 def _hubspot_post(url, data):
@@ -178,7 +179,7 @@ def _get_user_hubspot_id(webuser):
     api_key = settings.ANALYTICS_IDS.get('HUBSPOT_API_KEY', None)
     if api_key and webuser.analytics_enabled:
         req = requests.get(
-            u"https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
+            "https://api.hubapi.com/contacts/v1/contact/email/{}/profile".format(
                 six.moves.urllib.parse.quote(webuser.username)
             ),
             params={'hapikey': api_key},
@@ -211,7 +212,7 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
 
     hubspot_id = settings.ANALYTICS_IDS.get('HUBSPOT_API_ID')
     if hubspot_id and hubspot_cookie:
-        url = u"https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
+        url = "https://forms.hubspot.com/uploads/form/v2/{hubspot_id}/{form_id}".format(
             hubspot_id=hubspot_id,
             form_id=form_id
         )
@@ -520,7 +521,7 @@ def submit_data_to_hub_and_kiss(submit_json):
         except requests.exceptions.HTTPError as e:
             _hubspot_failure_soft_assert(False, e.response.content)
         except Exception as e:
-            notify_exception(None, u"{msg}: {exc}".format(msg=error_message, exc=e))
+            notify_exception(None, "{msg}: {exc}".format(msg=error_message, exc=e))
 
 
 def _track_periodic_data_on_kiss(submit_json):

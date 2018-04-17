@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from corehq.apps.app_manager.dbaccessors import get_app

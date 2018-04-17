@@ -31,7 +31,11 @@ from corehq.apps.cachehq.mixins import (
     CachedCouchDocumentMixin,
     QuickCachedDocumentMixin,
 )
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, VALID_REFERENCED_DOC_TYPES
+from corehq.apps.userreports.const import (
+    FILTER_INTERPOLATION_DOC_TYPES,
+    UCR_SQL_BACKEND,
+    VALID_REFERENCED_DOC_TYPES
+)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -76,7 +80,7 @@ class SQLPartition(DocumentSchema):
     http://architect.readthedocs.io/features/partition/index.html
     """
     column = StringProperty()
-    subtype = StringProperty(choices=['date', 'string_firstchars'])
+    subtype = StringProperty(choices=['date', 'string_firstchars', 'string_lastchars'])
     constraint = StringProperty()
 
 
@@ -176,9 +180,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'or',
                 'filters': [
                     {
-                        'type': 'property_match',
-                        'property_name': 'doc_type',
-                        'property_value': doc_type,
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "doc_type",
+                        },
+                        "operator": "eq",
+                        "property_value": doc_type,
                     }
                     for doc_type in doc_types
                 ],
@@ -194,9 +202,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def _get_domain_filter_spec(self):
         return {
-            'type': 'property_match',
-            'property_name': 'domain',
-            'property_value': self.domain,
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "eq",
+            "property_value": self.domain,
         }
 
     @property
@@ -373,31 +385,40 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
         """Returns a list of case types or xmlns from the filter of this data source.
 
         If this can't figure out the case types or xmlns's that filter, then returns [None]
+        Currently always returns a list because it is called by a loop in _iteratively_build_table
+        Could be reworked to return [] to be more pythonic
         """
-        def _get_property_value(config_filter, prop_name):
-            if config_filter.get('type') != 'boolean_expression':
-                return [None]
-
-            if config_filter['operator'] not in ('eq', 'in'):
-                return [None]
-
-            expression = config_filter['expression']
-            if expression['type'] == 'property_name' and expression['property_name'] == prop_name:
-                prop_value = config_filter['property_value']
-                if not isinstance(prop_value, list):
-                    prop_value = [prop_value]
-                return prop_value
+        if self.referenced_doc_type not in FILTER_INTERPOLATION_DOC_TYPES:
             return [None]
 
-        if self.referenced_doc_type == 'CommCareCase':
-            prop_value = _get_property_value(self.configured_filter, 'type')
-            if prop_value:
-                return prop_value
-        elif self.referenced_doc_type == 'XFormInstance':
-            prop_value = _get_property_value(self.configured_filter, 'xmlns')
-            if prop_value:
-                return prop_value
+        property_name = FILTER_INTERPOLATION_DOC_TYPES[self.referenced_doc_type]
+        prop_value = self._filter_interploation_helper(self.configured_filter, property_name)
 
+        return prop_value or [None]
+
+    def _filter_interploation_helper(self, config_filter, property_name):
+        filter_type = config_filter.get('type')
+        if filter_type == 'and':
+            sub_config_filters = [
+                self._filter_interploation_helper(f, property_name)
+                for f in config_filter.get('filters')
+            ]
+            for filter_ in sub_config_filters:
+                if filter_[0]:
+                    return filter_
+
+        if filter_type != 'boolean_expression':
+            return [None]
+
+        if config_filter['operator'] not in ('eq', 'in'):
+            return [None]
+
+        expression = config_filter['expression']
+        if expression['type'] == 'property_name' and expression['property_name'] == property_name:
+            prop_value = config_filter['property_value']
+            if not isinstance(prop_value, list):
+                prop_value = [prop_value]
+            return prop_value
         return [None]
 
 

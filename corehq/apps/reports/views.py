@@ -20,6 +20,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
+from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 import langcodes
@@ -886,24 +887,14 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=True,
-            ga_tracking_info={
-                'cd4': request.domain,
-                'cd10': report_slug
-            })
+            email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL,
-                ga_track=True,
-                ga_tracking_info={
-                    'cd4': request.domain,
-                    'cd10': report_slug
-                })
+                email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
@@ -1221,10 +1212,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
 
-    user_id = request.couch_user._id
-
-    user = CouchUser.get_by_user_id(user_id, domain)
-
     try:
         send_delayed_report(scheduled_report_id)
     except Exception as e:
@@ -1232,7 +1219,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Test message sent to the report's recipients."))
+        messages.success(request, _("Report sent to this report's recipients"))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
@@ -1450,7 +1437,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
         can_edit_data = self.request.couch_user.can_edit_data
 
-        return {
+        context = {
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
@@ -1464,17 +1451,14 @@ class CaseDataView(BaseProjectReportSectionView):
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
-            "case_hierarchy_options": {
-                "show_view_buttons": True,
-                "get_case_url": _get_case_url,
-                "timezone": timezone
-            },
             "ledgers": ledger_map,
             "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+        return context
 
 
 def form_to_json(domain, form, timezone):

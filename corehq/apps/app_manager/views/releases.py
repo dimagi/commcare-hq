@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import uuid
 
@@ -102,6 +103,11 @@ def paginate_releases(request, domain, app_id):
     for app in saved_apps:
         app['include_media'] = app['doc_type'] != 'RemoteApp'
         app['j2me_enabled'] = app['menu_item_label'] in j2me_enabled_configs
+        app['target_commcare_flavor'] = (
+            SavedAppBuild.get(app['_id']).target_commcare_flavor
+            if toggles.TARGET_COMMCARE_FLAVOR.enabled(domain)
+            else 'none'
+        )
 
     if toggles.APPLICATION_ERROR_REPORT.enabled(request.couch_user.username):
         versions = [app['version'] for app in saved_apps]
@@ -127,6 +133,20 @@ def get_releases_context(request, domain, app_id):
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
+    is_in_mobile_experiment = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
+        request.couch_user.username
+    )
+    is_mobile_ab = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
+        request.couch_user.username, toggles.NAMESPACE_USER
+    )
+    if is_in_mobile_experiment:
+        context.update({
+            'mobile_experience_ab_test': {
+                'name': 'mobile_signups_test_march2018test',
+                'version': 'variation' if is_mobile_ab else 'control',
+            },
+        })
+
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
@@ -144,6 +164,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
+        'is_mobile_experience': (is_in_mobile_experiment and is_mobile_ab),
     })
     if not app.is_remote_app():
         context.update({
@@ -310,18 +331,27 @@ def delete_copy(request, domain, app_id):
 
 
 def odk_install(request, domain, app_id, with_media=False):
+    download_target_version = request.GET.get('download_target_version') == 'true'
     app = get_app(domain, app_id)
     qr_code_view = "odk_qr_code" if not with_media else "odk_media_qr_code"
     build_profile_id = request.GET.get('profile')
     profile_url = app.odk_profile_url if not with_media else app.odk_media_profile_url
+    kwargs = []
     if build_profile_id is not None:
-        profile_url += '?profile={profile}'.format(profile=build_profile_id)
+        kwargs.append('profile={profile}'.format(profile=build_profile_id))
+    if download_target_version:
+        kwargs.append('download_target_version=true')
+    if kwargs:
+        profile_url += '?' + '&'.join(kwargs)
     context = {
         "domain": domain,
         "app": app,
         "qr_code": reverse(qr_code_view,
                            args=[domain, app_id],
-                           params={'profile': build_profile_id}),
+                           params={
+                               'profile': build_profile_id,
+                               'download_target_version': 'true' if download_target_version else 'false',
+                           }),
         "profile_url": profile_url,
     }
     return render(request, "app_manager/odk_install.html", context)
@@ -329,13 +359,19 @@ def odk_install(request, domain, app_id, with_media=False):
 
 def odk_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 
 def odk_media_qr_code(request, domain, app_id):
     profile = request.GET.get('profile')
-    qr_code = get_app(domain, app_id).get_odk_qr_code(with_media=True, build_profile_id=profile)
+    download_target_version = request.GET.get('download_target_version') == 'true'
+    qr_code = get_app(domain, app_id).get_odk_qr_code(
+        with_media=True, build_profile_id=profile, download_target_version=download_target_version
+    )
     return HttpResponse(qr_code, content_type="image/png")
 
 

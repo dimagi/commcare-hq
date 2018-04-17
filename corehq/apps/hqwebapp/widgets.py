@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 from django import forms
 from django.forms.fields import MultiValueField, CharField
@@ -38,7 +39,7 @@ class BootstrapCheckboxInput(CheckboxInput):
         if value not in ('', True, False, None):
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_unicode(value)
-        return mark_safe(u'<label class="checkbox"><input%s /> %s</label>' %
+        return mark_safe('<label class="checkbox"><input%s /> %s</label>' %
                          (flatatt(final_attrs), self.inline_label))
 
 
@@ -66,7 +67,7 @@ class BootstrapAddressFieldWidget(MultiWidget):
         lines = list()
         for field in rendered_widgets:
             lines.append("<p>%s</p>" % field)
-        return u'\n'.join(lines)
+        return '\n'.join(lines)
 #    def value_from_datadict(self, data, files, name):
 #        line_list = [widget.value_from_datadict(data,files,name+'_%s' %i) for i,widget in enumerate(self.widgets)]
 #        try:
@@ -85,7 +86,7 @@ class BootstrapDisabledInput(Input):
         if value != '':
             # Only add the 'value' attribute if a value is non-empty.
             final_attrs['value'] = force_unicode(self._format_value(value))
-        return mark_safe(u'<span class="uneditable-input %s">%s</span><input%s />' %
+        return mark_safe('<span class="uneditable-input %s">%s</span><input%s />' %
                          (attrs.get('class', ''), value, flatatt(final_attrs)))
 
 
@@ -93,7 +94,7 @@ class BootstrapPhoneNumberInput(Input):
     input_type = 'text'
 
     def render(self, name, value, attrs=None):
-        return mark_safe(u"""<div class="input-prepend">
+        return mark_safe("""<div class="input-prepend">
         <span class="add-on">+</span>%s
         </div>""" % super(BootstrapPhoneNumberInput, self).render(name, value, attrs))
 
@@ -190,17 +191,14 @@ class Select2Ajax(forms.TextInput):
             return {"id": val, "text": val}
 
     def render(self, name, value, attrs=None):
+        attrs.update({
+            'class': 'form-control hqwebapp-select2-ajax',
+            'data-initial': json.dumps(self._initial if self._initial is not None else self._clean_initial(value)),
+            'data-endpoint': self.url,
+            'data-page-size': self.page_size,
+            'data-multiple': '1' if self.multiple else '0',
+        })
         output = super(Select2Ajax, self).render(name, value, attrs)
-        output += render_to_string(
-            'hqwebapp/select_2_ajax_widget.html',
-            {
-                'id': attrs.get('id'),
-                'initial': self._initial if self._initial is not None else self._clean_initial(value),
-                'endpoint': self.url,
-                'page_size': self.page_size,
-                'multiple': self.multiple,
-            }
-        )
         return mark_safe(output)
 
 

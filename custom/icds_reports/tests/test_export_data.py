@@ -921,7 +921,7 @@ class TestExportData(TestCase):
                             'Number of adolescent girls 15 to 18 years old that are enrolled for services'
                         ],
                         [
-                            u'st1',
+                            'st1',
                             7266,
                             365,
                             1493,
@@ -941,7 +941,7 @@ class TestExportData(TestCase):
                             12
                         ],
                         [
-                            u'st1',
+                            'st1',
                             7266,
                             365,
                             1493,
@@ -961,7 +961,7 @@ class TestExportData(TestCase):
                             12
                         ],
                         [
-                            u'st1',
+                            'st1',
                             7266,
                             365,
                             1493,
@@ -981,7 +981,7 @@ class TestExportData(TestCase):
                             12
                         ],
                         [
-                            u'st1',
+                            'st1',
                             7266,
                             365,
                             1493,
@@ -1001,7 +1001,7 @@ class TestExportData(TestCase):
                             12
                         ],
                         [
-                            u'st1',
+                            'st1',
                             7266,
                             365,
                             1493,
@@ -1021,7 +1021,7 @@ class TestExportData(TestCase):
                             12
                         ],
                         [
-                            u'st2',
+                            'st2',
                             6662,
                             269,
                             1590,
@@ -1041,7 +1041,7 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            u'st2',
+                            'st2',
                             6662,
                             269,
                             1590,
@@ -1061,7 +1061,7 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            u'st2',
+                            'st2',
                             6662,
                             269,
                             1590,
@@ -1081,7 +1081,7 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            u'st2',
+                            'st2',
                             6662,
                             269,
                             1590,
@@ -1101,7 +1101,7 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
-                            u'st2',
+                            'st2',
                             6662,
                             269,
                             1590,
@@ -1130,8 +1130,8 @@ class TestExportData(TestCase):
                             '16:21:11 15 November 2017'
                         ],
                         [
-                            u'State',
-                            u'st1'
+                            'State',
+                            'st1'
                         ]
                     ]
                 ]

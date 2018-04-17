@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import re
 from dimagi.ext.couchdbkit import (Document, StringProperty,
     BooleanProperty, SchemaListProperty, StringListProperty)

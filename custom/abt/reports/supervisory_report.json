@@ -13,10 +13,12 @@
         "airsmozambique",
         "airskenya",
         "airs-testing",
+        "vectorlink-benin",
+        "vectorlink-ethiopia",
         "vectorlink-uganda"
     ],
     "report_id": "supervisory_report",
-    "data_source_table": "supervisory-005",
+    "data_source_table": "supervisory-006",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",

@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfSevereReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders, ages) {
+    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -205,7 +206,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        return _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return _.find(values, function(num) { return num['x'] === date; });
                     };
 
                     var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -214,7 +215,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
                     var total_measured = findValue(vm.chartData[0].values, d.value).total_measured;
                     var total_weighed = findValue(vm.chartData[0].values, d.value).total_weighed;
                     var height_eligible = findValue(vm.chartData[0].values, d.value).total_height_eligible;
-                    return vm.tooltipContent(d.value, normal, moderate, severe, total_weighed, total_measured, height_eligible);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, total_weighed, total_measured, height_eligible);
                 });
                 return chart;
             },
@@ -246,11 +247,13 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -283,7 +286,7 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 }
 
-PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
+PrevalenceOfSevereReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('prevalenceOfSevere', function() {
     return {

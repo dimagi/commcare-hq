@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import hashlib
 import hmac
 import json
+import six
 
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -31,7 +33,11 @@ class GreenhouseCandidateView(View):
         return super(GreenhouseCandidateView, self).dispatch(request=request, args=args, kwargs=kwargs)
 
     def post(self, request, *args, **kwargs):
-        digester = hmac.new(settings.GREENHOUSE_API_KEY, request.body, hashlib.sha256)
+        digester = hmac.new(
+            settings.GREENHOUSE_API_KEY.encode('utf-8')
+            if isinstance(settings.GREENHOUSE_API_KEY, six.text_type) else settings.GREENHOUSE_API_KEY,
+            request.body, hashlib.sha256
+        )
         calculated_signature = digester.hexdigest()
 
         signature_header = request.META.get('HTTP_SIGNATURE', '').split()

@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from itertools import groupby
 
 from django.conf import settings
@@ -50,7 +51,7 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         if should_use_sql_backend(domain):
-            raise CommandError(u'It looks like {} has already been migrated.'.format(domain))
+            raise CommandError('It looks like {} has already been migrated.'.format(domain))
 
         self.no_input = options.pop('no_input', False)
         self.debug = options.pop('debug', False)

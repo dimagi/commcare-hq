@@ -2,7 +2,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService,
-                                             locationsService, userLocationId, storageService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -129,11 +130,13 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -191,12 +194,12 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%m/%d/%y')(new Date(num.x)) === date;});
+                        var day = _.find(values, function(num) { return num.x === date; });
                         return day.y;
                     };
                     var total = findValue(vm.chartData[0].values, d.value);
                     var value = findValue(vm.chartData[1].values, d.value);
-                    return vm.tooltipContent(d.value, value, total);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value, total);
                 });
                 return chart;
             },
@@ -223,7 +226,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 }
 
-AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService'];
+AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('awcDailyStatus', function() {
     return {

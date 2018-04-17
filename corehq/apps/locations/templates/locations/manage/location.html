@@ -9,6 +9,7 @@
 {% endblock title %}
 
 {% block js %}{{ block.super }}
+    <script src="{% static 'hqwebapp/js/select_2_ajax_widget.js' %}"></script>
     <script src="{% static 'locations/js/location_drilldown.async.js' %}"></script>
     <script src="{% static 'locations/js/location.js' %}"></script>
     {% include 'hqwebapp/includes/ui_element_js.html' %}
@@ -45,7 +46,7 @@
           {% endif %}
 
           {% if location.supply_point_id %}
-          <a class="btn btn-default" href="{% url "case_details" domain location.supply_point_id %}">
+          <a class="btn btn-default" href="{% url "case_data" domain location.supply_point_id %}">
             <i class="fa fa-external-link"></i> {% trans "View Location Case" %}
           </a>
           {% endif %}

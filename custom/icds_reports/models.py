@@ -10,11 +10,13 @@ from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
+    AGG_CHILD_HEALTH_THR_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
+    THRFormsChildHealthAggregationHelper,
 )
 
 
@@ -38,6 +40,8 @@ class AwcLocation(models.Model):
     block_map_location_name = models.TextField(blank=True, null=True)
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -121,6 +125,8 @@ class AggAwcMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
     is_launched = models.TextField(blank=True, null=True)
     num_awcs = models.IntegerField(blank=True, null=True)
     num_launched_states = models.IntegerField(blank=True, null=True)
@@ -160,6 +166,8 @@ class AggAwcMonthly(models.Model):
     num_awc_rank_functional = models.IntegerField(blank=True, null=True)
     num_awc_rank_semi = models.IntegerField(blank=True, null=True)
     num_awc_rank_non = models.IntegerField(blank=True, null=True)
+    num_anc_visits = models.IntegerField(blank=True, null=True)
+    num_children_immunized = models.IntegerField(blank=True, null=True)
     cases_household = models.IntegerField(blank=True, null=True)
     cases_person = models.IntegerField(blank=True, null=True)
     cases_person_all = models.IntegerField(blank=True, null=True)
@@ -400,6 +408,7 @@ class AggChildHealthMonthly(models.Model):
     fully_immunized_late = models.IntegerField(blank=True, null=True)
     weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
     weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
+    days_ration_given_child = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -429,6 +438,8 @@ class AwcLocationMonths(models.Model):
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
     month_display = models.TextField(blank=True, null=True)
+    aww_name = models.TextField(blank=True, null=True)
+    contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -567,6 +578,8 @@ class CcsRecordMonthly(models.Model):
     lactating = models.IntegerField(blank=True, null=True)
     lactating_all = models.IntegerField(blank=True, null=True)
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    add = models.DateField(blank=True, null=True)
+    anc_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -811,3 +824,117 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class AggregateChildHealthTHRForms(models.Model):
+    """Aggregated data for child_health cases based on
+    Take Home Ration forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every child_health case that has had a THR Form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    days_ration_given_child = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child has been given rations this month"
+    )
+
+    class Meta(object):
+        db_table = AGG_CHILD_HEALTH_THR_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = THRFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+
+class ChildHealthMonthly(models.Model):
+    awc_id = models.TextField()
+    case_id = models.TextField(primary_key=True)
+    month = models.DateField()
+    age_in_months = models.IntegerField(blank=True, null=True)
+    open_in_month = models.IntegerField(blank=True, null=True)
+    alive_in_month = models.IntegerField(blank=True, null=True)
+    wer_eligible = models.IntegerField(blank=True, null=True)
+    nutrition_status_last_recorded = models.TextField(blank=True, null=True)
+    current_month_nutrition_status = models.TextField(blank=True, null=True)
+    nutrition_status_weighed = models.IntegerField(blank=True, null=True)
+    num_rations_distributed = models.IntegerField(blank=True, null=True)
+    pse_eligible = models.IntegerField(blank=True, null=True)
+    pse_days_attended = models.IntegerField(blank=True, null=True)
+    born_in_month = models.IntegerField(blank=True, null=True)
+    low_birth_weight_born_in_month = models.IntegerField(blank=True, null=True)
+    bf_at_birth_born_in_month = models.IntegerField(blank=True, null=True)
+    ebf_eligible = models.IntegerField(blank=True, null=True)
+    ebf_in_month = models.IntegerField(blank=True, null=True)
+    ebf_not_breastfeeding_reason = models.TextField(blank=True, null=True)
+    ebf_drinking_liquid = models.IntegerField(blank=True, null=True)
+    ebf_eating = models.IntegerField(blank=True, null=True)
+    ebf_no_bf_no_milk = models.IntegerField(blank=True, null=True)
+    ebf_no_bf_pregnant_again = models.IntegerField(blank=True, null=True)
+    ebf_no_bf_child_too_old = models.IntegerField(blank=True, null=True)
+    ebf_no_bf_mother_sick = models.IntegerField(blank=True, null=True)
+    cf_eligible = models.IntegerField(blank=True, null=True)
+    cf_in_month = models.IntegerField(blank=True, null=True)
+    cf_diet_diversity = models.IntegerField(blank=True, null=True)
+    cf_diet_quantity = models.IntegerField(blank=True, null=True)
+    cf_handwashing = models.IntegerField(blank=True, null=True)
+    cf_demo = models.IntegerField(blank=True, null=True)
+    fully_immunized_eligible = models.IntegerField(blank=True, null=True)
+    fully_immunized_on_time = models.IntegerField(blank=True, null=True)
+    fully_immunized_late = models.IntegerField(blank=True, null=True)
+    counsel_ebf = models.IntegerField(blank=True, null=True)
+    counsel_adequate_bf = models.IntegerField(blank=True, null=True)
+    counsel_pediatric_ifa = models.IntegerField(blank=True, null=True)
+    counsel_comp_feeding_vid = models.IntegerField(blank=True, null=True)
+    counsel_increase_food_bf = models.IntegerField(blank=True, null=True)
+    counsel_manage_breast_problems = models.IntegerField(blank=True, null=True)
+    counsel_skin_to_skin = models.IntegerField(blank=True, null=True)
+    counsel_immediate_breastfeeding = models.IntegerField(blank=True, null=True)
+    recorded_weight = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    recorded_height = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    has_aadhar_id = models.IntegerField(blank=True, null=True)
+    thr_eligible = models.IntegerField(blank=True, null=True)
+    pnc_eligible = models.IntegerField(blank=True, null=True)
+    cf_initiation_in_month = models.IntegerField(blank=True, null=True)
+    cf_initiation_eligible = models.IntegerField(blank=True, null=True)
+    height_measured_in_month = models.IntegerField(blank=True, null=True)
+    current_month_stunting = models.TextField(blank=True, null=True)
+    stunting_last_recorded = models.TextField(blank=True, null=True)
+    wasting_last_recorded = models.TextField(blank=True, null=True)
+    current_month_wasting = models.TextField(blank=True, null=True)
+    valid_in_month = models.IntegerField(blank=True, null=True)
+    valid_all_registered_in_month = models.IntegerField(blank=True, null=True)
+    ebf_no_info_recorded = models.IntegerField(blank=True, null=True)
+    dob = models.DateField(blank=True, null=True)
+    sex = models.TextField(blank=True, null=True)
+    age_tranche = models.TextField(blank=True, null=True)
+    caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
+    minority = models.TextField(blank=True, null=True)
+    resident = models.TextField(blank=True, null=True)
+    immunization_in_month = models.SmallIntegerField(blank=True, null=True)
+    days_ration_given_child = models.SmallIntegerField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'child_health_monthly'

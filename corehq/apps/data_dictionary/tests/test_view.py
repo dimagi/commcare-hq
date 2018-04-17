@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import uuid
 
 from django.urls import reverse
@@ -72,6 +73,13 @@ class UpdateCasePropertyViewTest(TestCase):
     def test_update_with_incorrect_data_type(self):
         self._assert_type()
         post_data = {"properties": '[{"caseType": "caseType", "name": "property", "data_type": "blah"}]'}
+        response = self.client.post(self.url, post_data)
+        self.assertEqual(response.status_code, 400)
+        self._assert_type()
+
+    def test_update_no_name(self):
+        self._assert_type()
+        post_data = {"properties": '[{"caseType": "caseType", "name": "", "data_type": "date"}]'}
         response = self.client.post(self.url, post_data)
         self.assertEqual(response.status_code, 400)
         self._assert_type()

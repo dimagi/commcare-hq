@@ -19,7 +19,9 @@
     <script src="{% static 'reports/js/reports.async.js' %}"></script>
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
-    <script src="{% static 'reports/js/filters.js' %}"></script>
+    {% include 'reports/partials/filters_js.html' %}
+    <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
+    <script src="{% static 'hqpillow_retry/js/pillow_errors.js' %}"></script>
     {% endcompress %}
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
@@ -28,6 +30,8 @@
 
 {% block stylesheets %}
     {{ block.super }}
+
+    <link href="{% static 'select2-3.4.5-legacy/select2.css' %}" rel="stylesheet"/>
 
     {% if less_debug %}
     <link type="text/less"
@@ -85,6 +89,8 @@
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
     {% endif %}
+    {% initial_page_data 'slug' report.slug %}
+
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

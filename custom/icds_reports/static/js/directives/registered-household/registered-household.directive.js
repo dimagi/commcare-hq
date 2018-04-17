@@ -2,7 +2,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
-                                             locationsService, userLocationId, storageService) {
+    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -128,11 +129,13 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -193,11 +196,11 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        var day = _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        var day = _.find(values, function(num) { return num['x'] === date; });
                         return d3.format(",")(day['y']);
                     };
                     var value = findValue(vm.chartData[0].values, d.value);
-                    return vm.tooltipContent(d.value, value);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value);
                 });
                 return chart;
             },
@@ -223,7 +226,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     };
 }
 
-RegisteredHouseholdController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService'];
+RegisteredHouseholdController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('registeredHousehold', function() {
     return {

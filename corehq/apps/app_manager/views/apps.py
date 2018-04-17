@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import copy
 import json
 import os
@@ -53,7 +54,7 @@ from corehq.apps.app_manager.util import (
     get_and_assert_practice_user_in_domain,
 )
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
-    validate_langs, update_linked_app
+    validate_langs, update_linked_app, clear_xmlns_app_id_cache
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
@@ -95,7 +96,7 @@ def delete_app(request, domain, app_id):
     )
     app.save()
     clear_app_cache(request, domain)
-
+    clear_xmlns_app_id_cache(domain)
     return HttpResponseRedirect(reverse(DomainDashboardView.urlname, args=[domain]))
 
 
@@ -230,8 +231,8 @@ def get_app_view_context(request, app):
                               args=(app.domain, app.get_id)),
             'download_url': reverse('download_bulk_ui_translations',
                                     args=(app.domain, app.get_id)),
-            'adjective': _(u"U\u200BI translation"),
-            'plural_noun': _(u"U\u200BI translations"),
+            'adjective': _("U\u200BI translation"),
+            'plural_noun': _("U\u200BI translations"),
         },
         'bulk_app_translation_upload': {
             'action': reverse('upload_bulk_app_translations',
@@ -309,6 +310,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
+            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain),
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
@@ -677,6 +679,7 @@ def edit_app_attr(request, domain, app_id, attr):
         ('auto_gps_capture', None),
         ('use_grid_menus', None),
         ('grid_form_menus', None),
+        ('target_commcare_flavor', None),
         ('comment', None),
         ('custom_base_url', None),
         ('use_j2me_endpoint', None),

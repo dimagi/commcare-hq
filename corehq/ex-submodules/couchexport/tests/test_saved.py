@@ -1,5 +1,6 @@
 # coding=utf-8
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from django.test import TestCase
@@ -35,7 +36,7 @@ class SavedBasicExportTest(TestCase):
 
     def test_file_save_and_load(self):
         payload = 'something small and simple'
-        for name in ['normal', u'हिंदी', None]:
+        for name in ['normal', 'हिंदी', None]:
             saved = SavedBasicExport(configuration=_mk_config(name))
             saved.save()
             saved.set_payload(payload)

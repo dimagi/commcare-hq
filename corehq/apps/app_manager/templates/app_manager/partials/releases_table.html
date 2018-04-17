@@ -97,7 +97,7 @@
                 'error': build_broken
             }">
           <div class="panel-heading">
-              {% if request.user.is_superuser %}
+              {% if request|toggle_enabled:"SUPPORT" %}
                   <div class="release-trash-container">
                     <a href="#"
                        class="hide release-remove"

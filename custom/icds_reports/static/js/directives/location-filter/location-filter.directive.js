@@ -13,7 +13,12 @@ var transformLocationTypeName = function(locationTypeName) {
 function LocationModalController($uibModalInstance, $location, locationsService, selectedLocationId, hierarchy, selectedLocations, locationsCache, maxLevel, userLocationId, showMessage) {
     var vm = this;
 
-    var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var ALL_OPTION = {
+        name: 'All',
+        location_id: 'all',
+        user_have_access: 0,
+        user_have_access_to_parent: 1,
+    };
 
     vm.locationsCache = locationsCache;
     vm.userLocationId = userLocationId;
@@ -117,7 +122,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 }
 
 
-function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations) {
+function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -126,9 +131,19 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     }
 
     vm.userLocationId = userLocationId;
+    vm.allUserLocationId = allUserLocationId;
     vm.animationsEnabled = true;
-    vm.selectedLocationId = $location.search()['location_id'] !== 'undefined' &&
-        $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.userLocationId;
+
+    function locationIdIsNullOrEmpty() {
+        var emptyValues = ['undefined', 'null'];
+        if (!haveAccessToAllLocations) {
+            emptyValues.push('');
+        }
+        return emptyValues.indexOf($location.search()['location_id']) === -1;
+    }
+
+    vm.selectedLocationId = locationIdIsNullOrEmpty() ? $location.search()['location_id'] : vm.userLocationId;
+
     vm.locationsCache = {};
     vm.selectedLocations = [];
     vm.hierarchy = [];
@@ -137,7 +152,12 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     vm.location_id = $location.search()['location_id'] !== 'undefined' &&
         $location.search()['location_id'] !== 'null' ? $location.search()['location_id'] : vm.selectedLocationId;
 
-    var ALL_OPTION = {name: 'All', location_id: 'all'};
+    var ALL_OPTION = {
+        name: 'All',
+        location_id: 'all',
+        "user_have_access": 0,
+        "user_have_access_to_parent": 1,
+    };
 
     var initHierarchy = function() {
         var hierarchy = _.map(locationHierarchy, function(locationType) {
@@ -228,6 +248,31 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
         });
     };
 
+    vm.userHaveAccessToAllLocations = function(locations) {
+        var haveAccessToAllLocationsForLevel = true;
+        window.angular.forEach(locations, function (location) {
+            if (!location.user_have_access) {
+                haveAccessToAllLocationsForLevel = false;
+            }
+        });
+        return haveAccessToAllLocationsForLevel;
+    };
+
+    vm.userLocationIdIsNull = function() {
+        return ["null", "undefined"].indexOf(vm.userLocationId) !== -1;
+    };
+
+    vm.isUserLocationIn = function(locations) {
+        var userLocationInSorted = _.filter(locations, function (location) {
+            return vm.allUserLocationId.indexOf(location.location_id) !== -1;
+        });
+        return userLocationInSorted.length > 0;
+    };
+
+    vm.showAllOption = function(locations) {
+        return ((!vm.userLocationIdIsNull() && !vm.userHaveAccessToAllLocations(locations)) || vm.isUserLocationIn(locations)) && !haveAccessToAllLocations;
+    };
+
     var init = function() {
         if (vm.selectedLocationId && vm.selectedLocationId !== 'all' && vm.selectedLocationId !== 'null') {
             locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
@@ -241,15 +286,16 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
                 for (var parentId in locationsGrouppedByParent) {
                     if (locationsGrouppedByParent.hasOwnProperty(parentId)) {
-                        var sorted_locations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
+                        var sortedLocations = _.sortBy(locationsGrouppedByParent[parentId], function(o) {
                             return o.name;
                         });
-                        if (["null", "undefined"].indexOf(userLocationId) === -1 && parentId === 'root' && !haveAccessToAllLocations) {
-                            vm.locationsCache[parentId] = sorted_locations;
+
+                        if (vm.showAllOption(sortedLocations)) {
+                            vm.locationsCache[parentId] = sortedLocations;
                         } else if (selectedLocation.user_have_access) {
-                            vm.locationsCache[parentId] = [ALL_OPTION].concat(sorted_locations);
+                            vm.locationsCache[parentId] = [ALL_OPTION].concat(sortedLocations);
                         } else {
-                            vm.locationsCache[parentId] = sorted_locations;
+                            vm.locationsCache[parentId] = sortedLocations;
                         }
                     }
                 }
@@ -368,7 +414,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     init();
 }
 
-LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
+LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {

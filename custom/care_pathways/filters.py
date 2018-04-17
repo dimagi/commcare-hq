@@ -300,4 +300,3 @@ class TableCardTypeFilter(TypeFilter):
             # No data selected, select first element from top hierarchy
             selected.append([self.drilldown_map[0].val])
         return selected
-

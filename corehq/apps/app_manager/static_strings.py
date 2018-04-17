@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.utils.translation import ugettext_noop
 
 
@@ -54,7 +55,9 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Choose to label the login buttons with Icons or Text'),
     ugettext_noop('Choose whether or not mobile workers can view previously submitted forms.'),
     ugettext_noop('Choose whether or not to display the \'Incomplete\' button on the ODK home screen'),
+    ugettext_noop('CommCare'),
     ugettext_noop('CommCare Home Screen Logo'),
+    ugettext_noop('CommCare LTS'),
     ugettext_noop('CommCare Sense'),
     ugettext_noop('CommCare Version'),
     ugettext_noop('Configure for low-literate users, J2ME only'),
@@ -173,6 +176,7 @@ STATICALLY_ANALYZABLE_TRANSLATIONS = [
     ugettext_noop('Skip'),
     ugettext_noop('Strict'),
     ugettext_noop('Sync Mode'),
+    ugettext_noop('Target CommCare Flavor'),
     ugettext_noop('Text Input'),
     ugettext_noop('Text'),
     ugettext_noop('This value will set whether the login screen uses customizable icons for login and demo mode options or uses the standard buttons with labels.'),

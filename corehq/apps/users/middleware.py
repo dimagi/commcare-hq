@@ -59,33 +59,3 @@ class UsersMiddleware(MiddlewareMixin):
         elif is_public_reports(view_kwargs, request):
             request.couch_user = AnonymousCouchUser()
         return None
-
-
-class Enforce2FAMiddleware(MiddlewareMixin):
-    """Require all superusers and staff accounts to have Two-Factor Auth enabled"""
-    def __init__(self, get_response=None):
-        super(Enforce2FAMiddleware, self).__init__(get_response)
-
-        if settings.DEBUG:
-            raise django.core.exceptions.MiddlewareNotUsed
-
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        if not (
-            hasattr(request, 'user')
-            and hasattr(request, 'couch_user')
-            and request.user
-            and request.couch_user
-        ):
-            return None
-
-        if (toggles.TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(request.user.username)
-                and not request.couch_user.two_factor_disabled
-                and not request.user.is_verified()
-                and not request.path.startswith('/account/')):
-            return TemplateResponse(
-                request=request,
-                template='two_factor/core/otp_required.html',
-                status=403,
-            )
-        else:
-            return None

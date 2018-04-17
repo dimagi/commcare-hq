@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
@@ -17,10 +18,6 @@ from couchexport.models import Format
 import six
 from six.moves import zip
 from six.moves import map
-
-
-def _encode_if_needed(val):
-    return val.encode("utf8") if isinstance(val, six.text_type) else val
 
 
 class UniqueHeaderGenerator(object):
@@ -152,7 +149,7 @@ class ExportWriter(object):
     max_table_name_size = 500
     target_app = 'Excel'  # Where does this writer export to? Export button to say "Export to Excel"
 
-    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=''):
+    def open(self, header_table, file, max_column_size=2000, table_titles=None, archive_basepath=b''):
         """
         Create any initial files, headings, etc necessary.
         :param header_table: tuple of one of the following formats
@@ -180,7 +177,9 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", six.text_type(name)))
+            if not isinstance(name, six.text_type):
+                name = name.decode('utf8')
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)
@@ -306,10 +305,9 @@ class ZippedExportWriter(OnDiskExportWriter):
     """
     Writer that creates a zip file containing a csv for each table.
     """
-    table_file_extension = ".csv"
+    table_file_extension = b".csv"
 
     def _write_final_result(self):
-
         archive = zipfile.ZipFile(self.file, 'w', zipfile.ZIP_DEFLATED)
         for index, name in self.table_names.items():
             if isinstance(name, six.text_type):
@@ -320,8 +318,10 @@ class ZippedExportWriter(OnDiskExportWriter):
         self.file.seek(0)
 
     def _get_archive_filename(self, name):
-        path = _encode_if_needed(self.archive_basepath)
-        return os.path.join(path, '{}{}'.format(name, self.table_file_extension))
+        path = self.archive_basepath
+        if isinstance(path, six.text_type):
+            path = path.encode('utf-8')
+        return os.path.join(path, b'{}{}'.format(name, self.table_file_extension))
 
 
 class CsvExportWriter(ZippedExportWriter):
@@ -338,7 +338,6 @@ class UnzippedCsvExportWriter(OnDiskExportWriter):
     format = Format.UNZIPPED_CSV
 
     def _write_final_result(self):
-
         tablefile = list(self.tables.values())[0].get_file()
         for line in tablefile:
             self.file.write(line)
@@ -372,7 +371,7 @@ class Excel2007ExportWriter(ExportWriter):
 
         # Source: http://stackoverflow.com/questions/1707890/fast-way-to-filter-illegal-xml-unicode-chars-in-python
         dirty_chars = re.compile(
-            u'[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
+            '[\x00-\x08\x0b-\x1f\x7f-\x84\x86-\x9f\ud800-\udfff\ufdd0-\ufddf\ufffe-\uffff]'
         )
 
         def get_write_value(value):
@@ -383,8 +382,8 @@ class Excel2007ExportWriter(ExportWriter):
             elif value is not None:
                 value = six.text_type(value)
             else:
-                value = u''
-            return dirty_chars.sub(u'?', value)
+                value = ''
+            return dirty_chars.sub('?', value)
 
         # NOTE: don't touch this. changing anything like formatting in the
         # row by referencing the cells will cause huge memory issues.

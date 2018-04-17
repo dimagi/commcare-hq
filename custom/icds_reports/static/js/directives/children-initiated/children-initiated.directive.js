@@ -2,7 +2,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ChildrenInitiatedController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService, genders) {
+    locationsService, userLocationId, storageService, genders, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -142,11 +143,13 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -207,8 +210,8 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
             callback: function(chart) {
                 var tooltip = chart.interactiveLayer.tooltip;
                 tooltip.contentGenerator(function (d) {
-                    var day = _.find(vm.chartData[0].values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === d.value;});
-                    return vm.tooltipContent(d.value, day);
+                    var day = _.find(vm.chartData[0].values, function(num) { return num['x'] === d.value;});
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                 });
                 return chart;
             },
@@ -238,7 +241,7 @@ function ChildrenInitiatedController($scope, $routeParams, $location, $filter, m
     };
 }
 
-ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders'];
+ChildrenInitiatedController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('childrenInitiated', function() {
     return {

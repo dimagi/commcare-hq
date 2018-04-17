@@ -20,7 +20,7 @@ class Dashboard2Report(MultiReport):
     def data_providers(self):
         config = self.report_config
 
-        if 'district_id' in config or 'pps_id' in config:
+        if 'pps_id' in config:
             return [
                 LossRateData(config=config),
                 ExpirationRateData(config=config),
@@ -32,5 +32,6 @@ class Dashboard2Report(MultiReport):
                 LossRateData(config=config),
                 ExpirationRateData(config=config),
                 RecoveryRateByDistrictData(config=config),
+                RecoveryRateByPPSData(config=config),
                 RuptureRateByPPSData(config=config),
             ]

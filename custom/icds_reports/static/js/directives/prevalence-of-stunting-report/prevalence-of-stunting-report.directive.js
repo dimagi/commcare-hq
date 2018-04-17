@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
-                                             locationsService, userLocationId, storageService,  genders, ages) {
+    locationsService, userLocationId, storageService,  genders, ages, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -206,7 +207,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                 tooltip.contentGenerator(function (d) {
 
                     var findValue = function (values, date) {
-                        return _.find(values, function(num) { return d3.time.format('%b %Y')(new Date(num['x'])) === date;});
+                        return _.find(values, function(num) { return num['x'] === date; });
                     };
 
                     var normal = findValue(vm.chartData[0].values, d.value).y;
@@ -214,7 +215,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
                     var severe = findValue(vm.chartData[2].values, d.value).y;
                     var measured = findValue(vm.chartData[0].values, d.value).measured;
                     var all = findValue(vm.chartData[0].values, d.value).all;
-                    return vm.tooltipContent(d.value, normal, moderate, severe, measured, all);
+                    return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), normal, moderate, severe, measured, all);
                 });
                 return chart;
             },
@@ -244,11 +245,13 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -281,7 +284,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
 }
 
-PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
+PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
     return {

@@ -8,6 +8,7 @@ from django.utils.safestring import mark_safe
 from corehq.apps.api.es import ReportXFormES
 from corehq.apps.hqwebapp.decorators import use_timeago
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.view_helpers import case_hierarchy_context
 from pact.enums import PACT_DOMAIN
 from pact.forms.patient_form import PactPatientForm
 from pact.forms.weekly_schedule_form import ScheduleForm
@@ -95,14 +96,10 @@ class PactPatientInfoReport(PactDrilldownReportMixin, PactElasticTabularReportMi
         elif view_mode == 'providers':
             self.report_template_path = "pact/patient/pactpatient_providers.html"
         elif view_mode == 'careplan':
-            ret.update({
-                'case_hierarchy_options': {
-                    "show_view_buttons": False,
-                    "get_case_url": lambda case_id: reverse(
-                        'case_details', args=[PACT_DOMAIN, case_id])
-                },
-                'case': patient_doc,
-            })
+            ret.update(case_hierarchy_context(patient_doc,
+                lambda case_id: reverse('case_data', args=[PACT_DOMAIN, case_id]),
+                show_view_buttons=False
+            ))
             self.report_template_path = "pact/patient/pactpatient_careplan.html"
         else:
             raise Http404

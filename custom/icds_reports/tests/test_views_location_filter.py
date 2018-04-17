@@ -190,7 +190,7 @@ class TestLocationView(TestCase):
                 {
                     'name': 'Test State 2',
                     'user_have_access_to_parent': False,
-                    'location_type_name': u'state',
+                    'location_type_name': 'state',
                     'user_have_access': True,
                     'parent_id': None,
                     'location_id': self.state_2.location_id
