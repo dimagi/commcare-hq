@@ -71,7 +71,7 @@ def get_topic_for_doc_type(doc_type, backend_id=None):
         return doc_type
     else:
         # at some point we may want to make this more granular
-        return META
+        return META  # note this does not map to the 'meta' Couch database
 
 
 def get_topic(document_type_object):
