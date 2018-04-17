@@ -29,6 +29,8 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
+from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
@@ -69,10 +71,17 @@ class CouchSqlDomainMigrator(object):
         print('[ERROR] {}'.format(message))
 
     def migrate(self):
-        self._process_main_forms()
-        self._copy_unprocessed_forms()
-        self._copy_unprocessed_cases()
-        self._calculate_case_diffs()
+        with TimingContext("couch_sql_migration") as timing_context:
+            with timing_context("main_forms"):
+                self._process_main_forms()
+            with timing_context("unprocessed_forms"):
+                self._copy_unprocessed_forms()
+            with timing_context("unprocessed_cases"):
+                self._copy_unprocessed_cases()
+            with timing_context("case_diffs"):
+                self._calculate_case_diffs()
+
+        self._send_timings(timing_context)
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -275,6 +284,11 @@ class CouchSqlDomainMigrator(object):
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
             return iterable
+
+    def _send_timings(self, timing_context):
+        metric_name_template = "commcare.%s"
+        for timing in timing_context.to_list():
+            datadog_histogram(metric_name_template % timing.full_name, timing.duration)
 
 
 def _wrap_form(doc):
