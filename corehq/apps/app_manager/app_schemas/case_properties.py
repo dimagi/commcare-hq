@@ -79,6 +79,10 @@ class ParentCasePropertyBuilder(object):
     def get_properties(self, case_type, already_visited=(),
                        include_shared_properties=True,
                        include_parent_properties=True):
+        # TODO add parent property updates to the parent case type(s) of m_case_type
+        # Currently if a property is only ever updated via parent property
+        # reference, then I think it will not appear in the schema.
+
         if case_type in already_visited:
             return ()
 
@@ -86,14 +90,7 @@ class ParentCasePropertyBuilder(object):
 
         for form in self._get_relevant_forms(include_shared_properties):
             updates = self._get_case_updates(form, case_type)
-            if include_parent_properties:
-                case_properties.update(updates)
-            else:
-                # HACK exclude case updates that reference properties like "parent/property_name"
-                # TODO add parent property updates to the parent case type(s) of m_case_type
-                # Currently if a property is only ever updated via parent property
-                # reference, then I think it will not appear in the schema.
-                case_properties.update(p for p in updates if "/" not in p)
+            case_properties.update(updates)
             case_properties.update(self._get_save_to_case_updates(form, case_type))
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
@@ -111,6 +108,10 @@ class ParentCasePropertyBuilder(object):
             for parent_type in parent_types:
                 for property in get_properties_recursive(parent_type[0]):
                     case_properties.add('%s/%s' % (parent_type[1], property))
+        else:
+            # exclude case updates that reference properties like "parent/property_name"
+            case_properties = {p for p in case_properties if "/" not in p}
+
         return case_properties
 
     @memoized
