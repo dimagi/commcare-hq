@@ -149,16 +149,22 @@ def commcare_fixture_instances(domain, instance_name):
         return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
 
 
+def _commcare_reports_instances(domain, instance_name, prefix):
+    from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+    if instance_name.startswith(prefix) and toggles.MOBILE_UCR.enabled(domain):
+        instance_id = instance_name[len(prefix):]
+        uuid = get_uuids_by_instance_id(domain).get(instance_id, [instance_id])[0]
+        return Instance(id=instance_name, src='jr://fixture/{}{}'.format(prefix, uuid))
+
+
 @register_factory('commcare-reports')
 def commcare_reports_fixture_instances(domain, instance_name):
-    if instance_name.startswith('commcare-reports:') and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+    return _commcare_reports_instances(domain, instance_name, 'commcare-reports:')
 
 
 @register_factory('commcare-reports-filters')
 def commcare_reports_filters_instances(domain, instance_name):
-    if instance_name.startswith('commcare-reports-filters:') and toggles.MOBILE_UCR.enabled(domain):
-        return Instance(id=instance_name, src='jr://fixture/{}'.format(instance_name))
+    return _commcare_reports_instances(domain, instance_name, 'commcare-reports-filters:')
 
 
 @register_factory('locations')
