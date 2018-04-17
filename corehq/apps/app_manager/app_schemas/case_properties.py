@@ -157,23 +157,23 @@ class ParentCasePropertyBuilder(object):
         self.defaults = defaults
         self.per_type_defaults = per_type_defaults or {}
 
-    def _get_relevant_apps(self, include_shared_properties):
+    def _get_relevant_apps(self):
         apps = [self.app]
-        if self.app.case_sharing and include_shared_properties:
+        if self.app.case_sharing:
             apps.extend(self._get_other_case_sharing_apps_in_domain())
         return apps
 
     @memoized
-    def _get_relevant_forms(self, include_shared_properties):
+    def _get_relevant_forms(self):
         forms = []
-        for app in self._get_relevant_apps(include_shared_properties):
+        for app in self._get_relevant_apps():
             forms.extend(_get_forms(app))
         return forms
 
     @memoized
-    def _get_all_case_updates(self, include_shared_properties):
+    def _get_all_case_updates(self):
         all_case_updates = defaultdict(set)
-        for form in self._get_relevant_forms(include_shared_properties):
+        for form in self._get_relevant_forms():
             for case_type, case_properties in form.get_all_case_updates().items():
                 all_case_updates[case_type].update(case_properties)
         return all_case_updates
@@ -189,14 +189,14 @@ class ParentCasePropertyBuilder(object):
             ).items()
         }
 
-    def get_case_relationships_for_case_type(self, case_type, include_shared_properties=True):
-        return self.get_case_relationships(include_shared_properties)[case_type]
+    def get_case_relationships_for_case_type(self, case_type):
+        return self.get_case_relationships()[case_type]
 
     @memoized
-    def get_case_relationships(self, include_shared_properties=True):
+    def get_case_relationships(self):
         case_relationships_by_child_type = defaultdict(set)
 
-        for form in self._get_relevant_forms(include_shared_properties):
+        for form in self._get_relevant_forms():
             for case_type, case_relationships in form.get_contributed_case_relationships().items():
                 case_relationships_by_child_type[case_type].update(case_relationships)
         return case_relationships_by_child_type
@@ -210,23 +210,15 @@ class ParentCasePropertyBuilder(object):
         return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
-    def get_properties(self, case_type, include_shared_properties=True,
-                       include_parent_properties=True):
+    def get_properties(self, case_type, include_parent_properties=True):
         return self.get_properties_by_case_type(
-            include_shared_properties=include_shared_properties,
             include_parent_properties=include_parent_properties)[case_type]
 
     @memoized
-    def get_properties_by_case_type(self, include_shared_properties=True,
-                                    include_parent_properties=True):
-        # TODO add parent property updates to the parent case type(s) of m_case_type
-        # Currently if a property is only ever updated via parent property
-        # reference, then I think it will not appear in the schema.
-
+    def get_properties_by_case_type(self, include_parent_properties=True):
         case_properties_by_case_type = defaultdict(set)
 
-        _zip_update(case_properties_by_case_type,
-                    self._get_all_case_updates(include_shared_properties))
+        _zip_update(case_properties_by_case_type, self._get_all_case_updates())
 
         _zip_update(case_properties_by_case_type, self.per_type_defaults)
 
@@ -274,16 +266,11 @@ class ParentCasePropertyBuilder(object):
                     if case_type in case_types}
         return parent_map
 
-    def get_case_property_map(self, case_types,
-                              include_shared_properties=True,
-                              include_parent_properties=True):
+    def get_case_property_map(self, case_types, include_parent_properties=True):
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(
-                case_type,
-                include_shared_properties=include_shared_properties,
-                include_parent_properties=include_parent_properties,
-            ))
+                case_type, include_parent_properties=include_parent_properties))
             for case_type in case_types
         }
 
@@ -293,16 +280,11 @@ def get_case_relationships(app):
     return builder.get_parent_type_map(app.get_case_types())
 
 
-def get_case_properties(app, case_types, defaults=(),
-                        include_shared_properties=True,
-                        include_parent_properties=True):
+def get_case_properties(app, case_types, defaults=(), include_parent_properties=True):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults)
     return builder.get_case_property_map(
-        case_types,
-        include_shared_properties=include_shared_properties,
-        include_parent_properties=include_parent_properties,
-    )
+        case_types, include_parent_properties=include_parent_properties)
 
 
 def get_all_case_properties(app):
