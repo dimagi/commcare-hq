@@ -177,7 +177,9 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", six.text_type(name)))
+            if not isinstance(name, six.text_type):
+                name = name.decode('utf8')
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)
