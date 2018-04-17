@@ -20,6 +20,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
+from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 import langcodes
@@ -1442,7 +1443,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
         can_edit_data = self.request.couch_user.can_edit_data
 
-        return {
+        context = {
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
@@ -1456,17 +1457,14 @@ class CaseDataView(BaseProjectReportSectionView):
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
-            "case_hierarchy_options": {
-                "show_view_buttons": True,
-                "get_case_url": _get_case_url,
-                "timezone": timezone
-            },
             "ledgers": ledger_map,
             "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+        return context
 
 
 def form_to_json(domain, form, timezone):

@@ -18,6 +18,8 @@
     <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
     <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
+    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -93,7 +95,7 @@
 
                     {% if case.has_indices %}
                     <div class="tab-pane" id="related">
-                        {% render_case_hierarchy case case_hierarchy_options %}
+                        {% include "case/partials/case_hierarchy.html" %}
                     </div>
                     {% endif %}
 
