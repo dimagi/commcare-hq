@@ -103,9 +103,9 @@ class ParentCasePropertyBuilder(object):
 
         updates_by_case_type = self._get_all_case_updates(include_shared_properties)
         case_properties = (
-                set(self.defaults) |
-                set(self.per_type_defaults.get(case_type, [])) |
-                updates_by_case_type[case_type]
+            set(self.defaults) |
+            set(self.per_type_defaults.get(case_type, [])) |
+            updates_by_case_type[case_type]
         )
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
