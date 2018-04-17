@@ -8,10 +8,10 @@ from django.utils.functional import cached_property
 
 
 class Dashboard3Report(MultiReport):
-    title = "Dashboard 3"
+    title = "Tableau de Bord 3"
     fields = [MonthsDateFilter, LocationFilter]
-    name = "Dashboard 3"
-    slug = 'dashboard_3'
+    name = "Tableau de Bord 3"
+    slug = 'tableau_de_bord_3'
     default_rows = 10
     exportable = True
 
