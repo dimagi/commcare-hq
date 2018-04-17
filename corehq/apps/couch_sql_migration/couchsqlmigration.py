@@ -37,6 +37,8 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 import six
+import logging
+_logger = logging.getLogger('main_couch_sql_datamigration')
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -64,13 +66,19 @@ class CouchSqlDomainMigrator(object):
         self.forms_that_touch_cases_without_actions = set()
 
     def log_debug(self, message):
+        _logger.debug(message)
         if self.debug:
             print('[DEBUG] {}'.format(message))
 
     def log_error(self, message):
+        _logger.error(message)
         print('[ERROR] {}'.format(message))
 
+    def log_info(self, message):
+        _logger.info(message)
+
     def migrate(self):
+        self.log_info('migrating domain {}'.format(self.domain))
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_name = "main_forms"
             with timing_context(self.timing_name):
@@ -86,6 +94,7 @@ class CouchSqlDomainMigrator(object):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
+        self.log_info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -103,7 +112,7 @@ class CouchSqlDomainMigrator(object):
             last_received_on = form_received
             try:
                 self._migrate_form_and_associated_models(wrapped_form)
-            except:
+            except Exception:
                 self.log_error("Unable to migrate form: {}".format(change.id))
                 raise
 
@@ -573,3 +582,4 @@ def commit_migration(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name)
     datadog_counter("commcare.couch_sql_migration.total_committed")
+    _logger.info("committed migration for {}".format(domain))
