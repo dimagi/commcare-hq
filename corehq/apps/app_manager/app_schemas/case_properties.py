@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import defaultdict
+from collections import defaultdict, deque, namedtuple
 import functools
 from itertools import chain, groupby
 from operator import attrgetter
@@ -34,6 +34,120 @@ def _get_forms(app):
 def _zip_update(properties_by_case_type, additional_properties_by_case_type):
     for case_type, case_properties in additional_properties_by_case_type.items():
         properties_by_case_type[case_type].update(case_properties)
+
+
+_CaseTypeReference = namedtuple('_CaseTypeReference', ['case_type', 'relationship_path'])
+
+
+class _CaseRelationshipManager(object):
+
+    def __init__(self, parent_type_map, case_types=()):
+        self.parent_type_map = parent_type_map
+        for case_type in case_types:
+            self.parent_type_map[case_type].update({})
+
+    @property
+    @memoized
+    def _all_possible_references(self):
+        """
+        If referral is a child case of patient, which is the child case of a household,
+        then this will return
+
+        {
+            # a referral is a referral
+            ('referral', _CaseTypeReference('referral', ())),
+            # a patient is a patient
+            ('patient', _CaseTypeReference('patient', ())),
+            # a patient is a referal's parent
+            ('patient', _CaseTypeReference('referral', ('parent',)))
+            # a household is a household
+            ('household', _CaseTypeReference('household', ())),
+            # a household is a patient's parent
+            ('household', _CaseTypeReference('patient', ('parent'))),
+            # a houseold is a referral's parent's parent
+            ('household', _CaseTypeReference('referral', ('parent', 'parent')))
+        }
+        """
+        all_possible_references = set()
+        references_queue = deque((case_type, _CaseTypeReference(case_type, ()))
+                                 for case_type in self.parent_type_map)
+        while True:
+            try:
+                current_reference = references_queue.popleft()
+            except IndexError:
+                break
+            all_possible_references.add(current_reference)
+            current_parent, (child, relationship_path) = current_reference
+            for relationship, grandparents in self.parent_type_map[current_parent].items():
+                for grandparent in grandparents:
+                    new_reference = (grandparent, _CaseTypeReference(child, relationship_path + (relationship,)))
+                    cycle_found = (grandparent == child)
+                    already_visited = (new_reference in all_possible_references)
+                    if not cycle_found and not already_visited:
+                        references_queue.append(new_reference)
+        return all_possible_references
+
+    @property
+    @memoized
+    def _case_type_to_references(self):
+        case_type_to_references = defaultdict(set)
+        for case_type, reference in self._all_possible_references:
+            case_type_to_references[case_type].add(reference)
+        return case_type_to_references
+
+    @property
+    @memoized
+    def _reference_to_case_types(self):
+        reference_to_case_types = defaultdict(set)
+        for case_type, reference in self._all_possible_references:
+            reference_to_case_types[reference].add(case_type)
+        return reference_to_case_types
+
+    def expand_case_type(self, case_type):
+        return self._case_type_to_references[case_type]
+
+    def resolve_reference(self, case_type, relationship_path):
+        return self._reference_to_case_types[_CaseTypeReference(case_type, relationship_path)]
+
+
+def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
+                               include_parent_properties):
+    case_relationship_manager = _CaseRelationshipManager(
+        parent_type_map, case_types=case_properties_by_case_type.keys())
+    flattened_case_properties = {
+        (_CaseTypeReference(case_type, relationship_path=case_property_parts[:-1]),
+         case_property_parts[-1])
+        for case_type, case_property_parts in (
+            (case_type, tuple(case_property.split('/')))
+            for case_type, properties in case_properties_by_case_type.items()
+            for case_property in properties
+        )
+    }
+    normalized_case_properties = set()
+    for reference, case_property in flattened_case_properties:
+        resolved_case_types = case_relationship_manager.resolve_reference(
+            reference.case_type, reference.relationship_path)
+        if resolved_case_types:
+            if include_parent_properties:
+                normalized_case_properties.update({
+                    (reference, case_property)
+                    for case_type in resolved_case_types
+                    for expanded_reference in case_relationship_manager.expand_case_type(case_type)
+                })
+            else:
+                normalized_case_properties.update({
+                    (_CaseTypeReference(case_type, ()), case_property)
+                    for case_type in resolved_case_types
+                })
+        else:
+            # if e.g. #case/parent doesn't match any known case type, leave the reference as is
+            normalized_case_properties.add((reference, case_property))
+
+    normalized_case_properties_by_case_type = defaultdict(set)
+    for reference, case_property in normalized_case_properties:
+        normalized_case_properties_by_case_type[reference.case_type].add(
+            '/'.join(reference.relationship_path + (case_property,)))
+    return normalized_case_properties_by_case_type
 
 
 class ParentCasePropertyBuilder(object):
@@ -96,15 +210,18 @@ class ParentCasePropertyBuilder(object):
         return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
-    def get_properties(self, case_type, already_visited=(),
-                       include_shared_properties=True,
+    def get_properties(self, case_type, include_shared_properties=True,
                        include_parent_properties=True):
+        return self.get_properties_by_case_type(
+            include_shared_properties=include_shared_properties,
+            include_parent_properties=include_parent_properties)[case_type]
+
+    @memoized
+    def get_properties_by_case_type(self, include_shared_properties=True,
+                                    include_parent_properties=True):
         # TODO add parent property updates to the parent case type(s) of m_case_type
         # Currently if a property is only ever updated via parent property
         # reference, then I think it will not appear in the schema.
-
-        if case_type in already_visited:
-            return ()
 
         case_properties_by_case_type = defaultdict(set)
 
@@ -116,34 +233,22 @@ class ParentCasePropertyBuilder(object):
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
             _zip_update(case_properties_by_case_type, self._get_data_dictionary_properties_by_case_type())
 
-        case_relationships = self.get_case_relationships_for_case_type(
-            case_type, include_shared_properties)
+        for case_properties in case_properties_by_case_type.values():
+            case_properties.update(self.defaults)
 
-        for case_properties_ in case_properties_by_case_type.values():
-            case_properties_.update(self.defaults)
-
-        case_properties = case_properties_by_case_type[case_type]
-
-        if include_parent_properties:
-            get_properties_recursive = functools.partial(
-                self.get_properties,
-                already_visited=already_visited + (case_type,),
-                include_shared_properties=include_shared_properties
-            )
-            for case_type, identifier in case_relationships:
-                for property in get_properties_recursive(case_type):
-                    case_properties.add('%s/%s' % (identifier, property))
-        else:
-            # exclude case updates that reference properties like "parent/property_name"
-            case_properties = {p for p in case_properties if "/" not in p}
-
-        return case_properties
+        return _normalize_case_properties(
+            case_properties_by_case_type,
+            parent_type_map=self.get_parent_type_map(case_types=None, allow_multiple_parents=True),
+            include_parent_properties=include_parent_properties,
+        )
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
         :returns: A dict
         ```
         {<case_type>: {<relationship>: <parent_type>, ...}, ...}
+
+        if case_types is None, then all available case types will be included
         ```
         """
         parent_map = defaultdict(dict)
