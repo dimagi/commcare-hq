@@ -879,6 +879,8 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 
 LOAD_BALANCED_APPS = {}
 
+STANDBY_LAG = 60
+
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None

@@ -1,7 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 import random
+
 from django.conf import settings
+from django.db import connections
 
 from memoized import memoized
 
@@ -110,7 +113,14 @@ def db_for_read_write(model, write=True):
 def get_load_balanced_read_db(app):
     dbs = read_database_mapping(app)
     if dbs:
-        return random.choice(dbs)
+        alias = random.choice(dbs)
+        cursor = connections[alias].cursor()
+        cursor.execute('SELECT now() - pg_last_xact_replay_timestamp() AS replication_delay;')
+        # a tuple is returned with one item, the lag as a timedelta
+        lag = cursor.fetchone()[0]
+        # lag is None for master node
+        if lag is not None and lag.total_seconds() < settings.STANDBY_LAG
+            return alias
     return 'default'
 
 
