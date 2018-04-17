@@ -92,10 +92,12 @@ class ParentCasePropertyBuilder(object):
             return ()
 
         updates_by_case_type = self._get_all_case_updates(include_shared_properties)
-        case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
+        case_properties = (
+                set(self.defaults) |
+                set(self.per_type_defaults.get(case_type, [])) |
+                updates_by_case_type[case_type]
+        )
 
-        for form in self._get_relevant_forms(include_shared_properties):
-            case_properties.update(updates_by_case_type[case_type])
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
             data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
