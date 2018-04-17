@@ -1,4 +1,4 @@
-3/* global module, inject, _, chai */
+/* global module, inject, _, chai */
 "use strict";
 
 var utils = hqImport('icds_reports/js/spec/utils');
