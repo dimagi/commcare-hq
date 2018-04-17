@@ -1863,17 +1863,18 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return case_properties
 
     @memoized
-    def get_contributed_case_relationships(self, child_case_type):
-        parent_types = set()
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
         parent_case_type = self.get_module().case_type
         for subcase in self.actions.subcases:
-            if subcase.case_type == child_case_type:
-                if child_case_type != parent_case_type and (
-                        self.actions.open_case.is_active() or
-                        self.actions.update_case.is_active() or
-                        self.actions.close_case.is_active()):
-                    parent_types.add((parent_case_type, subcase.reference_id or 'parent'))
-        return parent_types
+            child_case_type = subcase.case_type
+            if child_case_type != parent_case_type and (
+                    self.actions.open_case.is_active() or
+                    self.actions.update_case.is_active() or
+                    self.actions.close_case.is_active()):
+                case_relationships_by_child_type[child_case_type].add(
+                    (parent_case_type, subcase.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -3148,15 +3149,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return case_properties
 
     @memoized
-    def get_contributed_case_relationships(self, child_case_type):
-        parent_types = set()
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == child_case_type:
-                for case_index in subcase.case_indices:
-                    parent = self.actions.get_action_from_tag(case_index.tag)
-                    if parent:
-                        parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
-        return parent_types
+            child_case_type = subcase.case_type
+            for case_index in subcase.case_indices:
+                parent = self.actions.get_action_from_tag(case_index.tag)
+                if parent:
+                    case_relationships_by_child_type[child_case_type].add(
+                        (parent.case_type, case_index.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
