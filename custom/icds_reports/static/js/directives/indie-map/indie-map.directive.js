@@ -122,7 +122,8 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
         if (vm.map.data) {
             _.extend(vm.mapPlugins, {
                 customTable: function () {
-                    if (this.options.rightLegend !== null) {
+                    if (this.options.rightLegend !== null &&
+                        d3.select(this.options.element)[0][0].lastChild.className !== 'map-kpi-outer') {
                         var html = [
                             '<div class="map-kpi" style="width: 310px;">',
                             '<div class="row no-margin">',
@@ -173,9 +174,14 @@ function IndieMapController($scope, $compile, $location, $filter, storageService
 
                         html.push('</div>');
                         d3.select(this.options.element).append('div')
-                            .attr('class', '')
-                            .attr('style', 'position: absolute; top: 2%; left: 0; z-index: -1')
+                            .attr('class', 'map-kpi-outer')
+                            .attr('style', 'position: absolute; top: 15px; left: 0; z-index: -1')
                             .html(html.join(''));
+                        var mapHeight = d3.select(this.options.element)[0][0].offsetHeight;
+                        var legendHeight = d3.select(this.options.element)[0][0].lastElementChild.offsetHeight;
+                        if (mapHeight < legendHeight + 15) {
+                            d3.select(this.options.element)[0][0].style.height = legendHeight + 15 + "px";
+                        }
                     }
                 },
             });
