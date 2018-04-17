@@ -51,7 +51,6 @@
         </ul>
     {% endif %}
     <script>
-        $("#export-download-status .loading-indicator").addClass('hide');
         {% if allow_dropbox_sync %}
             $(".download-form").submit(function() {
                 $("#dropbox-sync-submit").prop('disabled', true);
