@@ -338,12 +338,12 @@ def get_per_type_defaults(domain, case_types=None):
     per_type_defaults = {}
     if (not case_types and is_usercase_in_use(domain)) or USERCASE_TYPE in case_types:
         per_type_defaults = {
-            USERCASE_TYPE: get_usercase_default_properties(domain)
+            USERCASE_TYPE: _get_usercase_default_properties(domain)
         }
 
     callcenter_case_type = get_call_center_case_type_if_enabled(domain)
     if callcenter_case_type and (not case_types or callcenter_case_type in case_types):
-        per_type_defaults[callcenter_case_type] = get_usercase_default_properties(domain)
+        per_type_defaults[callcenter_case_type] = _get_usercase_default_properties(domain)
 
     return per_type_defaults
 
@@ -360,7 +360,7 @@ def get_shared_case_types(app):
 
 
 @quickcache(['domain'])
-def get_usercase_default_properties(domain):
+def _get_usercase_default_properties(domain):
     from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
     from corehq.apps.users.views.mobile.custom_data_fields import CUSTOM_USER_DATA_FIELD_TYPE
 
