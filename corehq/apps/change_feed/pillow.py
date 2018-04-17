@@ -5,7 +5,7 @@ from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.apps.change_feed.producer import ChangeProducer
-from corehq.apps.change_feed.topics import get_topic, get_topic_for_doc_type
+from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
