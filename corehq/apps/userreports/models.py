@@ -180,9 +180,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
                 'type': 'or',
                 'filters': [
                     {
-                        'type': 'property_match',
-                        'property_name': 'doc_type',
-                        'property_value': doc_type,
+                        "type": "boolean_expression",
+                        "expression": {
+                            "type": "property_name",
+                            "property_name": "doc_type",
+                        },
+                        "operator": "eq",
+                        "property_value": doc_type,
                     }
                     for doc_type in doc_types
                 ],
@@ -198,9 +202,13 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def _get_domain_filter_spec(self):
         return {
-            'type': 'property_match',
-            'property_name': 'domain',
-            'property_value': self.domain,
+            "type": "boolean_expression",
+            "expression": {
+                "type": "property_name",
+                "property_name": "domain",
+            },
+            "operator": "eq",
+            "property_value": self.domain,
         }
 
     @property

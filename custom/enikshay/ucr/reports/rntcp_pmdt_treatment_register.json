@@ -3,10 +3,12 @@
         "enikshay",
         "enikshay-reports-qa",
         "sheel-enikshay",
-        "enikshay-performance-test"
+        "enikshay-performance-test",
+        "enikshay-test"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "data_source_table": "episode_drtb_v2",
     "report_id": "rntcp_pmdt_treatment_register",

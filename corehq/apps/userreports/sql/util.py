@@ -4,7 +4,7 @@ import hashlib
 from six.moves import filter
 
 
-def get_column_name(path, suffix=None):
+def get_column_name(path, suffix=None, add_hash=True):
     """
     :param path: xpath from form or case
     :return: column name for postgres
@@ -24,5 +24,7 @@ def get_column_name(path, suffix=None):
         return hashlib.sha1('{}_{}'.format(hashlib.sha1(front).hexdigest(), end)).hexdigest()[:8]
 
     new_parts = path.split("/")
-    full_name = "_".join(filter(None, new_parts + [_hash(parts), suffix]))
+    if add_hash:
+        new_parts.append(_hash(parts))
+    full_name = "_".join(filter(None, new_parts + [suffix]))
     return full_name[-63:]

@@ -53,6 +53,8 @@ from corehq.const import SERVER_DATETIME_FORMAT
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
+import six
+from six.moves import range
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -238,7 +240,12 @@ class MessagingDashboardView(BaseMessagingSectionView):
         start_date = end_date - timedelta(days=days - 1)
         counts = MessagingEvent.get_counts_of_errors(self.domain, start_date, end_date, self.timezone.zone)
 
-        sorted_counts = sorted(counts.items(), key=lambda item: item[1], reverse=True)
+        # Consolidate opt-out errors so they show up as one bar in the graph
+        if SMS.ERROR_PHONE_NUMBER_OPTED_OUT in counts and MessagingEvent.ERROR_PHONE_OPTED_OUT in counts:
+            counts[MessagingEvent.ERROR_PHONE_OPTED_OUT] += counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
+            del counts[SMS.ERROR_PHONE_NUMBER_OPTED_OUT]
+
+        sorted_counts = sorted(six.iteritems(counts), key=lambda item: item[1], reverse=True)
         result['error_count_data'] = [
             {
                 'values': [

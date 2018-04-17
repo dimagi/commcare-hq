@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 from dimagi.utils.couch import sync_docs
 from django.apps import apps

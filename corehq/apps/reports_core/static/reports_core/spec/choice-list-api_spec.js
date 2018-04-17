@@ -1,6 +1,6 @@
 describe('choiceListUtils', function() {
     it('Correctly formats select2 data', function() {
-        result = choiceListUtils.formatPageForSelect2([
+        var result = hqImport('reports/js/choice_list_utils').formatPageForSelect2([
             {
                 value: '123',
                 display: 'Ben',
@@ -22,4 +22,3 @@ describe('choiceListUtils', function() {
         ]);
     });
 });
-

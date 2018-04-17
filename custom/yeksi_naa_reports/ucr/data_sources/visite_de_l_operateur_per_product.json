@@ -210,12 +210,12 @@
         "expression": {
           "type": "property_path",
           "property_path": [
-            "pna_final_stock"
+            "final_pna_stock"
           ]
         },
         "datatype": "integer",
         "is_primary_key": false,
-        "column_id": "pna_final_stock",
+        "column_id": "final_pna_stock",
         "is_nullable": true,
         "type": "expression"
       },

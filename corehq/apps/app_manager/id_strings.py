@@ -190,6 +190,11 @@ def form_locale(form):
                                                   form=form)
 
 
+@pattern('training.root.title')
+def training_module_locale():
+    return 'training.root.title'
+
+
 @pattern('case_lists.m%d')
 def case_list_locale(module):
     return "case_lists.m{module.id}".format(module=module)

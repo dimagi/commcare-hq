@@ -2343,6 +2343,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
 
     @property
     def is_surveys(self):
@@ -2707,7 +2708,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2717,6 +2718,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
             ),
         )
         module.get_or_create_unique_id()
+        return module
+
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -2769,6 +2776,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         if module_case_hierarchy_has_circular_reference(self):
             errors.append({
                 'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
                 'module': self.get_module_info(),
             })
 
@@ -4705,6 +4724,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+    )
+
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
@@ -5083,17 +5107,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
+        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
         try:
-            return self.lazy_fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            kwargs = []
             if build_profile_id is not None:
-                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+            if download_target_version:
+                kwargs.append('download_target_version=true')
+            url += '?' + '&'.join(kwargs)
+
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -5103,7 +5133,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.lazy_put_attachment(png_data, "qrcode.png",
+                self.lazy_put_attachment(png_data, filename,
                                          content_type="image/png")
             return png_data
 
@@ -5522,7 +5552,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None):
+                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -5570,6 +5600,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
+        target_package_id = {
+            TARGET_COMMCARE: 'org.commcare.dalvik',
+            TARGET_COMMCARE_LTS: 'org.commcare.lts',
+        }.get(target_commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5583,6 +5617,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
+            'target_package_id': target_package_id,
         }).encode('utf-8')
 
     @property
@@ -5694,6 +5729,29 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+        if self.target_commcare_flavor != 'none':
+            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)
         if practice_user_restore:

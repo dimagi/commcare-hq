@@ -125,6 +125,9 @@ class StaticToggle(object):
         )
 
     def set(self, item, enabled, namespace=None):
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
@@ -1495,6 +1498,13 @@ MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+TARGET_COMMCARE_FLAVOR = StaticToggle(
+    'target_commcare_flavor',
+    'Target CommCare Flavor.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
     'mobile_signup_redirect_ab_test',
@@ -1511,4 +1521,12 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_USER],
     randomness=0.5
+)
+
+
+TRAINING_MODULE = StaticToggle(
+    'training-module',
+    'Training Modules',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )

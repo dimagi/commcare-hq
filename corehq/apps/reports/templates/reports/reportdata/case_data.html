@@ -20,6 +20,8 @@
     <script src="{% static "reports/js/data_corrections.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
     <script src="{% static "reports/js/single_form.js" %}"></script>
+    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -98,7 +100,7 @@
 
                     {% if case.has_indices %}
                     <div class="tab-pane" id="related">
-                        {% render_case_hierarchy case case_hierarchy_options %}
+                        {% include "case/partials/case_hierarchy.html" %}
                     </div>
                     {% endif %}
 

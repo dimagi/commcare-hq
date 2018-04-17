@@ -56,10 +56,10 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-var DrilldownOptionFilterControl = function (options) {
-    var self = this;
+var drilldownOptionFilterControl = function (options) {
+    var self = {};
 
-    self.notification = new DrilldownFinalNotification(options.notifications);
+    self.notification = new drilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
         return new DrilldownOption(select, options.drilldown_map);
     }));
@@ -103,10 +103,10 @@ var DrilldownOptionFilterControl = function (options) {
             }
         }
     };
-
+    return self;
 };
 
-var DrilldownFinalNotification = function (notifications) {
+var drilldownFinalNotification = function (notifications) {
     var self = this;
     self.notifications = notifications;
     self.message = ko.observable();
@@ -148,7 +148,7 @@ var DrilldownOption = function (select, drilldown_map) {
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    var viewModel = new DrilldownOptionFilterControl(options);
+    var viewModel = drilldownOptionFilterControl(options);
     $(this).koApplyBindings(viewModel);
     viewModel.init();
 };

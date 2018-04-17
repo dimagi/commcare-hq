@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 import logging
-from base64 import b64decode
 
 # Django imports
 from django.conf import settings
@@ -24,7 +23,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
     get_username_and_password_from_request)
-from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -39,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
 logger = logging.getLogger(__name__)
 
@@ -94,7 +92,8 @@ def login_and_domain_required(view_func):
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
-                if (_two_factor_required(view_func, domain, couch_user) and not user.is_verified()):
+                # If the two factor toggle is on, require it for all users.
+                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -118,7 +117,7 @@ def login_and_domain_required(view_func):
             else:
                 raise Http404
         elif (
-            req.path.startswith(u'/a/{}/reports/custom'.format(domain_name)) and
+            req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
             PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
         ):
             return view_func(req, domain_name, *args, **kwargs)
@@ -148,7 +147,7 @@ def domain_required(view_func):
         if domain:
             return view_func(req, domain_name, *args, **kwargs)
         else:
-            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            msg = _('The domain "{domain}" was not found.'.format(domain=domain_name))
             raise Http404(msg)
     return _inner
 
@@ -306,13 +305,14 @@ def two_factor_check(view_func, api_key):
                     return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
                 else:
                     return fn(request, domain, *args, **kwargs)
-
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
 
 
 def _two_factor_required(view_func, domain, couch_user):
+    if TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
+        return not getattr(view_func, 'two_factor_exempt', False)
     return (
         not getattr(view_func, 'two_factor_exempt', False)
         and domain.two_factor_auth

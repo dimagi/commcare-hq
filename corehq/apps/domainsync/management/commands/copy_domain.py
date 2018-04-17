@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from multiprocessing import Process, Queue
 import sys
 import os
@@ -239,7 +240,7 @@ class Command(BaseCommand):
                                                                 endkey=endkey, reduce=False)]
         total = len(doc_ids)
         count = 0
-        msg = u"Found %s matching documents in domain: %s" % (total, domain)
+        msg = "Found %s matching documents in domain: %s" % (total, domain)
         msg += " of type: %s" % (doc_type) if doc_type else ""
         msg += " since: %s" % (since) if since else ""
         print(msg)
