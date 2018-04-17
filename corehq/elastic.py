@@ -234,7 +234,8 @@ def iter_es_docs(index_name, ids):
     """Returns a generator which pulls documents from elasticsearch in chunks"""
     for ids_chunk in chunked(ids, 100):
         for result in mget_query(index_name, ids_chunk, source=True):
-            yield result['_source']
+            if result['found']:
+                yield result['_source']
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
