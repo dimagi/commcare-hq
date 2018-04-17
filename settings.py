@@ -877,8 +877,10 @@ DATADOG_APP_KEY = None
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 WAREHOUSE_DATABASE_ALIAS = 'default'
 
+
 LOAD_BALANCED_APPS = {}
 
+# Maximum seconds of standby lag before we stop reading from it
 STANDBY_LAG = 60
 
 # Override with the PEM export of an RSA private key, for use with any
