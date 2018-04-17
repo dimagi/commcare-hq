@@ -2,7 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import functools
-from itertools import chain
+from itertools import chain, groupby
+from operator import attrgetter
 import logging
 
 from corehq import toggles
@@ -60,6 +61,17 @@ class ParentCasePropertyBuilder(object):
                 all_case_updates[case_type].update(case_properties)
         return all_case_updates
 
+    @memoized
+    def _get_data_dictionary_properties_by_case_type(self):
+        return {
+            case_type: {prop.name for prop in props} for case_type, props in groupby(
+                CaseProperty.objects
+                .filter(case_type__domain=self.app.domain, deprecated=False)
+                .order_by('case_type__name'),
+                key=attrgetter('case_type.name')
+            ).items()
+        }
+
     def get_case_relationships_for_case_type(self, case_type, include_shared_properties=True):
         return self.get_case_relationships(include_shared_properties)[case_type]
 
@@ -98,14 +110,13 @@ class ParentCasePropertyBuilder(object):
                 updates_by_case_type[case_type]
         )
 
-
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
-                                                          case_type__name=case_type, deprecated=False)
-            case_properties |= {prop.name for prop in data_dict_props}
+            data_dict_props = self._get_data_dictionary_properties_by_case_type().get(case_type, set())
+            case_properties.update(data_dict_props)
 
         case_relationships = self.get_case_relationships_for_case_type(
             case_type, include_shared_properties)
+
         if include_parent_properties:
             get_properties_recursive = functools.partial(
                 self.get_properties,
