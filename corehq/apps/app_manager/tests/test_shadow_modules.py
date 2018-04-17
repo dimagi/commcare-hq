@@ -386,7 +386,7 @@ class ShadowModuleFormSelectionSuiteTest(SimpleTestCase, TestXmlMixin):
     def _create_parent_selection_app(self):
         '''
            setUp creates an app with three modules: basic, shadow, and child, all using parrot cases.
-           This apps adds an additional module that uses child cases (baby_parrot) and uses it as the
+           This app adds an additional module that uses child cases (baby_parrot) and uses it as the
            source for the shadow module. Tests verify that when the shadow module uses parent child
            selection, it fetches both parrot and baby_parrot datums, using the correct details.
         '''
