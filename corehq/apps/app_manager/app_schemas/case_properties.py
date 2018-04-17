@@ -116,7 +116,7 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def _get_case_updates(self, form, case_type):
-        return form.get_case_updates_for_case_type(case_type)
+        return form.get_all_case_updates().get(case_type, [])
 
     @memoized
     def _get_save_to_case_updates(self, form, case_type):

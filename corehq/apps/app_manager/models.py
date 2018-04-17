@@ -1795,21 +1795,28 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates_for_case_type(self, case_type):
-        return self.get_all_case_updates().get(case_type, [])
+        return self.get_case_updates().get(case_type, [])
 
-    def get_all_case_updates(self):
+    def get_case_updates(self):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
         # the usercase_update action, and for normal cases, use the
         # update_case action
         case_type = self.get_module().case_type
         format_key = self.get_case_property_name_formatter()
+
+        return {
+            case_type: {
+                format_key(*item) for item in self.actions.update_case.update.items()},
+            USERCASE_TYPE: {
+                format_key(*item) for item in self.actions.usercase_update.update.items()}
+        }
+
+    def get_all_case_updates(self):
         updates_by_case_type = defaultdict(set)
 
-        updates_by_case_type[case_type].update(
-            format_key(*item) for item in self.actions.update_case.update.items())
-        updates_by_case_type[USERCASE_TYPE].update(
-            format_key(*item) for item in self.actions.usercase_update.update.items())
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
 
         for case_type, updates in self.get_all_contributed_subcase_properties().items():
             updates_by_case_type[case_type].update(updates)
@@ -3095,9 +3102,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         return errors
 
     def get_case_updates_for_case_type(self, case_type):
-        return self.get_all_case_updates().get(case_type, [])
+        return self.get_case_updates().get(case_type, [])
 
-    def get_all_case_updates(self):
+    def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
@@ -3114,9 +3121,16 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
         for case_type, updates in scheduler_updates.items():
             updates_by_case_type[case_type].update(updates)
 
-        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+        return updates_by_case_type
+
+    def get_all_case_updates(self):
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
             updates_by_case_type[case_type].update(updates)
 
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
         return updates_by_case_type
 
     @memoized
