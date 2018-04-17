@@ -1794,7 +1794,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates_by_case_type(self, case_type):
+    def get_case_updates_for_case_type(self, case_type):
         return self.get_all_case_updates().get(case_type, [])
 
     def get_all_case_updates(self):
@@ -3094,7 +3094,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates_by_case_type(self, case_type):
+    def get_case_updates_for_case_type(self, case_type):
         return self.get_all_case_updates().get(case_type, [])
 
     def get_all_case_updates(self):
