@@ -11,7 +11,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
         return self;
     };
 
-    var advancedFormsOptions = $.fn.advanceFormsOptions = function ($el, options) {
+    var advancedFormsOptions = function ($el, options) {
         var viewModel = deletedFormsControl(options);
         $el.koApplyBindings(viewModel);
         var $cssClass = $('.' + viewModel.css_class);

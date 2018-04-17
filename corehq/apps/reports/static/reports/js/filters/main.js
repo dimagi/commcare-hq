@@ -164,6 +164,49 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
             model.load(data.locs, data.locId);
         });
+        $('.report-filter-drilldown-options').each(function (i, el) {
+            var $el = $(el), data = $el.data();
+            if ($el.parents('.report-filter-form-drilldown').length > 0) return;
+            if (data.isEmpty) return;
+            var model = drilldownOptions.drilldownOptionFilterControl({
+                drilldown_map: data.drilldownMap,
+                controls: data.controls,
+                selected: data.selected,
+                notifications: data.notifications,
+            });
+            $el.find('#' + data.cssId).koApplyBindings(model);
+            model.init();
+        });
+        $('.report-filter-form-drilldown').each(function (i, el) {
+            // This is copied from drilldown-options above because the order matters
+            // http://manage.dimagi.com/default.asp?231773
+            var $el = $(el), data = $el.data();
+            if (!data.isEmpty) {
+                var model = drilldownOptions.drilldownOptionFilterControl({
+                    drilldown_map: data.drilldownMap,
+                    controls: data.controls,
+                    selected: data.selected,
+                    notifications: data.notifications,
+                });
+                $el.find('#' + data.cssId).koApplyBindings(model);
+                model.init();
+            }
+
+            if (data.unknownAvailable || data.displayAppType) {
+                advancedFormsOptions.advancedFormsOptions(
+                    $el.find('#' + data.cssId + '-advanced-options'),
+                    {
+                        show: data.showAdvanced,
+                        is_unknown_shown: data.unknown.show,
+                        selected_unknown_form: data.unknown.selected,
+                        all_unknown_forms: data.unknown.options,
+                        caption_text: data.unknown.defaultText,
+                        css_id: data.cssId,
+                        css_class: data.cssClass,
+                    }
+                );
+            }
+        });
         $('.report-filter-logtag').each(function(i, el) {
             var $el = $(el), data = $el.data();
             if (data.defaultOn) {
