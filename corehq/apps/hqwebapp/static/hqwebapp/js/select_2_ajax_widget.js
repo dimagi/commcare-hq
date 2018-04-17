@@ -1,20 +1,22 @@
-{% load hq_shared_tags %}
-<script>
+hqDefine("hqwebapp/js/select_2_ajax_widget", function() {
     $(function(){
-        $('#{{ id }}').select2({
-                multiple: {{ multiple|JSON }},
+        $(".hqwebapp-select2-ajax").each(function() {
+            var $select = $(this),
+                data = $select.data();
+            $select.select2({
+                multiple: data.multiple,
                 ajax: {
-                    url: "{{ endpoint }}",
+                    url: data.endpoint,
                     dataType: 'json',
                     data: function (term, page) {
                         return {
                             q: term,
-                            page_limit: {{ page_size }},
+                            page_limit: data.pageSize,
                             page: page,
                          };
                     },
                     results: function (data, page) {
-                        var more = (page * {{ page_size }}) < data.total;
+                        var more = (page * data.pageSize) < data.total;
                         return {results: data.results, more: more};
                     }
                 },
@@ -27,13 +29,12 @@
                     // be improved because this function doesn't actually look at the element's value.
                     // You can use `data({"id": "someid", "text": "sometext"})` as is though.
 
-                    var initial = null;
-                    {% if initial %}
-                        initial = {{ initial|JSON }};
-                    {% endif %}
-                    callback(initial);
+                    if (data.initial && data.initial.length) {
+                        callback(data.initial);
+                    }
                 },
-                escapeMarkup: function (m) { return m; }
-            }).select2('val', {{ initial|JSON }});
-    })
-</script>
+                escapeMarkup: function (m) { return m; },
+            }).select2('val', data.initial);
+        });
+    });
+});
