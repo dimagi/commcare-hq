@@ -20,7 +20,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
-    monitoring, inspect, export,
+    monitoring, inspect,
     deployments, sms, ivr
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
