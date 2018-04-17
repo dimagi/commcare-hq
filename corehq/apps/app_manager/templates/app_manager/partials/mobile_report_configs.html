@@ -69,10 +69,11 @@
                             <select class="form-control"
                                     data-bind="options: availableReportIds, optionsText: $root.defaultReportTitle, value: reportId">
                             </select>
-                            <div data-bind="css: { 'has-error': $root.validateSlug(instanceId()) }">
+                            <div class="form-inline"
+                                 data-bind="css: { 'has-error': $root.validateSlug(instanceId()) }">
                                 <label>{% trans "Report code to use in custom expressions:" %}</label>
                                 <span data-bind="visible: !$root.supportCustomUcrSlug, text: uuid"></span>
-                                <input type="text" class="form-inline"
+                                <input type="text" class="form-control"
                                        data-bind="visible: $root.supportCustomUcrSlug,
                                                   value: instanceId">
                                 <p class="help-block" data-bind="text: $root.validateSlug(instanceId())"></p>
