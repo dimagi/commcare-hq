@@ -30,7 +30,7 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
@@ -572,3 +572,4 @@ def commit_migration(domain_name):
     if not should_use_sql_backend(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name)
+    datadog_counter("commcare.couch_sql_migration.total_committed")
