@@ -107,7 +107,6 @@ def db_for_read_write(model, write=True):
             # a tuple is returned with one item, the lag as a timedelta
             lag = cursor.fetchone()[0]
             # lag is None for master node
-            if lag is not None and lag.total_seconds() < settings.STANDBY_LAG
+            if lag is not None and lag.total_seconds() < settings.STANDBY_LAG:
                 return alias
-            return 'default'
         return partition_config.get_main_db()
