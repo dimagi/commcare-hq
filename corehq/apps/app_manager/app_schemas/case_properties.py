@@ -102,16 +102,17 @@ class ParentCasePropertyBuilder(object):
                                                           case_type__name=case_type, deprecated=False)
             case_properties |= {prop.name for prop in data_dict_props}
 
-        parent_types = self.get_case_relationships_for_case_type(case_type, include_shared_properties)
+        case_relationships = self.get_case_relationships_for_case_type(
+            case_type, include_shared_properties)
         if include_parent_properties:
             get_properties_recursive = functools.partial(
                 self.get_properties,
                 already_visited=already_visited + (case_type,),
                 include_shared_properties=include_shared_properties
             )
-            for parent_type in parent_types:
-                for property in get_properties_recursive(parent_type[0]):
-                    case_properties.add('%s/%s' % (parent_type[1], property))
+            for case_type, identifier in case_relationships:
+                for property in get_properties_recursive(case_type):
+                    case_properties.add('%s/%s' % (identifier, property))
         else:
             # exclude case updates that reference properties like "parent/property_name"
             case_properties = {p for p in case_properties if "/" not in p}
