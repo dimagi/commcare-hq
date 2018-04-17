@@ -30,7 +30,7 @@ hqDefine('app_manager/js/modules/shadow_module_settings', function () {
             });
 
             var sourceModuleModel = function (uniqueId, name, rootId) {
-                var self = this;
+                var self = {};
 
                 self.uniqueId = uniqueId;
                 self.name = name;
