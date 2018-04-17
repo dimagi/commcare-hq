@@ -34,24 +34,24 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                [u'New Test Region', u'50.00%', u'50.00%', u'0.00%', u'0.00%', u'50.00%', u'100.00%', u'41.67%'],
-                [u'Region Test', u'100.00%', u'no data entered', u'100.00%', u'100.00%', u'100.00%',
-                 u'no data entered', u'100.00%'],
-                [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'50.00%', u'50.00%'],
-                [u'Saint-Louis', u'75.00%', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'no data entered', u'75.00%'],
-                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'100.00%', u'100.00%'],
-                [u'Fatick', u'no data entered', u'33.33%', u'no data entered', u'no data entered',
-                 u'no data entered', u'no data entered', u'33.33%'],
-                [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'87.50%', u'87.50%']
+                ['New Test Region', '50.00%', '50.00%', '0.00%', '0.00%', '50.00%', '100.00%', '41.67%'],
+                ['Region Test', '100.00%', 'no data entered', '100.00%', '100.00%', '100.00%',
+                 'no data entered', '100.00%'],
+                ['Region 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
+                 'no data entered', '50.00%', '50.00%'],
+                ['Saint-Louis', '75.00%', 'no data entered', 'no data entered', 'no data entered',
+                 'no data entered', 'no data entered', '75.00%'],
+                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
+                 'no data entered', '100.00%', '100.00%'],
+                ['Fatick', 'no data entered', '33.33%', 'no data entered', 'no data entered',
+                 'no data entered', 'no data entered', '33.33%'],
+                ['Thies', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
+                 'no data entered', '87.50%', '87.50%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [u'Availability (%)', u'83.33%', u'40.00%', u'33.33%', u'66.67%', u'83.33%', u'88.89%', u'76.00%']
+            ['Availability (%)', '83.33%', '40.00%', '33.33%', '66.67%', '83.33%', '88.89%', '76.00%']
         )
 
     def test_availability_report_pps_level(self):
@@ -74,18 +74,18 @@ class TestDashboard1(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            [u'PPS', u'October 2017', u'November 2017', u'December 2017', u'January 2018', u'February 2018',
-             u'March 2018', u'Avg. Availability']
+            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018', 'February 2018',
+             'March 2018', 'Avg. Availability']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                [u'P2', u'100%', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'100.00%']
+                ['P2', '100%', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
+                 'no data entered', '100.00%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [u'Availability (%)', u'100.00%', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered', u'100.00%']
+            ['Availability (%)', '100.00%', 'no data entered', 'no data entered', 'no data entered',
+             'no data entered', 'no data entered', '100.00%']
         )
