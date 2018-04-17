@@ -31,6 +31,11 @@ def _get_forms(app):
     return forms
 
 
+def _zip_update(properties_by_case_type, additional_properties_by_case_type):
+    for case_type, case_properties in additional_properties_by_case_type.items():
+        properties_by_case_type[case_type].update(case_properties)
+
+
 class ParentCasePropertyBuilder(object):
 
     def __init__(self, app, defaults=(), per_type_defaults=None):
@@ -101,19 +106,23 @@ class ParentCasePropertyBuilder(object):
         if case_type in already_visited:
             return ()
 
-        updates_by_case_type = self._get_all_case_updates(include_shared_properties)
-        case_properties = (
-            set(self.defaults) |
-            set(self.per_type_defaults.get(case_type, [])) |
-            updates_by_case_type[case_type]
-        )
+        case_properties_by_case_type = defaultdict(set)
+
+        _zip_update(case_properties_by_case_type,
+                    self._get_all_case_updates(include_shared_properties))
+
+        _zip_update(case_properties_by_case_type, self.per_type_defaults)
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
-            data_dict_props = self._get_data_dictionary_properties_by_case_type().get(case_type, set())
-            case_properties.update(data_dict_props)
+            _zip_update(case_properties_by_case_type, self._get_data_dictionary_properties_by_case_type())
 
         case_relationships = self.get_case_relationships_for_case_type(
             case_type, include_shared_properties)
+
+        for case_properties_ in case_properties_by_case_type.values():
+            case_properties_.update(self.defaults)
+
+        case_properties = case_properties_by_case_type[case_type]
 
         if include_parent_properties:
             get_properties_recursive = functools.partial(
