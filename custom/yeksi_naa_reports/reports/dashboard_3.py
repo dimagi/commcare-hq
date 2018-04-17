@@ -2,7 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from custom.yeksi_naa_reports.filters import LocationFilter, MonthsDateFilter
-from custom.yeksi_naa_reports.sqldata import ValuationOfPNAStockPerProductData
+from custom.yeksi_naa_reports.sqldata import SatisfactionRateAfterDeliveryData, ValuationOfPNAStockPerProductData
 from custom.yeksi_naa_reports.utils import MultiReport
 from django.utils.functional import cached_property
 
@@ -18,5 +18,6 @@ class Dashboard3Report(MultiReport):
     @cached_property
     def data_providers(self):
         return [
+            SatisfactionRateAfterDeliveryData(config=self.report_config),
             ValuationOfPNAStockPerProductData(config=self.report_config),
         ]

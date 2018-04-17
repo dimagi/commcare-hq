@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+from collections import defaultdict
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn
 from sqlagg.filters import EQ, BETWEEN
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
@@ -37,6 +38,14 @@ class YeksiSqlData(SqlData):
     def months(self):
         return [month.date() for month in
                 rrule(freq=MONTHLY, dtstart=self.config['startdate'], until=self.config['enddate'])]
+
+    def date_in_selected_date_range(self, date):
+        return self.months[0] <= date < self.months[-1] + relativedelta(months=1)
+
+    def get_index_of_month_in_selected_data_range(self, date):
+        for index in range(len(self.months)):
+            if date < self.months[index] + relativedelta(months=1):
+                return index
 
 
 class VisiteDeLOperateurDataSource(YeksiSqlData):
@@ -190,16 +199,16 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     def calculate_total_row(self, rows):
         total_row = ['Availability (%)']
-        total_nominator = 0
+        total_numerator = 0
         total_denominator = 0
         if self.loc_id == 'pps_id':
             data = {}
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        [pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered']
+                        pps_data[i + 1] for pps_data in rows if pps_data[i + 1] != 'no data entered'
                     ),
-                    'pps_count': sum([1 for pps_data in rows if pps_data[i + 1] != 'no data entered'])
+                    'pps_count': sum(1 for pps_data in rows if pps_data[i + 1] != 'no data entered')
                 }
                 if data[i]['pps_count']:
                     total_row.append(
@@ -210,13 +219,13 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     )
                 else:
                     total_row.append('no data entered')
-                total_nominator += data[i]['pps_is_available']
+                total_numerator += data[i]['pps_is_available']
                 total_denominator += data[i]['pps_count']
 
             if total_denominator:
                 total_row.append(
                     self.percent_fn(
-                        total_nominator,
+                        total_numerator,
                         total_denominator
                     )
                 )
@@ -224,19 +233,19 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 total_row.append('no data entered')
         else:
             for i in range(len(self.months)):
-                nominator = 0
+                numerator = 0
                 denominator = 0
                 for location in rows:
-                    nominator += sum(rows[location][i].values())
+                    numerator += sum(rows[location][i].values())
                     denominator += len(rows[location][i])
-                total_nominator += nominator
+                total_numerator += numerator
                 total_denominator += denominator
                 if denominator:
-                    total_row.append(self.percent_fn(nominator, denominator))
+                    total_row.append(self.percent_fn(numerator, denominator))
                 else:
                     total_row.append('no data entered')
             if total_denominator:
-                total_row.append(self.percent_fn(total_nominator, total_denominator))
+                total_row.append(self.percent_fn(total_numerator, total_denominator))
             else:
                 total_row.append('no data entered')
         return total_row
@@ -267,39 +276,34 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         loc_names = {}
         if self.loc_id == 'pps_id':
-            for row in rows:
-                if row['real_date'] < self.months[0] or \
-                        self.months[-1] + relativedelta(months=1) <= row['real_date']:
+            for record in records:
+                if not self.date_in_selected_date_range(record['real_date']):
                     continue
-                if row[self.loc_id] not in data:
-                    data[row[self.loc_id]] = ['no data entered'] * len(self.months)
-                    loc_names[row[self.loc_id]] = row[self.loc_name]
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        data[row[self.loc_id]][i] = 0 if row['pps_is_outstock']['html'] == 1 else 1
-                        break
+                if record[self.loc_id] not in data:
+                    data[record[self.loc_id]] = ['no data entered'] * len(self.months)
+                    loc_names[record[self.loc_id]] = record[self.loc_name]
+                month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+                data[record[self.loc_id]][month_index] = 0 if record['pps_is_outstock']['html'] == 1 else 1
         else:
             new_data = {}
-            for row in rows:
-                if row['real_date'] < self.months[0] or \
-                        self.months[-1] + relativedelta(months=1) <= row['real_date']:
+            for record in records:
+                if not self.date_in_selected_date_range(record['real_date']):
                     continue
-                if row[self.loc_id] not in data:
-                    data[row[self.loc_id]] = []
+                if record[self.loc_id] not in data:
+                    data[record[self.loc_id]] = []
                     for i in range(len(self.months)):
-                        data[row[self.loc_id]].append({})
-                    loc_names[row[self.loc_id]] = row[self.loc_name]
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        multiple_rows_per_pps_in_month = data[row[self.loc_id]][i].get(row['pps_id'])
-                        if not multiple_rows_per_pps_in_month or data[row[self.loc_id]][i][row['pps_id']] == 1:
-                            data[row[self.loc_id]][i][row['pps_id']] = 0 if row['pps_is_outstock']['html'] == 1 \
-                                else 1
-                        break
+                        data[record[self.loc_id]].append({})
+                    loc_names[record[self.loc_id]] = record[self.loc_name]
+                month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+                multiple_rows_per_pps_in_month = data[record[self.loc_id]][month_index].get(record['pps_id'])
+                if not multiple_rows_per_pps_in_month or \
+                        data[record[self.loc_id]][month_index][record['pps_id']] == 1:
+                    data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
+                        record['pps_is_outstock']['html'] == 1 else 1
             for location in data:
                 new_data[location] = ['no data entered'] * len(self.months)
                 for i in range(len(self.months)):
@@ -314,20 +318,20 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
-            nominator = 0
+            numerator = 0
             denominator = 0
             for month in data[loc_id]:
                 if month and month != 'no data entered':
                     if self.loc_id == 'pps_id':
-                        nominator += float(month)
+                        numerator += float(month)
                     else:
-                        nominator += float(month[:-1])
+                        numerator += float(month[:-1])
                     denominator += 1
             if denominator:
                 if self.loc_id == 'pps_id':
-                    row.append("{:.2f}%".format(nominator * 100 / denominator))
+                    row.append("{:.2f}%".format(numerator * 100 / denominator))
                 else:
-                    row.append("{:.2f}%".format(nominator / denominator))
+                    row.append("{:.2f}%".format(numerator / denominator))
             else:
                 row.append('no data entered')
             new_rows.append(row)
@@ -351,7 +355,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
@@ -359,15 +363,14 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 'loss_amt': 0,
                 'pna_final_stock': 0
             }
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        if row['loss_amt']:
-                            data[i]['loss_amt'] += row['loss_amt']['html']
-                        if row['pna_final_stock']:
-                            data[i]['pna_final_stock'] += row['pna_final_stock']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            if record['loss_amt']:
+                data[month_index]['loss_amt'] += record['loss_amt']['html']
+            if record['pna_final_stock']:
+                data[month_index]['pna_final_stock'] += record['pna_final_stock']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -410,27 +413,26 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         loc_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row[self.loc_id] not in data:
-                    data[row[self.loc_id]] = ['no data entered'] * len(self.months)
-                    loc_names[row[self.loc_id]] = row[self.loc_name]
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        data[row[self.loc_id]][i] = self.percent_fn(
-                            row['loss_amt']['html'] if row['loss_amt'] else None,
-                            row['pna_final_stock']['html'] if row['pna_final_stock'] else None)
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            if record[self.loc_id] not in data:
+                data[record[self.loc_id]] = ['no data entered'] * len(self.months)
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            data[record[self.loc_id]][month_index] = self.percent_fn(
+                record['loss_amt']['html'] if record['loss_amt'] else None,
+                record['pna_final_stock']['html'] if record['pna_final_stock'] else None)
 
         new_rows = []
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @property
@@ -447,7 +449,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
@@ -455,15 +457,14 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 'expired_pna_valuation': 0,
                 'final_pna_stock_valuation': 0
             }
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        if row['expired_pna_valuation']:
-                            data[i]['expired_pna_valuation'] += row['expired_pna_valuation']['html']
-                        if row['final_pna_stock_valuation']:
-                            data[i]['final_pna_stock_valuation'] += row['final_pna_stock_valuation']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            if record['expired_pna_valuation']:
+                data[month_index]['expired_pna_valuation'] += record['expired_pna_valuation']['html']
+            if record['final_pna_stock_valuation']:
+                data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -506,27 +507,27 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         loc_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row[self.loc_id] not in data:
-                    data[row[self.loc_id]] = ['no data entered'] * len(self.months)
-                    loc_names[row[self.loc_id]] = row[self.loc_name]
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        data[row[self.loc_id]][i] = self.percent_fn(
-                            row['expired_pna_valuation']['html'] if row['expired_pna_valuation'] else None,
-                            row['final_pna_stock_valuation']['html'] if row['final_pna_stock_valuation'] else None)
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            if record[self.loc_id] not in data:
+                data[record[self.loc_id]] = ['no data entered'] * len(self.months)
+                loc_names[record[self.loc_id]] = record[self.loc_name]
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            data[record[self.loc_id]][month_index] = self.percent_fn(
+                record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
+                record['final_pna_stock_valuation']['html'] if record['final_pna_stock_valuation'] else None
+            )
 
         new_rows = []
         for loc_id in data:
             row = [loc_names[loc_id]]
             row.extend(data[loc_id])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @property
@@ -543,7 +544,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
@@ -551,15 +552,14 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 'pps_total_amt_paid': 0,
                 'pps_total_amt_owed': 0
             }
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        if row['pps_total_amt_paid']:
-                            data[i]['pps_total_amt_paid'] += row['pps_total_amt_paid']['html']
-                        if row['pps_total_amt_owed']:
-                            data[i]['pps_total_amt_owed'] += row['pps_total_amt_owed']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            if record['pps_total_amt_paid']:
+                data[month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']['html']
+            if record['pps_total_amt_owed']:
+                data[month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -595,27 +595,27 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         pps_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                if row['pps_id'] not in data:
-                    data[row['pps_id']] = ['no data entered'] * len(self.months)
-                    pps_names[row['pps_id']] = row['pps_name']
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        data[row['pps_id']][i] = self.percent_fn(
-                            row['pps_total_amt_paid']['html'] if row['pps_total_amt_paid'] else None,
-                            row['pps_total_amt_owed']['html'] if row['pps_total_amt_owed'] else None)
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            if record['pps_id'] not in data:
+                data[record['pps_id']] = ['no data entered'] * len(self.months)
+                pps_names[record['pps_id']] = record['pps_name']
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            data[record['pps_id']][month_index] = self.percent_fn(
+                record['pps_total_amt_paid']['html'] if record['pps_total_amt_paid'] else None,
+                record['pps_total_amt_owed']['html'] if record['pps_total_amt_owed'] else None
+            )
 
         new_rows = []
         for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @cached_property
@@ -636,7 +636,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
@@ -644,15 +644,14 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 'montant_paye': 0,
                 'montant_reel_a_payer': 0
             }
-        for row in rows:
-            if self.months[0] <= row['opened_on'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['opened_on'] < self.months[i] + relativedelta(months=1):
-                        if row['montant_paye']:
-                            data[i]['montant_paye'] += row['montant_paye']['html']
-                        if row['montant_reel_a_payer']:
-                            data[i]['montant_reel_a_payer'] += row['montant_reel_a_payer']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['opened_on']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
+            if record['montant_paye']:
+                data[month_index]['montant_paye'] += record['montant_paye']['html']
+            if record['montant_reel_a_payer']:
+                data[month_index]['montant_reel_a_payer'] += record['montant_reel_a_payer']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -686,27 +685,27 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         district_names = {}
-        for row in rows:
-            if self.months[0] <= row['opened_on'] < self.months[-1] + relativedelta(months=1):
-                if row['district_id'] not in data:
-                    data[row['district_id']] = ['no data entered'] * len(self.months)
-                    district_names[row['district_id']] = row['district_name']
-                for i in range(len(self.months)):
-                    if row['opened_on'] < self.months[i] + relativedelta(months=1):
-                        data[row['district_id']][i] = self.percent_fn(
-                            row['montant_paye']['html'] if row['montant_paye'] else None,
-                            row['montant_reel_a_payer']['html'] if row['montant_reel_a_payer'] else None)
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['opened_on']):
+                continue
+            if record['district_id'] not in data:
+                data[record['district_id']] = ['no data entered'] * len(self.months)
+                district_names[record['district_id']] = record['district_name']
+            month_index = self.get_index_of_month_in_selected_data_range(record['opened_on'])
+            data[record['district_id']][month_index] = self.percent_fn(
+                record['montant_paye']['html'] if record['montant_paye'] else None,
+                record['montant_reel_a_payer']['html'] if record['montant_reel_a_payer'] else None
+            )
 
         new_rows = []
         for district in data:
             row = [district_names[district]]
             row.extend(data[district])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @property
@@ -723,23 +722,22 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
             data[i] = {
                 'nb_products_stockout': 0,
-                'pps_nb_products': 0
+                'count_products_select': 0
             }
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        if row['nb_products_stockout']:
-                            data[i]['nb_products_stockout'] += row['nb_products_stockout']['html']
-                        if row['pps_nb_products']:
-                            data[i]['pps_nb_products'] += row['pps_nb_products']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            if record['nb_products_stockout']:
+                data[month_index]['nb_products_stockout'] += record['nb_products_stockout']['html']
+            if record['count_products_select']:
+                data[month_index]['count_products_select'] += record['count_products_select']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
             total_row.append('Rate by Region')
@@ -753,7 +751,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             total_row.append(
                 self.percent_fn(
                     monthly_data['nb_products_stockout'],
-                    monthly_data['pps_nb_products']
+                    monthly_data['count_products_select']
                 )
             )
         return total_row
@@ -769,33 +767,33 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Number of stockout products", SumColumn('nb_products_stockout')),
-            DatabaseColumn("Number of products in pps", SumColumn('pps_nb_products')),
+            DatabaseColumn("Number of products in pps", SumColumn('count_products_select')),
         ]
         return columns
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         pps_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date'] < self.months[-1] + relativedelta(months=1):
-                if row['pps_id'] not in data:
-                    data[row['pps_id']] = ['no data entered'] * len(self.months)
-                    pps_names[row['pps_id']] = row['pps_name']
-                for i in range(len(self.months)):
-                    if row['real_date'] < self.months[i] + relativedelta(months=1):
-                        data[row['pps_id']][i] = self.percent_fn(
-                            row['nb_products_stockout']['html'] if row['nb_products_stockout'] else None,
-                            row['pps_nb_products']['html'] if row['pps_nb_products'] else None)
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date']):
+                continue
+            if record['pps_id'] not in data:
+                data[record['pps_id']] = ['no data entered'] * len(self.months)
+                pps_names[record['pps_id']] = record['pps_name']
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
+            data[record['pps_id']][month_index] = self.percent_fn(
+                record['nb_products_stockout']['html'] if record['nb_products_stockout'] else None,
+                record['count_products_select']['html'] if record['count_products_select'] else None
+            )
 
         new_rows = []
         for pps in data:
             row = [pps_names[pps]]
             row.extend(data[pps])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @cached_property
@@ -809,6 +807,90 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         return headers
 
 
+class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
+    slug = 'satisfaction_rate_after_delivery'
+    comment = '% products ordered vs. delivered'
+    title = 'Satisfaction Rate after delivery'
+    show_total = True
+    custom_total_calculate = True
+
+    def calculate_total_row(self, products):
+        total_row = ['Total (CFA)']
+        for i in range(len(self.months)):
+            total_row.append(self.percent_fn(
+                sum(
+                    products[product_id][i]['numerator'] for product_id in products if
+                    products[product_id][i]['denominator']
+                ),
+                sum(
+                    products[product_id][i]['denominator'] for product_id in products if
+                    products[product_id][i]['denominator']
+                )
+            ))
+        return total_row
+
+    @property
+    def group_by(self):
+        return ['real_date_repeat', 'product_id', 'product_name']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Date", SimpleColumn('real_date_repeat')),
+            DatabaseColumn("Product ID", SimpleColumn('product_id')),
+            DatabaseColumn("Product Name", SimpleColumn('product_name')),
+            DatabaseColumn("Quantity of the product delivered", SumColumn('amt_delivered_convenience')),
+            DatabaseColumn("Quantity of the product  suggested", SumColumn('ideal_topup')),
+        ]
+        return columns
+
+    def get_product_satisfaction_rate_per_month(self, records):
+        data = defaultdict(list)
+        product_names = {}
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            if record['product_id'] not in data:
+                for i in range(len(self.months)):
+                    data[record['product_id']].append(defaultdict(int))
+                product_names[record['product_id']] = record['product_name']
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            if record['amt_delivered_convenience'] and record['ideal_topup']:
+                data[record['product_id']][month_index]['amt_delivered_convenience'] += \
+                    record['amt_delivered_convenience']['html']
+                data[record['product_id']][month_index]['ideal_topup'] += record['ideal_topup']['html']
+        return product_names, data
+
+    def parse_satisfaction_rate_to_rows(self, product_names, data):
+        rows = []
+        for product_id in data:
+            row = [product_names[product_id]]
+            for i in range(len(self.months)):
+                if data[product_id][i]['ideal_topup']:
+                    row.append(
+                        self.percent_fn(data[product_id][i]['amt_delivered_convenience'],
+                                        data[product_id][i]['ideal_topup'])
+                    )
+                else:
+                    row.append('no data entered')
+            rows.append(row)
+        return rows
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        product_names, data = self.get_product_satisfaction_rate_per_month(records)
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_satisfaction_rate_to_rows(product_names, data)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Product'))
+        for month in self.months:
+            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        return headers
+
+
 class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
     slug = 'valuation_of_pna_stock_per_product'
     comment = 'Stock value of available PNA products, per product'
@@ -816,20 +898,19 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, rows):
+    def calculate_total_row(self, records):
         total_row = []
         data = {}
         for i in range(len(self.months)):
             data[i] = {
                 'final_pna_stock_valuation': 0
             }
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        if row['final_pna_stock_valuation']:
-                            data[i]['final_pna_stock_valuation'] += row['final_pna_stock_valuation']['html']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            if record['final_pna_stock_valuation']:
+                data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
 
         total_row.append('Total (CFA)')
         for monthly_data in data.values():
@@ -852,26 +933,25 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def rows(self):
-        rows = self.get_data()
+        records = self.get_data()
         data = {}
         product_names = {}
-        for row in rows:
-            if self.months[0] <= row['real_date_repeat'] < self.months[-1] + relativedelta(months=1):
-                if row['product_id'] not in data:
-                    data[row['product_id']] = [0] * len(self.months)
-                    product_names[row['product_id']] = row['product_name']
-                for i in range(len(self.months)):
-                    if row['real_date_repeat'] < self.months[i] + relativedelta(months=1):
-                        if row['final_pna_stock_valuation']:
-                            data[row['product_id']][i] += row['final_pna_stock_valuation']
-                        break
+        for record in records:
+            if not self.date_in_selected_date_range(record['real_date_repeat']):
+                continue
+            if record['product_id'] not in data:
+                data[record['product_id']] = [0] * len(self.months)
+                product_names[record['product_id']] = record['product_name']
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+            if record['final_pna_stock_valuation']:
+                data[record['product_id']][month_index] += record['final_pna_stock_valuation']
 
         new_rows = []
         for product_id in data:
             row = [product_names[product_id]]
             row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
             new_rows.append(row)
-        self.total_row = self.calculate_total_row(rows)
+        self.total_row = self.calculate_total_row(records)
         return new_rows
 
     @property

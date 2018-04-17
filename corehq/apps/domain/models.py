@@ -318,9 +318,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     # everyone. Set to False so that a message is only counted as being read
     # for a user if only that user has read it.
     count_messages_as_read_by_anyone = BooleanProperty(default=False)
-    # Set to True to allow sending sms and all-label surveys to cases whose
-    # phone number is duplicated with another contact
-    send_to_duplicated_case_numbers = BooleanProperty(default=True)
     enable_registration_welcome_sms_for_case = BooleanProperty(default=False)
     enable_registration_welcome_sms_for_mobile_worker = BooleanProperty(default=False)
     sms_survey_date_format = StringProperty()

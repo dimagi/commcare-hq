@@ -6,6 +6,7 @@ Add `from dev_settings import *` to the top of your localsettings file to use.
 You can then override or append to any of these settings there.
 """
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 LOCAL_APPS = (

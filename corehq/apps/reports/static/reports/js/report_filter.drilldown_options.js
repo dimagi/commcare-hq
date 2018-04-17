@@ -1,9 +1,9 @@
-var DrilldownOptionFilterControl = function (options) {
-    var self = this;
+var drilldownOptionFilterControl = function (options) {
+    var self = {};
 
-    self.notification = new DrilldownFinalNotification(options.notifications);
+    self.notification = drilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
-        return new DrilldownOption(select, options.drilldown_map);
+        return drilldownOption(select, options.drilldown_map);
     }));
 
     self.init = function () {
@@ -13,24 +13,24 @@ var DrilldownOptionFilterControl = function (options) {
         }
     };
 
-    self.updateNextDrilldown = function (trigger_level) {
-        var current_control = self.controls()[trigger_level];
-        var current_selection = current_control.selected(),
-            current_options = current_control.control_options();
+    self.updateNextDrilldown = function (triggerLevel) {
+        var currentControl = self.controls()[triggerLevel];
+        var currentSelection = currentControl.selected(),
+            currentOptions = currentControl.control_options();
 
-        if (trigger_level+1 === self.controls().length) {
-            self.notification.changeMessage(current_selection);
+        if (triggerLevel+1 === self.controls().length) {
+            self.notification.changeMessage(currentSelection);
             return null;
         }
         self.notification.changeMessage('');
 
-        var current_index = _.indexOf(_.pluck(current_options, 'val'), current_selection);
-        for (var l = trigger_level+1; l < self.controls().length; l++) {
-            if (current_index >= 0 && l === trigger_level+1) {
-                var next_options = current_options[current_index].next;
-                self.controls()[trigger_level+1]
+        var currentIndex = _.indexOf(_.pluck(currentOptions, 'val'), currentSelection);
+        for (var l = triggerLevel+1; l < self.controls().length; l++) {
+            if (currentIndex >= 0 && l === triggerLevel+1) {
+                var nextOptions = currentOptions[currentIndex].next;
+                self.controls()[triggerLevel+1]
                     .selected(null)
-                    .control_options(next_options);
+                    .control_options(nextOptions);
             } else {
                 if (self.controls()[l-1].selected() === void(0)) {
                     self.controls()[l].control_options([]);
@@ -38,11 +38,11 @@ var DrilldownOptionFilterControl = function (options) {
             }
         }
     };
-
+    return self;
 };
 
-var DrilldownFinalNotification = function (notifications) {
-    var self = this;
+var drilldownFinalNotification = function (notifications) {
+    var self = {};
     self.notifications = notifications;
     self.message = ko.observable();
 
@@ -54,16 +54,17 @@ var DrilldownFinalNotification = function (notifications) {
         self.message(self.notifications[key]);
         $('.drilldown-notification-tooltip').tooltip();
     };
+    return self;
 };
 
-var DrilldownOption = function (select, drilldown_map) {
-    var self = this;
+var drilldownOption = function (select, drilldownMap) {
+    var self = {};
     self.label = select.label;
     self.default_text = select.default_text;
     self.slug = select.slug;
     self.level = select.level;
 
-    self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
+    self.control_options = ko.observableArray((self.level === 0) ? drilldownMap : []);
     self.selected = ko.observable();
 
     self.is_visible = ko.computed(function () {
@@ -73,10 +74,11 @@ var DrilldownOption = function (select, drilldown_map) {
     self.show_next_drilldown = ko.computed(function () {
         return !(self.control_options().length) && self.selected() !== void(0);
     });
+    return self;
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    var viewModel = new DrilldownOptionFilterControl(options);
+    var viewModel = drilldownOptionFilterControl(options);
     $(this).koApplyBindings(viewModel);
     viewModel.init();
 };

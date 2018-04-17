@@ -168,7 +168,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                 if (jqXHR.status === 400) {
                                     $(".dataTables_empty").html(self.badRequestErrorText);
                                 } else {
-                                    $(".dataTables_empty").html(self.errorText);                                
+                                    $(".dataTables_empty").html(self.errorText);
                                 }
                                 $(".dataTables_empty").show();
                                 if (self.errorCallbacks) {

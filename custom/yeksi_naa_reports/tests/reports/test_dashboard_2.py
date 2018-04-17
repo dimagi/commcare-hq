@@ -31,7 +31,7 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['Region 1', 'no data entered', 'no data entered', '1000.00%'],
+                ['Region 1', 'no data entered', 'no data entered', '1500.00%'],
                 ['Dakar', 'no data entered', 'no data entered', '52200.00%'],
                 ['Region Test', 'no data entered', '2000.00%', 'no data entered'],
                 ['Thies', 'no data entered', 'no data entered', '2300.00%']
@@ -166,10 +166,10 @@ class TestDashboard2(YeksiTestCase):
                 ['PPS 2', 'no data entered', 'no data entered', '0.00%'],
                 ['Virage 1', '0.00%', 'no data entered', 'no data entered'],
                 ['PPS 3', 'no data entered', '0.00%', 'no data entered'],
-                ['Virage 1', 'no data entered', 'no data entered', '100.00%'],
+                ['Virage 1', 'no data entered', 'no data entered', '20.00%'],
                 ['PPS 2', 'no data entered', '0.00%', 'no data entered'],
                 ['PPS 1', 'no data entered', '46.15%', 'no data entered'],
-                ['PPS 3', 'no data entered', 'no data entered', '100.00%'],
+                ['PPS 3', 'no data entered', 'no data entered', '50.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],
                 ['PPS 1', 'no data entered', 'no data entered', '0.00%'],

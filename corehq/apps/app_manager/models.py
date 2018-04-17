@@ -2343,6 +2343,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
 
     @property
     def is_surveys(self):
@@ -2707,7 +2708,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2717,6 +2718,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
             ),
         )
         module.get_or_create_unique_id()
+        return module
+
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -2769,6 +2776,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         if module_case_hierarchy_has_circular_reference(self):
             errors.append({
                 'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
                 'module': self.get_module_info(),
             })
 

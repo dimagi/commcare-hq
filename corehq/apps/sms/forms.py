@@ -183,11 +183,6 @@ class SettingsForm(Form):
         required=False,
         widget=forms.HiddenInput,
     )
-    send_to_duplicated_case_numbers = ChoiceField(
-        required=False,
-        label=ugettext_noop("Send Messages to Non-Unique Phone Numbers"),
-        choices=ENABLED_DISABLED_CHOICES,
-    )
 
     sms_survey_date_format = ChoiceField(
         required=False,
@@ -346,14 +341,6 @@ class SettingsForm(Form):
                               "}",
                 ),
                 data_bind="visible: showRestrictedSMSTimes",
-            ),
-            hqcrispy.FieldWithHelpBubble(
-                "send_to_duplicated_case_numbers",
-                help_bubble_text=_("Enabling this option will send "
-                                   "outgoing-only messages to phone numbers registered "
-                                   "with more than one mobile worker or case. SMS surveys "
-                                   "and keywords will still only work for unique phone "
-                                   "numbers in your project."),
             ),
             hqcrispy.FieldWithHelpBubble(
                 'sms_survey_date_format',
@@ -762,10 +749,6 @@ class SettingsForm(Form):
             return self._clean_time_window_json("sms_conversation_times_json")
         else:
             return []
-
-    def clean_send_to_duplicated_case_numbers(self):
-        return (self.cleaned_data.get("send_to_duplicated_case_numbers")
-            == ENABLED)
 
     def clean_count_messages_as_read_by_anyone(self):
         return (self.cleaned_data.get("count_messages_as_read_by_anyone")

@@ -20,6 +20,7 @@ describe('Newborn Low Weight Directive', function () {
             {id: 'F', name: 'Female'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -30,6 +31,9 @@ describe('Newborn Low Weight Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('low_birth').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<newborn-low-weight data='test'></newborn-low-weight>");
         var compiled = $compile(element)($scope);

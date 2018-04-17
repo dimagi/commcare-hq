@@ -142,7 +142,6 @@ MIDDLEWARE = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
-    'corehq.apps.users.middleware.Enforce2FAMiddleware',
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -340,7 +339,6 @@ HQ_APPS = (
     # custom reports
     'a5288',
     'custom.bihar',
-    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -430,6 +428,8 @@ LOGIN_REDIRECT_URL = 'homepage'
 
 # set to True or False in localsettings to override the value set way down below
 IS_LOCATION_CTE_ENABLED = None
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -1426,7 +1426,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'gsid',
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
@@ -1980,7 +1979,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
-    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
@@ -2166,8 +2164,6 @@ DOMAIN_MODULE_MAP = {
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
-    'gsid': 'custom.apps.gsid',
-    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2332,3 +2328,14 @@ if IS_LOCATION_CTE_ENABLED is None:
         'softlayer',
         'production',
     ]
+
+if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
+    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
+    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+    ]
+else:
+    IS_LOCATION_CTE_ONLY = False

@@ -3,7 +3,8 @@
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function ProgressReportController($scope, $location, progressReportService,
-                                  storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder) {
+    storageService, $routeParams, userLocationId, DTOptionsBuilder, DTColumnDefBuilder, haveAccessToAllLocations) {
+
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -130,11 +131,13 @@ function ProgressReportController($scope, $location, progressReportService,
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -165,7 +168,7 @@ function ProgressReportController($scope, $location, progressReportService,
 }
 
 ProgressReportController.$inject = [
-    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder',
+    '$scope', '$location', 'progressReportService', 'storageService', '$routeParams', 'userLocationId', 'DTOptionsBuilder', 'DTColumnDefBuilder', 'haveAccessToAllLocations',
 ];
 
 window.angular.module('icdsApp').directive('progressReport', function() {

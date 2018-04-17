@@ -37,6 +37,7 @@ describe('Location Filter Controller', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("allUserLocationId", []);
         $provide.constant("haveAccessToAllLocations", true);
         $provide.constant("locationHierarchy", [['awc', ['supervisor']], ['block', ['district']],
             ['district', ['state']], ['state', [null]], ['supervisor', ['block']]]);
@@ -153,6 +154,59 @@ describe('Location Filter Controller', function () {
         var result = controller.selectedLocations;
 
         assert.deepEqual(expected, result);
+    });
+
+    it('tests user have access to all locations', function() {
+        var mockLocations = [
+            {'location_id': 'loc_1', 'name': 'loc_1', 'user_have_access': true},
+            {'location_id': 'loc_2', 'name': 'loc_2', 'user_have_access': true},
+            {'location_id': 'loc_3', 'name': 'loc_3', 'user_have_access': true},
+            {'location_id': 'loc_4', 'name': 'loc_4', 'user_have_access': true},
+        ];
+        assert.equal(true, controller.userHaveAccessToAllLocations(mockLocations));
+    });
+
+    it('tests user dont have access to all locations', function() {
+        var mockLocations = [
+            {'location_id': 'loc_1', 'name': 'loc_1', 'user_have_access': true},
+            {'location_id': 'loc_2', 'name': 'loc_2', 'user_have_access': false},
+            {'location_id': 'loc_3', 'name': 'loc_3', 'user_have_access': true},
+            {'location_id': 'loc_4', 'name': 'loc_4', 'user_have_access': true},
+        ];
+        assert.equal(false, controller.userHaveAccessToAllLocations(mockLocations));
+    });
+
+    it('tests user location Id is null', function() {
+        controller.userLocationId = "null";
+        assert.equal(true, controller.userLocationIdIsNull());
+        controller.userLocationId = "undefined";
+        assert.equal(true, controller.userLocationIdIsNull());
+        controller.userLocationId = '';
+        assert.equal(false, controller.userLocationIdIsNull());
+        controller.userLocationId = 'test_location_id';
+        assert.equal(false, controller.userLocationIdIsNull());
+    });
+
+    it('tests user location id in locations', function() {
+        var mockLocations = [
+            {'location_id': 'loc_1', 'name': 'loc_1', 'user_have_access': true},
+            {'location_id': 'loc_2', 'name': 'loc_2', 'user_have_access': true},
+            {'location_id': 'loc_3', 'name': 'loc_3', 'user_have_access': true},
+            {'location_id': 'loc_4', 'name': 'loc_4', 'user_have_access': true},
+        ];
+        controller.allUserLocationId = ['loc_2'];
+        assert.equal(true, controller.isUserLocationIn(mockLocations));
+    });
+
+    it('tests user location id not in locations', function() {
+        var mockLocations = [
+            {'location_id': 'loc_1', 'name': 'loc_1', 'user_have_access': true},
+            {'location_id': 'loc_2', 'name': 'loc_2', 'user_have_access': true},
+            {'location_id': 'loc_3', 'name': 'loc_3', 'user_have_access': true},
+            {'location_id': 'loc_4', 'name': 'loc_4', 'user_have_access': true},
+        ];
+        controller.allUserLocationId = ['loc_5'];
+        assert.equal(false, controller.isUserLocationIn(mockLocations));
     });
 });
 

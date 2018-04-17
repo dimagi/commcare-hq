@@ -91,7 +91,7 @@ and reasonably performant code for accessing Elasticsearch.
 
 
 Use ESQuery when possible
-=========================
+'''''''''''''''''''''''''
 
 Check out :doc:`/es_query`
 
@@ -104,7 +104,7 @@ Check out :doc:`/es_query`
 
 
 Prefer "get" to "search"
-========================
+''''''''''''''''''''''''
 
 Don't use search to fetch a doc or doc fields by doc id; use "get" instead.
 Searching by id can be easily an order of magnitude (10x) slower. If done in a loop,
@@ -132,19 +132,19 @@ this can effectively grind the ES cluster to a halt.
 
 
 Prefer scroll queries
-=====================
+'''''''''''''''''''''
 
 Use a scroll query when fetching lots of records.
 
 
 Prefer filter to query
-======================
+''''''''''''''''''''''
 
 Don't use ``query`` when you could use ``filter`` if you don't need rank.
 
 
 Use size(0) with aggregations
-=============================
+'''''''''''''''''''''''''''''
 
 Use ``size(0)`` when you're only doing aggregations thing—otherwise you'll
 get back doc bodies as well! Sometimes that's just abstractly wasteful, but often
