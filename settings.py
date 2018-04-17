@@ -880,10 +880,10 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 # A dict of django apps in which the reads are
 # split betweeen the primary and standby db machines
 # Example format:
-# { 
-# "users": 
+# {
+# "users":
 #     {
-#      ["pgmain", 5], 
+#      ["pgmain", 5],
 #      [pgmainstandby", 5]
 #     }
 # }

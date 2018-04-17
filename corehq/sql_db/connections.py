@@ -112,7 +112,7 @@ class ConnectionManager(object):
 
     def get_load_balanced_db_alias(self, app_label, default):
         return self.get_load_balanced_read_db(app_label, default)
-        
+
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
             helper.Session.remove()
