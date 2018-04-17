@@ -5,26 +5,10 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>CommCareHQ Test</title>
-        {% compress css %}
-        {# TODO: DRY up with what's in hqwebapp/templates/base.html #}
-        {# TODO: Some of bootstrap conflicts with mocha (.progress) #}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
-        {% endcompress %}
+
+    {# TODO: Some of bootstrap conflicts with mocha (.progress) #}
+    {% include 'hqwebapp/includes/less.html' with debug=False %}
+
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
     <script src="{% static 'mocha/mocha.js' %}"></script>
