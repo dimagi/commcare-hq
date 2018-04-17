@@ -764,8 +764,7 @@ class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
 
     @allow_remote_invocation
     def get_case_property_map(self):
-        data = all_case_properties_by_domain(self.domain,
-            include_parent_properties=False)
+        data = all_case_properties_by_domain(self.domain, include_parent_properties=False)
         return {
             'data': data,
             'success': True,

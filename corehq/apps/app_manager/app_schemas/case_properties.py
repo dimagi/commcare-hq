@@ -152,10 +152,11 @@ def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
 
 class ParentCasePropertyBuilder(object):
 
-    def __init__(self, app, defaults=(), per_type_defaults=None):
+    def __init__(self, app, defaults=(), per_type_defaults=None, include_parent_properties=True):
         self.app = app
         self.defaults = defaults
         self.per_type_defaults = per_type_defaults or {}
+        self.include_parent_properties = include_parent_properties
 
     def _get_relevant_apps(self):
         apps = [self.app]
@@ -210,12 +211,11 @@ class ParentCasePropertyBuilder(object):
         return get_case_sharing_apps_in_domain(self.app.domain, self.app.id)
 
     @memoized
-    def get_properties(self, case_type, include_parent_properties=True):
-        return self.get_properties_by_case_type(
-            include_parent_properties=include_parent_properties)[case_type]
+    def get_properties(self, case_type):
+        return self.get_properties_by_case_type()[case_type]
 
     @memoized
-    def get_properties_by_case_type(self, include_parent_properties=True):
+    def get_properties_by_case_type(self):
         case_properties_by_case_type = defaultdict(set)
 
         _zip_update(case_properties_by_case_type, self._get_all_case_updates())
@@ -231,7 +231,7 @@ class ParentCasePropertyBuilder(object):
         return _normalize_case_properties(
             case_properties_by_case_type,
             parent_type_map=self.get_parent_type_map(case_types=None, allow_multiple_parents=True),
-            include_parent_properties=include_parent_properties,
+            include_parent_properties=self.include_parent_properties
         )
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
@@ -266,11 +266,10 @@ class ParentCasePropertyBuilder(object):
                     if case_type in case_types}
         return parent_map
 
-    def get_case_property_map(self, case_types, include_parent_properties=True):
+    def get_case_property_map(self, case_types):
         case_types = sorted(case_types)
         return {
-            case_type: sorted(self.get_properties(
-                case_type, include_parent_properties=include_parent_properties))
+            case_type: sorted(self.get_properties(case_type))
             for case_type in case_types
         }
 
@@ -282,9 +281,9 @@ def get_case_relationships(app):
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
-    builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults)
-    return builder.get_case_property_map(
-        case_types, include_parent_properties=include_parent_properties)
+    builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults,
+                                        include_parent_properties=include_parent_properties)
+    return builder.get_case_property_map(case_types)
 
 
 def get_all_case_properties(app):
