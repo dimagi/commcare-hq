@@ -7,7 +7,6 @@ import os
 import tempfile
 import zipfile
 from collections import defaultdict
-from distutils.version import LooseVersion
 from wsgiref.util import FileWrapper
 
 from couchdbkit.exceptions import ResourceConflict, ResourceNotFound
@@ -311,7 +310,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
-            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.build_version >= LooseVersion('2.43'),
+            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
