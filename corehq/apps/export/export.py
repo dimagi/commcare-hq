@@ -334,11 +334,14 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 
 
 def get_export_documents(export_instance, filters):
+    # Pull doc ids from elasticsearch and stream to disk
     query = _get_export_query(export_instance, filters)
     _, temp_path = tempfile.mkstemp()
     with open(temp_path, 'w') as f:
         for doc_id in query.scroll_ids():
             f.write(doc_id + '\n')
+
+    # Stream doc ids from disk and fetch documents from ES in chunks
     with open(temp_path) as f:
         doc_ids = (doc_id.strip() for doc_id in f)
         for doc in iter_es_docs(query.index, doc_ids):
