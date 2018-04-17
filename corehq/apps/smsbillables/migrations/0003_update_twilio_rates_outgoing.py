@@ -4,16 +4,11 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.apps.smsbillables.management.commands.bootstrap_twilio_gateway import \
-    bootstrap_twilio_gateway
 from corehq.sql_db.operations import HqRunPython
 
 
-def update_twilio_rates_outgoing(apps, schema_editor):
-    bootstrap_twilio_gateway(
-        apps,
-        'corehq/apps/smsbillables/management/commands/pricing_data/twilio-rates-2015_10_06.csv'
-    )
+def noop(*args, **kwargs):
+    pass
 
 
 class Migration(migrations.Migration):
@@ -23,5 +18,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = {
-        HqRunPython(update_twilio_rates_outgoing),
+        HqRunPython(noop),
     }
