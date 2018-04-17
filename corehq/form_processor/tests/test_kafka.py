@@ -30,13 +30,13 @@ class KafkaPublishingSQLTest(TestCase):
         self.case_pillow = ConstructedPillow(
             name='test-kafka-case-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'),
+            change_feed=KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='test-kafka-case-feed'),
             processor=self.processor
         )
         self.ledger_pillow = ConstructedPillow(
             name='test-kafka-ledger-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.LEDGER, topics.LEDGER_V2], group_id='test-kafka-ledger-feed'),
+            change_feed=KafkaChangeFeed(topics=topics.LEDGER_TOPICS, group_id='test-kafka-ledger-feed'),
             processor=self.processor
         )
 
@@ -113,19 +113,19 @@ class KafkaPublishingTest(TestCase):
         self.form_pillow = ConstructedPillow(
             name='test-kafka-form-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.FORM, topics.FORM_SQL], group_id='test-kafka-form-feed'),
+            change_feed=KafkaChangeFeed(topics=topics.FORM_TOPICS, group_id='test-kafka-form-feed'),
             processor=self.processor
         )
         self.case_pillow = ConstructedPillow(
             name='test-kafka-case-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.CASE, topics.CASE_SQL], group_id='test-kafka-case-feed'),
+            change_feed=KafkaChangeFeed(topics=topics.CASE_TOPICS, group_id='test-kafka-case-feed'),
             processor=self.processor
         )
         self.ledger_pillow = ConstructedPillow(
             name='test-kafka-ledger-feed',
             checkpoint=None,
-            change_feed=KafkaChangeFeed(topics=[topics.LEDGER, topics.LEDGER_V2], group_id='test-kafka-ledger-feed'),
+            change_feed=KafkaChangeFeed(topics=topics.LEDGER_TOPICS, group_id='test-kafka-ledger-feed'),
             processor=self.processor
         )
 

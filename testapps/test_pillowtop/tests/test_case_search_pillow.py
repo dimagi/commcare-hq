@@ -132,7 +132,7 @@ class CaseSearchPillowTest(TestCase):
     def _get_kafka_seq(self):
         # KafkaChangeFeed listens for multiple topics (case, case-sql) in the case search pillow,
         # so we need to provide a dict of seqs to kafka
-        return get_multi_topic_offset([topics.CASE, topics.CASE_SQL])
+        return get_multi_topic_offset(topics.CASE_TOPICS)
 
     def _make_case(self, domain=None, case_properties=None):
         # make a case

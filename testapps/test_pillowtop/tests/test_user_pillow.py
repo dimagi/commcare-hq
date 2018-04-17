@@ -119,4 +119,4 @@ class UnknownUserPillowTest(UserPillowTestBase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
 
     def _get_kafka_seq(self):
-        return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
+        return get_multi_topic_offset(topics.FORM_TOPICS)
