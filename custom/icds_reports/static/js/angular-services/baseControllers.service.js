@@ -39,6 +39,16 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                 }
                 return newValue;
             }, true);
+
+            vm.createTemplatePopup = function(header, lines) {
+                var template = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
+                    '<p>' + header + '</p>';
+                for (var i = 0; i < lines.length; i++) {
+                    template += '<div>' + lines[i]['indicator_name'] + '<strong>' + lines[i]['indicator_value'] + '</strong></div>';
+                }
+                template += '</div>';
+                return template;
+            };
         },
     };
 });

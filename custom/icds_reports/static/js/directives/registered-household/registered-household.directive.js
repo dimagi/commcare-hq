@@ -21,9 +21,13 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
 
     vm.templatePopup = function(loc, row) {
         var household = row ? $filter('indiaNumbers')(row.household) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of household registered: <strong>' + household + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total number of household registered: ',
+                indicator_value: household,
+            }]
+        );
     };
 
     vm.loadData = function () {

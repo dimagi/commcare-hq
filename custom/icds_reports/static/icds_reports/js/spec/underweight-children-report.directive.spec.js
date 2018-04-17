@@ -1,4 +1,4 @@
-/* global module, inject, _, chai */
+3/* global module, inject, _, chai */
 "use strict";
 
 var utils = hqImport('icds_reports/js/spec/utils');
@@ -106,7 +106,7 @@ describe('Underweight Children Directive', function () {
             '<div>Number of children unweighed (0 - 5 years): <strong>10</strong></div>' +
             '<div>% Severely Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
             '<div>% Moderately Underweight (0 - 5 years): <strong>25.00%</strong></div>' +
-            '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div>'
+            '<div>% Normal (0 - 5 years): <strong>25.00%</strong></div></div>'
         );
     });
 
@@ -227,7 +227,7 @@ describe('Underweight Children Directive', function () {
             '<div>Number of children unweighed (0 - 5 years): <strong>0</strong></div>' +
             '<div>% Severely Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
             '<div>% Moderately Underweight (0 - 5 years): <strong>NaN%</strong></div>' +
-            '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div>';
+            '<div>% Normal (0 - 5 years): <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

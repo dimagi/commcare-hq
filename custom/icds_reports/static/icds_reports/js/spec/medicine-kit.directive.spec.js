@@ -87,7 +87,7 @@ describe('Medicine Kit Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {all: 10, in_month: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;"><p>test</p>' +
             '<div>Total number of AWCs that reported having a Medicine Kit: <strong>5</strong></div>' +
-            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>50.00%</strong></div>');
+            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -201,7 +201,7 @@ describe('Medicine Kit Directive', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<div>Total number of AWCs that reported having a Medicine Kit: <strong>0</strong></div>' +
-            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>0.00%</strong></div>';
+            '<div>Percentage of AWCs that reported having a Medicine Kit: <strong>0.00%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

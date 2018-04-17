@@ -20,12 +20,19 @@ function AdhaarController($scope, $routeParams, $location, $filter, demographics
     };
 
     vm.templatePopup = function(loc, row) {
-        var in_month = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
+        var inMonth = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.in_month / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + in_month + '</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>' + percent + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total number of ICDS beneficiaries whose Aadhaar has been captured: ',
+                indicator_value: inMonth,
+            },
+            {
+                indicator_name: '% of ICDS beneficiaries whose Aadhaar has been captured: ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {

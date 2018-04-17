@@ -23,11 +23,21 @@ function InstitutionalDeliveriesController($scope, $routeParams, $location, $fil
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var children =row ? $filter('indiaNumbers')(row.children) : 'N/A';
         var percent = row ? d3.format('.2%')(row.children / (row.all || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total number of pregnant women who delivered in the last month: <strong>' + total + '</strong></div>' +
-            '<div>Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: <strong>' + children + '</strong></div>' +
-            '<div>% pregnant women who delivered in a public or private medical facility in the last month: <strong>' + percent + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total number of pregnant women who delivered in the last month: ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: 'Total number of pregnant women who delivered in a public/private medical facilitiy in the last month: ',
+                indicator_value: children,
+            },
+            {
+                indicator_name: '% pregnant women who delivered in a public or private medical facility in the last month: ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {

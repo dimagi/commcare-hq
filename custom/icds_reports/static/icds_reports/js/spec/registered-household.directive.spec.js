@@ -87,7 +87,7 @@ describe('Registered Household Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {household: 5});
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">'
             + '<p>test</p>'
-            + '<div>Total number of household registered: <strong>5</strong></div>');
+            + '<div>Total number of household registered: <strong>5</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -198,7 +198,7 @@ describe('Registered Household Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Total number of household registered: <strong>0</strong></div>';
+            '<div>Total number of household registered: <strong>0</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

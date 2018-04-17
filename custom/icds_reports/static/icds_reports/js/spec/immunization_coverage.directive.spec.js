@@ -94,7 +94,7 @@ describe('Immunization Coverage Directive', function () {
             '<p>test</p>'
             + '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>10</strong></div>'
             + '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>5</strong></div>'
-            + '<div>% of children who have recieved complete immunizations required by age 1: <strong>50.00%</strong></div>');
+            + '<div>% of children who have recieved complete immunizations required by age 1: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -212,7 +212,7 @@ describe('Immunization Coverage Directive', function () {
             '<p>Ambah</p>' +
             '<div>Total number of ICDS Child beneficiaries older than 1 year: <strong>25</strong></div>' +
             '<div>Total number of children who have recieved complete immunizations required by age 1: <strong>0</strong></div>' +
-            '<div>% of children who have recieved complete immunizations required by age 1: <strong>NaN%</strong></div>';
+            '<div>% of children who have recieved complete immunizations required by age 1: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

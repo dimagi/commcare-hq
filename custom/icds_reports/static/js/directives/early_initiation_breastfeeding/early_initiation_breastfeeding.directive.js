@@ -33,11 +33,21 @@ function EarlyInitiationBreastfeedingController($scope, $routeParams, $location,
         var total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var birth = row ? $filter('indiaNumbers')(row.birth) : 'N/A';
         var percent = row ? d3.format('.2%')(row.birth / (row.in_month || 1)) : 'N/A';
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Total Number of Children born in the given month' + chosenFilters + ': <strong>' + total + '</strong></div>' +
-            '<div>Total Number of Children who were put to the breast within one hour of birth' + chosenFilters + ': <strong>' + birth + '</strong></div>' +
-            '<div>% children who were put to the breast within one hour of birth' + chosenFilters + ': <strong>' + percent + '</strong></div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Total Number of Children born in the given month' + chosenFilters + ': ',
+                indicator_value: total,
+            },
+            {
+                indicator_name: 'Total Number of Children who were put to the breast within one hour of birth' + chosenFilters + ': ',
+                indicator_value: birth,
+            },
+            {
+                indicator_name: '% children who were put to the breast within one hour of birth' + chosenFilters + ': ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {

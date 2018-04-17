@@ -24,12 +24,21 @@ function LactatingEnrolledWomenController($scope, $routeParams, $location, $filt
         var valid = $filter('indiaNumbers')(row ? row.valid : 0);
         var all = $filter('indiaNumbers')(row ? row.all : 0);
         var percent = row ? d3.format('.2%')(row.valid / (row.all || 1)) : "N/A";
-        return '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
-            '<p>' + loc.properties.name + '</p>' +
-            '<div>Number of lactating women who are enrolled for Anganwadi Services: <strong>' + valid + '</strong>' +
-            '<div>Total number of lactating women who are registered: <strong>' + all + '</strong>' +
-            '<div>Percentage of registered lactating women who are enrolled for Anganwadi Services: <strong>' + percent + '</strong>' +
-            '</div>';
+        return vm.createTemplatePopup(
+            loc.properties.name,
+            [{
+                indicator_name: 'Number of lactating women who are enrolled for Anganwadi Services: ',
+                indicator_value: valid,
+            },
+            {
+                indicator_name: 'Total number of lactating women who are registered: ',
+                indicator_value: all,
+            },
+            {
+                indicator_name: 'Percentage of registered lactating women who are enrolled for Anganwadi Services: ',
+                indicator_value: percent,
+            }]
+        );
     };
 
     vm.loadData = function () {
