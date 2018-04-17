@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import os
 from celery.schedules import crontab
 from celery.task import periodic_task

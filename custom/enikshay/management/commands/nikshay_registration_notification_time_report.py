@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 import datetime
-import csv
+import csv342 as csv
 import pytz
 import six
 from django.core.management.base import BaseCommand

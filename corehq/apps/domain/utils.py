@@ -5,7 +5,7 @@ import os
 import re
 import datetime
 import json
-import csv
+import csv342 as csv
 import tempfile
 
 from django.conf import settings
