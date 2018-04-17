@@ -316,7 +316,6 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'custom.apps.wisepill',
-    'custom.fri',
     'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
@@ -1406,7 +1405,6 @@ COUCHDB_APPS = [
     'phonelog',
     'registration',
     'wisepill',
-    'fri',
     'crs_reports',
     'grapevine',
     'openclinica',
@@ -1557,10 +1555,6 @@ SMS_GATEWAY_TIMEOUT = 5
 # If the function is not in here, it will not be called.
 # Used by the old reminders framework
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
-    "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
-    "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
-    "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
-    "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
     "UCLA_GENERAL_HEALTH": "custom.ucla.api.general_health_message_bank_content",
     "UCLA_MENTAL_HEALTH": "custom.ucla.api.mental_health_message_bank_content",
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
@@ -1666,9 +1660,7 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
-CUSTOM_CHAT_TEMPLATES = {
-    "FRI": "fri/chat.html",
-}
+CUSTOM_CHAT_TEMPLATES = {}
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
@@ -2134,8 +2126,6 @@ REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'fri': 'custom.fri.reports',
-    'fri-testing': 'custom.fri.reports',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
