@@ -72,16 +72,16 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             'referral_id': 1,
         })
         self.assertCaseProperties(factory.app, 'household', [
-            # 'household_color',
-            # 'household_id',
+            'household_color',
+            'household_id',
             'household_name',
         ])
         self.assertCaseProperties(factory.app, 'patient', [
-            # 'parent/household_color',
+            'parent/household_color',
             'parent/household_id',
             'parent/household_name',
             'patient_id',
-            # 'patient_name',
+            'patient_name',
         ])
         self.assertCaseProperties(factory.app, 'referral', [
             'parent/parent/household_color',

@@ -130,7 +130,7 @@ def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
         if resolved_case_types:
             if include_parent_properties:
                 normalized_case_properties.update({
-                    (reference, case_property)
+                    (expanded_reference, case_property)
                     for case_type in resolved_case_types
                     for expanded_reference in case_relationship_manager.expand_case_type(case_type)
                 })
