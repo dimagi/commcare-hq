@@ -87,7 +87,7 @@ def undo_form_edits(form_tuples, logger):
         cases_to_rebuild[live_form.domain].update(affected_cases)
         ledgers_to_rebuild[live_form.domain].update(affected_ledgers)
         logger.log('Cases to rebuild: {}'.format(','.join(affected_cases)))
-        logger.log('Ledgers to rebuild: {}'.format(','.join(affected_ledgers)))
+        logger.log('Ledgers to rebuild: {}'.format(','.join([l.as_id() for l in affected_ledgers])))
 
     return cases_to_rebuild, ledgers_to_rebuild
 
