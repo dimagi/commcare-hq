@@ -6,7 +6,7 @@ from custom.yeksi_naa_reports.reports.dashboard_2 import Dashboard2Report
 from custom.yeksi_naa_reports.reports.dashboard_3 import Dashboard3Report
 
 CUSTOM_REPORTS = (
-    ("Yeksi Naa Reports", (
+    ("Rapports Yeksi Naa", (
         Dashboard1Report,
         Dashboard2Report,
         Dashboard3Report,

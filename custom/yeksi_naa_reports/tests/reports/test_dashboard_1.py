@@ -17,6 +17,7 @@ class TestDashboard1(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
@@ -63,6 +64,7 @@ class TestDashboard1(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
