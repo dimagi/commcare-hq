@@ -17,6 +17,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -62,6 +63,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -107,6 +109,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -173,6 +176,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -218,6 +222,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -252,6 +257,7 @@ class TestDashboard2(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
+            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -339,6 +345,8 @@ class TestDashboard2(YeksiTestCase):
             len(rows),
             len(expected)
         )
+        for row in expected:
+            self.assertIn(row, rows)
         self.assertEqual(
             total_row,
             [u'Rate by Country', u'23.33%', u'16.67%', u'16.67%', u'16.67%', u'4.65%', u'0.00%']
