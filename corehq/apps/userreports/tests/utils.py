@@ -9,7 +9,7 @@ import uuid
 
 from mock import patch
 
-from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
@@ -127,3 +127,17 @@ def mock_sql_backend():
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
                  return_value=(get_sample_data_source(), None))
+
+
+def get_simple_xform():
+    xform = XFormBuilder()
+    xform.new_question('first_name', 'First Name', data_type='string')
+    xform.new_question('last_name', 'Last Name', data_type='string')
+    xform.new_question('children', 'Children', data_type='int')
+    xform.new_question('dob', 'Date of Birth', data_type='date')
+    xform.new_question('state', 'State', data_type='select', choices={
+        'MA': 'MA',
+        'MN': 'MN',
+        'VT': 'VT',
+    })
+    return xform.tostring()

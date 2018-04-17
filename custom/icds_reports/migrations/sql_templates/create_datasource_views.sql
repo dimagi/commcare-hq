@@ -91,6 +91,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."num_awc_rank_functional" AS "num_awc_rank_functional",
         "agg_awc"."num_awc_rank_semi" AS "num_awc_rank_semi",
         "agg_awc"."num_awc_rank_non" AS "num_awc_rank_non",
+        "agg_awc"."num_anc_visits" AS "num_anc_visits",
+        "agg_awc"."num_children_immunized" AS "num_children_immunized",
         COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
         COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",

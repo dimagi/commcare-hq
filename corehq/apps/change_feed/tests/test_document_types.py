@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import SimpleTestCase
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError

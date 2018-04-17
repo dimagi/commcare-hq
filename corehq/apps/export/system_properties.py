@@ -285,7 +285,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='closed_date',
-        item=ExportItem(path=[PathNode(name='closed_on')]),
+        item=ExportItem(path=[PathNode(name='closed_on')], datatype=DATA_TYPE_DATETIME),
         help_text=_("The date and time at which the case was closed"),
         selected=True
     ),
@@ -313,7 +313,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='last_modified_date',
-        item=ExportItem(path=[PathNode(name='modified_on')]),
+        item=ExportItem(path=[PathNode(name='modified_on')], datatype=DATA_TYPE_DATETIME),
         help_text=_("The date and time at which the case was last modified"),
         selected=True
     ),
@@ -334,7 +334,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='opened_date',
-        item=ExportItem(path=[PathNode(name='opened_on')]),
+        item=ExportItem(path=[PathNode(name='opened_on')], datatype=DATA_TYPE_DATETIME),
         help_text=_("The date and time at which the case was opened"),
         selected=True,
     ),
@@ -355,7 +355,7 @@ BOTTOM_MAIN_CASE_TABLE_PROPERTIES = [
     ExportColumn(
         tags=[PROPERTY_TAG_INFO],
         label='server_last_modified_date',
-        item=ExportItem(path=[PathNode(name='server_modified_on')], transform=USERNAME_TRANSFORM),
+        item=ExportItem(path=[PathNode(name='server_modified_on')], datatype=DATA_TYPE_DATETIME),
         help_text=_("The date and time at which the server received the form that last modified the case"),
         is_advanced=True,
     ),

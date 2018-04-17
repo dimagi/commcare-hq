@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import pickle
+
 from ..models import SQLLocation
 from .util import LocationHierarchyTestCase
 from corehq.apps.users.models import WebUser
@@ -86,6 +88,11 @@ class TestLocationQuerysetMethods(BaseTestLocationQuerysetMethods):
         # remove this test when removing ComparedQuerySet
         locs = SQLLocation.objects.get(name='Suffolk').get_descendants()
         self.assertEqual([x.name for x in locs[:2]], ['Boston'])
+
+    def test_pickle_descendants_query(self):
+        locs = SQLLocation.objects.get(name='Suffolk').get_descendants()
+        # should not raise excepiton
+        pickle.dumps(locs)
 
 
 class TestLocationScopedQueryset(BaseTestLocationQuerysetMethods):

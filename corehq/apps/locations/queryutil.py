@@ -5,7 +5,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import time
-from collections import defaultdict
+from collections import Counter, defaultdict
 from contextlib import contextmanager
 
 from django.conf import settings
@@ -57,7 +57,10 @@ class ComparedQuerySet(object):
                     items2 = list(self._cte_set)
                 ids1 = [_identify(it) for it in items1]
                 ids2 = [_identify(it) for it in items2]
-                if (finished and ids1 != ids2) or not ids1 == ids2[:len(ids1)]:
+                # Verify both sets contain the same items, ignoring sort order
+                # Note: it's possible that there are duplicate elements.
+                if (finished and Counter(ids1) != Counter(ids2)) or (
+                        not finished and set(ids1) - set(ids2)):
                     _report_diff(self, ids1, ids2, "" if finished else "incomplete iteration")
 
     def __len__(self):

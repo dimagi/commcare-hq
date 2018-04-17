@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.change_feed.connection import get_kafka_client_or_none
 from corehq.apps.change_feed.document_types import change_meta_from_doc
