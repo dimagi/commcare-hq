@@ -89,9 +89,7 @@ class ParentCasePropertyBuilder(object):
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
         for form in self._get_relevant_forms(include_shared_properties):
-            updates = self._get_case_updates(form, case_type)
-            case_properties.update(updates)
-            case_properties.update(self._get_save_to_case_updates(form, case_type))
+            case_properties.update(self._get_case_updates(form, case_type))
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
             data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
@@ -117,10 +115,6 @@ class ParentCasePropertyBuilder(object):
     @memoized
     def _get_case_updates(self, form, case_type):
         return form.get_all_case_updates().get(case_type, [])
-
-    @memoized
-    def _get_save_to_case_updates(self, form, case_type):
-        return form.get_save_to_case_updates(case_type)
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """

@@ -1275,15 +1275,15 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
-    def get_save_to_case_updates(self, case_type):
+    def get_save_to_case_updates(self):
         """
         Get a flat list of case property names from save to case questions
         """
-        updates = set()
+        updates_by_case_type = defaultdict(set)
         for save_to_case_update in self.case_references_data.get_save_references():
-            if save_to_case_update.case_type == case_type:
-                updates |= set(save_to_case_update.properties)
-        return updates
+            case_type = save_to_case_update.case_type
+            updates_by_case_type[case_type] |= set(save_to_case_update.properties)
+        return updates_by_case_type
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1819,6 +1819,9 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             updates_by_case_type[case_type].update(updates)
 
         for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
             updates_by_case_type[case_type].update(updates)
 
         return updates_by_case_type
@@ -3131,6 +3134,10 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         for case_type, updates in self.get_all_contributed_subcase_properties().items():
             updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
         return updates_by_case_type
 
     @memoized
