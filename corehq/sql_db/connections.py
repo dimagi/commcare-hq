@@ -99,12 +99,20 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_load_balanced_read_engine_id(self, engine_id):
+    def get_load_balanced_read_db(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         if read_dbs:
             return random.choice(read_dbs)
+        elif default is not None:
+            return default
         return engine_id
 
+    def get_load_balanced_read_engine_id(self, engine_id):
+        return self.get_load_balanced_read_db(engine_id)
+
+    def get_load_balanced_db_alias(self, app_label, default):
+        return self.get_load_balanced_read_db(app_label, default)
+        
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
             helper.Session.remove()
