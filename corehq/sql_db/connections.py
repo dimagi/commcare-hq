@@ -155,6 +155,14 @@ class ConnectionManager(object):
                         if read_db != write_db:
                             self._add_django_db(read_db, read_db)
 
+        for app, weights in settings.LOAD_BALANCED_APPS.items():
+            self.read_database_mapping[app] = []
+            for db_alias, weighting in weights:
+                assert isinstance(weighting, int), 'weighting must be int'
+                assert db_alias in settings.DATABASES, db_alias
+
+                self.read_database_mapping[app].extend([db_alias] * weighting)
+
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')
         if UCR_ENGINE_ID not in self.db_connection_map:

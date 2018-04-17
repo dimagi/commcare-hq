@@ -103,32 +103,7 @@ def db_for_read_write(model, write=True):
         if not write:
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
-    elif app_label in settings.LOAD_BALANCED_APPS:
-        if not write:
-            return get_load_balanced_read_db(app_label)
     else:
+        if not write:
+            return connection_manager.get_load_balanced_read_engine_id(app_label)
         return partition_config.get_main_db()
-
-
-def get_load_balanced_read_db(app):
-    dbs = read_database_mapping(app)
-    if dbs:
-        alias = random.choice(dbs)
-        cursor = connections[alias].cursor()
-        cursor.execute('SELECT now() - pg_last_xact_replay_timestamp() AS replication_delay;')
-        # a tuple is returned with one item, the lag as a timedelta
-        lag = cursor.fetchone()[0]
-        # lag is None for master node
-        if lag is not None and lag.total_seconds() < settings.STANDBY_LAG
-            return alias
-    return 'default'
-
-
-@memoized
-def read_database_mapping(app):
-    dbs = []
-    weights = settings.LOAD_BALANCED_APPS.get(app)
-    if weights is not None:
-        for db, weight in weights:
-            dbs.extend([db] * weight)
-    return dbs
