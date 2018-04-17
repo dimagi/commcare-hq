@@ -14,13 +14,6 @@
 
     {% block patient_content %}
         <div class="col-sm-11">
-            <script>
-                // have to do this here too because this page is loaded asynchronously
-                $(function () {
-                    $(".timeago").timeago();
-                });
-            </script>
-
             <div class="row">
                 {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
                 {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
