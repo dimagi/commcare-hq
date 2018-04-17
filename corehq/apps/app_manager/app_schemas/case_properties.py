@@ -27,8 +27,7 @@ def _get_forms(app):
         return []
     forms = []
     for module in app.get_modules():
-        for form in module.get_forms():
-            forms.append(form)
+        forms.extend(module.get_forms())
     return forms
 
 
@@ -42,8 +41,7 @@ class ParentCasePropertyBuilder(object):
     def _get_relevant_apps(self, include_shared_properties):
         apps = [self.app]
         if self.app.case_sharing and include_shared_properties:
-            for app in self._get_other_case_sharing_apps_in_domain():
-                apps.append(app)
+            apps.extend(self._get_other_case_sharing_apps_in_domain())
         return apps
 
     @memoized
