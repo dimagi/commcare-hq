@@ -72,13 +72,17 @@ class CouchSqlDomainMigrator(object):
 
     def migrate(self):
         with TimingContext("couch_sql_migration") as timing_context:
-            with timing_context("main_forms"):
+            self.timing_name = "main_forms"
+            with timing_context(self.timing_name):
                 self._process_main_forms()
-            with timing_context("unprocessed_forms"):
+            self.timing_name = "unprocessed_forms"
+            with timing_context(self.timing_name):
                 self._copy_unprocessed_forms()
-            with timing_context("unprocessed_cases"):
+            self.timing_name = "unprocessed_cases"
+            with timing_context(self.timing_name):
                 self._copy_unprocessed_cases()
-            with timing_context("case_diffs"):
+            self.timing_name = "case_diffs"
+            with timing_context(self.timing_name):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
@@ -280,6 +284,7 @@ class CouchSqlDomainMigrator(object):
                 get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
                 for doc_type in doc_types
             ])
+            setattr(self, self.timing_name + '_doc_count', doc_count)
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
@@ -287,8 +292,13 @@ class CouchSqlDomainMigrator(object):
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s"
+        metric_name_template_normalized = "commcare.%s.normalized"
         for timing in timing_context.to_list():
             datadog_histogram(metric_name_template % timing.full_name, timing.duration)
+            doc_count = getattr(self, timing.name + '_doc_count', None)
+            if doc_count:
+                datadog_histogram(metric_name_template_normalized % timing.full_name,
+                                  timing.duration / doc_count)
 
 
 def _wrap_form(doc):
