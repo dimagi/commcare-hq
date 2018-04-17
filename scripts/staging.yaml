@@ -60,6 +60,7 @@ branches:
   - ce/app-status-staging # Cal April 9
   - es/mobile-ucr-slugs  # Ethan April 9
   - np/py3/unicode-uglify # NP April 17
+  - np/py3/settings # NP April 17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
