@@ -13,6 +13,7 @@
     font-size: 16px;
 }
 
+// Modal that takes up virtually the entire screen, with a variable amount of padding around it
 .absolute-center-modal(@spacing) {
     .modal-dialog {
         position: absolute;
@@ -29,6 +30,21 @@
             bottom: @spacing;
             left: @spacing;
             right: @spacing;
+
+            // These styles, along with the body/header/footer ones below,
+            // allow the body to scroll vertically while the header and footer stay fixed
+            display: flex;
+            flex: auto;
+            flex-direction: column;
+
+            .modal-body {
+                overflow-y: auto;
+                flex-grow: 1;
+            }
+
+            .modal-header, .modal-footer {
+                flex-grow: 0;
+            }
         }
     }
 }
