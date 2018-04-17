@@ -52,11 +52,12 @@ class ParentCasePropertyBuilder(object):
             forms.extend(_get_forms(app))
         return forms
 
+    @memoized
     def _get_all_case_updates(self, include_shared_properties):
         all_case_updates = defaultdict(set)
         for form in self._get_relevant_forms(include_shared_properties):
             for case_type, case_properties in form.get_all_case_updates().items():
-                all_case_updates[case_type] |= set(case_properties)
+                all_case_updates[case_type].update(case_properties)
         return all_case_updates
 
     @memoized
@@ -86,10 +87,11 @@ class ParentCasePropertyBuilder(object):
         if case_type in already_visited:
             return ()
 
+        updates_by_case_type = self._get_all_case_updates(include_shared_properties)
         case_properties = set(self.defaults) | set(self.per_type_defaults.get(case_type, []))
 
         for form in self._get_relevant_forms(include_shared_properties):
-            case_properties.update(self._get_case_updates(form, case_type))
+            case_properties.update(updates_by_case_type[case_type])
 
         if toggles.DATA_DICTIONARY.enabled(self.app.domain):
             data_dict_props = CaseProperty.objects.filter(case_type__domain=self.app.domain,
@@ -111,10 +113,6 @@ class ParentCasePropertyBuilder(object):
             case_properties = {p for p in case_properties if "/" not in p}
 
         return case_properties
-
-    @memoized
-    def _get_case_updates(self, form, case_type):
-        return form.get_all_case_updates().get(case_type, [])
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
