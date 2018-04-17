@@ -335,8 +335,15 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 
 def get_export_documents(export_instance, filters):
     query = _get_export_query(export_instance, filters)
-    doc_ids = list(query.scroll_ids())
-    return iter_es_docs(query.index, doc_ids)
+    _, temp_path = tempfile.mkstemp()
+    with open(temp_path, 'w') as f:
+        for doc_id in query.scroll_ids():
+            f.write(doc_id + '\n')
+    with open(temp_path) as f:
+        doc_ids = (doc_id.strip() for doc_id in f)
+        for doc in iter_es_docs(query.index, doc_ids):
+            yield doc
+    os.remove(temp_path)
 
 
 def _get_export_query(export_instance, filters):
