@@ -188,7 +188,7 @@ class ParentCasePropertyBuilder(object):
                 .filter(case_type__domain=self.app.domain, deprecated=False)
                 .order_by('case_type__name'),
                 key=attrgetter('case_type.name')
-            ).items()
+            )
         }
 
     def get_case_relationships_for_case_type(self, case_type):
