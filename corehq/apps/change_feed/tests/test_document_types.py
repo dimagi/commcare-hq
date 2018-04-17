@@ -1,9 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
+
+from corehq.apps.change_feed.data_sources import _get_document_store_from_doc_type
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
+from corehq.util.couch import get_classes_by_doc_type, get_document_class_by_doc_type
+from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import generate_cases
+from pillowtop.dao.couch import CouchDocumentStore
 
 
 class DocumentTypeTest(SimpleTestCase):
@@ -20,6 +25,20 @@ class DocumentTypeTest(SimpleTestCase):
         self.assertEqual(change_meta.document_subtype, 'person')
         self.assertEqual(change_meta.domain, 'test-domain')
         self.assertEqual(change_meta.is_deletion, False)
+
+    def test_all_doc_types_and_database_covered(self):
+        all_doc_types = list(get_classes_by_doc_type())
+        for doc_type in sorted(all_doc_types):
+            doc_class = get_document_class_by_doc_type(doc_type)
+            if doc_class._meta.app_label in ('phone', 'nikshay'):
+                continue
+            store = _get_document_store_from_doc_type(doc_type, 'domain')
+            self.assertIsInstance(store, CouchDocumentStore)
+            expected_db = couch_config.get_db_for_doc_type(doc_type)
+            self.assertEqual(
+                store._couch_db.uri, expected_db.uri,
+                "DB mismatch for '{}': {} != {}".format(doc_type, store._couch_db.uri, expected_db.uri)
+            )
 
 
 @generate_cases([
