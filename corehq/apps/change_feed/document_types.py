@@ -24,7 +24,7 @@ def _get_document_type(document_or_none):
 
 
 def _get_subtype(doc_type, document):
-    if doc_type in ('CommCareCase', 'CommCareCase-Deleted'):
+    if doc_type in CASE_DOC_TYPES:
         return document.get('type', None)
     elif doc_type in all_known_formlike_doc_types():
         return document.get('xmlns', None)
