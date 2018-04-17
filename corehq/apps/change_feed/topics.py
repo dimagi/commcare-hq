@@ -68,7 +68,7 @@ def get_topic_for_doc_type(doc_type, backend_id=None):
         return SYNCLOG_SQL
     elif doc_type in app_doc_types():
         return APP
-    elif doc_type in ALL:  # ledger, sms, location
+    elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
         return doc_type
     else:
         # at some point we may want to make this more granular

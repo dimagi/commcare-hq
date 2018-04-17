@@ -91,7 +91,7 @@ def _get_document_store_from_doc_type(doc_type, domain, backend_id=None):
             return LedgerV1DocumentStore(domain)
         elif doc_type == topics.LOCATION:
             return ReadonlyLocationDocumentStore(domain)
-        elif doc_type in document_types.SYNCLOG_DOC_TYPES:
+        elif doc_type in document_types.SYNCLOG_DOC_TYPES or doc_type == topics.SYNCLOG_SQL:
             return ReadonlySyncLogDocumentStore()
         else:
             raise UnknownDocumentStore(
