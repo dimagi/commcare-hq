@@ -1,19 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function FunctionalToiletController($scope, $routeParams, $location, $filter, infrastructureService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "AWCs Reported Functional Toilet";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/functional_toilet/map', label: 'Map View'},
         'chart': {route: '/functional_toilet/chart', label: 'Chart View'},
@@ -21,18 +14,10 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of AWCs that reported having a functional toilet',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -225,7 +210,7 @@ function FunctionalToiletController($scope, $routeParams, $location, $filter, in
     };
 }
 
-FunctionalToiletController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+FunctionalToiletController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('functionalToilet', function() {
     return {

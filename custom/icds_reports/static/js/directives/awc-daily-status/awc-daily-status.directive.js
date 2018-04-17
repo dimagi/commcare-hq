@@ -1,19 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+function AWCDailyStatusController($scope, $routeParams, $location, $filter, icdsCasReachService, locationsService,
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "AWC Daily Status";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/awc_daily_status/map', label: 'Map View'},
         'chart': {route: '/awc_daily_status/chart', label: 'Chart View'},
@@ -21,18 +14,10 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     vm.data = {
         legendTitle: 'Percentage AWCs',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['month', 'age', 'gender'];
     vm.rightLegend = {
         info: 'Percentage of Angwanwadi Centers that were open yesterday',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -226,7 +211,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
     };
 }
 
-AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+AWCDailyStatusController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'icdsCasReachService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('awcDailyStatus', function() {
     return {

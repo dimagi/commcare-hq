@@ -1,19 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+function MedicineKitController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "AWCs Reported Medicine Kit";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/medicine_kit/map', label: 'Map View'},
         'chart': {route: '/medicine_kit/chart', label: 'Chart View'},
@@ -21,18 +14,10 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of AWCs that reported having a Medicine Kit',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -225,7 +210,7 @@ function MedicineKitController($scope, $routeParams, $location, $filter, infrast
     };
 }
 
-MedicineKitController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+MedicineKitController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('medicineKit', function() {
     return {

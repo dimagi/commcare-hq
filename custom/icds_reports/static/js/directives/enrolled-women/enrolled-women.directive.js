@@ -1,19 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+function EnrolledWomenController($scope, $routeParams, $location, $filter, demographicsService, locationsService,
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "Pregnant Women enrolled for Anganwadi Services";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/enrolled_women/map', label: 'Map View'},
         'chart': {route: '/enrolled_women/chart', label: 'Chart View'},
@@ -21,20 +14,11 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     vm.data = {
         legendTitle: 'Number of Women',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['gender', 'age'];
 
     vm.rightLegend = {
         info: 'Total number of children between the age of 0 - 6 years who are enrolled for Anganwadi Services',
     };
-
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -231,7 +215,7 @@ function EnrolledWomenController($scope, $routeParams, $location, $filter, demog
     };
 }
 
-EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+EnrolledWomenController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('enrolledWomen', function() {
     return {

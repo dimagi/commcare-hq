@@ -1,19 +1,12 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function RegisteredHouseholdController($scope, $routeParams, $location, $filter, demographicsService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+    locationsService, userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
     vm.label = "Registered Household";
-    vm.step = $routeParams.step;
-    vm.userLocationId = userLocationId;
     vm.steps = {
         'map': {route: '/registered_household/map', label: 'Map View'},
         'chart': {route: '/registered_household/chart', label: 'Chart View'},
@@ -21,18 +14,10 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     vm.data = {
         legendTitle: 'Total AWCs that have launched ICDS CAS',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['age', 'gender'];
     vm.rightLegend = {
         info: 'Total AWCs that have launched ICDS CAS',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -226,7 +211,7 @@ function RegisteredHouseholdController($scope, $routeParams, $location, $filter,
     };
 }
 
-RegisteredHouseholdController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+RegisteredHouseholdController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'demographicsService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('registeredHousehold', function() {
     return {

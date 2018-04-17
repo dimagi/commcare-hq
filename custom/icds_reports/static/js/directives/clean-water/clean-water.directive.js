@@ -1,19 +1,17 @@
-/* global d3, moment */
+/* global d3 */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function CleanWaterController($scope, $routeParams, $location, $filter, infrastructureService,
-    locationsService, userLocationId, storageService, haveAccessToAllLocations) {
-
+function CleanWaterController($scope, $routeParams, $location, $filter, infrastructureService, locationsService,
+    userLocationId, storageService, haveAccessToAllLocations, baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
     } else {
         storageService.setKey('search', $location.search());
     }
-    vm.userLocationId = userLocationId;
-    vm.filtersData = $location.search();
     vm.label = "AWCs that reported having a source of clean drinking water";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/clean_water/map', label: 'Map View'},
         'chart': {route: '/clean_water/chart', label: 'Chart View'},
@@ -21,18 +19,10 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     vm.data = {
         legendTitle: 'Percentage',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = ['gender', 'age'];
     vm.rightLegend = {
         info: 'Percentage of AWCs that reported having a source of clean drinking water',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -224,7 +214,7 @@ function CleanWaterController($scope, $routeParams, $location, $filter, infrastr
     };
 }
 
-CleanWaterController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations'];
+CleanWaterController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'infrastructureService', 'locationsService', 'userLocationId', 'storageService', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('cleanWater', function() {
     return {

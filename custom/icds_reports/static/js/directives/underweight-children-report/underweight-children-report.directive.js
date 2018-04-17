@@ -1,17 +1,12 @@
-/* global d3, _, moment */
+/* global d3, _ */
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function UnderweightChildrenReportController($scope, $routeParams, $location, $filter, maternalChildService,
-    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations) {
-
+    locationsService, userLocationId, storageService, genders, ages, haveAccessToAllLocations,
+    baseControllersService) {
+    baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
+        userLocationId, storageService);
     var vm = this;
-    if (Object.keys($location.search()).length === 0) {
-        $location.search(storageService.getKey('search'));
-    } else {
-        storageService.setKey('search', $location.search());
-    }
-    vm.filtersData = $location.search();
-    vm.userLocationId = userLocationId;
 
     var ageIndex = _.findIndex(ages, function (x) {
         return x.id === vm.filtersData.age;
@@ -28,7 +23,6 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     }
 
     vm.label = "Prevalence of Underweight (Weight-for-Age)";
-    vm.step = $routeParams.step;
     vm.steps = {
         'map': {route: '/underweight_children/map', label: 'Map View'},
         'chart': {route: '/underweight_children/chart', label: 'Chart View'},
@@ -36,18 +30,10 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     vm.data = {
         legendTitle: 'Percentage Children',
     };
-    vm.chartData = null;
-    vm.top_five = [];
-    vm.bottom_five = [];
-    vm.selectedLocations = [];
-    vm.all_locations = [];
-    vm.location_type = null;
-    vm.loaded = false;
     vm.filters = [];
     vm.rightLegend = {
         info: 'Percentage of children between 0-5 years enrolled for Anganwadi Services with weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median.',
     };
-    vm.message = storageService.getKey('message') || false;
 
     $scope.$watch(function() {
         return vm.selectedLocations;
@@ -275,7 +261,7 @@ function UnderweightChildrenReportController($scope, $routeParams, $location, $f
     };
 }
 
-UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages'];
+UnderweightChildrenReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
 
 window.angular.module('icdsApp').directive('underweightChildrenReport', function() {
     return {
