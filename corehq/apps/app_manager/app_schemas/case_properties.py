@@ -147,10 +147,10 @@ class ParentCasePropertyBuilder(object):
         ```
         """
         parent_map = defaultdict(dict)
-        for case_type in case_types:
-            parent_types = self.get_case_relationships_for_case_type(case_type)
+
+        for case_type, case_relationships in self.get_case_relationships().items():
             rel_map = defaultdict(list)
-            for parent_type, relationship in parent_types:
+            for parent_type, relationship in case_relationships:
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
@@ -164,6 +164,9 @@ class ParentCasePropertyBuilder(object):
                         )
                     parent_map[case_type][relationship] = types[0]
 
+        if case_types is not None:
+            return {case_type: rel_map for case_type, rel_map in parent_map.items()
+                    if case_type in case_types}
         return parent_map
 
     def get_case_property_map(self, case_types,
