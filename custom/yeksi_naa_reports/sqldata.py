@@ -225,7 +225,8 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     'pps_is_available': sum(
                         1 for pps_data in rows if pps_data[i + 1] == '100%'
                     ),
-                    'pps_count': sum(1 for pps_data in rows if pps_data[i + 1] != Translation.no_data_entered[self.language()])
+                    'pps_count': sum(1 for pps_data in rows
+                                     if pps_data[i + 1] != Translation.no_data_entered[self.language()])
                 }
                 if data[i]['pps_count']:
                     total_row.append(
