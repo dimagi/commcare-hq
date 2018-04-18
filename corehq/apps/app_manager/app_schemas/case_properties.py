@@ -452,7 +452,7 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_case_relationships(app):
+def get_parent_type_map(app):
     builder = ParentCasePropertyBuilder(app)
     return builder.get_parent_type_map(app.get_case_types())
 
