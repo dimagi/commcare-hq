@@ -8,13 +8,16 @@ from corehq.apps.hqcase.utils import update_case
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.tests.util import make_loc, setup_location_types
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
 from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
 from datetime import time
+from mock import patch
 
 
 class SchedulingRecipientTest(TestCase):
@@ -49,6 +52,8 @@ class SchedulingRecipientTest(TestCase):
 
     def tearDown(self):
         delete_timed_schedules(self.domain)
+        PhoneNumber.objects.filter(domain=self.domain).delete()
+        super(SchedulingRecipientTest, self).tearDown()
 
     def user_ids(self, users):
         return [user.get_id for user in users]
@@ -173,26 +178,44 @@ class SchedulingRecipientTest(TestCase):
         }
         return create_case(self.domain, 'commcare-user', **create_case_kwargs)
 
+    def assertPhoneEntryCount(self, count):
+        self.assertEqual(PhoneNumber.objects.filter(domain=self.domain).count(), count)
+
     @run_with_all_backends
-    def test_user_case_phone_number(self):
-        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
-        self.addCleanup(user1.delete)
-        self.addCleanup(user2.delete)
-        self.addCleanup(user3.delete)
+    def test_not_using_phone_entries(self):
+        with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
+                patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
+                patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
 
-        self.assertIsNone(user1.memoized_usercase)
-        self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
+            patch1.return_value = patch2.return_value = patch3.return_value = False
 
-        with self.create_user_case(user2) as case:
-            self.assertIsNotNone(user2.memoized_usercase)
-            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+            user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+            user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+            user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+            self.addCleanup(user1.delete)
+            self.addCleanup(user2.delete)
+            self.addCleanup(user3.delete)
 
-        with self.create_user_case(user3) as case:
-            update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
-            self.assertIsNotNone(user3.memoized_usercase)
-            self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '12345678')
+            self.assertIsNone(user1.memoized_usercase)
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
 
-            user3.add_phone_number('87654321')
-            self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '87654321')
+            with self.create_user_case(user2) as case:
+                self.assertIsNotNone(user2.memoized_usercase)
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+                self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+
+            with self.create_user_case(user3) as case:
+                # If the user has no number, the user case's number is used
+                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '12345678'})
+                case = CaseAccessors(self.domain).get_case(case.case_id)
+                self.assertPhoneEntryCount(0)
+                self.assertIsNotNone(user3.memoized_usercase)
+                self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '12345678')
+
+                # If the user has a number, it is used before the user case's number
+                user3.add_phone_number('87654321')
+                self.assertPhoneEntryCount(0)
+                self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '87654321')
+
+                # Referencing the case directly uses the case's phone number
+                self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
