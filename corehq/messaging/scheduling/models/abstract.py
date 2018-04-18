@@ -4,8 +4,9 @@ import jsonfield
 import uuid
 from memoized import memoized
 from django.db import models, transaction
-from corehq.apps.reminders.util import get_one_way_number_for_recipient
-from corehq.apps.sms.api import MessageMetadata, send_sms
+from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
+from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
+from corehq.apps.sms.models import PhoneNumber
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -19,6 +20,7 @@ from corehq.messaging.templating import (
     SimpleDictTemplateParam,
     CaseMessagingTemplateParam,
 )
+from corehq.messaging.util import use_phone_entries
 from django.utils.functional import cached_property
 
 
@@ -246,19 +248,28 @@ class Content(models.Model):
         return r
 
     @classmethod
-    def get_one_way_phone_number(cls, recipient):
+    def get_two_way_entry_or_phone_number(cls, recipient):
+        """
+        If recipient has a two-way number, returns it as a PhoneNumber entry.
+        If recipient does not have a two-way number but has a phone number configured,
+        returns the one-way phone number as a string.
+        """
+        if use_phone_entries():
+            phone_entry = get_two_way_number_for_recipient(recipient)
+            if phone_entry:
+                return phone_entry
+
         phone_number = get_one_way_number_for_recipient(recipient)
 
-        if not phone_number and isinstance(recipient, CommCareUser):
-            if recipient.memoized_usercase:
-                phone_number = get_one_way_number_for_recipient(recipient.memoized_usercase)
+        # Avoid processing phone numbers that are obviously fake (len <= 3) to
+        # save on processing time
+        if phone_number and len(phone_number) > 3:
+            return phone_number
 
-        if not phone_number or len(phone_number) <= 3:
-            # Avoid processing phone numbers that are obviously fake to
-            # save on processing time
-            return None
+        if isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
+            return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase)
 
-        return phone_number
+        return None
 
     @staticmethod
     def get_cleaned_message(message_dict, language_code):
@@ -309,12 +320,17 @@ class Content(models.Model):
             messaging_subevent_id=logged_subevent.pk,
         )
 
-    def send_sms_message(self, domain, recipient, phone_number, message, logged_subevent):
+    def send_sms_message(self, domain, recipient, phone_entry_or_number, message, logged_subevent):
         if not message:
             return
 
         metadata = self.get_sms_message_metadata(logged_subevent)
-        send_sms(domain, recipient, phone_number, message, metadata=metadata)
+
+        if isinstance(phone_entry_or_number, PhoneNumber):
+            send_sms_to_verified_number(phone_entry_or_number, message, metadata=metadata,
+                logged_subevent=logged_subevent)
+        else:
+            send_sms(domain, recipient, phone_entry_or_number, message, metadata=metadata)
 
 
 class Broadcast(models.Model):

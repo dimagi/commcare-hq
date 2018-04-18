@@ -26,6 +26,7 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.messaging.util import use_phone_entries
 from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
@@ -484,6 +485,9 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
+    if not use_phone_entries():
+        return
+
     try:
         _sync_user_phone_numbers(couch_user_id)
     except Exception as e:
