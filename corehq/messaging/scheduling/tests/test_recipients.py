@@ -184,6 +184,11 @@ class SchedulingRecipientTest(TestCase):
             qs = qs.filter(is_two_way=True)
         self.assertEqual(qs.count(), count)
 
+    def assertTwoWayEntry(self, entry, expected_phone_number):
+        self.assertTrue(isinstance(entry, PhoneNumber))
+        self.assertEqual(entry.phone_number, expected_phone_number)
+        self.assertTrue(entry.is_two_way)
+
     @run_with_all_backends
     def test_one_way_numbers(self):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
@@ -212,12 +217,51 @@ class SchedulingRecipientTest(TestCase):
 
             # If the user has a number, it is used before the user case's number
             user3.add_phone_number('87654321')
-            self.assertPhoneEntryCount(1)
+            user3.save()
+            self.assertPhoneEntryCount(2)
             self.assertPhoneEntryCount(0, only_count_two_way=True)
             self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '87654321')
 
             # Referencing the case directly uses the case's phone number
             self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
+
+    @run_with_all_backends
+    def test_two_way_numbers(self):
+        user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        user3 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        self.addCleanup(user1.delete)
+        self.addCleanup(user2.delete)
+        self.addCleanup(user3.delete)
+
+        self.assertIsNone(user1.memoized_usercase)
+        self.assertIsNone(Content.get_two_way_entry_or_phone_number(user1))
+
+        with self.create_user_case(user2) as case:
+            self.assertIsNotNone(user2.memoized_usercase)
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(user2))
+            self.assertIsNone(Content.get_two_way_entry_or_phone_number(case))
+
+        with self.create_user_case(user3) as case:
+            # If the user has no number, the user case's number is used
+            update_case(self.domain, case.case_id,
+                case_properties={'contact_phone_number': '12345678', 'contact_phone_number_is_verified': '1'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertPhoneEntryCount(1)
+            self.assertPhoneEntryCount(1, only_count_two_way=True)
+            self.assertIsNotNone(user3.memoized_usercase)
+            self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user3), '12345678')
+
+            # If the user has a number, it is used before the user case's number
+            user3.add_phone_number('87654321')
+            user3.save()
+            PhoneNumber.objects.get(phone_number='87654321').set_two_way()
+            self.assertPhoneEntryCount(2)
+            self.assertPhoneEntryCount(2, only_count_two_way=True)
+            self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user3), '87654321')
+
+            # Referencing the case directly uses the case's phone number
+            self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(case), '12345678')
 
     @run_with_all_backends
     def test_not_using_phone_entries(self):
@@ -252,6 +296,7 @@ class SchedulingRecipientTest(TestCase):
 
                 # If the user has a number, it is used before the user case's number
                 user3.add_phone_number('87654321')
+                user3.save()
                 self.assertPhoneEntryCount(0)
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(user3), '87654321')
 
