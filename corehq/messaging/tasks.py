@@ -47,9 +47,15 @@ def _sync_case_for_messaging(domain, case_id):
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
 
-    handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
-    if handler_ids:
-        reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
+    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+        # This runs rules from the old reminders framework. ICDS only uses
+        # the new reminders framework now, so we can spare redis and couch
+        # some hits by not running this at all.
+        # When all environments are on the new framework, we can remove these
+        # lines entirely.
+        handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
+        if handler_ids:
+            reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
 
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)
