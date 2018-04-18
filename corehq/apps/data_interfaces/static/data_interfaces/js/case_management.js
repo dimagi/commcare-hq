@@ -38,7 +38,7 @@ var CaseManagement = function (o) {
 
     var updateCaseRow = function (case_id, owner_id, owner_type) {
         return function(data, textStatus) {
-            var $checkbox = $('#case-management input[data-caseid="' + case_id + '"].selected-commcare-case'),
+            var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + case_id + '"].selected-commcare-case'),
                 username = $('#reassign_owner_select').data().select2.data().text,
                 date_message = (self.on_today) ? '<span title="0"></span>' :
                     '<span class="label label-warning" title="0">Out of range of filter. Will ' +
