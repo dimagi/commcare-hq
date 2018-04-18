@@ -72,8 +72,11 @@ class _CaseRelationshipManager(object):
 
     You can then ask "what are the different ways a `patient` can be referred to?":
 
-    >>> case_relationship_manager.expand_case_type('patient')
-    set([_CaseTypeRef(case_type=u'patient', relationship_path=()), _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))])
+    >>> expansions = case_relationship_manager.expand_case_type('patient')
+    >>> for case_type_ref in sorted(expansions):
+    ...     print(case_type_ref)
+    _CaseTypeRef(case_type=u'patient', relationship_path=())
+    _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))
 
     This is read "`patient` and `referral`'s parent are the two ways to refer to `patient`".
 
