@@ -40,6 +40,7 @@
         });
 
         // Event handlers for selecting & de-selecting cases
+        // Similar to archive_forms.js, would be good to combine the two
         $(document).on("click", interfaceSelector + " a.select-all", function () {
             $(interfaceSelector).find('input.selected-commcare-case').prop('checked', true).change();
             return false;
