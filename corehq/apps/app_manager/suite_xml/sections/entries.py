@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple, defaultdict
 from six.moves import zip_longest
 
@@ -368,10 +369,28 @@ class EntriesHelper(object):
             else:
                 parent_filter = ''
 
+            # Figure out which module will supply the details (select, confirm, etc.)
+            # for this datum. Normally this is the datum's own module.
             detail_module = datum['module']
-            # For shadow modules, replace the source module's case list/detail with the shadow's
-            if module.module_type == 'shadow' and module.source_module_id == datum['module'].unique_id:
-                detail_module = module
+
+            # Shadow modules are different because datums_meta is generated based on the source module,
+            # but the various details should be supplied based on the shadow's own configuration.
+            if module.module_type == 'shadow':
+                if datum['module'].unique_id == module.source_module_id:
+                    # We're looking at the datum that corresponds to the original module,
+                    # so use that module for details
+                    detail_module = module
+                else:
+                    # Check for case list parent child selection. If both shadow and source use parent case
+                    # selection, datums_meta will contain a datum for the parent case, based on the SOURCE's
+                    # parent select, and when we see that datum, we need to use the SHADOW's parent select
+                    # to supply the details.
+                    shadow_active = hasattr(module, 'parent_select') and module.parent_select.active
+                    source_active = hasattr(datum_module, 'parent_select') and datum_module.parent_select.active
+                    if shadow_active and source_active:
+                        if datum['module'].unique_id == datum_module.parent_select.module_id:
+                            detail_module = self.app.get_module_by_unique_id(module.parent_select.module_id)
+
             detail_persistent = self.get_detail_persistent_attr(datum['module'], detail_module, "case_short")
             detail_inline = self.get_detail_inline_attr(datum['module'], detail_module, "case_short")
 

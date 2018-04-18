@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 from functools import wraps
 import logging
@@ -36,7 +37,7 @@ def parse_xml(string):
     try:
         return ET.fromstring(string, parser=ET.XMLParser(encoding="utf-8", remove_comments=True))
     except ET.ParseError as e:
-        raise XFormException(_(u"Error parsing XML: {}").format(e))
+        raise XFormException(_("Error parsing XML: {}").format(e))
 
 
 namespaces = dict(
@@ -250,7 +251,7 @@ class ItextNodeGroup(object):
 
     def add_node(self, node):
         if self.nodes.get(node.lang):
-            raise XFormException(_(u"Group already has node for lang: {0}").format(node.lang))
+            raise XFormException(_("Group already has node for lang: {0}").format(node.lang))
         else:
             self.nodes[node.lang] = node
 
@@ -761,7 +762,7 @@ class XForm(WrappedNode):
 
         for dup in duplicates:
             for group in dup[1:]:
-                itext_ref = u'{{f}}text[@id="{0}"]'.format(group.id)
+                itext_ref = '{{f}}text[@id="{0}"]'.format(group.id)
                 for lang in group.nodes.keys():
                     translation = translations[lang]
                     node = translation.find(itext_ref)
@@ -775,10 +776,10 @@ class XForm(WrappedNode):
         xf_string = self.render()
         for dup in duplicates:
             reference = dup[0]
-            new_ref = u"jr:itext('{0}')".format(reference.id)
+            new_ref = "jr:itext('{0}')".format(reference.id)
 
             for group in dup[1:]:
-                old_ref = u'jr:itext(\'{0}\')'.format(group.id)
+                old_ref = 'jr:itext(\'{0}\')'.format(group.id)
                 xf_string = replace_ref_s(xf_string, old_ref, new_ref)
 
         self.xml = parse_xml(xf_string)
@@ -820,9 +821,9 @@ class XForm(WrappedNode):
         duplicate_node = self.translations().get(new_code)
 
         if not trans_node or not trans_node.exists():
-            raise XFormException(_(u"There's no language called '{}'").format(old_code))
+            raise XFormException(_("There's no language called '{}'").format(old_code))
         if duplicate_node and duplicate_node.exists():
-            raise XFormException(_(u"There's already a language called '{}'").format(new_code))
+            raise XFormException(_("There's already a language called '{}'").format(new_code))
         trans_node.attrib['lang'] = new_code
 
         self._reset_translations_cache()
@@ -835,7 +836,7 @@ class XForm(WrappedNode):
                 changes = True
 
         if changes and not len(self.itext_node):
-            raise XFormException(_(u"Form does not contain any translations for any of the build languages"))
+            raise XFormException(_("Form does not contain any translations for any of the build languages"))
 
         if changes:
             self._reset_translations_cache()
@@ -873,11 +874,11 @@ class XForm(WrappedNode):
             for f in text_node.values_by_form.keys():
                 if f not in VALID_VALUE_FORMS + (None,):
                     raise XFormException(_(
-                        u'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
-                        u'"form" attribute is optional. Valid values are: "{}".').format(
-                            f, u'", "'.join(VALID_VALUE_FORMS)
+                        'Unrecognized value of "form" attribute in \'<value form="{}">\'. '
+                        '"form" attribute is optional. Valid values are: "{}".').format(
+                            f, '", "'.join(VALID_VALUE_FORMS)
                     ))
-            raise XFormException(_(u'<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
+            raise XFormException(_('<translation lang="{lang}"><text id="{id}"> node has no <value>').format(
                 lang=lang, id=id
             ))
 
@@ -1000,7 +1001,7 @@ class XForm(WrappedNode):
                     try:
                         value = item.findtext('{f}value').strip()
                     except AttributeError:
-                        raise XFormException(_(u"<item> ({}) has no <value>").format(translation))
+                        raise XFormException(_("<item> ({}) has no <value>").format(translation))
                     option = {
                         'label': translation,
                         'value': value
@@ -1215,7 +1216,7 @@ class XForm(WrappedNode):
         elif node.tag_name == "repeat":
             path = node.attrib['nodeset']
         else:
-            raise XFormException(_(u"Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
+            raise XFormException(_("Node <{}> has no 'ref' or 'bind'").format(node.tag_name))
         return path
 
     def get_leaf_data_nodes(self):
@@ -1430,11 +1431,11 @@ class XForm(WrappedNode):
             return 'true()'
         elif condition.type == 'if':
             if condition.operator == 'selected':
-                template = u"selected({path}, '{answer}')"
+                template = "selected({path}, '{answer}')"
             elif condition.operator == 'boolean_true':
-                template = u"{path}"
+                template = "{path}"
             else:
-                template = u"{path} = '{answer}'"
+                template = "{path} = '{answer}'"
             return template.format(
                 path=self.resolve_path(condition.question),
                 answer=condition.answer
@@ -1607,35 +1608,35 @@ class XForm(WrappedNode):
         forms_due = []
         for form in forms:
             form_xpath = QualifiedScheduleFormXPath(form, form.get_phase(), form.get_module(), case)
-            name = u"next_{}".format(form.schedule_form_id)
-            forms_due.append(u"/data/{}".format(name))
+            name = "next_{}".format(form.schedule_form_id)
+            forms_due.append("/data/{}".format(name))
 
             self.add_instance(
                 form_xpath.fixture_id,
-                u'jr://fixture/{}'.format(form_xpath.fixture_id)
+                'jr://fixture/{}'.format(form_xpath.fixture_id)
             )
 
             if form.get_phase().id == 1:
                 self.add_bind(
-                    nodeset=u'/data/{}'.format(name),
+                    nodeset='/data/{}'.format(name),
                     calculate=form_xpath.first_visit_phase_set
                 )
             else:
                 self.add_bind(
-                    nodeset=u'/data/{}'.format(name),
+                    nodeset='/data/{}'.format(name),
                     calculate=form_xpath.xpath_phase_set
                 )
 
             self.data_node.append(_make_elem(name))
 
         self.add_bind(
-            nodeset=u'/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
-            calculate=u'date(min({}))'.format(','.join(forms_due))
+            nodeset='/data/{}'.format(SCHEDULE_GLOBAL_NEXT_VISIT_DATE),
+            calculate='date(min({}))'.format(','.join(forms_due))
         )
         self.data_node.append(_make_elem(SCHEDULE_GLOBAL_NEXT_VISIT_DATE))
 
         self.add_bind(
-            nodeset=u'/data/{}'.format(SCHEDULE_NEXT_DUE),
+            nodeset='/data/{}'.format(SCHEDULE_NEXT_DUE),
             calculate=QualifiedScheduleFormXPath.next_visit_date(forms, case)
         )
         self.data_node.append(_make_elem(SCHEDULE_NEXT_DUE))
@@ -1653,11 +1654,11 @@ class XForm(WrappedNode):
 
             self.add_instance(
                 schedule_form_xpath.fixture_id,
-                u'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
+                'jr://fixture/{}'.format(schedule_form_xpath.fixture_id)
             )
 
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, SCHEDULE_PHASE),
                 type="xs:integer",
                 calculate=schedule_form_xpath.current_schedule_phase_calculation(
                     self.action_relevance(form.schedule.termination_condition),
@@ -1668,32 +1669,32 @@ class XForm(WrappedNode):
             self._add_scheduler_case_update(action.case_type, SCHEDULE_PHASE)
 
             self.add_bind(
-                nodeset=u'/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
+                nodeset='/data/{}'.format(SCHEDULE_CURRENT_VISIT_NUMBER),
                 calculate=schedule_form_xpath.next_visit_due_num
             )
             self.data_node.append(_make_elem(SCHEDULE_CURRENT_VISIT_NUMBER))
 
             self.add_bind(
-                nodeset=u'/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
+                nodeset='/data/{}'.format(SCHEDULE_UNSCHEDULED_VISIT),
                 calculate=schedule_form_xpath.is_unscheduled_visit,
             )
             self.data_node.append(_make_elem(SCHEDULE_UNSCHEDULED_VISIT))
 
             last_visit_num = SCHEDULE_LAST_VISIT.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_num),
-                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
-                calculate=u"/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, last_visit_num),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                calculate="/data/{}".format(SCHEDULE_CURRENT_VISIT_NUMBER),
             )
             update_block.append(make_case_elem(last_visit_num))
             self._add_scheduler_case_update(action.case_type, last_visit_num)
 
             last_visit_date = SCHEDULE_LAST_VISIT_DATE.format(form.schedule_form_id)
             self.add_bind(
-                nodeset=u'{}/case/update/{}'.format(action.form_element_name, last_visit_date),
+                nodeset='{}/case/update/{}'.format(action.form_element_name, last_visit_date),
                 type="xsd:dateTime",
                 calculate=self.resolve_path("meta/timeEnd"),
-                relevant=u"not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
+                relevant="not(/data/{})".format(SCHEDULE_UNSCHEDULED_VISIT),
             )
             update_block.append(make_case_elem(last_visit_date))
             self._add_scheduler_case_update(action.case_type, last_visit_date)

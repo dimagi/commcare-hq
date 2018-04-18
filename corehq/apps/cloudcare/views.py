@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from xml.etree import cElementTree as ElementTree
@@ -27,7 +28,6 @@ from xml2json.lib import xml2json
 
 from corehq import toggles, privileges
 from corehq.apps.accounting.decorators import requires_privilege_for_commcare_user, requires_privilege_with_fallback
-from corehq.apps.analytics import ab_tests
 from corehq.apps.app_manager.dbaccessors import (
     get_latest_build_doc,
     get_latest_released_app_doc,
@@ -252,16 +252,12 @@ class PreviewAppView(TemplateView):
     @use_legacy_jquery
     def get(self, request, *args, **kwargs):
         app = get_app(request.domain, kwargs.pop('app_id'))
-        ab_test = ab_tests.ABTest(ab_tests.DATA_FEEDBACK_LOOP, self.request)
-        response = self.render_to_response({
+        return self.render_to_response({
             'app': app,
             'formplayer_url': settings.FORMPLAYER_URL,
             "maps_api_key": settings.GMAPS_API_KEY,
             "environment": PREVIEW_APP_ENVIRONMENT,
-            'ab_test': ab_test.context,     # sets ab test version if needed
         })
-        ab_test.update_response(response)
-        return response
 
 
 class SingleAppLandingPageView(TemplateView):
@@ -393,14 +389,14 @@ def form_context(request, domain, app_id, module_id, form_id):
     form_name = list(form.name.values())[0]
 
     # make the name for the session we will use with the case and form
-    session_name = u'{app} > {form}'.format(
+    session_name = '{app} > {form}'.format(
         app=app.name,
         form=form_name,
     )
 
     if case_id:
         case = CaseAccessors(domain).get_case(case_id)
-        session_name = u'{0} - {1}'.format(session_name, case.name)
+        session_name = '{0} - {1}'.format(session_name, case.name)
 
     root_context = {
         'form_url': form_url,

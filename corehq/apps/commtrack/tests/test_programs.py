@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 from corehq.apps.commtrack.tests.util import bootstrap_domain, bootstrap_products, TEST_DOMAIN
 from corehq.apps.programs.models import Program

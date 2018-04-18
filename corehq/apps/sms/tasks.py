@@ -26,6 +26,7 @@ from corehq.apps.smsbillables.exceptions import RetryBillableTaskException
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.messaging.util import use_phone_entries
 from corehq.toggles import RETRY_SMS_INDEFINITELY
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
@@ -226,10 +227,15 @@ class OutboundDailyCounter(object):
 
     def __init__(self, domain_object=None):
         self.domain_object = domain_object
-        self.utc_date = datetime.utcnow().date()
+
+        if domain_object:
+            self.date = ServerTime(datetime.utcnow()).user_time(domain_object.get_default_timezone()).done().date()
+        else:
+            self.date = datetime.utcnow().date()
+
         self.key = 'outbound-daily-count-for-%s-%s' % (
             domain_object.name if domain_object else '',
-            self.utc_date.strftime('%Y-%m-%d')
+            self.date.strftime('%Y-%m-%d')
         )
 
         # We need access to the raw redis client because calling incr on
@@ -249,6 +255,10 @@ class OutboundDailyCounter(object):
 
     def decrement(self):
         return self.client.decr(self.key)
+
+    @property
+    def current_usage(self):
+        return self.client.get(self.key) or 0
 
     @property
     def daily_limit(self):
@@ -276,7 +286,7 @@ class OutboundDailyCounter(object):
             # Log the fact that we reached this limit
             DailyOutboundSMSLimitReached.create_for_domain_and_date(
                 self.domain_object.name if self.domain_object else '',
-                self.utc_date
+                self.date
             )
             return False
 
@@ -475,6 +485,9 @@ def _sync_case_phone_number(contact_case):
 @no_result_task(queue=settings.CELERY_REMINDER_CASE_UPDATE_QUEUE, acks_late=True,
                 default_retry_delay=5 * 60, max_retries=10, bind=True)
 def sync_user_phone_numbers(self, couch_user_id):
+    if not use_phone_entries():
+        return
+
     try:
         _sync_user_phone_numbers(couch_user_id)
     except Exception as e:

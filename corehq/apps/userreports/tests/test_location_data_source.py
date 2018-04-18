@@ -8,7 +8,7 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.util.test_utils import trap_extra_setup
 
-from corehq.apps.userreports.app_manager import _clean_table_name
+from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.pillow import get_kafka_ucr_pillow
 from corehq.apps.userreports.tasks import rebuild_indicators
@@ -28,7 +28,7 @@ class TestLocationDataSource(TestCase):
             domain=self.domain,
             display_name='Locations in Westworld',
             referenced_doc_type='Location',
-            table_id=_clean_table_name(self.domain, str(uuid.uuid4().hex)),
+            table_id=clean_table_name(self.domain, str(uuid.uuid4().hex)),
             configured_filter={},
             configured_indicators=[{
                 "type": "expression",

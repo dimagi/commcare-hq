@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import functools
 from itertools import chain
@@ -184,6 +185,10 @@ def get_case_properties(app, case_types, defaults=(),
 
 def get_all_case_properties(app):
     return get_case_properties(app, app.get_case_types(), defaults=('name',))
+
+
+def get_all_case_properties_for_case_type(domain, case_type):
+    return all_case_properties_by_domain(domain, [case_type]).get(case_type, [])
 
 
 def get_usercase_properties(app):

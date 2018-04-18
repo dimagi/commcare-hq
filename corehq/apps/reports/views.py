@@ -20,6 +20,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
+from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 import langcodes
@@ -307,7 +308,7 @@ class MySavedReportsView(BaseProjectReportSectionView):
                                    key=lambda s: s.configs[0].name)
         for report in scheduled_reports:
             self._adjust_report_day_and_time(report)
-        return scheduled_reports
+        return sorted(scheduled_reports, key=self._report_sort_key())
 
     @property
     def show_all_scheduled_reports(self):
@@ -315,9 +316,6 @@ class MySavedReportsView(BaseProjectReportSectionView):
 
     @property
     def others_scheduled_reports(self):
-        if not toggles.SHOW_ALL_SCHEDULED_REPORT_EMAILS.enabled(self.domain):
-            return []
-
         def _is_valid(rn):
             # the _id check is for weird bugs we've seen in the wild that look like
             # oddities in couch.
@@ -346,7 +344,10 @@ class MySavedReportsView(BaseProjectReportSectionView):
                 ret.append(scheduled_report)
             elif user_email in scheduled_report.all_recipient_emails:
                 ret.append(scheduled_report)
-        return ret
+        return sorted(ret, key=self._report_sort_key())
+
+    def _report_sort_key(self):
+        return lambda report: report.configs[0].full_name.lower() if report.configs else None
 
     def _adjust_report_day_and_time(self, report):
         time_difference = get_timezone_difference(self.domain)
@@ -886,24 +887,14 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=True,
-            ga_tracking_info={
-                'cd4': request.domain,
-                'cd10': report_slug
-            })
+            email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL,
-                ga_track=True,
-                ga_tracking_info={
-                    'cd4': request.domain,
-                    'cd10': report_slug
-                })
+                email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
@@ -1221,10 +1212,6 @@ def delete_scheduled_report(request, domain, scheduled_report_id):
 @login_and_domain_required
 def send_test_scheduled_report(request, domain, scheduled_report_id):
 
-    user_id = request.couch_user._id
-
-    user = CouchUser.get_by_user_id(user_id, domain)
-
     try:
         send_delayed_report(scheduled_report_id)
     except Exception as e:
@@ -1232,7 +1219,7 @@ def send_test_scheduled_report(request, domain, scheduled_report_id):
         logging.exception(e)
         messages.error(request, _("An error occurred, message unable to send"))
     else:
-        messages.success(request, _("Test message sent to the report's recipients."))
+        messages.success(request, _("Report sent to this report's recipients"))
 
     return HttpResponseRedirect(reverse("reports_home", args=(domain,)))
 
@@ -1336,10 +1323,10 @@ def view_scheduled_report(request, domain, scheduled_report_id):
 
 
 @location_safe
-class CaseDetailsView(BaseProjectReportSectionView):
-    urlname = 'case_details'
-    template_name = "reports/reportdata/case_details.html"
-    page_title = ugettext_lazy("Case Details")
+class CaseDataView(BaseProjectReportSectionView):
+    urlname = 'case_data'
+    template_name = "reports/reportdata/case_data.html"
+    page_title = ugettext_lazy("Case Data")
     http_method_names = ['get']
 
     @method_decorator(require_case_view_permission)
@@ -1347,13 +1334,13 @@ class CaseDetailsView(BaseProjectReportSectionView):
     def dispatch(self, request, *args, **kwargs):
         if not self.case_instance:
             messages.info(request,
-                          "Sorry, we couldn't find that case. If you think this "
-                          "is a mistake please report an issue.")
+                          _("Sorry, we couldn't find that case. If you think this "
+                            "is a mistake please report an issue."))
             return HttpResponseRedirect(CaseListReport.get_url(domain=self.domain))
         if not (request.can_access_all_locations or
                 user_can_access_case(self.domain, self.request.couch_user, self.case_instance)):
             raise location_restricted_exception(request)
-        return super(CaseDetailsView, self).dispatch(request, *args, **kwargs)
+        return super(CaseDataView, self).dispatch(request, *args, **kwargs)
 
     @property
     def case_id(self):
@@ -1456,7 +1443,7 @@ class CaseDetailsView(BaseProjectReportSectionView):
 
         can_edit_data = self.request.couch_user.can_edit_data
 
-        return {
+        context = {
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
@@ -1470,17 +1457,14 @@ class CaseDetailsView(BaseProjectReportSectionView):
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
-            "case_hierarchy_options": {
-                "show_view_buttons": True,
-                "get_case_url": _get_case_url,
-                "timezone": timezone
-            },
             "ledgers": ledger_map,
             "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+        return context
 
 
 def form_to_json(domain, form, timezone):
@@ -1551,7 +1535,7 @@ def case_property_changes(request, domain, case_id, case_property_name):
 
 
 @location_safe
-class CaseAttachmentsView(CaseDetailsView):
+class CaseAttachmentsView(CaseDataView):
     urlname = 'single_case_attachments'
     template_name = "reports/reportdata/case_attachments.html"
     page_title = ugettext_lazy("Case Attachments")
@@ -1644,7 +1628,7 @@ def rebuild_case_view(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
     rebuild_case_from_forms(domain, case_id, UserRequestedRebuild(user_id=request.couch_user.user_id))
     messages.success(request, _('Case %s was rebuilt from its forms.' % case.name))
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+    return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
 @require_case_view_permission
@@ -1659,7 +1643,7 @@ def resave_case_view(request, domain, case_id):
         request,
         _('Case %s was successfully saved. Hopefully it will show up in all reports momentarily.' % case.name),
     )
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+    return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
 @require_case_view_permission
@@ -1687,7 +1671,7 @@ def close_case_view(request, domain, case_id):
             url=reverse('undo_close_case', args=[domain, case_id]),
         ))
         messages.success(request, mark_safe(msg), extra_tags='html')
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+    return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
 @require_case_view_permission
@@ -1703,7 +1687,7 @@ def undo_close_case_view(request, domain, case_id):
         form = FormAccessors(domain).get_form(closing_form_id)
         form.archive(user_id=request.couch_user._id)
         messages.success(request, 'Case {} has been reopened.'.format(case.name))
-    return HttpResponseRedirect(reverse('case_details', args=[domain, case_id]))
+    return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
 
 
 @require_case_view_permission
@@ -2086,13 +2070,13 @@ class EditFormInstance(View):
                         'Case <a href="{case_url}">{case_name}</a> is closed. Please reopen the '
                         'case before editing the form'
                     ).format(
-                        case_url=reverse('case_details', args=[domain, case.case_id]),
+                        case_url=reverse('case_data', args=[domain, case.case_id]),
                         case_name=case.name,
                     ))
                 elif case.is_deleted:
                     return _error(
                         _('Case <a href="{case_url}">{case_name}</a> is deleted. Cannot edit this form.').format(
-                            case_url=reverse('case_details', args=[domain, case.case_id]),
+                            case_url=reverse('case_data', args=[domain, case.case_id]),
                             case_name=case.name,
                         )
                     )
@@ -2186,7 +2170,7 @@ def _get_cases_with_forms_message(domain, cases_with_other_forms, case_id_from_r
         if case_id == case_id_from_request:
             return _("%(case_name)s (this case)") % {'case_name': name}
         else:
-            return '<a href="{}#!history">{}</a>'.format(reverse('case_details', args=[domain, case_id]), name)
+            return '<a href="{}#!history">{}</a>'.format(reverse('case_data', args=[domain, case_id]), name)
 
     case_links = ', '.join([
         _get_case_link(case_id, name)
@@ -2218,7 +2202,7 @@ def _get_case_id_and_redirect_url(domain, request):
     else:
         # check if referring URL was a case detail view, then make sure
         # the case still exists before redirecting.
-        template = reverse('case_details', args=[domain, 'fake_case_id'])
+        template = reverse('case_data', args=[domain, 'fake_case_id'])
         template = template.replace('fake_case_id', '([^/]*)')
         case_id = re.findall(template, redirect)
         if case_id:

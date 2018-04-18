@@ -209,6 +209,9 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
+            self.kwargs['domain']
+        ).location_ids())
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -408,7 +411,6 @@ class LocationView(View):
             ]
         })
 
-
 @location_safe
 @method_decorator([login_and_domain_required], name='dispatch')
 class LocationAncestorsView(View):
@@ -478,6 +480,20 @@ class AWCLocationView(View):
                 }
                 for location in awcs
             ]
+        })
+
+
+@location_safe
+@method_decorator([login_and_domain_required], name='dispatch')
+class HaveAccessToLocation(View):
+    def get(self, request, *args, **kwargs):
+        location_id = request.GET.get('location_id')
+        have_access = user_can_access_location_id(
+            self.kwargs['domain'],
+            request.couch_user, location_id
+        )
+        return JsonResponse(data={
+            'haveAccess': have_access
         })
 
 
@@ -608,7 +624,7 @@ class ExportIndicatorView(View):
 
         sql_location = None
 
-        if location:
+        if location and indicator != ISSNIP_MONTHLY_REGISTER_PDF:
             try:
                 sql_location = SQLLocation.objects.get(location_id=location, domain=self.kwargs['domain'])
                 locations = sql_location.get_ancestors(include_self=True)
@@ -674,11 +690,11 @@ class ExportIndicatorView(View):
             pdf_format = request.POST.get('pdfformat')
             task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
-                self.request.couch_user,
                 awcs,
                 pdf_format,
                 month,
-                year
+                year,
+                request.couch_user
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})

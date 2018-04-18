@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import importlib
 import os
+import six
 
 from django.contrib import messages
 import settingshelper as helper
@@ -116,7 +118,6 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
-DEBUG_USER_SAVE_LOG_FILE = "%s/%s" % (FILEPATH, "debug_user_save.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -139,10 +140,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.common.BrokenLinkEmailsMiddleware',
     'django_otp.middleware.OTPMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
-    'corehq.apps.users.middleware.Enforce2FAMiddleware',
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -202,6 +203,7 @@ DEFAULT_APPS = (
     'ws4redis',
     'statici18n',
     'raven.contrib.django.raven_compat',
+    'django_user_agents',
 )
 
 CAPTCHA_FIELD_TEMPLATE = 'hq-captcha-field.html'
@@ -238,7 +240,6 @@ HQ_APPS = (
     'corehq.apps.linked_domain',
     'corehq.apps.locations',
     'corehq.apps.products',
-    'corehq.apps.prelogin',
     'corehq.apps.programs',
     'corehq.apps.commtrack',
     'corehq.apps.consumption',
@@ -338,9 +339,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
-    'a5288',
     'custom.bihar',
-    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -374,6 +373,7 @@ HQ_APPS = (
     'custom.hki',
     'corehq.motech.openmrs',
     'custom.champ',
+    'custom.yeksi_naa_reports',
 )
 
 ENIKSHAY_APPS = (
@@ -392,7 +392,6 @@ TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
-    'a5288',
     'captcha',
     'couchdbkit.ext.django',
     'corehq.apps.ivr',
@@ -427,6 +426,10 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
 
+# set to True or False in localsettings to override the value set way down below
+IS_LOCATION_CTE_ENABLED = None
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -507,6 +510,10 @@ EMAIL_SUBJECT_PREFIX = '[commcarehq] '
 
 SERVER_ENVIRONMENT = 'localdev'
 ICDS_ENVS = ('icds', 'icds-new')
+
+# minimum minutes between updates to user reporting metadata
+USER_REPORTING_METADATA_UPDATE_FREQUENCY = 15
+
 BASE_ADDRESS = 'localhost:8000'
 J2ME_ADDRESS = ''
 
@@ -754,11 +761,8 @@ LOCAL_REPEATERS = ()
 # Set to None to enable all or empty tuple to disable all.
 REPEATERS_WHITELIST = None
 
-# Prelogin site
+# If ENABLE_PRELOGIN_SITE is set to true, redirect to Dimagi.com urls
 ENABLE_PRELOGIN_SITE = False
-PRELOGIN_APPS = (
-    'corehq.apps.prelogin',
-)
 
 # dimagi.com urls
 PRICING_PAGE_URL = "https://www.dimagi.com/commcare/pricing/"
@@ -809,6 +813,8 @@ LESS_B3_PATHS = {
     'variables': '../../../hqwebapp/less/_hq/includes/variables',
     'mixins': '../../../hqwebapp/less/_hq/includes/mixins',
 }
+
+USER_AGENTS_CACHE = 'default'
 
 # Invoicing
 INVOICE_STARTING_NUMBER = 0
@@ -926,10 +932,6 @@ DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 
-# Allow overriding the synclog DB
-# This allows us to periodically rotate the synclog DB to remove deleted docs
-CUSTOM_SYNCLOGS_DB = None
-
 from env_settings import *
 
 try:
@@ -991,6 +993,11 @@ try:
     COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
+
+COUCH_DATABASES['default'] = {
+    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
+    for (k, v) in COUCH_DATABASES['default'].items()
+}
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
@@ -1204,15 +1211,7 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        },
-        'debug_user_save': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'simple',
-            'filename': DEBUG_USER_SAVE_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 5  # Backup 50 MB of logs
-        },
+        }
     },
     'root': {
         'level': 'INFO',
@@ -1329,11 +1328,6 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'debug_user_save': {
-            'handlers': ['debug_user_save'],
-            'level': 'INFO' if SERVER_ENVIRONMENT == 'localdev' else 'ERROR',
-            'propagate': False,
-        }
     }
 }
 
@@ -1369,21 +1363,19 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
+NEW_USERS_GROUPS_DB = b'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = 'fixtures'
+NEW_FIXTURES_DB = b'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = 'domains'
+NEW_DOMAINS_DB = b'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = 'apps'
+NEW_APPS_DB = b'apps'
 APPS_DB = NEW_APPS_DB
 
-SYNCLOGS_DB = CUSTOM_SYNCLOGS_DB or 'synclogs'
-
-META_DB = 'meta'
+META_DB = b'meta'
 
 
 COUCHDB_APPS = [
@@ -1439,7 +1431,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'gsid',
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
@@ -1470,9 +1461,6 @@ COUCHDB_APPS = [
     # domains
     ('domain', DOMAINS_DB),
 
-    # sync logs
-    ('phone', SYNCLOGS_DB),
-
     # applications
     ('app_manager', APPS_DB),
 ]
@@ -1494,9 +1482,6 @@ EXTRA_COUCHDB_DATABASES = COUCH_SETTINGS_HELPER.get_extra_couchdbs()
 # it can be reverted whenever that's figured out.
 # https://github.com/dimagi/commcare-hq/pull/10034#issuecomment-174868270
 INSTALLED_APPS = LOCAL_APPS + INSTALLED_APPS
-
-if ENABLE_PRELOGIN_SITE:
-    INSTALLED_APPS += PRELOGIN_APPS
 
 seen = set()
 INSTALLED_APPS = [x for x in INSTALLED_APPS if x not in seen and not seen.add(x)]
@@ -1538,8 +1523,8 @@ MESSAGE_TAGS = {
     messages.INFO: 'alert-info',
     messages.DEBUG: '',
     messages.SUCCESS: 'alert-success',
-    messages.WARNING: 'alert-error alert-warning',
-    messages.ERROR: 'alert-error alert-danger',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
 }
 
 COMMCARE_USER_TERM = "Mobile Worker"
@@ -1999,7 +1984,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
-    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
@@ -2026,7 +2010,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'person_cases_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tasks_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'tech_issue_cases.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'thr_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'usage_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
@@ -2034,6 +2017,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2068,7 +2056,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
-    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json')
+    os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2172,14 +2163,10 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'a5288-test': 'a5288',
-    'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
-    'gsid': 'custom.apps.gsid',
-    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2264,10 +2251,17 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
     'psi-unicef': 'psi',
-
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
+    'test-pna': 'custom.yeksi_naa_reports',
 }
+
+THROTTLE_SCHED_REPORTS_PATTERNS = (
+    # Regex patterns matching domains whose scheduled reports use a
+    # separate queue so that they don't hold up the background queue.
+    'ews-ghana$',
+    'mvp-',
+)
 
 CASEXML_FORCE_DOMAIN_CHECK = True
 
@@ -2336,9 +2330,22 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
-IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
-    'localdev',
-    'changeme',  # default value in localsettings.example.py
-    'staging',
-    'softlayer',
-]
+if IS_LOCATION_CTE_ENABLED is None:
+    IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+        'production',
+    ]
+
+if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
+    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
+    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+    ]
+else:
+    IS_LOCATION_CTE_ONLY = False

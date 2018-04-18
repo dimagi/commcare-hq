@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+from lxml import etree
 
 import iso8601
 import pytz
@@ -17,7 +18,7 @@ from dimagi.utils.parsing import json_format_datetime
 SIMPLE_FORM = """<?xml version='1.0' ?>
 <data uiVersion="1" version="17" name="{form_name}" xmlns:jrm="http://dev.commcarehq.org/jr/xforms"
     xmlns="{xmlns}">
-    <dalmation_count>yes</dalmation_count>
+    {form_properties}
     <n1:meta xmlns:n1="http://openrosa.org/jr/xforms">
         <n1:deviceID>{device_id}</n1:deviceID>
         <n1:timeStart>{time_start}</n1:timeStart>
@@ -45,26 +46,57 @@ class TestFormMetadata(jsonobject.JsonObject):
     received_on = jsonobject.DateTimeProperty(default=datetime.utcnow)
 
 
-def get_simple_form_xml(form_id, case_id=None, metadata=None):
+class FormSubmissionBuilder(object):
+    """
+    Utility/helper object for building a form submission
+    """
+
+    def __init__(self, form_id, metadata=None, case_blocks=None, form_properties=None, form_template=SIMPLE_FORM):
+        self.form_id = form_id
+        self.metadata = metadata or TestFormMetadata()
+        self.case_blocks = case_blocks or []
+        self.form_template = form_template
+        self.form_properties = form_properties or {}
+
+    def as_xml_string(self):
+        case_block_xml = ''.join(cb.as_string() for cb in self.case_blocks)
+        form_properties_xml = build_form_xml_from_property_dict(self.form_properties)
+        form_xml = self.form_template.format(
+            uuid=self.form_id, form_properties=form_properties_xml, case_block=case_block_xml,
+            **self.metadata.to_json()
+        )
+        if not self.metadata.user_id:
+            form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(self.metadata.user_id), '')
+        return form_xml
+
+
+def build_form_xml_from_property_dict(form_properties, separator=''):
+    elements = []
+    for key, value in form_properties.items():
+        prop = etree.Element(key)
+        prop.text = value
+        elements.append(prop)
+
+    return separator.join(etree.tostring(e) for e in elements)
+
+
+def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
     from casexml.apps.case.mock import CaseBlock
 
-    metadata = metadata or TestFormMetadata()
-    case_block = ''
-    if case_id:
-        case_block = CaseBlock(create=True, case_id=case_id).as_string()
-    form_xml = SIMPLE_FORM.format(uuid=form_id, case_block=case_block, **metadata.to_json())
-
-    if not metadata.user_id:
-        form_xml = form_xml.replace('<n1:userID>{}</n1:userID>'.format(metadata.user_id), '')
-
-    return form_xml
+    case_blocks = [CaseBlock(create=True, case_id=case_id)] if case_id else []
+    return FormSubmissionBuilder(
+        form_id=form_id,
+        metadata=metadata,
+        case_blocks=case_blocks,
+        form_template=simple_form,
+    ).as_xml_string()
 
 
-def get_simple_wrapped_form(form_id, case_id=None, metadata=None, save=True):
+def get_simple_wrapped_form(form_id, metadata=None, save=True, simple_form=SIMPLE_FORM):
     from corehq.form_processor.interfaces.processor import FormProcessorInterface
 
     metadata = metadata or TestFormMetadata()
-    xml = get_simple_form_xml(form_id=form_id, metadata=metadata)
+    xml = get_simple_form_xml(form_id=form_id, metadata=metadata, simple_form=simple_form)
     form_json = convert_xform_to_json(xml)
     interface = FormProcessorInterface(domain=metadata.domain)
     wrapped_form = interface.new_xform(form_json)

@@ -2,7 +2,8 @@
     "domains": [
         "enikshay",
         "enikshay-reports-qa",
-        "enikshay-performance-test"
+        "enikshay-performance-test",
+        "enikshay-test"
     ],
     "server_environment": [
       "enikshay",

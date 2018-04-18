@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import csv
 import io
 import json
@@ -37,7 +38,7 @@ from corehq.apps.data_interfaces.models import (AutomaticUpdateRule,
 from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqcase.utils import get_case_by_identifier
-from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, PaginatedItemException
+from corehq.apps.hqwebapp.views import CRUDPaginatedViewMixin, HQJSONResponseMixin, PaginatedItemException
 from corehq.apps.data_interfaces.dispatcher import (
     EditDataInterfaceDispatcher,
     require_can_edit_data,
@@ -237,7 +238,7 @@ class ArchiveFormView(DataInterfaceSection):
         try:
             bulk_file = self.request.FILES['bulk_upload_file']
             if bulk_file.size > self.MAX_SIZE:
-                raise BulkUploadCasesException(_(u"File size too large. "
+                raise BulkUploadCasesException(_("File size too large. "
                                                  "Please upload file less than"
                                                  " {size} Megabytes").format(size=self.MAX_SIZE // self.ONE_MB))
 
@@ -430,7 +431,7 @@ class CaseGroupCaseManagementView(DataInterfaceSection, CRUDPaginatedViewMixin):
     def _get_item_data(self, case):
         return {
             'id': case.case_id,
-            'detailsUrl': reverse('case_details', args=[self.domain, case.case_id]),
+            'detailsUrl': reverse('case_data', args=[self.domain, case.case_id]),
             'name': case.name,
             'externalId': case.external_id if case.external_id else '--',
             'phoneNumber': case.get_case_property('contact_phone_number') or '--',
@@ -606,7 +607,7 @@ def xform_management_job_poll(request, domain, download_id,
     return render(request, template, context)
 
 
-class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
+class AutomaticUpdateRuleListView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/list_automatic_update_rules.html'
     urlname = 'automatic_update_rule_list'
     page_title = ugettext_lazy("Automatically Close Cases")
@@ -728,7 +729,7 @@ class AutomaticUpdateRuleListView(JSONResponseMixin, DataInterfaceSection):
         }
 
 
-class AddAutomaticUpdateRuleView(JSONResponseMixin, DataInterfaceSection):
+class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
     template_name = 'data_interfaces/add_automatic_update_rule.html'
     urlname = 'add_automatic_update_rule'
     page_title = ugettext_lazy("Add Automatic Case Close Rule")

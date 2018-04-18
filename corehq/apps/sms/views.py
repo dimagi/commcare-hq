@@ -168,7 +168,6 @@ class ComposeMessageView(BaseMessagingSectionView):
         page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
-    @method_decorator(requires_old_reminder_framework())
     @method_decorator(require_permission(Permissions.edit_data))
     @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_typeahead
@@ -781,7 +780,7 @@ def format_contact_data(domain, data):
         vn_id = row[4]
         if row[1] == 'case':
             row[1] = _('Case')
-            row[4] = reverse('case_details', args=[domain, contact_id])
+            row[4] = reverse('case_data', args=[domain, contact_id])
         elif row[1] == 'mobile_worker':
             row[1] = _('Mobile Worker')
             row[4] = reverse(EditCommCareUserView.urlname, args=[domain, contact_id])
@@ -1867,8 +1866,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(len(domain_obj.restricted_sms_times) > 0),
                 "restricted_sms_times_json":
                     [w.to_json() for w in domain_obj.restricted_sms_times],
-                "send_to_duplicated_case_numbers":
-                    enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
                 "sms_survey_date_format":
                     domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
@@ -1943,8 +1940,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "default_sms_response"),
                 ("custom_case_username",
                  "custom_case_username"),
-                ("send_to_duplicated_case_numbers",
-                 "send_to_duplicated_case_numbers"),
                 ("sms_survey_date_format",
                  "sms_survey_date_format"),
                 ("sms_conversation_length",
@@ -2204,8 +2199,8 @@ class InvitationAppInfoView(View, DomainViewMixin):
         raise Http404()
 
     def get(self, *args, **kwargs):
-        url = str(self.odk_url).strip()
-        response = 'ccapp: %s signature: %s' % (url, sign(url))
+        url = six.binary_type(self.odk_url).strip()
+        response = b'ccapp: %s signature: %s' % (url, sign(url))
         response = base64.b64encode(response)
         return HttpResponse(response)
 

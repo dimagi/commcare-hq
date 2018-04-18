@@ -1,27 +1,29 @@
 DROP VIEW IF EXISTS awc_location_months CASCADE;
 CREATE VIEW awc_location_months AS
  SELECT
-	awc_location.doc_id as awc_id,
-    awc_location.awc_name,
-	awc_location.awc_site_code,
-    awc_location.supervisor_id,
-	awc_location.supervisor_name,
-	awc_location.supervisor_site_code,
-	awc_location.block_id,
-	awc_location.block_name,
-	awc_location.block_site_code,
-	awc_location.district_id,
-	awc_location.district_name,
-	awc_location.district_site_code,
-	awc_location.state_id,
-	awc_location.state_name,
-	awc_location.state_site_code,
-	awc_location.aggregation_level,
-	awc_location.block_map_location_name,
-	awc_location.district_map_location_name,
-	awc_location.state_map_location_name,
-    months.start_date AS month,
-	months.month_name AS month_display
+  awc_location.doc_id as awc_id,
+  awc_location.awc_name,
+  awc_location.awc_site_code,
+  awc_location.supervisor_id,
+  awc_location.supervisor_name,
+  awc_location.supervisor_site_code,
+  awc_location.block_id,
+  awc_location.block_name,
+  awc_location.block_site_code,
+  awc_location.district_id,
+  awc_location.district_name,
+  awc_location.district_site_code,
+  awc_location.state_id,
+  awc_location.state_name,
+  awc_location.state_site_code,
+  awc_location.aggregation_level,
+  awc_location.block_map_location_name,
+  awc_location.district_map_location_name,
+  awc_location.state_map_location_name,
+  awc_location.aww_name,
+  awc_location.contact_phone_number,
+  months.start_date AS month,
+  months.month_name AS month_display
   FROM awc_location awc_location
   CROSS JOIN "icds_months" months;
 
@@ -48,6 +50,8 @@ CREATE VIEW agg_awc_monthly AS
         "awc_location_months"."district_map_location_name" AS "district_map_location_name",
         "awc_location_months"."state_map_location_name" AS "state_map_location_name",
         "awc_location_months"."month" AS "month",
+        "awc_location_months"."aww_name" AS "aww_name",
+        "awc_location_months"."contact_phone_number" AS "contact_phone_number",
         "agg_awc"."is_launched" AS "is_launched",
         "agg_awc"."num_awcs" AS "num_awcs",
         "agg_awc"."num_launched_states" AS "num_launched_states",
@@ -87,6 +91,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."num_awc_rank_functional" AS "num_awc_rank_functional",
         "agg_awc"."num_awc_rank_semi" AS "num_awc_rank_semi",
         "agg_awc"."num_awc_rank_non" AS "num_awc_rank_non",
+        "agg_awc"."num_anc_visits" AS "num_anc_visits",
+        "agg_awc"."num_children_immunized" AS "num_children_immunized",
         COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
         COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
@@ -333,7 +339,8 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."fully_immunized_on_time", 0) AS "fully_immunized_on_time",
         COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late",
         COALESCE("agg_child_health"."weighed_and_height_measured_in_month", 0) AS "weighed_and_height_measured_in_month",
-        COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month"
+        COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month",
+        "agg_child_health"."days_ration_given_child" AS "days_ration_given_child"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
@@ -343,47 +350,6 @@ CREATE VIEW agg_child_health_monthly AS
         ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_child_health"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_child_health"."awc_id")
-    );
-
-DROP VIEW IF EXISTS agg_thr_monthly CASCADE;
-CREATE VIEW agg_thr_monthly AS
-    SELECT
-        "awc_location_months"."awc_id" AS "awc_id",
-        "awc_location_months"."awc_name" AS "awc_name",
-        "awc_location_months"."awc_site_code" AS "awc_site_code",
-        "awc_location_months"."supervisor_id" AS "supervisor_id",
-        "awc_location_months"."supervisor_name" AS "supervisor_name",
-        "awc_location_months"."supervisor_site_code" AS "supervisor_site_code",
-        "awc_location_months"."block_id" AS "block_id",
-        "awc_location_months"."block_name" AS "block_name",
-        "awc_location_months"."block_site_code" AS "block_site_code",
-        "awc_location_months"."district_id" AS "district_id",
-        "awc_location_months"."district_name" AS "district_name",
-        "awc_location_months"."district_site_code" AS "district_site_code",
-        "awc_location_months"."state_id" AS "state_id",
-        "awc_location_months"."state_name" AS "state_name",
-        "awc_location_months"."state_site_code" AS "state_site_code",
-        "awc_location_months"."aggregation_level" AS "aggregation_level",
-        "awc_location_months"."block_map_location_name" AS "block_map_location_name",
-        "awc_location_months"."district_map_location_name" AS "district_map_location_name",
-        "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-        "awc_location_months"."month" AS "month",
-        "agg_thr_data"."beneficiary_type" AS "beneficiary_type",
-        "agg_thr_data"."caste" AS "caste",
-        "agg_thr_data"."disabled" AS "disabled",
-        "agg_thr_data"."minority" AS "minority",
-        "agg_thr_data"."resident" AS "resident",
-        COALESCE("agg_thr_data"."thr_eligible", 0) AS "thr_eligible",
-        COALESCE("agg_thr_data"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed"
-    FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."agg_thr_data" "agg_thr_data" ON (
-        ("awc_location_months"."month" = "agg_thr_data"."month") AND
-        ("awc_location_months"."aggregation_level" = "agg_thr_data"."aggregation_level") AND
-        ("awc_location_months"."state_id" = "agg_thr_data"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_thr_data"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_thr_data"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_thr_data"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id")
     );
 
 DROP VIEW IF EXISTS daily_attendance_view CASCADE;

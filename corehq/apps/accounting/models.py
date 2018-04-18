@@ -1024,6 +1024,7 @@ class Subscription(models.Model):
     last_modified = models.DateTimeField(auto_now=True)
     is_hidden_to_ops = models.BooleanField(default=False)
     skip_auto_downgrade = models.BooleanField(default=False)
+    skip_auto_downgrade_reason = models.CharField(blank=True, max_length=256)
 
     visible_objects = VisibleSubscriptionManager()
     visible_and_suppressed_objects = models.Manager()
@@ -1145,7 +1146,8 @@ class Subscription(models.Model):
                             auto_generate_credits=None,
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
-                            skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None):
+                            skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
+                            skip_auto_downgrade_reason=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1164,7 +1166,8 @@ class Subscription(models.Model):
             service_type=service_type,
             pro_bono_status=pro_bono_status,
             funding_source=funding_source,
-            skip_auto_downgrade=skip_auto_downgrade
+            skip_auto_downgrade=skip_auto_downgrade,
+            skip_auto_downgrade_reason=skip_auto_downgrade_reason,
         )
 
         self.save()
@@ -1207,7 +1210,8 @@ class Subscription(models.Model):
             'service_type',
             'pro_bono_status',
             'funding_source',
-            'skip_auto_downgrade'
+            'skip_auto_downgrade',
+            'skip_auto_downgrade_reason',
         }
 
         assert property_names >= set(kwargs.keys())
@@ -1259,6 +1263,7 @@ class Subscription(models.Model):
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=False,
+            skip_auto_downgrade_reason='',
             **kwargs
         )
 
@@ -2780,6 +2785,7 @@ class PaymentMethod(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
+        unique_together = ('web_user', 'method_type')
 
 
 class StripePaymentMethod(PaymentMethod):

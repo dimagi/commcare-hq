@@ -7,7 +7,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
     googleAnalytics
 ) {
     var HQReportDataTables = function(options) {
-        var self = this;
+        var self = {};
         self.dataTableElem = options.dataTableElem || '.datatable';
         self.paginationType = options.paginationType || 'bs_normal';
         self.defaultRows = options.defaultRows || 10;
@@ -17,7 +17,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.autoWidth = (options.autoWidth != undefined) ? options.autoWidth : true;
         self.defaultSort = (options.defaultSort != undefined) ? options.defaultSort : true;
         self.customSort = options.customSort || null;
-        self.ajaxParams = options.ajaxParams || new Object();
+        self.ajaxParams = options.ajaxParams || {};
         self.ajaxSource = options.ajaxSource;
         self.ajaxMethod = options.ajaxMethod || 'GET';
         self.loadingText = options.loadingText || gettext("Loading") +
@@ -47,7 +47,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         self.datatable = null;
         self.rendered = false;
 
-        this.render_footer_row = (function() {
+        self.render_footer_row = (function() {
             var $dataTableElem = $(self.dataTableElem);
             return function(id, row) {
                 if ($dataTableElem.find('tfoot').length === 0) {
@@ -64,7 +64,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
             };
         })();
 
-        this.render = function () {
+        self.render = function () {
             if (self.rendered) {
                 $(self.dataTableElem).each(function () {
                     if ($.fn.dataTable.versionCheck) {
@@ -108,7 +108,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     params.aaSorting = self.aaSorting || self.customSort;
                 }
 
-                if(self.ajaxSource) {
+                if (self.ajaxSource) {
                     params.bServerSide = true;
                     params.bProcessing = true;
                     params.sAjaxSource = {
@@ -168,7 +168,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                                 if (jqXHR.status === 400) {
                                     $(".dataTables_empty").html(self.badRequestErrorText);
                                 } else {
-                                    $(".dataTables_empty").html(self.errorText);                                
+                                    $(".dataTables_empty").html(self.errorText);
                                 }
                                 $(".dataTables_empty").show();
                                 if (self.errorCallbacks) {
@@ -280,7 +280,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                     $(self.dataTableElem).trigger('hqreport.tabular.lengthChange', $(this).val());
                 });
             });
-        };
+        };  // end of self.render
+
+        return self;
     };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {

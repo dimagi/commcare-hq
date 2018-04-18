@@ -198,17 +198,19 @@ class SimplifiedUserInfo(
             'username_in_report',
             'raw_username',
             'is_active',
+            'location_id',
         ))):
+
+    ES_FIELDS = [
+        '_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'location_id', '__group_ids'
+    ]
 
     @property
     @memoized
     def group_ids(self):
+        if hasattr(self, '__group_ids'):
+            return getattr(self, '__group_ids')
         return Group.by_user(self.user_id, False)
-
-    @property
-    @memoized
-    def location_id(self):
-        return CommCareUser.get_by_user_id(self.user_id).location_id
 
 
 def _report_user_dict(user):
@@ -218,8 +220,9 @@ def _report_user_dict(user):
     ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active']
     """
     if not isinstance(user, dict):
-        user_report_attrs = ['user_id', 'username_in_report', 'raw_username',
-                             'is_active']
+        user_report_attrs = [
+            'user_id', 'username_in_report', 'raw_username', 'is_active', 'location_id'
+        ]
         return SimplifiedUserInfo(**{attr: getattr(user, attr)
                                      for attr in user_report_attrs})
     else:
@@ -236,12 +239,17 @@ def _report_user_dict(user):
             if full_name:
                 yield ' "%s"' % html.escape(full_name)
         username_in_report = safestring.mark_safe(''.join(parts()))
-        return SimplifiedUserInfo(
+        info = SimplifiedUserInfo(
             user_id=user.get('_id', ''),
             username_in_report=username_in_report,
             raw_username=raw_username,
-            is_active=user.get('is_active', None)
+            is_active=user.get('is_active', None),
+            location_id=user.get('location_id', None)
         )
+        if '__group_ids' in user:
+            group_ids = user['__group_ids']
+            info.__group_ids = group_ids if isinstance(group_ids, list) else [group_ids]
+        return info
 
 
 def get_simplified_users(user_es_query):
@@ -249,8 +257,7 @@ def get_simplified_users(user_es_query):
     Accepts an instance of UserES and returns SimplifiedUserInfo dicts for the
     matching users, sorted by username.
     """
-    fields = ['_id', 'username', 'first_name', 'last_name', 'doc_type', 'is_active', 'email']
-    users = user_es_query.fields(fields).run().hits
+    users = user_es_query.fields(SimplifiedUserInfo.ES_FIELDS).run().hits
     users = list(map(_report_user_dict, users))
     return sorted(users, key=lambda u: u['username_in_report'])
 

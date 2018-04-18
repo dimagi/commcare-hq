@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import wraps
 import logging
-from base64 import b64decode
 
 # Django imports
 from django.conf import settings
@@ -14,7 +13,7 @@ from django.http import (
     HttpResponse, HttpResponseRedirect, Http404, HttpResponseForbidden, JsonResponse,
 )
 from django.template.response import TemplateResponse
-from django.utils.decorators import method_decorator
+from django.utils.decorators import method_decorator, available_attrs
 from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
@@ -24,7 +23,6 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
     get_username_and_password_from_request)
-from python_digest import parse_digest_credentials
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -33,14 +31,13 @@ from dimagi.utils.web import json_response
 from django_otp import match_token
 
 # CCHQ imports
-from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name
 from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
 logger = logging.getLogger(__name__)
 
@@ -81,51 +78,53 @@ def login_and_domain_required(view_func):
     def _inner(req, domain, *args, **kwargs):
         user = req.user
         domain_name, domain = load_domain(req, domain)
-        if domain:
-            if user.is_authenticated and user.is_active:
-                if not domain.is_active:
-                    msg = _((
-                        'The domain "{domain}" has not yet been activated. '
-                        'Please report an issue if you think this is a mistake.'
-                    ).format(domain=domain_name))
-                    messages.info(req, msg)
-                    return HttpResponseRedirect(reverse("domain_select"))
-                couch_user = _ensure_request_couch_user(req)
-                if couch_user.is_member_of(domain):
-                    if domain.two_factor_auth and not user.is_verified() and not couch_user.two_factor_disabled:
-                        return TemplateResponse(
-                            request=req,
-                            template='two_factor/core/otp_required.html',
-                            status=403,
-                        )
-                    else:
-                        return view_func(req, domain_name, *args, **kwargs)
-
-                elif (
-                    _page_is_whitelist(req.path, domain_name) or
-                    not domain.restrict_superusers
-                ) and user.is_superuser:
-                    # superusers can circumvent domain permissions.
-                    return view_func(req, domain_name, *args, **kwargs)
-                elif domain.is_snapshot:
-                    # snapshots are publicly viewable
-                    return require_previewer(view_func)(req, domain_name, *args, **kwargs)
-                elif couch_user.is_web_user() and domain.allow_domain_requests:
-                    from corehq.apps.users.views import DomainRequestView
-                    return DomainRequestView.as_view()(req, *args, **kwargs)
-                else:
-                    raise Http404
-            elif (
-                req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
-                PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
-            ):
-                return view_func(req, domain_name, *args, **kwargs)
-            else:
-                login_url = reverse('domain_login', kwargs={'domain': domain})
-                return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
-        else:
+        if not domain:
             msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
             raise Http404(msg)
+
+        if user.is_authenticated and user.is_active:
+            if not domain.is_active:
+                msg = _((
+                    'The domain "{domain}" has not yet been activated. '
+                    'Please report an issue if you think this is a mistake.'
+                ).format(domain=domain_name))
+                messages.info(req, msg)
+                return HttpResponseRedirect(reverse("domain_select"))
+            couch_user = _ensure_request_couch_user(req)
+            if couch_user.is_member_of(domain):
+                # If the two factor toggle is on, require it for all users.
+                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
+                    return TemplateResponse(
+                        request=req,
+                        template='two_factor/core/otp_required.html',
+                        status=403,
+                    )
+                else:
+                    return view_func(req, domain_name, *args, **kwargs)
+
+            elif (
+                _page_is_whitelist(req.path, domain_name) or
+                not domain.restrict_superusers
+            ) and user.is_superuser:
+                # superusers can circumvent domain permissions.
+                return view_func(req, domain_name, *args, **kwargs)
+            elif domain.is_snapshot:
+                # snapshots are publicly viewable
+                return require_previewer(view_func)(req, domain_name, *args, **kwargs)
+            elif couch_user.is_web_user() and domain.allow_domain_requests:
+                from corehq.apps.users.views import DomainRequestView
+                return DomainRequestView.as_view()(req, *args, **kwargs)
+            else:
+                raise Http404
+        elif (
+            req.path.startswith('/a/{}/reports/custom'.format(domain_name)) and
+            PUBLISH_CUSTOM_REPORTS.enabled(domain_name)
+        ):
+            return view_func(req, domain_name, *args, **kwargs)
+        else:
+            login_url = reverse('domain_login', kwargs={'domain': domain})
+            return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
+
 
     return _inner
 
@@ -148,7 +147,7 @@ def domain_required(view_func):
         if domain:
             return view_func(req, domain_name, *args, **kwargs)
         else:
-            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            msg = _('The domain "{domain}" was not found.'.format(domain=domain_name))
             raise Http404(msg)
     return _inner
 
@@ -194,7 +193,7 @@ def _login_or_challenge(challenge_fn, allow_cc_users=False, api_key=False, allow
                 # if sessions are blocked or user is not already authenticated, check for authentication
                 @check_lockout
                 @challenge_fn
-                @two_factor_check(api_key)
+                @two_factor_check(fn, api_key)
                 def _inner(request, domain, *args, **kwargs):
                     couch_user = _ensure_request_couch_user(request)
                     if (
@@ -216,8 +215,21 @@ def login_or_basic_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(basicauth(), allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
+def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(
+        api_key(),
+        allow_cc_users=allow_cc_users,
+        api_key=True,
+        allow_sessions=allow_sessions
+    )
 
 
 def _get_multi_auth_decorator(default, allow_token=False):
@@ -238,26 +250,31 @@ def _get_multi_auth_decorator(default, allow_token=False):
     return decorator
 
 
-def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(
-        api_key(),
-        allow_cc_users=allow_cc_users,
-        api_key=True,
-        allow_sessions=allow_sessions
-    )
-
-
-def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def two_factor_exempt(view_func):
+    """
+    Marks a view function as being exempt from two factor authentication.
+    """
+    # We could just do view_func.two_factor_exempt = True, but decorators
+    # are nicer if they don't have side-effects, so we return a new
+    # function.
+    def wrapped_view(*args, **kwargs):
+        return view_func(*args, **kwargs)
+    wrapped_view.two_factor_exempt = True
+    return wraps(view_func, assigned=available_attrs(view_func))(wrapped_view)
 
 
 # This decorator should be used for any endpoints used by CommCare mobile
 # It supports basic, session, and apikey auth, but not digest
-mobile_auth = _get_multi_auth_decorator(default=BASIC)
+# Endpoints with this decorator will not enforce two factor authentication
+def mobile_auth(view_func):
+    return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
+
 
 # This decorator is deprecated, it's used only for anonymous web apps
-mobile_auth_or_token = _get_multi_auth_decorator(
-    default=BASIC, allow_token=True)
+# Endpoints with this decorator will not enforce two factor authentication
+def mobile_auth_or_token(view_func):
+    return _get_multi_auth_decorator(default=BASIC, allow_token=True)(two_factor_exempt(view_func))
+
 
 # Use this decorator to allow any auth type -
 # basic, digest, session, or apikey
@@ -274,24 +291,33 @@ basic_auth = login_or_basic_ex(allow_sessions=False)
 api_key_auth = login_or_api_key_ex(allow_sessions=False)
 
 
-def two_factor_check(api_key):
+def two_factor_check(view_func, api_key):
     def _outer(fn):
         @wraps(fn)
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
-            if not api_key and dom and dom.two_factor_auth:
+            couch_user = _ensure_request_couch_user(request)
+            if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
-
                 if not token:
                     return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
                 elif not match_token(request.user, token):
                     return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
                 else:
                     return fn(request, domain, *args, **kwargs)
-
             return fn(request, domain, *args, **kwargs)
         return _inner
     return _outer
+
+
+def _two_factor_required(view_func, domain, couch_user):
+    if TWO_FACTOR_SUPERUSER_ROLLOUT.enabled(couch_user.username):
+        return not getattr(view_func, 'two_factor_exempt', False)
+    return (
+        not getattr(view_func, 'two_factor_exempt', False)
+        and domain.two_factor_auth
+        and not couch_user.two_factor_disabled
+    )
 
 
 def cls_to_view(additional_decorator=None):
@@ -352,11 +378,11 @@ def check_lockout(fn):
     @wraps(fn)
     def _inner(request, *args, **kwargs):
         username, password = get_username_and_password_from_request(request)
-        if not username or username.endswith('.commcarehq.org'):
+        if not username:
             return fn(request, *args, **kwargs)
 
         user = CouchUser.get_by_username(username)
-        if user and (user.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(user.domain)) and user.is_locked_out():
+        if user and user.is_locked_out() and user.supports_lockout():
             return json_response({_("error"): _("maximum password attempts exceeded")}, status_code=401)
         else:
             return fn(request, *args, **kwargs)

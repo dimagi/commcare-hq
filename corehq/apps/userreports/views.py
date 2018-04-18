@@ -61,7 +61,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_nvd3,
 )
-from corehq.apps.userreports.app_manager import get_case_data_source, get_form_data_source
+from corehq.apps.userreports.app_manager.helpers import get_case_data_source, get_form_data_source
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
     DATA_SOURCE_NOT_FOUND_ERROR_MESSAGE,

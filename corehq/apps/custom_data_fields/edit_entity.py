@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import OrderedDict
 from django.core.validators import RegexValidator
 from django.urls import reverse
@@ -132,7 +133,7 @@ class CustomDataEditor(object):
         else:
             field_names = list(fields)
 
-        CustomDataForm = type('CustomDataForm', (forms.Form,), fields)
+        CustomDataForm = type('CustomDataForm' if six.PY3 else b'CustomDataForm', (forms.Form,), fields)
         CustomDataForm.helper = FormHelper()
         CustomDataForm.helper.form_tag = False
         CustomDataForm.helper.label_class = 'col-sm-4' if self.angular_model else 'col-lg-3'
@@ -164,7 +165,7 @@ class CustomDataEditor(object):
     def uncategorized_form(self):
 
         def FakeInput(val):
-            return HTML(u'<p class="form-control-static">{}</p>'
+            return HTML('<p class="form-control-static">{}</p>'
                         .format(val))
 
         def Label(val):

@@ -2,8 +2,9 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 
+from corehq.apps.locations.models import SQLLocation
 from custom.icds_reports.models import AggAwcMonthly, ChildHealthMonthlyView, CcsRecordMonthly, \
-    AggChildHealthMonthly
+    AggChildHealthMonthly, ChildHealthMonthly
 from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 from django.utils.functional import cached_property
@@ -29,20 +30,21 @@ class ISSNIPMonthlyReport(object):
     @cached_property
     def agg_awc_monthly_data(self):
         data = AggAwcMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values(
-            'block_name', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
+            'block_name', 'awc_id', 'awc_name', 'awc_site_code', 'infra_type_of_building', 'infra_clean_water',
             'cases_ccs_pregnant_all', 'cases_ccs_lactating_all', 'awc_days_open', 'awc_days_pse_conducted',
-            'usage_num_home_visit', 'cases_person_referred'
+            'usage_num_home_visit', 'cases_person_referred', 'num_anc_visits', 'num_children_immunized',
+            'aww_name', 'contact_phone_number'
         )
-        return data[0] if data else None
+        return {row['awc_id']: row for row in data}
 
     @cached_property
     def child_health_monthly_data(self):
         data = ChildHealthMonthlyView.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             month=self.config['month']
         ).values('awc_id').annotate(
             infants_0_6=Sum(self.filter_by({'age_in_months__range': [0, 6]}, 'valid_in_month')),
@@ -71,12 +73,12 @@ class ISSNIPMonthlyReport(object):
                 }, 'thr_eligible')
             ),
         )
-        return data[0] if data else None
+        return {row['awc_id']: row for row in data}
 
     @cached_property
     def css_record_monthly(self):
         data = CcsRecordMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             month=self.config['month']
         ).values(
             'awc_id'
@@ -94,32 +96,111 @@ class ISSNIPMonthlyReport(object):
                 }, 'lactating')
             )
         )
-        return data[0] if data else None
+        return {row['awc_id']: row for row in data}
 
     @cached_property
     def infrastructure_data(self):
-        data = AWCInfrastructureUCR(self.config).data
-        return list(data.values())[-1] if data else None
+        data = AWCInfrastructureUCR(self.config.copy()).data or {}
+        return {row['awc_id']: row for row in list(data.values())}
 
     @cached_property
     def vhnd_data(self):
-        data = VHNDFormUCR(self.config).data
-        return list(data.values())[-1] if data else None
+        data = VHNDFormUCR(self.config.copy()).data or {}
+        return {row['awc_id']: row for row in list(data.values())}
 
     @cached_property
     def ccs_record_monthly_ucr(self):
-        data = CcsRecordMonthlyURC(self.config).data
-        return data[self.config['awc_id']] if data else None
+        data = CcsRecordMonthlyURC(self.config.copy()).data or {}
+        return {row['awc_id']: row for row in list(data.values())}
 
     @cached_property
     def child_health_monthly_ucr(self):
-        data = ChildHealthMonthlyURC(self.config).data
-        return data[self.config['awc_id']] if data else None
+        data = ChildHealthMonthlyURC(self.config.copy()).data or {}
+        return {row['awc_id']: row for row in list(data.values())}
+
+    @cached_property
+    def child_health_monthly(self):
+        data = ChildHealthMonthly.objects.filter(
+            awc_id__in=self.config['awc_id'],
+            month=self.config['month']
+        ).values('awc_id').annotate(
+            sc_boys_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            sc_girls_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            st_boys_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            st_girls_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            obc_boys_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            obc_girls_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            general_boys_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            general_girls_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            total_boys_48_72=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            total_girls_48_72=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21
+            }, 'case_id', None)),
+            minority_boys_48_72_num=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21,
+                'minority': 'yes'
+            }, 'case_id', None)),
+            minority_girls_48_72_num=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'days_ration_given_child__gt': 21,
+                'minority': 'yes'
+            }, 'case_id', None)),
+        )
+        return {row['awc_id']: row for row in data}
 
     @cached_property
     def agg_child_health_monthly(self):
         data = AggChildHealthMonthly.objects.filter(
-            awc_id=self.config['awc_id'],
+            awc_id__in=self.config['awc_id'],
             aggregation_level=AWC_LOCATION_LEVEL,
             month=self.config['month']
         ).values('awc_id').annotate(
@@ -287,4 +368,23 @@ class ISSNIPMonthlyReport(object):
             }, 'rations_21_plus_distributed')),
 
         )
-        return data[0] if data else None
+        return {row['awc_id']: row for row in data}
+
+    def get_awc_name(self, awc_id):
+        return SQLLocation.objects.get(location_id=awc_id).name,
+
+    @cached_property
+    def to_pdf_format(self):
+        for awc in self.config['awc_id']:
+            yield dict(
+                awc_name=self.get_awc_name(awc),
+                agg_awc_monthly_data=self.agg_awc_monthly_data.get(awc, None),
+                child_health_monthly_data=self.child_health_monthly_data.get(awc, None),
+                css_record_monthly=self.css_record_monthly.get(awc, None),
+                infrastructure_data=self.infrastructure_data.get(awc, None),
+                vhnd_data=self.vhnd_data.get(awc, None),
+                ccs_record_monthly_ucr=self.ccs_record_monthly_ucr.get(awc, None),
+                child_health_monthly_ucr=self.child_health_monthly_ucr.get(awc, None),
+                agg_child_health_monthly=self.agg_child_health_monthly.get(awc, None),
+                child_health_monthly=self.child_health_monthly.get(awc, None),
+            )

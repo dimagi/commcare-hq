@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test.testcases import SimpleTestCase
 
 from corehq.apps.cleanup.pillow_migrations import get_merged_sequence

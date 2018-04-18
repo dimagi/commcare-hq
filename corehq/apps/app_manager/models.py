@@ -24,6 +24,7 @@ published on the exchange, but those are quite infrequent.
 """
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 import calendar
 from distutils.version import LooseVersion
 from itertools import chain
@@ -1180,7 +1181,7 @@ class FormBase(DocumentSchema):
                 include_translations=include_translations,
             )
         except XFormException as e:
-            raise XFormException(u"Error in form {}".format(self.full_path_name), e)
+            raise XFormException("Error in form {}".format(self.full_path_name), e)
 
     @memoized
     def get_case_property_name_formatter(self):
@@ -1198,7 +1199,7 @@ class FormBase(DocumentSchema):
 
         def format_key(key, path):
             if valid_paths.get(path) == "upload":
-                return u"{}{}".format(ATTACHMENT_PREFIX, key)
+                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1231,7 +1232,7 @@ class FormBase(DocumentSchema):
 
     @property
     def full_path_name(self):
-        return u"%(app_name)s > %(module_name)s > %(form_name)s" % {
+        return "%(app_name)s > %(module_name)s > %(form_name)s" % {
             'app_name': self.get_app().name,
             'module_name': self.get_module().default_name(),
             'form_name': self.default_name()
@@ -1500,8 +1501,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
         media = getattr(self, media_attr)
         if isinstance(media, dict) and list(media) == ['default']:
+            from corehq.util.view_utils import get_request
+            request = get_request()
+            url = ''
+            if request:
+                url = request.META.get('HTTP_REFERER')
             _assert = soft_assert(['jschweers' + '@' + 'dimagi.com'])
-            _assert(False, 'Called default_media_image on app with localized media')
+            _assert(False, 'Called default_media_image on app with localized media: {}'.format(url))
 
     def icon_by_language(self, lang, strict=False):
         return self._get_media_by_language('media_image', lang, strict=strict)
@@ -1960,16 +1966,16 @@ class MappingItem(DocumentSchema):
         numeral, which is illegal.
         """
         if re.search(r'\W', self.key) or self.treat_as_expression:
-            return u'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
+            return 'h{hash}'.format(hash=hashlib.md5(self.key.encode('UTF-8')).hexdigest()[:8])
         else:
-            return u'k{key}'.format(key=self.key)
+            return 'k{key}'.format(key=self.key)
 
     def key_as_condition(self, property):
         if self.treat_as_expression:
             condition = dot_interpolate(self.key, property)
-            return u"{condition}".format(condition=condition)
+            return "{condition}".format(condition=condition)
         else:
-            return u"{property} = '{key}'".format(
+            return "{property} = '{key}'".format(
                 property=property,
                 key=self.key
             )
@@ -2337,6 +2343,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
 
     @property
     def is_surveys(self):
@@ -2701,7 +2708,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2711,6 +2718,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
             ),
         )
         module.get_or_create_unique_id()
+        return module
+
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -2763,6 +2776,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         if module_case_hierarchy_has_circular_reference(self):
             errors.append({
                 'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
                 'module': self.get_module_info(),
             })
 
@@ -2838,7 +2863,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             by_type[action_meta.get('type')].append(action_tag)
 
         for type, tag_list in six.iteritems(by_type):
-            action_type.append(u'{} ({})'.format(type, ', '.join(filter(None, tag_list))))
+            action_type.append('{} ({})'.format(type, ', '.join(filter(None, tag_list))))
 
         return ' '.join(action_type)
 
@@ -3196,7 +3221,7 @@ class ShadowForm(AdvancedForm):
 
     def get_shadow_parent_options(self):
         options = [
-            (form.get_unique_id(), u'{} / {}'.format(form.get_module().default_name(), form.default_name()))
+            (form.get_unique_id(), '{} / {}'.format(form.get_module().default_name(), form.default_name()))
             for form in self.get_app().get_forms() if form.form_type == "advanced_form"
         ]
         if self.shadow_parent_form_id and self.shadow_parent_form_id not in [x[0] for x in options]:
@@ -4330,7 +4355,7 @@ class LazyBlobDoc(BlobMixin):
         return self
 
     def __attachment_cache_key(self, name):
-        return u'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
+        return 'lazy_attachment/{id}/{name}'.format(id=self.get_id, name=name)
 
     def __set_cached_attachment(self, name, content, timeout=60*60*24):
         cache.set(self.__attachment_cache_key(name), content, timeout=timeout)
@@ -4699,6 +4724,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+    )
+
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
@@ -4976,7 +5006,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             # e.g. 2011-Apr-11 20:45
             'CommCare-Release': "true",
         }
-        if self.build_version < '2.8':
+        if not self.build_version or self.build_version < LooseVersion('2.8'):
             settings['Build-Number'] = self.version
         return settings
 
@@ -5077,17 +5107,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
+        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
         try:
-            return self.lazy_fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            kwargs = []
             if build_profile_id is not None:
-                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+            if download_target_version:
+                kwargs.append('download_target_version=true')
+            url += '?' + '&'.join(kwargs)
+
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -5097,7 +5133,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.lazy_put_attachment(png_data, "qrcode.png",
+                self.lazy_put_attachment(png_data, filename,
                                          content_type="image/png")
             return png_data
 
@@ -5516,7 +5552,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None):
+                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -5564,6 +5600,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
+        target_package_id = {
+            TARGET_COMMCARE: 'org.commcare.dalvik',
+            TARGET_COMMCARE_LTS: 'org.commcare.lts',
+        }.get(target_commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5573,10 +5613,11 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'include_media_suite': with_media,
             'uniqueid': self.master_id,
             'name': self.name,
-            'descriptor': u"Profile File",
+            'descriptor': "Profile File",
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
+            'target_package_id': target_package_id,
         }).encode('utf-8')
 
     @property
@@ -5688,6 +5729,29 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+        if self.target_commcare_flavor != 'none':
+            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)
         if practice_user_restore:
@@ -5728,7 +5792,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             if matches(obj):
                 return obj
         if not error:
-            error = _(u"Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
+            error = _("Could not find module with ID='{unique_id}' in app '{app_name}'.").format(
                 app_name=self.name, unique_id=unique_id)
         raise ModuleNotFoundException(error)
 
@@ -6081,7 +6145,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 setting = contingent["value"]
         if setting is not None:
             return setting
-        if self.build_version < yaml_setting.get("since", "0"):
+        if not self.build_version or self.build_version < LooseVersion(yaml_setting.get("since", "0")):
             setting = yaml_setting.get("disabled_default", None)
             if setting is not None:
                 return setting

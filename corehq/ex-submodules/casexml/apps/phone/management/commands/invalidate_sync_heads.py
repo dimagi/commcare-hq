@@ -28,17 +28,3 @@ class Command(BaseCommand):
             doc = properly_wrap_sync_log(synclog.doc)
             doc.case_ids_on_phone = {'broken to force 412'}
         bulk_update_helper(synclogs_sql)
-        # Couch - ToDo - delete after Synclog SQL migration is over
-        synclogs_couch = SimplifiedSyncLog.view(
-            "phone/sync_logs_by_user",
-            startkey=[user_id, {}],
-            endkey=[user_id, date],
-            descending=True,
-            reduce=False,
-            include_docs=True
-        )
-        logs = []
-        for log in synclogs_couch:
-            log.case_ids_on_phone = {'broken to force 412'}
-            logs.append(log)
-        SimplifiedSyncLog.bulk_save(logs)

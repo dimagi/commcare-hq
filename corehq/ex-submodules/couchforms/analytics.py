@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
 
 from corehq.apps.es import FormES
@@ -77,7 +78,16 @@ def app_has_been_submitted_to_in_last_30_days(domain, app_id):
     return iso_string_to_datetime(result[0]['received_on']) > (now - _30_days)
 
 
+@quickcache(['domain'], memoize_timeout=0, timeout=12 * 3600)
 def get_all_xmlns_app_id_pairs_submitted_to_in_domain(domain):
+    """This is used to get (XMLNS, app_id) from submitted forms. The results
+    get combined with data from all current app versions which means
+    that this is only used to get (XMLNS, app_id) combos from forms submitted
+    in the past which no longer have a corresponding form in the app (e.g. form deleted)
+
+    Given that we can cache this for a long period of time under the assumption that
+    a user isn't going to submit a form and then delete it from their app immediately.
+    """
     query = (FormES()
              .domain(domain)
              .aggregation(

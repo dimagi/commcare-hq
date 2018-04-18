@@ -27,7 +27,7 @@ var ExportManager = function(o) {
 
         self.xmlns_formdesigner = o.xmlns_formdesigner || 'formdesigner';
 
-        self.sheet_names = ko.observable(new Object());
+        self.sheet_names = ko.observable({});
 
         self.selectedExportsData = o.selectedExportsData || {};
 
@@ -82,7 +82,7 @@ var ExportManager = function(o) {
                             },
                             error: function() {
                                 self.$modal.find(self.exportModalLoading).addClass('hide');
-                                self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-error">' +
+                                self.$modal.find(self.exportModalLoadedData).html('<p class="alert alert-danger">' +
                                     gettext('Oh no! Your download was unable to be completed. ' +
                                         'We have been notified and are already hard at work solving this issue.') +
                                     '</p>');
@@ -100,7 +100,7 @@ var ExportManager = function(o) {
                 pollDownloader();
             },
             displayModalError = function(error_text) {
-                var $error = $('<p class="alert alert-error" />');
+                var $error = $('<p class="alert alert-danger" />');
                 $error.text(error_text);
                 self.$modal.find(self.exportModalLoadedData).html($error);
                 self.$modal.find(self.exportModalLoading).addClass('hide');
@@ -238,9 +238,9 @@ var ExportManager = function(o) {
 
         self.requestBulkDownload = function(data, event) {
             resetModal("Bulk " + self.bulk_download_notice_text, false);
-            var prepareExport = new Object();
+            var prepareExport = {};
             if (self.is_custom)
-                prepareExport = new Array();
+                prepareExport = [];
 
             if (self.isNewExporter) {
                 for (var export_id in self.selectedExportsData) {
@@ -314,7 +314,7 @@ var ExportManager = function(o) {
                         prepareExport.push(export_tag);
                     else {
                         if (!prepareExport.hasOwnProperty(_id))
-                            prepareExport[_id] = new Array();
+                            prepareExport[_id] = [];
                         prepareExport[_id].push(export_tag);
                     }
                 }

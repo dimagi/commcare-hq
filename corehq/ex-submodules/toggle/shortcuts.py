@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.core.cache import cache
@@ -56,7 +57,7 @@ def update_toggle_cache(slug, item, state, namespace=None):
 
 
 def namespaced_item(item, namespace):
-    return u'{namespace}:{item}'.format(
+    return '{namespace}:{item}'.format(
         namespace=namespace, item=item
     ) if namespace is not None else item
 

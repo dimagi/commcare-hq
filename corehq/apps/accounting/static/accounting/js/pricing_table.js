@@ -1,12 +1,12 @@
 hqDefine('accounting/js/pricing_table', function () {
-    var PricingTable = function (editions, current_edition, isRenewal) {
+    var pricingTableModel = function (editions, current_edition, isRenewal) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.currentEdition = current_edition;
         self.isRenewal = isRenewal;
         self.editions = ko.observableArray(_.map(editions, function (edition) {
-            return new PricingTableEdition(edition, self.currentEdition);
+            return pricingTableEditionModel(edition, self.currentEdition);
         }));
 
         self.selected_edition = ko.observable(isRenewal ? current_edition : false);
@@ -59,11 +59,13 @@ hqDefine('accounting/js/pricing_table', function () {
                 self.selected_edition($(this).data('edition'));
             });
         };
+
+        return self;
     };
 
-    var PricingTableEdition = function (data, current_edition) {
+    var pricingTableEditionModel = function (data, current_edition) {
         'use strict';
-        var self = this;
+        var self = {};
 
         self.slug = ko.observable(data[0]);
         self.name = ko.observable(data[1].name);
@@ -90,11 +92,13 @@ hqDefine('accounting/js/pricing_table', function () {
         self.isEnterprise = ko.computed(function () {
             return self.slug() === 'enterprise';
         });
+
+        return self;
     };
 
     $(function () {
         var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            pricingTable = new PricingTable(
+            pricingTable = pricingTableModel(
                 initial_page_data('editions'),
                 initial_page_data('current_edition'),
                 initial_page_data('is_renewal')
