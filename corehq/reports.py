@@ -21,7 +21,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
-    monitoring, inspect, export,
+    monitoring, inspect,
     deployments, sms, ivr
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
@@ -298,12 +298,6 @@ def get_report_builder_count(domain):
     report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
     return len(report_builder_reports)
 
-
-DATA_INTERFACES = (
-    (ugettext_lazy("Export Data"), (
-        export.DeidExportReport,
-    )),
-)
 
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (
