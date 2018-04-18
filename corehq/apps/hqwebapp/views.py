@@ -7,6 +7,7 @@ import os
 import re
 import sys
 import traceback
+import types
 import uuid
 from datetime import datetime
 from six.moves.urllib.parse import urlparse
@@ -1261,6 +1262,43 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
+
+
+def json_iterdump(dict_, encoder=None):
+    """
+    Yields items of `dict_` as JSON and allows values to be generators.
+    Generators are yielded as lists in JSON.
+
+    >>> iterator = json_iterdump({'foo': (i for i in range(3))})
+    >>> ''.join(iterator) == '{"foo": [0, 1, 2]}'
+    True
+
+    """
+    if encoder is None:
+        encoder = json.JSONEncoder
+    yield '{'
+    first_item = True
+    for key, value in six.iteritems(dict_):
+        if first_item:
+            first_item = False
+        else:
+            yield ', '
+        if isinstance(value, types.GeneratorType):
+            yield '{}: ['.format(json.dumps(key, cls=encoder))
+            inner_first_item = True
+            for item in value:
+                if inner_first_item:
+                    inner_first_item = False
+                else:
+                    yield ', '
+                yield json.dumps(item, cls=encoder)
+            yield ']'
+        else:
+            yield '{}: {}'.format(
+                json.dumps(key, cls=encoder),
+                json.dumps(value, cls=encoder)
+            )
+    yield '}'
 
 
 def redirect_to_dimagi(endpoint):
