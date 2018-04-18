@@ -6,7 +6,7 @@ from django.utils.translation import ugettext_lazy
 
 
 class ScheduleInstanceFilter(BaseReportFilter):
-    label = ugettext_lazy("")
+    label = ""
     slug = 'schedule_instance_filter'
     template = 'scheduling/schedule_instance_filter.html'
 
