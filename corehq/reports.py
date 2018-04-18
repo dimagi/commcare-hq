@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
+import six
 from django.urls import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -243,7 +244,8 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
             )
         return show_item
 
-    return type('DynamicReport{}'.format(config._id), (GenericReportView,), {
+    bytes_config_id = config._id.encode('utf-8') if isinstance(config._id, six.text_type) else config._id
+    return type(b'DynamicReport{}'.format(bytes_config_id), (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,
         'get_url': get_url,
