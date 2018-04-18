@@ -20,6 +20,9 @@
                 },
                 "value": {
                     "type": "string"
+                },
+                "value_numeric": {
+                    "type": "double"
                 }
             }
         },

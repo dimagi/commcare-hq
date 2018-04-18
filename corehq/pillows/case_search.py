@@ -58,10 +58,16 @@ def _get_case_properties(doc_dict):
     else:
         dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    return base_case_properties + [
-        {'key': key, 'value': value}
-        for key, value in six.iteritems(dynamic_case_properties)
-    ]
+    dynamic_mapping = []
+    for key, value in six.iteritems(dynamic_case_properties):
+        mapping = {'key': key, 'value': value}
+        try:
+            mapping['value_numeric'] = float(value)  # cast as a Java double in Elasticsearch
+        except ValueError:
+            pass
+        dynamic_mapping.append(mapping)
+
+    return base_case_properties + dynamic_mapping
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):
