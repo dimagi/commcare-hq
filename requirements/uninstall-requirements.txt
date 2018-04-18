@@ -5,3 +5,4 @@ mocker
 ethiopian-date
 architect
 ethiopian-date-converter
+django-nose
