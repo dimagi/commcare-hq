@@ -226,6 +226,28 @@ class SchedulingRecipientTest(TestCase):
             self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
 
     @run_with_all_backends
+    def test_ignoring_entries(self):
+        with create_case(self.domain, 'person') as case:
+            update_case(self.domain, case.case_id,
+                case_properties={'contact_phone_number': '12345', 'contact_phone_number_is_verified': '1'})
+
+            self.assertPhoneEntryCount(1)
+            self.assertPhoneEntryCount(1, only_count_two_way=True)
+
+            with patch('corehq.apps.sms.tasks.use_phone_entries') as patch1, \
+                    patch('corehq.messaging.tasks.use_phone_entries') as patch2, \
+                    patch('corehq.messaging.scheduling.models.abstract.use_phone_entries') as patch3:
+
+                patch1.return_value = patch2.return_value = patch3.return_value = False
+                update_case(self.domain, case.case_id, case_properties={'contact_phone_number': '23456'})
+                case = CaseAccessors(self.domain).get_case(case.case_id)
+
+                self.assertPhoneEntryCount(1)
+                self.assertPhoneEntryCount(1, only_count_two_way=True)
+                self.assertTwoWayEntry(PhoneNumber.objects.get(owner_id=case.case_id), '12345')
+                self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '23456')
+
+    @run_with_all_backends
     def test_two_way_numbers(self):
         user1 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
         user2 = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
@@ -302,3 +324,22 @@ class SchedulingRecipientTest(TestCase):
 
                 # Referencing the case directly uses the case's phone number
                 self.assertEqual(Content.get_two_way_entry_or_phone_number(case), '12345678')
+
+    @run_with_all_backends
+    def test_phone_number_preference(self):
+        user = CommCareUser.create(self.domain, uuid.uuid4().hex, 'abc')
+        self.addCleanup(user.delete)
+
+        user.add_phone_number('12345')
+        user.add_phone_number('23456')
+        user.add_phone_number('34567')
+        user.save()
+
+        self.assertPhoneEntryCount(3)
+        self.assertPhoneEntryCount(0, only_count_two_way=True)
+        self.assertEqual(Content.get_two_way_entry_or_phone_number(user), '12345')
+
+        PhoneNumber.objects.get(phone_number='23456').set_two_way()
+        self.assertPhoneEntryCount(3)
+        self.assertPhoneEntryCount(1, only_count_two_way=True)
+        self.assertTwoWayEntry(Content.get_two_way_entry_or_phone_number(user), '23456')
