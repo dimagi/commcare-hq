@@ -5,7 +5,10 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            interfaceSelector = '#data-interfaces-reassign-cases';
+
+        // Apply bindings to reassignment interface and select2
         var caseManagementModel = CaseManagement({
             receiverUrl: initialPageData.reverse("receiver_secure_post"),
             enddate: initialPageData.get("reassign_cases_enddate"),
@@ -13,34 +16,7 @@
             webUserName: initialPageData.get("web_username"),
             form_name: gettext("Case Reassignment (via HQ)"),
         });
-        function applyBindings() {
-            var $caseManagement = $('#data-interfaces-reassign-cases');
-            $caseManagement.koApplyBindings(caseManagementModel);
-
-            $caseManagement.find('a.select-all').click(function () {
-                $caseManagement.find('input.selected-commcare-case').prop('checked', true).change();
-                return false;
-            });
-
-            $caseManagement.find('a.select-none').click(function() {selectNone(); return false;});
-            $caseManagement.find('.dataTables_paginate a').mouseup(selectNone);
-            $caseManagement.find('.dataTables_length select').change(selectNone);
-
-            function selectNone() {
-                $caseManagement.find('input.selected-commcare-case:checked').prop('checked', false).change();
-            }
-        }
-
-        $(document).on("change", "#data-interfaces-reassign-cases input.selected-commcare-case", function(e) {
-            caseManagementModel.updateCaseSelection({}, e);
-        });
-
-        var keepTrying = setInterval(function () {
-            if (window.reportTables !== undefined) {
-                clearInterval(keepTrying);
-                applyBindings();
-            }
-        }, 1000);
+        $(interfaceSelector).koApplyBindings(caseManagementModel);
 
         $('#reassign_owner_select').select2({
             placeholder: gettext("Search for users or groups"),
@@ -61,6 +37,28 @@
                 },
                 cache: true
             }
+        });
+
+        // Event handlers for selecting & de-selecting cases
+        $(document).on("click", interfaceSelector + " a.select-all", function () {
+            $(interfaceSelector).find('input.selected-commcare-case').prop('checked', true).change();
+            return false;
+        });
+
+        function selectNone() {
+            $(interfaceSelector).find('input.selected-commcare-case:checked').prop('checked', false).change();
+        }
+
+        $(document).on("click", interfaceSelector + " a.select-none", function() {
+            selectNone();
+            return false;
+        });
+
+        $(document).on("mouseup", interfaceSelector + " .dataTables_paginate a", selectNone);
+        $(document).on("change", interfaceSelector + " .dataTables_length select", selectNone);
+
+        $(document).on("change", interfaceSelector + " input.selected-commcare-case", function(e) {
+            caseManagementModel.updateCaseSelection({}, e);
         });
     </script>
 {% endblock %}
