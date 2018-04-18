@@ -12,6 +12,7 @@ from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
+from django.urls import NoReverseMatch
 from corehq.apps.domain.utils import normalize_domain_name
 
 from corehq.apps.reports.tasks import export_all_rows_task
@@ -509,6 +510,11 @@ class GenericReportView(object):
 
     @property
     def js_options(self):
+        async_url = ''
+        try:
+            async_url = self.get_url(domain=self.domain, render_as='async', relative=True)
+        except NoReverseMatch:
+            pass
         return {
             'async': self.asynchronous,
             'domain': self.domain,
@@ -522,7 +528,7 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
-            'asyncUrl': self.get_url(domain=self.domain, render_as='async', relative=True),
+            'asyncUrl': async_url,
         }
 
     def update_filter_context(self):
