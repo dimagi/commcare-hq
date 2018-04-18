@@ -6,10 +6,10 @@
 <div class="alert alert-info">{{ empty_text }}</div>
 {% else %}
 <div id="{{ css_id }}" class="well well-sm report-filter-drilldown-options"
-     data-drilldown-map='{{ option_map|JSON }}'
-     data-controls='{{ controls|JSON }}'
+     data-drilldown-map='{% html_attr option_map %}'
+     data-controls='{% html_attr controls %}'
      data-selected='{{ selected|JSON }}'
-     data-notifications='{{ notifications|JSON }}'
+     data-notifications='{% html_attr notifications %}'
      data-is-empty='{{ is_empty|JSON }}'>
     <div data-bind="foreach: controls">
         <div class="form-group"
