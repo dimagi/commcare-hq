@@ -39,13 +39,56 @@ def _zip_update(properties_by_case_type, additional_properties_by_case_type):
 
 _CaseTypeRef = namedtuple('_CaseTypeRef', ['case_type', 'relationship_path'])
 _PropertyRef = namedtuple('_PropertyRef', ['case_type_ref', 'case_property'])
-_CaseTypeEquivalence = namedtuple('_CaseTypeEquivalence', ['case_type', 'expansion'])
+
+
+class _CaseTypeEquivalence(namedtuple('_CaseTypeEquivalence', ['case_type', 'expansion'])):
+    """
+    A statement of equivalence between a single doc type and a parent reference
+
+    _CaseTypeEquivalence(case_type='household', expansion=_CaseTypeRef('referral', ('parent', 'parent'))
+    is read "a `household` is a `referral`'s `parent`'s `parent`"
+
+    A single case type may have _many_ expansions, and so many (true) _CaseTypeEquivalence may be
+    formulated with the same case type. At the very least,
+
+    _CaseTypeEquivalence(case_type='household', expansion=_CaseTypeRef('household', ())
+    (read "A `household` is a `household`") is true for any case_type.
+
+    """
+    pass
 
 
 class _CaseRelationshipManager(object):
+    """
+    Lets you convert between a case_type and its expansions (and vice versa)
 
+    If referral is a child case of patient, which is the child case of a household,
+    you can instantiate it like this:
+
+    >>> case_relationship_manager = _CaseRelationshipManager({
+    ...     'patient': {'parent': ['household']},
+    ...     'referral': {'parent': ['patient']},
+    ... }, case_types=['patient', 'referral', 'household'])
+
+    You can then ask "what are the different ways a `patient` can be referred to?":
+
+    >>> case_relationship_manager.expand_case_type('patient')
+    set([_CaseTypeRef(case_type=u'patient', relationship_path=()), _CaseTypeRef(case_type=u'referral', relationship_path=(u'parent',))])
+
+    This is read "`patient` and `referral`'s parent are the two ways to refer to `patient`".
+
+
+    You can also ask "What are all of the case_types a `referral`'s `parent` can be?":
+
+    >>> case_relationship_manager.resolve_expansion(_CaseTypeRef('referral', ('parent',)))
+    set([u'patient'])
+
+    This is read "a `referral`'s parent can only be a `patient`".
+
+    """
     def __init__(self, parent_type_map, case_types=()):
-        self.parent_type_map = parent_type_map
+        self.parent_type_map = defaultdict(dict)
+        self.parent_type_map.update(parent_type_map)
         for case_type in case_types:
             self.parent_type_map[case_type].update({})
 
@@ -59,8 +102,10 @@ class _CaseRelationshipManager(object):
     @memoized
     def _all_possible_equivalences(self):
         """
-        If referral is a child case of patient, which is the child case of a household,
-        then this will return
+        Returns the set all possible case_type <=> case_type_ref equivalences
+
+        for the parent_type_map and case_types given to this class.
+        Using the referral > patient > household example above, all possible equivalences are:
 
         {
             # a referral is a referral
@@ -76,6 +121,7 @@ class _CaseRelationshipManager(object):
             # a houseold is a referral's parent's parent
             _CaseTypeEquivalence('household', _CaseTypeRef('referral', ('parent', 'parent')))
         }
+
         """
         all_possible_equivalences = set()
         equivalence_queue = deque(_CaseTypeEquivalence(case_type, _CaseTypeRef(case_type, ()))
@@ -102,6 +148,7 @@ class _CaseRelationshipManager(object):
     @property
     @memoized
     def _case_type_to_expansions(self):
+        """Organize equivalences as case_type => set of expansions mapping"""
         case_type_to_expansions = defaultdict(set)
         for equivalence in self._all_possible_equivalences:
             case_type_to_expansions[equivalence.case_type].add(equivalence.expansion)
@@ -110,6 +157,7 @@ class _CaseRelationshipManager(object):
     @property
     @memoized
     def _expansion_to_case_types(self):
+        """Organize equivalences as expansion => set of case_types mapping"""
         expansion_to_case_types = defaultdict(set)
         for equivalence in self._all_possible_equivalences:
             expansion_to_case_types[equivalence.expansion].add(equivalence.case_type)
@@ -117,6 +165,7 @@ class _CaseRelationshipManager(object):
 
 
 def _flatten_case_properties(case_properties_by_case_type):
+    """Turn nested case_type => set of properties mapping into set of `_CasePropertyRef`s"""
     result = set()
     for case_type, properties in case_properties_by_case_type.items():
         for case_property in properties:
@@ -130,6 +179,24 @@ def _flatten_case_properties(case_properties_by_case_type):
 
 def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
                                include_parent_properties):
+    """
+    Analyze and propagate all parent refs in `case_properties_by_case_type`
+
+    and return something in the same format but with all parent refs propagated
+    up (and if `include_parent_properties`, down) the chain
+
+    :param case_properties_by_case_type: {case_type: set(case_property)} mapping,
+           where case_property is a string of the form "(parent/)*<case_property>"
+    :param parent_type_map: {case_type: {relationship: [parent_type]}}
+           note that for each relationship (almost always "parent"), there can be *multiple*
+           possible parent_types
+    :param include_parent_properties: If this is set to True, then propagate parents'
+           properties down (as parent/<property>), in addition to propagating
+           parent/<property> on the child up to <property> on the parent
+           (which happens regardless of this flag)
+
+    :return: {case_type: set(case_property)} mapping (with the propagated properties)
+    """
     case_relationship_manager = _CaseRelationshipManager(
         parent_type_map, case_types=case_properties_by_case_type.keys())
     flattened_case_properties = _flatten_case_properties(case_properties_by_case_type)

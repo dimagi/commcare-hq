@@ -7,6 +7,8 @@ from corehq.apps.app_manager.models import Module, AdvancedModule, FormSchedule,
     ScheduleVisit
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+import doctest
+import corehq.apps.app_manager.app_schemas.case_properties
 
 
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
@@ -144,3 +146,10 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             ]
         )
         phase.add_form(form)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.apps.app_manager.app_schemas.case_properties)
+        self.assertEqual(results.failed, 0)
