@@ -197,10 +197,10 @@ hqDefine("reports/js/filters/main", [
                     $el.find('#' + data.cssId + '-advanced-options'),
                     {
                         show: data.showAdvanced,
-                        is_unknown_shown: data.unknown.show,
-                        selected_unknown_form: data.unknown.selected,
-                        all_unknown_forms: data.unknown.options,
-                        caption_text: data.unknown.defaultText,
+                        is_unknown_shown: data.isUnknownShown,
+                        selected_unknown_form: data.selectedUnknownForm,
+                        all_unknown_forms: data.allUnknownForms,
+                        caption_text: data.captionText,
                         css_id: data.cssId,
                         css_class: data.cssClass,
                     }
