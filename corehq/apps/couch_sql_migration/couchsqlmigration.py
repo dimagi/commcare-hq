@@ -301,8 +301,8 @@ class CouchSqlDomainMigrator(object):
             return iterable
 
     def _send_timings(self, timing_context):
-        metric_name_template = "commcare.%s.duration"
-        metric_name_template_normalized = "commcare.%s.duration.normalized"
+        metric_name_template = "commcare.%s.count"
+        metric_name_template_normalized = "commcare.%s.count.normalized"
         for timing in timing_context.to_list():
             datadog_counter(
                 metric_name_template % timing.full_name,
