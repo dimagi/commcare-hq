@@ -185,6 +185,24 @@ def _propagate_and_normalize_case_properties(case_properties_by_case_type, paren
     and return something in the same format but with all parent refs propagated
     up (and if `include_parent_properties`, down) the chain
 
+    A note about *implementation*. The approach used here is to first receive all possible
+    case properties from all sources, but with inconsistent parent/<property> strewn about.
+    (For example child may have parent/<foo> but parent does not have <foo>.)
+    Then (in this method), the mapping of case types to property sets is flattened
+    to a single set of `_CasePropertyRef`s, which represents each property
+    (conceptually "parent/<property> relative to <case_type>")
+    as a pair of
+      - _CaseTypeRef ('parent' [or parent/parent, etc.] relative to <case_type>)
+      - case property (the string)
+    Finally, this set is copied over to a new set, but with each case_type_ref of each
+    case_property_ref replaced with its most cononical form
+    (or forms in the rare case that a case_type_ref resolves to more than one case_type,
+    i.e. a child case has more than one case type that can be its parent).
+    Additionally, if include_parent_properties is True, each cononical form is then splatted
+    out into all of the other forms it can take: (child, 'parent/parent', property) becomes
+    (parent, 'parent', property) and (grandparent, '', property) as well. (Note I'm using
+    conceptual notation here, whereas in the code each of these is a `_CasePropertyRef`.)
+
     :param case_properties_by_case_type: {case_type: set(case_property)} mapping,
            where case_property is a string of the form "(parent/)*<case_property>"
     :param parent_type_map: {case_type: {relationship: [parent_type]}}
