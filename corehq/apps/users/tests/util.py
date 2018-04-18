@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.data_interfaces.tests.util import create_case
 
