@@ -28,8 +28,8 @@ def publish_form_saved(form):
 def publish_form_deleted(domain, form_id):
     producer.send_change(topics.FORM_SQL, ChangeMeta(
         document_id=form_id,
+        data_source_type='sql',
         document_type='XFormInstance-Deleted',
-        backend_id='sql',
         domain=domain,
         is_deletion=True,
     ))
@@ -47,8 +47,8 @@ def publish_case_saved(case, send_post_save_signal=True):
 def publish_case_deleted(domain, case_id):
     producer.send_change(topics.CASE_SQL, ChangeMeta(
         document_id=case_id,
+        data_source_type='sql',
         document_type='CommCareCase-Deleted',
-        backend_id='sql',
         domain=domain,
         is_deletion=True,
     ))

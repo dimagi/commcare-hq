@@ -36,7 +36,7 @@ class KafkaProcessor(PillowProcessor):
             # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
             # along with a hard deletion, but it is doing that in the wild so we might as well support it.
             change_meta.is_deletion = change_meta.is_deletion or change.deleted
-            topic = get_topic_for_doc_type(change_meta.document_type, backend_id='couch')
+            topic = get_topic_for_doc_type(change_meta.document_type, data_source_type='couch')
             self._producer.send_change(topic, change_meta)
 
 

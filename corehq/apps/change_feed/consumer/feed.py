@@ -189,11 +189,9 @@ def change_from_kafka_message(message):
         document_store = get_document_store_for_change_meta(change_meta)
     except UnknownDocumentStore:
         document_store = None
-        if change_meta.version == 1:
-            msg = "Unknown document store: {} ({})".format(change_meta.document_type, change_meta.backend_id)
-        else:
-            msg = "Unknown document store: {}".format(change_meta.data_source_type)
-        notify_error(msg)
+        notify_error("Unknown document store: {} ({})".format(
+            change_meta.document_type, change_meta.data_source_type)
+        )
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

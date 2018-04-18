@@ -23,7 +23,6 @@ class ChangeMeta(jsonobject.JsonObject):
     data_source_name = jsonobject.StringProperty()
     document_type = DefaultProperty(required=True)
     document_subtype = jsonobject.StringProperty()
-    backend_id = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty(default=False)
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)

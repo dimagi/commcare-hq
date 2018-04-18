@@ -50,12 +50,12 @@ ALL = (
 )
 
 
-def get_topic_for_doc_type(doc_type, backend_id=None):
+def get_topic_for_doc_type(doc_type, data_source_type=None):
     from corehq.apps.change_feed import document_types
     if doc_type in document_types.CASE_DOC_TYPES:
-        return CASE_SQL if backend_id == 'sql' else CASE
+        return CASE_SQL if data_source_type == 'sql' else CASE
     elif doc_type in all_known_formlike_doc_types():
-        return FORM_SQL if backend_id == 'sql' else FORM
+        return FORM_SQL if data_source_type == 'sql' else FORM
     elif doc_type in document_types.DOMAIN_DOC_TYPES:
         return DOMAIN
     elif doc_type in document_types.MOBILE_USER_DOC_TYPES:

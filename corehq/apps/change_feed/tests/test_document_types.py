@@ -76,10 +76,10 @@ def test_change_from_doc_failures(self, doc):
 ], DocumentTypeTest)
 def test_change_meta(self, raw_doc, expected_subtype=None,
                      expected_domain=None, expected_deletion=False,
-                     expected_backend_id=None):
+                     data_source_type=None):
     raw_doc['_id'] = 'id'
     change_meta = change_meta_from_doc(raw_doc)
     self.assertEqual(change_meta.document_subtype, expected_subtype)
     self.assertEqual(change_meta.domain, expected_domain)
     self.assertEqual(change_meta.is_deletion, expected_deletion)
-    self.assertEqual(change_meta.backend_id, expected_backend_id)
+    self.assertEqual(change_meta.data_source_type, data_source_type)

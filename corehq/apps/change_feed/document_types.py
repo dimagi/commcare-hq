@@ -47,11 +47,11 @@ def change_meta_from_doc(document):
     return ChangeMeta(
         document_id=doc_id or document['_id'],
         document_rev=document.get('_rev', None),
+        data_source_type=document.get('backend_id', None),
         document_type=doc_type,
         document_subtype=_get_subtype(doc_type, document),
         domain=_get_domain(document),
         is_deletion=is_deletion_,
-        backend_id=document.get('backend_id', None)
     )
 
 

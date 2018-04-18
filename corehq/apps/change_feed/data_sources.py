@@ -28,7 +28,7 @@ SYNCLOG_SQL = 'synclog-sql'
 def get_document_store_for_change_meta(change_meta):
     if change_meta.version == 1:
         return _get_document_store_from_doc_type(
-            change_meta.document_type, change_meta.domain, change_meta.backend_id
+            change_meta.document_type, change_meta.domain, change_meta.data_source_type
         )
 
     if change_meta.version == 0:
@@ -70,30 +70,30 @@ def _get_document_store_v0(data_source_type, data_source_name, domain):
         )
 
 
-def _get_document_store_from_doc_type(doc_type, domain, backend_id=None):
-    if not backend_id or backend_id == 'couch':
+def _get_document_store_from_doc_type(doc_type, domain, data_source_type):
+    if not data_source_type or data_source_type == 'couch':
         doc_type = doc_type.split('-')[0]  # trip suffixes like '-DELETED'
         couch_db = couch_config.get_db_for_doc_type(doc_type)
         return CouchDocumentStore(couch_db, domain)
-    else:
-        from corehq.apps.change_feed import document_types
-        if doc_type in all_known_formlike_doc_types():
-            return ReadonlyFormDocumentStore(domain)
-        elif doc_type in document_types.CASE_DOC_TYPES:
-            return ReadonlyCaseDocumentStore(domain)
 
-        # for docs that don't have a doc_type we use the Kafka topic
-        elif doc_type == topics.SMS:
-            return ReadonlySMSDocumentStore()
-        elif doc_type == topics.LEDGER_V2:
-            return ReadonlyLedgerV2DocumentStore(domain)
-        elif doc_type == topics.LEDGER:
-            return LedgerV1DocumentStore(domain)
-        elif doc_type == topics.LOCATION:
-            return ReadonlyLocationDocumentStore(domain)
-        elif doc_type in document_types.SYNCLOG_DOC_TYPES or doc_type == topics.SYNCLOG_SQL:
-            return ReadonlySyncLogDocumentStore()
-        else:
-            raise UnknownDocumentStore(
-                'getting document stores for backend {} is not supported!'.format(doc_type)
-            )
+    from corehq.apps.change_feed import document_types
+    if doc_type in all_known_formlike_doc_types():
+        return ReadonlyFormDocumentStore(domain)
+    elif doc_type in document_types.CASE_DOC_TYPES:
+        return ReadonlyCaseDocumentStore(domain)
+
+    # for docs that don't have a doc_type we use the Kafka topic
+    elif doc_type == topics.SMS:
+        return ReadonlySMSDocumentStore()
+    elif doc_type == topics.LEDGER_V2:
+        return ReadonlyLedgerV2DocumentStore(domain)
+    elif doc_type == topics.LEDGER:
+        return LedgerV1DocumentStore(domain)
+    elif doc_type == topics.LOCATION:
+        return ReadonlyLocationDocumentStore(domain)
+    elif doc_type == topics.SYNCLOG_SQL:
+        return ReadonlySyncLogDocumentStore()
+    else:
+        raise UnknownDocumentStore(
+            'getting document stores for backend {} is not supported!'.format(doc_type)
+        )
