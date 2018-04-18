@@ -31,7 +31,8 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
-from corehq.util.datadog.gauges import datadog_histogram, datadog_counter
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
@@ -84,7 +85,7 @@ class CouchSqlDomainMigrator(object):
             self.timing_context = timing_context
             with timing_context('main_forms'):
                 self._process_main_forms()
-            with timing_context("unprocessed_forms")
+            with timing_context("unprocessed_forms"):
                 self._copy_unprocessed_forms()
             with timing_context("unprocessed_cases"):
                 self._copy_unprocessed_cases()
@@ -300,14 +301,22 @@ class CouchSqlDomainMigrator(object):
             return iterable
 
     def _send_timings(self, timing_context):
-        metric_name_template = "commcare.%s"
-        metric_name_template_normalized = "commcare.%s.normalized"
+        metric_name_template = "commcare.%s.duration"
+        metric_name_template_normalized = "commcare.%s.duration.normalized"
         for timing in timing_context.to_list():
-            datadog_histogram(metric_name_template % timing.full_name, timing.duration)
+            datadog_counter(
+                metric_name_template % timing.full_name,
+                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS))
             normalize_denominator = getattr(timing, 'normalize_denominator', None)
             if normalize_denominator:
-                datadog_histogram(metric_name_template_normalized % timing.full_name,
-                                  timing.duration / normalize_denominator)
+                datadog_counter(
+                    metric_name_template_normalized % timing.full_name,
+                    tags=['duration:%s' % bucket_value(timing.duration / normalize_denominator,
+                                                       NORMALIZED_TIMING_BUCKETS))
+
+
+TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
+NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 1, 5, 10, 30, 60)
 
 
 def _wrap_form(doc):
