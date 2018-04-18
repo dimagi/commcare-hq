@@ -81,17 +81,14 @@ class CouchSqlDomainMigrator(object):
     def migrate(self):
         self.log_info('migrating domain {}'.format(self.domain))
         with TimingContext("couch_sql_migration") as timing_context:
-            self.timing_name = "main_forms"
-            with timing_context(self.timing_name):
+            self.timing_context = timing_context
+            with timing_context('main_forms'):
                 self._process_main_forms()
-            self.timing_name = "unprocessed_forms"
-            with timing_context(self.timing_name):
+            with timing_context("unprocessed_forms")
                 self._copy_unprocessed_forms()
-            self.timing_name = "unprocessed_cases"
-            with timing_context(self.timing_name):
+            with timing_context("unprocessed_cases"):
                 self._copy_unprocessed_cases()
-            self.timing_name = "case_diffs"
-            with timing_context(self.timing_name):
+            with timing_context("case_diffs"):
                 self._calculate_case_diffs()
 
         self._send_timings(timing_context)
@@ -294,7 +291,9 @@ class CouchSqlDomainMigrator(object):
                 get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
                 for doc_type in doc_types
             ])
-            setattr(self, self.timing_name + '_doc_count', doc_count)
+            if self.timing_context:
+                current_timer = self.timing_context.peek()
+                current_timer.normalize_denominator = doc_count
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
@@ -305,10 +304,10 @@ class CouchSqlDomainMigrator(object):
         metric_name_template_normalized = "commcare.%s.normalized"
         for timing in timing_context.to_list():
             datadog_histogram(metric_name_template % timing.full_name, timing.duration)
-            doc_count = getattr(self, timing.name + '_doc_count', None)
-            if doc_count:
+            normalize_denominator = getattr(timing, 'normalize_denominator', None)
+            if normalize_denominator:
                 datadog_histogram(metric_name_template_normalized % timing.full_name,
-                                  timing.duration / doc_count)
+                                  timing.duration / normalize_denominator)
 
 
 def _wrap_form(doc):
