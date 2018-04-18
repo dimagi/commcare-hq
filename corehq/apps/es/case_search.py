@@ -52,29 +52,26 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        # Filter by case_properties.key and do a text search in case_properties.value
-        result = self
-        if fuzzy:
-            # Results must at least match the fuzzy value, and exact matches are weighted higher. `clause` param
-            # is overridden to do this.
-            fuzzy_query = queries.nested(
-                PATH,
-                queries.filtered(
-                    queries.match(value, '{}.value'.format(PATH), fuzziness='AUTO'),
-                    filters.term('{}.key'.format(PATH), key),
-                )
-            )
-            result = result._add_query(fuzzy_query, queries.MUST)
-            clause = queries.SHOULD
+        if fuzzy and clause != queries.MUST:
+            raise ValueError("You can't run {} queries as fuzzy".format(clause))
 
-        exact_query = queries.nested(
+        if fuzzy:
+            # fuzzy match
+            self = self._add_query(self._get_query(key, value, fuzziness='AUTO'), queries.MUST)
+            # exact match. added to improve the score of exact matches
+            return self._add_query(self._get_query(key, value, fuzziness='0'), queries.SHOULD)
+        else:
+            return self._add_query(self._get_query(key, value, fuzziness='0'), clause)
+
+    def _get_query(self, key, value, fuzziness):
+        # Filter by case_properties.key and do a text search in case_properties.value
+        return queries.nested(
             PATH,
             queries.filtered(
-                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
+                queries.match(value, '{}.value'.format(PATH), fuzziness=fuzziness),
                 filters.term('{}.key'.format(PATH), key),
             )
         )
-        return result._add_query(exact_query, clause)
 
     def regexp_case_property_query(self, key, regex, clause=queries.MUST):
         new_query = queries.nested(
