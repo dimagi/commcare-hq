@@ -87,6 +87,7 @@ from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
+    iter_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
@@ -889,6 +890,9 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("must implement get_saved_exports")
 
+    def iter_saved_exports(self):
+        return self.get_saved_exports()
+
     @property
     @memoized
     def emailed_export_groups(self):
@@ -1497,6 +1501,12 @@ class FormExportListView(BaseExportListView):
             # New exports display daily saved exports in their own view
             exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
+
+    def iter_saved_exports(self):
+        iter_exports = iter_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        if use_new_daily_saved_exports_ui(self.domain):
+            return (x for x in iter_exports if not x.is_daily_saved_export)
+        return iter_exports
 
     @property
     @memoized
