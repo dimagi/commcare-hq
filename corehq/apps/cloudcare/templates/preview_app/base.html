@@ -27,7 +27,6 @@
     <input id="csrfTokenContainer" type="hidden" value="{{ csrf_token }}">
 {% endblock %}
 
-{% analytics_ab_test 'kissmetrics.data_feedback_loop_feb2018' ab_test %}
 {% initial_page_data 'allowed_host' request.get_host %}
 {% initial_page_data 'app' app %}
 {% initial_page_data 'debugger_enabled' request.couch_user.can_edit_data %}
