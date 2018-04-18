@@ -59,7 +59,6 @@ from .views import (
     export_default_or_custom_data,
     hq_download_saved_export,
     hq_deid_download_saved_export,
-    hq_update_saved_export,
     export_report,
     email_report,
     delete_config,
@@ -146,7 +145,6 @@ urlpatterns = [
         name="hq_download_saved_export"),
     url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
         name="hq_deid_download_saved_export"),
-    url(r"^export/saved/update/$", hq_update_saved_export, name="hq_update_saved_export"),
 
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),
