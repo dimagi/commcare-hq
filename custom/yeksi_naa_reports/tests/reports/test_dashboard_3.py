@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
@@ -17,7 +18,6 @@ class TestDashboard3(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard3_report = Dashboard3Report(request=mock, domain='test-pna')
@@ -30,61 +30,61 @@ class TestDashboard3(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            ['Product', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['Produit', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', 'no data entered', '100.00%'],
-                ['NEVIRAPINE 200MG CP.', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '93.30%'],
-                ['ACETATE DE MEDROXY PROGESTERONE 104MG/0.65ML INJ. (SAYANA PRESS)', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', 'no data entered', '100.00%'],
-                ['ACT ADULTE', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%'],
-                ['Produit A', '97.63%', '94.86%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered'],
-                ['Produit 10', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 '87.10%', '96.30%'],
-                ['Produit 12', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', '100.00%'],
-                ['DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', '1462.40%'],
-                ['PARACETAMOL 500MG CP.', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered'],
-                ['EFAVIRENZ 600MG CP.', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '80.77%'],
-                ['RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', '101.21%'],
-                ['Produit 15', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%'],
-                ['Test Product 1', '518.75%', '592.86%', '691.67%', '345.83%', '129.69%', '98.44%'],
-                ['Produit 14', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '90.00%'],
-                ['ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', 'no data entered', '150.00%'],
-                ['Produit 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%'],
-                ['ACT PETIT ENFANT', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['Produit 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['ALBENDAZOL 4% SB.', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['LEVONORGESTREL+ETHYNILESTRADIOL+FER (0.15+0.03+75)MG (MICROGYNON)', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', 'no data entered', '222.22%'],
-                ['Produit C', '93.88%', '93.28%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered'],
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE (60+30+150)MG CP. DISPER', 'no data entered',
-                 'no data entered', 'no data entered', 'no data entered', 'no data entered', '100.00%'],
-                ['TEST RAPIDE HIV 1/2 (SD BIOLINE)', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['Produit B', '98.28%', '98.94%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered']
+                [u'RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'pas de données', u'100.00%'],
+                [u'NEVIRAPINE 200MG CP.', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'93.30%'],
+                [u'ACETATE DE MEDROXY PROGESTERONE 104MG/0.65ML INJ. (SAYANA PRESS)', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'pas de données', u'100.00%'],
+                [u'ACT ADULTE', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%'],
+                [u'Produit A', u'97.63%', u'94.86%', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données'],
+                [u'Produit 10', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'87.10%', u'96.30%'],
+                [u'Produit 12', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données'],
+                [u'LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'100.00%'],
+                [u'DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'1462.40%'],
+                [u'PARACETAMOL 500MG CP.', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données'],
+                [u'EFAVIRENZ 600MG CP.', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'80.77%'],
+                [u'RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'101.21%'],
+                [u'Produit 15', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%'],
+                [u'Test Product 1', u'518.75%', u'592.86%', u'691.67%', u'345.83%', u'129.69%', u'98.44%'],
+                [u'Produit 14', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'90.00%'],
+                [u'ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'pas de données', u'150.00%'],
+                [u'Produit 2', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%'],
+                [u'ACT PETIT ENFANT', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'100.00%'],
+                [u'Produit 1', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données'],
+                [u'ALBENDAZOL 4% SB.', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'100.00%'],
+                [u'LEVONORGESTREL+ETHYNILESTRADIOL+FER (0.15+0.03+75)MG (MICROGYNON)', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'pas de données', u'222.22%'],
+                [u'Produit C', u'93.88%', u'93.28%', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données'],
+                [u'RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE (60+30+150)MG CP. DISPER', u'pas de données',
+                 u'pas de données', u'pas de données', u'pas de données', u'pas de données', u'100.00%'],
+                [u'TEST RAPIDE HIV 1/2 (SD BIOLINE)', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'100.00%'],
+                [u'Produit B', u'98.28%', u'98.94%', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
@@ -101,7 +101,6 @@ class TestDashboard3(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard3_report = Dashboard3Report(request=mock, domain='test-pna')
@@ -114,8 +113,8 @@ class TestDashboard3(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            ['Product', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['Produit', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018']
         )
         self.assertItemsEqual(
             sorted(rows, key=lambda x: x[0]),
