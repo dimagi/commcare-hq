@@ -60,7 +60,6 @@ branches:
   - ce/app-status-staging # Cal April 9
   - es/mobile-ucr-slugs  # Ethan April 9
   - np/py3/csv342 # NP 4/17
-  - np/fix-dashboard # NP 4/17
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
