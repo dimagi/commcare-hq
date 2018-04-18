@@ -28,34 +28,34 @@ hqDefine("data_interfaces/js/case_management", function() {
             now = new Date();
         self.on_today = (enddate.toDateString() === now.toDateString());
 
-        var getOwnerType = function (owner_id) {
-            if (owner_id.startsWith('u')) {
+        var getOwnerType = function (ownerId) {
+            if (ownerId.startsWith('u')) {
                 return 'user';
-            } else if (owner_id.startsWith('sg')) {
+            } else if (ownerId.startsWith('sg')) {
                 return 'group';
             }
         };
 
-        var updateCaseRow = function (case_id, owner_id, owner_type) {
-            return function(data, textStatus) {
-                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + case_id + '"].selected-commcare-case'),
+        var updateCaseRow = function (caseId, ownerId, ownerType) {
+            return function() {
+                var $checkbox = $('#data-interfaces-reassign-cases input[data-caseid="' + caseId + '"].selected-commcare-case'),
                     username = $('#reassign_owner_select').data().select2.data().text,
-                    date_message = (self.on_today) ? '<span title="0"></span>' :
+                    dateMessage = (self.on_today) ? '<span title="0"></span>' :
                         '<span class="label label-warning" title="0">Out of range of filter. Will ' +
                                         'not appear on page refresh.</span>';
-                $checkbox.data('owner', owner_id);
-                $checkbox.data('ownertype', owner_type);
+                $checkbox.data('owner', ownerId);
+                $checkbox.data('ownertype', ownerType);
 
                 var $row = $checkbox.closest("tr"),
-                    group_label = '';
+                    groupLabel = '';
 
-                if (owner_type === 'group') {
-                    group_label = ' <span class="label label-inverse" title="'+username+'">group</span>';
+                if (ownerType === 'group') {
+                    groupLabel = ' <span class="label label-inverse" title="'+username+'">group</span>';
                 }
 
-                $row.find('td:nth-child(4)').html(username +group_label+' <span class="label label-info" title="' + username +
+                $row.find('td:nth-child(4)').html(username + groupLabel +' <span class="label label-info" title="' + username +
                                                 '">updated</span>');
-                $row.find('td:nth-child(5)').html('Today ' + date_message);
+                $row.find('td:nth-child(5)').html('Today ' + dateMessage);
                 $checkbox.prop("checked", false).change();
             };
         };
@@ -95,27 +95,27 @@ hqDefine("data_interfaces/js/case_management", function() {
         };
 
         self.updateCaseOwners = function (form) {
-            var new_owner = $(form).find('#reassign_owner_select').val(),
+            var newOwner = $(form).find('#reassign_owner_select').val(),
                 $modal = $('#caseManagementStatusModal'),
-                owner_type = getOwnerType(new_owner);
+                ownerType = getOwnerType(newOwner);
 
-            if (new_owner.includes('__')) {
+            if (newOwner.includes('__')) {
                 // groups and users have different number of characters before the id
                 // users are u__id and groups are sg__id
-                new_owner = new_owner.slice(new_owner.indexOf('__') + 2);
+                newOwner = newOwner.slice(newOwner.indexOf('__') + 2);
             }
 
-            if (_.isEmpty(new_owner)) {
+            if (_.isEmpty(newOwner)) {
                 $modal.find('.modal-body').text("Please select an owner");
                 $modal.modal('show');
             } else {
                 $(form).find("[type='submit']").disableButton();
                 for (var i = 0; i < self.selected_cases().length; i++) {
-                    var case_id = self.selected_cases()[i],
+                    var caseId = self.selected_cases()[i],
                         xform;
                     xform = casexml.CaseDelta.wrap({
-                        case_id: case_id,
-                        properties: {owner_id: new_owner},
+                        case_id: caseId,
+                        properties: {owner_id: newOwner},
                     }).asXFormInstance({
                         user_id: self.webUserID,
                         username: self.webUserName,
@@ -126,7 +126,7 @@ hqDefine("data_interfaces/js/case_management", function() {
                         url: self.receiverUrl,
                         type: 'post',
                         data: xform,
-                        success: updateCaseRow(case_id, new_owner, owner_type),
+                        success: updateCaseRow(caseId, newOwner, ownerType),
                     });
 
                 }
@@ -158,7 +158,7 @@ hqDefine("data_interfaces/js/case_management", function() {
                 webUserID: initialPageData.get("web_user_id"),
                 webUserName: initialPageData.get("web_username"),
                 form_name: gettext("Case Reassignment (via HQ)"),
-        });
+            });
 
         // Apply bindings whenever report content is refreshed
         $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions) {
@@ -173,21 +173,21 @@ hqDefine("data_interfaces/js/case_management", function() {
                 placeholder: gettext("Search for users or groups"),
                 ajax: {
                     url: initialPageData.reverse("reassign_case_options"),
-                    data: function (term, page) {
+                    data: function (term) {
                         return {
-                            q: term
+                            q: term,
                         };
                     },
                     dataType: 'json',
                     quietMillis: 250,
-                    results: function (data, page) {
+                    results: function (data) {
                         return {
                             total: data.total,
                             results: data.results,
                         };
                     },
-                    cache: true
-                }
+                    cache: true,
+                },
             });
         });
 
