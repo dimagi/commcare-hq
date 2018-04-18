@@ -102,9 +102,9 @@ describe('Enrolled Children Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 2, all: 4});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>2</strong>' +
-            '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong>' +
-            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>2</strong></div>' +
+            '<div>Total number of children (0 - 6 years) who are registered: <strong>4</strong></div>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -215,9 +215,9 @@ describe('Enrolled Children Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>0</strong>' +
-            '<div>Total number of children (0 - 6 years) who are registered: <strong>25</strong>' +
-            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>NaN%</strong>' +
+            '<div>Number of children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>0</strong></div>' +
+            '<div>Total number of children (0 - 6 years) who are registered: <strong>25</strong></div>' +
+            '<div>Percentage of registered children (0 - 6 years) who are enrolled for Anganwadi Services: <strong>NaN%</strong></div>' +
             '</div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);

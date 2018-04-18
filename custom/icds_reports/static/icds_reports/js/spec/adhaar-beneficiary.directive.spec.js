@@ -89,7 +89,7 @@ describe('Adhaar Beneficiary Directive', function () {
         assert.equal(result, '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>5</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div>');
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -196,7 +196,7 @@ describe('Adhaar Beneficiary Directive', function () {
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
             '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>24.56%</strong></div>';
 
-        var result = controller.getTooltipContent(month.value, day);
+        var result = controller.tooltipContent(month.value, day);
         assert.equal(expected, result);
     });
 
@@ -204,7 +204,7 @@ describe('Adhaar Beneficiary Directive', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<div>Total number of ICDS beneficiaries whose Aadhaar has been captured: <strong>0</strong></div>' +
-            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>0.00%</strong></div>';
+            '<div>% of ICDS beneficiaries whose Aadhaar has been captured: <strong>0.00%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
