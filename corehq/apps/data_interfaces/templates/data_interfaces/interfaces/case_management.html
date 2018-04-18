@@ -3,67 +3,6 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js-inline %} {{ block.super }}
-    <script>
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
-            interfaceSelector = '#data-interfaces-reassign-cases';
-
-        // Apply bindings to reassignment interface and select2
-        var caseManagementModel = CaseManagement({
-            receiverUrl: initialPageData.reverse("receiver_secure_post"),
-            enddate: initialPageData.get("reassign_cases_enddate"),
-            webUserID: initialPageData.get("web_user_id"),
-            webUserName: initialPageData.get("web_username"),
-            form_name: gettext("Case Reassignment (via HQ)"),
-        });
-        $(interfaceSelector).koApplyBindings(caseManagementModel);
-
-        $('#reassign_owner_select').select2({
-            placeholder: gettext("Search for users or groups"),
-            ajax: {
-                url: initialPageData.reverse("reassign_case_options"),
-                data: function (term, page) {
-                    return {
-                        q: term
-                    };
-                },
-                dataType: 'json',
-                quietMillis: 250,
-                results: function (data, page) {
-                    return {
-                        total: data.total,
-                        results: data.results,
-                    };
-                },
-                cache: true
-            }
-        });
-
-        // Event handlers for selecting & de-selecting cases
-        // Similar to archive_forms.js, would be good to combine the two
-        $(document).on("click", interfaceSelector + " a.select-all", function () {
-            $(interfaceSelector).find('input.selected-commcare-case').prop('checked', true).change();
-            return false;
-        });
-
-        function selectNone() {
-            $(interfaceSelector).find('input.selected-commcare-case:checked').prop('checked', false).change();
-        }
-
-        $(document).on("click", interfaceSelector + " a.select-none", function() {
-            selectNone();
-            return false;
-        });
-
-        $(document).on("mouseup", interfaceSelector + " .dataTables_paginate a", selectNone);
-        $(document).on("change", interfaceSelector + " .dataTables_length select", selectNone);
-
-        $(document).on("change", interfaceSelector + " input.selected-commcare-case", function(e) {
-            caseManagementModel.updateCaseSelection({}, e);
-        });
-    </script>
-{% endblock %}
-
 {% block reportcontent %}
     <div id="data-interfaces-reassign-cases">
         <div class="row">

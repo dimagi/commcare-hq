@@ -29,7 +29,7 @@ from corehq.apps.hqwebapp.decorators import (
 )
 from corehq.apps.users.models import CouchUser
 from corehq.util.timezones.utils import get_timezone_for_user
-from corehq.util.view_utils import absolute_reverse
+from corehq.util.view_utils import absolute_reverse, reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 from dimagi.utils.couch.pagination import DatatablesParams
@@ -522,6 +522,7 @@ class GenericReportView(object):
             'emailDefaultSubject': self.rendered_report_title,
             'type': self.dispatcher.prefix,
             'urlRoot': self.url_root,
+            'asyncUrl': self.get_url(domain=self.domain, render_as='async', relative=True),
         }
 
     def update_filter_context(self):
@@ -723,7 +724,7 @@ class GenericReportView(object):
         raise Http404
 
     @classmethod
-    def get_url(cls, domain=None, render_as=None, **kwargs):
+    def get_url(cls, domain=None, render_as=None, relative=False, **kwargs):
         # NOTE: I'm pretty sure this doesn't work if you ever pass in render_as
         # but leaving as is for now, as it should be obvious as soon as that
         # breaks something
@@ -737,8 +738,9 @@ class GenericReportView(object):
         url_args = [domain] if domain is not None else []
         if render_as is not None:
             url_args.append(render_as+'/')
-        return absolute_reverse(cls.dispatcher.name(),
-                                args=url_args + [cls.slug])
+        if relative:
+            return reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
+        return absolute_reverse(cls.dispatcher.name(), args=url_args + [cls.slug])
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
