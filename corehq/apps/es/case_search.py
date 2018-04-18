@@ -41,7 +41,8 @@ class CaseSearchES(CaseES):
 
     def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
         """
-        Search for a case property.
+        Search for all cases where case property `key` has text value `value`
+
         Usage: (CaseSearchES()
                 .domain('swashbucklers')
                 .case_property_query("name", "rebdeard", "must", fuzzy=True)
@@ -56,32 +57,18 @@ class CaseSearchES(CaseES):
             positive_clause = clause != queries.MUST_NOT
             return (
                 # fuzzy match
-                self._add_query(self._get_query(key, value, fuzziness='AUTO'), clause)
+                self._add_query(self._get_text_query(key, value, fuzziness='AUTO'), clause)
                 # exact match. added to improve the score of exact matches
-                ._add_query(self._get_query(key, value, fuzziness='0'),
+                ._add_query(self._get_text_query(key, value, fuzziness='0'),
                             queries.SHOULD if positive_clause else clause))
         else:
-            return self._add_query(self._get_query(key, value, fuzziness='0'), clause)
-
-    def _get_query(self, key, value, fuzziness):
-        # Filter by case_properties.key and do a text search in case_properties.value
-        return queries.nested(
-            PATH,
-            queries.filtered(
-                queries.match(value, '{}.value'.format(PATH), fuzziness=fuzziness),
-                filters.term('{}.key'.format(PATH), key),
-            )
-        )
+            return self._add_query(self._get_text_query(key, value, fuzziness='0'), clause)
 
     def regexp_case_property_query(self, key, regex, clause=queries.MUST):
-        new_query = queries.nested(
-            PATH,
-            queries.filtered(
-                filters.term('{}.key'.format(PATH), key),
-                queries.regexp('{}.value'.format(PATH), regex)
-            )
-        )
-        return self._add_query(new_query, clause)
+        """
+        Search for all cases where case property `key` matches the regular expression in `regex`
+        """
+        return self._add_query(self._get_query(key, queries.regexp('{}.value'.format(PATH), regex)), clause)
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
@@ -98,6 +85,19 @@ class CaseSearchES(CaseES):
                 queries.CLAUSES[clause]([new_query])
             )
         return self
+
+    def _get_text_query(self, key, value, fuzziness):
+        # Filter by case_properties.key and do a text search in case_properties.value
+        return self._get_query(key, queries.match(value, '{}.value'.format(PATH), fuzziness=fuzziness))
+
+    def _get_query(self, key, query):
+        return queries.nested(
+            PATH,
+            queries.filtered(
+                query,
+                filters.term('{}.key'.format(PATH), key),
+            )
+        )
 
 
 def case_property_filter(key, value):
