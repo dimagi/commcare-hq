@@ -2235,8 +2235,6 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'ews-ghana': 'custom.ewsghana',
     'ews-ghana-1': 'custom.ewsghana',
     'ewsghana-6': 'custom.ewsghana',
@@ -2250,7 +2248,6 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
-    'psi-unicef': 'psi',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.yeksi_naa_reports',
