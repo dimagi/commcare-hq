@@ -5,15 +5,16 @@
 
 {% block js-inline %} {{ block.super }}
     <script>
-        var OPTIONS = {
-            receiverUrl: '{% url "receiver_secure_post" domain %}',
-            enddate: '{{ datespan.enddate_param_utc }}',
-            webUserID: '{{ request.couch_user.userID }}',
-            webUserName: '{{ request.couch_user.username }}',
-            form_name: '{%  trans "Case Reassignment (via HQ)" %}'
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
+            options = {
+                receiverUrl: initialPageData.reverse("receiver_secure_post"),
+                enddate: initialPageData.get("reassign_cases_enddate"),
+                webUserID: initialPageData.get("web_user_id"),
+                webUserName: initialPageData.get("web_username"),
+                form_name: gettext("Case Reassignment (via HQ)"),
         };
 
-        var caseManagementModel = new CaseManagement(OPTIONS);
+        var caseManagementModel = CaseManagement(options);
         function applyBindings() {
             var $caseManagement = $('#case-management');
             $caseManagement.koApplyBindings(caseManagementModel);
@@ -48,9 +49,9 @@
         }, 1000);
 
         $('#reassign_owner_select').select2({
-            placeholder: '{% trans "Search for users or groups" %}',
+            placeholder: gettext("Search for users or groups"),
             ajax: {
-                url: '{% url "reassign_case_options" domain %}',
+                url: initialPageData.reverse("reassign_case_options"),
                 data: function (term, page) {
                     return {
                         q: term

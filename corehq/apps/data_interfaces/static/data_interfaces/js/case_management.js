@@ -2,7 +2,7 @@
 
 var CaseManagement = function (o) {
     'use strict';
-    var self = this;
+    var self = {};
 
     self.receiverUrl = o.receiverUrl;
     self.updatedCase = null;
@@ -132,6 +132,8 @@ var CaseManagement = function (o) {
             }
         }
     };
+
+    return self;
 };
 
 ko.bindingHandlers.caseReassignmentForm = {

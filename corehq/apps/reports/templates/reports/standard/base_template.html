@@ -89,6 +89,14 @@
 
 {% block page_content %}
     {% initial_page_data 'js_options' report.js_options %}
+
+    {# Needed for case reassignment interface #}
+    {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
+    {% initial_page_data "web_user_id" request.couch_user.userID %}
+    {% initial_page_data "web_username" request.couch_user.username %}
+    {% registerurl "reassign_case_options" domain %}
+    {% registerurl "receiver_secure_post" domain %}
+
     {% if request.datespan %}
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
