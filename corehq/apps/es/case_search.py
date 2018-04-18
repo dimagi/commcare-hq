@@ -52,14 +52,14 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        if fuzzy and clause != queries.MUST:
-            raise ValueError("You can't run {} queries as fuzzy".format(clause))
-
         if fuzzy:
-            # fuzzy match
-            self = self._add_query(self._get_query(key, value, fuzziness='AUTO'), queries.MUST)
-            # exact match. added to improve the score of exact matches
-            return self._add_query(self._get_query(key, value, fuzziness='0'), queries.SHOULD)
+            positive_clause = clause != queries.MUST_NOT
+            return (
+                # fuzzy match
+                self._add_query(self._get_query(key, value, fuzziness='AUTO'), clause)
+                # exact match. added to improve the score of exact matches
+                ._add_query(self._get_query(key, value, fuzziness='0'),
+                            queries.SHOULD if positive_clause else clause))
         else:
             return self._add_query(self._get_query(key, value, fuzziness='0'), clause)
 
