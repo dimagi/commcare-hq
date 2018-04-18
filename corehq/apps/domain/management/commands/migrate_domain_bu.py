@@ -1,7 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management.base import BaseCommand
 from corehq.apps.domain.dbaccessors import get_domain_ids_by_names

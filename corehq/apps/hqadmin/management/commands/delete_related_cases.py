@@ -1,7 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from django.core.management import BaseCommand
 import sys
 from corehq.apps.receiverwrapper.util import get_app_version_info
