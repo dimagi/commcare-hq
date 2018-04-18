@@ -337,7 +337,6 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
-    'a5288',
     'custom.bihar',
     'hsph',
     'mvp',
@@ -391,7 +390,6 @@ TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
-    'a5288',
     'captcha',
     'couchdbkit.ext.django',
     'corehq.apps.ivr',
@@ -2158,8 +2156,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'a5288-test': 'a5288',
-    'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',
