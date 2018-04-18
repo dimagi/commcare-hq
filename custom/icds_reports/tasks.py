@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from collections import namedtuple
-import csv
+import csv342 as csv
 from datetime import date, datetime, timedelta
 import io
 import logging

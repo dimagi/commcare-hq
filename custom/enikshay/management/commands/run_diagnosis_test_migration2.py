@@ -1,7 +1,7 @@
 from __future__ import absolute_import, print_function
 
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from datetime import datetime
 
 from django.core.management import BaseCommand

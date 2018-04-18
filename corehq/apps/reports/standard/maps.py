@@ -207,7 +207,7 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 yield data
 
     def _get_data_csv(self, params, filters):
-        import csv
+        import csv342 as csv
         with open(params['path']) as f:
             return list(csv.DictReader(f))
 
