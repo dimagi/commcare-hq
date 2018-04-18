@@ -677,6 +677,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'read_only_mode': self.read_only_mode,
             'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
             'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
+            'is_system_admin': self.is_system_admin,
         }
 
     @cached_property

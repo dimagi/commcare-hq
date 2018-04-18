@@ -94,7 +94,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
             + '<p>test</p>'
             + '<div>Total Number of Children born in the given month: <strong>10</strong></div>'
             + '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>5</strong></div>'
-            + '<div>% children who were put to the breast within one hour of birth: <strong>50.00%</strong></div>');
+            + '<div>% children who were put to the breast within one hour of birth: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -212,7 +212,7 @@ describe('Early Initiation Breastfeeding Directive', function () {
             '<p>Ambah</p>' +
             '<div>Total Number of Children born in the given month: <strong>0</strong></div>' +
             '<div>Total Number of Children who were put to the breast within one hour of birth: <strong>0</strong></div>' +
-            '<div>% children who were put to the breast within one hour of birth: <strong>NaN%</strong></div>';
+            '<div>% children who were put to the breast within one hour of birth: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

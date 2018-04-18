@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import importlib
 import os
+import six
 
 from django.contrib import messages
 import settingshelper as helper
@@ -337,7 +339,6 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
-    'a5288',
     'custom.bihar',
     'hsph',
     'mvp',
@@ -391,7 +392,6 @@ TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
-    'a5288',
     'captcha',
     'couchdbkit.ext.django',
     'corehq.apps.ivr',
@@ -994,6 +994,11 @@ try:
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
 
+COUCH_DATABASES['default'] = {
+    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
+    for (k, v) in COUCH_DATABASES['default'].items()
+}
+
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
 # https://docs.djangoproject.com/en/1.11/releases/1.11.1/#allowed-disabling-server-side-cursors-on-postgresql
@@ -1358,19 +1363,19 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
+NEW_USERS_GROUPS_DB = b'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = 'fixtures'
+NEW_FIXTURES_DB = b'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = 'domains'
+NEW_DOMAINS_DB = b'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = 'apps'
+NEW_APPS_DB = b'apps'
 APPS_DB = NEW_APPS_DB
 
-META_DB = 'meta'
+META_DB = b'meta'
 
 
 COUCHDB_APPS = [
@@ -2158,8 +2163,6 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'a5288-test': 'a5288',
-    'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',

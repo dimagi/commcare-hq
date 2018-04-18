@@ -41,8 +41,8 @@ class SMSContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_number = self.get_one_way_phone_number(recipient)
-        if not phone_number:
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
@@ -53,7 +53,7 @@ class SMSContent(Content):
         )
         message = self.render_message(message, recipient, logged_subevent)
 
-        self.send_sms_message(logged_event.domain, recipient, phone_number, message, logged_subevent)
+        self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
         logged_subevent.completed()
 
 
@@ -188,14 +188,14 @@ class CustomContent(Content):
             case_id=self.case.case_id if self.case else None,
         )
 
-        phone_number = self.get_one_way_phone_number(recipient)
-        if not phone_number:
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient)
+        if not phone_entry_or_number:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
             return
 
         # An empty list of messages returned from a custom content handler means
         # we shouldn't send anything, so we don't log an error for that.
         for message in self.get_list_of_messages(recipient):
-            self.send_sms_message(logged_event.domain, recipient, phone_number, message, logged_subevent)
+            self.send_sms_message(logged_event.domain, recipient, phone_entry_or_number, message, logged_subevent)
 
         logged_subevent.completed()
