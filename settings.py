@@ -368,7 +368,6 @@ HQ_APPS = (
 
     'custom.icds',
     'custom.icds_reports',
-    'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
     'corehq.motech.openmrs',
@@ -2053,8 +2052,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'test.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'qa', 'voucher.json'),
 
-    os.path.join('custom', 'pnlppgi', 'resources', 'site_reporting_rates.json'),
-    os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
@@ -2119,8 +2116,6 @@ CUSTOM_UCR_EXPRESSIONS = [
     ('eqa_expression', 'custom.eqa.expressions.eqa_expression'),
     ('cqi_action_item', 'custom.eqa.expressions.cqi_action_item'),
     ('eqa_percent_expression', 'custom.eqa.expressions.eqa_percent_expression'),
-    ('year_expression', 'custom.pnlppgi.expressions.year_expression'),
-    ('week_expression', 'custom.pnlppgi.expressions.week_expression'),
     ('concatenate_strings', 'custom.enikshay.expressions.concatenate_strings_expression'),
     ('first_case_form_with_xmlns', 'custom.enikshay.expressions.first_case_form_with_xmlns_expression'),
     ('count_case_forms_with_xmlns', 'custom.enikshay.expressions.count_case_forms_with_xmlns_expression'),
@@ -2231,7 +2226,6 @@ DOMAIN_MODULE_MAP = {
     'care-macf-malawi': 'custom.care_pathways',
     'care-macf-bangladesh': 'custom.care_pathways',
     'care-macf-ghana': 'custom.care_pathways',
-    'pnlppgi': 'custom.pnlppgi',
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
