@@ -322,7 +322,9 @@ To avoid having to run the databse setup for each test run you can specify the `
  which will use an existing test database if one exists:
 
     $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager
-    $ REUSE_DB=reset ./manage.py test corehq.apps.app_manager  # drop the current test DB and create a fresh one
+
+    # drop the current test DB and create a fresh one
+    $ REUSE_DB=1 ./manage.py test corehq.apps.app_manager --reusedb=reset
 
 See `corehq.tests.nose.HqdbContext` for full description of `REUSE_DB`.
 
