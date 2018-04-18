@@ -177,8 +177,8 @@ def _flatten_case_properties(case_properties_by_case_type):
     return result
 
 
-def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
-                               include_parent_properties):
+def _propagate_and_normalize_case_properties(case_properties_by_case_type, parent_type_map,
+                                             include_parent_properties):
     """
     Analyze and propagate all parent refs in `case_properties_by_case_type`
 
@@ -193,7 +193,9 @@ def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
     :param include_parent_properties: If this is set to True, then propagate parents'
            properties down (as parent/<property>), in addition to propagating
            parent/<property> on the child up to <property> on the parent
-           (which happens regardless of this flag)
+           (which happens regardless of this flag). If set to True, all `parent/<property>`
+           cases are also *removed* from the child, unless it cannot be determined what
+           it refers to.
 
     :return: {case_type: set(case_property)} mapping (with the propagated properties)
     """
@@ -227,7 +229,15 @@ def _normalize_case_properties(case_properties_by_case_type, parent_type_map,
 
 
 class ParentCasePropertyBuilder(object):
+    """
+    Helper for detecting case relationships and case properties
 
+    This class is not intended to be used directly, but rather through the functions below.
+    todo: remove all usages outside of this package and replaces with function calls.
+
+    Full functionality is documented in the individual methods.
+
+    """
     def __init__(self, app, defaults=(), per_type_defaults=None, include_parent_properties=True):
         self.app = app
         self.defaults = defaults
@@ -267,10 +277,25 @@ class ParentCasePropertyBuilder(object):
         }
 
     def get_case_relationships_for_case_type(self, case_type):
+        """
+        Like get_case_relationships, but filters down to a single case type
+
+        :param case_type: case type to get relationships for
+        :return: set of (parent, relationship) for this case. See get_case_relationships below.
+
+        """
         return self.get_case_relationships()[case_type]
 
     @memoized
     def get_case_relationships(self):
+        """
+        Returns a `defaultdict(set)` of case_type => set of (parent_type, relationship)
+
+        where relationship is almost always "parent" (but can technically be any word-string).
+
+        This based on all case-subcase relationships appearing in all relevant forms.
+
+        """
         case_relationships_by_child_type = defaultdict(set)
 
         for form in self._get_relevant_forms():
@@ -279,6 +304,18 @@ class ParentCasePropertyBuilder(object):
         return case_relationships_by_child_type
 
     def get_parent_types(self, case_type):
+        """
+        Get a list of all possible parent types for a case type
+
+        Unlike `get_case_relationships`, it doesn't include the `relationship`.
+        That is because it is almost always "parent". Presumably, if this method is used
+        without care, it will cause bugs in the rarer case when relationship is *not* "parent".
+        # todo audit usage to see if such bugs can occur
+
+        :param case_type: case type to get the parent types of
+        :return: set of parent types (strings)
+
+        """
         parent_types = self.get_case_relationships_for_case_type(case_type)
         return set(p[0] for p in parent_types)
 
@@ -288,10 +325,38 @@ class ParentCasePropertyBuilder(object):
 
     @memoized
     def get_properties(self, case_type):
+        """
+        Get all possible properties of case_type
+
+        Has all of the same behavior as `get_properties_by_case_type` in terms of
+        its abilities and limitations.
+
+        :param case_type: case type to get properties for
+        :return: set([<property>])
+
+        """
         return self.get_properties_by_case_type()[case_type]
 
     @memoized
     def get_properties_by_case_type(self):
+        """
+        Get all possible properties for each case type
+
+        Data sources for this are (limited to):
+        - the app given
+        - all other case sharing apps if app.case_sharing
+        - the Data Dictionary case properties if toggles.DATA_DICTIONARY
+        - the `defaults` and `per_type_defaults` passed in to the class
+
+        Notably, it propagates parent/<property> on a child up to the <property> on the parent,
+        and, only if `include_parent_properties` was not passed in as False to the class,
+        also propagates <property> on the parent down to parent/<property> on the child.
+        This propagation is (conceptually) recursive, going all the way up (and down) the chain.
+        (In actuality, the implementation is iterative,
+        for ease of reasoning and pobably also efficiency.)
+
+        :return: {<case_type>: set([<property>])} for all case types found
+        """
         case_properties_by_case_type = defaultdict(set)
 
         _zip_update(case_properties_by_case_type, self._get_all_case_updates())
@@ -304,7 +369,8 @@ class ParentCasePropertyBuilder(object):
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
 
-        return _normalize_case_properties(
+        # this is where all the sweet, sweet child-parent property propagation happens
+        return _propagate_and_normalize_case_properties(
             case_properties_by_case_type,
             parent_type_map=self.get_parent_type_map(case_types=None, allow_multiple_parents=True),
             include_parent_properties=self.include_parent_properties
@@ -312,12 +378,17 @@ class ParentCasePropertyBuilder(object):
 
     def get_parent_type_map(self, case_types, allow_multiple_parents=False):
         """
-        :returns: A dict
-        ```
-        {<case_type>: {<relationship>: <parent_type>, ...}, ...}
+        :param case_types: Case types to filter on. Setting to None will include all.
+               todo: including all should be the default behavior since it isn't more work.
+        :param allow_multiple_parents: whether to include a list of parent types
+               or arbitrarily pick one. todo: default should be True,
+               since False behavior is of dubious utility and correctness.
+        :return: {<case_type>: {<relationship>: [<parent_type>], ...}, ...}
+                 if allow_multiple_parents; otherwise
+                 {<case_type>: {<relationship>: <parent_type>, ...}, ...}
+                 and if there is more than one possible parent type, it arbitrarily picks one
+                 and complains quietly with logger.error. Todo: this seems like bad behavior.
 
-        if case_types is None, then all available case types will be included
-        ```
         """
         parent_map = defaultdict(dict)
 
@@ -343,6 +414,16 @@ class ParentCasePropertyBuilder(object):
         return parent_map
 
     def get_case_property_map(self, case_types):
+        """
+        Same data as self.get_properties_by_case_type, filtered and sorted.
+
+        Include only `case_type`s mentioned in `case_types`,
+        and put properties in a sorted list.
+
+        :param case_types: case_types to filter on
+
+        :return: {case_type: [property]}, with the property list sorted alphabetically.
+        """
         case_types = sorted(case_types)
         return {
             case_type: sorted(self.get_properties(case_type))
