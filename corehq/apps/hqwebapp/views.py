@@ -21,9 +21,17 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import HttpResponseRedirect, HttpResponse, Http404, \
-    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
-    HttpResponseForbidden, HttpResponsePermanentRedirect
+from django.http import (
+    HttpResponseRedirect,
+    HttpResponse,
+    Http404,
+    HttpResponseServerError,
+    HttpResponseNotFound,
+    HttpResponseBadRequest,
+    HttpResponseForbidden,
+    HttpResponsePermanentRedirect,
+    StreamingHttpResponse,
+)
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
@@ -34,7 +42,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-from djangular.views.mixins import JSONResponseMixin
+from djangular.views.mixins import JSONResponseMixin, JSONBaseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -1299,6 +1307,20 @@ def json_iterdump(dict_, encoder=None):
                 json.dumps(value, cls=encoder)
             )
     yield '}'
+
+
+class StreamingJSONResponseMixin(JSONBaseMixin):
+
+    def json_response(self, response_data, status=200, **kwargs):
+        """
+        response_data is a dictionary that has a generator as one of
+        its values. The streamed response is created by iterating that
+        generator.
+        """
+        iterator = json_iterdump(response_data, encoder=self.json_encoder)
+        response = StreamingHttpResponse(iterator, self.json_content_type, status=status)
+        response['Cache-Control'] = 'no-cache'
+        return response
 
 
 def redirect_to_dimagi(endpoint):
