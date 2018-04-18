@@ -26,6 +26,27 @@
 
 {% block page_content %}{{ block.super }}
 {% initial_page_data 'read_only_mode' read_only_mode %}
+
+<p class="help-block">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+    For information on Conditional Alerts, see the
+    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts">Conditional Alerts</a>
+    help page.
+    {% endblocktrans %}
+</p>
+
+{% if is_system_admin %}
+<p class="help-block">
+    <i class="fa fa-info-circle"></i>
+    {% blocktrans %}
+    Since you are a Superuser, you will see additional options. See
+    <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Conditional+Alerts+-+Superuser+Options">Superuser Options</a>
+    for more information.
+    {% endblocktrans %}
+</p>
+{% endif %}
+
 {% include 'data_interfaces/partials/case_rule_criteria.html' with form=criteria_form %}
 
 <div class="row">
