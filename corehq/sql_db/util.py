@@ -9,6 +9,8 @@ from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 import six
+from memoized import memoized
+
 from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.quickcache import quickcache
@@ -157,7 +159,7 @@ def _get_all_nested_subclasses(cls):
 def get_standby_databases():
     standby_dbs = []
     for db_alias in settings.DATABASES:
-        with connections[db_alias].cursor() as cursor:
+        with db.connections[db_alias].cursor() as cursor:
             cursor.execute("SELECT pg_is_in_recovery()")
             [(is_standby, )] = cursor.fetchall()
             if is_standby:
