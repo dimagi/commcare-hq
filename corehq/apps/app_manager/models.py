@@ -1411,6 +1411,32 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 "%s is not a valid question" % question_path
             )
 
+    def get_all_case_updates(self):
+        """
+        Collate contributed case updates from all sources within the form
+
+        Subclass must have helper methods defined:
+
+        - get_case_updates
+        - get_all_contributed_subcase_properties
+        - get_save_to_case_updates
+
+        :return: collated {<case_type>: set([<property>])}
+
+        """
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
+
 
 class JRResourceProperty(StringProperty):
 
@@ -1812,20 +1838,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             USERCASE_TYPE: {
                 format_key(*item) for item in self.actions.usercase_update.update.items()}
         }
-
-    def get_all_case_updates(self):
-        updates_by_case_type = defaultdict(set)
-
-        for case_type, updates in self.get_case_updates().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_all_contributed_subcase_properties().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_save_to_case_updates().items():
-            updates_by_case_type[case_type].update(updates)
-
-        return updates_by_case_type
 
     @memoized
     def get_subcase_types(self):
@@ -3124,20 +3136,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             scheduler_updates = {}
 
         for case_type, updates in scheduler_updates.items():
-            updates_by_case_type[case_type].update(updates)
-
-        return updates_by_case_type
-
-    def get_all_case_updates(self):
-        updates_by_case_type = defaultdict(set)
-
-        for case_type, updates in self.get_case_updates().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_all_contributed_subcase_properties().items():
-            updates_by_case_type[case_type].update(updates)
-
-        for case_type, updates in self.get_save_to_case_updates().items():
             updates_by_case_type[case_type].update(updates)
 
         return updates_by_case_type
