@@ -228,16 +228,16 @@ def _propagate_and_normalize_case_properties(case_properties_by_case_type, paren
         resolved_case_types = case_relationship_manager.resolve_expansion(property_ref.case_type_ref)
         if resolved_case_types:
             if include_parent_properties:
-                normalized_case_properties.update({
+                normalized_case_properties.update(
                     _PropertyRef(expansion, property_ref.case_property)
                     for case_type in resolved_case_types
                     for expansion in case_relationship_manager.expand_case_type(case_type)
-                })
+                )
             else:
-                normalized_case_properties.update({
+                normalized_case_properties.update(
                     _PropertyRef(_CaseTypeRef(case_type, ()), property_ref.case_property)
                     for case_type in resolved_case_types
-                })
+                )
         else:
             # if #case/parent doesn't match any known case type, leave the property_ref as is
             normalized_case_properties.add(property_ref)
