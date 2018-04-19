@@ -3,14 +3,17 @@ from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
 
-from corehq.sql_db.config import partition_config
 from django.conf import settings
 from django import db
 from django.db.utils import InterfaceError as DjangoInterfaceError
 from functools import wraps
 from psycopg2._psycopg import InterfaceError as Psycopg2InterfaceError
 import six
+from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
+from corehq.util.quickcache import quickcache
+
+from .apps import STANDBY_DATABASE_ALIASES
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -150,3 +153,32 @@ def _get_all_nested_subclasses(cls):
         if subclass not in seen:
             seen.add(subclass)
             yield subclass
+
+
+STANDBY_DELAY_FRESHNESS = 30
+
+@quickcache(timeout=STANDBY_DELAY_FRESHNESS)
+def get_replication_delay_for_standby(db_alias):
+    """
+    Finds the replication delay for given database by running a SQL query on standby database.
+        See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
+
+    If the given database is not a standby database, an assertion error is raised
+    If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
+    """
+    assert db_alias in STANDBY_DATABASE_ALIASES
+    # used to indicate that the wal_receiver process on standby is not running
+    VERY_LARGE_DELAY = 100000
+    sql = """
+    SELECT
+    CASE
+        WHEN NOT EXISTS (SELECT 1 FROM pg_stat_wal_receiver) THEN {delay}
+        WHEN pg_last_xlog_receive_location() = pg_last_xlog_replay_location() THEN 0
+        ELSE EXTRACT (EPOCH FROM now() - pg_last_xact_replay_timestamp())::INTEGER
+    END
+    AS replication_lag;
+    """.format(delay=VERY_LARGE_DELAY)
+    with connections['icds-ucr-standby1'].cursor() as cursor:
+        cursor.execute(sql)
+        [(delay, )] = cursor.fetchall()
+        return delay
