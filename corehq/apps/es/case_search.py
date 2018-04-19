@@ -15,6 +15,7 @@ from __future__ import unicode_literals
 from corehq.apps.case_search.const import (
     PATH,
     RELEVANCE_SCORE,
+    VALUE_DATE,
     VALUE_NUMERIC,
     VALUE_TEXT,
 )
@@ -82,6 +83,15 @@ class CaseSearchES(CaseES):
         """
         return self._add_query(
             self._get_query(key, queries.range_query("{}.{}".format(PATH, VALUE_NUMERIC), gt, gte, lt, lte)),
+            clause,
+        )
+
+    def date_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+        """
+        Search for all cases where case property `key` fulfills the date range criteria.
+        """
+        return self._add_query(
+            self._get_query(key, queries.date_range("{}.{}".format(PATH, VALUE_DATE), gt, gte, lt, lte)),
             clause,
         )
 
