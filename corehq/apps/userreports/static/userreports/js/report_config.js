@@ -502,6 +502,10 @@ hqDefine('userreports/js/report_config', function() {
 
 
                 $("#btnSaveView").click(function () {
+                    var thisButton = $(this);
+                    self.saveButton.setState('saving');
+                    thisButton.disableButton();
+
                     var isValid = self.validate();
                     if (isValid) {
                         _ga_track_config_change('Save and View Report');
@@ -517,6 +521,10 @@ hqDefine('userreports/js/report_config', function() {
                                 // Redirect to the newly-saved report
                                 self.saveButton.setState('saved');
                                 window.location.href = data['report_url'];
+                            },
+                            error: function () {
+                                self.saveButton.setState('retry');
+                                thisButton.enableButton();
                             },
                             dataType: 'json',
                         });
