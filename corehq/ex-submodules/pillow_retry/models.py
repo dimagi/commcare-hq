@@ -84,21 +84,28 @@ class PillowError(models.Model):
     def get_or_create(cls, change, pillow):
         change.document = None
         doc_id = change.id
+        now = datetime.utcnow()
         try:
             error = cls.objects.get(doc_id=doc_id, pillow=pillow.pillow_id)
         except cls.DoesNotExist:
-            now = datetime.utcnow()
             error = PillowError(
                 doc_id=doc_id,
                 pillow=pillow.pillow_id,
                 date_created=now,
-                date_last_attempt=now,
-                date_next_attempt=now,
                 change=change.to_dict()
             )
 
-            if change.metadata:
-                error.change_metadata = change.metadata.to_json()
+        if change.metadata:
+            error.date_last_attempt = change.metadata.date_last_attempt
+            error.total_attempts = change.metadata.attempts
+            error.error_type = change.metadata.last_error_type
+            error.error_traceback = change.metadata.last_error_traceback
+            change.metadata = change.metadata.to_json()
+        else:
+            error.date_last_attempt = now,
+            error.date_next_attempt = now,
+
+        error.save()
 
         return error
 

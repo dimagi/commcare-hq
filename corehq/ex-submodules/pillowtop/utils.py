@@ -296,3 +296,7 @@ def ensure_document_exists(change):
     change.get_document()
     if change.error_raised is not None and isinstance(change.error_raised, DocumentMissingError):
         raise change.error_raised
+
+
+def path_from_object(obj):
+    return "{0}.{1}".format(obj.__class__.__module__, obj.__class__.__name__)

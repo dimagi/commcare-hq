@@ -1,12 +1,19 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import traceback
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
+
+from django.conf import settings
+
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
+
+from pillowtop.utils import path_from_object
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -25,6 +32,14 @@ class ChangeMeta(jsonobject.JsonObject):
     is_deletion = jsonobject.BooleanProperty()
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
+
+    # data for keeping track of errors
+    date_last_attempt = jsonobject.DateTimeProperty()
+    attempts = jsonobject.IntegerProperty(default=0)
+    # dict of error type to attempt count
+    attempts_by_error = jsonobject.DictProperty()
+    last_error_type = jsonobject.StringProperty()
+    last_error_traceback = jsonobject.StringProperty()
 
 
 class Change(object):
@@ -73,6 +88,20 @@ class Change(object):
                 self._document_checked = True  # set this flag to avoid multiple redundant lookups
                 self.error_raised = e
         return self.document
+
+    def record_error(self, exception, traceb, date=None):
+        self.metadata.attempts += 1
+        self.metadata.date_last_attempt = date or datetime.utcnow()
+        error_type = path_from_object(exception)
+        self.last_error_type = error_type
+        error_count = self.metadata.attempts_by_error.get(error_type, None) or 0
+        self.metadata.attempts_by_error[error_type] = error_count + 1
+        self.metadata.last_error_traceback = "{}\n\n{}".format(
+            exception.message, "".join(traceback.format_tb(traceb))
+        )
+
+    def should_retry(self):
+        return self.metadata.attempts < settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
 
     def __repr__(self):
         return 'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
