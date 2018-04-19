@@ -61,6 +61,7 @@ branches:
   - es/mobile-ucr-slugs  # Ethan April 9
   - jls/externalize-js-locations-widgets # Jenny April 19
   - jls/externalize-js-reassign-cases # Jenny April 19
+  - jls/fix-filters-for-requirejs # Jenny April 19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
