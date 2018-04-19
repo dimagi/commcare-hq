@@ -263,7 +263,7 @@ class OutboundDailyCounter(object):
     @property
     def daily_limit(self):
         if self.domain_object:
-            return self.domain_object.daily_outbound_sms_limit
+            return self.domain_object.get_daily_outbound_sms_limit()
         else:
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered

@@ -147,7 +147,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         result.update({
             'queued_sms_count': QueuedSMS.objects.filter(domain=self.domain).count(),
             'outbound_sms_sent_today': OutboundDailyCounter(self.domain_object).current_usage,
-            'daily_outbound_sms_limit': self.domain_object.daily_outbound_sms_limit,
+            'daily_outbound_sms_limit': self.domain_object.get_daily_outbound_sms_limit(),
         })
 
     def add_reminder_status_info(self, result):
