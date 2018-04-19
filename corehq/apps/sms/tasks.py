@@ -506,7 +506,7 @@ def _sync_user_phone_numbers(couch_user_id):
     with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
 
-        if couch_user.is_deleted():
+        if couch_user.is_deleted() or not couch_user.is_active:
             for phone_number in phone_entries.values():
                 phone_number.delete()
             return
