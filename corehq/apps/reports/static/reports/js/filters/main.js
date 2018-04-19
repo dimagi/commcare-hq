@@ -188,13 +188,13 @@ hqDefine("reports/js/filters/main", [
                     selected: data.selected,
                     notifications: data.notifications,
                 });
-                $el.find('#' + data.cssId).koApplyBindings(model);
+                $('#' + data.cssId).koApplyBindings(model);
                 model.init();
             }
 
             if (data.unknownAvailable || data.displayAppType) {
                 advancedFormsOptions.advancedFormsOptions(
-                    $el.find('#' + data.cssId + '-advanced-options'),
+                    $('#' + data.cssId + '-advanced-options'),
                     {
                         show: data.showAdvanced,
                         is_unknown_shown: data.isUnknownShown,
