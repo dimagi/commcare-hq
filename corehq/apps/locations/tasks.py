@@ -160,6 +160,10 @@ def import_locations_async(domain, file_ref_id):
     importer.mark_complete()
 
     if LOCATIONS_IN_UCR.enabled(domain):
+        # We must rebuild datasources once the location import is complete in
+        # case child locations were not updated, but a parent location was.
+        # For example if a state was updated, the county may reference the state
+        # and need to have its row updated
         datasources = get_datasources_for_domain(domain, "Location", include_static=True)
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
