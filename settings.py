@@ -884,7 +884,7 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 # "users":
 #     {
 #      ["pgmain", 5],
-#      [pgmainstandby", 5]
+#      ["pgmainstandby", 5]
 #     }
 # }
 LOAD_BALANCED_APPS = {}
