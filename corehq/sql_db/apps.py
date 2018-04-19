@@ -3,6 +3,7 @@ from __future__ import absolute_import
 from django.apps import AppConfig
 from django.conf import settings
 from django.db import connections
+from memoized import memoized
 
 
 class SqlDbAppConfig(AppConfig):
@@ -17,7 +18,7 @@ class SqlDbAppConfig(AppConfig):
 #   after Django starts.
 STANDBY_DATABASE_ALIASES = []
 
-
+@memoized
 def identify_standby_databases():
     for db_alias in settings.DATABASES:
         with connections[db_alias].cursor() as cursor:

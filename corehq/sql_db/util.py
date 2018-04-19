@@ -179,7 +179,7 @@ def get_replication_delay_for_standby(db_alias):
     END
     AS replication_lag;
     """.format(delay=VERY_LARGE_DELAY)
-    with db.connections['icds-ucr-standby1'].cursor() as cursor:
+    with db.connections[db_alias].cursor() as cursor:
         cursor.execute(sql)
         [(delay, )] = cursor.fetchall()
         return delay
