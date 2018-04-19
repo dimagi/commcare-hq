@@ -541,6 +541,15 @@
     "named_expressions": {},
     "named_filters": {},
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "10"
+        }
+      ]
+    },
     "disable_destructive_rebuild": true
   }
 }

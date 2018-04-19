@@ -80,6 +80,15 @@
         }
       }
     ],
-    "engine_id": "icds-ucr"
+    "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "state_id",
+          "subtype": "string_lastchars",
+          "constraint": "10"
+        }
+      ]
+    }
   }
 }

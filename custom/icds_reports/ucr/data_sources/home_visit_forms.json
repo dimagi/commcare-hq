@@ -156,6 +156,15 @@
       }
     },
     "named_filters": {},
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "timeend",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
     "engine_id": "icds-ucr",
     "sql_column_indexes": [
       {"column_ids": ["supervisor_id", "submitted_on"]}
