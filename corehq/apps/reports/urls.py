@@ -52,6 +52,7 @@ from .views import (
     restore_edit,
     form_multimedia_export,
     archive_form,
+    edit_form,
     resave_form_view,
     unarchive_form,
     project_health_user_details,
@@ -109,7 +110,7 @@ urlpatterns = [
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_.]+)/$',
+    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_\-.]+)/$',
         case_property_changes, name="case_property_changes"),
 
     # Download and view form data
@@ -119,6 +120,7 @@ urlpatterns = [
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/restore_version/$', restore_edit, name='restore_edit'),
     url(r'^form_data/download/media/$',
         form_multimedia_export, name='form_multimedia_export'),
+    url(r'^form_data/(?P<instance_id>[\w\-:]+)/correct_data/$', edit_form, name='edit_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/archive/$', archive_form, name='archive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/unarchive/$', unarchive_form, name='unarchive_form'),
     url(r'^form_data/(?P<instance_id>[\w\-:]+)/rebuild/$', resave_form_view, name='resave_form'),
