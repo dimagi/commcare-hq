@@ -512,36 +512,33 @@ CREATE VIEW child_health_monthly_view AS
         "child_list".block_id,
         "child_list".district_id,
         "child_list".state_id,
-        "awc_location".awc_site_code,
         "child_list".name AS person_name,
         "child_list".mother_name,
-        "child_list".opened_on,
-        "child_list".closed_on,
-        "child_list".closed,
         "child_list".dob,
         "child_list".sex,
-        "child_list".fully_immunized_date,
         child_health_monthly.month,
         child_health_monthly.age_in_months,
         child_health_monthly.open_in_month,
         child_health_monthly.valid_in_month,
-        child_health_monthly.wer_eligible,
-        child_health_monthly.valid_all_registered_in_month,
         child_health_monthly.nutrition_status_last_recorded,
         child_health_monthly.current_month_nutrition_status,
-        child_health_monthly.nutrition_status_weighed,
-        child_health_monthly.num_rations_distributed,
-        child_health_monthly.pse_eligible,
         child_health_monthly.pse_days_attended,
-        child_health_monthly.born_in_month,
         child_health_monthly.recorded_weight,
         child_health_monthly.recorded_height,
-        child_health_monthly.thr_eligible,
-        child_health_monthly.stunting_last_recorded,
         child_health_monthly.current_month_stunting,
-        child_health_monthly.wasting_last_recorded,
         child_health_monthly.current_month_wasting,
-        GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized
+        GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized,
+        CASE WHEN child_health_monthly.current_month_nutrition_status = 'severely_underweight' THEN 1
+            WHEN child_health_monthly.current_month_nutrition_status = 'moderately_underweight'  THEN 2
+            WHEN child_health_monthly.current_month_nutrition_status = 'normal' THEN 3
+            ELSE 4 END AS current_month_nutrition_status_sort,
+        CASE WHEN child_health_monthly.current_month_stunting = 'severe' THEN 1
+            WHEN child_health_monthly.current_month_stunting = 'moderate' THEN 2
+            WHEN child_health_monthly.current_month_stunting = 'normal' THEN 3
+            ELSE 4 END AS current_month_stunting_sort,
+        CASE WHEN child_health_monthly.current_month_wasting = 'severe' THEN 1
+            WHEN child_health_monthly.current_month_wasting = 'moderate'  THEN 2
+            WHEN child_health_monthly.current_month_wasting = 'normal' THEN 3
+            ELSE 4 END AS current_month_wasting_sort
    FROM "config_report_icds-cas_static-child_health_cases_a46c129f" "child_list"
-     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id
-     LEFT JOIN awc_location awc_location ON "child_list".awc_id = awc_location.doc_id;
+     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".doc_id = child_health_monthly.case_id
