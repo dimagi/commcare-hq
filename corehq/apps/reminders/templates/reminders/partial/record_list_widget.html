@@ -14,35 +14,3 @@
 <button type="button" id="id_add_{{ name }}" class="btn btn-success">
     <i class="icon-plus"></i> {% trans "Add Parameter" %}
 </button>
-
-<script>
-$(".record-list-widget").each(function() {
-    var $widget = $(this),
-        name = $widget.data("name"),
-        value = $widget.data("value");
-
-    var param_counter = 0;
-
-    function add_param(nm, val) {
-        $widget.append('<tr> \
-                <td><input type="text" class="form-control" name="additional_params.'+param_counter+'.name" value="'+nm+'" /></td> \
-                <td><input type="text" class="form-control" name="additional_params.'+param_counter+'.value" value="'+val+'" /></td> \
-                <td><span id="id_remove_record_'+param_counter+'" class="btn btn-danger"><i class="icon-remove"></i> {% trans "Remove" %}</span></td> \
-            </tr>');
-        $("#id_remove_record_"+param_counter).click(function(){
-            $(this).parent().parent().remove();
-        });
-        param_counter++;
-    }
-
-    $(function(){
-        _.each(value, function(pair) {
-            add_param(pair.name, pair.value);
-        });
-
-        $("#id_add_" + name).click(function() {
-            add_param("", "");
-        });
-    });
-});
-</script>
