@@ -510,11 +510,10 @@ class GenericReportView(object):
 
     @property
     def js_options(self):
-        async_url = ''
         try:
             async_url = self.get_url(domain=self.domain, render_as='async', relative=True)
         except NoReverseMatch:
-            pass
+            async_url = ''
         return {
             'async': self.asynchronous,
             'domain': self.domain,
