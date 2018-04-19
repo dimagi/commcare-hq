@@ -70,6 +70,7 @@
             "type": "multi_field"
         },
         "indices": {
+            "type": "nested",
             "dynamic": false,
             "properties": {
                 "doc_type": {
@@ -88,8 +89,7 @@
                 "relationship": {
                     "type": "string"
                 }
-            },
-            "type": "object"
+            }
         },
         "location_id": {
             "type": "string"
