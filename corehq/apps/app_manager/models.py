@@ -1437,6 +1437,15 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
 
         return updates_by_case_type
 
+    def get_case_updates_for_case_type(self, case_type):
+        """
+        Like get_case_updates filtered by a single case type
+
+        subclass must implement `get_case_updates`
+
+        """
+        return self.get_case_updates().get(case_type, [])
+
 
 class JRResourceProperty(StringProperty):
 
@@ -1820,9 +1829,6 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         return errors
-
-    def get_case_updates_for_case_type(self, case_type):
-        return self.get_case_updates().get(case_type, [])
 
     def get_case_updates(self):
         # This method is used by both get_all_case_properties and
@@ -3117,9 +3123,6 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
             ))
 
         return errors
-
-    def get_case_updates_for_case_type(self, case_type):
-        return self.get_case_updates().get(case_type, [])
 
     def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
