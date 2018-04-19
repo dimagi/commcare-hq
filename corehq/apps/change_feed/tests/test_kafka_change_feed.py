@@ -129,6 +129,6 @@ def _get_producer():
 
 
 def publish_stub_change(topic):
-    meta = ChangeMeta(document_id=uuid.uuid4().hex, data_source_type='dummy-type', data_source_name='dummy-name')
+    meta = ChangeMeta(document_id=uuid.uuid4().hex, document_type='dummy-type')
     send_to_kafka(_get_producer(), topic, meta)
     return meta

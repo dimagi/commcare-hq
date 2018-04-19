@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
-from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed import document_types
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import topics
@@ -13,14 +11,12 @@ from corehq.apps.es import UserES
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import CommCareUser
 from corehq.elastic import get_es_new
-from corehq.form_processor.change_publishers import change_meta_from_sql_form
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.user_mapping import USER_INDEX_INFO
 from corehq.pillows.user import get_user_pillow, get_unknown_users_pillow
 from corehq.util.elastic import ensure_index_deleted
-from couchforms.models import XFormInstance
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from corehq.util.test_utils import get_form_ready_to_save
 from pillowtop.es_utils import initialize_index
@@ -60,8 +56,8 @@ class UserPillowTest(UserPillowTestBase):
         user.save()
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        since = get_topic_offset(topics.COMMCARE_USER)
+        producer.send_change(topics.COMMCARE_USER, change_meta_from_doc(user.to_json()))
 
         # send to elasticsearch
         pillow = get_user_pillow()
@@ -74,8 +70,8 @@ class UserPillowTest(UserPillowTestBase):
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        since = get_topic_offset(topics.COMMCARE_USER)
+        producer.send_change(topics.COMMCARE_USER, change_meta_from_doc(user.to_json()))
 
         # send to elasticsearch
         pillow = get_user_pillow()
@@ -104,7 +100,7 @@ class UnknownUserPillowTest(UserPillowTestBase):
         # send to kafka
         topic = topics.FORM_SQL if settings.TESTS_SHOULD_USE_SQL_BACKEND else topics.FORM
         since = self._get_kafka_seq()
-        producer.send_change(topic, _form_to_change_meta(form))
+        producer.send_change(topic, change_meta_from_doc(form.to_json()))
 
         # send to elasticsearch
         pillow = get_unknown_users_pillow()
@@ -123,24 +119,4 @@ class UnknownUserPillowTest(UserPillowTestBase):
         self.assertEqual('UnknownUser', user_doc['doc_type'])
 
     def _get_kafka_seq(self):
-        return get_multi_topic_offset([topics.FORM_SQL, topics.FORM])
-
-
-def _form_to_change_meta(form):
-    if settings.TESTS_SHOULD_USE_SQL_BACKEND:
-        return change_meta_from_sql_form(form)
-    else:
-        return change_meta_from_doc(
-            document=form.to_json(),
-            data_source_type=data_sources.COUCH,
-            data_source_name=XFormInstance.get_db().dbname,
-        )
-
-
-def _user_to_change_meta(user):
-    user_doc = user.to_json()
-    return change_meta_from_doc(
-        document=user_doc,
-        data_source_type=data_sources.COUCH,
-        data_source_name=CommCareUser.get_db().dbname,
-    )
+        return get_multi_topic_offset(topics.FORM_TOPICS)

@@ -4,6 +4,8 @@ import functools
 from couchdbkit.ext.django import schema
 import datetime
 import sqlalchemy
+
+from corehq.form_processor.utils import should_use_sql_backend
 from .util import get_indicator_model, default_null_value_placeholder
 from .calculators import Calculator
 from .const import ALL_TYPES, TYPE_STRING
@@ -105,10 +107,14 @@ class IndicatorDocument(six.with_metaclass(IndicatorDocumentMeta, schema.Documen
     @property
     def kafka_topic(self):
         """if set, this will use a kafka feed instead of couch for the pillow"""
-        from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
-        from corehq.apps.change_feed.topics import get_topic
-        meta = get_doc_meta_object_from_document(self.document_class().to_json())
-        return get_topic(meta)
+        from corehq.apps.change_feed.topics import get_topic_for_doc_type
+        use_sql = {should_use_sql_backend(domain) for domain in self.domains}
+        if len(use_sql) > 1:
+            raise Exception("All domains must be on the same backend")
+        data_source_type = 'sql' if all(use_sql) else 'couch'
+        return get_topic_for_doc_type(
+            self.document_class().to_json()['doc_type'], data_source_type=data_source_type
+        )
 
     @property
     def wrapped_group_by(self):

@@ -20,13 +20,9 @@ def publish_sms_saved(sms):
 
 
 def change_meta_from_sms(sms):
-    from corehq.apps.change_feed import data_sources
     return ChangeMeta(
         document_id=sms.couch_id,
-        data_source_type=data_sources.SMS,
-        data_source_name=data_sources.SMS,
-        document_type='SMS',
-        document_subtype=None,
+        document_type=topics.SMS,
         domain=sms.domain,
         is_deletion=False,
     )

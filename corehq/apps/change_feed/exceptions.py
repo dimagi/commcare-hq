@@ -10,3 +10,7 @@ class MissingMetaInformationError(Exception):
 
 class UnavailableKafkaOffset(Exception):
     pass
+
+
+class UnknownChangeVersion(ValueError):
+    pass

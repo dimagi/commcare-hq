@@ -1,52 +1,44 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import SimpleTestCase
-from corehq.apps.change_feed.document_types import CASE, get_doc_meta_object_from_document, FORM, META, DOMAIN, \
-    change_meta_from_doc, COMMCARE_USER, WEB_USER, GROUP
+
+from corehq.apps.change_feed.data_sources import _get_document_store_from_doc_type
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
+from corehq.util.couch import get_classes_by_doc_type, get_document_class_by_doc_type
+from corehq.util.couchdb_management import couch_config
 from corehq.util.test_utils import generate_cases
+from pillowtop.dao.couch import CouchDocumentStore
 
 
 class DocumentTypeTest(SimpleTestCase):
-    pass
 
+    def test_change_from_doc_success(self):
+        change_meta = change_meta_from_doc({
+            '_id': 'id',
+            'doc_type': 'CommCareCase',
+            'domain': 'test-domain',
+            'type': 'person'
+        })
+        self.assertEqual(change_meta.document_id, 'id')
+        self.assertEqual(change_meta.document_type, 'CommCareCase')
+        self.assertEqual(change_meta.document_subtype, 'person')
+        self.assertEqual(change_meta.domain, 'test-domain')
+        self.assertEqual(change_meta.is_deletion, False)
 
-@generate_cases([
-    # primary type tests
-    ({'doc_type': 'CommCareCase'}, CASE),
-    ({'doc_type': 'XFormInstance'}, FORM),
-    ({'doc_type': 'XFormArchived'}, FORM),
-    ({'doc_type': 'XFormDeprecated'}, FORM),
-    ({'doc_type': 'XFormDuplicate'}, FORM),
-    ({'doc_type': 'XFormError'}, FORM),
-    ({'doc_type': 'Domain'}, DOMAIN),
-    ({'doc_type': 'CommCareUser'}, COMMCARE_USER),
-    ({'doc_type': 'WebUser'}, WEB_USER),
-    ({'doc_type': 'Group'}, GROUP),
-    # subtype tests
-    ({'doc_type': 'CommCareCase', 'type': 'person'}, CASE, 'person'),
-    ({'doc_type': 'XFormInstance', 'xmlns': 'my-xmlns'}, FORM, 'my-xmlns'),
-    # domain tests
-    ({'doc_type': 'CommCareCase', 'domain': 'test-domain'}, CASE, None, 'test-domain'),
-    ({'doc_type': 'XFormInstance', 'domain': 'test-domain'}, FORM, None, 'test-domain'),
-    ({'doc_type': 'Domain', 'name': 'test-domain'}, DOMAIN, None, 'test-domain'),
-    ({'doc_type': 'Domain', 'domain': 'wrong', 'name': 'right'}, DOMAIN, None, 'right'),
-    # deletion tests
-    ({'doc_type': 'CommCareCase-Deleted'}, CASE, None, None, True),
-    ({'doc_type': 'XFormInstance-Deleted'}, FORM, None, None, True),
-    ({'doc_type': 'Domain-Deleted'}, DOMAIN, None, None, True),
-    ({'doc_type': 'Domain-DUPLICATE'}, DOMAIN, None, None, True),
-    ({'doc_type': 'CommCareUser-Deleted'}, COMMCARE_USER, None, None, True),
-    ({'doc_type': 'WebUser-Deleted'}, WEB_USER, None, None, True),
-    ({'doc_type': 'Group-Deleted'}, GROUP, None, None, True),
-], DocumentTypeTest)
-def test_document_meta(self, raw_doc, expected_primary_type, expected_subtype=None,
-                       expected_domain=None, expected_deletion=False):
-    doc_meta = get_doc_meta_object_from_document(raw_doc)
-    self.assertEqual(expected_primary_type, doc_meta.primary_type)
-    self.assertEqual(expected_subtype, doc_meta.subtype)
-    self.assertEqual(expected_domain, doc_meta.domain)
-    self.assertEqual(expected_deletion, doc_meta.is_deletion)
+    def test_all_doc_types_and_database_covered(self):
+        all_doc_types = list(get_classes_by_doc_type())
+        for doc_type in sorted(all_doc_types):
+            doc_class = get_document_class_by_doc_type(doc_type)
+            if doc_class._meta.app_label in ('phone', 'nikshay'):
+                continue
+            store = _get_document_store_from_doc_type(doc_type, 'domain')
+            self.assertIsInstance(store, CouchDocumentStore)
+            expected_db = couch_config.get_db_for_doc_type(doc_type)
+            self.assertEqual(
+                store._couch_db.uri, expected_db.uri,
+                "DB mismatch for '{}': {} != {}".format(doc_type, store._couch_db.uri, expected_db.uri)
+            )
 
 
 @generate_cases([
@@ -58,19 +50,36 @@ def test_document_meta(self, raw_doc, expected_primary_type, expected_subtype=No
 ], DocumentTypeTest)
 def test_change_from_doc_failures(self, doc):
     with self.assertRaises(MissingMetaInformationError):
-        change_meta_from_doc(doc, 'dummy-data-source', 'dummy-data-source-name')
+        change_meta_from_doc(doc)
 
 
 @generate_cases([
-    ({'_id': 'id', 'doc_type': 'CommCareCase', 'domain': 'test-domain'}, 'id'),
+    # subtype tests
+    ({'doc_type': 'CommCareCase', 'type': 'person'}, 'person'),
+    ({'doc_type': 'XFormInstance', 'xmlns': 'my-xmlns'}, 'my-xmlns'),
+    # domain tests
+    ({'doc_type': 'CommCareCase', 'domain': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'XFormInstance', 'domain': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'name': 'test-domain'}, None, 'test-domain'),
+    ({'doc_type': 'Domain', 'domain': 'wrong', 'name': 'right'}, None, 'right'),
+    # deletion tests
+    ({'doc_type': 'CommCareCase-Deleted'}, None, None, True),
+    ({'doc_type': 'XFormInstance-Deleted'}, None, None, True),
+    ({'doc_type': 'Domain-Deleted'}, None, None, True),
+    ({'doc_type': 'Domain-DUPLICATE'}, None, None, True),
+    ({'doc_type': 'CommCareUser-Deleted'}, None, None, True),
+    ({'doc_type': 'WebUser-Deleted'}, None, None, True),
+    ({'doc_type': 'Group-Deleted'}, None, None, True),
+    # backend id tests
+    ({'doc_type': 'CommCareCase', 'backend_id': 'couch'}, None, None, False, 'couch'),
+    ({'doc_type': 'CommCareCase', 'backend_id': 'sql'}, None, None, False, 'sql'),
 ], DocumentTypeTest)
-def test_change_from_doc_success(self, doc, expected_id):
-    change_meta = change_meta_from_doc(doc, 'dummy-data-source', 'dummy-data-source-name')
-    doc_meta = get_doc_meta_object_from_document(doc)
-    self.assertEqual(expected_id, change_meta.document_id)
-    self.assertEqual('dummy-data-source', change_meta.data_source_type)
-    self.assertEqual('dummy-data-source-name', change_meta.data_source_name)
-    self.assertEqual(doc_meta.raw_doc_type, change_meta.document_type)
-    self.assertEqual(doc_meta.subtype, change_meta.document_subtype)
-    self.assertEqual(doc_meta.domain, change_meta.domain)
-    self.assertEqual(doc_meta.is_deletion, change_meta.is_deletion)
+def test_change_meta(self, raw_doc, expected_subtype=None,
+                     expected_domain=None, expected_deletion=False,
+                     data_source_type=None):
+    raw_doc['_id'] = 'id'
+    change_meta = change_meta_from_doc(raw_doc)
+    self.assertEqual(change_meta.document_subtype, expected_subtype)
+    self.assertEqual(change_meta.domain, expected_domain)
+    self.assertEqual(change_meta.is_deletion, expected_deletion)
+    self.assertEqual(change_meta.data_source_type, data_source_type)

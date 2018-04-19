@@ -7,7 +7,7 @@ from django.conf import settings
 from kafka import KafkaConsumer
 from kafka.common import ConsumerTimeout
 
-from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_change_meta
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
 from corehq.apps.change_feed.topics import get_multi_topic_offset, validate_offsets
 from memoized import memoized
@@ -186,14 +186,12 @@ class KafkaCheckpointEventHandler(PillowCheckpointEventHandler):
 def change_from_kafka_message(message):
     change_meta = change_meta_from_kafka_message(message.value)
     try:
-        document_store = get_document_store(
-            data_source_type=change_meta.data_source_type,
-            data_source_name=change_meta.data_source_name,
-            domain=change_meta.domain
-        )
+        document_store = get_document_store_for_change_meta(change_meta)
     except UnknownDocumentStore:
         document_store = None
-        notify_error("Unknown document store: {}".format(change_meta.data_source_type))
+        notify_error("Unknown document store: {} ({})".format(
+            change_meta.document_type, change_meta.data_source_type)
+        )
     return Change(
         id=change_meta.document_id,
         sequence_id=message.offset,

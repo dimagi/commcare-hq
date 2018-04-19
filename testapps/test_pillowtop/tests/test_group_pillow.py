@@ -2,10 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
-from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.document_types import GROUP, change_meta_from_doc
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.change_feed.topics import get_topic_offset
+from corehq.apps.change_feed.topics import get_topic_offset, GROUP
 from corehq.apps.es import GroupES
 from corehq.apps.groups.models import Group
 from corehq.apps.groups.tests.test_utils import delete_all_groups
@@ -37,11 +36,7 @@ class GroupPillowTest(TestCase):
 
         # send to kafka
         since = get_topic_offset(GROUP)
-        change_meta = change_meta_from_doc(
-            document=group.to_json(),
-            data_source_type=data_sources.COUCH,
-            data_source_name=Group.get_db().dbname,
-        )
+        change_meta = change_meta_from_doc(group.to_json())
         producer.send_change(GROUP, change_meta)
 
         # send to elasticsearch

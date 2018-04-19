@@ -2,8 +2,8 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor, iter_all_rows
-from corehq.form_processor.change_publishers import change_meta_from_sql_case
 from corehq.form_processor.utils.general import should_use_sql_backend
 from pillowtop.feed.interface import Change
 from pillowtop.reindexer.change_providers.composite import CompositeChangeProvider
@@ -52,6 +52,6 @@ def _sql_case_to_change(case):
         sequence_id=None,
         document=case.to_json(),
         deleted=False,
-        metadata=change_meta_from_sql_case(case),
+        metadata=change_meta_from_doc(case.to_json()),
         document_store=None,
     )

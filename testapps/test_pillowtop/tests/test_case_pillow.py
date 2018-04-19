@@ -8,7 +8,7 @@ from elasticsearch.exceptions import ConnectionError
 from corehq.apps.es import CaseES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import delete_es_index, ensure_index_deleted
 from corehq.util.test_utils import trap_extra_setup, create_and_save_a_case
@@ -33,7 +33,6 @@ class CasePillowTest(TestCase):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain)
         super(CasePillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_case_pillow(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 
@@ -45,7 +44,6 @@ class CasePillowTest(TestCase):
         self.assertEqual(case_id, case_doc['_id'])
         self.assertEqual(case_name, case_doc['name'])
 
-    @run_with_all_backends
     def test_case_soft_deletion(self):
         case_id, case_name = self._create_case_and_sync_to_es()
 
@@ -71,3 +69,8 @@ class CasePillowTest(TestCase):
                 create_and_save_a_case(self.domain, case_id, case_name)
         self.elasticsearch.indices.refresh(CASE_INDEX_INFO.index)
         return case_id, case_name
+
+
+@use_sql_backend
+class CasePillowTestSQL(CasePillowTest):
+    pass

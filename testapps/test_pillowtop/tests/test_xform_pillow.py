@@ -10,7 +10,7 @@ from corehq.apps.es import FormES
 from corehq.elastic import get_es_new
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
-from corehq.form_processor.tests.utils import FormProcessorTestUtils, run_with_all_backends
+from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX_INFO
 from corehq.pillows.xform import (
@@ -36,7 +36,6 @@ class XFormPillowTest(TestCase):
         ensure_index_deleted(XFORM_INDEX_INFO.index)
         super(XFormPillowTest, self).tearDown()
 
-    @run_with_all_backends
     def test_xform_pillow(self):
         form, metadata = self._create_form_and_sync_to_es()
 
@@ -49,7 +48,6 @@ class XFormPillowTest(TestCase):
         self.assertEqual(metadata.xmlns, form_doc['xmlns'])
         self.assertEqual('XFormInstance', form_doc['doc_type'])
 
-    @run_with_all_backends
     def test_form_soft_deletion(self):
         form, metadata = self._create_form_and_sync_to_es()
 
@@ -76,6 +74,11 @@ class XFormPillowTest(TestCase):
                 form_processor.save_processed_models([form])
         self.elasticsearch.indices.refresh(XFORM_INDEX_INFO.index)
         return form, metadata
+
+
+@use_sql_backend
+class XFormPillowTestSQL(XFormPillowTest):
+    pass
 
 
 class TransformXformForESTest(SimpleTestCase):

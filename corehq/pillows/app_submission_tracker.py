@@ -4,9 +4,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
-    change_meta_from_doc_meta_and_document
-from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.reports.analytics.esaccessors import get_last_forms_by_app
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
@@ -47,13 +45,11 @@ def get_form_submission_metadata_tracker_pillow(pillow_id='FormSubmissionMetadat
 
 
 class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
-    def __init__(self, pillow_processor, data_source_type, data_source_name):
+    def __init__(self, pillow_processor):
         self.pillow_processor = pillow_processor
-        self.data_source_type = data_source_type
-        self.data_source_name = data_source_name
 
     def process_doc(self, doc):
-        change = self._doc_to_change(doc, self.data_source_type, self.data_source_name)
+        change = self._doc_to_change(doc)
         try:
             self.pillow_processor.process_change(None, change)
         except Exception:
@@ -69,14 +65,8 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
         return True
 
     @staticmethod
-    def _doc_to_change(doc, data_source_type, data_source_name):
-        doc_meta = get_doc_meta_object_from_document(doc)
-        change_meta = change_meta_from_doc_meta_and_document(
-            doc_meta=doc_meta,
-            document=doc,
-            data_source_type=data_source_type,
-            data_source_name=data_source_name,
-        )
+    def _doc_to_change(doc):
+        change_meta = change_meta_from_doc(doc)
         return Change(
             id=change_meta.document_id,
             sequence_id=None,
@@ -90,14 +80,12 @@ class AppFormSubmissionReindexDocProcessor(BaseDocProcessor):
 class AppFormSubmissionReindexer(Reindexer):
     reset = False
 
-    def __init__(self, doc_provider, data_source_type, data_source_name, chunk_size=1000, reset=False):
+    def __init__(self, doc_provider, chunk_size=1000, reset=False):
         self.reset = reset
         self.doc_provider = doc_provider
         self.chunk_size = chunk_size
         self.doc_processor = AppFormSubmissionReindexDocProcessor(
             FormSubmissionMetadataTrackerProcessor(),
-            data_source_type,
-            data_source_name,
         )
 
     def reindex(self):
@@ -128,7 +116,7 @@ class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
             SubmissionErrorLog,
         ])
         return AppFormSubmissionReindexer(
-            doc_provider, COUCH, XFormInstance.get_db().dbname, **self.options
+            doc_provider, **self.options
         )
 
 
@@ -145,7 +133,7 @@ class SqlAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
             FormReindexAccessor(include_attachments=False)
         )
         return AppFormSubmissionReindexer(
-            doc_provider, FORM_SQL, 'form_processor_xforminstancesql', **self.options
+            doc_provider, **self.options
         )
 
 
@@ -176,13 +164,7 @@ class UserAppFormSubmissionDocProcessor(BaseDocProcessor):
         changes = []
         forms = get_last_forms_by_app(doc['_id'])
         for form in forms:
-            doc_meta = get_doc_meta_object_from_document(form)
-            change_meta = change_meta_from_doc_meta_and_document(
-                doc_meta=doc_meta,
-                document=form,
-                data_source_type='elasticsearch',
-                data_source_name='hqforms',
-            )
+            change_meta = change_meta_from_doc(form)
             changes.append(Change(
                 id=change_meta.document_id,
                 sequence_id=None,
