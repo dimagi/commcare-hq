@@ -117,7 +117,7 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{% trans "Reminder Status:" %}</strong>
+                        <strong>{% trans "All Messaging Events Status:" %}</strong>
                         <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
                         <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
                         <span data-bind="visible: events_pending() > 0">
@@ -125,7 +125,7 @@
                             {% trans "event(s) queued" %}
                         </span>
                         <span class="hq-help-template"
-                              data-title="{% trans 'Messaging Event Status' %}"
+                              data-title="{% trans 'All Messaging Events Status' %}"
                               data-container="body"
                               data-content="{% blocktrans %}
                               <p><strong>All Caught Up:</strong> All due events have been processed.</p>
@@ -146,11 +146,11 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{% trans "SMS Received, Sent" %}</strong>
+                        <strong>{% trans "Incoming / Outgoing SMS" %}</strong>
                         <span class="hq-help-template"
-                              data-title="{% trans 'SMS Received, Sent' %}"
+                              data-title="{% trans 'Incoming / Outgoing SMS' %}"
                               data-container="body"
-                              data-content="{% trans 'Summary of SMS activity. SMS sent represent SMS successfully handed off to an SMS gateway for delivery.' %}"
+                              data-content="{% trans 'Summary of SMS activity. Outgoing SMS represent SMS successfully handed off to an SMS gateway for delivery.' %}"
                               data-placement="left">
                         </span>
                     </h3>
