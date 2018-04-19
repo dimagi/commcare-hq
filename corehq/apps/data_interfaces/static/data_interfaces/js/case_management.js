@@ -152,43 +152,53 @@ hqDefine("data_interfaces/js/case_management", function() {
     $(function() {
         var initialPageData = hqImport("hqwebapp/js/initial_page_data"),
             interfaceSelector = '#data-interfaces-reassign-cases',
-            caseManagementModel = CaseManagement({
-                receiverUrl: initialPageData.reverse("receiver_secure_post"),
-                enddate: initialPageData.get("reassign_cases_enddate"),
-                webUserID: initialPageData.get("web_user_id"),
-                webUserName: initialPageData.get("web_username"),
-                form_name: gettext("Case Reassignment (via HQ)"),
-            });
+            caseManagementModel;
 
-        // Apply bindings whenever report content is refreshed
-        $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions) {
-            if (ajaxOptions.url.indexOf(initialPageData.get("js_options").asyncUrl) === -1) {
-                return;
+        var applyBindings = function() {
+            if ($(interfaceSelector).length) {
+                caseManagementModel = CaseManagement({
+                    receiverUrl: initialPageData.reverse("receiver_secure_post"),
+                    enddate: initialPageData.get("reassign_cases_enddate"),
+                    webUserID: initialPageData.get("web_user_id"),
+                    webUserName: initialPageData.get("web_username"),
+                    form_name: gettext("Case Reassignment (via HQ)"),
+                });
+                $(interfaceSelector).koApplyBindings(caseManagementModel);
             }
 
-            // Apply bindings to reassignment interface and select2
-            $(interfaceSelector).koApplyBindings(caseManagementModel);
+            var $select = $('#reassign_owner_select');
+            if ($select.length) {
+                $select.select2({
+                    placeholder: gettext("Search for users or groups"),
+                    ajax: {
+                        url: initialPageData.reverse("reassign_case_options"),
+                        data: function (term) {
+                            return {
+                                q: term,
+                            };
+                        },
+                        dataType: 'json',
+                        quietMillis: 250,
+                        results: function (data) {
+                            return {
+                                total: data.total,
+                                results: data.results,
+                            };
+                        },
+                        cache: true,
+                    },
+                });
+            }
+        }
 
-            $('#reassign_owner_select').select2({
-                placeholder: gettext("Search for users or groups"),
-                ajax: {
-                    url: initialPageData.reverse("reassign_case_options"),
-                    data: function (term) {
-                        return {
-                            q: term,
-                        };
-                    },
-                    dataType: 'json',
-                    quietMillis: 250,
-                    results: function (data) {
-                        return {
-                            total: data.total,
-                            results: data.results,
-                        };
-                    },
-                    cache: true,
-                },
-            });
+        // Apply bindings whenever report content is refreshed
+        applyBindings();
+        $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions) {
+            var jsOptions = initialPageData.get("js_options");
+            if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
+                return;
+            }
+            applyBindings();
         });
 
         // Event handlers for selecting & de-selecting cases
