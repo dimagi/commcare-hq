@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 from dimagi.utils.chunked import chunked
 import six
+from io import open
 
 
 class Command(BaseCommand):

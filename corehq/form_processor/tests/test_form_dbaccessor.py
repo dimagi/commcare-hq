@@ -27,6 +27,7 @@ from corehq.form_processor.utils.xform import TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import trap_extra_setup
 from six.moves import range
+from io import open
 
 DOMAIN = 'test-form-accessor'
 

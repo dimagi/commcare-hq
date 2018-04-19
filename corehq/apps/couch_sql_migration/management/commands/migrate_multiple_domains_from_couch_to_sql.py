@@ -21,6 +21,7 @@ from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, SimpleTableWriter, TableRowFormatter
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
+from io import open
 
 
 class Command(BaseCommand):

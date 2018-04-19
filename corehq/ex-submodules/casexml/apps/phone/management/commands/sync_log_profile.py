@@ -7,6 +7,7 @@ from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from casexml.apps.phone.models import SyncLog
 from dimagi.utils.couch.database import iter_docs
+from io import open
 
 
 class Command(BaseCommand):

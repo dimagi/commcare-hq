@@ -11,6 +11,7 @@ from corehq.util.log import with_progress_bar
 
 from custom.enikshay.case_utils import get_person_case
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from io import open
 
 
 MIGRATION_CASE_PROPERTIES = [

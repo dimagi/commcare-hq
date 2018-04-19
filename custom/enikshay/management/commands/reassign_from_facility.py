@@ -15,6 +15,7 @@ from custom.enikshay.case_utils import (
     iter_all_active_person_episode_cases,
 )
 from dimagi.utils.chunked import chunked
+from io import open
 
 MJK = 'df661f7aaf384e9c98d88beeedb83050'
 ALERT_INDIA = 'af50474dd6b747b29a2934b7b0359bdf'

@@ -6,6 +6,7 @@ import logging
 from corehq.apps.es import CaseSearchES
 from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
+from io import open
 
 logger = logging.getLogger('enikshay_2b_reason_for_test_fix')
 

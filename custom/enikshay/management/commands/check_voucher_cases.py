@@ -9,6 +9,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import get_person_case_from_voucher, CASE_TYPE_VOUCHER
 from custom.enikshay.const import PERSON_FIRST_NAME, PERSON_LAST_NAME
+from io import open
 
 
 class Command(BaseCommand):

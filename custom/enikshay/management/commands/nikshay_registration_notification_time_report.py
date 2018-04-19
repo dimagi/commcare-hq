@@ -14,6 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from casexml.apps.case.util import get_latest_property_change_to_value
 from corehq.util.timezones.utils import get_timezone_for_domain
+from io import open
 
 
 REGISTRATION_REPEATER_ID = "803b375da8d6f261777d339d12f89cdb"

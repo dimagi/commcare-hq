@@ -41,6 +41,7 @@ from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
+from io import open
 
 TEMP_FILE_PREFIX = 'cchq_export_dump_'
 

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import csv342 as csv
 
 from django.core.management import BaseCommand
+from io import open
 
 
 class BaseCleanupCommand(BaseCommand):

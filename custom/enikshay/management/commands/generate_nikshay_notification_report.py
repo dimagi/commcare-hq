@@ -20,6 +20,7 @@ from custom.enikshay.const import DSTB_EPISODE_TYPE
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.integrations.utils import is_valid_person_submission
 from six.moves import range
+from io import open
 
 DOMAIN = "enikshay"
 

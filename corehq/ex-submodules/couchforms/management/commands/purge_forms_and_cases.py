@@ -12,6 +12,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAcce
 from corehq.apps.app_manager.dbaccessors import get_app
 from dimagi.utils.django.management import are_you_sure
 from datetime import datetime
+from io import open
 
 
 XFORM_HEADER = ['Version', 'Form Id', 'Domain']

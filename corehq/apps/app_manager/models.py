@@ -158,6 +158,7 @@ import six
 from six.moves import filter
 from six.moves import range
 from six.moves import map
+from io import open
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen

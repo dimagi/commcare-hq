@@ -8,6 +8,7 @@ import requests
 from zeep import Client, Transport
 from zeep.cache import InMemoryCache
 import six
+from io import open
 
 
 def tmpfile(*args, **kwargs):

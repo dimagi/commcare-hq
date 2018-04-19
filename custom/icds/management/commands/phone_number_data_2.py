@@ -7,6 +7,7 @@ import csv342 as csv
 from django.core.management import BaseCommand
 
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from io import open
 
 
 class Command(BaseCommand):

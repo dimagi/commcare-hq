@@ -10,6 +10,7 @@ from django.http import StreamingHttpResponse
 from django.views.generic import View
 from django_transfer import TransferHttpResponse
 from corehq.util.view_utils import set_file_download
+from io import open
 
 CHUNK_SIZE = 8192
 

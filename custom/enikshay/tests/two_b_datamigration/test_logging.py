@@ -20,6 +20,7 @@ from custom.enikshay.two_b_datamigration.management.commands.import_drtb_cases i
 from custom.enikshay.two_b_datamigration.management.commands.drtb_import_history import (
     Command as DRTBImportHistoryCommand
 )
+from io import open
 
 IMPORT_ROWS = [
     # A minimal valid row

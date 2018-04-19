@@ -11,6 +11,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 class Command(BaseCommand):

@@ -126,6 +126,7 @@ from memoized import memoized
 import six
 from six.moves import filter
 from six.moves import range
+from io import open
 
 logger = logging.getLogger('two_b_datamigration')
 

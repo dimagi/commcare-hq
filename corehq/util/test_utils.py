@@ -18,6 +18,7 @@ from django.conf import settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
+from io import open
 
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])

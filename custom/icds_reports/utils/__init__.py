@@ -33,6 +33,7 @@ from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from io import open
 
 OPERATORS = {
     "==": operator.eq,

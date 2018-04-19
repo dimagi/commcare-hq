@@ -25,6 +25,7 @@ from dimagi.utils.web import get_url_base
 
 from soil.util import expose_blob_download
 from casexml.apps.case.util import get_all_changes_to_case_property
+from io import open
 
 DOMAIN = "enikshay"
 LIMITED_TEST_DUMP_SIZE = 500

@@ -27,6 +27,7 @@ from dimagi.utils.web import json_response
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 import six
+from io import open
 
 
 BAD_BUILD_MESSAGE = _("Sorry: this build is invalid. Try deleting it and rebuilding. "

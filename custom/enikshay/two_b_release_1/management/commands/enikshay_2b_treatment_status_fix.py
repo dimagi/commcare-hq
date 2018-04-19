@@ -8,6 +8,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.mock import CaseStructure, CaseFactory
 
 from custom.enikshay.exceptions import NikshayLocationNotFound
+from io import open
 
 logger = logging.getLogger('enikshay_2b_reason_for_test_fix')
 

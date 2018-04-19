@@ -188,6 +188,7 @@ from corehq.apps.hqwebapp.decorators import (
 import six
 from six.moves import range
 from no_exceptions.exceptions import Http403
+from io import open
 
 
 # Number of columns in case property history popup

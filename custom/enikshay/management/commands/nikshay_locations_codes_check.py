@@ -7,6 +7,7 @@ from datetime import datetime
 
 from django.core.management.base import BaseCommand
 from corehq.apps.locations.models import SQLLocation
+from io import open
 
 domain = "enikshay"
 

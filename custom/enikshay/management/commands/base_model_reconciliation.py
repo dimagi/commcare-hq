@@ -11,6 +11,7 @@ from django.conf import settings
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import CASE_TYPE_OCCURRENCE
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from io import open
 
 DOMAIN = "enikshay"
 

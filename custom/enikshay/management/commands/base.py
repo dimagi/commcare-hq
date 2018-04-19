@@ -9,6 +9,7 @@ from corehq.apps.hqcase.utils import bulk_update_cases
 from corehq.util.log import with_progress_bar
 
 from custom.enikshay.case_utils import get_all_episode_ids, iter_all_active_person_episode_cases
+from io import open
 
 
 class ENikshayBatchCaseUpdaterCommand(BaseCommand):

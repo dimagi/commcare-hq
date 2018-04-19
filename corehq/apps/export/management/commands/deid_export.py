@@ -9,6 +9,7 @@ import tempfile
 import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
+from io import open
 
 
 class Command(BaseCommand):

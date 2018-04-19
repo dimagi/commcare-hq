@@ -8,6 +8,7 @@ from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from dimagi.utils.couch.database import iter_docs
+from io import open
 
 logger = logging.getLogger('case_cleanup')
 logger.setLevel('DEBUG')
