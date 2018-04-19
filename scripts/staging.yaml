@@ -62,6 +62,7 @@ branches:
   - jls/externalize-js-locations-widgets # Jenny April 19
   - jls/externalize-js-reassign-cases # Jenny April 19
   - jls/fix-filters-for-requirejs # Jenny April 19
+  - emord-patch-1 # J$ April 19 (upgrading celery)
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
