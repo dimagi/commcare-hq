@@ -3,15 +3,6 @@
 {% load i18n %}
 
 
-{% block stylesheets %}{{ block.super }}
-<style>
-    .messaging-dashboard-indicator{
-        font-size: 20px;
-    };
-</style>
-{% endblock %}
-
-
 {% block js %}{{ block.super }}
     <script src="{% static 'scheduling/js/dashboard.js' %}"></script>
 {% endblock %}
@@ -50,8 +41,8 @@
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-xs-1 text-center">
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"></span>
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"></span>
+                           <span class="text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"><i class="fa fa-check"></i></span>
+                           <span class="text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
                             <span>{% trans "Daily Usage" %}</span>
@@ -84,8 +75,8 @@
                     </div>
                     <div class="row">
                         <div class="col-xs-1 text-center">
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"></span>
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"></span>
+                           <span class="text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"><i class="fa fa-check"></i></span>
+                           <span class="text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
                             <span>{% trans "Restricted Times" %}</span>
