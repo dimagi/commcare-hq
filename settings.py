@@ -2358,6 +2358,7 @@ if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
         'changeme',  # default value in localsettings.example.py
         'staging',
         'softlayer',
+        'production',
     ]
 else:
     IS_LOCATION_CTE_ONLY = False
