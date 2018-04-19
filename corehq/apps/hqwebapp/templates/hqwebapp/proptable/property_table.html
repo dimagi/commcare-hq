@@ -1,7 +1,6 @@
 <div class="property-table-row">
     {% for table in tables %}
     <div class="property-table-container">
-    
         {% if table.name %}
         <div class="table-tab">
             {{ table.name }}
@@ -17,7 +16,7 @@
                     <th title="{{ cell.expr }}">
                         {% if cell.has_history %}
                             <a href="#" data-property-name="{{ cell.expr }}" class="case-property-name">
-                                {{ cell.name }}
+                                <i class="fa fa-history hidden"></i> {{ cell.name }}
                             </a>
                         {% else %}
                             {{ cell.name }}

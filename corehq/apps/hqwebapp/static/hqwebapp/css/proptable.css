@@ -82,3 +82,7 @@
 .case-property-table a {
     display: block;
 }
+
+.case-property-name:hover i{
+    display: inline-block !important;
+}
