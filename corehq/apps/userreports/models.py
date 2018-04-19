@@ -643,18 +643,10 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_domain(cls, domain):
-        """
-        Returns a list of DataSourceConfiguration objects,
-        NOT a list of StaticDataSourceConfiguration objects.
-        """
         return [ds for ds in cls.all() if ds.domain == domain]
 
     @classmethod
     def by_id(cls, config_id):
-        """
-        Returns a DataSourceConfiguration object,
-        NOT a StaticDataSourceConfiguration object.
-        """
         mapping = cls.by_id_mapping()
         if config_id not in mapping:
             mapping = cls.by_id_mapping(rebuild=True)
