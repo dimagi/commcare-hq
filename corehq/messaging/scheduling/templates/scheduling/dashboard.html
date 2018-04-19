@@ -3,15 +3,6 @@
 {% load i18n %}
 
 
-{% block stylesheets %}{{ block.super }}
-<style>
-    .messaging-dashboard-indicator{
-        font-size: 20px;
-    };
-</style>
-{% endblock %}
-
-
 {% block js %}{{ block.super }}
     <script src="{% static 'scheduling/js/dashboard.js' %}"></script>
 {% endblock %}
@@ -19,6 +10,13 @@
 
 {% block page_content %}
     {% registerurl 'messaging_dashboard' domain %}
+    <p class="help-block">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Messaging+Dashboard">Click here</a>
+        for more information about this dashboard.
+        {% endblocktrans %}
+    </p>
     <div id="messaging_dashboard" class="container-fluid">
         <div data-bind="visible: !bindingApplied()">
             <img src="/static/hqwebapp/images/ajax-loader.gif" />
@@ -37,21 +35,23 @@
                             (<span data-bind="text: queued_sms_count"></span>
                             {% trans "SMS queued" %})
                         </span>
-                        <span data-bind="visible: !is_sms_currently_allowed()">
-                            <span class="hq-help-template"
-                                  data-title="{% trans 'SMS Paused' %}"
-                                  data-container="body"
-                                  data-content="{% trans 'Messages will remain queued until the following conditions are cleared.' %}"
-                                  data-placement="left">
-                            </span>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'SMS Status' %}"
+                              data-container="body"
+                              data-content="{% blocktrans %}
+                              <p><strong>All Caught Up:</strong> All queued messages have been processed.</p>
+                              <p><strong>Working:</strong> There are queued messages which are currently being processed.</p>
+                              <p><strong>Paused:</strong> No messages are currently being processed. Any messages created will remain queued until SMS processing resumes.</p>
+                              {% endblocktrans %}"
+                              data-placement="left">
                         </span>
                     </h3>
                 </div>
                 <div class="panel-body">
                     <div class="row">
                         <div class="col-xs-1 text-center">
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"></span>
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"></span>
+                           <span class="text-success" aria-hidden="true" data-bind="visible: is_daily_usage_ok"><i class="fa fa-check"></i></span>
+                           <span class="text-danger" aria-hidden="true" data-bind="visible: !is_daily_usage_ok()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
                             <span>{% trans "Daily Usage" %}</span>
@@ -77,15 +77,15 @@
                             <span class="hq-help-template"
                                   data-title="{% trans 'Daily Usage' %}"
                                   data-container="body"
-                                  data-content="{% trans 'The number of SMS sent today out of the total daily limit for your project.' %}"
+                                  data-content="{% trans 'The number of SMS sent today out of the total daily limit for your project. If you require a higher limit, contact support.' %}"
                                   data-placement="left">
                             </span>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-xs-1 text-center">
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-ok text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"></span>
-                           <span class="messaging-dashboard-indicator glyphicon glyphicon-remove text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"></span>
+                           <span class="text-success" aria-hidden="true" data-bind="visible: within_allowed_sms_times"><i class="fa fa-check"></i></span>
+                           <span class="text-danger" aria-hidden="true" data-bind="visible: !within_allowed_sms_times()"><i class="fa fa-times"></i></span>
                         </div>
                         <div class="col-xs-3 col-lg-2">
                             <span>{% trans "Restricted Times" %}</span>
@@ -117,12 +117,21 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{% trans "Reminder Status:" %}</strong>
+                        <strong>{% trans "All Messaging Events Status:" %}</strong>
                         <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
                         <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
                             {% trans "event(s) queued" %}
+                        </span>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'All Messaging Events Status' %}"
+                              data-container="body"
+                              data-content="{% blocktrans %}
+                              <p><strong>All Caught Up:</strong> All due events have been processed.</p>
+                              <p><strong>Working:</strong> There are events which are due that are currently being processed.</p>
+                              {% endblocktrans %}"
+                              data-placement="left">
                         </span>
                     </h3>
                 </div>
@@ -137,11 +146,11 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{% trans "SMS Received, Sent" %}</strong>
+                        <strong>{% trans "Incoming / Outgoing SMS" %}</strong>
                         <span class="hq-help-template"
-                              data-title="{% trans 'SMS Received, Sent' %}"
+                              data-title="{% trans 'Incoming / Outgoing SMS' %}"
                               data-container="body"
-                              data-content="{% trans 'Summary of SMS activity. SMS sent represent SMS successfully handed off to an SMS gateway for delivery.' %}"
+                              data-content="{% trans 'Summary of SMS activity. Outgoing SMS represent SMS successfully handed off to an SMS gateway for delivery.' %}"
                               data-placement="left">
                         </span>
                     </h3>
@@ -160,9 +169,9 @@
             <div class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        <strong>{% trans "Messaging Events" %}</strong>
+                        <strong>{% trans "Messaging Events (Success / Error)" %}</strong>
                         <span class="hq-help-template"
-                              data-title="{% trans 'Messaging Events' %}"
+                              data-title="{% trans 'Messaging Events (Success / Error)' %}"
                               data-container="body"
                               data-content="{% trans 'Shows the counts of messaging events that completed successfully as well as those that had errors.' %}"
                               data-placement="left">

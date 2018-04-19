@@ -191,8 +191,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
             })
 
         result['sms_count_data'] = [
-            {'key': _("Received"), 'values': inbound_values},
-            {'key': _("Sent"), 'values': outbound_values},
+            {'key': _("Incoming"), 'values': inbound_values},
+            {'key': _("Outgoing"), 'values': outbound_values},
         ]
 
     def add_event_count_info(self, result, days):
