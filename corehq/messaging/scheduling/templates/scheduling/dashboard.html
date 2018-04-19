@@ -35,13 +35,15 @@
                             (<span data-bind="text: queued_sms_count"></span>
                             {% trans "SMS queued" %})
                         </span>
-                        <span data-bind="visible: !is_sms_currently_allowed()">
-                            <span class="hq-help-template"
-                                  data-title="{% trans 'SMS Paused' %}"
-                                  data-container="body"
-                                  data-content="{% trans 'Messages will remain queued until the following conditions are cleared.' %}"
-                                  data-placement="left">
-                            </span>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'SMS Status' %}"
+                              data-container="body"
+                              data-content="{% blocktrans %}
+                              <p><strong>All Caught Up:</strong> All queued messages have been processed.</p>
+                              <p><strong>Working:</strong> There are queued messages which are currently being processed.</p>
+                              <p><strong>Paused:</strong> No messages are currently being processed. Any messages created will remain queued until SMS processing resumes.</p>
+                              {% endblocktrans %}"
+                              data-placement="left">
                         </span>
                     </h3>
                 </div>
@@ -121,6 +123,15 @@
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
                             {% trans "event(s) queued" %}
+                        </span>
+                        <span class="hq-help-template"
+                              data-title="{% trans 'Messaging Event Status' %}"
+                              data-container="body"
+                              data-content="{% blocktrans %}
+                              <p><strong>All Caught Up:</strong> All due events have been processed.</p>
+                              <p><strong>Working:</strong> There are events which are due that are currently being processed.</p>
+                              {% endblocktrans %}"
+                              data-placement="left">
                         </span>
                     </h3>
                 </div>
