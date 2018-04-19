@@ -44,7 +44,7 @@ hqDefine("locations/js/widgets_main", function() {
                     $(element).trigger('select-ready');
                 },
                 formatResult: function(e) { return e.name; },
-                formatSelection: function(e) { return e.name; }
+                formatSelection: function(e) { return e.name; },
             });
         });
 
