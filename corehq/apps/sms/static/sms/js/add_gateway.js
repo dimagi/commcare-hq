@@ -2,7 +2,7 @@ hqDefine('sms/js/add_gateway', function() {
     var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
         AddGatewayFormHandler = hqImport('sms/js/add_gateway_form_handler').AddGatewayFormHandler;
 
-    function add_param($widget, count, nm, val) {
+    function addParam($widget, count, nm, val) {
         $widget.append('<tr> \
                 <td><input type="text" class="form-control" name="additional_params.'+count+'.name" value="'+nm+'" /></td> \
                 <td><input type="text" class="form-control" name="additional_params.'+count+'.value" value="'+val+'" /></td> \
@@ -32,11 +32,11 @@ hqDefine('sms/js/add_gateway', function() {
                 value = $widget.data("value");
 
             _.each(value, function(pair) {
-                count = add_param($widget, count, pair.name, pair.value);
+                count = addParam($widget, count, pair.name, pair.value);
             });
 
             $("#id_add_" + name).click(function() {
-                count = add_param($widget, count, "", "");
+                count = addParam($widget, count, "", "");
             });
         });
     });
