@@ -198,10 +198,10 @@ def _propagate_and_normalize_case_properties(case_properties_by_case_type, paren
       - _CaseTypeRef ('parent' [or parent/parent, etc.] relative to <case_type>)
       - case property (the string)
     Finally, this set is copied over to a new set, but with each case_type_ref of each
-    case_property_ref replaced with its most cononical form
+    case_property_ref replaced with its most canonical form
     (or forms in the rare case that a case_type_ref resolves to more than one case_type,
     i.e. a child case has more than one case type that can be its parent).
-    Additionally, if include_parent_properties is True, each cononical form is then splatted
+    Additionally, if include_parent_properties is True, each canonical form is then splatted
     out into all of the other forms it can take: (child, 'parent/parent', property) becomes
     (parent, 'parent', property) and (grandparent, '', property) as well. (Note I'm using
     conceptual notation here, whereas in the code each of these is a `_CasePropertyRef`.)
@@ -302,7 +302,7 @@ class ParentCasePropertyBuilder(object):
         Like get_case_relationships, but filters down to a single case type
 
         :param case_type: case type to get relationships for
-        :return: set of (parent, relationship) for this case. See get_case_relationships below.
+        :return: set of (parent_type, relationship) for this case. See get_case_relationships below.
 
         """
         return self.get_case_relationships()[case_type]
