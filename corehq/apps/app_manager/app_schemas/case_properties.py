@@ -292,8 +292,10 @@ class ParentCasePropertyBuilder(object):
             case_type: {prop.name for prop in props} for case_type, props in groupby(
                 CaseProperty.objects
                 .filter(case_type__domain=self.app.domain, deprecated=False)
+                .select_related("case_type")
                 .order_by('case_type__name'),
                 key=attrgetter('case_type.name')
+
             )
         }
 
