@@ -12,6 +12,7 @@ from corehq.apps.case_search.models import case_search_enabled_domains, \
     case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.case_search.const import VALUE_NUMERIC, VALUE_TEXT
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -60,9 +61,9 @@ def _get_case_properties(doc_dict):
 
     dynamic_mapping = []
     for key, value in six.iteritems(dynamic_case_properties):
-        mapping = {'key': key, 'value': value}
+        mapping = {'key': key, VALUE_TEXT: value}
         try:
-            mapping['value_numeric'] = float(value)  # cast as a Java double in Elasticsearch
+            mapping[VALUE_NUMERIC] = float(value)  # cast as a Java double in Elasticsearch
         except ValueError:
             pass
         dynamic_mapping.append(mapping)

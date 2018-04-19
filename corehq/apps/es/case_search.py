@@ -10,16 +10,19 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
-from corehq.apps.es.aggregations import TermsAggregation, BucketResult
+
+from corehq.apps.case_search.const import (
+    PATH,
+    RELEVANCE_SCORE,
+    VALUE_NUMERIC,
+    VALUE_TEXT,
+)
+from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
-
-PATH = "case_properties"
-RELEVANCE_SCORE = "commcare_search_score"
 
 
 class CaseSearchES(CaseES):
@@ -68,14 +71,17 @@ class CaseSearchES(CaseES):
         """
         Search for all cases where case property `key` matches the regular expression in `regex`
         """
-        return self._add_query(self._get_query(key, queries.regexp('{}.value'.format(PATH), regex)), clause)
+        return self._add_query(
+            self._get_query(key, queries.regexp("{}.{}".format(PATH, VALUE_TEXT), regex)),
+            clause,
+        )
 
     def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None):
         """
         Search for all cases where case property `key` fulfills the range criteria.
         """
         return self._add_query(
-            self._get_query(key, filters.range_filter('{}.value_numeric'.format(PATH), gt, gte, lt, lte)),
+            self._get_query(key, queries.range_query("{}.{}".format(PATH, VALUE_NUMERIC), gt, gte, lt, lte)),
             queries.MUST,
         )
 
@@ -97,7 +103,7 @@ class CaseSearchES(CaseES):
 
     def _get_text_query(self, key, value, fuzziness):
         # Filter by case_properties.key and do a text search in case_properties.value
-        return self._get_query(key, queries.match(value, '{}.value'.format(PATH), fuzziness=fuzziness))
+        return self._get_query(key, queries.match(value, '{}.{}'.format(PATH, VALUE_TEXT), fuzziness=fuzziness))
 
     def _get_query(self, key, query):
         return queries.nested(
