@@ -1,4 +1,12 @@
-hqDefine('reports/js/filters/drilldown_options', function() {
+hqDefine('reports/js/filters/drilldown_options', [
+    'jquery',
+    'knockout',
+    'underscore',
+], function(
+    $,
+    ko,
+    _
+) {
     var drilldownOptionFilterControl = function (options) {
         var self = {};
 
