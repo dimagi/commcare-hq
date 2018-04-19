@@ -1,4 +1,4 @@
-hqDefine('reports/js/report_filter/drilldown_options', function() {
+hqDefine('reports/js/filters/drilldown_options', function() {
     var drilldownOptionFilterControl = function (options) {
         var self = {};
 

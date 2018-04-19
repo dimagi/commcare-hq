@@ -7,10 +7,10 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
-    'locations/js/location_drilldown',
-    'reports/js/report_filter/advanced_forms_options',
-    'reports/js/report_filter/drilldown_options',
-    'reports/js/choice_list_utils',
+    'locations/js/location_drilldown',  // TODO
+    'reports/js/filters/advanced_forms_options',    // TODO
+    'reports/js/filters/drilldown_options', // TODO
+    'reports/js/choice_list_utils', // TODO
     'select2-3.5.2-legacy/select2',
 ], function(
     $,

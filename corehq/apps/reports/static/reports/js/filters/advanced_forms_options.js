@@ -1,4 +1,4 @@
-hqDefine('reports/js/report_filter/advanced_forms_options', function() {
+hqDefine('reports/js/filters/advanced_forms_options', function() {
     var deletedFormsControl = function (options) {
         var self = {};
         self.show = ko.observable();

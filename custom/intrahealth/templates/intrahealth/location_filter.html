@@ -15,7 +15,7 @@
     var REQUIRED = {{ required }}
 
     $.when(
-        $.getScript("{% static 'locations/js/location_drilldown.async.js' %}"),
+        $.getScript("{% static 'locations/js/location_drilldown.js' %}"),
         $.getScript("{% static 'intrahealth/js/intrahealth_loc_drilldown.async.js' %}")
     ).done(function () {
         var locs = {{ locations|safe }};
