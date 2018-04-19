@@ -12,6 +12,7 @@ are available, and put 'em here if you end up using any of 'em.
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from .filters import range_filter
 import re
 
 MUST = "must"
@@ -152,3 +153,5 @@ def regexp(field, regex):
             }
         }
     }
+
+range_query = range_filter
