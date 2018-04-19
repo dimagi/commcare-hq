@@ -528,7 +528,7 @@
         "location_type": "state",
         "location_propery": "_id",
         "type": "ancestor_location"
-      },
+      }
     },
     "referenced_doc_type": "Location",
     "table_id": "static-awc_location",
