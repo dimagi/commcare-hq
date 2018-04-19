@@ -393,17 +393,17 @@ class ParentCasePropertyBuilder(object):
         # this is where all the sweet, sweet child-parent property propagation happens
         return _propagate_and_normalize_case_properties(
             case_properties_by_case_type,
-            parent_type_map=self.get_parent_type_map(case_types=None, allow_multiple_parents=True),
+            parent_type_map=self.get_parent_type_map(case_types=None),
             include_parent_properties=self.include_parent_properties
         )
 
-    def get_parent_type_map(self, case_types, allow_multiple_parents=False):
+    def get_parent_type_map(self, case_types, if_multiple_parents_arbitrarily_pick_one=False):
         """
         :param case_types: Case types to filter on. Setting to None will include all.
                todo: including all should be the default behavior since it isn't more work.
-        :param allow_multiple_parents: whether to include a list of parent types
-               or arbitrarily pick one. todo: default should be True,
-               since False behavior is of dubious utility and correctness.
+        :param if_multiple_parents_arbitrarily_pick_one: whether to include a list of parent types
+               or arbitrarily pick one. todo: remove this argument
+               since True behavior is of dubious utility and correctness.
         :return: {<case_type>: {<relationship>: [<parent_type>], ...}, ...}
                  if allow_multiple_parents; otherwise
                  {<case_type>: {<relationship>: <parent_type>, ...}, ...}
@@ -419,15 +419,15 @@ class ParentCasePropertyBuilder(object):
                 rel_map[relationship].append(parent_type)
 
             for relationship, types in rel_map.items():
-                if allow_multiple_parents:
-                    parent_map[case_type][relationship] = types
-                else:
+                if if_multiple_parents_arbitrarily_pick_one:
                     if len(types) > 1:
                         logger.error(
                             "Case Type '%s' in app '%s' has multiple parents for relationship '%s': %s",
                             case_type, self.app.id, relationship, types
                         )
                     parent_map[case_type][relationship] = types[0]
+                else:
+                    parent_map[case_type][relationship] = types
 
         if case_types is not None:
             return {case_type: rel_map for case_type, rel_map in parent_map.items()
@@ -452,9 +452,11 @@ class ParentCasePropertyBuilder(object):
         }
 
 
-def get_parent_type_map(app):
+def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
     builder = ParentCasePropertyBuilder(app)
-    return builder.get_parent_type_map(app.get_case_types())
+    return builder.get_parent_type_map(
+        app.get_case_types(),
+        if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
 
 
 def get_case_properties(app, case_types, defaults=(), include_parent_properties=True):

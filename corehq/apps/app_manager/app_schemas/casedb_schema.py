@@ -19,7 +19,7 @@ def get_casedb_schema(form):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, ['case_name'], per_type_defaults,
                                         include_parent_properties=False)
-    related = builder.get_parent_type_map(case_types, allow_multiple_parents=True)
+    related = builder.get_parent_type_map(case_types)
     map = builder.get_case_property_map(case_types)
     descriptions_dict = get_case_property_description_dict(app.domain)
 

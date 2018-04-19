@@ -6205,7 +6205,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        case_relationships = get_parent_type_map(self)
+        # todo: fix this to expect a list of parent types
+        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
+        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
