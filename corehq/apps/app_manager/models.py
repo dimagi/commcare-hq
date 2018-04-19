@@ -1283,7 +1283,7 @@ class FormBase(DocumentSchema):
         updates_by_case_type = defaultdict(set)
         for save_to_case_update in self.case_references_data.get_save_references():
             case_type = save_to_case_update.case_type
-            updates_by_case_type[case_type] |= set(save_to_case_update.properties)
+            updates_by_case_type[case_type].update(save_to_case_update.properties)
         return updates_by_case_type
 
 
