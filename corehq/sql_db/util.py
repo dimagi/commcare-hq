@@ -163,7 +163,7 @@ def get_standby_databases():
             cursor.execute("SELECT pg_is_in_recovery()")
             [(is_standby, )] = cursor.fetchall()
             if is_standby:
-               standby_dbs.append(db_alias)
+                standby_dbs.append(db_alias)
     return standby_dbs
 
 
