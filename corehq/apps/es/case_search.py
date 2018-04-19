@@ -12,8 +12,12 @@ from corehq.apps.es import case_search as case_search_es
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from six import string_types
+
 from corehq.apps.case_search.const import (
-    PATH,
+    INDICES_PATH,
+    REFERENCED_ID,
+    CASE_PROPERTIES_PATH,
     RELEVANCE_SCORE,
     VALUE_DATE,
     VALUE_NUMERIC,
@@ -73,7 +77,7 @@ class CaseSearchES(CaseES):
         Search for all cases where case property `key` matches the regular expression in `regex`
         """
         return self._add_query(
-            self._get_query(key, queries.regexp("{}.{}".format(PATH, VALUE_TEXT), regex)),
+            self._get_query(key, queries.regexp("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)),
             clause,
         )
 
@@ -82,7 +86,10 @@ class CaseSearchES(CaseES):
         Search for all cases where case property `key` fulfills the range criteria.
         """
         return self._add_query(
-            self._get_query(key, queries.range_query("{}.{}".format(PATH, VALUE_NUMERIC), gt, gte, lt, lte)),
+            self._get_query(
+                key,
+                queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), gt, gte, lt, lte)
+            ),
             clause,
         )
 
@@ -91,7 +98,10 @@ class CaseSearchES(CaseES):
         Search for all cases where case property `key` fulfills the date range criteria.
         """
         return self._add_query(
-            self._get_query(key, queries.date_range("{}.{}".format(PATH, VALUE_DATE), gt, gte, lt, lte)),
+            self._get_query(
+                key,
+                queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), gt, gte, lt, lte)
+            ),
             clause,
         )
 
@@ -113,24 +123,41 @@ class CaseSearchES(CaseES):
 
     def _get_text_query(self, key, value, fuzziness):
         # Filter by case_properties.key and do a text search in case_properties.value
-        return self._get_query(key, queries.match(value, '{}.{}'.format(PATH, VALUE_TEXT), fuzziness=fuzziness))
+        return self._get_query(
+            key,
+            queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
+        )
 
     def _get_query(self, key, query):
         return queries.nested(
-            PATH,
+            CASE_PROPERTIES_PATH,
             queries.filtered(
                 query,
-                filters.term('{}.key'.format(PATH), key),
+                filters.term('{}.key'.format(CASE_PROPERTIES_PATH), key),
             )
+        )
+
+    def get_child_cases(self, case_ids):
+        """Returns all cases that reference cases with id: `case_ids`
+        """
+        if isinstance(case_ids, string_types):
+            case_ids = [case_ids]
+
+        return self._add_query(
+            queries.nested(
+                INDICES_PATH,
+                queries.match(" ".join(case_ids), '{}.{}'.format(INDICES_PATH, REFERENCED_ID))
+            ),
+            queries.MUST,
         )
 
 
 def case_property_filter(key, value):
     return filters.nested(
-        PATH,
+        CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key".format(PATH), key),
-            filters.term("{}.value".format(PATH), value),
+            filters.term("{}.key".format(CASE_PROPERTIES_PATH), key),
+            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
         )
     )
 
