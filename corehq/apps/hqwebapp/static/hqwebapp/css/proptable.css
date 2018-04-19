@@ -83,6 +83,10 @@
     display: block;
 }
 
+.case-property-name i{
+    display: none;
+}
+
 .case-property-name:hover i{
-    display: inline-block !important;
+    display: inline-block;
 }
