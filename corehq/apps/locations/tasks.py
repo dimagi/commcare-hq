@@ -160,7 +160,7 @@ def import_locations_async(domain, file_ref_id):
     importer.mark_complete()
 
     if LOCATIONS_IN_UCR.enabled(domain):
-        datasources = get_datasources_for_domain(domain, "Location")
+        datasources = get_datasources_for_domain(domain, "Location", include_static=True)
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
 
