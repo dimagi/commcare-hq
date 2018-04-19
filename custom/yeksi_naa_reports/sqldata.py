@@ -214,7 +214,7 @@ class LogisticienDataSource(YeksiSqlData):
 
 
 class AvailabilityData(VisiteDeLOperateurDataSource):
-    slug = 'disponibilité'
+    slug = 'disponibilite'
     comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
     title = 'Disponibilité'
     show_total = True
@@ -486,7 +486,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
 
 
 class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'taux_de_péremption'
+    slug = 'taux_de_peremption'
     comment = 'Valorisation des produits périmés PNA'
     title = 'Taux de Péremption'
     show_total = True
@@ -872,7 +872,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
 
 
 class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'taux_de_satisfaction_après_livraison'
+    slug = 'taux_de_satisfaction_apres_livraison'
     comment = '% de produits commandés vs. deliverés'
     title = 'Taux de satisfaction (après livraison)'
     show_total = True
