@@ -61,11 +61,11 @@ class LocationTypeStub(object):
         # These can be set by passing information of existing location data latter.
         # Whether the type already exists in domain or is new
         self.is_new = False
-        # The SQL LocationType object, either an unsaved or the actual database object
-        #   depending on whether 'is_new' is True or not
+        # The SQL LocationType object, either an unsaved or the actual
+        # database object depending on whether 'is_new' is True or not
         self.db_object = None
-        # Whether the db_object needs a SQL save, either because it's new or because some attributes
-        #   are changed
+        # Whether the db_object needs a SQL save, either because it's
+        # new or because some attributes are changed
         self.needs_save = False
 
     @classmethod
@@ -110,7 +110,8 @@ class LocationTypeStub(object):
                 return True
 
         # check if the parent is being updated
-        old_parent_code = old_version.parent_type.code if old_version.parent_type else ROOT_LOCATION_TYPE
+        old_parent_code = old_version.parent_type.code \
+            if old_version.parent_type else ROOT_LOCATION_TYPE
         if old_parent_code != self.parent_code:
             return True
         return False
@@ -148,11 +149,11 @@ class LocationStub(object):
             )
         # Whether the location already exists in domain or is new
         self.is_new = False
-        # The SQLLocation object, either an unsaved or the actual database object
-        #   depending on whether 'is_new' is True or not
+        # The SQLLocation object, either an unsaved or the actual database
+        # object depending on whether 'is_new' is True or not
         self.db_object = None
-        # Whether the db_object needs a SQL save, either because it's new or because some attributes
-        #   are changed
+        # Whether the db_object needs a SQL save, either because it's
+        # new or because some attributes are changed
         self.needs_save = False
         self.moved_to_root = False
         self.data_model = location_data_model
@@ -188,8 +189,7 @@ class LocationStub(object):
         return stub
 
     def lookup_old_collection_data(self, old_collection):
-        # Lookup whether the location already exists in old_collection or is new.
-        #   Depending on that set attributes like 'is_new', 'needs_save', 'db_obect'
+        """Lookup whether the location already exists or is new"""
         self.autoset_location_id_or_site_code(old_collection)
 
         if self.is_new:
@@ -258,19 +258,19 @@ class LocationStub(object):
             return True
 
         old_version = self.db_object
-        # check if any attributes are being updated
         for attr in self.meta_data_attrs:
             old_value = getattr(old_version, attr, None)
             new_value = getattr(self, attr, None)
             if (old_value or new_value) and old_value != new_value:
+                # attributes are being updated
                 return True
 
-        # check if custom location data is being updated
         if self.custom_location_data != old_version.metadata:
+            # custom location data is being updated
             return True
 
-        # check if any foreign-key refs are being updated
         if (self.location_type != old_version.location_type.code):
+            # any foreign-key refs are being updated
             return True
 
         old_parent = old_version.parent.site_code if old_version.parent else ROOT_LOCATION_TYPE
@@ -440,7 +440,7 @@ class NewLocationImporter(object):
         save_locations(location_stubs, type_objects, self.domain,
                        delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
-        #   that occurs inside LocationType.save needs to be explicitly called here
+        # that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
             if (not lt.do_delete and lt.needs_save):
                 obj = type_objects[lt.code]
@@ -786,7 +786,7 @@ def save_types(type_stubs, excel_importer=None):
 
     :returns: (dict) a dict of {object.code: object for all type objects}
     """
-    #
+
     # This proceeds in 3 steps
     # 1. Lookup all to be deleted types and 'bulk_delete' them
     # 2. Lookup all new types and 'bulk_create' the SQL objects, but don't set ForeignKey attrs like
