@@ -142,7 +142,7 @@ def _iter_export_instances(cls, key):
         reduce=False,
     ).all()
     result_ids = [result['id'] for result in results]
-    return iter_docs(cls.get_db(), result_ids)
+    return (cls.wrap(doc) for doc in iter_docs(cls.get_db(), result_ids))
 
 
 def get_all_daily_saved_export_instance_ids():
