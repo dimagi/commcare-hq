@@ -78,3 +78,7 @@
 .case-property-table td:nth-child(even) {
     width: 160px;
 }
+
+.case-property-table a {
+    display: block;
+}
