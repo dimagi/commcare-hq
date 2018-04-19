@@ -1,6 +1,7 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from __future__ import division
 import os
 import uuid
 from datetime import datetime
@@ -29,12 +30,17 @@ from corehq.form_processor.utils.general import set_local_domain_sql_backend_ove
     clear_local_domain_sql_backend_override
 from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
 from corehq.util.log import with_progress_bar
+from corehq.util.timer import TimingContext
+from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.utils import bucket_value
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 import six
+import logging
+_logger = logging.getLogger('main_couch_sql_datamigration')
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -62,17 +68,32 @@ class CouchSqlDomainMigrator(object):
         self.forms_that_touch_cases_without_actions = set()
 
     def log_debug(self, message):
+        _logger.debug(message)
         if self.debug:
             print('[DEBUG] {}'.format(message))
 
     def log_error(self, message):
+        _logger.error(message)
         print('[ERROR] {}'.format(message))
 
+    def log_info(self, message):
+        _logger.info(message)
+
     def migrate(self):
-        self._process_main_forms()
-        self._copy_unprocessed_forms()
-        self._copy_unprocessed_cases()
-        self._calculate_case_diffs()
+        self.log_info('migrating domain {}'.format(self.domain))
+        with TimingContext("couch_sql_migration") as timing_context:
+            self.timing_context = timing_context
+            with timing_context('main_forms'):
+                self._process_main_forms()
+            with timing_context("unprocessed_forms"):
+                self._copy_unprocessed_forms()
+            with timing_context("unprocessed_cases"):
+                self._copy_unprocessed_cases()
+            with timing_context("case_diffs"):
+                self._calculate_case_diffs()
+
+        self._send_timings(timing_context)
+        self.log_info('migrated domain {}'.format(self.domain))
 
     def _process_main_forms(self):
         last_received_on = datetime.min
@@ -90,7 +111,7 @@ class CouchSqlDomainMigrator(object):
             last_received_on = form_received
             try:
                 self._migrate_form_and_associated_models(wrapped_form)
-            except:
+            except Exception:
                 self.log_error("Unable to migrate form: {}".format(change.id))
                 raise
 
@@ -271,10 +292,31 @@ class CouchSqlDomainMigrator(object):
                 get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
                 for doc_type in doc_types
             ])
+            if self.timing_context:
+                current_timer = self.timing_context.peek()
+                current_timer.normalize_denominator = doc_count
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
             return iterable
+
+    def _send_timings(self, timing_context):
+        metric_name_template = "commcare.%s.count"
+        metric_name_template_normalized = "commcare.%s.count.normalized"
+        for timing in timing_context.to_list():
+            datadog_counter(
+                metric_name_template % timing.full_name,
+                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
+            normalize_denominator = getattr(timing, 'normalize_denominator', None)
+            if normalize_denominator:
+                datadog_counter(
+                    metric_name_template_normalized % timing.full_name,
+                    tags=['duration:%s' % bucket_value(timing.duration / normalize_denominator,
+                                                       NORMALIZED_TIMING_BUCKETS)])
+
+
+TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
+NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 1, 5, 10, 30, 60)
 
 
 def _wrap_form(doc):
@@ -548,3 +590,5 @@ def commit_migration(domain_name):
     if not should_use_sql_backend(domain_name):
         Domain.get_by_name.clear(Domain, domain_name)
         assert should_use_sql_backend(domain_name)
+    datadog_counter("commcare.couch_sql_migration.total_committed")
+    _logger.info("committed migration for {}".format(domain))
