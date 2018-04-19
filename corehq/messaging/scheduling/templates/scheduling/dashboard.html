@@ -10,6 +10,13 @@
 
 {% block page_content %}
     {% registerurl 'messaging_dashboard' domain %}
+    <p class="help-block">
+        <i class="fa fa-info-circle"></i>
+        {% blocktrans %}
+        <a target="_blank" href="https://confluence.dimagi.com/display/commcarepublic/Messaging+Dashboard">Click here</a>
+        for more information about this dashboard.
+        {% endblocktrans %}
+    </p>
     <div id="messaging_dashboard" class="container-fluid">
         <div data-bind="visible: !bindingApplied()">
             <img src="/static/hqwebapp/images/ajax-loader.gif" />
