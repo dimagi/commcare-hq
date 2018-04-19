@@ -76,13 +76,13 @@ class CaseSearchES(CaseES):
             clause,
         )
 
-    def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None):
+    def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
         """
         Search for all cases where case property `key` fulfills the range criteria.
         """
         return self._add_query(
             self._get_query(key, queries.range_query("{}.{}".format(PATH, VALUE_NUMERIC), gt, gte, lt, lte)),
-            queries.MUST,
+            clause,
         )
 
     def _add_query(self, new_query, clause):
