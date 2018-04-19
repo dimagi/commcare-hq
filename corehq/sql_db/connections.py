@@ -165,7 +165,7 @@ class ConnectionManager(object):
                             self._add_django_db(read_db, read_db)
 
         for app, weights in settings.LOAD_BALANCED_APPS.items():
-            # this tests that the config is real and raises an exception if not
+            # this tests that the app_label is real and raises an exception if not
             apps.get_app_config(app)
             self.read_database_mapping[app] = []
             for db_alias, weighting in weights:
