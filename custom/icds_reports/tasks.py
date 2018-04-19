@@ -9,7 +9,7 @@ import logging
 import os
 import uuid
 
-from celery import chain, group
+from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
@@ -80,20 +80,14 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             tasks.extend([
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
-                ),
+                icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
                 icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
             ])
 
