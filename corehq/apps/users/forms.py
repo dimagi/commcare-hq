@@ -859,6 +859,7 @@ class SupplyPointSelectWidget(forms.Widget):
         initial_data = [{'id': loc.location_id, 'name': loc.get_path_display()} for loc in locations]
 
         return get_template('locations/manage/partials/autocomplete_select_widget.html').render({
+            'id': self.id,
             'name': name,
             'value': ','.join(loc.location_id for loc in locations),
             'query_url': self.query_url,
