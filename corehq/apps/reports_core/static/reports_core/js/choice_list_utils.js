@@ -1,4 +1,4 @@
-hqDefine('reports/js/choice_list_utils', function() {
+hqDefine('reports_core/js/choice_list_utils', ['underscore'], function(_) {
     var module = {};
     // todo: we may need to support configuring this in the future
     var pageSize = 20;

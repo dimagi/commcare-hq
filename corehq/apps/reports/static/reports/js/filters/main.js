@@ -8,9 +8,9 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
     'locations/js/location_drilldown',
-    'reports/js/report_filter/advanced_forms_options',
-    'reports/js/report_filter/drilldown_options',
-    'reports/js/choice_list_utils',
+    'reports/js/filters/advanced_forms_options',
+    'reports/js/filters/drilldown_options',
+    'reports_core/js/choice_list_utils',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,

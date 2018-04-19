@@ -1,5 +1,13 @@
 /* globals REQUIRED */
-hqDefine('locations/js/location_drilldown', function() {
+hqDefine('locations/js/location_drilldown', [
+    'jquery',
+    'knockout',
+    'underscore',
+], function(
+    $,
+    ko,
+    _
+) {
     function apiGetChildren(locUuid, callback, locUrl) {
         var params = (locUuid ? {parent_id: locUuid} : {});
         $('#loc_ajax').show().removeClass('hide');
