@@ -13,8 +13,6 @@ from corehq.sql_db.config import partition_config
 from corehq.sql_db.models import PartitionedModel
 from corehq.util.quickcache import quickcache
 
-from .apps import STANDBY_DATABASE_ALIASES
-
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
     """
@@ -155,10 +153,22 @@ def _get_all_nested_subclasses(cls):
             yield subclass
 
 
+@memoized
+def get_standby_databases():
+    standby_dbs = []
+    for db_alias in settings.DATABASES:
+        with connections[db_alias].cursor() as cursor:
+            cursor.execute("SELECT pg_is_in_recovery()")
+            [(is_standby, )] = cursor.fetchall()
+            if is_standby:
+               standby_dbs.append(db_alias)
+    return standby_dbs
+
+
 STANDBY_DELAY_FRESHNESS = 30
 
 
-@quickcache(timeout=STANDBY_DELAY_FRESHNESS)
+@quickcache(['db_alias'], timeout=STANDBY_DELAY_FRESHNESS)
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
@@ -167,7 +177,7 @@ def get_replication_delay_for_standby(db_alias):
     If the given database is not a standby database, an assertion error is raised
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-    assert db_alias in STANDBY_DATABASE_ALIASES
+    assert db_alias in get_standby_databases()
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
     sql = """
