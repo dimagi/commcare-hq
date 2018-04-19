@@ -23,6 +23,10 @@
                 },
                 "value_numeric": {
                     "type": "double"
+                },
+                "value_date": {
+                    "type": "date",
+                    "format": "__DATE_FORMATS_STRING__"
                 }
             }
         },
