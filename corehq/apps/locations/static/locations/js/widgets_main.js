@@ -1,4 +1,20 @@
 hqDefine("locations/js/widgets_main", function() {
+    // Update the options available to one select2 to be
+    // the selected values from another (multiselect) select2
+    function updateSelect2($source, $select) {
+        var options = {
+            formatResult: function(e) { return e.name; },
+            formatSelection: function(e) { return e.name; },
+            allowClear: true,
+            placeholder: gettext("Choose a primary location"),
+            formatNoMatches: function() {
+                return gettext("No locations set for this user");
+            },
+            data: {'results': $source.select2('data')},
+        }
+        $select.select2(options);
+    };
+
     $(function() {
         $(".locations-widget-autocomplete").each(function() {
             var $select = $(this),
@@ -30,6 +46,37 @@ hqDefine("locations/js/widgets_main", function() {
                 formatResult: function(e) { return e.name; },
                 formatSelection: function(e) { return e.name; }
             });
+        });
+
+        $(".locations-widget-primary").each(function() {
+            var $select = $(this),
+                $source = $('#' + $select.data("sourceCssId")),
+                value = $select.val();
+
+            // This custom event is fired in autocomplete_select_widget.html
+            $source.on('select-ready', function() {
+                updateSelect2($source, $select);
+                // set initial value
+                $select.select2("val", value);
+            });
+
+            // Change options/value for css_id based on what's chosen for source_css_id
+            $source.on('change', function() {
+                updateSelect2($source, $select);
+                if ($(this).select2('data').length == 0) {
+                    // if no options available, set to null
+                    $select.val(null);
+                } else {
+                    var currentValue = $select.val();
+                    var availableValues = _.map($source.select2('data'), function(item){return item.id});
+                    // set as first value of option
+                    if (!currentValue || !availableValues.includes(currentValue)) {
+                       $select.select2("val", $source.select2('data')[0].id);
+                    }
+
+                }
+
+            }).trigger('change');
         });
     });
 });
