@@ -880,6 +880,18 @@ DATADOG_APP_KEY = None
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 WAREHOUSE_DATABASE_ALIAS = 'default'
 
+# A dict of django apps in which the reads are
+# split betweeen the primary and standby db machines
+# Example format:
+# {
+# "users":
+#     {
+#      ["pgmain", 5],
+#      ["pgmainstandby", 5]
+#     }
+# }
+LOAD_BALANCED_APPS = {}
+
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
