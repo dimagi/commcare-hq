@@ -27,12 +27,12 @@ def get_report_configs_for_domain(domain):
     )
 
 
-def get_datasources_for_domain(domain, referenced_doc_type=None):
-    from corehq.apps.userreports.models import DataSourceConfiguration
+def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=False):
+    from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
     key = [domain]
     if referenced_doc_type:
         key.append(referenced_doc_type)
-    return sorted(
+    datasources = sorted(
         DataSourceConfiguration.view(
             'userreports/data_sources_by_build_info',
             start_key=key,
@@ -40,8 +40,15 @@ def get_datasources_for_domain(domain, referenced_doc_type=None):
             reduce=False,
             include_docs=True
         ),
-        key=lambda config: config.display_name
-    )
+        key=lambda config: config.display_name)
+
+    if include_static:
+        static_ds = StaticDataSourceConfiguration.by_domain(domain)
+        if referenced_doc_type:
+            static_ds = [ds for ds in static_ds if ds.referenced_doc_type == referenced_doc_type]
+        datasources.extend(sorted(static_ds, key=lambda config: config.display_name))
+
+    return sorted(datasources, key=lambda config: config.display_name)
 
 
 @unit_testing_only
