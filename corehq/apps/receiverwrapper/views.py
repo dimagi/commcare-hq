@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+
+import six
 from couchdbkit import ResourceNotFound
 from django.http import (
     HttpResponseBadRequest,
@@ -80,7 +82,7 @@ def _process_form(request, domain, app_id, user_id, authenticated,
             ]
             datadog_counter(MULTIMEDIA_SUBMISSION_ERROR_COUNT, tags=details)
             notify_exception(request, "Received a submission with POST.keys()", details)
-            response = HttpResponseBadRequest(e.message)
+            response = HttpResponseBadRequest(six.text_type(e))
             _record_metrics(metric_tags, 'unknown', response)
             return response
 
