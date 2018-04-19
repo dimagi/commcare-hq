@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 import datetime
-import csv342 as csv
+import csv
 
 from corehq.apps.es import CaseSearchES
 from django.core.management import BaseCommand

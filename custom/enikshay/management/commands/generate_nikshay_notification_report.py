@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from datetime import datetime
 from openpyxl import Workbook
-import csv342 as csv
+import csv
 
 from django.core.management.base import BaseCommand
 from corehq.form_processor.exceptions import CaseNotFound
