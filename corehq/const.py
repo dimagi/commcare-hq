@@ -1,4 +1,7 @@
-# from __future__ import unicode_literals
+from __future__ import unicode_literals
+
+from distutils.version import LooseVersion
+
 USER_DATETIME_FORMAT = "%b %d, %Y %H:%M %Z"
 USER_DATETIME_FORMAT_WITH_SEC = "%b %d, %Y %H:%M:%S %Z"
 
@@ -13,10 +16,10 @@ SERVER_DATETIME_FORMAT_NO_SEC = "%Y-%m-%d %H:%M"
 
 MISSING_APP_ID = '_MISSING_APP_ID'
 
-OPENROSA_VERSION_1 = "1.0"
-OPENROSA_VERSION_2 = "2.0"
-OPENROSA_VERSION_3 = "3.0"
-OPENROSA_VERSION_2_1 = "2.1"
+OPENROSA_VERSION_1 = LooseVersion("1.0")
+OPENROSA_VERSION_2 = LooseVersion("2.0")
+OPENROSA_VERSION_3 = LooseVersion("3.0")
+OPENROSA_VERSION_2_1 = LooseVersion("2.1")
 OPENROSA_DEFAULT_VERSION = OPENROSA_VERSION_1
 OPENROSA_VERSION_MAP = {
     'ASYNC_RESTORE': OPENROSA_VERSION_2,

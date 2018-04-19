@@ -205,7 +205,7 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
     async_restore_enabled = (
         toggles.ASYNC_RESTORE.enabled(domain)
         and openrosa_version
-        and LooseVersion(openrosa_version) >= LooseVersion(OPENROSA_VERSION_MAP['ASYNC_RESTORE'])
+        and LooseVersion(openrosa_version) >= OPENROSA_VERSION_MAP['ASYNC_RESTORE']
     )
 
     app = get_app_cached(domain, app_id) if app_id else None
