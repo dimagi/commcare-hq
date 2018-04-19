@@ -94,7 +94,7 @@ class SubmissionPost(object):
         # e.g. for closing extension cases
         self.case_db = case_db
 
-        self.is_openrosa_version3 = LooseVersion(self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '')) == OPENROSA_VERSION_3
+        self.is_openrosa_version3 = LooseVersion(self.openrosa_headers.get(OPENROSA_VERSION_HEADER, '0')) == OPENROSA_VERSION_3
 
     def _set_submission_properties(self, xform):
         # attaches shared properties of the request to the document.
