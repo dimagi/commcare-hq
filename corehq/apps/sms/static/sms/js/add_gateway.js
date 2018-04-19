@@ -6,7 +6,7 @@ hqDefine('sms/js/add_gateway', function() {
         $widget.append('<tr> \
                 <td><input type="text" class="form-control" name="additional_params.'+count+'.name" value="'+nm+'" /></td> \
                 <td><input type="text" class="form-control" name="additional_params.'+count+'.value" value="'+val+'" /></td> \
-                <td><span id="id_remove_record_'+count+'" class="btn btn-danger"><i class="icon-remove"></i> {% trans "Remove" %}</span></td> \
+                <td><span id="id_remove_record_'+count+'" class="btn btn-danger"><i class="fa fa-remove"></i> ' + gettext('Remove') + '</span></td> \
             </tr>');
         $("#id_remove_record_"+count).click(function(){
             $(this).parent().parent().remove();
