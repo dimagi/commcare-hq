@@ -46,7 +46,10 @@ def process_pillow_retry(error_doc):
             pillow.process_change(change)
         else:
             producer.send_change(
-                get_topic_for_doc_type(change_metadata.document_type),
+                get_topic_for_doc_type(
+                    change_metadata.document_type,
+                    change_metadata.data_source_type
+                ),
                 change_metadata
             )
     except Exception:
