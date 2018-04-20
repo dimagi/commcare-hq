@@ -45,10 +45,16 @@ def process_pillow_retry(error_doc):
         if isinstance(pillow.get_change_feed(), CouchChangeFeed):
             pillow.process_change(change)
         else:
+            if change_metadata.data_source_type in ('couch', 'sql'):
+                data_source_type = change_metadata.data_source_type
+            else:
+                # legacy metadata will have other values for non-sql
+                # can remove this once all legacy errors have been processed
+                data_source_type = 'sql'
             producer.send_change(
                 get_topic_for_doc_type(
                     change_metadata.document_type,
-                    change_metadata.data_source_type
+                    data_source_type
                 ),
                 change_metadata
             )
