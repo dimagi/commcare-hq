@@ -232,25 +232,22 @@ class LocationStub(object):
         if self.location_id and self.site_code:
             return
 
-        # Both can't be empty, this should have already been caught in initialization
-        assert self.location_id or self.site_code
-
         old_locations_by_id = old_collection.locations_by_id
         old_locations_by_site_code = old_collection.locations_by_site_code
-        # must be an existing location specified with just location_id
-        if not self.site_code:
-            if self.location_id in old_locations_by_id:
+        if self.location_id:
+            try:
                 self.site_code = old_locations_by_id[self.location_id].site_code
-            else:
-                # Unknown location_id, this should have already been caught
-                raise Exception
-        elif not self.location_id:
-            if self.site_code in old_locations_by_site_code:
-                # existing location specified with just site_code
+            except KeyError:
+                # this should have already been caught
+                raise UnexpectedState("unknown location_id: %r" % (self.location_id,))
+        elif self.site_code:
+            try:
                 self.location_id = old_locations_by_site_code[self.site_code].location_id
-            else:
-                # must be a new location
+            except KeyError:
                 self.is_new = True
+        else:
+            # this should have already been caught in initialization
+            raise UnexpectedState("missing site_code and location_id: %s" % self.name)
 
     def _needs_save(self):
         if self.is_new or self.do_delete:
@@ -280,6 +277,10 @@ class LocationStub(object):
         if not self.is_new and self.parent_code == ROOT_LOCATION_TYPE and old_parent != ROOT_LOCATION_TYPE:
             return True
         return False
+
+
+class UnexpectedState(Exception):
+    pass
 
 
 class LocationCollection(object):
