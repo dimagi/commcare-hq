@@ -46,7 +46,7 @@ class ChangeMeta(jsonobject.JsonObject):
     def clear_retry_info(self):
         self.attempts = 0
 
-    def record_error(self, exception):
+    def record_error(self):
         self.attempts += 1
 
 
@@ -97,10 +97,10 @@ class Change(object):
                 self.error_raised = e
         return self.document
 
-    def record_error(self, exception):
+    def record_error(self):
         if not self.metadata:
             return
-        self.metadata.record_error(exception)
+        self.metadata.record_error()
 
     def should_retry(self):
         return self.metadata and self.metadata.attempts < settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS

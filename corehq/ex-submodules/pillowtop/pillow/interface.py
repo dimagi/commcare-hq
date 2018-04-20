@@ -275,7 +275,7 @@ def handle_pillow_error(pillow, change, exception):
         from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 
         save_error = True
-        change.record_error(exception)
+        change.record_error()
         if isinstance(pillow.get_change_feed(), KafkaChangeFeed):
             if change.should_retry():
                 producer.send_change(change.topic, change.metadata)
