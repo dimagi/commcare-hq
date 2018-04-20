@@ -278,7 +278,7 @@ def make_collection(types, locations):
 
     locations = [LocationStub(*loc) for loc in locations]
     locations_by_code = {loc.site_code: loc for loc in locations}
-    idgen = iter(xrange(len(locations)))
+    idgen = iter(range(len(locations)))
     # make LocationStub more like a real SQLLocation
     for loc in locations:
         loc.id = next(idgen)
