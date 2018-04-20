@@ -1840,7 +1840,10 @@ def _get_form_context(request, domain, instance):
 
 def _get_form_or_404(domain, id):
     try:
-        return FormAccessors(domain).get_form(id)
+        form = FormAccessors(domain).get_form(id)
+        if form.domain != domain:
+            raise Http404()
+        return form
     except XFormNotFound:
         raise Http404()
 
