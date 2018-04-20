@@ -7,6 +7,10 @@ module.exports = {
         "browser": true,
     },
 
+    "plugins": [
+        "html",
+    ],
+
     // http://eslint.org/docs/user-guide/configuring#specifying-globals
     "globals": {
         // false means it shouldn't be overwritten
