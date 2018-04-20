@@ -5,8 +5,8 @@ from django.core.management import call_command
 from django.test import SimpleTestCase, TestCase
 from elasticsearch.exceptions import ConnectionError
 
-from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed.document_types import change_meta_from_doc, GROUP
+from corehq.apps.change_feed import data_sources, topics
+from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_offset
 from corehq.apps.groups.models import Group
@@ -161,8 +161,8 @@ class GroupToUserPillowDbTest(TestCase):
         group.save()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
-        producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
+        since = get_topic_offset(topics.GROUP)
+        producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
         # process using pillow
         pillow = get_group_to_user_pillow()
@@ -178,8 +178,8 @@ class GroupToUserPillowDbTest(TestCase):
         group.soft_delete()
 
         # send to kafka
-        since = get_topic_offset(GROUP)
-        producer.send_change(GROUP, _group_to_change_meta(group.to_json()))
+        since = get_topic_offset(topics.GROUP)
+        producer.send_change(topics.GROUP, _group_to_change_meta(group.to_json()))
 
         pillow = get_group_to_user_pillow()
         pillow.process_changes(since=since, forever=False)
