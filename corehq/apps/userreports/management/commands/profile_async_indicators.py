@@ -29,7 +29,8 @@ class Command(BaseCommand):
         configs = {}
         docs = {}
         for indicator in indicators:
-            docs[indicator.doc_id] = get_document_store_for_doc_type(domain, indicator.doc_type).get_document(indicator.doc_id)
+            doc_store = get_document_store_for_doc_type(domain, indicator.doc_type)
+            docs[indicator.doc_id] = doc_store.get_document(indicator.doc_id)
             for config_id in indicator.indicator_config_ids:
                 configs[config_id] = _get_config(config_id)
 
