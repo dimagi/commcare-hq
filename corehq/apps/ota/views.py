@@ -282,7 +282,8 @@ def update_user_reporting_data(app_build_id, app_id, couch_user, request):
     num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
     num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
     commcare_version = request.GET.get('cc_version', '')
-    save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+    if app_version:
+        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
     try:
         last_sync = adjust_text_to_datetime(last_sync_time)
     except iso8601.ParseError:
