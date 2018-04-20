@@ -275,8 +275,8 @@ def handle_pillow_error(pillow, change, exception):
         from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed
 
         save_error = True
+        change.record_error(exception, sys.exc_info()[2])
         if isinstance(pillow.get_change_feed(), KafkaChangeFeed):
-            change.record_error(exception, sys.exc_info()[2])
             if change.should_retry():
                 producer.send_change(change.topic, change.metadata)
                 save_error = False
@@ -284,7 +284,9 @@ def handle_pillow_error(pillow, change, exception):
 
         if save_error:
             try:
-                error = PillowError.get_or_create(change, pillow)
+                error = PillowError.get_or_create(
+                    change, pillow, exception, sys.exc_info()[2]
+                )
             except (DatabaseError, InterfaceError) as e:
                 error_id = 'PillowError.get_or_create failed'
             else:

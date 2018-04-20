@@ -90,6 +90,8 @@ class Change(object):
         return self.document
 
     def record_error(self, exception, traceb, date=None):
+        if not self.metadata:
+            return
         self.metadata.attempts += 1
         self.metadata.date_last_attempt = date or datetime.utcnow()
         error_type = path_from_object(exception)

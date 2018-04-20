@@ -60,10 +60,12 @@ class PillowError(models.Model):
         self.current_attempt += 1
         self.total_attempts += 1
         self.date_last_attempt = date or datetime.utcnow()
-        self.error_type = path_from_object(exception)
+        self.calculate_next_attempt()
 
+        self.error_type = path_from_object(exception)
         self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
 
+    def calculate_next_attempt(self):
         if self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
             time_till_next = settings.PILLOW_RETRY_REPROCESS_INTERVAL * math.pow(self.current_attempt, settings.PILLOW_RETRY_BACKOFF_FACTOR)
             self.date_next_attempt = self.date_last_attempt + timedelta(minutes=time_till_next)
@@ -81,7 +83,7 @@ class PillowError(models.Model):
         )
 
     @classmethod
-    def get_or_create(cls, change, pillow):
+    def get_or_create(cls, change, pillow, exception, traceb):
         change.document = None
         doc_id = change.id
         now = datetime.utcnow()
@@ -98,12 +100,15 @@ class PillowError(models.Model):
         if change.metadata:
             error.date_last_attempt = change.metadata.date_last_attempt
             error.total_attempts = change.metadata.attempts
+            error.current_attempt = change.metadata.attempts
             error.error_type = change.metadata.last_error_type
             error.error_traceback = change.metadata.last_error_traceback
             change.metadata = change.metadata.to_json()
+            error.calculate_next_attempt()
         else:
-            error.date_last_attempt = now,
-            error.date_next_attempt = now,
+            error.date_last_attempt = now
+            error.date_next_attempt = now
+            error.add_attempt(exception, traceb)
 
         error.save()
 
