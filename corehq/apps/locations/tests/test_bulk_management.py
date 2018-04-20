@@ -8,6 +8,7 @@ from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.locations.const import ROOT_LOCATION_TYPE
 from corehq.apps.locations.models import LocationType, SQLLocation
 from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
 from corehq.apps.locations.bulk_management import (
@@ -219,11 +220,10 @@ class TestTreeUtils(SimpleTestCase):
 
 
 class MockLocationStub(LocationStub):
+
     def lookup_old_collection_data(self, old_collection):
-        try:
-            return super(MockLocationStub, self).lookup_old_collection_data(old_collection)
-        except (AttributeError, KeyError):
-            # This will happen if the LocationStub is not new and an old_collection is not given
+        self.autoset_location_id_or_site_code(old_collection)
+        if not self.is_new:
             self.db_object = MagicMock()
 
 
@@ -254,21 +254,46 @@ class IngoreOldLocationTreeValidator(LocationTreeValidator):
 
 def get_validator(location_types, locations, old_collection=None):
     if old_collection is None:
+        LocStub = MockLocationStub
         old_collection = TestLocationCollection()
         Validator = IngoreOldLocationTreeValidator
     else:
+        LocStub = LocationStub
         Validator = LocationTreeValidator
     return Validator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
-        [MockLocationStub(*loc) for loc in locations],
+        [LocStub(*loc) for loc in locations],
         old_collection=old_collection
     )
 
 
 def make_collection(types, locations):
     types = [LocationTypeStub(*loc_type) for loc_type in types]
+    types_by_code = {t.code: t for t in types}
+    # make LocationTypeStub more like a real LocationType
+    for loc_type in types:
+        if loc_type.parent_code == ROOT_LOCATION_TYPE:
+            loc_type.parent_type = None
+        else:
+            loc_type.parent_type = types_by_code[loc_type.parent_code]
 
     locations = [LocationStub(*loc) for loc in locations]
+    locations_by_code = {loc.site_code: loc for loc in locations}
+    idgen = iter(range(len(locations)))
+    # make LocationStub more like a real SQLLocation
+    for loc in locations:
+        loc.id = next(idgen)
+        loc.location_type = types_by_code[loc.location_type]
+        if loc.parent_code == ROOT_LOCATION_TYPE:
+            loc.parent_id = None
+            loc.parent = None
+        else:
+            loc.parent_id = locations_by_code[loc.parent_code].id
+            loc.parent = locations_by_code[loc.parent_code]
+        assert loc.custom_data == NOT_PROVIDED, loc.custom_data
+        loc.metadata = {}
+        loc.full_clean = lambda **k: None
+
     return TestLocationCollection(types, locations)
 
 
