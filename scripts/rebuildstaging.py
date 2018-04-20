@@ -53,6 +53,7 @@ class BranchConfig(jsonobject.JsonObject):
     name = jsonobject.StringProperty()
     branches = jsonobject.ListProperty(six.text_type)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
+    pull_request = jsonobject.ListProperty(six.text_type)
 
     def normalize(self):
         for submodule, subconfig in self.submodules.items():
@@ -88,6 +89,12 @@ def fetch_remote(base_config, name="origin"):
             print("  [{path}] fetching {remote} {branch}".format(**locals()))
             jobs.append(gevent.spawn(git.fetch, remote, branch))
             fetched.add(remote)
+
+        for pr in config.pull_requests:
+            print("  [{path}] fetching pull request {pr}".format(**locals()))
+            pr = 'pull/{pr}/head:stable/{pr}'.format(pr=pr)
+            jobs.append(gevent.spawn(git.fetch, 'origin', pr))
+
     gevent.joinall(jobs)
     print("fetched {}".format(", ".join(['origin'] + sorted(fetched))))
 
@@ -176,7 +183,10 @@ def rebuild_staging(config, print_details=True, push=True):
     with context_manager:
         for path, config in all_configs:
             git = get_git(path)
-            git.checkout('-B', config.name, origin(config.trunk), '--no-track')
+            try:
+                git.checkout('-B', config.name, origin(config.trunk), '--no-track')
+            except Exception:
+                git.checkout('-B', config.name, config.trunk, '--no-track')
             for branch in config.branches:
                 remote = ":" in branch
                 if remote or not has_local(git, branch):
@@ -195,6 +205,24 @@ def rebuild_staging(config, print_details=True, push=True):
                 print("  [{cwd}] Merging {branch} into {name}".format(
                     cwd=path,
                     branch=branch,
+                    name=config.name
+                ), end=' ')
+                try:
+                    git.merge(branch, '--no-edit')
+                except sh.ErrorReturnCode_1:
+                    merge_conflicts.append((path, branch, config))
+                    try:
+                        git.merge("--abort")
+                    except sh.ErrorReturnCode_128:
+                        pass
+                    print("FAIL")
+                else:
+                    print("ok")
+            for pr in config.pull_requests:
+                branch = "stable/{pr}".format(pr=pr)
+                print("  [{cwd}] Merging {pr} into {name}".format(
+                    cwd=path,
+                    pr=pr,
                     name=config.name
                 ), end=' ')
                 try:

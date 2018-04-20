@@ -38,6 +38,10 @@ do
         no_push=y
         echo no-push
         ;;
+      --stable)
+        stable=y
+        echo stable
+        ;;
       *)
         usage
         exit 1
@@ -48,6 +52,11 @@ done
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
     python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
+}
+
+function rebuildstable() {
+    echo "rebuilding enterprise stable branch, this might take a while..."
+    python scripts/rebuildstaging.py < scripts/enterprise_stable.yaml "$@"
 }
 
 args=''
@@ -66,13 +75,16 @@ then
     exit 1
 fi
 
-if [[ $deploy = 'y' && $no_push != 'y' ]]
+if [[ $deploy = 'y' && $no_push != 'y' && $stable != 'y' ]]
 then
     rebuildstaging $args && {
         which commcare-cloud \
         && commcare-cloud staging fab deploy:confirm=no \
         || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
     }
+elif [[ $stable == 'y' ]]
+then
+    rebuildstable $args
 else
     rebuildstaging $args
 fi
