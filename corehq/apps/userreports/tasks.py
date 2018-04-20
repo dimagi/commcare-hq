@@ -28,7 +28,7 @@ from corehq.apps.userreports.const import (
     UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.document_stores import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import StaticDataSourceConfigurationNotFoundError
 from corehq.apps.userreports.rebuild import DataSourceResumeHelper
 from corehq.apps.userreports.specs import EvaluationContext
@@ -141,7 +141,7 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
 
     for case_type_or_xmlns in case_type_or_xmlns_list:
         relevant_ids = []
-        document_store = get_document_store(
+        document_store = get_document_store_for_doc_type(
             config.domain, config.referenced_doc_type, case_type_or_xmlns=case_type_or_xmlns
         )
 
@@ -329,7 +329,7 @@ def save_document(doc_ids):
             assert i.doc_type == first_indicator.doc_type
 
         indicator_by_doc_id = {i.doc_id: i for i in indicators}
-        doc_store = get_document_store(first_indicator.domain, first_indicator.doc_type)
+        doc_store = get_document_store_for_doc_type(first_indicator.domain, first_indicator.doc_type)
         indicator_config_ids = first_indicator.indicator_config_ids
         related_docs_to_rebuild = set()
 

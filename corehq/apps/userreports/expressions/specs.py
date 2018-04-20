@@ -12,7 +12,7 @@ import six
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.userreports.document_stores import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.users.models import CommCareUser
@@ -272,7 +272,7 @@ class RelatedDocExpressionSpec(JsonObject):
     @staticmethod
     @ucr_context_cache(vary_on=('related_doc_type', 'doc_id',))
     def _get_document(related_doc_type, doc_id, context):
-        document_store = get_document_store(context.root_doc['domain'], related_doc_type)
+        document_store = get_document_store_for_doc_type(context.root_doc['domain'], related_doc_type)
         try:
             doc = document_store.get_document(doc_id)
         except DocumentNotFoundError:
