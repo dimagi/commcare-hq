@@ -101,6 +101,7 @@ class PillowError(models.Model):
                 date_next_attempt=now,
             )
             if change.metadata:
+                error.date_created = change.metadata.publish_timestamp
                 error.change_metadata = change.metadata.to_json()
 
         return error
