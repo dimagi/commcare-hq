@@ -217,11 +217,10 @@ class LocationStub(object):
 
         if self.delete_uncategorized_data:
             metadata, unknown = self.data_model.get_model_and_uncategorized(metadata)
-        else:
-            if data_provided:
-                # add back uncategorized data to new metadata
-                known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
-                metadata.update(unknown)
+        elif data_provided:
+            # add back uncategorized data to new metadata
+            known, unknown = self.data_model.get_model_and_uncategorized(db_meta)
+            metadata.update(unknown)
 
         return metadata
 
@@ -274,10 +273,7 @@ class LocationStub(object):
             return True
 
         old_parent = old_version.parent.site_code if old_version.parent else ROOT_LOCATION_TYPE
-        if old_parent != self.parent_code:
-            return True
-
-        return False
+        return old_parent != self.parent_code
 
     def _moved_to_root(self):
         old_parent = self.db_object.parent.site_code if self.db_object.parent else ROOT_LOCATION_TYPE
