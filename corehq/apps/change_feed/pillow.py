@@ -25,11 +25,11 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change):
-        from corehq.apps.change_feed.document_types import _get_primary_type
+        from corehq.apps.change_feed.topics import get_topic_for_doc_type
         populate_change_metadata(change, self._data_source_type, self._data_source_name)
         if change.metadata:
             change_meta = change.metadata
-            topic = _get_primary_type(change_meta.document_type)
+            topic = get_topic_for_doc_type(change_meta.document_type)
             # change.deleted is used for hard deletions whereas change_meta.is_deletion is for soft deletions.
             # from the consumer's perspective both should be counted as deletions so just "or" them
             # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
