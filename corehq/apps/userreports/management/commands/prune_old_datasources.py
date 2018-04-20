@@ -35,13 +35,7 @@ class Command(BaseCommand):
         data_sources = list(DataSourceConfiguration.all())
         data_sources.extend(list(StaticDataSourceConfiguration.all()))
 
-        tables_by_engine = defaultdict(list)
-        for data_source in data_sources:
-            adapter = get_indicator_adapter(data_source)
-            if hasattr(adapter, 'engine_id'):
-                if options.get('engine_id') and options['engine_id'] != adapter.engine_id:
-                    continue
-                tables_by_engine[adapter.engine_id].append(adapter.get_table().name)
+        tables_by_engine = self._get_tables_by_engine(data_sources, options.get('engine_id'))
 
         diffs_by_engine = defaultdict(list)
         for engine_id, table_map in tables_by_engine.items():
@@ -53,7 +47,6 @@ class Command(BaseCommand):
                 diffs_by_engine[engine_id] = diffs
 
         tables_to_remove_by_engine = defaultdict(list)
-
         for engine_id, diffs in diffs_by_engine.items():
             for diff in diffs:
                 if diff.type == 'remove_table':
@@ -71,6 +64,17 @@ class Command(BaseCommand):
                         print(tablename, "no inserted_at column, probably not UCR")
                     else:
                         print(tablename, result.fetchone())
+
+    def _get_tables_by_engine(self, data_sources, engine_id):
+        tables_by_engine = defaultdict(list)
+        for data_source in data_sources:
+            adapter = get_indicator_adapter(data_source)
+            if hasattr(adapter, 'engine_id'):
+                if engine_id and engine_id != adapter.engine_id:
+                    continue
+                tables_by_engine[adapter.engine_id].append(adapter.get_table().name)
+
+        return tables_by_engine
 
 
 def _include_object(object_, name, type_, reflected, compare_to):
