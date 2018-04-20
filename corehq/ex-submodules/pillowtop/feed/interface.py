@@ -48,6 +48,17 @@ class ChangeMeta(jsonobject.JsonObject):
         self.last_error_type = None
         self.last_error_traceback = None
 
+    def record_error(self, exception, traceb):
+        self.attempts += 1
+        self.date_last_attempt = datetime.utcnow()
+        error_type = path_from_object(exception)
+        self.last_error_type = error_type
+        error_count = self.metadata.attempts_by_error.get(error_type, None) or 0
+        self.attempts_by_error[error_type] = error_count + 1
+        self.last_error_traceback = "{}\n\n{}".format(
+            exception.message, "".join(traceback.format_tb(traceb))
+        )
+
 
 class Change(object):
     """
@@ -96,18 +107,10 @@ class Change(object):
                 self.error_raised = e
         return self.document
 
-    def record_error(self, exception, traceb, date=None):
+    def record_error(self, exception, traceb):
         if not self.metadata:
             return
-        self.metadata.attempts += 1
-        self.metadata.date_last_attempt = date or datetime.utcnow()
-        error_type = path_from_object(exception)
-        self.last_error_type = error_type
-        error_count = self.metadata.attempts_by_error.get(error_type, None) or 0
-        self.metadata.attempts_by_error[error_type] = error_count + 1
-        self.metadata.last_error_traceback = "{}\n\n{}".format(
-            exception.message, "".join(traceback.format_tb(traceb))
-        )
+        self.metadata.record_error(exception, traceb)
 
     def should_retry(self):
         return self.metadata.attempts < settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
