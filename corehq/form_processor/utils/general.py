@@ -65,10 +65,6 @@ def _get_domain_name_and_object(domain_object_or_name):
         return domain_object_or_name, None
 
 
-def use_new_exports(domain_name):
-    return True
-
-
 def use_sqlite_backend(domain_name):
     return not TF_DOES_NOT_USE_SQLITE_BACKEND.enabled(domain_name) or should_use_sql_backend(domain_name)
 

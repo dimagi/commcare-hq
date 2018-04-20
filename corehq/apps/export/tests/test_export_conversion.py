@@ -8,9 +8,7 @@ from django.test import TestCase, SimpleTestCase
 
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
-from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
-from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
@@ -38,12 +36,10 @@ from corehq.apps.export.utils import (
     revert_new_exports,
     _is_remote_app_conversion,
     _is_form_stock_question,
-    migrate_domain,
 )
 from corehq.apps.export.const import (
     DEID_ID_TRANSFORM,
     DEID_DATE_TRANSFORM,
-    CASE_NAME_TRANSFORM,
     FORM_EXPORT,
     CASE_EXPORT,
 )

@@ -32,7 +32,6 @@ from corehq.apps.locations.permissions import location_safe, location_restricted
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
 from corehq.apps.reports.views import should_update_export, build_download_saved_export_response
-from corehq.form_processor.utils import use_new_exports
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -1627,7 +1626,7 @@ def use_new_daily_saved_exports_ui(domain):
     def _has_no_old_exports(domain_):
         return not bool(stale_get_export_count(domain_))
 
-    return use_new_exports(domain) and _has_no_old_exports(domain)
+    return _has_no_old_exports(domain)
 
 
 @location_safe
@@ -1665,11 +1664,6 @@ class FormExportListView(BaseExportListView):
         return _("Select a Form to Export")
 
     def fmt_export_data(self, export):
-        if use_new_exports(self.domain):
-            edit_view = EditNewCustomFormExportView
-        else:
-            edit_view = EditCustomFormExportView
-
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
         else:
@@ -1686,7 +1680,7 @@ class FormExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
-            'editUrl': reverse(edit_view.urlname,
+            'editUrl': reverse(EditNewCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
@@ -1724,12 +1718,8 @@ class FormExportListView(BaseExportListView):
 
         app_id = create_form.cleaned_data['application']
         form_xmlns = create_form.cleaned_data['form']
-        if use_new_exports(self.domain):
-            cls = CreateNewCustomFormExportView
-        else:
-            cls = CreateCustomFormExportView
         return reverse(
-            cls.urlname,
+            CreateNewCustomFormExportView.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"{app_id}'.format(
             app_id=('&app_id={}'.format(app_id)
@@ -1812,11 +1802,6 @@ class CaseExportListView(BaseExportListView):
         return _("Select a Case Type to Export")
 
     def fmt_export_data(self, export):
-        if use_new_exports(self.domain):
-            edit_view = EditNewCustomCaseExportView
-        else:
-            edit_view = EditCustomCaseExportView
-
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
         else:
@@ -1833,7 +1818,7 @@ class CaseExportListView(BaseExportListView):
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
-            'editUrl': reverse(edit_view.urlname, args=(self.domain, export.get_id)),
+            'editUrl': reverse(EditNewCustomCaseExportView.urlname, args=(self.domain, export.get_id)),
             'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
@@ -1872,12 +1857,8 @@ class CaseExportListView(BaseExportListView):
         else:
             app_id_param = '&app_id={}'.format(app_id)
 
-        if use_new_exports(self.domain):
-            cls = CreateNewCustomCaseExportView
-        else:
-            cls = CreateCustomCaseExportView
         return reverse(
-            cls.urlname,
+            CreateNewCustomCaseExportView.urlname,
             args=[self.domain],
         ) + ('?export_tag="{export_tag}"{app_id_param}'.format(
             export_tag=case_type,
@@ -1912,7 +1893,6 @@ class BaseNewExportView(BaseExportView):
             'export_instance': self.export_instance,
             'export_home_url': self.export_home_url,
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
-            'use_new_exports': use_new_exports(self.domain),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
         }
