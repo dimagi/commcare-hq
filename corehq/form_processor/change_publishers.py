@@ -99,6 +99,7 @@ def change_meta_from_ledger_v2(ledger_ref, domain, deleted=False):
         document_id=ledger_ref.as_id(),
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.LEDGER_V2,
+        document_type=topics.LEDGER,
         domain=domain,
         is_deletion=deleted,
     )
@@ -113,6 +114,7 @@ def change_meta_from_ledger_v1(stock_state, deleted=False):
         document_id=stock_state.pk,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.LEDGER_V1,
+        document_type=topics.LEDGER,
         domain=stock_state.domain,
         is_deletion=deleted,
     )
@@ -145,6 +147,7 @@ def _change_meta_from_ledger_reference(domain, ledger_reference, source_name):
         document_id=ledger_reference.as_id(),
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=source_name,
+        document_type=topics.LEDGER,
         domain=domain,
         is_deletion=False,
     )
