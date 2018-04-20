@@ -7,6 +7,7 @@ from collections import defaultdict
 from alembic.autogenerate.api import compare_metadata
 from django.core.management.base import BaseCommand
 
+from corehq.apps.userreports.const import UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, StaticDataSourceConfiguration
 from corehq.apps.userreports.sql.adapter import metadata
 from corehq.apps.userreports.util import get_indicator_adapter
@@ -35,10 +36,10 @@ class Command(BaseCommand):
         data_sources = list(DataSourceConfiguration.all())
         data_sources.extend(list(StaticDataSourceConfiguration.all()))
 
-        tables_by_engine = self._get_tables_by_engine(data_sources, options.get('engine_id'))
+        engine_ids = self._get_engine_ids(data_sources, options.get('engine_id'))
 
         tables_to_remove_by_engine = defaultdict(list)
-        for engine_id, table_map in tables_by_engine.items():
+        for engine_id in engine_ids:
             engine = connection_manager.get_engine(engine_id)
             with engine.begin() as connection:
                 migration_context = get_migration_context(connection, include_object=_include_object)
@@ -63,23 +64,28 @@ class Command(BaseCommand):
                     else:
                         print(tablename, result.fetchone())
 
-    def _get_tables_by_engine(self, data_sources, engine_id):
-        tables_by_engine = defaultdict(list)
+    def _get_engine_ids(self, data_sources, engine_id):
+        engine_ids = set()
         for data_source in data_sources:
-            adapter = get_indicator_adapter(data_source)
-            if hasattr(adapter, 'engine_id'):
-                if engine_id and engine_id != adapter.engine_id:
-                    continue
-                tables_by_engine[adapter.engine_id].append(adapter.get_table().name)
+            if data_source.backend_id == UCR_ES_BACKEND:
+                continue
 
-        return tables_by_engine
+            if engine_id and data_source.engine_id != engine_id:
+                continue
+
+            # Magic: getting the table adds the table to the global sqlalchemy metadata object
+            adapter = get_indicator_adapter(data_source)
+            adapter.get_table()
+            engine_ids.add(adapter.engine_id)
+
+        return engine_ids
 
 
 def _include_object(object_, name, type_, reflected, compare_to):
     if type_ != 'table':
         return False
 
-    if not name.startswith('config_report_'):
-        return False
+    if name.startswith('config_report_'):
+        return True
 
-    return True
+    return False
