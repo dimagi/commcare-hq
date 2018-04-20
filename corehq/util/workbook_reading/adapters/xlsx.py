@@ -21,8 +21,9 @@ XLSX_ENCRYPTED_MARKER = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 
 @contextmanager
 def open_xlsx_workbook(filename):
+    print filename
     try:
-        f = open(filename)
+        f = open(filename, 'rb')
     except IOError as e:
         raise SpreadsheetFileNotFound(e.message)
 
