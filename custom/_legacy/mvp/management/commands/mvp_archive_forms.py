@@ -5,6 +5,7 @@ import csv
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 from couchforms.models import XFormInstance
+from io import open
 
 
 class Command(BaseCommand):

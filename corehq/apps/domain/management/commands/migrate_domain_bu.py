@@ -8,6 +8,7 @@ from corehq.apps.domain.dbaccessors import get_domain_ids_by_names
 
 from corehq.util.couch import iter_update, DocUpdate
 from corehq.apps.domain.models import Domain, BUSINESS_UNITS
+from io import open
 
 
 class Command(BaseCommand):

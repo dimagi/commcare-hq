@@ -29,6 +29,7 @@ from custom.enikshay.case_utils import (
 from custom.enikshay.duplicate_ids import (
     get_duplicated_case_stubs, ReadableIdGenerator)
 from custom.enikshay.user_setup import join_chunked
+from io import open
 
 
 class Command(BaseCommand):

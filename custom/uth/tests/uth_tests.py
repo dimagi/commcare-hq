@@ -13,6 +13,7 @@ from casexml.apps.case.tests.util import delete_all_xforms, delete_all_cases
 from casexml.apps.case.models import CommCareCase
 from custom.uth.const import UTH_DOMAIN, UTH_CASE_TYPE
 from couchdbkit import MultipleResultsFound
+from io import open
 
 
 class UTHTests(TestCase):

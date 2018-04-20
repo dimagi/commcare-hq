@@ -10,6 +10,7 @@ from dimagi.utils.chunked import chunked
 from corehq.apps.hqcase.utils import bulk_update_cases
 
 from custom.enikshay.duplicate_ids import get_duplicated_case_stubs, add_debug_info_to_cases
+from io import open
 
 
 class Command(BaseCommand):

@@ -9,6 +9,7 @@ from django.core.management import BaseCommand, CommandError
 from corehq.blobs.migrate import MIGRATIONS
 from corehq.util.decorators import change_log_level
 from corehq.util.teeout import tee_output
+from io import open
 
 
 USAGE = """Usage: ./manage.py run_blob_migration [options] <slug>

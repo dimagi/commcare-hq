@@ -39,6 +39,7 @@ from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
+from io import open
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('biyeun', 'dimagi.com'),

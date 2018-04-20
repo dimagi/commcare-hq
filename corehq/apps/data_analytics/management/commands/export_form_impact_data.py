@@ -15,6 +15,7 @@ from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
 import six
+from io import open
 
 class Command(BaseCommand):
     """

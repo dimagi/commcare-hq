@@ -24,6 +24,7 @@ from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
 import six
+from io import open
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'

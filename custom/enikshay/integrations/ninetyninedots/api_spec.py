@@ -34,6 +34,7 @@ from custom.enikshay.integrations.ninetyninedots.exceptions import \
 from dimagi.ext.jsonobject import StrictJsonObject
 from memoized import memoized
 from dimagi.utils.modules import to_function
+from io import open
 
 DIRECTION_OUTBOUND = 1
 DIRECTION_INBOUND = 2

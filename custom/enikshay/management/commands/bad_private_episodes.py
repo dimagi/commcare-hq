@@ -14,6 +14,7 @@ from custom.enikshay.case_utils import (
     get_all_occurrence_cases_from_person,
     iter_all_active_person_episode_cases,
 )
+from io import open
 
 
 class Command(BaseCommand):

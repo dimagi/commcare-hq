@@ -10,6 +10,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 
 from corehq.sql_db.connections import connection_manager
+from io import open
 
 PERSON_TABLE_ID = 'static-person_cases_v2'
 AWC_LOCATION_TABLE_ID = 'static-awc_location'

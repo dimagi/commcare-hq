@@ -7,6 +7,7 @@ from django.core.management.base import BaseCommand
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.tasks import rebuild_indicators
 from dimagi.utils.decorators.log_exception import log_exception
+from io import open
 
 
 class Command(BaseCommand):

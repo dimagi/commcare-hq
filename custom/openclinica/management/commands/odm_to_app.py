@@ -24,6 +24,7 @@ from custom.openclinica.const import (
     CC_ENROLLMENT_DATE,
 )
 from custom.openclinica.utils import odm_nsmap, quote_nan
+from io import open
 
 
 # Map ODM data types to ODK XForm data types

@@ -18,6 +18,7 @@ from corehq.util.log import with_progress_bar
 
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.case_utils import CASE_TYPE_PERSON
+from io import open
 
 
 class Command(BaseCommand):

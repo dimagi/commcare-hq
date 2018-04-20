@@ -9,6 +9,7 @@ from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
     SpreadsheetFileNotFound, SpreadsheetFileInvalidError, SpreadsheetFileEncrypted
+from io import open
 
 # Got this from running hexdump and then googling
 # which matched something on https://en.wikipedia.org/wiki/List_of_file_signatures:

@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from lxml import etree
 import os
 from corehq.apps.app_manager.models import Application, RemoteApp
+from io import open
 
 try:
     from guppy import hpy

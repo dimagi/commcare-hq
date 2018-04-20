@@ -22,6 +22,7 @@ from dimagi.utils.django.email import send_HTML_email
 
 from soil.util import ExposeBlobDownload
 from couchexport.models import Format
+from io import open
 
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'

@@ -5,6 +5,7 @@ from django.core.management.base import BaseCommand
 import csv
 
 from corehq.apps.data_analytics.models import MALTRow
+from io import open
 
 
 class Command(BaseCommand):

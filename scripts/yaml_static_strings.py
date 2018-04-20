@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import argparse
 import yaml
 import six
+from io import open
 
 parser = argparse.ArgumentParser(
     description='''

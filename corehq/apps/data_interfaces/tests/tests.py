@@ -20,6 +20,7 @@ from corehq.apps.users.models import WebUser
 from corehq.apps.data_interfaces.utils import archive_forms_old
 from corehq import privileges, toggles
 import six
+from io import open
 
 THISDIR = dirname(abspath(__file__))
 BASE_PATH = join(THISDIR, 'files')

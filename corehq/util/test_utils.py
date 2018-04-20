@@ -18,6 +18,7 @@ from django.conf import settings
 
 from corehq.util.context_managers import drop_connected_signals
 from corehq.util.decorators import ContextDecorator
+from io import open
 
 
 WrappedJsonFormPair = namedtuple('WrappedJsonFormPair', ['wrapped_form', 'json_form'])
@@ -117,7 +118,7 @@ class TestFileMixin(object):
 
     @classmethod
     def get_xml(cls, name, override_path=None):
-        return cls.get_file(name, '.xml', override_path)
+        return cls.get_file(name, '.xml', override_path).encode('utf-8')
 
 
 def flag_enabled(toggle_class_string):

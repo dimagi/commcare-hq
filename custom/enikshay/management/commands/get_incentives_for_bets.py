@@ -9,6 +9,7 @@ from django.core.management.base import BaseCommand
 from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 import six
+from io import open
 
 
 class Command(BaseCommand):

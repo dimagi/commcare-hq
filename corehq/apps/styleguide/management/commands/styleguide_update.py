@@ -5,6 +5,7 @@ from pycco.main import template, parse, highlight, re, destination
 import os
 from django.core.management.base import BaseCommand
 from django.conf import settings
+from io import open
 
 EXAMPLES_PATH = 'corehq/apps/styleguide/examples/'
 TEMPLATE_PATH = 'corehq/apps/styleguide/templates/styleguide/examples'

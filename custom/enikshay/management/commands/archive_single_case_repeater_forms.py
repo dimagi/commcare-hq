@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.form_processor.models import UserRequestedRebuild
 from corehq.util.log import with_progress_bar
 from couchforms.signals import xform_archived
+from io import open
 
 domain = "enikshay"
 

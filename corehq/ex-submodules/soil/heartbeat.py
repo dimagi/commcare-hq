@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.core.cache import cache
+from io import open
 
 NOT_FOUND = "None found"
 NOT_CONFIGURED = "Not configured."

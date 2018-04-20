@@ -11,6 +11,7 @@ from corehq.motech.repeaters.models import Repeater, RepeatRecord
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from custom.enikshay.integrations.utils import is_valid_episode_submission
 from six.moves import input
+from io import open
 
 domain = 'enikshay'
 

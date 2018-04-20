@@ -15,6 +15,7 @@ from corehq.motech.repeaters.models import RepeatRecord
 from corehq.util.log import with_progress_bar
 from custom.enikshay.case_utils import (get_adherence_cases_from_episode,
                                         get_person_case_from_episode)
+from io import open
 
 
 class Command(BaseCommand):

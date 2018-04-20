@@ -19,6 +19,7 @@ from custom.enikshay.case_utils import (
     CASE_TYPE_TEST,
 )
 from custom.enikshay.case_utils import update_case
+from io import open
 
 DOMAIN = "enikshay"
 

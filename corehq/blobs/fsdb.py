@@ -16,6 +16,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter
+from io import open
 
 CHUNK_SIZE = 4096
 

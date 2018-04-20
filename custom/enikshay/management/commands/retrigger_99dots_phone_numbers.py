@@ -9,6 +9,7 @@ from corehq.apps.es import CaseSearchES
 
 from custom.enikshay.case_utils import get_open_episode_case_from_person
 from custom.enikshay.exceptions import ENikshayCaseNotFound
+from io import open
 
 
 class Command(BaseCommand):

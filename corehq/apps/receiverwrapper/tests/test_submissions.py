@@ -16,6 +16,7 @@ import os
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.form_processor.tests.utils import use_sql_backend, FormProcessorTestUtils
 import six
+from io import open
 
 
 class SubmissionTest(TestCase):

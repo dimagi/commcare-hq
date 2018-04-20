@@ -10,6 +10,7 @@ from django.core.files.uploadedfile import UploadedFile
 from custom.uth.const import UTH_DOMAIN
 import re
 import six
+from io import open
 
 
 def scan_case(scanner_serial, scan_id):

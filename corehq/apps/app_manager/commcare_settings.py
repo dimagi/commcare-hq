@@ -9,6 +9,7 @@ from corehq.apps.app_manager import static_strings
 import os
 import yaml
 import six
+from io import open
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [

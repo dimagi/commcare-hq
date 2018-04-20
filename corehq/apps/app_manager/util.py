@@ -37,6 +37,7 @@ from dimagi.utils.couch import CriticalSection
 from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 import six
+from io import open
 
 
 logger = logging.getLogger(__name__)

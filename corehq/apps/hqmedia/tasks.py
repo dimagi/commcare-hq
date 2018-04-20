@@ -14,6 +14,7 @@ from corehq.util.files import file_extention_from_filename
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
 from soil.util import expose_file_download, expose_cached_download
+from io import open
 
 logging = get_task_logger(__name__)
 

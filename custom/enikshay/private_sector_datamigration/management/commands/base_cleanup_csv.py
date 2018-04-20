@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import csv
 
 from django.core.management import BaseCommand
+from io import open
 
 
 class BaseCleanupCSVCommand(BaseCommand):

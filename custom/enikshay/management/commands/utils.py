@@ -18,6 +18,7 @@ from custom.enikshay.case_utils import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
+from io import open
 
 
 def get_result_recorded_form(test):

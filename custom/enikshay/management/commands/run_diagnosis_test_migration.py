@@ -11,6 +11,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from custom.enikshay.case_utils import get_occurrence_case_from_episode, get_person_case_from_episode
 from custom.enikshay.const import ENROLLED_IN_PRIVATE
 from custom.enikshay.exceptions import ENikshayCaseNotFound, NikshayLocationNotFound
+from io import open
 
 
 class Command(BaseCommand):

@@ -22,6 +22,7 @@ from custom.enikshay.const import VOUCHER_ID
 from custom.enikshay.integrations.bets.repeater_generators import VoucherPayload
 from custom.enikshay.integrations.bets.views import VoucherUpdate
 from six.moves import map
+from io import open
 
 
 class Command(BaseCommand):

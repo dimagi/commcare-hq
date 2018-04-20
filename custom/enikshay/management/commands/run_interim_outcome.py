@@ -20,6 +20,7 @@ from custom.enikshay.const import (
 )
 from custom.enikshay.exceptions import ENikshayCaseNotFound
 from six.moves import range
+from io import open
 
 
 class Command(BaseCommand):

@@ -7,6 +7,7 @@ from corehq.apps.locations.models import SQLLocation
 from custom.enikshay.integrations.bets.repeaters import BETSLocationRepeater
 from custom.enikshay.integrations.bets.utils import get_bets_location_json
 from six.moves import map
+from io import open
 
 
 class Command(BaseCommand):

@@ -11,6 +11,7 @@ from corehq.util.log import with_progress_bar
 from custom.enikshay.integrations.bets.repeater_generators import BETSUserPayloadGenerator
 from custom.enikshay.integrations.bets.repeaters import BETSUserRepeater
 from six.moves import map
+from io import open
 
 
 class Command(BaseCommand):

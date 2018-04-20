@@ -6,6 +6,7 @@ import os
 from django.core.management import BaseCommand
 from casexml.apps.phone.checksum import Checksum
 from six.moves import range
+from io import open
 
 
 class Command(BaseCommand):

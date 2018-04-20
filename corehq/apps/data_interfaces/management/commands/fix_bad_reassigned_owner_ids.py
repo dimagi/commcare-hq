@@ -17,6 +17,7 @@ from corehq.elastic import ESError
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.util.log import with_progress_bar
+from io import open
 
 
 class Command(BaseCommand):
