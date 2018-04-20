@@ -10,7 +10,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchexport.models import SavedExportSchema
 from toggle.shortcuts import toggle_enabled, clear_toggle_cache, set_toggle
 
-from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.util.test_utils import TestFileMixin, generate_cases
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.export.models import (
@@ -53,32 +53,6 @@ from corehq.apps.export.dbaccessors import (
 )
 
 MockRequest = namedtuple('MockRequest', 'domain')
-
-
-@mock.patch(
-    'corehq.apps.export.utils.stale_get_export_count',
-    return_value=0,
-)
-class TestMigrateDomain(TestCase):
-    """
-    This tests some specifics of migrate_domain that do not have to do with
-    the actual conversion process. That is tested in another test class
-    """
-    domain = 'test-migrate-domain'
-
-    def setUp(self):
-        self.project = Domain(name=self.domain)
-        self.project.save()
-        clear_toggle_cache(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN)
-        set_toggle(OLD_EXPORTS.slug, self.domain, True, namespace=NAMESPACE_DOMAIN)
-
-    def tearDown(self):
-        self.project.delete()
-
-    def test_toggle_turned_on(self, _):
-        self.assertTrue(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
-        migrate_domain(self.domain)
-        self.assertFalse(toggle_enabled(OLD_EXPORTS.slug, self.domain, namespace=NAMESPACE_DOMAIN))
 
 
 class TestIsFormStockExportQuestion(SimpleTestCase):
