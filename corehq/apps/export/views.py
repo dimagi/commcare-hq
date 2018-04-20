@@ -18,8 +18,7 @@ from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
-from corehq.apps.analytics.tasks import send_hubspot_form, \
-    HUBSPOT_CREATED_EXPORT_FORM_ID, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
+from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
@@ -48,10 +47,7 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.utils import (
-    convert_saved_export_to_export_instance,
-    revert_new_exports,
-)
+from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import generate_schema_for_all_builds
 from corehq.apps.export.exceptions import (
@@ -88,14 +84,12 @@ from corehq.apps.export.const import (
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
-    get_case_export_instances,
     get_properly_wrapped_export_instance,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
-from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
@@ -117,14 +111,12 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import SavedExportSchema, ExportSchema
-from couchexport.schema import build_latest_schema
+from couchexport.models import SavedExportSchema
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop, ugettext_lazy
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response, get_url_base
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.undo import DELETED_SUFFIX
@@ -285,94 +277,6 @@ class BaseExportView(BaseProjectDataView):
             return HttpResponseRedirect(url)
 
 
-class BaseCreateCustomExportView(BaseExportView):
-    """
-    todo: Refactor in v2 of redesign
-    """
-
-    @method_decorator(require_can_edit_data)
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseCreateCustomExportView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    @memoized
-    def export_helper(self):
-        return make_custom_export_helper(
-            self.request, self.export_type, domain=self.domain)
-
-    def commit(self, request):
-        export_id = self.export_helper.update_custom_export()
-        messages.success(
-            request,
-            mark_safe(
-                _("Export <strong>{}</strong> created.").format(
-                    self.export_helper.custom_export.name
-                )
-            )
-        )
-        send_hubspot_form(HUBSPOT_CREATED_EXPORT_FORM_ID, request)
-        return export_id
-
-    def get(self, request, *args, **kwargs):
-        # just copying what was in the old django view here. don't want to mess too much with exports just yet.
-        try:
-            export_tag = [self.domain, json.loads(request.GET.get("export_tag", "null") or "null")]
-        except ValueError:
-            return HttpResponseBadRequest()
-
-        if self.export_helper.export_type == "form" and not export_tag[1]:
-            return HttpResponseRedirect(reverse(FormExportListView.urlname, args=(self.domain,)))
-
-        schema = build_latest_schema(export_tag)
-
-        if not schema and self.export_helper.export_type == "form":
-            schema = create_basic_form_checkpoint(export_tag)
-
-        if request.GET.get('minimal', False):
-            # minimal mode is a HACK so that some large domains can
-            # load this page. halp.
-            messages.warning(request,
-                _("Warning you are using minimal mode, some things may not be functional"))
-
-        if schema:
-            app_id = request.GET.get('app_id')
-            self.export_helper.custom_export = self.export_helper.ExportSchemaClass.default(
-                schema=schema,
-                name=_("{export_name} (created {date})").format(
-                    export_name=(xmlns_to_name(self.domain, export_tag[1], app_id=app_id)
-                                 if self.export_helper.export_type == "form" else export_tag[1]),
-                    date=json_format_date(datetime.utcnow())
-                ),
-                type=self.export_helper.export_type
-            )
-            if self.export_helper.export_type in ['form', 'case']:
-                self.export_helper.custom_export.app_id = app_id
-            if self.export_helper.export_type == 'form':
-                self.export_helper.custom_export.update_question_schema()
-
-            return super(BaseCreateCustomExportView, self).get(request, *args, **kwargs)
-
-        messages.warning(
-            request, _(
-                '<strong>No data found to export "%s".</strong> '
-                'Please submit data before creating this export.'
-            ) % xmlns_to_name(
-                self.domain, export_tag[1], app_id=None), extra_tags="html")
-        return HttpResponseRedirect(self.export_home_url)
-
-
-class CreateCustomFormExportView(BaseCreateCustomExportView):
-    urlname = 'custom_export_form'
-    page_title = ugettext_lazy("Create Form Export")
-    export_type = 'form'
-
-
-class CreateCustomCaseExportView(BaseCreateCustomExportView):
-    urlname = 'custom_export_case'
-    page_title = ugettext_lazy("Create Case Export")
-    export_type = 'case'
-
-
 class BaseModifyCustomExportView(BaseExportView):
 
     @method_decorator(require_can_edit_data)
@@ -444,63 +348,6 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
                   "was deleted.").format(saved_export.name)
             )
         )
-
-
-BASIC_FORM_SCHEMA = {
-    "doc_type": "string",
-    "domain": "string",
-    "xmlns": "string",
-    "form": {
-        "@xmlns": "string",
-        "@uiVersion": "string",
-        "@name": "string",
-        "#type": "string",
-        "meta": {
-            "@xmlns": "string",
-            "username": "string",
-            "instanceID": "string",
-            "userID": "string",
-            "timeEnd": "string",
-            "appVersion": {
-                "@xmlns": "string",
-                "#text": "string"
-            },
-            "timeStart": "string",
-            "deviceID": "string"
-        },
-        "@version": "string"
-    },
-    "partial_submission": "string",
-    "_rev": "string",
-    "#export_tag": [
-       "string"
-    ],
-    "received_on": "string",
-    "app_id": "string",
-    "last_sync_token": "string",
-    "submit_ip": "string",
-    "computed_": {
-    },
-    "openrosa_headers": {
-       "HTTP_DATE": "string",
-       "HTTP_ACCEPT_LANGUAGE": "string",
-       "HTTP_X_OPENROSA_VERSION": "string"
-    },
-    "date_header": "string",
-    "path": "string",
-    "computed_modified_on_": "string",
-    "_id": "string"
-}
-
-
-def create_basic_form_checkpoint(index):
-    checkpoint = ExportSchema(
-        schema=BASIC_FORM_SCHEMA,
-        timestamp=datetime(1970, 1, 1),
-        index=index,
-    )
-    checkpoint.save()
-    return checkpoint
 
 
 class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProjectDataView):
