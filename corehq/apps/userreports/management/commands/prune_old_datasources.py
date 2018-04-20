@@ -20,6 +20,11 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
+            '--engine_id',
+            action='store',
+            help='Only check this DB engine',
+        )
+        parser.add_argument(
             '--execute',
             action='store_true',
             default=False,
@@ -34,6 +39,8 @@ class Command(BaseCommand):
         for data_source in data_sources:
             adapter = get_indicator_adapter(data_source)
             if hasattr(adapter, 'engine_id'):
+                if options.get('engine_id') and options['engine_id'] != adapter.engine_id:
+                    continue
                 tables_by_engine[adapter.engine_id].append(adapter.get_table().name)
 
         diffs_by_engine = defaultdict(list)
