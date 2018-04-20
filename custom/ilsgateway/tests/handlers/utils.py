@@ -9,6 +9,7 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import CommCareUser
+from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from custom.ilsgateway.models import ILSGatewayConfig
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
@@ -37,6 +38,7 @@ class ILSTestScript(TestScript):
         super(ILSTestScript, cls).setUpClass()
         cls.sms_backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         domain = prepare_domain(TEST_DOMAIN)
+        USE_SMS_WITH_INACTIVE_CONTACTS.set(TEST_DOMAIN, True, namespace='domain')
         mohsw = make_loc(code="moh1", name="Test MOHSW 1", type="MOHSW", domain=domain.name)
 
         msdzone = make_loc(code="msd1", name="MSD Zone 1", type="MSDZONE",
