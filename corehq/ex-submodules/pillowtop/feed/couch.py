@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ChangesStream
+
+from corehq.apps.change_feed.data_sources import COUCH
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 from pillowtop.utils import force_seq_int
@@ -29,7 +31,9 @@ class CouchChangeFeed(ChangeFeed):
             **extra_args
         )
         for couch_change in changes_stream:
-            yield change_from_couch_row(couch_change, document_store=self._document_store)
+            change = change_from_couch_row(couch_change, document_store=self._document_store)
+            populate_change_metadata(change, COUCH, self._couch_db.dbname)
+            yield change
             self._last_processed_seq = couch_change.get('seq', None)
 
     def get_processed_offsets(self):
@@ -54,6 +58,30 @@ def change_from_couch_row(couch_change, document_store=None):
         deleted=couch_change.get('deleted', False),
         document_store=document_store,
     )
+
+
+def populate_change_metadata(change, data_source_type, data_source_name):
+    from corehq.apps.change_feed.exceptions import MissingMetaInformationError
+    from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document
+    from corehq.apps.change_feed.document_types import change_meta_from_doc_meta_and_document
+
+    if change.metadata:
+        return
+
+    try:
+        document = change.get_document()
+        doc_meta = get_doc_meta_object_from_document(document)
+        change_meta = change_meta_from_doc_meta_and_document(
+            doc_meta=doc_meta,
+            document=document,
+            data_source_type=data_source_type,
+            data_source_name=data_source_name,
+            doc_id=change.id,
+        )
+    except MissingMetaInformationError:
+        pass
+    else:
+        change.metadata = change_meta
 
 
 def get_current_seq(couch_db):
