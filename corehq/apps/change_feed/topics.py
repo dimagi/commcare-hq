@@ -47,6 +47,8 @@ ALL = (
 
 def get_topic_for_doc_type(doc_type, data_source_type=None):
     from corehq.apps.change_feed import document_types
+    from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
+
     if doc_type in document_types.CASE_DOC_TYPES:
         return {
             'sql': CASE_SQL,
@@ -69,6 +71,8 @@ def get_topic_for_doc_type(doc_type, data_source_type=None):
         return SYNCLOG_SQL
     elif doc_type in app_doc_types():
         return APP
+    elif doc_type == LOCATION_DOC_TYPE:
+        return LOCATION
     elif doc_type in ALL:  # for docs that don't have a doc_type we use the Kafka topic
         return doc_type
     else:
