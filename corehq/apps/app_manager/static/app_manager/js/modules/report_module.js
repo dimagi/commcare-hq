@@ -198,7 +198,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
     function reportConfigModel(reportId, display,
         localizedDescription, xpathDescription, useXpathDescription,
-        showDataTable, syncDelay, uuid, availableReportIds,
+        showDataTable, syncDelay, reportSlug, uuid, availableReportIds,
         reportCharts, graphConfigs, columnXpathTemplate, dataPathPlaceholders,
         filterValues, reportFilters,
         language, languages, changeSaveButton) {
@@ -216,6 +216,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.useXpathDescription = ko.observable(useXpathDescription);
         self.showDataTable = ko.observable(showDataTable);
         self.syncDelay = ko.observable(syncDelay);
+        self.instanceId = ko.observable(reportSlug || uuid);
 
         self.reportId.subscribe(changeSaveButton);
         self.display.subscribe(changeSaveButton);
@@ -224,6 +225,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.useXpathDescription.subscribe(changeSaveButton);
         self.showDataTable.subscribe(changeSaveButton);
         self.syncDelay.subscribe(changeSaveButton);
+        self.instanceId.subscribe(changeSaveButton);
 
         self.graphConfig = graphConfigModel(self.reportId, self.display(), availableReportIds, reportCharts,
             graphConfigs, columnXpathTemplate, dataPathPlaceholders,
@@ -233,7 +235,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         });
         self.filterConfig = filterConfigModel(reportId, self.reportId, filterValues, reportFilters, changeSaveButton);
 
-        self.validate = ko.computed(function() {
+        self.validateDisplay = ko.computed(function() {
             if (!self.display()) {
                 return gettext("Display text is required");
             }
@@ -253,6 +255,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 use_xpath_description: self.useXpathDescription(),
                 show_data_table: self.showDataTable(),
                 sync_delay: self.syncDelay(),
+                // only pass instanceId if it was manually specified
+                report_slug: (self.instanceId() && self.instanceId() !== self.uuid) ? self.instanceId() : null,
                 uuid: self.uuid,
             };
         };
@@ -277,7 +281,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        self.supportSyncDelay = options.supportSyncDelay;
+        self.supportSyncDelay = options.mobileUcrVersion !== 1;
+        self.supportCustomUcrSlug = options.mobileUcrVersion >= 2;
         self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;
@@ -325,6 +330,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.saveButton = hqImport("hqwebapp/js/main").initSaveButton({
             unsavedMessage: gettext("You have unsaved changes in your report list module"),
             save: function () {
+
                 self.moduleName[self.lang] = self.currentModuleName();
 
                 var filter = self.currentModuleFilter().trim();
@@ -362,6 +368,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
                 options.use_xpath_description,
                 options.show_data_table,
                 options.sync_delay,
+                options.report_slug,
                 options.uuid,
                 self.availableReportIds,
                 self.reportCharts,
@@ -383,10 +390,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
 
             return report;
         }
-        this.addReport = function () {
+        self.addReport = function () {
             self.reports.push(newReport());
         };
-        this.removeReport = function (report) {
+        self.removeReport = function (report) {
             self.reports.remove(report);
             self.changeSaveButton();
         };
@@ -395,6 +402,29 @@ hqDefine('app_manager/js/modules/report_module', function () {
         for (i = 0; i < currentReports.length; i += 1) {
             self.reports.push(newReport(currentReports[i]));
         }
+
+        var getInstanceIdsInThisModule = function () {
+            return _.map(self.reports(), function (r) {return r.instanceId();});
+        };
+
+        // flag instance ids with uuids outside this module
+        var uuidsByInstanceId = hqImport('hqwebapp/js/initial_page_data').get('uuids_by_instance_id'),
+            uuidsInThisModule = _.pluck(self.reports(), 'uuid'),
+            instanceIdsElsewhere = _.chain(uuidsByInstanceId)
+                .pairs()
+                .filter(function (idPair) { return _.difference(idPair[1], uuidsInThisModule).length; })
+                .map(_.first)
+                .value();
+
+        self.validateSlug = function (instanceId) {
+            var allInstanceIds = instanceIdsElsewhere.concat(getInstanceIdsInThisModule()),
+                isDuplicate = _.filter(allInstanceIds, function (iid) {return iid === instanceId;})
+                              .length > 1;
+            if (isDuplicate) {
+                return gettext("This code is used in multiple places.");
+            }
+            return "";
+        };
 
         return self;
     }
