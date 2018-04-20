@@ -37,6 +37,7 @@ def open_xlsx_workbook(filename):
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
                 raise SpreadsheetFileEncrypted('Workbook is encrypted')
             else:
+                raise
                 raise SpreadsheetFileInvalidError(e.message)
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
 
