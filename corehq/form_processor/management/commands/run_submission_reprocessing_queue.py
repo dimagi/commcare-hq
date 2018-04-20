@@ -8,7 +8,7 @@ from django.db.models import Q
 
 from corehq.util.datadog.gauges import datadog_gauge
 from couchforms.models import UnfinishedSubmissionStub
-from hqscripts.generic_queue import GenericEnqueuingOperation
+from hqscripts.generic_queue import GenericEnqueuingOperation, QueueItem
 from corehq.form_processor.tasks import reprocess_submission
 
 ENQUEUING_TIMEOUT = 14 * 24 * 60    # 14 days (in minutes)
@@ -43,15 +43,15 @@ class SubmissionReprocessingEnqueuingOperation(GenericEnqueuingOperation):
                 date_queued=utcnow, attempts=F('attempts') + 1
             )
         return [
-            {'id': stub_id, 'key': ''}
+            QueueItem(stub_id, '')
             for stub_id in stub_ids
         ]
 
     def use_queue(self):
         return settings.SUBMISSION_REPROCESSING_QUEUE_ENABLED
 
-    def enqueue_item(self, item_id):
-        reprocess_submission.delay(item_id)
+    def enqueue_item(self, item):
+        reprocess_submission.delay(item.id)
 
 
 class Command(SubmissionReprocessingEnqueuingOperation):

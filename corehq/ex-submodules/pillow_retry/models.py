@@ -56,14 +56,18 @@ class PillowError(models.Model):
         app_label = 'pillow_retry'
         unique_together = ('doc_id', 'pillow',)
 
-    def add_attempt(self, exception, traceb, date=None):
-        self.current_attempt += 1
-        self.total_attempts += 1
-        self.date_last_attempt = date or datetime.utcnow()
-        self.error_type = path_from_object(exception)
+    def add_attempt(self, exception, traceb, change_meta=None, date=None):
+        new_attempts = change_meta.attempts if change_meta else 1
 
+        self.current_attempt += new_attempts
+        self.total_attempts += new_attempts
+        self.date_last_attempt = date or datetime.utcnow()
+        self.calculate_next_attempt()
+
+        self.error_type = path_from_object(exception)
         self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
 
+    def calculate_next_attempt(self):
         if self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
             time_till_next = settings.PILLOW_RETRY_REPROCESS_INTERVAL * math.pow(self.current_attempt, settings.PILLOW_RETRY_BACKOFF_FACTOR)
             self.date_next_attempt = self.date_last_attempt + timedelta(minutes=time_till_next)
@@ -92,18 +96,17 @@ class PillowError(models.Model):
                 doc_id=doc_id,
                 pillow=pillow.pillow_id,
                 date_created=now,
+                change=change.to_dict(),
                 date_last_attempt=now,
                 date_next_attempt=now,
-                change=change.to_dict()
             )
-
             if change.metadata:
                 error.change_metadata = change.metadata.to_json()
 
         return error
 
     @classmethod
-    def get_errors_to_process(cls, utcnow, limit=None, skip=0, fetch_full=False):
+    def get_errors_to_process(cls, utcnow, limit=None, skip=0):
         """
         Get errors according the following rules:
 
@@ -122,8 +125,6 @@ class PillowError(models.Model):
         :param utcnow:      The current date and time in UTC.
         :param limit:       Paging limit param.
         :param skip:        Paging skip param.
-        :param fetch_full:  If True return the whole PillowError object otherwise return a
-                            a dict containing 'id' and 'date_next_attempt' keys.
         """
         max_attempts = settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         multi_attempts_cutoff = cls.multi_attempts_cutoff()
@@ -137,8 +138,6 @@ class PillowError(models.Model):
         # temporarily disable queuing of ConfigurableReportKafkaPillow errors
         query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow'))
 
-        if not fetch_full:
-            query = query.values('id', 'date_next_attempt')
         if limit is not None:
             return query[skip:skip+limit]
         else:
@@ -162,21 +161,3 @@ class PillowError(models.Model):
             current_attempt=0,
             date_next_attempt=datetime.utcnow()
         )
-
-    @classmethod
-    def get_pillows(cls):
-        results = PillowError.objects.values('pillow').annotate(count=Count('pillow'))
-        return (p['pillow'] for p in results)
-
-    @classmethod
-    def get_error_types(cls):
-        results = PillowError.objects.values('error_type').annotate(count=Count('error_type'))
-        return (e['error_type'] for e in results)
-
-
-# Stub models file, also used in tests
-from dimagi.ext.couchdbkit import Document
-
-
-class Stub(Document):
-    pass
