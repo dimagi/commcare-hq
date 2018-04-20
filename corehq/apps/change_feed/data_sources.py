@@ -16,6 +16,8 @@ from couchforms.models import all_known_formlike_doc_types
 from pillowtop.dao.couch import CouchDocumentStore
 
 SOURCE_COUCH = 'couch'
+SOURCE_SQL = 'sql'
+
 FORM_SQL = 'form-sql'
 CASE_SQL = 'case-sql'
 SMS = 'sms'
@@ -26,6 +28,8 @@ SYNCLOG_SQL = 'synclog-sql'
 
 
 def get_document_store(data_source_type, data_source_name, domain):
+    # change this to just 'data_source_name' after June 2018
+    type_or_name = (data_source_type, data_source_name)
     if data_source_type == SOURCE_COUCH:
         try:
             return CouchDocumentStore(couch_config.get_db_for_db_name(data_source_name))
@@ -34,19 +38,19 @@ def get_document_store(data_source_type, data_source_name, domain):
             if settings.DEBUG:
                 return None
             raise
-    elif data_source_type == FORM_SQL:
+    elif FORM_SQL in type_or_name:
         return ReadonlyFormDocumentStore(domain)
-    elif data_source_type == CASE_SQL:
+    elif CASE_SQL in type_or_name:
         return ReadonlyCaseDocumentStore(domain)
-    elif data_source_type == SMS:
+    elif SMS in type_or_name:
         return ReadonlySMSDocumentStore()
-    elif data_source_type == LEDGER_V2:
+    elif LEDGER_V2 in type_or_name:
         return ReadonlyLedgerV2DocumentStore(domain)
-    elif data_source_type == LEDGER_V1:
+    elif LEDGER_V1 in type_or_name:
         return LedgerV1DocumentStore(domain)
-    elif data_source_type == LOCATION:
+    elif LOCATION in type_or_name:
         return ReadonlyLocationDocumentStore(domain)
-    elif data_source_type == SYNCLOG_SQL:
+    elif SYNCLOG_SQL in type_or_name:
         return ReadonlySyncLogDocumentStore()
     else:
         raise UnknownDocumentStore(
@@ -58,6 +62,7 @@ def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None):
     """Only applies to documents that have a document type:
     * forms
     * cases
+    * locations
     * all couch models
     """
     from corehq.apps.change_feed import document_types

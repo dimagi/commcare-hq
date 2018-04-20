@@ -7,7 +7,7 @@ from pillowtop.dao.exceptions import DocumentNotFoundError
 from pillowtop.dao.interface import ReadOnlyDocumentStore
 from pillowtop.feed.interface import ChangeMeta
 
-from corehq.apps.change_feed import topics
+from corehq.apps.change_feed import topics, data_sources
 from corehq.apps.change_feed.producer import producer
 
 from .models import SQLLocation
@@ -38,8 +38,8 @@ class ReadonlyLocationDocumentStore(ReadOnlyDocumentStore):
 def publish_location_saved(domain, location_id, is_deletion=False):
     change_meta = ChangeMeta(
         document_id=location_id,
-        data_source_type='location',
-        data_source_name='location',
+        data_source_type=data_sources.SOURCE_SQL,
+        data_source_name=data_sources.LOCATION,
         document_type=LOCATION_DOC_TYPE,
         domain=domain,
         is_deletion=is_deletion,
