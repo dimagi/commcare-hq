@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 
-import csv342 as csv
+import csv
 
 from corehq.apps.data_analytics.models import MALTRow
 

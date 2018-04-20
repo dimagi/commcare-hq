@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from django.core.management import BaseCommand
 from corehq.apps.domain.models import Domain
-import csv342 as csv
+import csv
 import sys
 
 

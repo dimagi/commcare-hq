@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv342 as csv
+import csv
 
 from django.core.management import BaseCommand
 

@@ -3,7 +3,7 @@ from __future__ import (
     absolute_import,
     unicode_literals,
 )
-import csv342 as csv
+import csv
 import os
 import tempfile
 from zipfile import ZipFile
