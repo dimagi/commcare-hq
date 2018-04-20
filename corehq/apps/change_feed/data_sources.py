@@ -15,7 +15,7 @@ from corehq.util.exceptions import DatabaseNotFound
 from couchforms.models import all_known_formlike_doc_types
 from pillowtop.dao.couch import CouchDocumentStore
 
-COUCH = 'couch'
+SOURCE_COUCH = 'couch'
 FORM_SQL = 'form-sql'
 CASE_SQL = 'case-sql'
 SMS = 'sms'
@@ -26,7 +26,7 @@ SYNCLOG_SQL = 'synclog-sql'
 
 
 def get_document_store(data_source_type, data_source_name, domain):
-    if data_source_type == COUCH:
+    if data_source_type == SOURCE_COUCH:
         try:
             return CouchDocumentStore(couch_config.get_db_for_db_name(data_source_name))
         except DatabaseNotFound:
