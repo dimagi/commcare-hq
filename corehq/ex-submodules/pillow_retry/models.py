@@ -57,11 +57,7 @@ class PillowError(models.Model):
         unique_together = ('doc_id', 'pillow',)
 
     def add_attempt(self, exception, traceb, change_meta=None, date=None):
-        if change_meta:
-            new_attempts = change_meta.attempts
-            self.change_metadata = change_meta.to_json()
-        else:
-            new_attempts = 1
+        new_attempts = change_meta.attempts if change_meta else 1
 
         self.current_attempt += new_attempts
         self.total_attempts += new_attempts
