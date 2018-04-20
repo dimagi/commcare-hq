@@ -41,6 +41,13 @@ class ChangeMeta(jsonobject.JsonObject):
     last_error_type = jsonobject.StringProperty()
     last_error_traceback = jsonobject.StringProperty()
 
+    def clear_retry_info(self):
+        self.date_last_attempt = None
+        self.attempts = 0
+        self.attempts_by_error = {}
+        self.last_error_type = None
+        self.last_error_traceback = None
+
 
 class Change(object):
     """
