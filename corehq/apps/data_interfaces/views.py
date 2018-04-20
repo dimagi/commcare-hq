@@ -5,6 +5,8 @@ import csv
 import io
 import json
 import uuid
+
+import six
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
@@ -268,7 +270,7 @@ class ArchiveFormView(DataInterfaceSection):
             messages.success(self.request, _("We received your file and are processing it. "
                                              "You will receive an email when it has finished."))
         except BulkUploadCasesException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
         return None
 
     def post(self, request, *args, **kwargs):
@@ -764,8 +766,7 @@ class AddAutomaticUpdateRuleView(HQJSONResponseMixin, DataInterfaceSection):
 
     @allow_remote_invocation
     def get_case_property_map(self):
-        data = all_case_properties_by_domain(self.domain,
-            include_parent_properties=False)
+        data = all_case_properties_by_domain(self.domain, include_parent_properties=False)
         return {
             'data': data,
             'success': True,

@@ -202,7 +202,7 @@ class WorkbookJSONReader(object):
         try:
             self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
         except (BadZipfile, InvalidFileException) as e:
-            raise InvalidExcelFileException(e.message)
+            raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}
         self.worksheets = []
 

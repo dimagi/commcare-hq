@@ -121,6 +121,7 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
+MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -1226,7 +1227,15 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        }
+        },
+        'main_couch_sql_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': MAIN_COUCH_SQL_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -2030,6 +2039,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
@@ -2358,6 +2368,7 @@ if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
         'changeme',  # default value in localsettings.example.py
         'staging',
         'softlayer',
+        'production',
     ]
 else:
     IS_LOCATION_CTE_ONLY = False

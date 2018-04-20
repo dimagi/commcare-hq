@@ -217,7 +217,7 @@ class BaseDrilldownOptionFilter(BaseReportFilter):
             ]
         """
         raise NotImplementedError("drilldown_map must be implemented")
-    
+
     @classmethod
     def get_labels(cls):
         """

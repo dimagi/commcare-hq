@@ -2886,7 +2886,7 @@ class DailyOutboundSMSLimitReached(models.Model):
     """
 
     # The domain name that reached its daily outbound SMS limit as defined
-    # on Domain.daily_outbound_sms_limit. This can be empty string if
+    # on Domain.get_daily_outbound_sms_limit(). This can be empty string if
     # we reached the limit for outbound SMS not tied to a domain.
     domain = models.CharField(max_length=126)
 

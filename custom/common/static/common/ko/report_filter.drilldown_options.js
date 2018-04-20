@@ -1,7 +1,7 @@
 /* globals drilldownFinalNotification */
 
 //probably we need clear this file
-//copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/report_filter.drilldown_options.js
+//copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/filters/drilldown_options.js
 
 ko.bindingHandlers.select2 = {
     init: function(el, valueAccessor, allBindingsAccessor, viewModel) {

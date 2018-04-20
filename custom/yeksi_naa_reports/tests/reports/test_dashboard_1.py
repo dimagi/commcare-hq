@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
@@ -17,7 +18,6 @@ class TestDashboard1(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
@@ -29,30 +29,30 @@ class TestDashboard1(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018', 'Avg. Availability']
+            ['Région', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['New Test Region', '50.00%', '50.00%', '0.00%', '0.00%', '50.00%', '100.00%', '41.67%'],
-                ['Region Test', '100.00%', 'no data entered', '100.00%', '100.00%', '100.00%',
-                 'no data entered', '100.00%'],
-                ['Region 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '50.00%', '50.00%'],
-                ['Saint-Louis', '75.00%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '75.00%'],
-                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%', '100.00%'],
-                ['Fatick', 'no data entered', '33.33%', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '33.33%'],
-                ['Thies', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '87.50%', '87.50%']
+                [u'New Test Region', u'50.00%', u'50.00%', u'0.00%', u'0.00%', u'50.00%', u'100.00%', u'41.67%'],
+                [u'Region Test', u'100.00%', u'pas de données', u'100.00%', u'100.00%', u'100.00%',
+                 u'pas de données', u'100.00%'],
+                [u'Region 1', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'50.00%', u'50.00%'],
+                [u'Saint-Louis', u'75.00%', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'75.00%'],
+                [u'Dakar', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%', u'100.00%'],
+                [u'Fatick', u'pas de données', u'33.33%', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'33.33%'],
+                [u'Thies', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'87.50%', u'87.50%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Availability (%)', '83.33%', '40.00%', '33.33%', '66.67%', '83.33%', '88.89%', '76.00%']
+            [u'Disponibilité (%)', u'83.33%', u'40.00%', u'33.33%', u'66.67%', u'83.33%', u'88.89%', u'76.00%']
         )
 
     def test_availability_report_pps_level(self):
@@ -64,7 +64,6 @@ class TestDashboard1(YeksiTestCase):
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
@@ -76,18 +75,18 @@ class TestDashboard1(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018', 'February 2018',
-             'March 2018', 'Avg. Availability']
+            [u'PPS', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['P2', '100%', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%']
+                [u'P2', u'100%', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Availability (%)', '100.00%', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered', '100.00%']
+            [u'Disponibilité (%)', u'100.00%', u'pas de données', u'pas de données', u'pas de données',
+             u'pas de données', u'pas de données', u'100.00%']
         )

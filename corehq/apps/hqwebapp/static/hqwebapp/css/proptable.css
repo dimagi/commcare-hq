@@ -21,15 +21,15 @@
     border-radius: 4px 4px 0 0;
 }
 
-.case-properties-table ul {
+.form-case-changes ul {
     list-style-type: none;
 }
 
-.case-properties-table ul li {
+.form-case-changes ul li {
     margin: 0;
 }
 
-.case-properties-table > dl {
+.form-case-changes > dl {
     word-wrap: break-word;
     word-break: break-all;
     float: left;
@@ -39,15 +39,15 @@
     font-size: 100%;
 }
 
-.case-properties-table > dl:not(:last-child) {
+.form-case-changes > dl:not(:last-child) {
     margin-right: 20px;
 }
 
-.case-properties-table > dl dt {
+.form-case-changes > dl dt {
     margin-bottom: 5px;
 }
 
-.case-properties-table > dl dd {
+.form-case-changes > dl dd {
     margin-bottom: 20px;
 }
 
@@ -63,18 +63,30 @@
     max-width: 300px;
 }
 
-.foo-table {
+.case-property-table {
     table-layout: fixed;
     width: auto;
     background-color: #f5f5f5;
     border-radius: 4px;
 }
 
-.foo-table th:nth-child(odd) {
+.case-property-table th:nth-child(odd) {
     text-align: right;
     width: 80px;
 }
 
-.foo-table td:nth-child(even) {
+.case-property-table td:nth-child(even) {
     width: 160px;
+}
+
+.case-property-table a {
+    display: block;
+}
+
+.case-property-name i{
+    display: none;
+}
+
+.case-property-name:hover i{
+    display: inline-block;
 }
