@@ -3,8 +3,8 @@ hqDefine('builds/js/edit-builds', function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         doc = initial_page_data('doc');
 
-    function Version(version, label, superuser_only, j2me_enabled) {
-        var self = this;
+    function versionModel(version, label, superuser_only, j2me_enabled) {
+        var self = {};
         self.version = ko.observable(version);
         self.label = ko.observable(label);
         self.superuser_only = ko.observable(superuser_only);
@@ -17,10 +17,11 @@ hqDefine('builds/js/edit-builds', function () {
                 includes(newValue)
             );
         });
+        return self;
     }
 
-    function Menu() {
-        var self = this;
+    function menuModel() {
+        var self = {};
 
         self.available_versions = initial_page_data('available_versions');
         self.j2me_enabled_versions = initial_page_data('j2me_enabled_versions');
@@ -31,12 +32,12 @@ hqDefine('builds/js/edit-builds', function () {
         self.default_two = ko.observable();
 
         self.addVersion = function() {
-            self.versions.push(new Version('', '', false));
+            self.versions.push(versionModel('', '', false));
         };
         self.removeVersion = function(version) { self.versions.remove(version); };
 
         _.each(doc.menu, function(version) {
-            self.versions.push(new Version(
+            self.versions.push(versionModel(
                 version.build.version, version.label,
                 version.superuser_only, version.j2me_enabled
             ));
@@ -56,6 +57,8 @@ hqDefine('builds/js/edit-builds', function () {
                 self.available_twos.push(version);
             }
         });
+
+        return self;
     }
 
     function outputJSON(menu) {
@@ -83,7 +86,7 @@ hqDefine('builds/js/edit-builds', function () {
         return doc;
     }
 
-    var buildsMenu = new Menu();
+    var buildsMenu = menuModel();
     $("#menu-form").koApplyBindings(buildsMenu);
 
     function postGo(url, params) {
