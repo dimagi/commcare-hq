@@ -19,16 +19,26 @@ class ChangeMeta(jsonobject.JsonObject):
 
     This is only used in kafka-based pillows.
     """
+    _allow_dynamic_properties = False
+
     document_id = DefaultProperty(required=True)
-    document_rev = jsonobject.StringProperty()  # Only relevant for Couch documents
+
+    # Only relevant for Couch documents
+    document_rev = jsonobject.StringProperty()
+
+    # 'couch' or 'sql'
     data_source_type = jsonobject.StringProperty(required=True)
+
+    # couch database name or one of data sources listed in corehq.apps.change_feed.data_sources
     data_source_name = jsonobject.StringProperty(required=True)
+
+    # doc_type property of doc or else the topic name
     document_type = DefaultProperty()
+
     document_subtype = jsonobject.StringProperty()
     domain = jsonobject.StringProperty()
     is_deletion = jsonobject.BooleanProperty()
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
-    _allow_dynamic_properties = False
 
     # track of retry attempts
     attempts = jsonobject.IntegerProperty(default=0)
