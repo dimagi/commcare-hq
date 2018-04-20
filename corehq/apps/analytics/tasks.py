@@ -6,6 +6,7 @@ import os
 from celery.schedules import crontab
 from celery.task import periodic_task
 import tinys3
+from corehq import toggles
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
@@ -245,7 +246,7 @@ def update_hubspot_properties(webuser, properties):
 
 
 @analytics_task()
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path, tracked_fields):
     from corehq.apps.registration.views import ProcessRegistrationView
     if path.startswith(reverse(ProcessRegistrationView.urlname)):
         tracking_dict = {
@@ -262,6 +263,7 @@ def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
                 'atypical_user': True
             })
         tracking_dict.update(get_ab_test_properties(webuser))
+        tracking_dict.update(tracked_fields)
         _track_on_hubspot(webuser, tracking_dict)
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
@@ -595,3 +597,22 @@ def get_ab_test_properties(user):
         'a_b_test_variable_first_submission':
             'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }
+
+
+def get_hubspot_fields_tracked_on_registration(request, username):
+    body_unicode = request.body.decode('utf-8')
+    data = json.loads(body_unicode)['data']
+
+    appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
+                                                      toggles.NAMESPACE_USER)
+
+    hubspot_fields = {
+        "appcues_test": "On" if appcues_ab_test else "Off",
+    }
+
+    if data['persona']:
+        hubspot_fields['buyer_persona'] = data['persona']
+        if data['persona_other']:
+            hubspot_fields['buyer_persona_other'] = data['persona_other']
+
+    return hubspot_fields
