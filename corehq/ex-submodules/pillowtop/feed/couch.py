@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from couchdbkit import ChangesStream
 
-from corehq.apps.change_feed.data_sources import COUCH
 from pillowtop.dao.couch import CouchDocumentStore
 from pillowtop.feed.interface import ChangeFeed, Change
 from pillowtop.utils import force_seq_int
@@ -19,6 +18,7 @@ class CouchChangeFeed(ChangeFeed):
         self._last_processed_seq = None
 
     def iter_changes(self, since, forever):
+        from corehq.apps.change_feed.data_sources import COUCH
         extra_args = {'feed': 'continuous'} if forever else {}
         extra_args.update(self._extra_couch_view_params)
         self._last_processed_seq = since
