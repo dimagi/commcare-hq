@@ -6112,7 +6112,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ModuleNotFoundException as ex:
                 errors.append({
                     "type": "missing module",
-                    "message": ex.message
+                    "message": six.text_type(ex)
                 })
 
         for form in self.get_forms():
