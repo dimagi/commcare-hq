@@ -233,7 +233,6 @@ def get_mvp_case_indicator_pillow(pillow_id='MVPCaseIndicatorPillow'):
 def _get_mvp_indicator_pillow(pillow_id, processor):
     feed = CouchChangeFeed(
         XFormInstance.get_db(),
-        include_docs=True,
         couch_filter='hqadmin/domains_and_doc_types',
         extra_couch_view_params={
             'domains': ' '.join(processor.domains),
