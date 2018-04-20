@@ -5,7 +5,7 @@ import cProfile
 
 from django.core.management.base import BaseCommand
 
-from corehq.apps.userreports.document_stores import get_document_store_for_doc_type
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.management.commands.profile_data_source import print_profile_stats
 from corehq.apps.userreports.models import AsyncIndicator
 from corehq.apps.userreports.specs import EvaluationContext

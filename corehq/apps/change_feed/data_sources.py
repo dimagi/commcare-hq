@@ -3,12 +3,13 @@ from __future__ import unicode_literals
 from django.conf import settings
 from casexml.apps.phone.document_store import ReadonlySyncLogDocumentStore
 from corehq.apps.change_feed.exceptions import UnknownDocumentStore
-from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore
+from corehq.apps.locations.document_store import ReadonlyLocationDocumentStore, LOCATION_DOC_TYPE
 from corehq.apps.sms.document_stores import ReadonlySMSDocumentStore
 from corehq.form_processor.document_stores import (
     ReadonlyFormDocumentStore, ReadonlyCaseDocumentStore, ReadonlyLedgerV2DocumentStore,
     LedgerV1DocumentStore
 )
+from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
 from corehq.util.exceptions import DatabaseNotFound
 from pillowtop.dao.couch import CouchDocumentStore
@@ -49,4 +50,20 @@ def get_document_store(data_source_type, data_source_name, domain):
     else:
         raise UnknownDocumentStore(
             'getting document stores for backend {} is not supported!'.format(data_source_type)
+        )
+
+
+def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None):
+    if doc_type == 'XFormInstance':
+        return ReadonlyFormDocumentStore(domain, xmlns=case_type_or_xmlns)
+    elif doc_type == 'CommCareCase':
+        return ReadonlyCaseDocumentStore(domain, case_type=case_type_or_xmlns)
+    elif doc_type == LOCATION_DOC_TYPE:
+        return ReadonlyLocationDocumentStore(domain)
+    else:
+        # all other types still live in couchdb
+        return CouchDocumentStore(
+            couch_db=get_db_by_doc_type(doc_type),
+            domain=domain,
+            doc_type=doc_type
         )

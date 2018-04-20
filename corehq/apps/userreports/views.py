@@ -68,7 +68,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
 )
-from corehq.apps.userreports.document_stores import get_document_store_for_doc_type
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,

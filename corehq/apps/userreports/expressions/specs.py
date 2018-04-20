@@ -12,7 +12,7 @@ import six
 from corehq.apps.locations.document_store import LOCATION_DOC_TYPE
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX, NAMED_EXPRESSION_PREFIX
 from corehq.apps.userreports.decorators import ucr_context_cache
-from corehq.apps.userreports.document_stores import get_document_store_for_doc_type
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.users.models import CommCareUser
