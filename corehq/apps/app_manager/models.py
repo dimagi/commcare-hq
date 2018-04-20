@@ -53,7 +53,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -85,6 +85,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
@@ -1275,15 +1276,15 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
-    def get_save_to_case_updates(self, case_type):
+    def get_save_to_case_updates(self):
         """
         Get a flat list of case property names from save to case questions
         """
-        updates = set()
+        updates_by_case_type = defaultdict(set)
         for save_to_case_update in self.case_references_data.get_save_references():
-            if save_to_case_update.case_type == case_type:
-                updates |= set(save_to_case_update.properties)
-        return updates
+            case_type = save_to_case_update.case_type
+            updates_by_case_type[case_type].update(save_to_case_update.properties)
+        return updates_by_case_type
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1409,6 +1410,41 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 self.unique_id,
                 "%s is not a valid question" % question_path
             )
+
+    def get_all_case_updates(self):
+        """
+        Collate contributed case updates from all sources within the form
+
+        Subclass must have helper methods defined:
+
+        - get_case_updates
+        - get_all_contributed_subcase_properties
+        - get_save_to_case_updates
+
+        :return: collated {<case_type>: set([<property>])}
+
+        """
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
+
+    def get_case_updates_for_case_type(self, case_type):
+        """
+        Like get_case_updates filtered by a single case type
+
+        subclass must implement `get_case_updates`
+
+        """
+        return self.get_case_updates().get(case_type, [])
 
 
 class JRResourceProperty(StringProperty):
@@ -1794,16 +1830,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
+    def get_case_updates(self):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
         # the usercase_update action, and for normal cases, use the
         # update_case action
-        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
-            format_key = self.get_case_property_name_formatter()
-            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in action.update.items()]
-        return []
+        case_type = self.get_module().case_type
+        format_key = self.get_case_property_name_formatter()
+
+        return {
+            case_type: {
+                format_key(*item) for item in self.actions.update_case.update.items()},
+            USERCASE_TYPE: {
+                format_key(*item) for item in self.actions.usercase_update.update.items()}
+        }
 
     @memoized
     def get_subcase_types(self):
@@ -1835,20 +1875,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             self.actions.load_from_form = PreloadAction()
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                if case_type != module_case_type and (
-                        self.actions.open_case.is_active() or
-                        self.actions.update_case.is_active() or
-                        self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
-        return parent_types, case_properties
+            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+        return case_properties
+
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        parent_case_type = self.get_module().case_type
+        for subcase in self.actions.subcases:
+            child_case_type = subcase.case_type
+            if child_case_type != parent_case_type and (
+                    self.actions.open_case.is_active() or
+                    self.actions.update_case.is_active() or
+                    self.actions.close_case.is_active()):
+                case_relationships_by_child_type[child_case_type].add(
+                    (parent_case_type, subcase.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -3079,37 +3124,43 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
-        updates = set()
+    def get_case_updates(self):
+        updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
-            if action.case_type == case_type:
-                updates.update(format_key(*item)
-                               for item in six.iteritems(action.case_properties))
+            case_type = action.case_type
+            updates_by_case_type[case_type].update(
+                format_key(*item) for item in six.iteritems(action.case_properties))
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
-            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+            scheduler_updates = xform.get_scheduler_case_updates()
         else:
-            scheduler_updates = set()
+            scheduler_updates = {}
 
-        return updates.union(scheduler_updates)
+        for case_type, updates in scheduler_updates.items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                for case_index in subcase.case_indices:
-                    parent = self.actions.get_action_from_tag(case_index.tag)
-                    if parent:
-                        parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
+            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+        return case_properties
 
-        return parent_types, case_properties
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        for subcase in self.actions.get_subcase_actions():
+            child_case_type = subcase.case_type
+            for case_index in subcase.case_indices:
+                parent = self.actions.get_action_from_tag(case_index.tag)
+                if parent:
+                    case_relationships_by_child_type[child_case_type].add(
+                        (parent.case_type, case_index.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -6154,8 +6205,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        builder = ParentCasePropertyBuilder(self)
-        case_relationships = builder.get_parent_type_map(self.get_case_types())
+        # todo: fix this to expect a list of parent types
+        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
+        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 
