@@ -222,7 +222,6 @@ class TestTreeUtils(SimpleTestCase):
 class MockLocationStub(LocationStub):
 
     def lookup_old_collection_data(self, old_collection):
-        self.autoset_location_id_or_site_code(old_collection)
         if not self.is_new:
             self.db_object = MagicMock()
 

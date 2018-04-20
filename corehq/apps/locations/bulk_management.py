@@ -190,8 +190,6 @@ class LocationStub(object):
 
     def lookup_old_collection_data(self, old_collection):
         """Lookup whether the location already exists or is new"""
-        self.autoset_location_id_or_site_code(old_collection)
-
         if self.is_new:
             self.db_object = SQLLocation(domain=old_collection.domain_name)
         else:
@@ -424,12 +422,6 @@ class NewLocationImporter(object):
         return self.result
 
     def bulk_commit(self, type_stubs, location_stubs):
-        for lt in type_stubs:
-            lt.lookup_old_collection_data(self.old_collection)
-
-        for loc in location_stubs:
-            loc.lookup_old_collection_data(self.old_collection)
-
         type_objects = save_types(type_stubs, self.excel_importer)
         types_changed = any(loc_type.needs_save for loc_type in type_stubs)
         moved_to_root = any(loc.moved_to_root for loc in location_stubs)
@@ -459,9 +451,12 @@ class NewLocationImporter(object):
 
 
 class LocationTreeValidator(object):
+    """Validates the given type and location stubs
+
+    All types and stubs are linked with a corresponding db_object by the
+    time validation is complete if/ when there are no errors.
     """
-    Validates the given type and location stubs
-    """
+
     def __init__(self, type_rows, location_rows, old_collection):
 
         _to_be_deleted = lambda items: [i for i in items if i.do_delete]
@@ -476,28 +471,34 @@ class LocationTreeValidator(object):
         self.locations_to_be_deleted = _to_be_deleted(location_rows)
 
         self.old_collection = old_collection
-        for loc in self.all_listed_locations:
-            loc.autoset_location_id_or_site_code(self.old_collection)
+        for loc in location_rows:
+            loc.autoset_location_id_or_site_code(old_collection)
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
-        self.locations_by_code = {l.site_code: l for l in self.all_listed_locations}
+        self.locations_by_code = {l.site_code: l for l in location_rows}
 
-    @property
-    def warnings(self):
-        # should be called after errors are found
-        def bad_deletes():
-            return [
-                _("Location deletion in sheet '{type}', row '{i}' is ignored, "
-                  "as the location does not exist")
-                .format(type=loc.location_type, i=loc.index)
-                for loc in self.all_listed_locations
-                if loc.is_new and loc.do_delete
-            ]
-        return bad_deletes()
+        self.errors = self._get_errors()
+        self.warnings = self._get_warnings()
 
-    @property
-    @memoized
-    def errors(self):
+        for lt in type_rows:
+            lt.lookup_old_collection_data(old_collection)
+
+        # `lookup_old_collection_data()` is called for items in
+        # `self.locations` by `_check_model_validation()`, which
+        # is the final step in `_get_errors()`
+        for loc in self.locations_to_be_deleted:
+            loc.lookup_old_collection_data(old_collection)
+
+    def _get_warnings(self):
+        return [
+            _("Location deletion in sheet '{type}', row '{i}' is ignored, "
+              "as the location does not exist")
+            .format(type=loc.location_type, i=loc.index)
+            for loc in self.all_listed_locations
+            if loc.is_new and loc.do_delete
+        ]
+
+    def _get_errors(self):
         # We want to find as many errors as possible up front, but some high
         # level errors make it unrealistic to keep validating
 
