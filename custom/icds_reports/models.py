@@ -964,39 +964,39 @@ class AggregateGrowthMonitoringForms(models.Model):
     )
 
     weight_child = models.DecimalField(
-        max_digits=64, decimal_places=16,
+        max_digits=64, decimal_places=16, null=True,
         help_text="Last recorded weight_child case property"
     )
     weight_child_last_recorded = models.DateTimeField(
-        help_text="Time when weight_child was last recorded"
+        null=True, help_text="Time when weight_child was last recorded"
     )
     height_child = models.DecimalField(
-        max_digits=64, decimal_places=16,
+        max_digits=64, decimal_places=16, null=True,
         help_text="Last recorded height_child case property"
     )
     height_child_last_recorded = models.DateTimeField(
-        help_text="Time when height_child was last recorded"
+        null=True, help_text="Time when height_child was last recorded"
     )
 
     zscore_grading_wfa = models.PositiveSmallIntegerField(
-        help_text="Last value of zscore_grading_wfa in this month"
+        null=True, help_text="Last value of zscore_grading_wfa in this month"
     )
     zscore_grading_wfa_last_recorded = models.DateTimeField(
-        help_text="Time when zscore_grading_wfa was last recorded"
+        null=True, help_text="Time when zscore_grading_wfa was last recorded"
     )
 
     zscore_grading_hfa = models.PositiveSmallIntegerField(
-        help_text="Last value of zscore_grading_hfa in this month"
+        null=True, help_text="Last value of zscore_grading_hfa in this month"
     )
     zscore_grading_hfa_last_recorded = models.DateTimeField(
-        help_text="Time when zscore_grading_hfa was last recorded"
+        null=True, help_text="Time when zscore_grading_hfa was last recorded"
     )
 
     zscore_grading_wfh = models.PositiveSmallIntegerField(
-        help_text="Current value of zscore_grading_wfh in this month"
+        null=True, help_text="Current value of zscore_grading_wfh in this month"
     )
     zscore_grading_wfh_last_recorded = models.DateTimeField(
-        help_text="Time when zscore_grading_wfh was last recorded"
+        null=True, help_text="Time when zscore_grading_wfh was last recorded"
     )
 
     class Meta(object):
