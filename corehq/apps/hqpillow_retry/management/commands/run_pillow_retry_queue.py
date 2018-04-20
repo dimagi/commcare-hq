@@ -21,7 +21,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
     @staticmethod
     def _get_items(utcnow):
         errors = PillowError.get_errors_to_process(utcnow=utcnow, limit=1000)
-        return [QueueItem(e['id'], e['date_next_attempt'], e) for e in errors]
+        return [QueueItem(e.id, e.date_next_attempt, e) for e in errors]
 
     @classmethod
     def get_items_to_be_processed(cls, utcnow):
