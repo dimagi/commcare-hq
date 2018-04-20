@@ -462,7 +462,7 @@ class LocationTreeValidator(object):
     """
     Validates the given type and location stubs
     """
-    def __init__(self, type_rows, location_rows, old_collection=None):
+    def __init__(self, type_rows, location_rows, old_collection):
 
         _to_be_deleted = lambda items: [i for i in items if i.do_delete]
         _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
@@ -504,10 +504,8 @@ class LocationTreeValidator(object):
         location_row_errors = (self._site_code_and_location_id_missing() +
                                self._check_unknown_location_ids() + self._validate_geodata())
 
-        unknown_or_missing_errors = []
-        if self.old_collection:
-            # all old types/locations should be listed in excel
-            unknown_or_missing_errors = self._check_unlisted_type_codes()
+        # all old types/locations should be listed in excel
+        unknown_or_missing_errors = self._check_unlisted_type_codes()
 
         uniqueness_errors = (self._check_unique_type_codes() +
                              self._check_unique_location_codes() +
@@ -558,7 +556,7 @@ class LocationTreeValidator(object):
         ]
 
     def _check_required_locations_missing(self):
-        if not self.locations_to_be_deleted or not self.old_collection:
+        if not self.locations_to_be_deleted:
             # skip this check if no old locations or no location to be deleted
             return []
 
@@ -626,8 +624,6 @@ class LocationTreeValidator(object):
 
     def _check_unknown_location_ids(self):
         # count location_ids listed in the excel that are not found in the domain
-        if not self.old_collection:
-            return []
         old = self.old_collection.locations_by_id
         listed = {l.location_id: l for l in self.all_listed_locations if l.location_id}
         unknown = set(listed.keys()) - set(old.keys())
@@ -639,12 +635,7 @@ class LocationTreeValidator(object):
         ]
 
     def _custom_data_errors(self):
-        if not self.old_collection or not self.old_collection.custom_data_validator:
-            # tests
-            return []
-
         validator = self.old_collection.custom_data_validator
-
         return [
             _("Problem with custom data for location '{site_code}', in sheet '{type}', at index '{i}' - '{er}'")
             .format(site_code=l.site_code, type=l.location_type, i=l.index, er=validator(l.custom_data))

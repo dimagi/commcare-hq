@@ -1,8 +1,9 @@
 # coding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from collections import namedtuple, defaultdict
+from collections import defaultdict
 
+import attr
 from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
 
@@ -221,46 +222,54 @@ class MockLocationStub(LocationStub):
     def lookup_old_collection_data(self, old_collection):
         try:
             return super(MockLocationStub, self).lookup_old_collection_data(old_collection)
-        except AttributeError:
+        except (AttributeError, KeyError):
             # This will happen if the LocationStub is not new and an old_collection is not given
             self.db_object = MagicMock()
 
 
+@attr.s
+class TestLocationCollection(LocationCollection):
+
+    domain_name = 'location-bulk-management'
+
+    types = attr.ib(default=attr.Factory(list))
+    locations = attr.ib(default=attr.Factory(list))
+
+    def custom_data_validator(self):
+        return lambda data: False
+
+
+class IngoreOldLocationTreeValidator(LocationTreeValidator):
+    """Skip checks that depend on self.old_collection"""
+
+    def _check_required_locations_missing(self):
+        return []
+
+    def _check_unlisted_type_codes(self):
+        return []
+
+    def _check_unknown_location_ids(self):
+        return []
+
+
 def get_validator(location_types, locations, old_collection=None):
-    validator = LocationTreeValidator(
+    if old_collection is None:
+        old_collection = TestLocationCollection()
+        Validator = IngoreOldLocationTreeValidator
+    else:
+        Validator = LocationTreeValidator
+    return Validator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
         [MockLocationStub(*loc) for loc in locations],
         old_collection=old_collection
     )
-    return validator
-
-
-MockCollection = namedtuple(
-    'MockCollection',
-    'types locations locations_by_id locations_by_site_code domain_name '
-    'custom_data_validator locations_by_parent_code')
 
 
 def make_collection(types, locations):
     types = [LocationTypeStub(*loc_type) for loc_type in types]
 
     locations = [LocationStub(*loc) for loc in locations]
-
-    def locations_by_parent_code():
-        locs_by_parent = defaultdict(list)
-        for loc in locations:
-            locs_by_parent[loc.parent_code].append(loc)
-        return locs_by_parent
-
-    return MockCollection(
-        types=types,
-        locations=locations,
-        locations_by_id={l.location_id: l for l in locations},
-        locations_by_site_code={l.site_code: l for l in locations},
-        locations_by_parent_code=locations_by_parent_code(),
-        custom_data_validator=None,
-        domain_name='location-bulk-management',
-    )
+    return TestLocationCollection(types, locations)
 
 
 class TestTreeValidator(SimpleTestCase):
@@ -471,8 +480,6 @@ class TestBulkManagement(TestCase):
     def assertMpttDescendants(self, pairs):
         # Given list of (child, parent), check that for each location
         # SQLLocation.get_descendants is same as calculated descendants
-
-        from collections import defaultdict
 
         # index by parent, to calculate descendants
         by_parent = defaultdict(list)
