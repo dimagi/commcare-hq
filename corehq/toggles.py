@@ -1038,6 +1038,13 @@ EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
+    'use_sms_with_inactive_contacts',
+    'Use SMS with inactive contacts',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
 BROADCAST_TO_LOCATIONS = StaticToggle(
     'broadcast_to_locations',
     'Send broadcasts to locations',
