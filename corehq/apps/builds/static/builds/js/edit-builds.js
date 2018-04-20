@@ -3,12 +3,12 @@ hqDefine('builds/js/edit-builds', function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
         doc = initial_page_data('doc');
 
-    function versionModel(version, label, superuser_only, j2me_enabled) {
+    function versionModel(version, label, superuserOnly, j2meEnabled) {
         var self = {};
         self.version = ko.observable(version);
         self.label = ko.observable(label);
-        self.superuser_only = ko.observable(superuser_only);
-        self.j2me_enabled = ko.observable(j2me_enabled);
+        self.superuser_only = ko.observable(superuserOnly);
+        self.j2me_enabled = ko.observable(j2meEnabled);
 
         // subscribe for change in version to update j2me_enabled
         // property and hence the checkbox in view
