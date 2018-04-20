@@ -11,12 +11,15 @@ from django.conf import settings
 from django.db.models import Count
 
 from corehq.apps.change_feed.data_sources import get_document_store
+from corehq.apps.change_feed.producer import producer
+from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
 from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
+from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_pillow_by_name
 
 logger = get_task_logger(__name__)
@@ -57,7 +60,13 @@ def process_pillow_retry(error_doc_id):
                 domain=change_metadata.domain
             )
             change.document_store = document_store
-        pillow.process_change(change)
+        if isinstance(pillow.get_change_feed(), CouchChangeFeed):
+            pillow.process_change(change)
+        else:
+            producer.send_change(
+                get_topic_for_doc_type(change_metadata.document_type),
+                change_metadata
+            )
     except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         error_doc.add_attempt(ex_value, ex_tb)
