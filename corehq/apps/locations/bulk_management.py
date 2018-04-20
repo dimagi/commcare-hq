@@ -539,7 +539,6 @@ class LocationTreeValidator(object):
 
         return errors
 
-    @memoized
     def _validate_geodata(self):
         errors = []
         for l in self.all_listed_locations:
@@ -557,7 +556,6 @@ class LocationTreeValidator(object):
             for l in errors
         ]
 
-    @memoized
     def _check_required_locations_missing(self):
         if not self.locations_to_be_deleted or not self.old_collection:
             # skip this check if no old locations or no location to be deleted
@@ -580,7 +578,6 @@ class LocationTreeValidator(object):
             for (old_locs, parent) in missing_locs
         ]
 
-    @memoized
     def _site_code_and_location_id_missing(self):
         return [
             _("Location in sheet '{type}' at index {index} has no site_code and location_id - "
@@ -590,7 +587,6 @@ class LocationTreeValidator(object):
             if not l.site_code and not l.location_id
         ]
 
-    @memoized
     def _check_unique_type_codes(self):
         counts = list(Counter(lt.code for lt in self.all_listed_types).items())
         return [
@@ -599,7 +595,6 @@ class LocationTreeValidator(object):
             for code, count in counts if count > 1
         ]
 
-    @memoized
     def _check_unique_location_codes(self):
         counts = list(Counter(l.site_code for l in self.all_listed_locations).items())
         return [
@@ -608,7 +603,6 @@ class LocationTreeValidator(object):
             for code, count in counts if count > 1
         ]
 
-    @memoized
     def _check_unique_location_ids(self):
         counts = list(Counter(l.location_id for l in self.all_listed_locations if l.location_id).items())
         return [
@@ -617,7 +611,6 @@ class LocationTreeValidator(object):
             for location_id, count in counts if count > 1
         ]
 
-    @memoized
     def _check_unlisted_type_codes(self):
         # count types not listed in excel but are present in the domain now
         old_codes = [lt.code for lt in self.old_collection.types]
@@ -630,7 +623,6 @@ class LocationTreeValidator(object):
             for code in unlisted_codes
         ]
 
-    @memoized
     def _check_unknown_location_ids(self):
         # count location_ids listed in the excel that are not found in the domain
         if not self.old_collection:
@@ -645,7 +637,6 @@ class LocationTreeValidator(object):
             for l_id in unknown
         ]
 
-    @memoized
     def _custom_data_errors(self):
         if not self.old_collection or not self.old_collection.custom_data_validator:
             # tests
@@ -660,7 +651,6 @@ class LocationTreeValidator(object):
             if l.custom_data is not LocationStub.NOT_PROVIDED and validator(l.custom_data)
         ]
 
-    @memoized
     def _validate_types_tree(self):
         type_pairs = [(lt.code, lt.parent_code) for lt in self.location_types]
         try:
@@ -676,7 +666,6 @@ class LocationTreeValidator(object):
                 for code in e.affected_nodes
             ]
 
-    @memoized
     def _validate_location_tree(self):
         errors = []
 
@@ -722,7 +711,6 @@ class LocationTreeValidator(object):
 
         return errors
 
-    @memoized
     def _check_location_names(self):
         locs_by_parent = defaultdict(list)
         for loc in self.locations:
@@ -738,7 +726,6 @@ class LocationTreeValidator(object):
                     )
         return errors
 
-    @memoized
     def _check_model_validation(self):
         errors = []
         for location in self.locations:
