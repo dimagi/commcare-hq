@@ -860,8 +860,12 @@ NON_COMMTRACK_LEDGERS = StaticToggle(
 
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
-    'Enikshay: Inject custom instance declarations',
+    'Inject custom instance declarations',
     TAG_CUSTOM,
+    description=(
+        'Enables the insertion of custom instances into a case list configuration. '
+        'Currently used by SimPrints-integrated projects.'
+    ),
     namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
 )
 
