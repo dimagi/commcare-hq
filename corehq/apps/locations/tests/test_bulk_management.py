@@ -221,7 +221,7 @@ class TestTreeUtils(SimpleTestCase):
 
 class MockLocationStub(LocationStub):
 
-    def lookup_old_collection_data(self, old_collection):
+    def lookup_old_collection_data(self, old_collection, locs_by_code):
         if not self.is_new:
             self.db_object = MagicMock()
 
@@ -285,10 +285,8 @@ def make_collection(types, locations):
         loc.location_type = types_by_code[loc.location_type]
         if loc.parent_code == ROOT_LOCATION_TYPE:
             loc.parent_id = None
-            loc.parent = None
         else:
             loc.parent_id = locations_by_code[loc.parent_code].id
-            loc.parent = locations_by_code[loc.parent_code]
         assert loc.custom_data == NOT_PROVIDED, loc.custom_data
         loc.metadata = {}
         loc.full_clean = lambda **k: None
