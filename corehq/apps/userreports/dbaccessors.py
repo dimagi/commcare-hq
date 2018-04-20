@@ -48,7 +48,7 @@ def get_datasources_for_domain(domain, referenced_doc_type=None, include_static=
             static_ds = [ds for ds in static_ds if ds.referenced_doc_type == referenced_doc_type]
         datasources.extend(sorted(static_ds, key=lambda config: config.display_name))
 
-    return sorted(datasources, key=lambda config: config.display_name)
+    return datasources
 
 
 @unit_testing_only
