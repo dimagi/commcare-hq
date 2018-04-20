@@ -56,9 +56,15 @@ class PillowError(models.Model):
         app_label = 'pillow_retry'
         unique_together = ('doc_id', 'pillow',)
 
-    def add_attempt(self, exception, traceb, date=None):
-        self.current_attempt += 1
-        self.total_attempts += 1
+    def add_attempt(self, exception, traceb, change_meta=None, date=None):
+        if change_meta:
+            new_attempts = change_meta.attempts
+            self.change_metadata = change_meta.to_json()
+        else:
+            new_attempts = 1
+
+        self.current_attempt += new_attempts
+        self.total_attempts += new_attempts
         self.date_last_attempt = date or datetime.utcnow()
         self.calculate_next_attempt()
 
@@ -83,7 +89,7 @@ class PillowError(models.Model):
         )
 
     @classmethod
-    def get_or_create(cls, change, pillow, exception, traceb):
+    def get_or_create(cls, change, pillow):
         change.document = None
         doc_id = change.id
         now = datetime.utcnow()
@@ -94,23 +100,12 @@ class PillowError(models.Model):
                 doc_id=doc_id,
                 pillow=pillow.pillow_id,
                 date_created=now,
-                change=change.to_dict()
+                change=change.to_dict(),
+                date_last_attempt=now,
+                date_next_attempt=now,
             )
-
-        if change.metadata:
-            error.date_last_attempt = change.metadata.date_last_attempt
-            error.total_attempts = change.metadata.attempts
-            error.current_attempt = change.metadata.attempts
-            error.error_type = change.metadata.last_error_type
-            error.error_traceback = change.metadata.last_error_traceback
-            change.metadata = change.metadata.to_json()
-            error.calculate_next_attempt()
-        else:
-            error.date_last_attempt = now
-            error.date_next_attempt = now
-            error.add_attempt(exception, traceb)
-
-        error.save()
+            if change.metadata:
+                error.change_metadata = change.metadata.to_json()
 
         return error
 

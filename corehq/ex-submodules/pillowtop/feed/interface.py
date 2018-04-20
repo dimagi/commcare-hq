@@ -34,30 +34,19 @@ class ChangeMeta(jsonobject.JsonObject):
     _allow_dynamic_properties = False
 
     # data for keeping track of errors
-    date_last_attempt = jsonobject.DateTimeProperty()
     attempts = jsonobject.IntegerProperty(default=0)
     # dict of error type to attempt count
     attempts_by_error = jsonobject.DictProperty()
-    last_error_type = jsonobject.StringProperty()
-    last_error_traceback = jsonobject.StringProperty()
 
     def clear_retry_info(self):
-        self.date_last_attempt = None
         self.attempts = 0
         self.attempts_by_error = {}
-        self.last_error_type = None
-        self.last_error_traceback = None
 
-    def record_error(self, exception, traceb):
+    def record_error(self, exception):
         self.attempts += 1
-        self.date_last_attempt = datetime.utcnow()
         error_type = path_from_object(exception)
-        self.last_error_type = error_type
         error_count = self.metadata.attempts_by_error.get(error_type, None) or 0
         self.attempts_by_error[error_type] = error_count + 1
-        self.last_error_traceback = "{}\n\n{}".format(
-            exception.message, "".join(traceback.format_tb(traceb))
-        )
 
 
 class Change(object):
@@ -107,13 +96,13 @@ class Change(object):
                 self.error_raised = e
         return self.document
 
-    def record_error(self, exception, traceb):
+    def record_error(self, exception):
         if not self.metadata:
             return
-        self.metadata.record_error(exception, traceb)
+        self.metadata.record_error(exception)
 
     def should_retry(self):
-        return self.metadata.attempts < settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+        return self.metadata and self.metadata.attempts < settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
 
     def __repr__(self):
         return 'Change id: {}, seq: {}, deleted: {}, metadata: {}, doc: {}'.format(
