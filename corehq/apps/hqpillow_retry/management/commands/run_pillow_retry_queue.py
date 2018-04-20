@@ -5,7 +5,7 @@ from psycopg2._psycopg import InterfaceError
 import pytz
 from hqscripts.generic_queue import GenericEnqueuingOperation
 from pillow_retry.models import PillowError
-from pillow_retry.tasks import process_pillow_retry
+from pillow_retry.api import process_pillow_retry
 from django import db
 
 
@@ -37,7 +37,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         return settings.PILLOW_RETRY_QUEUE_ENABLED
 
     def enqueue_item(self, item_id):
-        process_pillow_retry.delay(item_id)
+        process_pillow_retry(item_id)
 
 
 class Command(PillowRetryEnqueuingOperation):
