@@ -13,7 +13,6 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
-from custom.icds_reports.queries import get_beneficiary_list, get_growth_monitoring_details
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status

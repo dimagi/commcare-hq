@@ -506,6 +506,7 @@ class ChildHealthMonthlyView(models.Model):
     pse_days_attended = models.IntegerField(blank=True, null=True)
     recorded_weight = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
     recorded_height = models.DecimalField(max_digits=65535, decimal_places=65535, blank=True, null=True)
+    thr_eligible = models.IntegerField(blank=True, null=True)
     current_month_stunting = models.TextField(blank=True, null=True)
     current_month_wasting = models.TextField(blank=True, null=True)
     fully_immunized = models.IntegerField(blank=True, null=True)
