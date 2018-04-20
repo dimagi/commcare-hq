@@ -866,7 +866,7 @@ CUSTOM_INSTANCES = StaticToggle(
         'Enables the insertion of custom instances into a case list configuration. '
         'Currently used by SimPrints-integrated projects.'
     ),
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
