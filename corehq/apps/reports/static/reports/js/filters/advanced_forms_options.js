@@ -22,7 +22,7 @@ hqDefine('reports/js/filters/advanced_forms_options', [
         $el.koApplyBindings(viewModel);
         var $cssClass = $('.' + viewModel.css_class);
         $cssClass.each(function() {
-            $el.koApplyBindings(viewModel);
+            $(this).koApplyBindings(viewModel);
         });
 
         viewModel.show.subscribe(function(newValue) {

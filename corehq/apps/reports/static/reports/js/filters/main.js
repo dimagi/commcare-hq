@@ -174,7 +174,7 @@ hqDefine("reports/js/filters/main", [
                 selected: data.selected,
                 notifications: data.notifications,
             });
-            $el.find('#' + data.cssId).koApplyBindings(model);
+            $('#' + data.cssId).koApplyBindings(model);
             model.init();
         });
         $('.report-filter-form-drilldown').each(function (i, el) {
