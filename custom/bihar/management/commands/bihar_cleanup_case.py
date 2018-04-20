@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 import logging
-import csv342 as csv
+import csv
 from couchdbkit.exceptions import ResourceNotFound
 from django.core.management import BaseCommand
 from casexml.apps.case.models import CommCareCase

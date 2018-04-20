@@ -1,4 +1,10 @@
-hqDefine('reports/js/report_filter/advanced_forms_options', function() {
+hqDefine('reports/js/filters/advanced_forms_options', [
+    'jquery',
+    'knockout',
+], function(
+    $,
+    ko
+) {
     var deletedFormsControl = function (options) {
         var self = {};
         self.show = ko.observable();
@@ -16,7 +22,7 @@ hqDefine('reports/js/report_filter/advanced_forms_options', function() {
         $el.koApplyBindings(viewModel);
         var $cssClass = $('.' + viewModel.css_class);
         $cssClass.each(function() {
-            $el.koApplyBindings(viewModel);
+            $(this).koApplyBindings(viewModel);
         });
 
         viewModel.show.subscribe(function(newValue) {
