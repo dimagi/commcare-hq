@@ -23,4 +23,4 @@ class TestLogging(SimpleTestCase):
         exception = AssertionError("foo")
         cleaned_exception = clean_exception(exception)
         self.assertEqual(exception.__class__, cleaned_exception.__class__)
-        self.assertEqual(six.text_type(exception), six.text_type(cleaned_exception.message))
+        self.assertEqual(six.text_type(exception), six.text_type(cleaned_exception))
