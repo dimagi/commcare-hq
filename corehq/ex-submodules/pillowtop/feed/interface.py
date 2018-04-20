@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import traceback
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 
@@ -12,8 +11,6 @@ from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
 from pillowtop.dao.exceptions import DocumentNotFoundError
 import six
-
-from pillowtop.utils import path_from_object
 
 
 class ChangeMeta(jsonobject.JsonObject):
@@ -35,18 +32,12 @@ class ChangeMeta(jsonobject.JsonObject):
 
     # data for keeping track of errors
     attempts = jsonobject.IntegerProperty(default=0)
-    # dict of error type to attempt count
-    attempts_by_error = jsonobject.DictProperty()
 
     def clear_retry_info(self):
         self.attempts = 0
-        self.attempts_by_error = {}
 
     def record_error(self, exception):
         self.attempts += 1
-        error_type = path_from_object(exception)
-        error_count = self.metadata.attempts_by_error.get(error_type, None) or 0
-        self.attempts_by_error[error_type] = error_count + 1
 
 
 class Change(object):
