@@ -12,6 +12,7 @@ from corehq.form_processor.document_stores import (
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couchdb_management import couch_config
 from corehq.util.exceptions import DatabaseNotFound
+from couchforms.models import all_known_formlike_doc_types
 from pillowtop.dao.couch import CouchDocumentStore
 
 COUCH = 'couch'
@@ -54,9 +55,15 @@ def get_document_store(data_source_type, data_source_name, domain):
 
 
 def get_document_store_for_doc_type(domain, doc_type, case_type_or_xmlns=None):
-    if doc_type == 'XFormInstance':
+    """Only applies to documents that have a document type:
+    * forms
+    * cases
+    * all couch models
+    """
+    from corehq.apps.change_feed import document_types
+    if doc_type in all_known_formlike_doc_types():
         return ReadonlyFormDocumentStore(domain, xmlns=case_type_or_xmlns)
-    elif doc_type == 'CommCareCase':
+    elif doc_type in document_types.CASE_DOC_TYPES:
         return ReadonlyCaseDocumentStore(domain, case_type=case_type_or_xmlns)
     elif doc_type == LOCATION_DOC_TYPE:
         return ReadonlyLocationDocumentStore(domain)
