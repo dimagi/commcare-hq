@@ -43,9 +43,6 @@ class ChangeMeta(jsonobject.JsonObject):
     # track of retry attempts
     attempts = jsonobject.IntegerProperty(default=0)
 
-    def clear_retry_info(self):
-        self.attempts = 0
-
     def record_error(self):
         self.attempts += 1
 

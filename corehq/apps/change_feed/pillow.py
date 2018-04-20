@@ -35,7 +35,6 @@ class KafkaProcessor(PillowProcessor):
             # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
             # along with a hard deletion, but it is doing that in the wild so we might as well support it.
             change_meta.is_deletion = change_meta.is_deletion or change.deleted
-            change_meta.clear_retry_info()
             self._producer.send_change(topic, change_meta)
 
 
