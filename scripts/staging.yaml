@@ -61,7 +61,6 @@ branches:
   - es/mobile-ucr-slugs  # Ethan April 9
   - jls/externalize-js-locations-widgets # Jenny April 19
   - jls/externalize-js-reassign-cases # Jenny April 19
-  - jls/fix-filters-for-requirejs # Jenny April 19
   - emord-patch-1 # J$ April 19 (upgrading celery)
   - sk/pillow-retry-v3 # SK April 20
 submodules:
