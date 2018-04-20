@@ -172,7 +172,7 @@ class PillowRetryTestCase(TestCase):
             settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
         )
 
-        errors = PillowError.get_errors_to_process(date, fetch_full=True).all()
+        errors = PillowError.get_errors_to_process(date).all()
         self.assertEqual(len(errors), 2)
         docs_to_process = {e.doc_id for e in errors}
         self.assertEqual({'to-process1', 'to-process2'}, docs_to_process)

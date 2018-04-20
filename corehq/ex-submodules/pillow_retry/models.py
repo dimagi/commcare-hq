@@ -110,7 +110,7 @@ class PillowError(models.Model):
         return error
 
     @classmethod
-    def get_errors_to_process(cls, utcnow, limit=None, skip=0, fetch_full=False):
+    def get_errors_to_process(cls, utcnow, limit=None, skip=0):
         """
         Get errors according the following rules:
 
