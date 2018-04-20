@@ -30,7 +30,7 @@ class ChangeMeta(jsonobject.JsonObject):
     publish_timestamp = jsonobject.DateTimeProperty(default=datetime.utcnow)
     _allow_dynamic_properties = False
 
-    # data for keeping track of errors
+    # track of retry attempts
     attempts = jsonobject.IntegerProperty(default=0)
 
     def clear_retry_info(self):
