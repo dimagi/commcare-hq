@@ -9,7 +9,7 @@ from django.test import TestCase
 from mock import MagicMock
 
 from pillow_retry.models import PillowError
-from pillow_retry.tasks import process_pillow_retry
+from pillow_retry.api import process_pillow_retry
 from pillowtop import get_all_pillow_configs
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.dao.exceptions import DocumentMissingError
@@ -183,7 +183,7 @@ class PillowRetryTestCase(TestCase):
         error = create_error(change_from_couch_row(change_dict))
         error.save()
         # this used to error out
-        process_pillow_retry(error.id)
+        process_pillow_retry(error)
         with self.assertRaises(PillowError.DoesNotExist):
             PillowError.objects.get(id=error.id)
 
@@ -223,7 +223,7 @@ class PillowRetryTestCase(TestCase):
             date_last_attempt=datetime.utcnow()
         )
         # make sure this doesn't error
-        process_pillow_retry(error.id)
+        process_pillow_retry(error)
         # and that its total_attempts was bumped above the threshold
         self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
 
@@ -232,7 +232,7 @@ class PillowRetryTestCase(TestCase):
         error = PillowError.get_or_create(change, GetDocPillow())
         error.save()
 
-        process_pillow_retry(error.id)
+        process_pillow_retry(error)
 
         error = PillowError.objects.get(pk=error.id)
         self.assertEquals(error.total_attempts, 1)

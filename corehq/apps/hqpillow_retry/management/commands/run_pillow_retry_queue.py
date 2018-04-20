@@ -37,7 +37,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         return settings.PILLOW_RETRY_QUEUE_ENABLED
 
     def enqueue_item(self, item):
-        process_pillow_retry(item.id)
+        process_pillow_retry(item.object)
 
 
 class Command(PillowRetryEnqueuingOperation):

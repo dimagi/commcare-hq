@@ -14,7 +14,7 @@ from dimagi.utils.logging import notify_exception
 class QueueItem(object):
     id = attr.ib()
     key = attr.ib()
-    item = attr.ib(default=None)
+    object = attr.ib(default=None)
 
 
 class GenericEnqueuingOperation(BaseCommand):
