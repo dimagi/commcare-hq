@@ -93,6 +93,13 @@
           "location_type": "block",
           "type": "ancestor_location"
         },
+        "transform": {},
+        "is_nullable": true,
+        "is_primary_key": false,
+        "column_id": "block_id",
+        "create_index": false,
+        "type": "expression"
+      },
       {
         "display_name": null,
         "datatype": "string",

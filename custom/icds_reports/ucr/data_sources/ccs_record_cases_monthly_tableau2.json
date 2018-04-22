@@ -295,7 +295,7 @@
           "location_type": "supervisor",
           "location_propery": "_id",
           "type": "ancestor_location"
-        }
+        },
         "is_nullable": true,
         "is_primary_key": false,
         "transform": {},

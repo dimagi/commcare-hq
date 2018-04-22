@@ -137,7 +137,7 @@
           "location_type": "state",
           "location_propery": "_id",
           "type": "ancestor_location"
-        }
+        },
         "is_primary_key": false,
         "is_nullable": true,
         "column_id": "state_id",
