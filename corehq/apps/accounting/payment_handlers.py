@@ -361,7 +361,7 @@ class AutoPayInvoicePaymentHandler(object):
             try:
                 self._pay_invoice(invoice)
             except Exception as e:
-                log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e.message))
+                log_accounting_error("Error autopaying invoice %d: %s" % (invoice.id, e))
 
     def _pay_invoice(self, invoice):
         log_accounting_info("[Autopay] Autopaying invoice {}".format(invoice.id))

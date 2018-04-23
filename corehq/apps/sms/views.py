@@ -1907,8 +1907,10 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
-                "daily_outbound_sms_limit":
-                    domain_obj.daily_outbound_sms_limit,
+                "override_daily_outbound_sms_limit":
+                    ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
+                "custom_daily_outbound_sms_limit":
+                    domain_obj.custom_daily_outbound_sms_limit,
                 "uses_new_reminders":
                     'Y' if domain_obj.uses_new_reminders else 'N',
             }
@@ -1959,8 +1961,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 field_map.extend([
                     ("custom_chat_template",
                      "custom_chat_template"),
-                    ("daily_outbound_sms_limit",
-                     "daily_outbound_sms_limit"),
+                    ("custom_daily_outbound_sms_limit",
+                     "custom_daily_outbound_sms_limit"),
                 ])
             if self.new_reminders_migrator:
                 field_map.extend([

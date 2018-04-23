@@ -204,7 +204,7 @@ class SOHHandler(KeywordHandler):
             self.respond(six.text_type(INVALID_MESSAGE))
             return True
         except ProductCodeException as e:
-            self.respond(e.message)
+            self.respond(six.text_type(e))
             return True
         except Exception as e:
             if settings.UNIT_TESTING or settings.DEBUG:

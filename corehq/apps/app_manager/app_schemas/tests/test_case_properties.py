@@ -7,6 +7,8 @@ from corehq.apps.app_manager.models import Module, AdvancedModule, FormSchedule,
     ScheduleVisit
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import TestXmlMixin
+import doctest
+import corehq.apps.app_manager.app_schemas.case_properties
 
 
 @patch('corehq.apps.app_manager.app_schemas.case_properties.get_per_type_defaults', MagicMock(return_value={}))
@@ -31,6 +33,66 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
                 'bar': '/data/question2',
             })
             self.assertCaseProperties(factory.app, 'house', ['foo', 'bar'])
+
+    def test_case_sharing(self):
+        factory1 = AppFactory()
+        factory2 = AppFactory()
+        factory1.app.case_sharing = True
+        factory2.app.case_sharing = True
+
+        with patch('corehq.apps.app_manager.app_schemas.case_properties.get_case_sharing_apps_in_domain')\
+                as mock_sharing:
+            mock_sharing.return_value = [factory1.app, factory2.app]
+            a1m1, a1m1f1 = factory1.new_basic_module('open_patient', 'patient')
+            factory1.form_requires_case(a1m1f1, update={
+                'app1': 'yes',
+            })
+            a2m1, a2m1f1 = factory2.new_basic_module('open_patient', 'patient')
+            factory1.form_requires_case(a2m1f1, update={
+                'app2': 'yes',
+            })
+            self.assertCaseProperties(factory1.app, 'patient', ['app1', 'app2'])
+
+    def test_parent_child_properties(self):
+        factory = AppFactory()
+
+        household_module, houshold_form_1 = factory.new_basic_module('household_module', 'household')
+        patient_module, patient_form_1 = factory.new_basic_module('patient_module', 'patient')
+        referral_module, referral_form_1 = factory.new_basic_module('referral_module', 'referral')
+        factory.form_requires_case(houshold_form_1, 'household', update={
+            'household_name': 'HH',
+        })
+        factory.form_opens_case(houshold_form_1, 'patient', is_subcase=True)
+        factory.form_requires_case(patient_form_1, update={
+            'patient_id': 1,
+            'parent/household_id': 1,
+        })
+        factory.form_opens_case(patient_form_1, 'referral', is_subcase=True)
+        factory.form_requires_case(referral_form_1, update={
+            'parent/patient_name': "Ralph",
+            'parent/parent/household_color': 'green',
+            'referral_id': 1,
+        })
+        self.assertCaseProperties(factory.app, 'household', [
+            'household_color',
+            'household_id',
+            'household_name',
+        ])
+        self.assertCaseProperties(factory.app, 'patient', [
+            'parent/household_color',
+            'parent/household_id',
+            'parent/household_name',
+            'patient_id',
+            'patient_name',
+        ])
+        self.assertCaseProperties(factory.app, 'referral', [
+            'parent/parent/household_color',
+            'parent/parent/household_id',
+            'parent/parent/household_name',
+            'parent/patient_id',
+            'parent/patient_name',
+            'referral_id',
+        ])
 
     def test_scheduler_module(self):
         factory = AppFactory()
@@ -84,3 +146,10 @@ class GetCasePropertiesTest(SimpleTestCase, TestXmlMixin):
             ]
         )
         phase.add_form(form)
+
+
+class DocTests(SimpleTestCase):
+
+    def test_doctests(self):
+        results = doctest.testmod(corehq.apps.app_manager.app_schemas.case_properties)
+        self.assertEqual(results.failed, 0)

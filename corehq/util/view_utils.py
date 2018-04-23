@@ -97,10 +97,10 @@ def _get_json_exception_response(code, request, exception, log_message=None):
 
 
 def _json_exception_response_data(code, exception):
-    if isinstance(exception.message, six.text_type):
-        message = six.text_type(exception)
+    if isinstance(exception.args[0], six.binary_type):
+        message = exception.args[0].decode('utf-8')
     else:
-        message = str(exception).decode('utf-8')
+        message = six.text_type(exception)
     data = {
         'error': code,
         'message': message

@@ -20,7 +20,7 @@
     var REQUIRED = 0;
 
     $.when(
-        $.getScript("{% static 'locations/js/location_drilldown.async.js' %}")
+        $.getScript("{% static 'locations/js/location_drilldown.js' %}")
     ).done(function () {
         var locs = {{ locations|safe }};
         var selected = '{{ loc_id }}';

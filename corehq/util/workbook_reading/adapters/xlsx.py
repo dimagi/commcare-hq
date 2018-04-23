@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
 import openpyxl
+import six
 from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
 from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
@@ -35,7 +36,7 @@ def open_xlsx_workbook(filename):
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
                 raise SpreadsheetFileEncrypted('Workbook is encrypted')
             else:
-                raise SpreadsheetFileInvalidError(e.message)
+                raise SpreadsheetFileInvalidError(six.text_type(e))
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
 
 

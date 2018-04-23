@@ -1573,6 +1573,7 @@ class BroadcastForm(ScheduleForm):
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
+                    data_bind='text: saveBroadcastText()',
                     css_class='btn-primary',
                     type='submit',
                 ),

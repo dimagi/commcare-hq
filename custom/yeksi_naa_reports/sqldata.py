@@ -10,7 +10,7 @@ from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from custom.yeksi_naa_reports.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
-    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, Translation
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -50,10 +50,25 @@ class YeksiSqlData(SqlData):
             if date < self.months[index] + relativedelta(months=1):
                 return index
 
-    def language(self):
-        if self.config.get('language'):
-            return self.config['language']
-        return 'french'
+    def month_headers(self):
+        month_headers = []
+        french_months = {
+            1: 'Janvier',
+            2: 'Février',
+            3: 'Mars',
+            4: 'Avril',
+            5: 'Mai',
+            6: 'Juin',
+            7: 'Juillet',
+            8: 'Août',
+            9: 'Septembre',
+            10: 'Octobre',
+            11: 'Novembre',
+            12: 'Décembre',
+        }
+        for month in self.months:
+            month_headers.append(DataTablesColumn("{0} {1}".format(french_months[month.month], month.year)))
+        return month_headers
 
 
 class VisiteDeLOperateurDataSource(YeksiSqlData):
@@ -94,15 +109,15 @@ class VisiteDeLOperateurDataSource(YeksiSqlData):
     @property
     def headers(self):
         if self.loc_id == 'pps_id':
-            first_row = Translation.PPS[self.language()]
+            first_row = 'PPS'
         elif self.loc_id == 'district_id':
-            first_row = Translation.district[self.language()]
+            first_row = 'District'
         else:
-            first_row = Translation.region[self.language()]
+            first_row = 'Région'
 
         headers = DataTablesHeader(DataTablesColumn(first_row))
-        for month in self.months:
-            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        for month in self.month_headers():
+            headers.add_column(month)
         return headers
 
 
@@ -144,15 +159,15 @@ class VisiteDeLOperateurPerProductDataSource(YeksiSqlData):
     @property
     def headers(self):
         if self.loc_id == 'pps_id':
-            first_row = Translation.PPS[self.language()]
+            first_row = 'PPS'
         elif self.loc_id == 'district_id':
-            first_row = Translation.district[self.language()]
+            first_row = 'District'
         else:
-            first_row = Translation.region[self.language()]
+            first_row = 'Région'
 
         headers = DataTablesHeader(DataTablesColumn(first_row))
-        for month in self.months:
-            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        for month in self.month_headers():
+            headers.add_column(month)
         return headers
 
 
@@ -188,34 +203,25 @@ class LogisticienDataSource(YeksiSqlData):
     @property
     def headers(self):
         if self.loc_id == 'district_id':
-            first_row = Translation.district[self.language()]
+            first_row = 'District'
         else:
-            first_row = Translation.region[self.language()]
+            first_row = 'Région'
 
         headers = DataTablesHeader(DataTablesColumn(first_row))
-        for month in self.months:
-            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        for month in self.month_headers():
+            headers.add_column(month)
         return headers
 
 
 class AvailabilityData(VisiteDeLOperateurDataSource):
-    slug = 'availability'
-    comment = 'Availability of the products at the PPS level: how many PPS had ALL products in stock'
-    title = 'Availability'
+    slug = 'disponibilite'
+    comment = 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles'
+    title = 'Disponibilité'
     show_total = True
     custom_total_calculate = True
 
-    def __init__(self, config=None):
-        VisiteDeLOperateurDataSource.__init__(self, config)
-        self.slug = Translation.availability[self.language()].lower().replace(' ', '_')
-        self.comment = \
-            Translation.availability_of_the_products_at_the_PPS_level_how_many_PPS_had_ALL_products_in_stock[
-                self.language()
-            ]
-        self.title = Translation.availability[self.language()]
-
     def calculate_total_row(self, rows):
-        total_row = [Translation.availability_percentage[self.language()]]
+        total_row = ['Disponibilité (%)']
         total_numerator = 0
         total_denominator = 0
         if self.loc_id == 'pps_id':
@@ -226,7 +232,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         1 for pps_data in rows if pps_data[i + 1] == '100%'
                     ),
                     'pps_count': sum(1 for pps_data in rows
-                                     if pps_data[i + 1] != Translation.no_data_entered[self.language()])
+                                     if pps_data[i + 1] != 'pas de données')
                 }
                 if data[i]['pps_count']:
                     total_row.append(
@@ -236,7 +242,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         )
                     )
                 else:
-                    total_row.append(Translation.no_data_entered[self.language()])
+                    total_row.append('pas de données')
                 total_numerator += data[i]['pps_is_available']
                 total_denominator += data[i]['pps_count']
 
@@ -248,7 +254,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     )
                 )
             else:
-                total_row.append(Translation.no_data_entered[self.language()])
+                total_row.append('pas de données')
         else:
             for i in range(len(self.months)):
                 numerator = 0
@@ -261,11 +267,11 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 if denominator:
                     total_row.append(self.percent_fn(numerator, denominator))
                 else:
-                    total_row.append(Translation.no_data_entered[self.language()])
+                    total_row.append('pas de données')
             if total_denominator:
                 total_row.append(self.percent_fn(total_numerator, total_denominator))
             else:
-                total_row.append(Translation.no_data_entered[self.language()])
+                total_row.append('pas de données')
         return total_row
 
     @property
@@ -299,7 +305,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = [Translation.no_data_entered[self.language()]] * len(self.months)
+                data[record[self.loc_id]] = ['pas de données'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             data[record[self.loc_id]][month_index] = '0%' if record['pps_is_outstock']['html'] == 1 else '100%'
@@ -324,7 +330,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     record['pps_is_outstock']['html'] == 1 else 1
 
         for location in data:
-            new_data[location] = [Translation.no_data_entered[self.language()]] * len(self.months)
+            new_data[location] = ['pas de données'] * len(self.months)
             for month_index in range(len(self.months)):
                 if data[location][month_index]:
                     new_data[location][month_index] = self.percent_fn(
@@ -337,7 +343,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         numerator = 0
         denominator = 0
         for data_in_month in data_per_localization:
-            if data_in_month and data_in_month != Translation.no_data_entered[self.language()]:
+            if data_in_month and data_in_month != 'pas de données':
                 if self.loc_id == 'pps_id':
                     if data_in_month == '100%':
                         numerator += 1
@@ -350,7 +356,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             else:
                 return "{:.2f}%".format(numerator / denominator)
         else:
-            return Translation.no_data_entered[self.language()]
+            return 'pas de données'
 
     def parse_availability_data_to_rows(self, loc_names, data):
         rows = []
@@ -379,22 +385,16 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def headers(self):
         headers = super(AvailabilityData, self).headers
-        headers.add_column(DataTablesColumn(Translation.avg_availability[self.language()]))
+        headers.add_column(DataTablesColumn('Taux moyen de disponibilité'))
         return headers
 
 
 class LossRateData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'loss_rate'
-    comment = 'Products lost (excluding expired products)'
-    title = 'Products lost (excluding expired products)'
+    slug = 'taux_de_perte'
+    comment = 'Taux de Perte (hors péremption)'
+    title = 'Taux de Perte (hors péremption)'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        VisiteDeLOperateurPerProductDataSource.__init__(self, config)
-        self.slug = Translation.loss_rate[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.products_lost_excluding_expired_products[self.language()]
-        self.title = Translation.products_lost_excluding_expired_products[self.language()]
 
     def calculate_total_row(self, records):
         total_row = []
@@ -409,13 +409,13 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                     data[month_index]['loss_amt'] += record['loss_amt']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append(Translation.rate_by_region[self.language()])
+            total_row.append('Taux par Région')
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append(Translation.rate_by_district[self.language()])
+            total_row.append('Taux par District')
         elif 'pps_id' in self.config and self.config['pps_id']:
             total_row.append('')
         else:
-            total_row.append(Translation.rate_by_country[self.language()])
+            total_row.append('Taux par Pays')
         for month_index in range(len(self.months)):
             if data[month_index]:
                 total_row.append(
@@ -425,7 +425,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                     )
                 )
             else:
-                total_row.append(Translation.no_data_entered[self.language()])
+                total_row.append('pas de données')
         return total_row
 
     @property
@@ -457,7 +457,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = [Translation.no_data_entered[self.language()]] * len(self.months)
+                data[record[self.loc_id]] = ['pas de données'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if self.denominator_exists(record['final_pna_stock']):
@@ -486,17 +486,11 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
 
 
 class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'expiration_rate'
-    comment = 'Products lost through expiration'
-    title = 'Lapse (expiration) rate'
+    slug = 'taux_de_peremption'
+    comment = 'Valorisation des produits périmés PNA'
+    title = 'Taux de Péremption'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        VisiteDeLOperateurPerProductDataSource.__init__(self, config)
-        self.slug = Translation.expiration_rate[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.products_lost_through_expiration[self.language()]
-        self.title = Translation.lapse_expiration_rate[self.language()]
 
     def calculate_total_row(self, records):
         total_row = []
@@ -516,13 +510,13 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append(Translation.rate_by_region[self.language()])
+            total_row.append('Taux par Région')
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append(Translation.rate_by_district[self.language()])
+            total_row.append('Taux par District')
         elif 'pps_id' in self.config and self.config['pps_id']:
             total_row.append('')
         else:
-            total_row.append(Translation.rate_by_country[self.language()])
+            total_row.append('Taux par Pays')
         for monthly_data in data.values():
             total_row.append(
                 self.percent_fn(
@@ -561,7 +555,7 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = [Translation.no_data_entered[self.language()]] * len(self.months)
+                data[record[self.loc_id]] = ['pas de données'] * len(self.months)
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if self.denominator_exists(record['final_pna_stock_valuation']):
@@ -591,28 +585,22 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
 
 
 class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
-    slug = 'recovery_rate_by_pps'
-    comment = 'Total amount paid vs. owed'
-    title = 'Recovery rate by PPS'
+    slug = 'taux_de_recouvrement_au_niveau_du_pps'
+    comment = 'Somme des montants payés sur total dû'
+    title = 'Taux de Recouvrement au niveau du PPS'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        VisiteDeLOperateurDataSource.__init__(self, config)
-        self.slug = Translation.recovery_rate_by_PPS[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.total_amount_paid_vs_owed[self.language()]
-        self.title = Translation.recovery_rate_by_PPS[self.language()]
 
     def get_total_row(self, data):
         total_row = []
         if 'district_id' in self.config and self.config['district_id']:
-            total_row.append(Translation.rate_by_district[self.language()])
+            total_row.append('Taux par District')
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('Rate by PPS')
+            total_row.append('Taux par PPS')
         elif 'region_id' in self.config and self.config['region_id']:
-            total_row.append(Translation.rate_by_region[self.language()])
+            total_row.append('Taux par Région')
         else:
-            total_row.append(Translation.rate_by_country[self.language()])
+            total_row.append('Taux par Pays')
         for i in range(len(self.months)):
             total_row.append(self.percent_fn(
                 sum(
@@ -679,7 +667,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     )
                 )
             else:
-                row.append(Translation.no_data_entered[self.language()])
+                row.append('pas de données')
         return row
 
     @property
@@ -702,17 +690,11 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
 
 
 class RecoveryRateByDistrictData(LogisticienDataSource):
-    slug = 'recovery_rate_by_district'
-    comment = 'Total amount paid vs. owed'
-    title = 'Recovery rate by District'
+    slug = 'taux_de_recouvrement_au_niveau_du_district'
+    comment = 'Somme des montants payés sur total dû'
+    title = 'Taux de Recouvrement au niveau du District'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        LogisticienDataSource.__init__(self, config)
-        self.slug = Translation.recovery_rate_by_district[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.total_amount_paid_vs_owed[self.language()]
-        self.title = Translation.recovery_rate_by_district[self.language()]
 
     def calculate_total_row(self, records):
         total_row = []
@@ -732,11 +714,11 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 data[month_index]['montant_reel_a_payer'] += record['montant_reel_a_payer']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append(Translation.rate_by_region[self.language()])
+            total_row.append('Taux par Région')
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append(Translation.rate_by_district[self.language()])
+            total_row.append('Taux par District')
         else:
-            total_row.append(Translation.rate_by_country[self.language()])
+            total_row.append('Taux par Pays')
         for monthly_data in data.values():
             total_row.append(
                 self.percent_fn(
@@ -768,7 +750,7 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
             if not self.date_in_selected_date_range(record['date_echeance']):
                 continue
             if record['district_id'] not in data:
-                data[record['district_id']] = [Translation.no_data_entered[self.language()]] * len(self.months)
+                data[record['district_id']] = ['pas de données'] * len(self.months)
                 district_names[record['district_id']] = record['district_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['date_echeance'])
             if self.denominator_exists(record['montant_reel_a_payer']):
@@ -798,17 +780,11 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
 
 
 class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
-    slug = 'rupture_rate_by_pps'
-    comment = '# of products stocked out vs. all products of the PPS'
-    title = 'Rupture rate by PPS'
+    slug = 'taux_de_rupture_par_pps'
+    comment = 'Nombre de produits en rupture sur le nombre total de produits du PPS'
+    title = 'Taux de Rupture par PPS'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        VisiteDeLOperateurDataSource.__init__(self, config)
-        self.slug = Translation.rupture_rate_by_PPS[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.num_of_products_stocked_out_vs_all_products_of_the_PPS[self.language()]
-        self.title = Translation.rupture_rate_by_PPS[self.language()]
 
     def calculate_total_row(self, records):
         total_row = []
@@ -828,13 +804,13 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 data[month_index]['count_products_select'] += record['count_products_select']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append(Translation.rate_by_region[self.language()])
+            total_row.append('Taux par Région')
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append(Translation.rate_by_district[self.language()])
+            total_row.append('Taux par District')
         elif 'pps_id' in self.config and self.config['pps_id']:
             total_row.append('')
         else:
-            total_row.append(Translation.rate_by_country[self.language()])
+            total_row.append('Taux par Pays')
         for monthly_data in data.values():
             total_row.append(
                 self.percent_fn(
@@ -868,7 +844,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             if record['pps_id'] not in data:
-                data[record['pps_id']] = [Translation.no_data_entered[self.language()]] * len(self.months)
+                data[record['pps_id']] = ['pas de données'] * len(self.months)
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             if record['count_products_select']:
@@ -896,20 +872,14 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
 
 
 class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'satisfaction_rate_after_delivery'
-    comment = '% products ordered vs. delivered'
-    title = 'Satisfaction Rate after delivery'
+    slug = 'taux_de_satisfaction_apres_livraison'
+    comment = '% de produits commandés vs. deliverés'
+    title = 'Taux de satisfaction (après livraison)'
     show_total = True
     custom_total_calculate = True
 
-    def __init__(self, config=None):
-        VisiteDeLOperateurPerProductDataSource.__init__(self, config)
-        self.slug = Translation.satisfaction_rate_after_delivery[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.percentage_products_ordered_vs_delivered[self.language()]
-        self.title = Translation.satisfaction_rate_after_delivery[self.language()]
-
     def calculate_total_row(self, products):
-        total_row = [Translation.total_CFA[self.language()]]
+        total_row = ['Total (CFA)']
         for i in range(len(self.months)):
             total_row.append(self.percent_fn(
                 sum(
@@ -967,7 +937,7 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
                                         data[product_id][i]['ideal_topup'])
                     )
                 else:
-                    row.append(Translation.no_data_entered[self.language()])
+                    row.append('pas de données')
             rows.append(row)
         return rows
 
@@ -980,24 +950,18 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(Translation.product[self.language()]))
-        for month in self.months:
-            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        headers = DataTablesHeader(DataTablesColumn('Produit'))
+        for month in self.month_headers():
+            headers.add_column(month)
         return headers
 
 
 class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
-    slug = 'valuation_of_pna_stock_per_product'
-    comment = 'Stock value of available PNA products, per product'
-    title = 'Valuation of PNA Stock per product'
+    slug = 'valeur_des_stocks_pna_disponible_chaque_produit'
+    comment = 'Valeur des stocks PNA disponible (chaque produit)'
+    title = 'Valeur des stocks PNA disponible (chaque produit)'
     show_total = True
     custom_total_calculate = True
-
-    def __init__(self, config=None):
-        VisiteDeLOperateurPerProductDataSource.__init__(self, config)
-        self.slug = Translation.valuation_of_PNA_stock_per_product[self.language()].lower().replace(' ', '_')
-        self.comment = Translation.stock_value_of_available_PNA_products_per_product[self.language()]
-        self.title = Translation.valuation_of_PNA_stock_per_product[self.language()]
 
     def calculate_total_row(self, records):
         total_row = []
@@ -1009,14 +973,14 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
             if record['final_pna_stock_valuation']:
                 data[month_index] += record['final_pna_stock_valuation']['html']
 
-        total_row.append(Translation.total_CFA[self.language()])
+        total_row.append('Total (CFA)')
         for month_index in range(len(self.months)):
             if data[month_index]:
                 total_row.append(
                     '{:.2f}'.format(data[month_index])
                 )
             else:
-                total_row.append(Translation.no_data_entered[self.language()])
+                total_row.append('pas de données')
         return total_row
 
     @property
@@ -1062,7 +1026,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(DataTablesColumn(Translation.product[self.language()]))
-        for month in self.months:
-            headers.add_column(DataTablesColumn(month.strftime("%B %Y")))
+        headers = DataTablesHeader(DataTablesColumn('Produit'))
+        for month in self.month_headers():
+            headers.add_column(month)
         return headers

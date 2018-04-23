@@ -64,7 +64,7 @@ class PillowError(models.Model):
         self.calculate_next_attempt()
 
         self.error_type = path_from_object(exception)
-        self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
+        self.error_traceback = "{}\n\n{}".format(exception, "".join(traceback.format_tb(traceb)))
 
     def calculate_next_attempt(self):
         if self.current_attempt <= const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
