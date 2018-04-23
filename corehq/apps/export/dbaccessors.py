@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import itertools
+
 from dimagi.utils.couch.database import safe_delete, iter_docs
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.reports.models import CaseExportSchema, FormExportSchema
@@ -87,7 +89,7 @@ def get_case_export_instances(domain):
 
 
 def _iter_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
-    exports = old_exports_getter(domain) + new_exports_getter(domain)
+    exports = itertools.chain(old_exports_getter(domain), new_exports_getter(domain))
     if not has_deid_permissions:
         return (e for e in exports if not e.is_safe)
     return exports  # Unsorted
