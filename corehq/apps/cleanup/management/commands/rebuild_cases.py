@@ -34,7 +34,6 @@ def rebuild_cases(domain, cases, logger):
         try:
             FormProcessorSQL.hard_rebuild_case(domain, case_id, detail)
             logger.info('Case %s rebuilt' % case_id)
-        except Exception as e:
+        except:
             logger.error("Exception rebuilding case %s".format(case_id))
             logger.exception("message")
-
