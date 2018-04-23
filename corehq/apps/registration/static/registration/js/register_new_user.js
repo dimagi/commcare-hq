@@ -19,7 +19,7 @@ $(function () {
     if (!initial_page_data('hide_password_feedback')) {
         reg.showPasswordFeedback();
     }
-    var regForm = new reg.FormViewModel(
+    var regForm = reg.formViewModel(
         initial_page_data('reg_form_defaults'),
         '#registration-form-container',
         ['step-1', 'step-2', 'final-step']
