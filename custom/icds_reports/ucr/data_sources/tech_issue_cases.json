@@ -184,6 +184,7 @@
           "location_propery": "_id",
           "type": "ancestor_location"
         }
+      },
       {
         "display_name": null,
         "property_path": [],
@@ -350,36 +351,40 @@
         "property_name": "aww_or_ls"
       },
       "supervisor_id": {
-        "location_id": {
-          "type": "conditional",
-          "test": {
-            "operator": "eq",
-            "expression": {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "aww_or_ls"
+        "datatype": null,
+        "type": "expression",
+        "expression": {
+          "location_id": {
+            "type": "conditional",
+            "test": {
+              "operator": "eq",
+              "expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "aww_or_ls"
+              },
+              "type": "boolean_expression",
+              "property_value": "aww"
             },
-            "type": "boolean_expression",
-            "property_value": "aww"
+            "expression_if_true": {
+              {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "aww_id"
+              },
+            },
+            "expression_if_false": {
+              {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "ls_id"
+              },
+            }
           },
-          "expression_if_true": {
-            {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "aww_id"
-            },
-          },
-          "expression_if_false": {
-            {
-              "datatype": null,
-              "type": "property_name",
-              "property_name": "ls_id"
-            },
-          }
-        },
-        "location_type": "supervisor",
-        "location_propery": "_id",
-        "type": "ancestor_location"
+          "location_type": "supervisor",
+          "location_propery": "_id",
+          "type": "ancestor_location"
+        }
       }
     },
     "named_filters": {
