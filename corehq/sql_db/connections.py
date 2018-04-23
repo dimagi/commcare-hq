@@ -157,9 +157,7 @@ class ConnectionManager(object):
                 if isinstance(db_config, dict):
                     write_db = db_config['WRITE']
                     read = db_config['READ']
-                    for db_alias, weighting in read:
-                        assert isinstance(weighting, int), 'weighting must be int'
-                        assert db_alias in settings.DATABASES, db_alias
+                    assert set(read.keys()).issubset(set(settings.DATABASES.keys()))
 
                 self._add_django_db(engine_id, write_db)
                 if read:
