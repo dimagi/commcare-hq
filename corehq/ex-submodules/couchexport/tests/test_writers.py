@@ -90,6 +90,20 @@ class HtmlExportWriterTests(SimpleTestCase):
                           ['<td>spam</td>', '<td>spam</td>', '<td/>', '<td>spam</td>']])
 
 
+class Excel2007ExportWriterTests(SimpleTestCase):
+
+    def test_bytestrings(self):
+        format_ = Format.XLS_2007
+        file_ = io.BytesIO()
+        table = [
+            [b'heading\xe2\x80\x931', b'heading\xe2\x80\x932', b'heading\xe2\x80\x933'],
+            [b'row1\xe2\x80\x931', b'row1\xe2\x80\x932', b'row1\xe2\x80\x933'],
+            [b'row2\xe2\x80\x931', b'row2\xe2\x80\x932', b'row2\xe2\x80\x933'],
+        ]
+        tables = [[b'table\xe2\x80\x93title', table]]
+        export_from_tables(tables, file_, format_)
+
+
 class HeaderNameTest(SimpleTestCase):
 
     def test_names_matching_case(self):

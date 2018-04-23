@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.locations.models import SQLLocation
@@ -332,7 +333,7 @@ class ChoiceListFilter(BaseFilter):
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
-            raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
+            raise FilterValueException(_('Choice "{choice}" not found in choices: {choices}')
                                        .format(choice=choice,
                                                choices=choice_values))
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)

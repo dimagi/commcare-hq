@@ -147,7 +147,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         result.update({
             'queued_sms_count': QueuedSMS.objects.filter(domain=self.domain).count(),
             'outbound_sms_sent_today': OutboundDailyCounter(self.domain_object).current_usage,
-            'daily_outbound_sms_limit': self.domain_object.daily_outbound_sms_limit,
+            'daily_outbound_sms_limit': self.domain_object.get_daily_outbound_sms_limit(),
         })
 
     def add_reminder_status_info(self, result):
@@ -191,8 +191,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
             })
 
         result['sms_count_data'] = [
-            {'key': _("Received"), 'values': inbound_values},
-            {'key': _("Sent"), 'values': outbound_values},
+            {'key': _("Incoming"), 'values': inbound_values},
+            {'key': _("Outgoing"), 'values': outbound_values},
         ]
 
     def add_event_count_info(self, result, days):
@@ -677,6 +677,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
             'read_only_mode': self.read_only_mode,
             'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
             'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
+            'is_system_admin': self.is_system_admin,
         }
 
     @cached_property

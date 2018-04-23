@@ -18,21 +18,21 @@ var drilldownOptionFilterControl = function (options) {
         var currentSelection = currentControl.selected(),
             currentOptions = currentControl.control_options();
 
-        if (triggerLevel+1 === self.controls().length) {
+        if (triggerLevel + 1 === self.controls().length) {
             self.notification.changeMessage(currentSelection);
             return null;
         }
         self.notification.changeMessage('');
 
         var currentIndex = _.indexOf(_.pluck(currentOptions, 'val'), currentSelection);
-        for (var l = triggerLevel+1; l < self.controls().length; l++) {
-            if (currentIndex >= 0 && l === triggerLevel+1) {
+        for (var l = triggerLevel + 1; l < self.controls().length; l++) {
+            if (currentIndex >= 0 && l === triggerLevel + 1) {
                 var nextOptions = currentOptions[currentIndex].next;
-                self.controls()[triggerLevel+1]
+                self.controls()[triggerLevel + 1]
                     .selected(null)
                     .control_options(nextOptions);
             } else {
-                if (self.controls()[l-1].selected() === void(0)) {
+                if (self.controls()[l - 1].selected() === void(0)) {
                     self.controls()[l].control_options([]);
                 }
             }

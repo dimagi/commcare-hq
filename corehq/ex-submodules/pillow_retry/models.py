@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import json
 import traceback
 from datetime import datetime, timedelta
@@ -61,7 +62,7 @@ class PillowError(models.Model):
         self.date_last_attempt = date or datetime.utcnow()
         self.error_type = path_from_object(exception)
 
-        self.error_traceback = "{}\n\n{}".format(exception.message, "".join(traceback.format_tb(traceb)))
+        self.error_traceback = "{}\n\n{}".format(exception, "".join(traceback.format_tb(traceb)))
 
         if self.current_attempt <= settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS:
             time_till_next = settings.PILLOW_RETRY_REPROCESS_INTERVAL * math.pow(self.current_attempt, settings.PILLOW_RETRY_BACKOFF_FACTOR)

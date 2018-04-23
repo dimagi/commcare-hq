@@ -22,6 +22,8 @@ from corehq.util.markup import shell_green, shell_red
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 from six.moves import input, zip_longest
+import logging
+_logger = logging.getLogger('main_couch_sql_datamigration')
 
 
 class Command(BaseCommand):
@@ -207,3 +209,4 @@ def _blow_away_migration(domain):
 
     sql_case_ids = CaseAccessorSQL.get_deleted_case_ids_in_domain(domain)
     CaseAccessorSQL.hard_delete_cases(domain, sql_case_ids)
+    _logger.info("blew away migration for domain {}".format(domain))

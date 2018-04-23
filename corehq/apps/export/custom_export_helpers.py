@@ -6,7 +6,6 @@ from corehq import privileges
 from corehq.apps.export.exceptions import BadExportConfiguration
 from corehq.apps.reports.dbaccessors import touch_exports
 from corehq.apps.reports.models import FormExportSchema, HQGroupExportConfiguration, CaseExportSchema
-from corehq.apps.reports.standard.export import DeidExportReport
 from couchexport.models import ExportTable, ExportSchema, ExportColumn, display_column_types, SplitColumn
 from django.utils.translation import ugettext as _, ugettext_lazy
 from memoized import memoized
@@ -185,7 +184,6 @@ class CustomExportHelper(object):
             'column_type_options': ColumnTypesOptions.json_options,
             'presave': self.presave,
             'export_stock': self.export_stock,
-            'DeidExportReport_name': DeidExportReport.name,
             'table_configuration': table_configuration,
             'domain': self.domain,
             'commtrack_domain': Domain.get_by_name(self.domain).commtrack_enabled,

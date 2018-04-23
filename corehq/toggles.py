@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -859,9 +860,13 @@ NON_COMMTRACK_LEDGERS = StaticToggle(
 
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
-    'Enikshay: Inject custom instance declarations',
+    'Inject custom instance declarations',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=(
+        'Enables the insertion of custom instances into a case list configuration. '
+        'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -994,13 +999,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-CASE_PROPERTY_HISTORY = StaticToggle(
-    'case_property_history',
-    'Shows a modal on the case property page allowing you to see the history of various case properties',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
@@ -1033,6 +1031,13 @@ FIXTURE_CASE_SELECTION = StaticToggle(
 EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'ews_invalid_report_response',
     'EWS: Send response about invalid stock on hand',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
+    'use_sms_with_inactive_contacts',
+    'Use SMS with inactive contacts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )

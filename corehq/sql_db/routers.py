@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from django.conf import settings
 
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID, get_icds_ucr_db_alias
@@ -98,4 +99,7 @@ def db_for_read_write(model, write=True):
             engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     else:
-        return partition_config.get_main_db()
+        default_db = partition_config.get_main_db()
+        if not write:
+            return connection_manager.get_load_balanced_db_alias(app_label, default_db)
+        return default_db

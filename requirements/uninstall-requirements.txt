@@ -4,3 +4,5 @@ github3.py
 mocker
 ethiopian-date
 architect
+ethiopian-date-converter
+django-nose

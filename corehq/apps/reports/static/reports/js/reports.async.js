@@ -106,6 +106,7 @@ var HQAsyncReport = function (o) {
                 self.loadingIssueModal.modal('hide');
                 self.hqLoading = $(self.loaderClass);
                 self.reportContent.html(data.report);
+                hqImport('reports/js/charts/main').init();
                 // clear lingering popovers
                 _.each($('body > .popover'), function (popover) {
                     $(popover).remove();
@@ -113,7 +114,11 @@ var HQAsyncReport = function (o) {
                 self.reportContent.append(self.hqLoading);
                 self.hqLoading.removeClass('hide');
 
+                // Assorted UI cleanup/initialization
                 $('.hq-report-time-notice').removeClass('hide');
+                if ($.timeago) {
+                    $(".timeago").timeago();
+                }
 
                 $('.loading-backdrop').fadeOut();
                 self.hqLoading.fadeOut();

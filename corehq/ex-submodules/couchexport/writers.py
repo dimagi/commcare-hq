@@ -12,6 +12,7 @@ import bz2
 from collections import OrderedDict
 
 from django.template.loader import render_to_string, get_template
+from django.utils.functional import Promise
 import xlwt
 
 from couchexport.models import Format
@@ -177,7 +178,12 @@ class ExportWriter(object):
 
     def add_table(self, table_index, headers, table_title=None):
         def _clean_name(name):
-            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", six.text_type(name)))
+            if isinstance(name, six.binary_type):
+                name = name.decode('utf8')
+            elif isinstance(name, Promise):
+                # noinspection PyCompatibility
+                name = unicode(name) if six.PY2 else str(name)
+            return re.sub(r"[\n]", '', re.sub(r"[[\\?*/:\]]", "-", name))
 
         table_title_truncated = self.table_name_generator.next_unique(
             _clean_name(table_title or table_index)

@@ -155,8 +155,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
-            var inTest = hqImport('analytix/js/kissmetrix').getAbTest('Data Feedback Loop') === 'data_feedback_loop_on';
-            if (inTest && resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
+            if (resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     analyticsLinks = [
@@ -500,7 +499,7 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
         formplayer_url = user.formplayer_url,
         resp,
         options = {
-            url: formplayer_url + "/delete_application_dbs",
+            url: formplayer_url + "/update",
             data: JSON.stringify({
                 app_id: appId,
                 domain: user.domain,
@@ -518,9 +517,13 @@ FormplayerFrontend.on('refreshApplication', function(appId) {
             formplayerLoadingComplete(true);
             return;
         }
-
         formplayerLoadingComplete();
         $("#cloudcare-notifications").empty();
+        if (response.error) {
+            FormplayerFrontend.request('showError', response.message);
+        } else {
+            FormplayerFrontend.request('showSuccess', response.message);
+        }
         FormplayerFrontend.trigger('navigateHome');
     });
 });

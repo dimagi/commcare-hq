@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-10 23:40+0000\n"
+"POT-Creation-Date: 2018-04-17 19:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -502,15 +502,15 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:387
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:394
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:428
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:433
 msgid "No new changes!"
 msgstr ""
 
@@ -2472,7 +2472,7 @@ msgid "Excel (older versions)"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:197
-msgid "Excel 2007"
+msgid "Excel 2007+"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:510
@@ -2554,7 +2554,7 @@ msgid "Clear"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
+#: corehq/apps/reports/static/reports/js/filters/main.js:71
 msgid "Show All Dates"
 msgstr ""
 
@@ -2859,12 +2859,12 @@ msgid ""
 "duplicate sheet names."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:109
+#: corehq/apps/reports/static/reports/js/filters/main.js:139
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:122
+#: corehq/apps/reports/static/reports/js/filters/main.js:152
 msgid "Select a group"
 msgstr ""
 
@@ -2927,7 +2927,7 @@ msgstr ""
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:184
+#: corehq/apps/reports/static/reports/js/reports.async.js:189
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
@@ -2962,6 +2962,10 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/submission_error_report.js:25
 msgid "Failed to re-process"
+msgstr ""
+
+#: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
+msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
 
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:29
@@ -3298,6 +3302,10 @@ msgstr ""
 
 #: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:158
 msgid "every month"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:61
+msgid "(no errors over the given date range)"
 msgstr ""
 
 #: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:92
