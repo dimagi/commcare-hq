@@ -109,10 +109,22 @@ class ConnectionManager(object):
 
     def get_load_balanced_read_engine_id(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
-        if read_dbs:
-            fresh_dbs = filter_out_stale_standbys(read_dbs, ACCEPTABLE_STANDBY_DELAY_SECONDS)
-            dbs = [db for db, weight in read_dbs if db in fresh_dbs]
-            weights = [weight for db, weight in read_dbs if db in fresh_dbs]
+        # convert to a db to weight dictionary
+        weights_by_db = {db: weight for db, weight in read_dbs}
+
+        # filter out stale standby dbs
+        fresh_dbs = filter_out_stale_standbys(
+            weights_by_db.keys(), ACCEPTABLE_STANDBY_DELAY_SECONDS
+        )
+        dbs = []
+        weights = []
+        for db, weight in six.iteritems(weights_by_db):
+            if db in fresh_dbs:
+                dbs.append(db)
+                weights.append(weight)
+
+        if dbs:
+            # normalize weights of remaining dbs
             total_weight = sum(weights)
             normalized_weights = [weight / total_weight for weight in weights]
             return random.choice(dbs, p=normalized_weights)
