@@ -4,8 +4,6 @@ from __future__ import unicode_literals
 from datetime import datetime
 from abc import ABCMeta, abstractmethod
 
-from django.conf import settings
-
 from corehq.sql_db.util import handle_connection_failure, get_default_and_partitioned_db_aliases
 from jsonobject import DefaultProperty
 from dimagi.ext import jsonobject
