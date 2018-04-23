@@ -341,7 +341,7 @@ http://openrosa.org/formdesigner/54338047-CFB6-4D5B-861B-2256A10BBBC8:
     warning_fr: "Problème signalé : Le ou les opérateurs de pulvérisation ne sont pas alimentés ou hydratés de manière appropriée avant de revêtir leur EPI."
     warning_question: ~
     # answer and warning_question are optional
-  - question: [q4_ecoaction]
+  - question: [q4]
     base_path: [morning_mobilization]
     flag_name: "SOs in PPE?"
     flag_name_por: "Roceadors vestiram EPI?"
