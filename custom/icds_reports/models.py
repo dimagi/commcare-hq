@@ -979,21 +979,21 @@ class AggregateGrowthMonitoringForms(models.Model):
     )
 
     zscore_grading_wfa = models.PositiveSmallIntegerField(
-        null=True, help_text="Last value of zscore_grading_wfa in this month"
+        null=True, help_text="Last recorded zscore_grading_wfa before end of this month"
     )
     zscore_grading_wfa_last_recorded = models.DateTimeField(
         null=True, help_text="Time when zscore_grading_wfa was last recorded"
     )
 
     zscore_grading_hfa = models.PositiveSmallIntegerField(
-        null=True, help_text="Last value of zscore_grading_hfa in this month"
+        null=True, help_text="Last recorded zscore_grading_hfa before end of this month"
     )
     zscore_grading_hfa_last_recorded = models.DateTimeField(
         null=True, help_text="Time when zscore_grading_hfa was last recorded"
     )
 
     zscore_grading_wfh = models.PositiveSmallIntegerField(
-        null=True, help_text="Current value of zscore_grading_wfh in this month"
+        null=True, help_text="Last recorded zscore_grading_wfh before end of this month"
     )
     zscore_grading_wfh_last_recorded = models.DateTimeField(
         null=True, help_text="Time when zscore_grading_wfh was last recorded"
