@@ -1,6 +1,7 @@
+from __future__ import division
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import random
+from numpy import random
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
 
@@ -105,7 +106,11 @@ class ConnectionManager(object):
     def get_load_balanced_read_engine_id(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         if read_dbs:
-            return random.choice(read_dbs)
+            dbs = [db for db, weight in read_dbs]
+            weights = [weight for db, weight in read_dbs]
+            total_weight = sum(weights)
+            normalized_weights = [weight / total_weight for weight in weights]
+            return random.choice(dbs, p=normalized_weights)
         elif default:
             return default
         return engine_id
@@ -153,20 +158,16 @@ class ConnectionManager(object):
 
                 self._add_django_db(engine_id, write_db)
                 if read:
-                    self.read_database_mapping[engine_id] = []
+                    self.read_database_mapping[engine_id] = read
                     for read_db, weighting in read:
                         assert read_db == write_db or read_db not in self.db_connection_map, read_db
-                        self.read_database_mapping[engine_id].extend([read_db] * weighting)
                         if read_db != write_db:
                             self._add_django_db(read_db, read_db)
 
         for app, weights in settings.LOAD_BALANCED_APPS.items():
-            self.read_database_mapping[app] = []
-            for db_alias, weighting in weights:
-                assert isinstance(weighting, int), 'weighting must be int'
-                assert db_alias in settings.DATABASES, db_alias
-
-                self.read_database_mapping[app].extend([db_alias] * weighting)
+            self.read_database_mapping[app] = weights
+            dbs = weights.keys()
+            assert set(dbs).issubset(set(settings.DATABASES.keys()))
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')
