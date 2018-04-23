@@ -64,8 +64,8 @@ class PillowRetryTestCase(TestCase):
         self._pillowtops = settings.PILLOWTOPS
         settings.PILLOWTOPS = {
             'tests': [
-                'pillow_retry.tests.FakePillow',
-                'pillow_retry.tests.GetDocPillow',
+                'pillow_retry.tests.test_model.FakePillow',
+                'pillow_retry.tests.test_model.GetDocPillow',
             ]
         }
 
@@ -87,7 +87,7 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(error.total_attempts, 1)
         self.assertEqual(error.current_attempt, 1)
         self.assertTrue(message in error.error_traceback)
-        self.assertEqual(error.error_type, 'pillow_retry.tests.ExceptionA')
+        self.assertEqual(error.error_type, 'pillow_retry.tests.test_model.ExceptionA')
 
         message = 'ex message2'
         error.add_attempt(*get_ex_tb(message))
