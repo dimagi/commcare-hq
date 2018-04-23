@@ -131,12 +131,14 @@ DECLARE
   _agg_complementary_feeding_table text;
   _ucr_child_tasks_table text;
   _agg_thr_form_table text;
+  _agg_gm_form_table text;
   _start_date date;
   _end_date date;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'child_health_monthly' || '_' || _start_date;
+  _agg_gm_form_table := 'icds_dashboard_growth_monitoring_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
@@ -338,6 +340,14 @@ BEGIN
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'days_ration_given_child = agg.days_ration_given_child  ' ||
     'FROM ' || quote_ident(_agg_thr_form_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'stunting_last_recorded_v2 = agg.zscore_grading_hfa, ' ||
+      'stunting_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
+      'wasting_last_recorded_v2 = agg.zscore_grading_wfh, ' ||
+      'wasting_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_wfh_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END ' ||
+    'FROM ' || quote_ident(_agg_gm_form_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';

@@ -1,0 +1,4 @@
+ALTER TABLE child_health_monthly ADD COLUMN stunting_last_recorded_v2 smallint;
+ALTER TABLE child_health_monthly ADD COLUMN stunting_recorded_in_month smallint;
+ALTER TABLE child_health_monthly ADD COLUMN wasting_last_recorded_v2 smallint;
+ALTER TABLE child_health_monthly ADD COLUMN wasting_recorded_in_month smallint;
