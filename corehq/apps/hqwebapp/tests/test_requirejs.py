@@ -7,12 +7,10 @@ import subprocess
 
 from django.test import SimpleTestCase
 
-logger = logging.getLogger(__name__)
-
 
 class TestRequireJS(SimpleTestCase):
 
-    def test_files_match_modules(self):
+    def _get_hqdefine_files(self):
         prefix = os.path.join(os.getcwd(), 'corehq')
 
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
@@ -22,8 +20,12 @@ class TestRequireJS(SimpleTestCase):
                     and not re.search(r'couchapps', f)
                     and not re.search(r'/vellum/', f)]
 
-        errors = {}
-        for filename in js_files:
+        return js_files
+
+
+    def test_files_match_modules(self):
+        errors = []
+        for filename in self._get_hqdefine_files():
             proc = subprocess.Popen(["grep", "hqDefine", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             for line in out.split("\n"):
@@ -31,9 +33,7 @@ class TestRequireJS(SimpleTestCase):
                 if match:
                     module = match.group(1)
                     if not filename.endswith(module + ".js"):
-                        errors[module] = filename
+                        errors.append("Module {} defined in file {}".format(module, filename))
 
         if errors:
-            for module, filename in errors.items():
-                logger.debug("Module {} defined in file {}".format(module, filename))
-            self.fail("Mismatched JS file/modules, see output above")
+            self.fail("Mismatched JS file/modules: \n{}".format("\n".join(errors)))
