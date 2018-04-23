@@ -176,10 +176,11 @@ def get_replication_delay_for_standby(db_alias):
     Finds the replication delay for given database by running a SQL query on standby database.
         See https://www.postgresql.org/message-id/CADKbJJWz9M0swPT3oqe8f9+tfD4-F54uE6Xtkh4nERpVsQnjnw@mail.gmail.com
 
-    If the given database is not a standby database, an assertion error is raised
+    If the given database is not a standby database, zero delay is returned
     If standby process (wal_receiver) is not running on standby a `VERY_LARGE_DELAY` is returned
     """
-    assert db_alias in get_standby_databases()
+    if db_alias not in get_standby_databases():
+        return 0
     # used to indicate that the wal_receiver process on standby is not running
     VERY_LARGE_DELAY = 100000
     sql = """
@@ -195,3 +196,10 @@ def get_replication_delay_for_standby(db_alias):
         cursor.execute(sql)
         [(delay, )] = cursor.fetchall()
         return delay
+
+def filter_out_stale_standbys(dbs, delay_threshold):
+    return [
+        db
+        for db in dbs
+        if get_replication_delay_for_standby(db) <= delay_threshold
+    ]

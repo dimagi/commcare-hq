@@ -14,10 +14,14 @@ from django.core import signals
 
 from corehq.util.test_utils import unit_testing_only
 
+from .util import filter_out_stale_standbys
+
+
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
+ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 
 
 def get_icds_ucr_db_alias():
@@ -106,8 +110,9 @@ class ConnectionManager(object):
     def get_load_balanced_read_engine_id(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         if read_dbs:
-            dbs = [db for db, weight in read_dbs]
-            weights = [weight for db, weight in read_dbs]
+            fresh_dbs = filter_out_stale_standbys(read_dbs, ACCEPTABLE_STANDBY_DELAY_SECONDS)
+            dbs = [db for db, weight in read_dbs if db in fresh_dbs]
+            weights = [weight for db, weight in read_dbs if db in fresh_dbs]
             total_weight = sum(weights)
             normalized_weights = [weight / total_weight for weight in weights]
             return random.choice(dbs, p=normalized_weights)
