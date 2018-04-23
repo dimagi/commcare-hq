@@ -24,7 +24,7 @@ from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
     EmailExportWhenDoneRequest
-from corehq.apps.hqwebapp.views import HQJSONResponseMixin
+from corehq.apps.hqwebapp.views import HQJSONResponseMixin, StreamingJSONResponseMixin
 from corehq.apps.hqwebapp.utils import format_angular_error, format_angular_success
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
@@ -87,6 +87,7 @@ from corehq.apps.export.dbaccessors import (
     get_properly_wrapped_export_instance,
     get_case_exports_by_domain,
     get_form_exports_by_domain,
+    iter_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
 from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
@@ -889,6 +890,9 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("must implement get_saved_exports")
 
+    def iter_saved_exports(self):
+        return self.get_saved_exports()
+
     @property
     @memoized
     def emailed_export_groups(self):
@@ -1041,17 +1045,24 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         }
         """
         try:
-            saved_exports = self.get_saved_exports()
+            saved_exports = self.iter_saved_exports()
+            # FormExportListView.iter_saved_exports() returns a generator
+            # because some domains have too many FormExportInstances.
+            # FormExportListView returns StreamingHttpResponses. Other
+            # subclasses return normal HttpResponses and need saved_exports to
+            # be a list. To avoid having two almost identical versions of this
+            # method, just return saved_exports as the type its class expects:
+            return_as_list = isinstance(saved_exports, list)
             if self.is_deid:
-                saved_exports = [x for x in saved_exports if x.is_safe]
-            saved_exports = list(map(self.fmt_export_data, saved_exports))
+                saved_exports = (x for x in saved_exports if x.is_safe)
+            saved_exports = (self.fmt_export_data(x) for x in saved_exports)
         except Exception as e:
             return format_angular_error(
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
             )
         return format_angular_success({
-            'exports': saved_exports,
+            'exports': list(saved_exports) if return_as_list else saved_exports,
         })
 
     @property
@@ -1477,7 +1488,7 @@ def use_new_daily_saved_exports_ui(domain):
 
 
 @location_safe
-class FormExportListView(BaseExportListView):
+class FormExportListView(BaseExportListView, StreamingJSONResponseMixin):
     urlname = 'list_form_exports'
     page_title = ugettext_noop("Export Forms")
     form_or_case = 'form'
@@ -1497,6 +1508,12 @@ class FormExportListView(BaseExportListView):
             # New exports display daily saved exports in their own view
             exports = [x for x in exports if not x.is_daily_saved_export]
         return exports
+
+    def iter_saved_exports(self):
+        iter_exports = iter_form_exports_by_domain(self.domain, self.has_deid_view_permissions)
+        if use_new_daily_saved_exports_ui(self.domain):
+            return (x for x in iter_exports if not x.is_daily_saved_export)
+        return iter_exports
 
     @property
     @memoized
