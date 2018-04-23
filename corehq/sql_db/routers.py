@@ -101,5 +101,5 @@ def db_for_read_write(model, write=True):
     else:
         default_db = partition_config.get_main_db()
         if not write:
-            return connection_manager.get_load_balanced_db_alias(app_label, default_db)
+            return connection_manager.get_load_balanced_read_engine_id(app_label, default_db)
         return default_db

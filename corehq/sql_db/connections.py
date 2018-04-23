@@ -11,6 +11,8 @@ from sqlalchemy.orm.scoping import scoped_session
 from sqlalchemy.orm.session import sessionmaker
 from django.core import signals
 
+from corehq.util.test_utils import unit_testing_only
+
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
@@ -100,19 +102,13 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_load_balanced_read_db(self, engine_id, default=None):
+    def get_load_balanced_read_engine_id(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         if read_dbs:
             return random.choice(read_dbs)
-        elif default is not None:
+        elif default:
             return default
         return engine_id
-
-    def get_load_balanced_read_engine_id(self, engine_id):
-        return self.get_load_balanced_read_db(engine_id)
-
-    def get_load_balanced_db_alias(self, app_label, default):
-        return self.get_load_balanced_read_db(app_label, default)
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
@@ -226,6 +222,7 @@ def _close_connections(**kwargs):
 signals.request_finished.connect(_close_connections)
 
 
+@unit_testing_only
 @contextmanager
 def override_engine(engine_id, connection_url):
     original_url = connection_manager.get_connection_string(engine_id)
