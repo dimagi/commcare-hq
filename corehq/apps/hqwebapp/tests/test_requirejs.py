@@ -3,12 +3,9 @@ from __future__ import unicode_literals
 import os
 import re
 import subprocess
-from nose.plugins.attrib import attr
 
 from django.test import SimpleTestCase
 
-from django.conf import settings
-from django.contrib.staticfiles import finders
 
 class TestRequireJS(SimpleTestCase):
 
@@ -18,9 +15,9 @@ class TestRequireJS(SimpleTestCase):
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         js_files = [f for f in out.split("\n") if f
-                                               and not re.search(r'/_design/', f)
-                                               and not re.search(r'couchapps', f)
-                                               and not re.search(r'/vellum/', f)]
+                    and not re.search(r'/_design/', f)
+                    and not re.search(r'couchapps', f)
+                    and not re.search(r'/vellum/', f)]
 
         errors = {}
         for filename in js_files:
@@ -35,5 +32,5 @@ class TestRequireJS(SimpleTestCase):
 
         if errors:
             for module, filename in errors.items():
-                print "Module {} defined in file {}".format(module, filename)
+                logger.debug("Module {} defined in file {}".format(module, filename))
             self.fail("Mismatched JS file/modules, see output above")
