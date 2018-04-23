@@ -32,6 +32,7 @@ from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import (
     AggChildHealthMonthly,
     AggregateComplementaryFeedingForms,
+    AggregateGrowthMonitoringForms,
     AggregateChildHealthTHRForms,
 )
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
@@ -83,6 +84,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
                 icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
                 icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_gm_forms),
                 icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
                 icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
@@ -168,6 +170,16 @@ def _aggregate_cf_forms(day):
     agg_date = force_to_date(day)
     for state_id in state_ids:
         AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
+
+
+def _aggregate_gm_forms(day):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+
+    agg_date = force_to_date(day)
+    for state_id in state_ids:
+        AggregateGrowthMonitoringForms.aggregate(state_id, force_to_date(agg_date))
 
 
 def _aggregate_thr_forms(day):
