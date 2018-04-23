@@ -7,7 +7,7 @@ from corehq.apps.change_feed.data_sources import get_document_store
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
-from pillow_retry.models import PillowError
+from pillow_retry.const import PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_pillow_by_name
@@ -27,7 +27,7 @@ def process_pillow_retry(error_doc):
             "If not, then this should be looked into."
         ) % pillow_name_or_class)
         try:
-            error_doc.total_attempts = PillowError.multi_attempts_cutoff() + 1
+            error_doc.total_attempts = PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
             error_doc.save()
         finally:
             return

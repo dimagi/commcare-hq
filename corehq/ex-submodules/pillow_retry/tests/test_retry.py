@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.test import TestCase
-from django.test.utils import override_settings
 from fakecouch import FakeCouchDb
 from kafka import KafkaConsumer
 from kafka.common import KafkaUnavailableError
@@ -121,7 +120,6 @@ class KakfaPillowRetryProcessingTest(TestCase, TestMixin):
     def tearDown(self):
         ensure_index_deleted(CASE_INDEX_INFO.index)
 
-    @override_settings(PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS=0)
     def test(self):
         document = {
             '_id': 'test-id',

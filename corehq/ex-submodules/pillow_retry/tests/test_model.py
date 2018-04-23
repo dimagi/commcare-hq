@@ -9,6 +9,7 @@ from django.test import TestCase
 from six.moves import range
 
 from pillow_retry.api import process_pillow_retry
+from pillow_retry import const
 from pillow_retry.models import PillowError
 from pillowtop.checkpoints.manager import PillowCheckpoint
 from pillowtop.feed.couch import change_from_couch_row
@@ -113,7 +114,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_get_errors_to_process(self):
         # Only re-process errors with
-        # current_attempt < setting.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
+        # current_attempt < const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         date = datetime.utcnow()
         for i in range(0, 5):
             error = create_error(_change(id=i), attempts=i+1)
@@ -131,7 +132,6 @@ class PillowRetryTestCase(TestCase):
         self.assertEqual(len(errors), 3)
 
     def test_get_errors_to_process_max_limit(self):
-        # see settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
         date = datetime.utcnow()
 
         def make_error(id, current_attempt, total_attempts):
@@ -144,29 +144,29 @@ class PillowRetryTestCase(TestCase):
         # current_attempts <= limit, total_attempts <= limit
         make_error(
             'to-process1',
-            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
-            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+            const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
+            const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
         )
 
         # current_attempts = 0, total_attempts > limit
         make_error(
             'to-process2',
             0,
-            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
+            const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
         )
 
         # current_attempts > limit, total_attempts <= limit
         make_error(
             'not-processed1',
-            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS + 1,
-            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
+            const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS + 1,
+            const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
         )
 
         # current_attempts <= limit, total_attempts > limit
         make_error(
             'not-processed2',
-            settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
-            settings.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
+            const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS,
+            const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
         )
 
         errors = PillowError.get_errors_to_process(date).all()
@@ -186,7 +186,7 @@ class PillowRetryTestCase(TestCase):
 
     def test_bulk_reset(self):
         for i in range(0, 5):
-            error = create_error(_change(id=i), attempts=settings.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
+            error = create_error(_change(id=i), attempts=const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS)
             error.save()
 
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
@@ -201,7 +201,7 @@ class PillowRetryTestCase(TestCase):
         for i in range(0, 3):
             error = create_error(_change(id=i), attempts=1)
             if i >= 1:
-                error.total_attempts = PillowError.multi_attempts_cutoff() + 1
+                error.total_attempts = const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
             error.save()
 
         errors = PillowError.get_errors_to_process(datetime.utcnow()).all()
@@ -222,7 +222,8 @@ class PillowRetryTestCase(TestCase):
         # make sure this doesn't error
         process_pillow_retry(error)
         # and that its total_attempts was bumped above the threshold
-        self.assertTrue(PillowError.objects.get(pk=error.pk).total_attempts > PillowError.multi_attempts_cutoff())
+        error = PillowError.objects.get(pk=error.pk)
+        self.assertTrue(error.total_attempts > const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF)
 
     def test_empty_metadata(self):
         change = _change(id='123')
