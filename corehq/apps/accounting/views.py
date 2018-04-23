@@ -62,7 +62,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.models import (
     Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
 )
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
@@ -180,6 +180,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def page_context(self):
         return {
             'account': self.account,
+            'auto_pay_card': (
+                StripePaymentMethod.objects.get(web_user=self.account.auto_pay_user).get_autopay_card(self.account)
+                if self.account.auto_pay_enabled else None
+            ),
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
             'basic_form': self.basic_account_form,
