@@ -1878,7 +1878,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def get_all_contributed_subcase_properties(self):
         case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
         return case_properties
 
     @memoized
@@ -3147,7 +3147,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def get_all_contributed_subcase_properties(self):
         case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
         return case_properties
 
     @memoized
