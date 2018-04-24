@@ -8,6 +8,7 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
 from pillow_retry import const
+from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_pillow_by_name
@@ -33,6 +34,7 @@ def process_pillow_retry(error_doc):
             return
 
     change = error_doc.change_object
+    delete_all_for_doc = False
     try:
         change_metadata = change.metadata
         if change_metadata:
@@ -58,9 +60,13 @@ def process_pillow_retry(error_doc):
                 ),
                 change_metadata
             )
+            delete_all_for_doc = True
     except Exception:
         ex_type, ex_value, ex_tb = sys.exc_info()
         error_doc.add_attempt(ex_value, ex_tb)
         error_doc.save()
     else:
-        error_doc.delete()
+        if delete_all_for_doc:
+            PillowError.objects.filter(doc_id=error_doc.doc_id).delete()
+        else:
+            error_doc.delete()
