@@ -989,6 +989,13 @@ class AggregateGrowthMonitoringForms(models.Model):
         null=True, help_text="Time when zscore_grading_wfh was last recorded"
     )
 
+    muac_grading = models.PositiveSmallIntegerField(
+        null=True, help_text="Last recorded muac_grading before end of this month"
+    )
+    muac_grading_last_recorded = models.DateTimeField(
+        null=True, help_text="Time when muac_grading was last recorded"
+    )
+
     class Meta(object):
         db_table = AGG_GROWTH_MONITORING_TABLE
 
