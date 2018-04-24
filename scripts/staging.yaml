@@ -59,7 +59,6 @@ branches:
   - jls/externalize-js-locations-widgets # Jenny April 19
   - jls/externalize-js-reassign-cases # Jenny April 19
   - emord-patch-1 # J$ April 19 (upgrading celery)
-  - sk/pillow-retry-v3 # SK April 20
   - jls/inheritance-cleanup # Jenny April 20
   - jr/drilldown-filters-again # jordan April 23
 submodules:
