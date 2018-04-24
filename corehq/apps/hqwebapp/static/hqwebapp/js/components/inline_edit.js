@@ -95,7 +95,7 @@ hqDefine('hqwebapp/js/components/inline_edit', function() {
                         url: self.url,
                         type: 'POST',
                         dataType: 'JSON',
-                        data: data,
+                        data: JSON.stringify(data),
                         success: function (data) {
                             self.isSaving(false);
                             self.hasError(false);
