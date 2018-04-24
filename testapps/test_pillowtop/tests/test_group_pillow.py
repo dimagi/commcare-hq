@@ -39,7 +39,7 @@ class GroupPillowTest(TestCase):
         since = get_topic_offset(GROUP)
         change_meta = change_meta_from_doc(
             document=group.to_json(),
-            data_source_type=data_sources.COUCH,
+            data_source_type=data_sources.SOURCE_COUCH,
             data_source_name=Group.get_db().dbname,
         )
         producer.send_change(GROUP, change_meta)

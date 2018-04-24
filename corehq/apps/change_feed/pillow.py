@@ -70,7 +70,7 @@ def get_application_db_kafka_pillow(pillow_id, **kwargs):
 def get_change_feed_pillow_for_db(pillow_id, couch_db):
     kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
-        kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
+        kafka_client, data_source_type=data_sources.SOURCE_COUCH, data_source_name=couch_db.dbname
     )
     change_feed = CouchChangeFeed(couch_db, include_docs=True)
     checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)

@@ -132,7 +132,7 @@ def _form_to_change_meta(form):
     else:
         return change_meta_from_doc(
             document=form.to_json(),
-            data_source_type=data_sources.COUCH,
+            data_source_type=data_sources.SOURCE_COUCH,
             data_source_name=XFormInstance.get_db().dbname,
         )
 
@@ -141,6 +141,6 @@ def _user_to_change_meta(user):
     user_doc = user.to_json()
     return change_meta_from_doc(
         document=user_doc,
-        data_source_type=data_sources.COUCH,
+        data_source_type=data_sources.SOURCE_COUCH,
         data_source_name=CommCareUser.get_db().dbname,
     )

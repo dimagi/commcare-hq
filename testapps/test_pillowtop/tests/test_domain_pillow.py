@@ -81,6 +81,6 @@ def _domain_to_change_meta(domain):
     domain_doc = domain.to_json()
     return change_meta_from_doc(
         document=domain_doc,
-        data_source_type=data_sources.COUCH,
+        data_source_type=data_sources.SOURCE_COUCH,
         data_source_name=Domain.get_db().dbname,
     )

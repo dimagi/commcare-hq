@@ -13,7 +13,7 @@ def change_meta_from_synclog(synclog):
     from corehq.apps.change_feed import data_sources
     return ChangeMeta(
         document_id=synclog.synclog_id.hex,
-        data_source_type=data_sources.SYNCLOG_SQL,
+        data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.SYNCLOG_SQL,
         document_type='SYNCLOG_SQL',
         document_subtype=None,

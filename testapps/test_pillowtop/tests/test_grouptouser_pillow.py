@@ -192,7 +192,7 @@ class GroupToUserPillowDbTest(TestCase):
 def _group_to_change_meta(group):
     return change_meta_from_doc(
         document=group,
-        data_source_type=data_sources.COUCH,
+        data_source_type=data_sources.SOURCE_COUCH,
         data_source_name=Group.get_db().dbname,
     )
 
