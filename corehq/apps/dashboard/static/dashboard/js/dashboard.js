@@ -11,8 +11,8 @@ hqDefine("dashboard/js/dashboard", [
     _,
     initialPageData
 ) {
-    var TileModel = function(options) {
-        var self = this;
+    var tileModel = function(options) {
+        var self = {};
         self.title = options.title;
         self.slug = options.slug;
         self.icon = options.icon;
@@ -137,15 +137,14 @@ hqDefine("dashboard/js/dashboard", [
         return self;
     };
 
-    var DashboardModel = function(options) {
-        var self = this;
-        self.tiles = _.map(options.tiles, function(t) { return new TileModel(t); });
-
+    var dashboardModel = function(options) {
+        var self = {};
+        self.tiles = _.map(options.tiles, function(t) { return tileModel(t); });
         return self;
     };
 
     $(function() {
-        $("#dashboard-tiles").koApplyBindings(new DashboardModel({
+        $("#dashboard-tiles").koApplyBindings(dashboardModel({
             tiles: initialPageData.get("dashboard_tiles"),
         }));
     });
