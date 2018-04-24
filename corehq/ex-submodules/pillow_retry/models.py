@@ -107,7 +107,7 @@ class PillowError(models.Model):
         return error
 
     @classmethod
-    def get_errors_to_process(cls, utcnow, limit=None, skip=0, fetch_full=False):
+    def get_errors_to_process(cls, utcnow, limit=None, skip=0):
         """
         Get errors according the following rules:
 
@@ -126,8 +126,6 @@ class PillowError(models.Model):
         :param utcnow:      The current date and time in UTC.
         :param limit:       Paging limit param.
         :param skip:        Paging skip param.
-        :param fetch_full:  If True return the whole PillowError object otherwise return a
-                            a dict containing 'id' and 'date_next_attempt' keys.
         """
         max_attempts = const.PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS
         multi_attempts_cutoff = const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF
@@ -141,8 +139,6 @@ class PillowError(models.Model):
         # temporarily disable queuing of ConfigurableReportKafkaPillow errors
         query = query.filter(~models.Q(pillow='corehq.apps.userreports.pillow.ConfigurableReportKafkaPillow'))
 
-        if not fetch_full:
-            query = query.values('id', 'date_next_attempt')
         if limit is not None:
             return query[skip:skip+limit]
         else:

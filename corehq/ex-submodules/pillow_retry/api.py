@@ -8,18 +8,12 @@ from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from dimagi.utils.logging import notify_error
 from pillow_retry import const
-from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.feed.couch import CouchChangeFeed
 from pillowtop.utils import get_pillow_by_name
 
 
-def process_pillow_retry(error_doc_id):
-    try:
-        error_doc = PillowError.objects.get(id=error_doc_id)
-    except PillowError.DoesNotExist:
-        return
-
+def process_pillow_retry(error_doc):
     pillow_name_or_class = error_doc.pillow
     try:
         pillow = get_pillow_by_name(pillow_name_or_class)
