@@ -7,7 +7,7 @@ from corehq.apps.change_feed.document_types import get_doc_meta_object_from_docu
     change_meta_from_doc_meta_and_document
 from corehq.apps.change_feed.exceptions import MissingMetaInformationError
 from corehq.apps.change_feed.producer import ChangeProducer
-from corehq.apps.change_feed.topics import get_topic
+from corehq.apps.change_feed.topics import get_topic_for_doc_type
 from corehq.apps.domain.models import Domain
 from corehq.apps.users.models import CommCareUser
 from corehq.util.couchdb_management import couch_config
@@ -47,7 +47,7 @@ class KafkaProcessor(PillowProcessor):
             # note: it is strange and hard to reproduce that the couch changes feed is providing a "doc"
             # along with a hard deletion, but it is doing that in the wild so we might as well support it.
             change_meta.is_deletion = change_meta.is_deletion or change.deleted
-            self._producer.send_change(get_topic(doc_meta), change_meta)
+            self._producer.send_change(get_topic_for_doc_type(doc_meta.raw_doc_type), change_meta)
 
 
 def get_default_couch_db_change_feed_pillow(pillow_id, **kwargs):
@@ -70,7 +70,7 @@ def get_application_db_kafka_pillow(pillow_id, **kwargs):
 def get_change_feed_pillow_for_db(pillow_id, couch_db):
     kafka_client = get_kafka_client_or_none()
     processor = KafkaProcessor(
-        kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
+        kafka_client, data_source_type=data_sources.SOURCE_COUCH, data_source_name=couch_db.dbname
     )
     change_feed = CouchChangeFeed(couch_db)
     checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
