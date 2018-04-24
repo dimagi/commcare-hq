@@ -4,6 +4,7 @@ from django.conf import settings
 from psycopg2._psycopg import InterfaceError
 import pytz
 from hqscripts.generic_queue import GenericEnqueuingOperation, QueueItem
+from pillow_retry.const import PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 from pillow_retry.models import PillowError
 from pillow_retry.tasks import process_pillow_retry
 from django import db
@@ -16,7 +17,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         return "pillow-queue"
 
     def get_enqueuing_timeout(self):
-        return settings.PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
+        return PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 
     @staticmethod
     def _get_items(utcnow):
