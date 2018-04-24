@@ -77,7 +77,8 @@ urlpatterns = [
         ucr_download_job_poll, name='ucr_download_job_poll'),
 
     # Update Report Description
-    url(r'^builder/update_report_description/(?P<report_id>[\w-]+)', update_report_description, name='update_report_description'),
+    url(r'^builder/update_report_description/(?P<report_id>[\w-]+)', update_report_description,
+        name='update_report_description'),
 
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$',
