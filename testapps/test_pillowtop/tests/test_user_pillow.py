@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.test import TestCase
 from corehq.apps.change_feed import data_sources
-from corehq.apps.change_feed import document_types
+from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.document_types import change_meta_from_doc
 from corehq.apps.change_feed.producer import producer
 from corehq.apps.change_feed import topics
@@ -60,8 +60,8 @@ class UserPillowTest(UserPillowTestBase):
         user.save()
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        since = get_topic_offset(topics.COMMCARE_USER)
+        producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
         pillow = get_user_pillow()
@@ -74,8 +74,8 @@ class UserPillowTest(UserPillowTestBase):
         user = CommCareUser.create(TEST_DOMAIN, username, 'secret')
 
         # send to kafka
-        since = get_topic_offset(document_types.COMMCARE_USER)
-        producer.send_change(document_types.COMMCARE_USER, _user_to_change_meta(user))
+        since = get_topic_offset(topics.COMMCARE_USER)
+        producer.send_change(topics.COMMCARE_USER, _user_to_change_meta(user))
 
         # send to elasticsearch
         pillow = get_user_pillow()
