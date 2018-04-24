@@ -8,7 +8,7 @@ from django.conf import settings
 from django.test import TestCase
 from six.moves import range
 
-from pillow_retry.tasks import process_pillow_retry
+from pillow_retry.api import process_pillow_retry
 from pillow_retry import const
 from pillow_retry.models import PillowError
 from pillowtop.checkpoints.manager import PillowCheckpoint

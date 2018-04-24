@@ -6,7 +6,7 @@ import pytz
 from hqscripts.generic_queue import GenericEnqueuingOperation, QueueItem
 from pillow_retry.const import PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT
 from pillow_retry.models import PillowError
-from pillow_retry.tasks import process_pillow_retry
+from pillow_retry.api import process_pillow_retry
 from django import db
 
 
@@ -38,7 +38,7 @@ class PillowRetryEnqueuingOperation(GenericEnqueuingOperation):
         return settings.PILLOW_RETRY_QUEUE_ENABLED
 
     def enqueue_item(self, item):
-        process_pillow_retry.delay(item.id)
+        process_pillow_retry(item.id)
 
 
 class Command(PillowRetryEnqueuingOperation):
