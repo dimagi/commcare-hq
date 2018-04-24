@@ -161,21 +161,3 @@ class PillowError(models.Model):
             current_attempt=0,
             date_next_attempt=datetime.utcnow()
         )
-
-    @classmethod
-    def get_pillows(cls):
-        results = PillowError.objects.values('pillow').annotate(count=Count('pillow'))
-        return (p['pillow'] for p in results)
-
-    @classmethod
-    def get_error_types(cls):
-        results = PillowError.objects.values('error_type').annotate(count=Count('error_type'))
-        return (e['error_type'] for e in results)
-
-
-# Stub models file, also used in tests
-from dimagi.ext.couchdbkit import Document
-
-
-class Stub(Document):
-    pass
