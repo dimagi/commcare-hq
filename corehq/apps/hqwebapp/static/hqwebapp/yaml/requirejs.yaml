@@ -74,3 +74,12 @@ modules:
       - reports/js/standard_hq_report
     exclude:
       - hqwebapp/js/common
+
+  # Limited bundle for report filters, ignoring the not-yet-migrated drilldown filters.
+  - name: reports/js/filters/bundle
+    include:
+      - reports/js/filters/main
+      - reports/js/filters/button_group
+      - reports/js/filters/select2s
+    exclude:
+      - hqwebapp/js/common

@@ -72,7 +72,7 @@ def get_change_feed_pillow_for_db(pillow_id, couch_db):
     processor = KafkaProcessor(
         kafka_client, data_source_type=data_sources.COUCH, data_source_name=couch_db.dbname
     )
-    change_feed = CouchChangeFeed(couch_db, include_docs=True)
+    change_feed = CouchChangeFeed(couch_db)
     checkpoint = PillowCheckpoint(pillow_id, change_feed.sequence_format)
     return ConstructedPillow(
         name=pillow_id,

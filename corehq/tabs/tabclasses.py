@@ -34,7 +34,6 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
-from corehq.form_processor.utils import use_new_exports
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -518,24 +517,21 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
-            if use_new_exports(self.domain):
-                export_data_views.extend([
-                    {
-                        'title': _(DeIdDailySavedExportListView.page_title),
-                        'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
-                    },
-                    {
-                        'title': _(DeIdDashboardFeedListView.page_title),
-                        'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
-                    },
-                ])
+            export_data_views.extend([
+                {
+                    'title': _(DeIdDailySavedExportListView.page_title),
+                    'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _(DeIdDashboardFeedListView.page_title),
+                    'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                },
+            ])
 
         elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
-                CreateCustomFormExportView,
-                CreateCustomCaseExportView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 DownloadFormExportView,
@@ -545,8 +541,6 @@ class ProjectDataTab(UITab):
                 DownloadNewSmsExportView,
                 BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
-                EditCustomFormExportView,
-                EditCustomCaseExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
                 DashboardFeedListView,
@@ -562,16 +556,6 @@ class ProjectDataTab(UITab):
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
-            if use_new_exports(self.domain):
-                create_case_cls = CreateNewCustomCaseExportView
-                create_form_cls = CreateNewCustomFormExportView
-                edit_form_cls = EditNewCustomFormExportView
-                edit_case_cls = EditNewCustomCaseExportView
-            else:
-                create_case_cls = CreateCustomCaseExportView
-                create_form_cls = CreateCustomFormExportView
-                edit_form_cls = EditCustomFormExportView
-                edit_case_cls = EditCustomCaseExportView
 
             if self.can_view_form_exports:
                 export_data_views.append(
@@ -583,8 +567,8 @@ class ProjectDataTab(UITab):
                         'icon': 'icon icon-list-alt fa fa-list-alt',
                         'subpages': [_f for _f in [
                             {
-                                'title': _(create_form_cls.page_title),
-                                'urlname': create_form_cls.urlname,
+                                'title': _(CreateNewCustomFormExportView.page_title),
+                                'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
                                 'title': _(BulkDownloadFormExportView.page_title),
@@ -603,8 +587,8 @@ class ProjectDataTab(UITab):
                                 'urlname': DownloadNewFormExportView.urlname,
                             },
                             {
-                                'title': _(edit_form_cls.page_title),
-                                'urlname': edit_form_cls.urlname,
+                                'title': _(EditNewCustomFormExportView.page_title),
+                                'urlname': EditNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
                     }
@@ -619,8 +603,8 @@ class ProjectDataTab(UITab):
                         'icon': 'icon icon-share fa fa-share-square-o',
                         'subpages': [_f for _f in [
                             {
-                                'title': _(create_case_cls.page_title),
-                                'urlname': create_case_cls.urlname,
+                                'title': _(CreateNewCustomCaseExportView.page_title),
+                                'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
                                 'title': _(DownloadCaseExportView.page_title),
@@ -631,8 +615,8 @@ class ProjectDataTab(UITab):
                                 'urlname': DownloadNewCaseExportView.urlname,
                             },
                             {
-                                'title': _(edit_case_cls.page_title),
-                                'urlname': edit_case_cls.urlname,
+                                'title': _(EditNewCustomCaseExportView.page_title),
+                                'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
                     })

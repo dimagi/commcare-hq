@@ -221,7 +221,7 @@ def _propagate_and_normalize_case_properties(case_properties_by_case_type, paren
     :return: {case_type: set(case_property)} mapping (with the propagated properties)
     """
     case_relationship_manager = _CaseRelationshipManager(
-        parent_type_map, case_types=case_properties_by_case_type.keys())
+        parent_type_map, case_types=list(case_properties_by_case_type.keys()))
     flattened_case_properties = _flatten_case_properties(case_properties_by_case_type)
     normalized_case_properties = set()
     for property_ref in flattened_case_properties:

@@ -277,6 +277,10 @@ class MessageLogReport(BaseCommConnectLogReport):
 
     exportable = True
 
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+
     def get_message_type_filter(self):
         filtered_types = MessageTypeFilter.get_value(self.request, self.domain)
         if filtered_types:
@@ -731,6 +735,10 @@ class MessagingEventsReport(BaseMessagingEventReport):
         PhoneNumberFilter,
     ]
     ajax_pagination = True
+
+    @classmethod
+    def show_in_navigation(cls, domain=None, project=None, user=None):
+        return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
 
     @property
     def headers(self):
@@ -1633,6 +1641,9 @@ class ScheduleInstanceReport(ProjectReport, ProjectReportParametersMixin, Generi
 
     @classmethod
     def show_in_navigation(cls, domain=None, project=None, user=None):
+        if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
+            return False
+
         return (
             (user and toggles.NEW_REMINDERS_MIGRATOR.enabled(user.username)) or
             (project and project.uses_new_reminders)

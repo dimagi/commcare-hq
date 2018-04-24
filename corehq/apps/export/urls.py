@@ -2,8 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
 from corehq.apps.export.views import (
-    CreateCustomFormExportView,
-    CreateCustomCaseExportView,
     CreateNewCustomFormExportView,
     CreateNewCustomCaseExportView,
     EditCustomFormExportView,
@@ -75,12 +73,6 @@ urlpatterns = [
         name=DataFileDownloadDetail.urlname),
 
     # New export configuration views
-    url(r"^custom/form/create$",
-        CreateCustomFormExportView.as_view(),
-        name=CreateCustomFormExportView.urlname),
-    url(r"^custom/case/create$",
-        CreateCustomCaseExportView.as_view(),
-        name=CreateCustomCaseExportView.urlname),
     url(r"^custom/new/form/create$",
         CreateNewCustomFormExportView.as_view(),
         name=CreateNewCustomFormExportView.urlname),
