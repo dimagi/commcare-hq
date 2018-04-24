@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from numpy import random
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
+import six
 
 from django.apps import apps
 from django.conf import settings
