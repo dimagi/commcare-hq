@@ -1,4 +1,5 @@
 @startuml
+left to right direction
 [UCR - Child Health Monthly Tableau]
 [UCR - CCS Record Monthly Tableau]
 [UCR - Person Cases]
