@@ -818,72 +818,7 @@ class ScheduleForm(Form):
     def get_content_layout_fields(self):
         return [
             crispy.Field('content', data_bind='value: content'),
-            hqcrispy.B3MultiField(
-                _("Subject"),
-                crispy.Field(
-                    'subject',
-                    data_bind='value: subject.messagesJSONString',
-                ),
-                crispy.Div(
-                    crispy.Div(template='scheduling/partial/message_configuration.html'),
-                    data_bind='with: subject',
-                ),
-                data_bind="visible: content() === '%s'" % self.CONTENT_EMAIL,
-            ),
-            hqcrispy.B3MultiField(
-                _("Message"),
-                crispy.Field(
-                    'message',
-                    data_bind='value: message.messagesJSONString',
-                ),
-                crispy.Div(
-                    crispy.Div(template='scheduling/partial/message_configuration.html'),
-                    data_bind='with: message',
-                ),
-                data_bind=(
-                    "visible: content() === '%s' || content() === '%s'" % (self.CONTENT_SMS, self.CONTENT_EMAIL)
-                ),
-            ),
-            crispy.Div(
-                crispy.Field('form_unique_id'),
-                hqcrispy.B3MultiField(
-                    _("Expire After"),
-                    crispy.Div(
-                        twbscrispy.InlineField('survey_expiration_in_hours'),
-                        css_class='col-sm-4',
-                    ),
-                    crispy.HTML("<span>%s</span>" % _("hour(s)")),
-                ),
-                hqcrispy.B3MultiField(
-                    _("Reminder Intervals"),
-                    crispy.Div(
-                        twbscrispy.InlineField(
-                            'survey_reminder_intervals_enabled',
-                            data_bind='value: survey_reminder_intervals_enabled',
-                        ),
-                        css_class='col-sm-4',
-                    ),
-                    crispy.Div(
-                        twbscrispy.InlineField(
-                            'survey_reminder_intervals',
-                            placeholder=_("e.g., 30, 60"),
-                        ),
-                        data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
-                        css_class='col-sm-4',
-                    ),
-                ),
-                hqcrispy.B3MultiField(
-                    '',
-                    crispy.HTML(
-                        '<p class="help-block"><i class="fa fa-info-circle"></i> %s</p>' %
-                        _("Specify a list of comma-separated intervals in minutes. At each interval, if "
-                          "the survey session is still open, the system will resend the current question in the "
-                          "open survey.")
-                    ),
-                    data_bind="visible: survey_reminder_intervals_enabled() === 'Y'",
-                ),
-                data_bind="visible: content() === '%s'" % self.CONTENT_SMS_SURVEY,
-            ),
+            crispy.Div(template='scheduling/partial/single_event_and_content.html'),
         ]
 
     def get_advanced_layout_fields(self):
@@ -2087,18 +2022,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                 twbscrispy.InlineField('custom_recipient'),
                 self.get_system_admin_label(),
                 data_bind="visible: recipientTypeSelected('%s')" % CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
-            ),
-        ])
-        return result
-
-    def get_content_layout_fields(self):
-        result = super(ConditionalAlertScheduleForm, self).get_content_layout_fields()
-        result.extend([
-            hqcrispy.B3MultiField(
-                _("Custom SMS Content"),
-                twbscrispy.InlineField('custom_sms_content_id'),
-                self.get_system_admin_label(),
-                data_bind="visible: content() === '%s'" % self.CONTENT_CUSTOM_SMS,
             ),
         ])
         return result

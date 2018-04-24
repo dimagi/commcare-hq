@@ -54,7 +54,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         select2_user_group_recipients, select2_user_organization_recipients, select2_location_types,
-        select2_case_group_recipients, current_visit_scheduler_form) {
+        select2_case_group_recipients, current_visit_scheduler_form,
+        form_unique_id_choices, custom_sms_content_id_choices) {
         var self = this;
 
         self.timestamp = new Date().getTime();
@@ -71,6 +72,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.stop_type = ko.observable(initial_values.stop_type);
         self.occurrences = ko.observable(initial_values.occurrences);
         self.recipient_types = ko.observableArray(initial_values.recipient_types || []);
+        self.form_unique_id_choices = ko.observableArray(form_unique_id_choices || []);
+        self.custom_sms_content_id_choices = ko.observableArray(custom_sms_content_id_choices || []);
 
         self.user_recipients = new recipientsSelect2Handler(select2_user_recipients,
             initial_values.user_recipients, 'schedule-user_recipients');
@@ -395,7 +398,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_user_organization_recipients"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_location_types"),
             hqImport("hqwebapp/js/initial_page_data").get("current_select2_case_group_recipients"),
-            hqImport("hqwebapp/js/initial_page_data").get("current_visit_scheduler_form")
+            hqImport("hqwebapp/js/initial_page_data").get("current_visit_scheduler_form"),
+            hqImport("hqwebapp/js/initial_page_data").get("form_unique_id_choices"),
+            hqImport("hqwebapp/js/initial_page_data").get("custom_sms_content_id_choices")
         );
         $('#create-schedule-form').koApplyBindings(scheduleViewModel);
         scheduleViewModel.init();

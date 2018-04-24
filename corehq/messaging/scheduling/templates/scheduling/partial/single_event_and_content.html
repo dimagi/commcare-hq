@@ -1,0 +1,99 @@
+{% load i18n %}
+
+<div class="form-group" data-bind="visible: content() === 'email'">
+    <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Subject" %}</label>
+    <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
+        <div class="row">
+            <input type="hidden" name="schedule-subject" data-bind="value: subject.messagesJSONString" />
+            <div data-bind="with: subject">
+                {% include 'scheduling/partial/message_configuration.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-group" data-bind="visible: content() === 'sms' || content() === 'email'">
+    <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Message" %}</label>
+    <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
+        <div class="row">
+            <input type="hidden" name="schedule-message" data-bind="value: message.messagesJSONString" />
+            <div data-bind="with: message">
+                {% include 'scheduling/partial/message_configuration.html' %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div data-bind="visible: content() === 'sms_survey'">
+    <div class="form-group">
+        <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Form" %}</label>
+        <div class="controls col-sm-10 col-md-7 col-lg-5">
+            <select name="schedule-form_unique_id"
+                    class="select form-control"
+                    data-bind="options: form_unique_id_choices,
+                               optionsValue: function(item) { return item[0]; },
+                               optionsText: function(item) { return item[1]; }">
+            </select>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Expire After" %}</label>
+        <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
+            <div class="row">
+                <div class="col-sm-4" >
+                    <div class="form-group">
+                        <input type="number" name="schedule-survey_expiration_in_hours" min="1" max="168" class="numberinput form-control" />
+                    </div>
+                </div>
+                <span>{% trans "hour(s)" %}</span>
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Reminder Intervals" %}</label>
+        <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
+            <div class="row">
+                <div class="col-sm-4">
+                    <div class="form-group">
+                        <label class="sr-only">{% trans "Survey reminder intervals enabled" %}</label>
+                        <select name="schedule-survey_reminder_intervals_enabled" data-bind="value: survey_reminder_intervals_enabled" class="select form-control">
+                            <option value="N">{% trans "Disabled" %}</option>
+                            <option value="Y">{% trans "Enabled" %}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-sm-4" data-bind="visible: survey_reminder_intervals_enabled() === 'Y'">
+                    <div class="form-group">
+                        <input type="text" name="schedule-survey_reminder_intervals" placeholder="{% trans 'e.g., 30, 60' %}" class="textinput textInput form-control" />
+                    </div>
+                </div>
+            </div>
+            <div class="row" data-bind="visible: survey_reminder_intervals_enabled() === 'Y'">
+                <p class="help-block"><i class="fa fa-info-circle"></i>
+                    {% blocktrans %}
+                    Specify a list of comma-separated intervals in minutes. At each interval, if the survey session
+                    is still open, the system will resend the current question in the open survey.
+                    {% endblocktrans %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="form-group" data-bind="visible: content() === 'custom_sms'">
+    <label class="control-label col-sm-2 col-md-2 col-lg-2">{% trans "Custom SMS Content" %}</label>
+    <div class="controls col-sm-10 col-md-7 col-lg-5 controls-multiple">
+        <div class="row">
+            <div class="form-group">
+                <label class="sr-only">{% trans "Custom SMS Content" %}</label>
+                <select name="schedule-custom_sms_content_id"
+                        class="select form-control"
+                        data-bind="options: custom_sms_content_id_choices,
+                                   optionsValue: function(item) { return item[0]; },
+                                   optionsText: function(item) { return item[1]; }">
+                </select>
+            </div>
+            <label class="col-xs-1 control-label"><span class="label label-primary">{% trans "Requires System Admin" %}</span></label>
+        </div>
+    </div>
+</div>
