@@ -26,7 +26,6 @@ class KafkaProcessor(PillowProcessor):
         self._data_source_name = data_source_name
 
     def process_change(self, pillow_instance, change):
-        from corehq.apps.change_feed.topics import get_topic_for_doc_type
         populate_change_metadata(change, self._data_source_type, self._data_source_name)
         if change.metadata:
             change_meta = change.metadata
