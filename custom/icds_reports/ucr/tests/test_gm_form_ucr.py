@@ -20,6 +20,7 @@ class TestGMForms(BaseFormsTest):
                 "zscore_grading_wfa": 0,
                 "zscore_grading_hfa": 3,
                 "zscore_grading_wfh": 1,
+                "muac_grading": 2,
             }])
 
     def test_gm_form(self):
@@ -35,6 +36,7 @@ class TestGMForms(BaseFormsTest):
                 "zscore_grading_wfa": 1,
                 "zscore_grading_hfa": 0,
                 "zscore_grading_wfh": 0,
+                "muac_grading": 0,
             }])
 
     def test_delivery_form(self):
@@ -50,4 +52,5 @@ class TestGMForms(BaseFormsTest):
                 "zscore_grading_wfa": 3,
                 "zscore_grading_hfa": 0,
                 "zscore_grading_wfh": 0,
+                "muac_grading": 0,
             }])
