@@ -25,7 +25,7 @@ def change_meta_from_sms(sms):
         document_id=sms.couch_id,
         data_source_type=data_sources.SOURCE_SQL,
         data_source_name=data_sources.SMS,
-        document_type='SMS',
+        document_type=topics.SMS,
         document_subtype=None,
         domain=sms.domain,
         is_deletion=False,
