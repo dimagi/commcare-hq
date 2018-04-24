@@ -57,9 +57,11 @@ class PillowError(models.Model):
         app_label = 'pillow_retry'
         unique_together = ('doc_id', 'pillow',)
 
-    def add_attempt(self, exception, traceb, date=None):
-        self.current_attempt += 1
-        self.total_attempts += 1
+    def add_attempt(self, exception, traceb, change_meta=None, date=None):
+        new_attempts = change_meta.attempts if change_meta else 1
+
+        self.current_attempt += new_attempts
+        self.total_attempts += new_attempts
         self.date_last_attempt = date or datetime.utcnow()
         self.error_type = path_from_object(exception)
 
