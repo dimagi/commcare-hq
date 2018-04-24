@@ -85,7 +85,7 @@ def doc_to_change(doc):
         document=doc,
         metadata=ChangeMeta(
             document_id=doc['_id'],
-            data_source_type=data_sources.COUCH,
+            data_source_type=data_sources.SOURCE_COUCH,
             data_source_name=CommCareCase.get_db().dbname,
             document_type=doc['doc_type'],
             document_subtype=doc.get('type'),
