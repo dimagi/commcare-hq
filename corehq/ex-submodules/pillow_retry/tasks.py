@@ -15,6 +15,7 @@ from corehq.util.datadog.gauges import datadog_gauge
 from dimagi.utils.couch import release_lock
 from dimagi.utils.couch.cache import cache_core
 from dimagi.utils.logging import notify_error
+from pillow_retry import const
 from pillow_retry.models import PillowError
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_pillow_by_name
@@ -42,7 +43,7 @@ def process_pillow_retry(error_doc_id):
             "If not, then this should be looked into."
         ) % pillow_name_or_class)
         try:
-            error_doc.total_attempts = PillowError.multi_attempts_cutoff() + 1
+            error_doc.total_attempts = const.PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF + 1
             error_doc.save()
         finally:
             return
