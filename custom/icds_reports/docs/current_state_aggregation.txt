@@ -12,6 +12,8 @@
 [UCR - Daily Feeding Forms]
 [UCR - Infrastructure Forms]
 [UCR - Complementary Feeding Forms]
+[UCR - Growth Monitoring Forms]
+
 [Child Health Monthly]
 [CCS Record Monthly]
 [Daily Attendance]
@@ -21,6 +23,7 @@
 [Agg AWC Daily]
 
 [UCR - Complementary Feeding Forms] --> [Child Health Monthly]
+[UCR - Growth Monitoring Forms] --> [Child Health Monthly]
 [UCR - Child Health Monthly Tableau] --> [Child Health Monthly]
 [UCR - THR Forms] --> [Child Health Monthly]
 [UCR - Child Tasks Cases] --> [Child Health Monthly]
