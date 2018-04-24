@@ -35,7 +35,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthTHRForms,
 )
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features
+from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -160,6 +160,7 @@ def icds_aggregation_task(self, date, func):
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
 
+@track_time
 def _aggregate_cf_forms(day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -170,6 +171,7 @@ def _aggregate_cf_forms(day):
         AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
 
 
+@track_time
 def _aggregate_thr_forms(day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -195,10 +197,12 @@ def aggregate_awc_daily(day):
     _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
 
 
+@track_time
 def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
+@track_time
 def _child_health_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('child_health_monthly', %s)",
@@ -206,6 +210,7 @@ def _child_health_monthly_table(day):
     ], day)
 
 
+@track_time
 def _ccs_record_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
@@ -213,6 +218,7 @@ def _ccs_record_monthly_table(day):
     ], day)
 
 
+@track_time
 def _daily_attendance_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('daily_attendance', %s)",
@@ -220,6 +226,7 @@ def _daily_attendance_table(day):
     ], day)
 
 
+@track_time
 def _agg_child_health_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
@@ -227,6 +234,7 @@ def _agg_child_health_table(day):
     ], day)
 
 
+@track_time
 def _agg_ccs_record_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
@@ -234,6 +242,7 @@ def _agg_ccs_record_table(day):
     ], day)
 
 
+@track_time
 def _agg_awc_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
