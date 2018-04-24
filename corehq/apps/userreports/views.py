@@ -655,7 +655,7 @@ class ConfigureReport(ReportBuilderView):
 
 
 def update_report_description(request, domain, report_id):
-    new_description = json.loads(request.body)["value"]
+    new_description = request.POST['value']
     report = get_document_or_404(ReportConfiguration, domain, report_id)
     report.description = new_description
     report.save()
