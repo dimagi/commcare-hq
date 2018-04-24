@@ -627,10 +627,15 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
 def send_overdue_reminders(today=None):
-    from corehq.apps.domain.views import DomainSubscriptionView
-    from corehq.apps.domain.views import DomainBillingStatementsView
-
     today = today or datetime.date.today()
+
+    for domain, oldest_unpaid_invoice, total in _get_domains_with_invoices_over_threshold(today):
+        current_subscription = Subscription.get_active_subscription_by_domain(domain)
+        if _is_subscription_eligible_for_downgrade_process(current_subscription):
+            _apply_downgrade_process(current_subscription, oldest_unpaid_invoice, total, today)
+
+
+def _get_domains_with_invoices_over_threshold(today):
     invoices = Invoice.objects.filter(is_hidden=False,
                                       subscription__service_type=SubscriptionType.PRODUCT,
                                       date_paid__isnull=True,
@@ -640,39 +645,50 @@ def send_overdue_reminders(today=None):
         .select_related('subscription__subscriber')
 
     domains = set()
+
     for invoice in invoices:
-        if invoice.get_domain() not in domains:
-            domains.add(invoice.get_domain())
+        domain = invoice.get_domain()
+        if domain not in domains:
+            domains.add(domain)
             total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=invoice.get_domain())\
+                                           subscription__subscriber__domain=domain)\
                 .aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
-                domain = Domain.get_by_name(invoice.get_domain())
-                current_subscription = Subscription.get_active_subscription_by_domain(domain.name)
-                if (
-                    current_subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
-                    and not current_subscription.skip_auto_downgrade
-                ):
-                    days_ago = (today - invoice.date_due).days
-                    context = {
-                        'domain': invoice.get_domain(),
-                        'total': total,
-                        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
-                                                             args=[invoice.get_domain()]),
-                        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
-                                                           args=[invoice.get_domain()]),
-                        'date_60': invoice.date_due + datetime.timedelta(days=60),
-                        'contact_email': settings.INVOICING_CONTACT_EMAIL
-                    }
-                    if days_ago == 61:
-                        _downgrade_domain(current_subscription)
-                        _send_downgrade_notice(invoice, context)
-                    elif days_ago == 58:
-                        _send_downgrade_warning(invoice, context)
-                    elif days_ago == 30:
-                        _send_overdue_notice(invoice, context)
-                    elif days_ago == 1:
-                        _create_overdue_notification(invoice, context)
+                yield domain, invoice, total
+
+
+def _is_subscription_eligible_for_downgrade_process(subscription):
+    return (
+        subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
+        and not subscription.skip_auto_downgrade
+    )
+
+
+def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
+    from corehq.apps.domain.views import DomainSubscriptionView
+    from corehq.apps.domain.views import DomainBillingStatementsView
+
+    days_ago = (today - oldest_unpaid_invoice.date_due).days
+    domain = subscription.subscriber.domain
+    context = {
+        'domain': domain,
+        'total': total,
+        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                             args=[domain]),
+        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                           args=[domain]),
+        'date_60': oldest_unpaid_invoice.date_due + datetime.timedelta(days=60),
+        'contact_email': settings.INVOICING_CONTACT_EMAIL
+    }
+    if days_ago == 61:
+        _downgrade_domain(subscription)
+        _send_downgrade_notice(oldest_unpaid_invoice, context)
+    elif days_ago == 58:
+        _send_downgrade_warning(oldest_unpaid_invoice, context)
+    elif days_ago == 30:
+        _send_overdue_notice(oldest_unpaid_invoice, context)
+    elif days_ago == 1:
+        _create_overdue_notification(oldest_unpaid_invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
