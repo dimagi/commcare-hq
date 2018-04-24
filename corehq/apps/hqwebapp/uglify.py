@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 import subprocess
 from django.conf import settings
@@ -15,8 +16,8 @@ from django.utils.safestring import mark_safe
 # Code taken from: https://roverdotcom.github.io/blog/2014/05/28/javascript-error-reporting-with-source-maps-in-django/
 class UglifySourcemapFilter(CompilerFilter):
     command = (
-        "uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
-        " --source-map-url {mapurl} --source-map-root {maproot} -c -m")
+        b"uglifyjs {infiles} -o {outfile} --source-map {mapfile}"
+        b" --source-map-url {mapurl} --source-map-root {maproot} -c -m")
 
     def input(self, **kwargs):
         return self.content
@@ -36,11 +37,11 @@ class UglifySourcemapFilter(CompilerFilter):
             else:
                 infiles.append(infile[2])
 
-        options['infiles'] = ' '.join(f for f in infiles)
+        options['infiles'] = b' '.join(f for f in infiles)
 
-        options['mapfile'] = kwargs['outfile'].replace('.js', '.map.js')
+        options['mapfile'] = kwargs['outfile'].replace(b'.js', b'.map.js')
 
-        options['mapurl'] = '{}{}'.format(
+        options['mapurl'] = b'{}{}'.format(
             settings.STATIC_URL, options['mapfile']
         )
 
@@ -74,9 +75,9 @@ class JsUglifySourcemapCompressor(JsCompressor):
     def output(self, mode='file', forced=False):
         content = self.filter_input(forced)
         if not content:
-            return ''
+            return b''
 
-        concatenated_content = '\n'.join(
+        concatenated_content = b'\n'.join(
             c.encode(self.charset) for c in content)
 
         if settings.COMPRESS_ENABLED or forced:

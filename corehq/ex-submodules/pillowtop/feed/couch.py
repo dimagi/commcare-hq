@@ -8,11 +8,10 @@ from pillowtop.utils import force_seq_int
 
 class CouchChangeFeed(ChangeFeed):
 
-    def __init__(self, couch_db, include_docs, couch_filter=None, extra_couch_view_params=None):
+    def __init__(self, couch_db, couch_filter=None, extra_couch_view_params=None):
         self._couch_db = couch_db
         self._document_store = CouchDocumentStore(couch_db)
         self._couch_filter = couch_filter
-        self._include_docs = include_docs
         self._extra_couch_view_params = extra_couch_view_params or {}
         self._last_processed_seq = None
 
@@ -25,7 +24,7 @@ class CouchChangeFeed(ChangeFeed):
             heartbeat=True,
             since=since,
             filter=self._couch_filter,
-            include_docs=self._include_docs,
+            include_docs=True,
             **extra_args
         )
         for couch_change in changes_stream:

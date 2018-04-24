@@ -140,9 +140,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             self.handle_exception(doc, e)
 
     def _save_rows(self, rows, doc):
-        if not rows:
-            return
-
         table = self.get_table()
         with self.engine.begin() as connection:
             # delete all existing rows for this doc to ensure we aren't left with stale data

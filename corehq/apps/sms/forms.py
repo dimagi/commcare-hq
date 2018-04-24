@@ -280,7 +280,12 @@ class SettingsForm(Form):
     )
 
     # Internal settings
-    daily_outbound_sms_limit = IntegerField(
+    override_daily_outbound_sms_limit = ChoiceField(
+        required=False,
+        choices=ENABLED_DISABLED_CHOICES,
+        label=ugettext_lazy("Override Daily Outbound SMS Limit"),
+    )
+    custom_daily_outbound_sms_limit = IntegerField(
         required=False,
         label=ugettext_noop("Daily Outbound SMS Limit"),
         min_value=1000,
@@ -517,7 +522,21 @@ class SettingsForm(Form):
     def section_internal(self):
         return crispy.Fieldset(
             _("Internal Settings (Dimagi Only)"),
-            crispy.Field('daily_outbound_sms_limit'),
+            hqcrispy.B3MultiField(
+                _("Override Daily Outbound SMS Limit"),
+                crispy.Div(
+                    InlineField(
+                        'override_daily_outbound_sms_limit',
+                        data_bind='value: override_daily_outbound_sms_limit',
+                    ),
+                    css_class='col-sm-4'
+                ),
+                crispy.Div(
+                    InlineField('custom_daily_outbound_sms_limit'),
+                    data_bind="visible: override_daily_outbound_sms_limit() === '%s'" % ENABLED,
+                    css_class='col-sm-8'
+                ),
+            ),
             hqcrispy.B3MultiField(
                 _("Chat Template"),
                 crispy.Div(
@@ -827,11 +846,14 @@ class SettingsForm(Form):
         # Just cast to int, the ChoiceField will validate that it is an integer
         return int(self.cleaned_data.get("sms_conversation_length"))
 
-    def clean_daily_outbound_sms_limit(self):
+    def clean_custom_daily_outbound_sms_limit(self):
         if not self._cchq_is_previewer:
             return None
 
-        value = self.cleaned_data.get("daily_outbound_sms_limit")
+        if self.cleaned_data.get('override_daily_outbound_sms_limit') != ENABLED:
+            return None
+
+        value = self.cleaned_data.get("custom_daily_outbound_sms_limit")
         if not value:
             raise ValidationError(_("This field is required"))
 

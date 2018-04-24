@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-10 23:40+0000\n"
+"POT-Creation-Date: 2018-04-17 19:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Sarah Sagan <ssagan@dimagi.com>, 2018\n"
 "Language-Team: French (https://www.transifex.com/dimagi/teams/9388/fr/)\n"
@@ -455,10 +455,8 @@ msgid "Show All"
 msgstr "Afficher tous"
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:238
-#, fuzzy
-#| msgid "Case type is required."
 msgid "Display text is required"
-msgstr "Type de dossier est requis."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:326
 msgid "You have unsaved changes in your report list module"
@@ -518,17 +516,17 @@ msgstr "Sélectionner un utilisateur"
 msgid "(Default)"
 msgstr "(Par défaut)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:387
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:394
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Désolé, ça n'a pas fonctionné. Veuillez rafraîchir la page et réessayer"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:421
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:428
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 "La liste des versions a changé depuis votre dernier chargement de la page."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:426
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:433
 msgid "No new changes!"
 msgstr "Pas de nouvelles modifications!"
 
@@ -2292,10 +2290,8 @@ msgid "Hide Full Menu"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/main.js:34
-#, fuzzy
-#| msgid "Show All Dates"
 msgid "Show Full Menu"
-msgstr "Afficher toutes les dates"
+msgstr "Montrer tout le menu"
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:53
 msgid ""
@@ -2434,36 +2430,28 @@ msgid "Show previous versions"
 msgstr "Afficher les versions précédentes"
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:5
-#, fuzzy
-#| msgid "Form"
 msgid "Forms"
-msgstr "Formulaire"
+msgstr "Formulaires"
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:6
-#, fuzzy
-#| msgid "Repeat Group"
 msgid "Repeat: "
-msgstr "Répéter groupe "
+msgstr "Répéter : "
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:7
-#, fuzzy
-#| msgid "Case"
 msgid "Cases"
-msgstr "Dossier"
+msgstr "Dossiers"
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:8
 msgid "Case History"
-msgstr ""
+msgstr "Historique de dossier"
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:9
 msgid "Case History > Parent Cases"
-msgstr ""
+msgstr "Historique de dossier > Dossiers parents"
 
 #: corehq/apps/export/static/export/js/customize_export_old.js:10
-#, fuzzy
-#| msgid "Create Case"
 msgid "Parent Cases"
-msgstr "Créer un dossier"
+msgstr "Dossiers parents"
 
 #: corehq/apps/export/static/export/js/download_data_files.js:17
 msgid "Copy to clipboard: Ctrl-C, Enter (Mac: Cmd-C, Enter)"
@@ -2507,7 +2495,9 @@ msgid "Excel (older versions)"
 msgstr "Excel (versions plus anciennes)"
 
 #: corehq/apps/export/static/export/js/models.js:197
-msgid "Excel 2007"
+#, fuzzy
+#| msgid "Excel 2007"
+msgid "Excel 2007+"
 msgstr "Excel 2007"
 
 #: corehq/apps/export/static/export/js/models.js:510
@@ -2591,7 +2581,7 @@ msgid "Clear"
 msgstr "Effacer"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports_core/templates/reports_core/filters/datespan_filter/datespan_filter.js:18
+#: corehq/apps/reports/static/reports/js/filters/main.js:71
 msgid "Show All Dates"
 msgstr "Afficher toutes les dates"
 
@@ -2899,12 +2889,12 @@ msgid ""
 "duplicate sheet names."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:109
+#: corehq/apps/reports/static/reports/js/filters/main.js:139
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr "Tous"
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:122
+#: corehq/apps/reports/static/reports/js/filters/main.js:152
 msgid "Select a group"
 msgstr "Sélectionner un groupe"
 
@@ -2967,7 +2957,7 @@ msgstr ""
 msgid "Gateway Timeout. Please contact CommCare HQ Support."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/reports.async.js:184
+#: corehq/apps/reports/static/reports/js/reports.async.js:189
 msgid "We were unsuccessful loading the report:"
 msgstr ""
 
@@ -3006,6 +2996,10 @@ msgstr "Échoué "
 msgid "Failed to re-process"
 msgstr ""
 
+#: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
+msgid "Showing the current page of data. Switch pages to see more data."
+msgstr ""
+
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:29
 msgid "Streets"
 msgstr "Rues"
@@ -3019,10 +3013,8 @@ msgid "You must have at least one phone number."
 msgstr "Vous devez avoir au moins un numéro de téléphone."
 
 #: corehq/apps/sms/static/sms/js/chat.js:239
-#, fuzzy
-#| msgid "Help Message"
 msgid "(New Message) - "
-msgstr "Message d'aide"
+msgstr ""
 
 #: corehq/apps/sms/static/sms/js/chat_contacts.js:36
 msgid "Chat"
@@ -3346,6 +3338,10 @@ msgstr ""
 msgid "every month"
 msgstr ""
 
+#: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:61
+msgid "(no errors over the given date range)"
+msgstr ""
+
 #: corehq/messaging/smsbackends/telerivet/static/telerivet/js/telerivet_setup.js:92
 msgid "Send"
 msgstr "Envoyer"
@@ -3411,6 +3407,3 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
 msgid "Failed to cancel"
 msgstr ""
-
-#~ msgid "Reports must have all properties set!"
-#~ msgstr "Les rapports doivent avoir toutes les propriétés définies!"

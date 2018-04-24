@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+from __future__ import unicode_literals
 from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta

@@ -1573,6 +1573,7 @@ class BroadcastForm(ScheduleForm):
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     _("Save"),
+                    data_bind='text: saveBroadcastText()',
                     css_class='btn-primary',
                     type='submit',
                 ),
@@ -2579,7 +2580,8 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
 
     @property
     def fieldset_help_text(self):
-        return _("An instance of the schedule will be created for each case matching all filter criteria below.")
+        return _("An instance of the schedule will be created for each "
+                 "open case matching all filter criteria below.")
 
     @property
     def allow_parent_case_references(self):

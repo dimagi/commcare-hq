@@ -60,7 +60,6 @@ from .views import (
     export_default_or_custom_data,
     hq_download_saved_export,
     hq_deid_download_saved_export,
-    hq_update_saved_export,
     export_report,
     email_report,
     delete_config,
@@ -111,7 +110,7 @@ urlpatterns = [
     url(r'^case_data/(?P<case_id>[\w\-]+)/export_transactions/$',
         export_case_transactions, name="export_case_transactions"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/(?P<xform_id>[\w\-:]+)/$', case_form_data, name="case_form_data"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_.]+)/$',
+    url(r'^case_data/(?P<case_id>[\w\-]+)/case_property/(?P<case_property_name>[\w_\-.]+)/$',
         case_property_changes, name="case_property_changes"),
 
     # Download and view form data
@@ -148,7 +147,6 @@ urlpatterns = [
         name="hq_download_saved_export"),
     url(r"^export/saved/download/deid/(?P<export_id>[\w\-]+)/$", hq_deid_download_saved_export,
         name="hq_deid_download_saved_export"),
-    url(r"^export/saved/update/$", hq_update_saved_export, name="hq_update_saved_export"),
 
     # Full Excel export
     url(r'^full_excel_export/(?P<export_hash>[\w\-]+)/(?P<format>[\w\-]+)$', export_report, name="export_report"),

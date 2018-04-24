@@ -323,7 +323,8 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
     sms_survey_date_format = StringProperty()
 
     # Allowed outbound SMS per day
-    daily_outbound_sms_limit = IntegerProperty(default=5000)
+    # If this is None, then the default is applied. See get_daily_outbound_sms_limit()
+    custom_daily_outbound_sms_limit = IntegerProperty()
 
     # Allowed number of case updates or closes from automatic update rules in the daily rule run.
     # If this value is None, the value in settings.MAX_RULE_UPDATES_IN_ONE_RUN is used.
@@ -1088,6 +1089,13 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         self.get_by_name.clear(self.__class__, self.name)
         self.is_secure_session_required.clear(self.name)
         domain_restricts_superusers.clear(self.name)
+
+    def get_daily_outbound_sms_limit(self):
+        if self.custom_daily_outbound_sms_limit:
+            return self.custom_daily_outbound_sms_limit
+
+        # https://manage.dimagi.com/default.asp?274299
+        return 50000
 
 
 class TransferDomainRequest(models.Model):

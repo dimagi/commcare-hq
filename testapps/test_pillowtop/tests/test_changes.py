@@ -29,18 +29,6 @@ class ChangeFeedDbTest(TestCase):
         self.assertEqual(doc_id, doc['_id'])
         self.assertEqual('property_value', doc['property'])
 
-    def test_include_docs_false(self):
-        pillow = _make_couch_pillow(self.couch_db, include_docs=False)
-        doc_id = uuid.uuid4().hex
-        self.couch_db.save_doc({'_id': doc_id, 'property': 'property_value'})
-        pillow.process_changes(since=self.update_seq, forever=False)
-
-        changes = self._extract_changes_from_call_args(pillow.process_change.call_args_list)
-        change_ids = {change['id'] for change in changes}
-        self.assertIn(doc_id, change_ids)
-        change = [change for change in changes if change['id'] == doc_id][0]
-        self.assertTrue(change.get('doc', None) is None)
-
     def test_couch_filter(self):
         pillow = _make_couch_pillow(self.couch_db)
         pillow.couch_filter = 'couchforms/xforms'
@@ -66,7 +54,7 @@ class ChangeFeedDbTest(TestCase):
         return ret
 
 
-def _make_couch_pillow(couch_db, include_docs=True):
+def _make_couch_pillow(couch_db):
     from pillowtop.feed.couch import CouchChangeFeed
     from pillowtop.processors import LoggingProcessor
     from pillowtop.checkpoints.manager import PillowCheckpoint
@@ -74,7 +62,7 @@ def _make_couch_pillow(couch_db, include_docs=True):
     pillow = FakeConstructedPillow(
         name='fake-couch-pillow',
         checkpoint=PillowCheckpoint('fake-feed-test-checkpoint', 'text'),
-        change_feed=CouchChangeFeed(couch_db=couch_db, include_docs=include_docs),
+        change_feed=CouchChangeFeed(couch_db=couch_db),
         processor=LoggingProcessor(),
     )
     pillow.process_change = MagicMock(return_value=True)

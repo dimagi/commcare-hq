@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
@@ -28,30 +29,30 @@ class TestDashboard1(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018', 'Avg. Availability']
+            ['Région', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
                 [u'New Test Region', u'50.00%', u'50.00%', u'0.00%', u'0.00%', u'50.00%', u'100.00%', u'41.67%'],
-                [u'Region Test', u'100.00%', u'no data entered', u'100.00%', u'100.00%', u'100.00%',
-                 u'no data entered', u'100.00%'],
-                [u'Region 1', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'50.00%', u'50.00%'],
-                [u'Saint-Louis', u'75.00%', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'no data entered', u'75.00%'],
-                [u'Dakar', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'100.00%', u'100.00%'],
-                [u'Fatick', u'no data entered', u'33.33%', u'no data entered', u'no data entered',
-                 u'no data entered', u'no data entered', u'33.33%'],
-                [u'Thies', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'87.50%', u'87.50%']
+                [u'Region Test', u'100.00%', u'pas de données', u'100.00%', u'100.00%', u'100.00%',
+                 u'pas de données', u'100.00%'],
+                [u'Region 1', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'50.00%', u'50.00%'],
+                [u'Saint-Louis', u'75.00%', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'75.00%'],
+                [u'Dakar', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%', u'100.00%'],
+                [u'Fatick', u'pas de données', u'33.33%', u'pas de données', u'pas de données',
+                 u'pas de données', u'pas de données', u'33.33%'],
+                [u'Thies', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'87.50%', u'87.50%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [u'Availability (%)', u'83.33%', u'40.00%', u'33.33%', u'66.67%', u'83.33%', u'88.89%', u'76.00%']
+            [u'Disponibilité (%)', u'83.33%', u'40.00%', u'33.33%', u'66.67%', u'83.33%', u'88.89%', u'76.00%']
         )
 
     def test_availability_report_pps_level(self):
@@ -74,18 +75,18 @@ class TestDashboard1(YeksiTestCase):
 
         self.assertEqual(
             headers,
-            [u'PPS', u'October 2017', u'November 2017', u'December 2017', u'January 2018', u'February 2018',
-             u'March 2018', u'Avg. Availability']
+            [u'PPS', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                [u'P2', u'100%', u'no data entered', u'no data entered', u'no data entered', u'no data entered',
-                 u'no data entered', u'100.00%']
+                [u'P2', u'100%', u'pas de données', u'pas de données', u'pas de données', u'pas de données',
+                 u'pas de données', u'100.00%']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [u'Availability (%)', u'100.00%', u'no data entered', u'no data entered', u'no data entered',
-             u'no data entered', u'no data entered', u'100.00%']
+            [u'Disponibilité (%)', u'100.00%', u'pas de données', u'pas de données', u'pas de données',
+             u'pas de données', u'pas de données', u'100.00%']
         )
