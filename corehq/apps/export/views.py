@@ -17,7 +17,6 @@ from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, H
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
-from more_itertools import spy
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
@@ -1062,19 +1061,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
                 _("Issue fetching list of exports: {}").format(e),
                 log_error=True,
             )
-
-        if return_as_list:
-            exports = sorted(saved_exports, key=lambda x: x['name'])
-        else:
-            # If there are fewer than 100 exports, sort them. (100 is iter_docs
-            # default chunk size, so the first 100 are returned in a single
-            # query.) Otherwise use the unsorted iterable so we don't load them
-            # all into memory.
-            first_chunk, exports = spy(saved_exports, n=100)
-            if len(first_chunk) < 100:
-                exports = sorted(first_chunk, key=lambda x: x['name'])
         return format_angular_success({
-            'exports': exports
+            'exports': list(saved_exports) if return_as_list else saved_exports,
         })
 
     @property
