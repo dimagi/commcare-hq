@@ -33,7 +33,7 @@ from corehq.apps.app_manager.models import Domain, Application, RemoteApp, Modul
 from corehq.apps.export.utils import (
     convert_saved_export_to_export_instance,
     _convert_index_to_path_nodes,
-    iter_reverted_new_exports,
+    revert_new_exports,
     _is_remote_app_conversion,
     _is_form_stock_question,
 )
@@ -965,7 +965,7 @@ class TestRevertNewExports(TestCase):
             export.delete()
 
     def test_revert_new_exports(self):
-        reverted = list(iter_reverted_new_exports(self.new_exports))
+        reverted = revert_new_exports(self.new_exports)
         self.assertListEqual(reverted, [])
         for export in self.new_exports:
             self.assertTrue(export.doc_type.endswith(DELETED_SUFFIX))
@@ -976,7 +976,7 @@ class TestRevertNewExports(TestCase):
         saved_export_schema.save()
         self.new_exports[0].legacy_saved_export_schema_id = saved_export_schema._id
 
-        reverted = list(iter_reverted_new_exports(self.new_exports))
+        reverted = revert_new_exports(self.new_exports)
         self.assertEqual(len(reverted), 1)
         self.assertFalse(reverted[0].doc_type.endswith(DELETED_SUFFIX))
         saved_export_schema.delete()

@@ -581,34 +581,34 @@ def _is_remote_app_conversion(domain, app_id, export_type):
         return any([app.is_remote_app() for app in apps])
 
 
-def iter_reverted_new_exports(new_exports, dryrun=False):
+def revert_new_exports(new_exports, dryrun=False):
     """
-    Takes an iterable of new style ExportInstance and marks them as deleted as well as restoring
+    Takes a list of new style ExportInstance and marks them as deleted as well as restoring
     the old export it was converted from (if it was converted from an old export)
 
-    :param new_exports: Iterable of ExportInstances
-    :returns: An iterable of any old exports that were restored when decommissioning the new exports
+    :param new_exports: List of ExportInstance
+    :returns: Any old exports that were restored when decommissioning the new exports
     """
+    reverted_exports = []
     for new_export in new_exports:
-        old_export = None
         if new_export.legacy_saved_export_schema_id:
             schema_cls = FormExportSchema if new_export.type == FORM_EXPORT else CaseExportSchema
             old_export = schema_cls.get(new_export.legacy_saved_export_schema_id)
             old_export.doc_type = old_export.doc_type.rstrip(DELETED_SUFFIX)
             if not dryrun:
                 old_export.save()
+            reverted_exports.append(old_export)
         new_export.doc_type += DELETED_SUFFIX
         if not dryrun:
             new_export.save()
-        if old_export:
-            yield old_export
+    return reverted_exports
 
 
 def revert_migrate_domain(domain, dryrun=False):
     instances = get_form_export_instances(domain)
     instances.extend(get_case_export_instances(domain))
 
-    reverted_exports = list(iter_reverted_new_exports(instances, dryrun=dryrun))
+    reverted_exports = revert_new_exports(instances, dryrun=dryrun)
 
     for reverted_export in reverted_exports:
         print('Reverted export: {}'.format(reverted_export._id))
