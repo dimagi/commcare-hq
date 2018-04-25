@@ -22,6 +22,6 @@ class Command(BaseCommand):
             event_dict['user'] = new_username
             return DocUpdate(doc=event_dict)
 
-        new_username = "Redacted User (GDPR)"
+        new_username = "Redacted User (Right To Forget)"
         event_ids = navigation_event_ids_by_user(username)
         iter_update(NavigationEventAudit.get_db(), update_username, with_progress_bar(event_ids, len(event_ids)))

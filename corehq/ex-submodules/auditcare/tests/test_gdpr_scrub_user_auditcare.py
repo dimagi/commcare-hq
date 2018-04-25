@@ -23,14 +23,14 @@ class TestGDPRScrubUserAuditcare(TestCase):
 
     def test_update_username_no_returned_docs(self):
         management.call_command("gdpr_scrub_user_auditcare", "nonexistent_user")
-        num_redacted_users = navigation_event_ids_by_user("Redacted User (GDPR)")
+        num_redacted_users = navigation_event_ids_by_user("Redacted User (Right To Forget)")
         self.assertEqual(len(num_redacted_users), 0)
         num_original_users = navigation_event_ids_by_user("test_user1")
         self.assertEqual(len(num_original_users), 3)
 
     def test_update_username_returned_docs(self):
         management.call_command("gdpr_scrub_user_auditcare", "test_user1")
-        num_redacted_users = navigation_event_ids_by_user("Redacted User (GDPR)")
+        num_redacted_users = navigation_event_ids_by_user("Redacted User (Right To Forget)")
         self.assertEqual(len(num_redacted_users), 3)
         num_original_users = navigation_event_ids_by_user("test_user1")
         self.assertEqual(len(num_original_users), 0)
