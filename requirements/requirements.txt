@@ -28,7 +28,6 @@ gunicorn==19.4
 lxml==3.4.4
 kafka-python==0.9.5
 mock==2.0.0
-more-itertools==4.1.0
 openpyxl==2.2.5
 Pillow==2.7.0
 phonenumberslite==8.8.9
