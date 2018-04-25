@@ -23,6 +23,7 @@ module.exports = function(grunt) {
         'cloudcare',
         'cloudcare#form_entry',
         'hqwebapp',
+        'hqwebapp#requirejs',
         'case_importer',
     ];
 
