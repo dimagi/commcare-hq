@@ -1,0 +1,4 @@
+doc_id,inserted_at,repeat_iteration,timeend,state_id,received_on,child_health_case_id,weight_child,height_child,zscore_grading_wfa,zscore_grading_hfa,zscore_grading_wfh,muac_grading
+april_stunting_normal,2018-04-07,0,2017-04-07,st1,2017-04-01,5632d95c-bb23-46a5-9168-c10f00826fb5,,,,3,,
+april_wasting_severe,2018-04-03,0,2017-04-03,st1,2017-04-01,70b5760f-4258-407f-94de-84f2530d18de,,,,,1,
+may_muac_moderate,2018-05-02,0,2017-05-02,st1,2017-04-01,4403d8c3-f3cf-40e1-b66e-e565cee5e26b,,,,,,2

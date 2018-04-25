@@ -606,7 +606,8 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             'height_child',
             'zscore_grading_wfa',
             'zscore_grading_hfa',
-            'zscore_grading_wfh'
+            'zscore_grading_wfh',
+            'muac_grading',
         )
 
         initial_query = self._inital_aggregation_query()
