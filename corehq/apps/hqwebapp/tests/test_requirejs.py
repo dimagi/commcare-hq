@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import json
 import os
 import re
 import subprocess
@@ -11,9 +12,9 @@ class TestRequireJS(SimpleTestCase):
 
     def setUp(self):
         super(TestRequireJS, self).setUp()
-        prefix = os.path.join(os.getcwd(), 'corehq')
+        self.prefix = os.path.join(os.getcwd(), 'corehq')
 
-        proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
+        proc = subprocess.Popen(["find", self.prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
         self.js_files = [f for f in out.split("\n") if f
                     and not re.search(r'/_design/', f)
@@ -70,3 +71,27 @@ class TestRequireJS(SimpleTestCase):
 
         if errors:
             self.fail("hqImport used in RequireJS modules: \n{}".format("\n".join(errors)))
+
+    def test_js_tests_are_comprehensive(self):
+        proc = subprocess.Popen(["find", self.prefix, "-name", "*.html"], stdout=subprocess.PIPE)
+        (out, err) = proc.communicate()
+        html_files = [f for f in out.split("\n") if f
+                      and not re.search(r'/tests/', f)]
+
+        filename = os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
+                                   'static', 'hqwebapp', 'spec', 'requirejs_main.json'))
+        errors = []
+        with open(filename, 'r') as f:
+            tested_modules = json.loads(f.read())
+            for filename in html_files:
+                proc = subprocess.Popen(["grep", "requirejs_main", filename], stdout=subprocess.PIPE)
+                (out, err) = proc.communicate()
+                for line in out.split("\n"):
+                    match = re.search(r'{% requirejs_main ["\'](.*)["\'] %}', line)
+                    if match:
+                        module = match.group(1)
+                        if module not in tested_modules:
+                            errors.append(module)
+
+        if errors:
+            self.fail("Please add to requirejs_main.json: \n{}".format("\n".join(errors)))
