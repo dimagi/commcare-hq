@@ -20,15 +20,18 @@ hqDefine('toggle_ui/js/flags', [
             return tag === viewModel.tagFilter();
         }
     );
-    $('#table-filters').koApplyBindings(viewModel);
-    var table = datatablesConfig.HQReportDataTables({
-        dataTableElem: dataTableElem,
-        showAllRowsOption: true,
-        includeFilter: true,
-    });
-    table.render();
 
-    viewModel.tagFilter.subscribe(function(value){
-        table.datatable.fnDraw();
+    $(function() {
+        $('#table-filters').koApplyBindings(viewModel);
+        var table = datatablesConfig.HQReportDataTables({
+            dataTableElem: dataTableElem,
+            showAllRowsOption: true,
+            includeFilter: true,
+        });
+        table.render();
+
+        viewModel.tagFilter.subscribe(function(value){
+            table.datatable.fnDraw();
+        });
     });
 });

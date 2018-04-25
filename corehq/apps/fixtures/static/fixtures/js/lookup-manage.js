@@ -380,18 +380,20 @@ hqDefine("fixtures/js/lookup-manage", [
         };
     }
 
-    var el = $('#fixtures-ui');
-    var app = new App();
-    el.koApplyBindings(app);
-    el.removeClass('hide');
-    app.loadData();
-    $('#fixture-upload').koApplyBindings(app);
-    $("#fixture-download").on("hidden.bs.modal", function() {
-        $("#downloading").removeClass('hide');
-        $("#download-progress").addClass('hide');
-        $("#download-complete").addClass('hide');
-    });
-    $('.alert .close').on("click", function(e) {
-        $(this).parent().addClass('hide');
+    $(function() {
+        var el = $('#fixtures-ui');
+        var app = new App();
+        el.koApplyBindings(app);
+        el.removeClass('hide');
+        app.loadData();
+        $('#fixture-upload').koApplyBindings(app);
+        $("#fixture-download").on("hidden.bs.modal", function() {
+            $("#downloading").removeClass('hide');
+            $("#download-progress").addClass('hide');
+            $("#download-complete").addClass('hide');
+        });
+        $('.alert .close').on("click", function(e) {
+            $(this).parent().addClass('hide');
+        });
     });
 });
