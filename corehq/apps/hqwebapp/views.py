@@ -7,7 +7,6 @@ import os
 import re
 import sys
 import traceback
-import types
 import uuid
 from datetime import datetime
 from six.moves.urllib.parse import urlparse
@@ -21,17 +20,9 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import logout as django_logout
 from django.core import cache
 from django.core.mail.message import EmailMessage
-from django.http import (
-    HttpResponseRedirect,
-    HttpResponse,
-    Http404,
-    HttpResponseServerError,
-    HttpResponseNotFound,
-    HttpResponseBadRequest,
-    HttpResponseForbidden,
-    HttpResponsePermanentRedirect,
-    StreamingHttpResponse,
-)
+from django.http import HttpResponseRedirect, HttpResponse, Http404, \
+    HttpResponseServerError, HttpResponseNotFound, HttpResponseBadRequest, \
+    HttpResponseForbidden, HttpResponsePermanentRedirect
 from django.shortcuts import redirect, render
 from django.template import loader
 from django.template.loader import render_to_string
@@ -42,7 +33,7 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
 from django.views.generic.base import View
-from djangular.views.mixins import JSONResponseMixin, JSONBaseMixin
+from djangular.views.mixins import JSONResponseMixin
 
 import httpagentparser
 from couchdbkit import ResourceNotFound
@@ -1270,57 +1261,6 @@ class HQJSONResponseMixin(JSONResponseMixin):
         from djangular.templatetags.djangular_tags import djng_current_rmi
         context['djng_current_rmi'] = json.loads(djng_current_rmi(context))
         return context
-
-
-def json_iterdump(dict_, encoder=None):
-    """
-    Yields items of `dict_` as JSON and allows values to be generators.
-    Generators are yielded as lists in JSON.
-
-    >>> iterator = json_iterdump({'foo': (i for i in range(3))})
-    >>> ''.join(iterator) == '{"foo": [0, 1, 2]}'
-    True
-
-    """
-    if encoder is None:
-        encoder = json.JSONEncoder
-    yield '{'
-    first_item = True
-    for key, value in six.iteritems(dict_):
-        if first_item:
-            first_item = False
-        else:
-            yield ', '
-        if isinstance(value, types.GeneratorType):
-            yield '{}: ['.format(json.dumps(key, cls=encoder))
-            inner_first_item = True
-            for item in value:
-                if inner_first_item:
-                    inner_first_item = False
-                else:
-                    yield ', '
-                yield json.dumps(item, cls=encoder)
-            yield ']'
-        else:
-            yield '{}: {}'.format(
-                json.dumps(key, cls=encoder),
-                json.dumps(value, cls=encoder)
-            )
-    yield '}'
-
-
-class StreamingJSONResponseMixin(JSONBaseMixin):
-
-    def json_response(self, response_data, status=200, **kwargs):
-        """
-        response_data is a dictionary that has a generator as one of
-        its values. The streamed response is created by iterating that
-        generator.
-        """
-        iterator = json_iterdump(response_data, encoder=self.json_encoder)
-        response = StreamingHttpResponse(iterator, self.json_content_type, status=status)
-        response['Cache-Control'] = 'no-cache'
-        return response
 
 
 def redirect_to_dimagi(endpoint):
