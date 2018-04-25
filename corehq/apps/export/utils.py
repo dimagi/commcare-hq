@@ -9,7 +9,7 @@ from dimagi.utils.couch import CriticalSection
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
+from corehq.toggles import NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
@@ -581,38 +581,34 @@ def _is_remote_app_conversion(domain, app_id, export_type):
         return any([app.is_remote_app() for app in apps])
 
 
-def revert_new_exports(new_exports, dryrun=False):
+def iter_reverted_new_exports(new_exports, dryrun=False):
     """
-    Takes a list of new style ExportInstance and marks them as deleted as well as restoring
+    Takes an iterable of new style ExportInstance and marks them as deleted as well as restoring
     the old export it was converted from (if it was converted from an old export)
 
-    :param new_exports: List of ExportInstance
-    :returns: Any old exports that were restored when decommissioning the new exports
+    :param new_exports: Iterable of ExportInstances
+    :returns: An iterable of any old exports that were restored when decommissioning the new exports
     """
-    reverted_exports = []
     for new_export in new_exports:
+        old_export = None
         if new_export.legacy_saved_export_schema_id:
             schema_cls = FormExportSchema if new_export.type == FORM_EXPORT else CaseExportSchema
             old_export = schema_cls.get(new_export.legacy_saved_export_schema_id)
             old_export.doc_type = old_export.doc_type.rstrip(DELETED_SUFFIX)
             if not dryrun:
                 old_export.save()
-            reverted_exports.append(old_export)
         new_export.doc_type += DELETED_SUFFIX
         if not dryrun:
             new_export.save()
-    return reverted_exports
+        if old_export:
+            yield old_export
 
 
 def revert_migrate_domain(domain, dryrun=False):
     instances = get_form_export_instances(domain)
     instances.extend(get_case_export_instances(domain))
 
-    reverted_exports = revert_new_exports(instances, dryrun=dryrun)
-
-    if not dryrun:
-        set_toggle(OLD_EXPORTS.slug, domain, True, namespace=NAMESPACE_DOMAIN)
-        toggle_js_domain_cachebuster.clear(domain)
+    reverted_exports = list(iter_reverted_new_exports(instances, dryrun=dryrun))
 
     for reverted_export in reverted_exports:
         print('Reverted export: {}'.format(reverted_export._id))
@@ -640,10 +636,6 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                     raise
                 else:
                     metas.append(migration_meta)
-
-    if not dryrun:
-        set_toggle(OLD_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)
-        toggle_js_domain_cachebuster.clear(domain)
 
     # Remote app migrations must have access to UserDefined columns and tables
     if any([meta.is_remote_app_migration for meta in metas]):

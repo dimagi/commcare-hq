@@ -25,6 +25,7 @@ from corehq.apps.userreports.views import (
     choice_list_api,
     ExpressionDebuggerView,
     evaluate_expression,
+    update_report_description,
     undelete_data_source, undelete_report, DataSourceDebuggerView, evaluate_data_source)
 
 urlpatterns = [
@@ -74,6 +75,10 @@ urlpatterns = [
         DownloadUCRStatusView.as_view(), name=DownloadUCRStatusView.urlname),
     url(r'^export_job_poll/(?P<download_id>[0-9a-fA-Z]{25,32})/$',
         ucr_download_job_poll, name='ucr_download_job_poll'),
+
+    # Update Report Description
+    url(r'^builder/update_report_description/(?P<report_id>[\w-]+)', update_report_description,
+        name='update_report_description'),
 
     # apis
     url(r'^api/choice_list/(?P<report_id>[\w-]+)/(?P<filter_id>[\w-]+)/$',
