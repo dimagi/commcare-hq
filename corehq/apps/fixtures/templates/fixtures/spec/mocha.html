@@ -2,45 +2,22 @@
 {% load hq_shared_tags %}
 
 {% block core_libraries %}
+    {# Deliberately override parent #}
+{% endblock %}
+
+{% block dependencies %}
     <script src="{% static 'requirejs/require.js' %}"></script>
     <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
     <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
     <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
 {% endblock %}
 
-{% block is_requirejs %}true{% endblock %};
+{% block is_requirejs %}true{% endblock %}
 
 {% block analytics %}
+    {# Deliberately override parent #}
 {% endblock %}
 
 {% block mocha_tests %}
-<script>
-        requirejs.config({
-            deps: ['knockout', 'ko.mapping'],
-            callback: function (ko, mapping) {
-                ko.mapping = mapping;
-            },
-        });
-        requirejs([
-            'analytix/js/google',
-            'analytix/js/kissmetrix',
-        ], function(
-            google,
-            kissmetrics,
-        ) {
-            google.track.event = sinon.spy();
-            google.track.click = sinon.spy();
-            kissmetrics.track.event = sinon.spy();
-
-            requirejs([
-                'fixtures/js/view-table',
-            ], function() {
-                console.log("green");
-                assert.isTrue(true);
-            }, function(err) {
-                console.log("red");
-                assert.fail(err);
-            });
-        });
-</script>
+    <script src="{% static 'hqwebapp/spec/requirejs_spec.js' %}"></script>
 {% endblock %}
