@@ -299,7 +299,8 @@ def convert_saved_export_to_export_instance(
 
         new_table.columns = _reorder_columns(new_table, ordering)
 
-    migration_meta.has_case_history = instance.has_case_history_table
+    if isinstance(instance, CaseExportInstance):
+        migration_meta.has_case_history = instance.has_case_history_table
 
     if not dryrun:
         migration_meta.save()
