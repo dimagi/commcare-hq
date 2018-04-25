@@ -30,7 +30,7 @@ hqDefine('toggle_ui/js/flags', [
         });
         table.render();
 
-        viewModel.tagFilter.subscribe(function(value){
+        viewModel.tagFilter.subscribe(function(){
             table.datatable.fnDraw();
         });
     });

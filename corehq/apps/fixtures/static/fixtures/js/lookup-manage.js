@@ -392,7 +392,7 @@ hqDefine("fixtures/js/lookup-manage", [
             $("#download-progress").addClass('hide');
             $("#download-complete").addClass('hide');
         });
-        $('.alert .close').on("click", function(e) {
+        $('.alert .close').on("click", function() {
             $(this).parent().addClass('hide');
         });
     });

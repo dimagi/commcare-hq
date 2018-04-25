@@ -16,7 +16,7 @@ describe('requirejs', function() {
         ], function(
             initialPageData,
             google,
-            kissmetrics,
+            kissmetrics
         ) {
             initialPageData.reverse = function(path) {
                 return path;
