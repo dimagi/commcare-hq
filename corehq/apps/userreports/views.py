@@ -654,6 +654,14 @@ class ConfigureReport(ReportBuilderView):
             raise Http404()
 
 
+def update_report_description(request, domain, report_id):
+    new_description = request.POST['value']
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report.description = new_description
+    report.save()
+    return json_response({})
+
+
 def _get_form_type(report_type):
     assert report_type in (None, "list", "table", "chart", "map")
     if report_type == "list" or report_type is None:
