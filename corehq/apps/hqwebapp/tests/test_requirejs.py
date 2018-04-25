@@ -42,10 +42,6 @@ class TestRequireJS(SimpleTestCase):
                 match = re.search(r'^\s*hqDefine\([\'"]([^\'"]*)[\'"]', line)
                 if match:
                     module = match.group(1)
-                    # Special case: renaming toggles seems to cause a bug
-                    # See http://manage.dimagi.com/default.asp?275208
-                    if module == "#toggles":
-                        continue
                     if not filename.endswith(module + ".js"):
                         errors.append("Module {} defined in file {}".format(module, filename))
 
