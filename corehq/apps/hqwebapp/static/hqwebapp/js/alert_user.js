@@ -54,11 +54,13 @@ function(
             message_alerts.remove(ko.dataFor(this));
         });
 
-        var message_element = $("#message-alerts").get(0);
-        ko.cleanNode(message_element);
-        $(message_element).koApplyBindings({
-            alerts: message_alerts,
-        });
+        var $el = $("#message-alerts");
+        if ($el.length) {
+            ko.cleanNode($el.get(0));
+            $el.koApplyBindings({
+                alerts: message_alerts,
+            });
+        }
     });
 
     return {
