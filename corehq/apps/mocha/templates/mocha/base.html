@@ -13,12 +13,19 @@
         mocha.setup('bdd')
         window.assert = chai.assert
 
-        function gettext(str) {
-            return str;
-        }
+        window.django = {
+            gettext: function(str) {
+                return str;
+            }
+        };
+        window.gettext = window.django.gettext;
     </script>
 
-    <!-- Core Libraries -->
+    {# This is fine as an inline script; it'll be removed once form designer is migrated to RequireJS #}
+    <script>
+        window.USE_REQUIREJS = {% block is_requirejs %}false{% endblock %};
+    </script>
+
     {% block core_libraries %}
         {% javascript_libraries underscore=True ko=True hq=True analytics=True %}
     {% endblock %}
@@ -26,11 +33,14 @@
     <!-- App specific dependencies -->
     {% block dependencies %}{% endblock %}
 
+    {% block analytics %}
     <script>
         hqImport('analytix/js/google').track.event = sinon.spy();
         hqImport('analytix/js/google').track.click = sinon.spy();
         hqImport('analytix/js/kissmetrix').track.event = sinon.spy();
     </script>
+    {% endblock %}
+
   </head>
   <body>
       <div class="initial-analytics-data hide"></div>
