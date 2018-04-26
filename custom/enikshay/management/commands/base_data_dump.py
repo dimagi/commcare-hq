@@ -14,6 +14,7 @@ from django.urls import reverse
 
 from couchexport.models import Format
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.util.files import safe_filename_header
@@ -26,8 +27,59 @@ from dimagi.utils.web import get_url_base
 from soil.util import expose_blob_download
 from casexml.apps.case.util import get_all_changes_to_case_property
 
+from custom.enikshay.case_utils import (
+    CASE_TYPE_PERSON,
+)
+
 DOMAIN = "enikshay"
 LIMITED_TEST_DUMP_SIZE = 500
+PRIVATE_SECTOR_ID_MAPPING = {
+    '1': "PATH",
+    '2': "MJK",
+    '3': "Alert-India",
+    '4': "WHP-Patna",
+    '5': "DTO-Mehsana",
+    '6': "Vertex",
+    '7': "Accenture",
+    '8': "BMGF",
+    '9': "EY",
+    '10': "CTD",
+    '11': "Nagpur",
+    '12': "Nagpur-rural",
+    '13': "Nagpur_Corp",
+    '14': "Surat",
+    '15': "SMC",
+    '16': "Surat_Rural",
+    '17': "Rajkot",
+    '18': "WHP-AMC"
+}
+
+PRIVATE_SECTOR_PERSON_CASE_IDS_TO_IGNORE = [
+    "8f0608ef-b78d-4135-aef3-b857c8d7fb04",
+    "81b43362-12c4-48f9-b705-a3618d9e5a59",
+    "4f3c278b-945a-4dfa-99ea-632f4a329823",
+    "48eecd28-a416-477a-a00c-307f665df65d",
+    "17fb07d0-913c-40d1-911b-f2b923732ff2",
+    "8123dac7-3a35-49be-8467-5f84c13f5473",
+    "8a17015d-4dd0-4e9b-a754-11f49fe772aa",
+    "90e271ec-fa21-4748-bc2b-09f395fa2080",
+    "609990a2-34c2-4b1d-9788-8e37f7e5fe24",
+    "bd077386-67a6-480a-850d-a9898a53104a",
+    "7ce438c5-a374-42c3-8e73-8f2763a59aa3",
+    "d3bb7e37-d51f-4891-a529-9a54fb8bdae7",
+    "918f6b6e-7834-4141-ba21-41b5add03f1e",
+    "20c68017-ef12-4bb8-b979-d131b0d3ff85",
+    "cf83a73a-89e2-4b6a-b2e9-896b2b11df66",
+    "3f1435cb-ee37-4b3d-8936-46c37cb792c4",
+    "556006f9-ca1c-423a-80dd-f2e72492f6e6",
+    "6330d4e0-666b-45a1-99a4-07f92fad8691",
+    "8d1197cb-21f5-4f9b-846c-a0dbac07b9fc",
+    "217f9232-3a1e-4160-9225-b47c8de9d2b2",
+    "ae9ecff3-1b5c-42c5-a3ce-e0a3810f6906",
+    "f3650c3f-eac4-49b7-973d-655bfd4a04e9",
+    "2b6c8a3b-ee81-4948-94d8-18d6d8dffe86",
+    "e6429add-06f2-4149-be30-d24c3586aa90"
+]
 
 
 class BaseDataDump(BaseCommand):
@@ -117,7 +169,7 @@ class BaseDataDump(BaseCommand):
                         for case_reference, calculation in details.items():
                             if case_reference == "N/A":
                                 case_row[column_name] = ""
-                            elif case_reference == 'self':
+                            elif case_reference in ['self', 'Self']:
                                 if calculation == 'caseid':
                                     case_row[column_name] = case_to_dump.case_id
                                 else:
@@ -222,3 +274,16 @@ class BaseDataDump(BaseCommand):
             raise Exception("Case Property not %s set as %s by any user on case %s" % (
                 case_property_name, case_property_value, test_case.case_id
             ))
+
+    @staticmethod
+    def person_belongs_to_real_location(person_case):
+        if person_case.case_id in PRIVATE_SECTOR_PERSON_CASE_IDS_TO_IGNORE:
+            print("ignoring person case %s" % person_case.case_id)
+            return False
+        assert person_case.type == CASE_TYPE_PERSON
+        try:
+            owner_id = person_case.owner_id
+            owner_location = SQLLocation.active_objects.get(location_id=owner_id)
+            return owner_location.metadata['is_test'] != "yes"
+        except SQLLocation.DoesNotExist:
+            return True

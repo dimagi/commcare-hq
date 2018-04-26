@@ -141,7 +141,7 @@ def get_last_occurrence(person_case):
         if last_episode:
             return episode_id_to_occurrence[last_episode.case_id]
         else:
-            return "No Occurrences"
+            raise Exception("No occurrence cases for person %s" % person_case.case_id)
 
 
 def get_last_episode(person_case):
