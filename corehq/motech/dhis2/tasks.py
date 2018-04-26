@@ -11,7 +11,7 @@ from celery.task import periodic_task, task
 from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.motech.dhis2.api import JsonApiRequest
-from corehq.motech.dhis2.models import JsonApiLog
+from corehq.motech.models import RequestLog
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
@@ -58,7 +58,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             except Exception as err:
                 log_level = logging.ERROR
                 if log_level >= domain_log_level:
-                    JsonApiLog.log(
+                    RequestLog.log(
                         log_level,
                         api.domain_name,
                         str(err),
@@ -71,7 +71,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
             else:
                 log_level = logging.INFO
                 if log_level >= domain_log_level:
-                    JsonApiLog.log(
+                    RequestLog.log(
                         log_level,
                         api.domain_name,
                         None,

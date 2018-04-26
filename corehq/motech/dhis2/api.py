@@ -5,7 +5,7 @@ import logging
 import requests
 from django.core.serializers.json import DjangoJSONEncoder
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection
-from corehq.motech.dhis2.models import JsonApiLog
+from corehq.motech.models import RequestLog
 
 
 class JsonApiError(Exception):
@@ -36,7 +36,7 @@ def log_request(func):
             return response
         finally:
             if log_level >= domain_log_level:
-                JsonApiLog.log(log_level, self.domain_name, request_error, response_status, response_body,
+                RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
                                self.headers, *args, **kwargs)
 
     return request_wrapper

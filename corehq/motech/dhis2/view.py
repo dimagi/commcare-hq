@@ -12,7 +12,8 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.motech.dhis2.forms import Dhis2ConnectionForm
-from corehq.motech.dhis2.models import DataValueMap, DataSetMap, JsonApiLog
+from corehq.motech.dhis2.models import DataValueMap, DataSetMap
+from corehq.motech.models import RequestLog
 from corehq.motech.dhis2.tasks import send_datasets
 from corehq.apps.domain.views import BaseProjectSettingsView
 from memoized import memoized
@@ -107,7 +108,7 @@ class Dhis2LogListView(BaseProjectSettingsView, ListView):
     paginate_by = 100
 
     def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
+        return RequestLog.objects.filter(domain=self.domain).order_by('-timestamp').only(
             'timestamp',
             'request_method',
             'request_url',
@@ -128,7 +129,7 @@ class Dhis2LogDetailView(BaseProjectSettingsView, DetailView):
     context_object_name = 'log'
 
     def get_queryset(self):
-        return JsonApiLog.objects.filter(domain=self.domain)
+        return RequestLog.objects.filter(domain=self.domain)
 
     @property
     def object(self):
