@@ -391,6 +391,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         if isinstance(obj, six.string_types):
             return obj
+        if not obj:
+            return _('Untitled')
+
         val = obj.get(display_lang)
         if val:
             return val
