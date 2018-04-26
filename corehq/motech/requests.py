@@ -3,10 +3,36 @@ from __future__ import unicode_literals
 
 import logging
 
+from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 
 
 logger = logging.getLogger('motech')
+
+
+def log_request(func):
+
+    def request_wrapper(self, *args, **kwargs):
+        log_level = logging.INFO
+        request_error = ''
+        response_status = None
+        response_body = ''
+        try:
+            response = func(self, *args, **kwargs)
+            response_status = response.status_code
+            response_body = response.content
+        except Exception as err:
+            log_level = logging.ERROR
+            request_error = str(err)
+            raise err
+        else:
+            return response
+        finally:
+            request_headers = kwargs.pop('headers') or {}
+            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
+                           request_headers, func, *args, **kwargs)
+
+    return request_wrapper
 
 
 class Requests(object):
@@ -18,6 +44,7 @@ class Requests(object):
         self.username = username
         self.password = password
 
+    @log_request
     def send_request(self, method_func, *args, **kwargs):
         raise_for_status = kwargs.pop('raise_for_status', False)
         try:
