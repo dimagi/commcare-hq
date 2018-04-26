@@ -487,7 +487,7 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
 
 class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_peremption'
-    comment = 'Valorisation des produits périmés PNA'
+    comment = 'valeur péremption sur valeur totale'
     title = 'Taux de Péremption'
     show_total = True
     custom_total_calculate = True
@@ -873,7 +873,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
 
 class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
     slug = 'taux_de_satisfaction_apres_livraison'
-    comment = '% de produits commandés vs. deliverés'
+    comment = 'produits proposés sur produits livrés'
     title = 'Taux de satisfaction (après livraison)'
     show_total = True
     custom_total_calculate = True
