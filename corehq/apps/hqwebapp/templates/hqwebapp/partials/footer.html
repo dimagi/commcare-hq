@@ -18,7 +18,7 @@
           &nbsp;
           {% blocktrans %}
             <a href="https://dimagi.com/commcare/">CommCare</a>
-            is copyright &copy;
+            is <span ondblclick="throw new Error('Fake error for sentry, sent ' + (new Date()).toString());">copyright</span> &copy;
           {% endblocktrans %}{% now "Y" %}
           <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
 
