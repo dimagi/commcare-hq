@@ -53,6 +53,7 @@ class Command(BaseCommand):
             domain = doc['key']
 
             if stale_get_export_count(domain):
+                print("Inspecting '{}'".format(domain))
                 if not force_convert_columns:
                     try:
                         metas = migrate_domain(domain, dryrun=True, force_convert_columns=force_convert_columns)
