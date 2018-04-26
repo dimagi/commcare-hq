@@ -133,10 +133,12 @@
 
     {% if not requirejs_main %}
       {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
-      <script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" crossorigin="anonymous"></script>
-      <script>
-        Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
-      </script>
+      {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+        <script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" crossorigin="anonymous"></script>
+        <script>
+          Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+        </script>
+      {% endif %}
     {% endif %}
 
     {# Up here because if daterangepicker is called from within a form widget, #}
