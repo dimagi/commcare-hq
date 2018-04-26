@@ -609,17 +609,17 @@ BEGIN
     'sum(low_birth_weight_born_in_month), ' ||
     'sum(bf_at_birth_born_in_month), ' ||
     'sum(ebf_eligible), ' ||
-    'sum(ebf_in_month), ' ||
     '0, ' ||
     '0, ' ||
     '0, ' ||
     '0, ' ||
     '0, ' ||
     '0, ' ||
-    'sum(counsel_increase_food_bf), ' ||
-    'sum(counsel_manage_breast_problems), ' ||
-    'sum(counsel_ebf), ' ||
-    'sum(counsel_adequate_bf), ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
     '0, ' ||
     '0, ' ||
     'sum(fully_immunized_eligible), ' ||
@@ -639,7 +639,7 @@ BEGIN
     'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
     'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
     'sum(valid_all_registered_in_month), ' ||
-    'sum(ebf_no_info_recorded), ' ||
+    '0, ' ||
     'sum(CASE WHEN nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
     'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END), ' ||
     '0, 0, 0, 0, 0, 0 ' ||
@@ -672,7 +672,13 @@ BEGIN
     'zscore_grading_hfa_severe = temp.zscore_grading_hfa_severe, ' ||
     'wasting_normal_v2 = temp.wasting_normal_v2, ' ||
     'wasting_moderate_v2 = temp.wasting_moderate_v2, ' ||
-    'wasting_severe_v2 = temp.wasting_severe_v2 ' ||
+    'wasting_severe_v2 = temp.wasting_severe_v2, ' ||
+    'ebf_in_month = temp.ebf_in_month, ' ||
+    'counsel_increase_food_bf = temp.counsel_increase_food_bf, ' ||
+    'counsel_manage_breast_problems = temp.counsel_manage_breast_problems, ' ||
+    'counsel_ebf = temp.counsel_ebf, ' ||
+    'counsel_adequate_bf = temp.counsel_adequate_bf, ' ||
+    'ebf_no_info_recorded = temp.ebf_no_info_recorded ' ||
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, ' ||
       'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
@@ -703,7 +709,13 @@ BEGIN
       'sum(CASE ' ||
         'WHEN zscore_grading_wfh_recorded_in_month = 1 AND zscore_grading_wfh = 1 THEN 1 ' ||
         'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 1 THEN 1 ' ||
-        'ELSE 0 END) as wasting_severe_v2 ' ||
+        'ELSE 0 END) as wasting_severe_v2, ' ||
+      'sum(ebf_in_month) as ebf_in_month, ' ||
+      'sum(counsel_increase_food_bf) as counsel_increase_food_bf, ' ||
+      'sum(counsel_manage_breast_problems) as counsel_manage_breast_problems, ' ||
+      'sum(counsel_ebf) as counsel_ebf, ' ||
+      'sum(counsel_adequate_bf) as counsel_adequate_bf, ' ||
+      'sum(ebf_no_info_recorded) as ebf_no_info_recorded ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
