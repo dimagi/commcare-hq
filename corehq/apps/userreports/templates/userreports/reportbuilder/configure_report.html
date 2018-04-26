@@ -89,6 +89,7 @@
         <inline-edit params="
           value: reportDescription,
           id: 'report-description',
+          url: '{% url "update_report_description" domain existing_report.get_id %}',
           placeholder: '{% trans "Enter report description here"|escapejs %}',
           readOnlyClass: 'app-comment',
           cols: 50,

@@ -12,11 +12,10 @@ from django.utils.translation import ugettext as _
 from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
-    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly
-from custom.icds_reports.queries import get_beneficiary_list, get_growth_monitoring_details
+    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
-    person_has_aadhaar_column, person_is_beneficiary_column
+    person_has_aadhaar_column, person_is_beneficiary_column, get_status
 from custom.icds_reports.const import MapColors
 import six
 
@@ -1005,13 +1004,18 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
     }
 
 
-@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'domain'], timeout=30 * 60)
-def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, domain):
+@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
 
-    data, total_records = get_beneficiary_list(
-        domain, awc_id, month, start, length, order
-    )
-
+    data = ChildHealthMonthlyView.objects.filter(
+        month=datetime(*month),
+        awc_id=awc_id,
+        open_in_month=1,
+        valid_in_month=1,
+        age_in_months__lte=60
+    ).order_by(order)
+    data_count = data.count()
+    data = data[start:(start + length)]
     config = {
         'data': [],
         'months': [
@@ -1024,40 +1028,49 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
         'last_month': datetime(*month).strftime("%b %Y"),
     }
 
-    def get_color(value):
-        if value == 1:
-            return 'red'
-        return 'black'
-
     def base_data(row_data):
         return dict(
-            case_id=row_data[0],
-            person_name=row_data[1],
-            dob=row_data[2],
-            age=calculate_date_for_age(row_data[2], datetime(*month).date()),
-            fully_immunized='Yes' if row_data[13] else 'No',
-            age_in_months=row_data[3],
-            current_month_nutrition_status={'value': row_data[4], 'color': get_color(row[5])},
-            recorded_weight=row_data[6] or 0,
-            recorded_height=row_data[7] or 0,
-            current_month_stunting={'value': row_data[8], 'color': get_color(row[9])},
-            current_month_wasting={'value': row_data[10], 'color': get_color(row[11])},
-            pse_days_attended=row_data[12]
+            case_id=row_data.case_id,
+            person_name=row_data.person_name,
+            dob=row_data.dob,
+            age=calculate_date_for_age(row_data.dob, datetime(*month).date()),
+            fully_immunized='Yes' if row_data.fully_immunized else 'No',
+            age_in_months=row_data.age_in_months,
+            current_month_nutrition_status=get_status(
+                row_data.current_month_nutrition_status,
+                'underweight',
+                'Normal weight for age'
+            ),
+            recorded_weight=row_data.recorded_weight or 0,
+            recorded_height=row_data.recorded_height or 0,
+            current_month_stunting=get_status(
+                row_data.current_month_stunting,
+                'stunted',
+                'Normal height for age'
+            ),
+            current_month_wasting=get_status(
+                row_data.current_month_wasting,
+                'wasted',
+                'Normal weight for height'
+            ),
+            pse_days_attended=row_data.pse_days_attended
         )
 
     for row in data:
         config['data'].append(base_data(row))
 
     config["draw"] = draw
-    config["recordsTotal"] = total_records
-    config["recordsFiltered"] = total_records
+    config["recordsTotal"] = data_count
+    config["recordsFiltered"] = data_count
 
     return config
 
 
-@quickcache(['domain', 'case_id'], timeout=30 * 60)
-def get_beneficiary_details(domain, case_id):
-    data = get_growth_monitoring_details(domain, case_id)
+@quickcache(['case_id'], timeout=30 * 60)
+def get_beneficiary_details(case_id):
+    data = ChildHealthMonthlyView.objects.filter(
+        case_id=case_id
+    ).order_by('month')
 
     min_height = 45
     max_height = 120.0
@@ -1068,16 +1081,16 @@ def get_beneficiary_details(domain, case_id):
         'wfl': []
     }
     for row in data:
-        age_in_months = row[5]
-        recorded_weight = row[6]
-        recorded_height = row[7]
+        age_in_months = row.age_in_months
+        recorded_weight = row.recorded_weight
+        recorded_height = row.recorded_height
         beneficiary.update({
-            'person_name': row[1],
-            'mother_name': row[2],
-            'dob': row[3],
-            'age': current_age(row[3], datetime.now().date()),
-            'sex': row[4],
-            'age_in_months': row[5],
+            'person_name': row.person_name,
+            'mother_name': row.mother_name,
+            'dob': row.dob,
+            'age': current_age(row.dob, datetime.now().date()),
+            'sex': row.sex,
+            'age_in_months': age_in_months,
         })
         if age_in_months <= 60:
             if recorded_weight:
