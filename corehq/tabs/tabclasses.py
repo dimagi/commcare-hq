@@ -34,7 +34,8 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -1552,8 +1553,8 @@ def _get_integration_section(domain):
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
         }, {
-            'title': _(Dhis2LogListView.page_title),
-            'url': reverse(Dhis2LogListView.urlname, args=[domain])
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
