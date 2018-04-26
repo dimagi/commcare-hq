@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0041_added_num_anc_visits_to_agg_awc_montlhy_view'),
+        ('icds_reports', '0045_add_new_wasting_stunting_to_chm'),
     ]
 
     operations = [
