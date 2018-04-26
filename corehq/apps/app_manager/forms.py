@@ -62,11 +62,11 @@ class CopyApplicationForm(forms.Form):
         )
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
-        domain = Domain.get_by_name(domain_name)
-        if domain is None:
+        domain = self.cleaned_data['domain']
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
-        return domain_name
+        return domain
 
     def clean(self):
         domain = self.cleaned_data.get('domain')
