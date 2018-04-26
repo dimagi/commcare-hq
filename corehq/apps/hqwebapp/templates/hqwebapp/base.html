@@ -424,16 +424,16 @@
           },
         });
         requirejs([
-          'hqwebapp/js/common',
         {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
           'raven-js/dist/raven',
         {% endif %}
+          'hqwebapp/js/common',
         ], function() {
           requirejs([
             'hqwebapp/js/base_main',
           ], function () {
           {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
-            Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+            arguments[0].config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
           {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
               console.log("Loaded requirejs main module: {{ requirejs_main }}");
