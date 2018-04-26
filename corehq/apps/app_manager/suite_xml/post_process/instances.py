@@ -89,7 +89,8 @@ class EntryInstances(PostProcessor):
 
         for instance in custom_instances:
             if instance.instance_id in known_instance_ids:
-                raise DuplicateInstanceIdError(_("Duplicate custom instance: ") + instance.instance_id)
+                raise DuplicateInstanceIdError(
+                        _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.instance_id))
             # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
             required_instances.discard(instance.instance_id)
         return {
