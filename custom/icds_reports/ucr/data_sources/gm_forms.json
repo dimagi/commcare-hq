@@ -549,6 +549,15 @@
       }
     },
     "engine_id": "icds-ucr",
+    "sql_settings": {
+      "partition_config": [
+        {
+          "column": "timeend",
+          "subtype": "date",
+          "constraint": "month"
+        }
+      ]
+    },
     "sql_column_indexes": [
       {
         "column_ids": [
