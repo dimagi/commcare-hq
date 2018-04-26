@@ -1113,13 +1113,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OLD_EXPORTS = StaticToggle(
-    'old_exports',
-    'Use old backend export infrastructure',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
     'not_tf_sql_backend',
     'Domains that do not use a SQLite backend for Touchforms',

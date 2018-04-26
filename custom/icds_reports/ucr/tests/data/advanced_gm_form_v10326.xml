@@ -68,7 +68,7 @@
 	<age_months_rounded>55</age_months_rounded>
 	<age_in_months>55</age_in_months>
 	<weight_gmp>6</weight_gmp>
-	<muac_grading/>
+	<muac_grading>yellow</muac_grading>
 	<prev_muac/>
 	<muac_change/>
 	<muac_change_status>no_prev</muac_change_status>
