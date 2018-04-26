@@ -173,6 +173,10 @@
         {% if not requirejs_main %}
             {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
         {% endif %}
+        <script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" crossorigin="anonymous"></script>
+        <script>
+            Raven.config('https://daed866a80f5475c8f0efe550c5d5f0d@sentry.io/136860').install();
+        </script>
 
         {# Up here because if daterangepicker is called from within a form widget, #}
         {# the javascript requiring the config file is run before js-inline #}
