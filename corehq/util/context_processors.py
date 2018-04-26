@@ -120,6 +120,8 @@ def js_api_keys(request):
         'ANALYTICS_IDS': settings.ANALYTICS_IDS,
         'ANALYTICS_CONFIG': settings.ANALYTICS_CONFIG,
         'MAPBOX_ACCESS_TOKEN': settings.MAPBOX_ACCESS_TOKEN,
+        'SENTRY_PUBLIC_KEY': settings.SENTRY_PUBLIC_KEY,
+        'SENTRY_PROJECT_ID': settings.SENTRY_PROJECT_ID,
     }
 
 
