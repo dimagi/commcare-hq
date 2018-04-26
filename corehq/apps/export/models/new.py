@@ -2595,6 +2595,8 @@ class ExportMigrationMeta(Document):
 
     is_remote_app_migration = BooleanProperty(default=False)
 
+    has_case_history = BooleanProperty(default=False)
+
     migration_date = DateTimeProperty()
 
     class Meta(object):

@@ -299,6 +299,9 @@ def convert_saved_export_to_export_instance(
 
         new_table.columns = _reorder_columns(new_table, ordering)
 
+    if isinstance(instance, CaseExportInstance):
+        migration_meta.has_case_history = instance.has_case_history_table
+
     if not dryrun:
         migration_meta.save()
         instance.save()
@@ -669,6 +672,10 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
             print('# Skipped columns #')
             for column_meta in meta.skipped_columns:
                 column_meta.pretty_print()
+
+        if meta.has_case_history:
+            print('# Has Case History #')
+
     return metas
 
 
