@@ -132,6 +132,7 @@ DECLARE
   _ucr_child_tasks_table text;
   _agg_thr_form_table text;
   _agg_gm_form_table text;
+  _agg_pnc_form_table text;
   _start_date date;
   _end_date date;
 BEGIN
@@ -139,6 +140,7 @@ BEGIN
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'child_health_monthly' || '_' || _start_date;
   _agg_gm_form_table := 'icds_dashboard_growth_monitoring_forms';
+  _agg_pnc_form_table := 'icds_dashboard_child_health_postnatal_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
@@ -229,23 +231,23 @@ BEGIN
     'low_birth_weight_born_in_month, ' ||
     'bf_at_birth_born_in_month, ' ||
     'ebf_eligible, ' ||
-    'ebf_in_month, ' ||
-    'ebf_not_breastfeeding_reason, ' ||
-    'ebf_drinking_liquid, ' ||
-    'ebf_eating, ' ||
-    'ebf_no_bf_no_milk, ' ||
-    'ebf_no_bf_pregnant_again, ' ||
-    'ebf_no_bf_child_too_old, ' ||
-    'ebf_no_bf_mother_sick, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
     'cf_eligible, ' ||
     'fully_immunized_eligible, ' ||
     'fully_immunized_on_time, ' ||
     'fully_immunized_late, ' ||
-    'counsel_ebf, ' ||
-    'counsel_adequate_bf, ' ||
-    'counsel_increase_food_bf, ' ||
-    'counsel_manage_breast_problems, ' ||
-    'counsel_skin_to_skin, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
     'counsel_immediate_breastfeeding, ' ||
     'weight_recorded_in_month, ' ||
     'height_recorded_in_month, ' ||
@@ -260,7 +262,7 @@ BEGIN
     'current_month_wasting, ' ||
     'valid_in_month, ' ||
     'valid_all_registered_in_month, ' ||
-    'ebf_no_info_recorded, ' ||
+    '0, ' ||
     'dob, ' ||
     'sex, ' ||
     'age_tranche, ' ||
@@ -282,6 +284,8 @@ BEGIN
 
     EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_eligible) WHERE cf_eligible = 1';
     EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (cf_initiation_eligible) WHERE cf_initiation_eligible = 1';
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (ebf_eligible) WHERE ebf_eligible = 1';
+    EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || ' (pnc_eligible) WHERE pnc_eligible = 1';
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'cf_in_month = COALESCE(agg.comp_feeding_latest, 0), ' ||
@@ -351,6 +355,24 @@ BEGIN
       'muac_grading_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.muac_grading_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END ' ||
     'FROM ' || quote_ident(_agg_gm_form_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'counsel_increase_food_bf = COALESCE(agg.counsel_increase_food_bf, 0), ' ||
+      'counsel_manage_breast_problems = COALESCE(agg.counsel_breast, 0), ' ||
+      'counsel_skin_to_skin = COALESCE(agg.skin_to_skin, 0) ' ||
+    'FROM ' || quote_ident(_agg_pnc_form_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.pnc_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'ebf_in_month = COALESCE(agg.is_ebf, 0), ' ||
+      'ebf_drinking_liquid = GREATEST(agg.water_or_milk, agg.other_milk_to_child, agg.tea_other, 0), ' ||
+      'ebf_eating = COALESCE(agg.eating, 0), ' ||
+      'ebf_not_breastfeeding_reason = COALESCE(agg.not_breastfeeding, ' || quote_literal('not_breastfeeding') || '), ' ||
+      'counsel_ebf = GREATEST(agg.counsel_exclusive_bf, agg.counsel_only_milk, 0), ' ||
+      'counsel_adequate_bf = COALESCE(agg.counsel_adequate_bf, 0), ' ||
+      'ebf_no_info_recorded = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.latest_time_end_processed) = ' || quote_literal(_start_date) || ') THEN 0 ELSE 1 END ' ||
+    'FROM ' || quote_ident(_agg_pnc_form_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.ebf_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
 END;
