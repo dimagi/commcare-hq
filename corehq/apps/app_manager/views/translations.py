@@ -76,8 +76,8 @@ def download_bulk_ui_translations(request, domain, app_id):
     app = get_app(domain, app_id)
     temp = build_ui_translation_download_file(app)
     filename = '{app_name} v.{app_version} - CommCare Translations'.format(
-                app_name=app.name,
-                app_version=app.version)
+        app_name=app.name,
+        app_version=app.version)
     return export_response(temp, Format.XLS_2007, filename)
 
 
@@ -90,8 +90,8 @@ def download_bulk_app_translations(request, domain, app_id):
     data = [(k, v) for k, v in six.iteritems(rows)]
     export_raw(headers, data, temp)
     filename = '{app_name} v.{app_version} - App Translations'.format(
-                app_name=app.name,
-                app_version=app.version)
+        app_name=app.name,
+        app_version=app.version)
     return export_response(temp, Format.XLS_2007, filename)
 
 
