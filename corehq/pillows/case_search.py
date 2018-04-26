@@ -73,7 +73,7 @@ def _get_case_properties(doc_dict):
             value_date = parse_date(value)
             if value_date:
                 mapping[VALUE_DATE] = value_date
-        except ValueError:
+        except (ValueError, TypeError):
             pass
 
         dynamic_mapping.append(mapping)
