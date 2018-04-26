@@ -9,6 +9,7 @@ from auditcare.models import NavigationEventAudit
 
 
 logger = logging.getLogger(__name__)
+NEW_USERNAME = "Redacted User (Right To Forget)"
 
 
 class Command(BaseCommand):
@@ -19,9 +20,8 @@ class Command(BaseCommand):
 
     def handle(self, username, **options):
         def update_username(event_dict):
-            event_dict['user'] = new_username
+            event_dict['user'] = NEW_USERNAME
             return DocUpdate(doc=event_dict)
 
-        new_username = "Redacted User (Right To Forget)"
         event_ids = navigation_event_ids_by_user(username)
         iter_update(NavigationEventAudit.get_db(), update_username, with_progress_bar(event_ids, len(event_ids)))
