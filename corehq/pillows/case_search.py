@@ -66,7 +66,7 @@ def _get_case_properties(doc_dict):
 
         try:
             mapping[VALUE_NUMERIC] = float(value)  # cast as a Java double in Elasticsearch
-        except ValueError:
+        except (ValueError, TypeError):
             pass
 
         try:
