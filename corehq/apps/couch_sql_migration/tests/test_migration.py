@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.test import override_settings
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
@@ -21,7 +22,7 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
+from corehq.apps.reports.models import HQExportSchema
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -35,6 +36,7 @@ from corehq.util.test_utils import (
 )
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
+from mock import patch, MagicMock
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -59,9 +61,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration_and_assert_flags(self, domain):
+    def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
         call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+
+    def _do_migration_and_assert_flags(self, domain):
+        self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
@@ -77,6 +82,21 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
 
 class MigrationTestCase(BaseMigrationTestCase):
+    def test_migration_blacklist(self):
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
+        with self.assertRaises(AssertionError):
+            self._do_migration(self.domain_name)
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
+
+    @patch.object(HQExportSchema, "get_db", MagicMock())
+    def test_migration_old_exports(self):
+        with self.assertRaises(AssertionError):
+            self._do_migration(self.domain_name)
+
+    def test_migration_custom_report(self):
+        with self.assertRaises(AssertionError):
+            self._do_migration("up-nrhm")
+
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
