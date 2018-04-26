@@ -21,10 +21,10 @@ from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormC
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
 from corehq.motech.openmrs.models import ColumnMapping
 from corehq.motech.openmrs.repeater_helpers import (
-    Requests,
     get_patient_identifier_types,
     get_person_attribute_types,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.utils import b64_aes_encrypt
 from memoized import memoized

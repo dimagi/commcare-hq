@@ -28,7 +28,7 @@ from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENC
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
-from corehq.motech.openmrs.repeater_helpers import Requests
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
 import six
