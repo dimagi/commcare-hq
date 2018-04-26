@@ -330,9 +330,6 @@
         "property_name": "aww_or_ls"
       },
       "supervisor_id": {
-        "datatype": null,
-        "type": "expression",
-        "expression": {
           "location_id": {
             "type": "conditional",
             "test": {
@@ -356,7 +353,6 @@
           "location_type": "supervisor",
           "location_propery": "_id",
           "type": "ancestor_location"
-        }
       }
     },
     "named_filters": {
