@@ -20,7 +20,9 @@
     </p>
     <form class="form form-horizontal main-form" method="POST" action="#">
         <div id="create-schedule-form">
-            {% crispy schedule_form %}
+            {% crispy schedule_form schedule_form.before_content %}
+            {% crispy schedule_form.standalone_content_form %}
+            {% crispy schedule_form schedule_form.after_content %}
         </div>
     </form>
 {% endblock %}
