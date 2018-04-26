@@ -674,7 +674,10 @@ BEGIN
     'wasting_moderate_v2 = temp.wasting_moderate_v2, ' ||
     'wasting_severe_v2 = temp.wasting_severe_v2 ' ||
     'FROM (SELECT ' ||
-      'awc_id, month, sex, age_tranche, caste, disabled, minority, resident, ' ||
+      'awc_id, month, sex, age_tranche, caste, ' ||
+      'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
+      'coalesce(minority, ' || quote_nullable(_no_text) || ') as coalesce_minority, ' ||
+      'coalesce(resident, ' || quote_nullable(_no_text) || ') as coalesce_resident, ' ||
       'sum(cf_eligible) as cf_eligible, ' ||
       'sum(cf_in_month) as cf_in_month, ' ||
       'sum(cf_diet_diversity) as cf_diet_diversity, ' ||
@@ -702,11 +705,11 @@ BEGIN
         'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 1 THEN 1 ' ||
         'ELSE 0 END) as wasting_severe_v2 ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
-      'GROUP BY awc_id, month, sex, age_tranche, caste, disabled, minority, resident) temp ' ||
+      'GROUP BY awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
       'AND temp.age_tranche = agg_child_health.age_tranche AND temp.caste = agg_child_health.caste ' ||
-      'AND temp.disabled = agg_child_health.disabled AND temp.minority = agg_child_health.minority ' ||
-      'AND temp.resident = agg_child_health.resident';
+      'AND temp.coalesce_disabled = agg_child_health.disabled AND temp.coalesce_minority = agg_child_health.minority ' ||
+      'AND temp.coalesce_resident = agg_child_health.resident';
 
   --Roll up by location
   _rollup_text = 'sum(valid_in_month), ' ||
