@@ -60,7 +60,7 @@ branches:
   - jls/externalize-js-reassign-cases # Jenny April 19
   - emord-patch-1 # J$ April 19 (upgrading celery)
   - jr/drilldown-filters-again # jordan April 23
-  - jls/sentry-js
+  - jls/sentry-js # Jenny April 26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
