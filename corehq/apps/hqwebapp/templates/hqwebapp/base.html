@@ -134,7 +134,7 @@
     {% if not requirejs_main %}
       {% javascript_libraries underscore=True jquery_ui=request.use_jquery_ui ko=True hq=True analytics=True %}
       {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
-        <script src="https://cdn.ravenjs.com/3.24.2/raven.min.js" crossorigin="anonymous"></script>
+        <script src="{% static 'raven-js/dist/raven.js' %}"></script>
         <script>
           Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
         </script>
@@ -425,10 +425,16 @@
         });
         requirejs([
           'hqwebapp/js/common',
+        {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+          'raven-js/dist/raven',
+        {% endif %}
         ], function() {
           requirejs([
             'hqwebapp/js/base_main',
           ], function () {
+          {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
+            Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+          {% endif %}
             requirejs(['{{ requirejs_main }}'], function () {
               console.log("Loaded requirejs main module: {{ requirejs_main }}");
             });
