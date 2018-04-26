@@ -62,10 +62,11 @@ class Command(BaseCommand):
                         skipped_domains.append(domain)
                         continue
 
-                    has_skipped_tables = any([bool(meta.skipped_tables) for meta in metas])
-                    has_skipped_columns = any([bool(meta.skipped_columns) for meta in metas])
-                    is_remote_app_migration = any([bool(meta.is_remote_app_migration) for meta in metas])
-                    if has_skipped_tables or has_skipped_columns:
+                    has_skipped_tables = any(meta.skipped_tables for meta in metas)
+                    has_skipped_columns = any(meta.skipped_columns for meta in metas)
+                    has_case_history = any(meta.has_case_history for meta in metas)
+                    is_remote_app_migration = any(meta.is_remote_app_migration for meta in metas)
+                    if has_skipped_tables or has_skipped_columns or has_case_history:
                         print('Skipping {} because we would have skipped columns'.format(domain))
                         skipped_domains.append(domain)
                         continue
