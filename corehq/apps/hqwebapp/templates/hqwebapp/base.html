@@ -418,10 +418,10 @@
                     },
                 });
                 requirejs([
-                    'hqwebapp/js/common',
                     {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
                     'raven-js/dist/raven',
                     {% endif %}
+                    'hqwebapp/js/common',
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
@@ -433,7 +433,7 @@
                     'analytix/js/kissmetrix',
                 ], function () {
                     {% if SENTRY_PUBLIC_KEY and SENTRY_PROJECT_ID %}
-                        Raven.config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
+                        arguments[0].config('https://{{ SENTRY_PUBLIC_KEY }}@sentry.io/{{ SENTRY_PROJECT_ID }}').install();
                     {% endif %}
                     requirejs(['{{ requirejs_main }}']);
                 });
