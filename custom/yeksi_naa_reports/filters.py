@@ -39,7 +39,7 @@ class LocationFilter(AsyncLocationFilter):
 class MonthsDateFilter(BaseReportFilter):
     template = "yeksi_naa/months_datespan.html"
     slug = 'datespan'
-    label = "Date Range"
+    label = "Plage de dates"
 
     @classmethod
     def months(cls):
