@@ -541,11 +541,11 @@ class MigrationTestCase(BaseMigrationTestCase):
         with patch_datadog() as received_stats:
             self._do_migration_and_assert_flags(self.domain_name)
         tracked_stats = [
-            'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
-            'commcare.couch_sql_migration.main_forms.count.duration:',
-            'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
-            'commcare.couch_sql_migration.case_diffs.count.duration:',
-            'commcare.couch_sql_migration.count.duration:',
+            'commcare.couchsqlmigration.timings.couch_sql_migration.unprocessed_cases:duration:',
+            'commcare.couchsqlmigration.timings.couch_sql_migration.main_forms:duration:',
+            'commcare.couchsqlmigration.timings.couch_sql_migration.unprocessed_forms:duration:',
+            'commcare.couchsqlmigration.timings.couch_sql_migration.case_diffs:duration:',
+            'commcare.couchsqlmigration.timings.couch_sql_migration:duration:',
         ]
         for t_stat in tracked_stats:
             self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))

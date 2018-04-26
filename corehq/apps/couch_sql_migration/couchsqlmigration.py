@@ -301,18 +301,20 @@ class CouchSqlDomainMigrator(object):
             return iterable
 
     def _send_timings(self, timing_context):
-        metric_name_template = "commcare.%s.count"
-        metric_name_template_normalized = "commcare.%s.count.normalized"
+        metric_name = "commcare.couchsqlmigration.timings"
+        metric_name_normalized = "commcare.couchsqlmigration.timings.normalized"
         for timing in timing_context.to_list():
             datadog_counter(
-                metric_name_template % timing.full_name,
-                tags=['duration:%s' % bucket_value(timing.duration, TIMING_BUCKETS)])
+                metric_name,
+                tags=['%s:duration:%s' % (timing.full_name,
+                                          bucket_value(timing.duration, TIMING_BUCKETS))])
             normalize_denominator = getattr(timing, 'normalize_denominator', None)
             if normalize_denominator:
                 datadog_counter(
-                    metric_name_template_normalized % timing.full_name,
-                    tags=['duration:%s' % bucket_value(timing.duration / normalize_denominator,
-                                                       NORMALIZED_TIMING_BUCKETS)])
+                    metric_name_normalized,
+                    tags=['%sduration:%s' % (timing.full_name,
+                                             bucket_value(timing.duration / normalize_denominator,
+                                                          NORMALIZED_TIMING_BUCKETS))])
 
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
