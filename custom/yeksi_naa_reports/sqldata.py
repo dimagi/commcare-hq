@@ -50,6 +50,12 @@ class YeksiSqlData(SqlData):
             if date < self.months[index] + relativedelta(months=1):
                 return index
 
+    def cell_value_less_than(self, cell, value):
+        return True if cell != 'pas de données' and float(cell[:-1]) < value else False
+
+    def cell_value_bigger_than(self, cell, value):
+        return True if cell != 'pas de données' and float(cell[:-1]) > value else False
+
     def month_headers(self):
         month_headers = []
         french_months = {
@@ -221,7 +227,9 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     custom_total_calculate = True
 
     def calculate_total_row(self, rows):
-        total_row = ['Disponibilité (%)']
+        total_row = [{
+            'html': 'Disponibilité (%)',
+        }]
         total_numerator = 0
         total_denominator = 0
         if self.loc_id == 'pps_id':
@@ -235,26 +243,34 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                                      if pps_data[i + 1] != 'pas de données')
                 }
                 if data[i]['pps_count']:
-                    total_row.append(
-                        self.percent_fn(
-                            data[i]['pps_is_available'],
-                            data[i]['pps_count']
-                        )
+                    month_value = self.percent_fn(
+                        data[i]['pps_is_available'],
+                        data[i]['pps_count']
                     )
+                    total_row.append({
+                        'html': month_value,
+                        'style': 'color: red' if self.cell_value_less_than(month_value, 95) else '',
+                    })
                 else:
-                    total_row.append('pas de données')
+                    total_row.append({
+                        'html': 'pas de données',
+                    })
                 total_numerator += data[i]['pps_is_available']
                 total_denominator += data[i]['pps_count']
 
             if total_denominator:
-                total_row.append(
-                    self.percent_fn(
-                        total_numerator,
-                        total_denominator
-                    )
+                total_value = self.percent_fn(
+                    total_numerator,
+                    total_denominator
                 )
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_less_than(total_value, 95) else '',
+                })
             else:
-                total_row.append('pas de données')
+                total_row.append({
+                    'html': 'pas de données',
+                })
         else:
             for i in range(len(self.months)):
                 numerator = 0
@@ -265,13 +281,25 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                 total_numerator += numerator
                 total_denominator += denominator
                 if denominator:
-                    total_row.append(self.percent_fn(numerator, denominator))
+                    month_value = self.percent_fn(numerator, denominator)
+                    total_row.append({
+                        'html': month_value,
+                        'style': 'color: red' if self.cell_value_less_than(month_value, 95) else '',
+                    })
                 else:
-                    total_row.append('pas de données')
+                    total_row.append({
+                        'html': 'pas de données',
+                    })
             if total_denominator:
-                total_row.append(self.percent_fn(total_numerator, total_denominator))
+                total_value = self.percent_fn(total_numerator, total_denominator)
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_less_than(total_value, 95) else '',
+                })
             else:
-                total_row.append('pas de données')
+                total_row.append({
+                    'html': 'pas de données',
+                })
         return total_row
 
     @property
@@ -361,9 +389,19 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     def parse_availability_data_to_rows(self, loc_names, data):
         rows = []
         for loc_id in data:
-            row = [loc_names[loc_id]]
-            row.extend(data[loc_id])
-            row.append(self.get_average_availability_in_location(data[loc_id]))
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for cell in data[loc_id]:
+                row.append({
+                    'html': cell,
+                    'style': 'color: red' if self.cell_value_less_than(cell, 95) else '',
+                })
+            average = self.get_average_availability_in_location(data[loc_id])
+            row.append({
+                'html': average,
+                'style': 'color: red' if self.cell_value_less_than(average, 95) else '',
+            })
             rows.append(row)
         return rows
 
@@ -510,20 +548,30 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Taux par Région')
+            total_row.append({
+                'html': 'Taux par Région',
+            })
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append('Taux par District')
+            total_row.append({
+                'html': 'Taux par District',
+            })
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('')
+            total_row.append({
+                'html': '',
+            })
         else:
-            total_row.append('Taux par Pays')
+            total_row.append({
+                'html': 'Taux par Pays',
+            })
         for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['expired_pna_valuation'],
-                    monthly_data['final_pna_stock_valuation']
-                )
+            total_value = self.percent_fn(
+                monthly_data['expired_pna_valuation'],
+                monthly_data['final_pna_stock_valuation']
             )
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+            })
         return total_row
 
     @property
@@ -555,14 +603,22 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = ['pas de données'] * len(self.months)
+                data[record[self.loc_id]] = []
+                for i in range(len(self.months)):
+                    data[record[self.loc_id]].append({
+                        'html': 'pas de données',
+                    })
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if self.denominator_exists(record['final_pna_stock_valuation']):
-                data[record[self.loc_id]][month_index] = self.percent_fn(
+                month_value = self.percent_fn(
                     record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
                     record['final_pna_stock_valuation']['html']
                 )
+                data[record[self.loc_id]][month_index] = {
+                    'html': month_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(month_value, 5) else '',
+                }
         return loc_names, data
 
     @property
@@ -572,7 +628,9 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
 
         rows = []
         for loc_id in data:
-            row = [loc_names[loc_id]]
+            row = [{
+                'html': loc_names[loc_id],
+            }]
             row.extend(data[loc_id])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
@@ -804,20 +862,30 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 data[month_index]['count_products_select'] += record['count_products_select']
 
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Taux par Région')
+            total_row.append({
+                'html': 'Taux par Région',
+            })
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append('Taux par District')
+            total_row.append({
+                'html': 'Taux par District',
+            })
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('')
+            total_row.append({
+                'html': '',
+            })
         else:
-            total_row.append('Taux par Pays')
+            total_row.append({
+                'html': 'Taux par Pays',
+            })
         for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['nb_products_stockout'],
-                    monthly_data['count_products_select']
-                )
+            total_value = self.percent_fn(
+                monthly_data['nb_products_stockout'],
+                monthly_data['count_products_select']
             )
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+            })
         return total_row
 
     @property
@@ -848,14 +916,20 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             if record['count_products_select']:
-                data[record['pps_id']][month_index] = self.percent_fn(
+                month_value = self.percent_fn(
                     record['nb_products_stockout'],
                     record['count_products_select']
                 )
+                data[record['pps_id']][month_index] = {
+                    'html': month_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(month_value, 2) else '',
+                }
 
         rows = []
         for pps in data:
-            row = [pps_names[pps]]
+            row = [{
+                'html': pps_names[pps],
+            }]
             row.extend(data[pps])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
