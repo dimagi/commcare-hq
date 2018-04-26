@@ -76,7 +76,6 @@
             "test": {
               "operator": "eq",
               "expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_or_ls"
               },
@@ -84,16 +83,12 @@
               "property_value": "aww"
             },
             "expression_if_true": {
-              {
                 "type": "property_name",
                 "property_name": "aww_id"
-              },
             },
             "expression_if_false": {
-              {
                 "type": "property_name",
                 "property_name": "ls_id"
-              },
             }
           },
           "location_type": "block",
@@ -115,7 +110,6 @@
             "test": {
               "operator": "eq",
               "expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_or_ls"
               },
@@ -123,16 +117,12 @@
               "property_value": "aww"
             },
             "expression_if_true": {
-              {
                 "type": "property_name",
                 "property_name": "aww_id"
-              },
             },
             "expression_if_false": {
-              {
                 "type": "property_name",
                 "property_name": "ls_id"
-              },
             }
           },
           "location_type": "district",
@@ -154,7 +144,6 @@
             "test": {
               "operator": "eq",
               "expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_or_ls"
               },
@@ -162,16 +151,12 @@
               "property_value": "aww"
             },
             "expression_if_true": {
-              {
                 "type": "property_name",
                 "property_name": "aww_id"
-              },
             },
             "expression_if_false": {
-              {
                 "type": "property_name",
                 "property_name": "ls_id"
-              },
             }
           },
           "location_type": "state",
@@ -353,7 +338,6 @@
             "test": {
               "operator": "eq",
               "expression": {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_or_ls"
               },
@@ -361,16 +345,12 @@
               "property_value": "aww"
             },
             "expression_if_true": {
-              {
                 "type": "property_name",
                 "property_name": "aww_id"
-              },
             },
             "expression_if_false": {
-              {
                 "type": "property_name",
                 "property_name": "ls_id"
-              },
             }
           },
           "location_type": "supervisor",
