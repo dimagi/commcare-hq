@@ -155,7 +155,7 @@ def icds_aggregation_task(self, date, func):
         )
         notify_exception(
             None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name, 'date': date, 'error': exc}
+            details={'func': func.__name__, 'date': date, 'error': exc}
         )
         self.retry(exc=exc)
 
