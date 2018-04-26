@@ -58,8 +58,8 @@ def setUpModule():
 
     SQLLocation.objects.create(
         domain='test-pna',
-        name='Test PPS 1',
-        location_id='f400d0ba6bdb456bb2d5f9843eb766fe',
+        name='P2',
+        location_id='ccf4430f5c3f493797486d6ce1c39682',
         location_type=pps_location_type
     )
 
@@ -91,6 +91,15 @@ def tearDownModule():
     _call_center_domain_mock = mock.patch(
         'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
     )
+    domain = Domain.get_by_name('test-pna')
+    engine = connection_manager.get_engine(UCR_ENGINE_ID)
+    metadata = sqlalchemy.MetaData(bind=engine)
+    metadata.reflect(bind=engine, extend_existing=True)
+    path = os.path.join(os.path.dirname(__file__), 'fixtures')
+    for file_name in os.listdir(path):
+        table_name = get_table_name(domain.name, file_name[:-4])
+        table = metadata.tables[table_name]
+        table.drop()
     _call_center_domain_mock.start()
-    Domain.get_by_name('test-pna').delete()
+    domain.delete()
     _call_center_domain_mock.stop()

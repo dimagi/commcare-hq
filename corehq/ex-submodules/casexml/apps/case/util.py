@@ -9,7 +9,6 @@ import datetime
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from iso8601 import iso8601
-from restkit.errors import ResourceError
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
@@ -150,17 +149,6 @@ def update_sync_log_with_checks(sync_log, xform, cases, case_db,
                                         case_id_blacklist=case_id_blacklist)
 
 
-def prune_previous_log(sync_log):
-    previous_log = sync_log.get_previous_log()
-    if previous_log:
-        try:
-            previous_log.delete()
-            sync_log.previous_log_removed = True
-            sync_log.save()
-        except MissingSyncLog:
-            pass
-
-
 def get_indexed_cases(domain, case_ids):
     """
     Given a base list of cases, gets all wrapped cases that they reference
@@ -240,3 +228,35 @@ def get_all_changes_to_case_property(case, case_property_name):
             case_property_changes.append(property_changed_info)
 
     return case_property_changes
+
+
+def get_paged_changes_to_case_property(case, case_property_name, start=0, per_page=50):
+    """Return paged changes to case properties, and last transaction index checked
+    """
+
+    def iter_transactions(transactions):
+        for i, transaction in enumerate(transactions):
+            property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+            if property_changed_info:
+                yield property_changed_info, i + start
+        raise StopIteration
+
+    num_actions = len(case.actions)
+    if start > num_actions:
+        return [], -1
+
+    case_transactions = iter_transactions(
+        sorted(case.actions, key=lambda t: t.server_date, reverse=True)[start:]
+    )
+
+    infos = []
+    last_index = 0
+    while len(infos) < per_page:
+        try:
+            info, last_index = next(case_transactions)
+            infos.append(info)
+        except StopIteration:
+            last_index = -1
+            break
+
+    return infos, last_index

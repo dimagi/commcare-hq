@@ -48,7 +48,7 @@ class MigrationView(BaseMigrationView, FormView):
 
 
 def get_case_and_descendants(domain, case_id):
-    from casexml.apps.case.templatetags.case_tags import get_case_hierarchy
+    from corehq.apps.reports.view_helpers import get_case_hierarchy
     case = CaseAccessors(domain).get_case(case_id)
     return [c for c in get_case_hierarchy(case, {})['case_list']
             if not c.closed]

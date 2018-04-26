@@ -239,7 +239,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
             return _.isEmpty(self.selectedPrivileges());
         });
 
-        return {};
+        return self;
     };
 
 

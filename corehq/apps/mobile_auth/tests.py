@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import TestCase
 from casexml.apps.case.tests.util import check_xml_line_by_line

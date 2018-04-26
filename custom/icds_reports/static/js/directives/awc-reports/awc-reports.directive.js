@@ -1697,7 +1697,7 @@ var weight_for_height = {
 
 var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
-function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId) {
+function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOptionsBuilder, DTColumnBuilder, $compile, storageService, userLocationId, haveAccessToAllLocations) {
     var vm = this;
     vm.data = {};
     vm.label = "AWC Report";
@@ -1732,8 +1732,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         DTColumnBuilder.newColumn('age').withTitle('Current Age').renderWith(renderAge).withClass('medium-col'),
         DTColumnBuilder.newColumn('fully_immunized').withTitle('1 Year Immunizations Complete').renderWith(renderFullyImmunizedDate).withClass('medium-col'),
         DTColumnBuilder.newColumn('current_month_nutrition_status').withTitle('Weight-for-Age Status (in Month)').renderWith(renderWeightForAgeStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
-        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_wasting').withTitle('Weight-for-Height Status (in Month)').renderWith(renderWeightForHeightStatus).withClass('medium-col'),
+        DTColumnBuilder.newColumn('current_month_stunting').withTitle('Height-for-Age Status (in Month)').renderWith(renderHeightForAgeStatus).withClass('medium-col'),
         DTColumnBuilder.newColumn('pse_days_attended').withTitle('PSE Attendance (Days)').renderWith(renderPseDaysAttended).withClass('medium-col'),
     ];
 
@@ -2394,11 +2394,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
 
     vm.getDisableIndex = function () {
         var i = -1;
-        window.angular.forEach(vm.selectedLocations, function (key, value) {
-            if (key !== null && key.location_id === vm.userLocationId) {
-                i = value;
-            }
-        });
+        if (!haveAccessToAllLocations) {
+            window.angular.forEach(vm.selectedLocations, function (key, value) {
+                if (key !== null && key.location_id !== 'all' && !key.user_have_access) {
+                    i = value;
+                }
+            });
+        }
         return i;
     };
 
@@ -2435,7 +2437,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
     vm.getDataForStep(vm.step);
 }
 
-AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId'];
+AwcReportsController.$inject = ['$scope', '$http', '$location', '$routeParams', '$log', 'DTOptionsBuilder', 'DTColumnBuilder', '$compile', 'storageService', 'userLocationId', 'haveAccessToAllLocations'];
 
 window.angular.module('icdsApp').directive('awcReports', function () {
     return {

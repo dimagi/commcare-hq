@@ -6,8 +6,8 @@ import traceback
 from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import migrate_domain
+from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.utils.general import use_new_exports
 from corehq.util.log import send_HTML_email
 
 
@@ -52,7 +52,7 @@ class Command(BaseCommand):
         for doc in Domain.get_all(include_docs=False):
             domain = doc['key']
 
-            if not use_new_exports(domain):
+            if stale_get_export_count(domain):
                 if not force_convert_columns:
                     try:
                         metas = migrate_domain(domain, dryrun=True, force_convert_columns=force_convert_columns)

@@ -28,7 +28,7 @@ from corehq.apps.app_manager.views.notifications import notify_form_changed
 from corehq.apps.app_manager.views.schedules import get_schedule_context
 
 from corehq.apps.app_manager.views.utils import back_to_main, \
-    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits
+    CASE_TYPE_CONFLICT_MSG, get_langs, handle_custom_icon_edits, clear_xmlns_app_id_cache
 
 from casexml.apps.case.const import DEFAULT_CASE_INDEX_IDENTIFIERS
 from corehq import toggles, privileges
@@ -106,6 +106,7 @@ def delete_form(request, domain, app_id, module_unique_id, form_unique_id):
             extra_tags='html'
         )
         app.save()
+        clear_xmlns_app_id_cache(domain)
     try:
         module_id = app.get_module_by_unique_id(module_unique_id).id
     except ModuleNotFoundException as e:
@@ -392,7 +393,15 @@ def new_form(request, domain, app_id, module_unique_id):
     lang = request.COOKIES.get('lang', app.langs[0])
     form_type = request.POST.get('form_type', 'form')
     case_action = request.POST.get('case_action', 'none')
-    name = _("Register") if case_action == 'open' else (_("Followup") if case_action == 'update' else "Survey")
+
+    if case_action == 'open':
+        name = _('Register')
+    elif case_action == 'update':
+        name = _('Followup')
+    elif module.is_training_module:
+        name = _('Lesson')
+    else:
+        name = _('Survey')
 
     if form_type == "shadow":
         if module.module_type == "advanced":

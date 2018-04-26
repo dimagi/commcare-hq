@@ -4,6 +4,7 @@ import random
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
 
+from django.apps import apps
 from django.conf import settings
 import sqlalchemy
 from sqlalchemy.orm.scoping import scoped_session
@@ -99,11 +100,19 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_load_balanced_read_engine_id(self, engine_id):
+    def get_load_balanced_read_db(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
         if read_dbs:
             return random.choice(read_dbs)
+        elif default is not None:
+            return default
         return engine_id
+
+    def get_load_balanced_read_engine_id(self, engine_id):
+        return self.get_load_balanced_read_db(engine_id)
+
+    def get_load_balanced_db_alias(self, app_label, default):
+        return self.get_load_balanced_read_db(app_label, default)
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
@@ -154,6 +163,14 @@ class ConnectionManager(object):
                         self.read_database_mapping[engine_id].extend([read_db] * weighting)
                         if read_db != write_db:
                             self._add_django_db(read_db, read_db)
+
+        for app, weights in settings.LOAD_BALANCED_APPS.items():
+            self.read_database_mapping[app] = []
+            for db_alias, weighting in weights:
+                assert isinstance(weighting, int), 'weighting must be int'
+                assert db_alias in settings.DATABASES, db_alias
+
+                self.read_database_mapping[app].extend([db_alias] * weighting)
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')

@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import calendar
+
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
@@ -43,13 +43,14 @@ class MonthsDateFilter(BaseReportFilter):
 
     @classmethod
     def months(cls):
-        month_pairs = []
-        for month_number in range(1, 13):
-            month_pairs.append({
-                'name': calendar.month_name[month_number],
-                'value': month_number,
-            })
-        return month_pairs
+        return [
+            {u'name': 'Janvier', u'value': 1}, {u'name': 'Février', u'value': 2},
+            {u'name': 'Mars', u'value': 3}, {u'name': 'Avril', u'value': 4},
+            {u'name': 'Mai', u'value': 5}, {u'name': 'Juin', u'value': 6},
+            {u'name': 'Juillet', u'value': 7}, {u'name': 'Août', u'value': 8},
+            {u'name': 'Septembre', u'value': 9}, {u'name': 'Octobre', u'value': 10},
+            {u'name': 'Novembre', u'value': 11}, {u'name': 'Décembre', u'value': 12}
+        ]
 
     @property
     def filter_context(self):

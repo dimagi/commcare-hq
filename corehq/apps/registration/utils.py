@@ -158,7 +158,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
         "is_mobile_experience": (
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                recipient, toggles.NAMESPACE_USER) and
+                recipient) and
             toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                 recipient, toggles.NAMESPACE_USER)
         ),
@@ -171,8 +171,7 @@ def send_domain_registration_email(recipient, domain_name, guid, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL,
-                                    ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning("Can't send email, but the message was:\n%s" % message_plaintext)
 
@@ -227,8 +226,7 @@ def send_mobile_experience_reminder(recipient, full_name):
     try:
         send_html_email_async.delay(subject, recipient, message_html,
                                     text_content=message_plaintext,
-                                    email_from=settings.DEFAULT_FROM_EMAIL,
-                                    ga_track=True)
+                                    email_from=settings.DEFAULT_FROM_EMAIL)
     except Exception:
         logging.warning(
             "Can't send email, but the message was:\n%s" % message_plaintext)

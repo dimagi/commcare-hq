@@ -79,7 +79,13 @@
                                                         </span>
                                                     </label>
                                                 </div>
-                                                {% endif %}
+                                            {% endif %}
+                                                <div class="checkbox">
+                                                    <label data-bind="visible: has_commcare_flavor_target">
+                                                        <input type="checkbox" data-bind="checked: download_targeted_version">
+                                                        {% trans "Download Targeted Version" %}
+                                                    </label>
+                                                </div>
                                                 <p>
                                                     {% blocktrans %}
                                                     Open the app on your Android and use one of the following installation methods:
@@ -335,7 +341,7 @@
                         </div>
                     </div>
                 {% endif %}
-                {% if request.user.is_superuser %}
+                {% if request|toggle_enabled:"SUPPORT" %}
                     <div class="panel panel-appmanager">
                         <div class="panel-heading">
                             <h4 class="panel-title">

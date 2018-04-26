@@ -6,53 +6,23 @@
     {{ block.super }}
     <script src="{% static 'export/js/utils.js' %}"></script>
     <script src="{% static 'export/js/customize_export.js' %}"></script>
+    <script src="{% static 'export/js/customize_export_old.js' %}"></script>
 {% endblock %}
 
-{% block js-inline %}{{ block.super }}
-    <script>
-        $(function () {
-            var translations = {
-                forms: "{% trans 'Forms'|escapejs %}",
-                repeat: "{% trans 'Repeat: '|escapejs %}",
-                cases: "{% trans 'Cases'|escapejs %}",
-                case_history: "{% trans 'Case History'|escapejs %}",
-                history_to_parents: "{% trans 'Case History > Parent Cases'|escapejs %}",
-                parent_cases: "{% trans 'Parent Cases'|escapejs %}"
-            };
-            var customExportView = CustomExportView.wrap({
-                export_type: {{ custom_export.type|JSON }},
-                custom_export: {{ custom_export|JSON }},
-                table_configuration: {{ table_configuration|JSON }},
-                presave: {{ presave|JSON }},
-                export_stock: {{ export_stock|JSON }},
-                deid_options: {{ deid_options|JSON }},
-                column_type_options: {{ column_type_options|JSON }},
-                urls: {
-                    save: {{ request.get_full_path|safe|JSON }}
-                },
-                allow_repeats: {{ helper.allow_repeats|JSON }},
-                default_order: {{ default_order|JSON }},
-                minimal: {{ minimal|JSON }}
-            }, translations, {{ has_excel_dashboard_access|JSON }});
-
-            var $export = $('#customize-export');
-            $export.koApplyBindings(customExportView);
-
-            $export.find('form').on("change input", function() {
-                if (customExportView.custom_export.type() === 'form') {
-                    window.onbeforeunload = function() {
-                        var state = customExportView.save.state();
-                        if (state !== 'saving' && state !== 'saving-preview' && state !== 'canceling') {
-                           return gettext("You have unsaved changes");
-                        }
-                    }
-                }
-            });
-        });
-    </script>
-{% endblock %}
 
 {% block page_content %}
+{% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
+{% initial_page_data 'minimal' minimal %}
+{% initial_page_data 'default_order' default_order %}
+{% initial_page_data 'helper_allow_repeats' helper.allow_repeats %}
+{% initial_page_data 'request_get_full_path' request.get_full_path %}
+{% initial_page_data 'column_type_options' column_type_options %}
+{% initial_page_data 'deid_options' deid_options %}
+{% initial_page_data 'export_stock' export_stock %}
+{% initial_page_data 'presave' presave %}
+{% initial_page_data 'table_configuration' table_configuration %}
+{% initial_page_data 'custom_export' custom_export %}
+{% initial_page_data 'custom_export_type' custom_export.type %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
     {% if custom_export.type == 'case' %}
@@ -88,7 +58,7 @@
                 >
                     <select id="format-select" class="form-control" data-bind="value: custom_export.default_format">
                         <option value="csv">{% trans "CSV (Zip file)" %}</option>
-                        <option value="xlsx">{% trans "Excel 2007" %}</option>
+                        <option value="xlsx">{% trans "Excel 2007+" %}</option>
                         <option value="xls">{% trans "Excel (older versions)" %}</option>
                         <option value="html">{% trans "Excel Dashboard Integration" %}</option>
                     </select>
@@ -308,17 +278,6 @@
         {% if helper.allow_deid %}
         <fieldset>
             <legend>{% trans "Privacy Settings" %}</legend>
-            <div class="form-group">
-                <div class="col-sm-9 col-md-8 col-lg-6 col-sm-offset-3 col-md-offset-2 deid-column" data-bind="visible: $root.showDeidColumn()">
-                    <div class="checkbox">
-                        <label>
-                            <input type="checkbox" id="is_safe" data-bind="checked: custom_export.is_safe" />
-                            {% trans "Publish in" %} {{ DeidExportReport_name }}
-                        </label>
-                    </div>
-                    <p class="help-block">{% trans "Check only if this export has been fully and safely de-identified." %}</p>
-                </div>
-            </div>
             <div class="form-group" data-bind="
                         visible: !showDeidColumn(),
                         click: animateShowDeidColumn

@@ -1866,8 +1866,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(len(domain_obj.restricted_sms_times) > 0),
                 "restricted_sms_times_json":
                     [w.to_json() for w in domain_obj.restricted_sms_times],
-                "send_to_duplicated_case_numbers":
-                    enabled_disabled(domain_obj.send_to_duplicated_case_numbers),
                 "sms_survey_date_format":
                     domain_obj.sms_survey_date_format,
                 "use_custom_case_username":
@@ -1909,8 +1907,10 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                     enabled_disabled(domain_obj.sms_mobile_worker_registration_enabled),
                 "registration_welcome_message":
                     self.get_welcome_message_recipient(domain_obj),
-                "daily_outbound_sms_limit":
-                    domain_obj.daily_outbound_sms_limit,
+                "override_daily_outbound_sms_limit":
+                    ENABLED if domain_obj.custom_daily_outbound_sms_limit else DISABLED,
+                "custom_daily_outbound_sms_limit":
+                    domain_obj.custom_daily_outbound_sms_limit,
                 "uses_new_reminders":
                     'Y' if domain_obj.uses_new_reminders else 'N',
             }
@@ -1942,8 +1942,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                  "default_sms_response"),
                 ("custom_case_username",
                  "custom_case_username"),
-                ("send_to_duplicated_case_numbers",
-                 "send_to_duplicated_case_numbers"),
                 ("sms_survey_date_format",
                  "sms_survey_date_format"),
                 ("sms_conversation_length",
@@ -1963,8 +1961,8 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
                 field_map.extend([
                     ("custom_chat_template",
                      "custom_chat_template"),
-                    ("daily_outbound_sms_limit",
-                     "daily_outbound_sms_limit"),
+                    ("custom_daily_outbound_sms_limit",
+                     "custom_daily_outbound_sms_limit"),
                 ])
             if self.new_reminders_migrator:
                 field_map.extend([

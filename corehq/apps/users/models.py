@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
 import inspect
 from datetime import datetime
@@ -15,6 +14,7 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _, override as override_language, ugettext_noop
 from casexml.apps.phone.restore_caching import get_loadtest_factor_for_user
+from corehq import toggles
 from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.domain.dbaccessors import get_docs_in_domain_by_class
 from corehq.apps.users.landing_pages import ALL_LANDING_PAGES
@@ -22,7 +22,6 @@ from corehq.apps.users.permissions import EXPORT_PERMISSIONS
 from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.util.global_request import get_request
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import (
     StringProperty,
@@ -83,32 +82,9 @@ import six
 from six.moves import range
 from six.moves import map
 
-debug_save_logger = logging.getLogger('debug_user_save')
-
 COUCH_USER_AUTOCREATED_STATUS = 'autocreated'
 
 MAX_LOGIN_ATTEMPTS = 5
-
-
-def log_user_save(type_, doc):
-    """function to log a user save event for debugging purposes"""
-    if debug_save_logger.isEnabledFor(logging.INFO):
-        try:
-            caller = None
-            for tb in inspect.stack():
-                frame, filename, lineno, function, context, index = tb
-                if filename != __file__:
-                    caller = '%s:%s:%s' % (filename, lineno, function)
-                    break
-            req_path = ''
-            request = get_request()
-            if request:
-                req_path = request.path
-            debug_save_logger.info(
-                "%s,%s,%s,%s,%s", type_, doc['_id'], doc['_rev'], caller, req_path
-            )
-        except Exception:
-            debug_save_logger.exception('Error attempting to log user save')
 
 
 def _add_to_list(list, obj, default):
@@ -897,6 +873,12 @@ class DeviceIdLastUsed(DocumentSchema):
     def get_meta_for_app(self, app_id):
         return filter_by_app(self.app_meta, app_id)
 
+    def get_last_used_app_meta(self):
+        try:
+            return max(self.app_meta, key=lambda a: a.last_request)
+        except ValueError:
+            pass
+
     def __eq__(self, other):
         return all(getattr(self, p) == getattr(other, p) for p in self.properties())
 
@@ -949,6 +931,8 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     # this is the real list of devices
     devices = SchemaListProperty(DeviceIdLastUsed)
+    # most recent device with most recent app for easy reporting
+    last_device = SchemaProperty(DeviceIdLastUsed)
 
     phone_numbers = ListProperty()
     created_on = DateTimeProperty(default=datetime(year=1900, month=1, day=1))
@@ -1074,6 +1058,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     def is_web_user(self):
         return self._get_user_type() == 'web'
+
+    def supports_lockout(self):
+        return self.is_web_user() or toggles.MOBILE_LOGIN_LOCKOUT.enabled(self.domain)
 
     def _get_user_type(self):
         if self.doc_type == 'WebUser':
@@ -1481,7 +1468,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
-            log_user_save('bulk', doc)
         super(CouchUser, cls).save_docs(docs, **kwargs)
 
     bulk_save = save_docs
@@ -1489,7 +1475,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def save(self, fire_signals=True, **params):
         self.last_modified = datetime.utcnow()
         self.clear_quickcache_for_user()
-        log_user_save('single', self)
         with CriticalSection(['username-check-%s' % self.username], timeout=120):
             # test no username conflict
             by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
@@ -2050,7 +2035,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                 'commcare_location_ids': user_location_data(location_ids)
             })
         else:
-            self.user_data.pop('commcare_location_ids')
+            self.user_data.pop('commcare_location_ids', None)
 
         # try to set primary-location if not set already
         if not self.location_id and location_ids:
@@ -2223,17 +2208,36 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         device = self.get_device(device_id)
         if device:
+            do_update = False
             if when.date() > device.last_used.date():
+                do_update = True
+            elif device_app_meta:
+                existing_app_meta = device.get_meta_for_app(device_app_meta.app_id)
+                if not existing_app_meta:
+                    do_update = True
+                else:
+                    last_request = device_app_meta.last_request
+                    do_update = (
+                        last_request
+                        and existing_app_meta.last_request
+                        and last_request > existing_app_meta.last_request.date()
+                    )
+
+            if do_update:
                 device.last_used = when
                 device.update_meta(commcare_version, device_app_meta)
+
+                self.last_device = DeviceIdLastUsed.wrap(self.get_last_used_device().to_json())
+                meta = self.last_device.get_last_used_app_meta()
+                self.last_device.app_meta = [meta] if meta else []
                 return True
-            else:
-                return False
         else:
             device = DeviceIdLastUsed(device_id=device_id, last_used=when)
             device.update_meta(commcare_version, device_app_meta)
             self.devices.append(device)
+            self.last_device = device
             return True
+        return False
 
     def get_last_used_device(self):
         if not self.devices:

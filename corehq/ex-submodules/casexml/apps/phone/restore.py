@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 from io import BytesIO
 from uuid import uuid4
 from distutils.version import LooseVersion
@@ -26,7 +27,7 @@ from casexml.apps.phone.exceptions import (
 from casexml.apps.phone.restore_caching import AsyncRestoreTaskIdCache, RestorePayloadPathCache
 from casexml.apps.phone.tasks import get_async_restore_payload, ASYNC_RESTORE_SENT
 from casexml.apps.phone.utils import get_cached_items_with_count
-from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC, ICDS_LIVEQUERY, NAMESPACE_USER
+from corehq.toggles import EXTENSION_CASES_SYNC_ENABLED, LIVEQUERY_SYNC
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -36,7 +37,6 @@ from casexml.apps.phone.models import (
     LOG_FORMAT_LIVEQUERY,
     OTARestoreUser,
     SimplifiedSyncLog,
-    SyncLog,
 )
 from dimagi.utils.couch.database import get_db
 from casexml.apps.phone import xml as xml_util
@@ -338,10 +338,7 @@ class RestoreState(object):
         self._last_sync_log = Ellipsis
 
         if case_sync is None:
-            username = self.restore_user.username
             if LIVEQUERY_SYNC.enabled(self.domain):
-                case_sync = LIVEQUERY
-            elif self.domain == 'icds-cas' and ICDS_LIVEQUERY.enabled(username, namespace=NAMESPACE_USER):
                 case_sync = LIVEQUERY
             else:
                 case_sync = DEFAULT_CASE_SYNC
@@ -436,19 +433,16 @@ class RestoreState(object):
 
     def _new_sync_log(self):
         previous_log_id = None if self.is_initial else self.last_sync_log._id
-        previous_log_rev = None if self.is_initial else self.last_sync_log._rev
-        last_seq = str(get_db().info()["update_seq"])
         new_synclog = SimplifiedSyncLog(
-            _id=SyncLog.get_db().server.next_uuid(),
+            _id=uuid.uuid1().hex.lower(),
             domain=self.restore_user.domain,
             build_id=self.params.app_id,
             user_id=self.restore_user.user_id,
-            last_seq=last_seq,
             owner_ids_on_phone=set(self.owner_ids),
             date=datetime.utcnow(),
             previous_log_id=previous_log_id,
-            previous_log_rev=previous_log_rev,
             extensions_checked=True,
+            device_id=self.params.device_id,
         )
         if self.is_livequery:
             new_synclog.log_format = LOG_FORMAT_LIVEQUERY

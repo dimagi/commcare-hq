@@ -7,39 +7,15 @@ from uuid import uuid4
 from xml.etree import cElementTree as ElementTree
 from collections import defaultdict
 
-from couchdbkit.exceptions import BulkSaveError
-
 from casexml.apps.case.mock import CaseBlock, CaseFactory, CaseStructure
 from casexml.apps.case.xml import V1, V2, V2_NAMESPACE
-from casexml.apps.phone.exceptions import CouldNotPruneSyncLogs
-from casexml.apps.phone.models import SyncLogSQL, get_properly_wrapped_sync_log
+from casexml.apps.phone.models import get_properly_wrapped_sync_log
 from casexml.apps.phone.restore_caching import RestorePayloadPathCache
 from casexml.apps.phone.xml import SYNC_XMLNS
 from casexml.apps.stock.const import COMMTRACK_REPORT_XMLNS
 from casexml.apps.stock.mock import Balance
 from memoized import memoized
-from six.moves import range
 
-
-def delete_sync_logs(before_date, limit=1000, num_tries=10):
-    # Todo: convert to SQL including get_synclog_ids_before_date
-    from casexml.apps.phone.dbaccessors.sync_logs_by_user import get_synclog_ids_before_date
-    from casexml.apps.phone.models import SyncLog
-    from dimagi.utils.couch.database import iter_bulk_delete_with_doc_type_verification
-
-    for i in range(num_tries):
-        try:
-            sync_log_ids = get_synclog_ids_before_date(before_date, limit)
-            return iter_bulk_delete_with_doc_type_verification(
-                SyncLog.get_db(), sync_log_ids, 'SyncLog', chunksize=25)
-        except BulkSaveError:
-            pass
-
-    raise CouldNotPruneSyncLogs()
-
-
-def delete_sql_synclogs(before_date):
-    SyncLogSQL.objects.filter(date__lt=before_date).delete()
 
 ITEMS_COMMENT_PREFIX = b'<!--items='
 ITESM_COMMENT_REGEX = re.compile(br'(<!--items=(\d+)-->)')

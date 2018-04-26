@@ -9,11 +9,12 @@ import logging
 import os
 import uuid
 
+from celery import chain
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
-from django.db import Error, IntegrityError, connections
+from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 
 from corehq.apps.locations.models import SQLLocation
@@ -28,9 +29,14 @@ from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import AggChildHealthMonthly, AggregateComplementaryFeedingForms
+from custom.icds_reports.models import (
+    AggChildHealthMonthly,
+    AggregateComplementaryFeedingForms,
+    AggregateGrowthMonitoringForms,
+    AggregateChildHealthTHRForms,
+)
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file
+from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -70,14 +76,26 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        aggregation_tasks = []
+        tasks = []
 
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
-            aggregation_tasks.append(UCRAggregationTask('monthly', calculation_date))
+            tasks.extend([
+                icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_aggregate_gm_forms),
+                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+            ])
 
-        aggregation_tasks.append(UCRAggregationTask('daily', date.strftime('%Y-%m-%d')))
-        aggregate_tables.delay(aggregation_tasks[0], aggregation_tasks[1:])
+        tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily))
+        tasks.append(email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')))
+        chain(*tasks).delay()
 
 
 def _create_aggregate_functions(cursor):
@@ -119,68 +137,128 @@ def _update_aggregate_locations_tables(cursor):
 
 
 @task(queue='background_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
-def aggregate_tables(self, current_task, future_tasks):
-    aggregation_type = current_task.type
-    aggregation_date = current_task.date
-
-    if aggregation_type == 'monthly':
-        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_monthly_aggregate_tables.sql')
-    elif aggregation_type == 'daily':
-        path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_daily_aggregate_table.sql')
-    else:
-        raise ValueError("Invalid aggregation type {}".format(aggregation_type))
-
+def icds_aggregation_task(self, date, func):
     db_alias = get_icds_ucr_db_alias()
-    if db_alias:
-        state_ids = (SQLLocation.objects
-                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                     .values_list('location_id', flat=True))
+    if not db_alias:
+        return
 
-        for state_id in state_ids:
-            AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(aggregation_date))
+    celery_task_logger.info("Starting icds reports {} {}".format(date, func.__name__))
 
-        with connections[db_alias].cursor() as cursor:
-            with open(path, "r") as sql_file:
-                sql_to_execute = sql_file.read()
-                celery_task_logger.info(
-                    "Starting icds reports {} update_{}_aggregate_tables".format(
-                        aggregation_date, aggregation_type
-                    )
-                )
+    try:
+        func(date)
+    except Error as exc:
+        _dashboard_team_soft_assert(
+            False,
+            "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
+                func.__name__, settings.SERVER_ENVIRONMENT, date
+            )
+        )
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'error': exc}
+        )
+        self.retry(exc=exc)
 
-                try:
-                    cursor.execute(sql_to_execute, {"date": aggregation_date})
-                except Error as exc:
-                    _dashboard_team_soft_assert(
-                        False,
-                        "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
-                            aggregation_type, settings.SERVER_ENVIRONMENT, aggregation_date
-                        )
-                    )
-                    notify_exception(
-                        None,
-                        message="Error occurred during ICDS aggregation",
-                        details={
-                            'type': aggregation_type,
-                            'date': aggregation_date,
-                            'error': exc,
-                        }
-                    )
-                    self.retry(exc=exc)
+    celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
-                celery_task_logger.info(
-                    "Ended icds reports {} update_{}_aggregate_tables".format(
-                        aggregation_date, aggregation_type
-                    )
-                )
 
-    if future_tasks:
-        aggregate_tables.delay(future_tasks[0], future_tasks[1:])
-    else:
-        # temporary soft assert to verify it's completing
-        _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
-        celery_task_logger.info("Aggregation has completed")
-        icds_data_validation.delay(aggregation_date)
+def _aggregate_cf_forms(day):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+
+    agg_date = force_to_date(day)
+    for state_id in state_ids:
+        AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
+
+
+def _aggregate_gm_forms(day):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+
+    agg_date = force_to_date(day)
+    for state_id in state_ids:
+        AggregateGrowthMonitoringForms.aggregate(state_id, force_to_date(agg_date))
+
+
+def _aggregate_thr_forms(day):
+    state_ids = (SQLLocation.objects
+                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                 .values_list('location_id', flat=True))
+
+    agg_date = force_to_date(day)
+    for state_id in state_ids:
+        AggregateChildHealthTHRForms.aggregate(state_id, force_to_date(agg_date))
+
+
+@transaction.atomic
+def _run_custom_sql_script(commands, day):
+    db_alias = get_icds_ucr_db_alias()
+    if not db_alias:
+        return
+
+    with connections[db_alias].cursor() as cursor:
+        for command in commands:
+            cursor.execute(command, [day])
+
+
+def aggregate_awc_daily(day):
+    _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
+
+
+def _update_months_table(day):
+    _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
+
+
+def _child_health_monthly_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_table_for_month('child_health_monthly', %s)",
+        "SELECT insert_into_child_health_monthly(%s)"
+    ], day)
+
+
+def _ccs_record_monthly_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
+        "SELECT insert_into_ccs_record_monthly(%s)"
+    ], day)
+
+
+def _daily_attendance_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_table_for_month('daily_attendance', %s)",
+        "SELECT insert_into_daily_attendance(%s)"
+    ], day)
+
+
+def _agg_child_health_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
+        "SELECT aggregate_child_health(%s)"
+    ], day)
+
+
+def _agg_ccs_record_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
+        "SELECT aggregate_ccs_record(%s)"
+    ], day)
+
+
+def _agg_awc_table(day):
+    _run_custom_sql_script([
+        "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
+        "SELECT aggregate_awc_data(%s)"
+    ], day)
+
+
+@task(queue='background_queue')
+def email_dashboad_team(aggregation_date):
+    # temporary soft assert to verify it's completing
+    _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))
+    celery_task_logger.info("Aggregation has completed")
+    icds_data_validation.delay(aggregation_date)
 
 
 @periodic_task(
@@ -235,10 +313,11 @@ def _find_stagnant_cases(adapter):
 
 
 @task(queue='icds_dashboard_reports_queue')
-def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year):
+def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, year, couch_user):
     selected_date = date(year, month, 1)
     report_context = {
-        'reports': []
+        'reports': [],
+        'user_have_access_to_features': icds_pre_release_features(couch_user),
     }
 
     pdf_files = []

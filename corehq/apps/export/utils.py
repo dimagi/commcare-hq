@@ -9,7 +9,7 @@ from dimagi.utils.couch import CriticalSection
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.toggles import OLD_EXPORTS, NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
+from corehq.toggles import NAMESPACE_DOMAIN, ALLOW_USER_DEFINED_EXPORT_COLUMNS
 from corehq.util.log import with_progress_bar
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_js_domain_cachebuster
 from corehq.apps.reports.dbaccessors import (
@@ -610,10 +610,6 @@ def revert_migrate_domain(domain, dryrun=False):
 
     reverted_exports = revert_new_exports(instances, dryrun=dryrun)
 
-    if not dryrun:
-        set_toggle(OLD_EXPORTS.slug, domain, True, namespace=NAMESPACE_DOMAIN)
-        toggle_js_domain_cachebuster.clear(domain)
-
     for reverted_export in reverted_exports:
         print('Reverted export: {}'.format(reverted_export._id))
 
@@ -640,10 +636,6 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
                     raise
                 else:
                     metas.append(migration_meta)
-
-    if not dryrun:
-        set_toggle(OLD_EXPORTS.slug, domain, False, namespace=NAMESPACE_DOMAIN)
-        toggle_js_domain_cachebuster.clear(domain)
 
     # Remote app migrations must have access to UserDefined columns and tables
     if any([meta.is_remote_app_migration for meta in metas]):

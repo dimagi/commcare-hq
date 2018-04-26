@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 from collections import namedtuple
 from functools import wraps
 import hashlib
@@ -125,6 +126,9 @@ class StaticToggle(object):
         )
 
     def set(self, item, enabled, namespace=None):
+        if namespace == NAMESPACE_USER:
+            namespace = None  # because:
+            #     __init__() ... self.namespaces = [None if n == NAMESPACE_USER else n for n in namespaces]
         set_toggle(self.slug, item, enabled, namespace)
 
     def required_decorator(self):
@@ -856,9 +860,13 @@ NON_COMMTRACK_LEDGERS = StaticToggle(
 
 CUSTOM_INSTANCES = StaticToggle(
     'custom_instances',
-    'Enikshay: Inject custom instance declarations',
+    'Inject custom instance declarations',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN],
+    description=(
+        'Enables the insertion of custom instances into a case list configuration. '
+        'Currently used by SimPrints-integrated projects.'
+    ),
+    namespaces=[NAMESPACE_DOMAIN],
 )
 
 APPLICATION_ERROR_REPORT = StaticToggle(
@@ -991,13 +999,6 @@ SUPPORT = StaticToggle(
     help_link='https://confluence.dimagi.com/display/ccinternal/Support+Flag',
 )
 
-CASE_PROPERTY_HISTORY = StaticToggle(
-    'case_property_history',
-    'Shows a modal on the case property page allowing you to see the history of various case properties',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 BASIC_CHILD_MODULE = StaticToggle(
     'child_module',
     'Basic modules can be child modules',
@@ -1030,6 +1031,13 @@ FIXTURE_CASE_SELECTION = StaticToggle(
 EWS_INVALID_REPORT_RESPONSE = StaticToggle(
     'ews_invalid_report_response',
     'EWS: Send response about invalid stock on hand',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+USE_SMS_WITH_INACTIVE_CONTACTS = StaticToggle(
+    'use_sms_with_inactive_contacts',
+    'Use SMS with inactive contacts',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
@@ -1102,13 +1110,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     'call_center_location_owners',
     'ICDS: Enable the use of locations as owners of call center cases',
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
-)
-
-OLD_EXPORTS = StaticToggle(
-    'old_exports',
-    'Use old backend export infrastructure',
-    TAG_DEPRECATED,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1433,14 +1434,6 @@ REGEX_FIELD_VALIDATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_LIVEQUERY = PredictablyRandomToggle(
-    'icds_livequery',
-    'ICDS: Enable livequery case sync for a random subset of ICDS users',
-    TAG_CUSTOM,
-    [NAMESPACE_USER],
-    randomness=0.0,
-)
-
 REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
     'remote_request_quetion_type',
     'Enikshay: Enable remote request question type in the form builder',
@@ -1473,7 +1466,8 @@ MOBILE_LOGIN_LOCKOUT = StaticToggle(
     'mobile_user_login_lockout',
     "On too many wrong password attempts, lock out mobile users",
     TAG_CUSTOM,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 LINKED_DOMAINS = StaticToggle(
@@ -1502,6 +1496,13 @@ MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+TARGET_COMMCARE_FLAVOR = StaticToggle(
+    'target_commcare_flavor',
+    'Target CommCare Flavor.',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_DOMAIN],
+)
+
 
 MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
     'mobile_signup_redirect_ab_test',
@@ -1518,4 +1519,12 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     TAG_PRODUCT,
     namespaces=[NAMESPACE_USER],
     randomness=0.5
+)
+
+
+TRAINING_MODULE = StaticToggle(
+    'training-module',
+    'Training Modules',
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
 )

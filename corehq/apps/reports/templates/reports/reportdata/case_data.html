@@ -18,6 +18,9 @@
     <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
     <script src="{% static "hqwebapp/js/lib/jquery.cachedAjax.js" %}"></script>
     <script src="{% static "reports/js/case_details.js" %}"></script>
+    <script src="{% static "case/js/case_property_modal.js" %}"></script>
+    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
+    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
 {% endblock %}
 
 {% block page_content %}
@@ -30,6 +33,7 @@
 {% registerurl "case_form_data" case.domain case.case_id '---' %}
 {% registerurl "case_property_names" case.domain case.case_id %}
 {% registerurl "edit_case" case.domain case.case_id %}
+{% registerurl "case_property_changes" case.domain case.case_id '---' %}
 
 {# This is used in case/partials/repeat_records.html #}
 {% registerurl 'requeue_repeat_record' case.domain %}
@@ -93,7 +97,7 @@
 
                     {% if case.has_indices %}
                     <div class="tab-pane" id="related">
-                        {% render_case_hierarchy case case_hierarchy_options %}
+                        {% include "case/partials/case_hierarchy.html" %}
                     </div>
                     {% endif %}
 
@@ -207,6 +211,8 @@
 
     </div> {# end tabbed-content-container div #}
     </div> {# end report-container #}
+
+    {% include "case/partials/case_property_modal.html" %}
 
     {% if show_properties_edit %}
     <!-- class='hide' keeps modal from showing until knockout initializes & removes the class -->

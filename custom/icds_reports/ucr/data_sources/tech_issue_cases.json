@@ -85,14 +85,12 @@
             },
             "expression_if_true": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_id"
               },
             },
             "expression_if_false": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "ls_id"
               },
@@ -126,14 +124,12 @@
             },
             "expression_if_true": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_id"
               },
             },
             "expression_if_false": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "ls_id"
               },
@@ -167,14 +163,12 @@
             },
             "expression_if_true": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_id"
               },
             },
             "expression_if_false": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "ls_id"
               },
@@ -368,14 +362,12 @@
             },
             "expression_if_true": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "aww_id"
               },
             },
             "expression_if_false": {
               {
-                "datatype": null,
                 "type": "property_name",
                 "property_name": "ls_id"
               },

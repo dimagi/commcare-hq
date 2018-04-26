@@ -34,6 +34,7 @@ from corehq.util.test_utils import (
     trap_extra_setup, TestFileMixin
 )
 from couchforms.models import XFormInstance
+from corehq.util.test_utils import patch_datadog
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -536,6 +537,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_timings(self):
+        with patch_datadog() as received_stats:
+            self._do_migration_and_assert_flags(self.domain_name)
+        tracked_stats = [
+            'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
+            'commcare.couch_sql_migration.main_forms.count.duration:',
+            'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
+            'commcare.couch_sql_migration.case_diffs.count.duration:',
+            'commcare.couch_sql_migration.count.duration:',
+        ]
+        for t_stat in tracked_stats:
+            self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):

@@ -20,6 +20,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
+from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
 import langcodes
@@ -67,7 +68,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.templatetags.case_tags import case_inline_display
 from casexml.apps.case.xform import extract_case_blocks, get_case_updates
 from casexml.apps.case.xml import V2
-from casexml.apps.case.util import get_all_changes_to_case_property
+from casexml.apps.case.util import get_paged_changes_to_case_property
 from casexml.apps.stock.models import StockTransaction
 from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
@@ -109,7 +110,6 @@ from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
-from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
     login_or_digest,
@@ -678,24 +678,6 @@ def should_update_export(last_accessed):
 
 @login_or_digest
 @require_form_export_permission
-@require_POST
-def hq_update_saved_export(req, domain):
-    group_id = req.POST['group_export_id']
-    index = int(req.POST['index'])
-    group_config = get_document_or_404(HQGroupExportConfiguration, domain, group_id)
-    config, schema = group_config.all_exports[index]
-    rebuild_export_task.delay(group_id, index)
-    messages.success(
-        req,
-        _('Data update for {} has started and the saved export will be automatically updated soon. '
-          'Please refresh the page periodically to check the status.').format(config.name)
-    )
-    return HttpResponseRedirect(reverse(DataInterfaceDispatcher.name(),
-                                        args=[domain, req.POST['report_slug']]))
-
-
-@login_or_digest
-@require_form_export_permission
 @require_GET
 def export_all_form_metadata(req, domain):
     """
@@ -886,24 +868,14 @@ def email_report(request, domain, report_slug, report_type=ProjectReportDispatch
 
         send_html_email_async.delay(
             subject, email, body,
-            email_from=settings.DEFAULT_FROM_EMAIL,
-            ga_track=True,
-            ga_tracking_info={
-                'cd4': request.domain,
-                'cd10': report_slug
-            })
+            email_from=settings.DEFAULT_FROM_EMAIL)
 
     if form.cleaned_data['recipient_emails']:
         for recipient in form.cleaned_data['recipient_emails']:
             body = render_full_report_notification(request, content).content
             send_html_email_async.delay(
                 subject, recipient, body,
-                email_from=settings.DEFAULT_FROM_EMAIL,
-                ga_track=True,
-                ga_tracking_info={
-                    'cd4': request.domain,
-                    'cd10': report_slug
-                })
+                email_from=settings.DEFAULT_FROM_EMAIL)
 
     return HttpResponse()
 
@@ -1417,15 +1389,9 @@ class CaseDataView(BaseProjectReportSectionView):
             definition = get_default_definition(
                 dynamic_keys, num_columns=DYNAMIC_CASE_PROPERTIES_COLUMNS)
 
-            info_url = None
-            if toggles.CASE_PROPERTY_HISTORY.enabled_for_request(self.request) \
-                    or toggles.SUPPORT.enabled_for_request(self.request):
-                info_url = reverse('case_property_changes', args=[self.domain, self.case_id, '__placeholder__'])
-
             dynamic_properties = _get_tables_as_rows(
                 dynamic_data,
                 definition,
-                info_url=info_url,
             )
         else:
             dynamic_properties = None
@@ -1452,7 +1418,7 @@ class CaseDataView(BaseProjectReportSectionView):
 
         can_edit_data = self.request.couch_user.can_edit_data
 
-        return {
+        context = {
             "case_id": self.case_id,
             "case": self.case_instance,
             "show_case_rebuild": toggles.SUPPORT.enabled(self.request.user.username),
@@ -1466,17 +1432,14 @@ class CaseDataView(BaseProjectReportSectionView):
             "case_actions": mark_safe(json.dumps(wrapped_case.actions())),
             "timezone": timezone,
             "tz_abbrev": tz_abbrev,
-            "case_hierarchy_options": {
-                "show_view_buttons": True,
-                "get_case_url": _get_case_url,
-                "timezone": timezone
-            },
             "ledgers": ledger_map,
             "timezone_offset": tz_offset_ms,
             "show_transaction_export": show_transaction_export,
             "xform_api_url": reverse('single_case_forms', args=[self.domain, self.case_id]),
             "repeat_records": repeat_records,
         }
+        context.update(case_hierarchy_context(self.case_instance, _get_case_url, timezone=timezone))
+        return context
 
 
 def form_to_json(domain, form, timezone):
@@ -1529,21 +1492,28 @@ def case_forms(request, domain, case_id):
 def case_property_changes(request, domain, case_id, case_property_name):
     """Returns all changes to a case property
     """
+
     case = _get_case_or_404(domain, case_id)
-    changes = []
     timezone = get_timezone_for_user(request.couch_user, domain)
-    for change in reversed(get_all_changes_to_case_property(case, case_property_name)):
+    next_transaction = int(request.GET.get('next_transaction', 0))
+
+    paged_changes, last_trasaction_checked = get_paged_changes_to_case_property(
+        case,
+        case_property_name,
+        start=next_transaction,
+    )
+
+    changes = []
+    for change in paged_changes:
         change_json = form_to_json(domain, change.transaction.form, timezone)
         change_json['new_value'] = change.new_value
+        change_json['form_url'] = reverse('render_form_data', args=[domain, change.transaction.form.form_id])
         changes.append(change_json)
 
-    context = {
-        'domain': domain,
-        'timezone': timezone.localize(datetime.utcnow()).tzname(),
-        'property_name': case_property_name,
+    return json_response({
         'changes': changes,
-    }
-    return render(request, "case/partials/case_property_modal.html", context)
+        'last_transaction_checked': last_trasaction_checked,
+    })
 
 
 @location_safe
@@ -1871,7 +1841,10 @@ def _get_form_context(request, domain, instance):
 
 def _get_form_or_404(domain, id):
     try:
-        return FormAccessors(domain).get_form(id)
+        form = FormAccessors(domain).get_form(id)
+        if form.domain != domain:
+            raise Http404()
+        return form
     except XFormNotFound:
         raise Http404()
 

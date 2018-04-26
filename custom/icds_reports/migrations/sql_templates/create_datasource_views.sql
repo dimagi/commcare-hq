@@ -91,6 +91,8 @@ CREATE VIEW agg_awc_monthly AS
         "agg_awc"."num_awc_rank_functional" AS "num_awc_rank_functional",
         "agg_awc"."num_awc_rank_semi" AS "num_awc_rank_semi",
         "agg_awc"."num_awc_rank_non" AS "num_awc_rank_non",
+        "agg_awc"."num_anc_visits" AS "num_anc_visits",
+        "agg_awc"."num_children_immunized" AS "num_children_immunized",
         COALESCE("agg_awc"."cases_household", 0) AS "cases_household",
         COALESCE("agg_awc"."cases_person", 0) AS "cases_person",
         COALESCE("agg_awc"."cases_person_all", 0) AS "cases_person_all",
@@ -337,7 +339,8 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."fully_immunized_on_time", 0) AS "fully_immunized_on_time",
         COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late",
         COALESCE("agg_child_health"."weighed_and_height_measured_in_month", 0) AS "weighed_and_height_measured_in_month",
-        COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month"
+        COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month",
+        "agg_child_health"."days_ration_given_child" AS "days_ration_given_child"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND
@@ -347,47 +350,6 @@ CREATE VIEW agg_child_health_monthly AS
         ("awc_location_months"."block_id" = "agg_child_health"."block_id") AND
         ("awc_location_months"."supervisor_id" = "agg_child_health"."supervisor_id") AND
         ("awc_location_months"."awc_id" = "agg_child_health"."awc_id")
-    );
-
-DROP VIEW IF EXISTS agg_thr_monthly CASCADE;
-CREATE VIEW agg_thr_monthly AS
-    SELECT
-        "awc_location_months"."awc_id" AS "awc_id",
-        "awc_location_months"."awc_name" AS "awc_name",
-        "awc_location_months"."awc_site_code" AS "awc_site_code",
-        "awc_location_months"."supervisor_id" AS "supervisor_id",
-        "awc_location_months"."supervisor_name" AS "supervisor_name",
-        "awc_location_months"."supervisor_site_code" AS "supervisor_site_code",
-        "awc_location_months"."block_id" AS "block_id",
-        "awc_location_months"."block_name" AS "block_name",
-        "awc_location_months"."block_site_code" AS "block_site_code",
-        "awc_location_months"."district_id" AS "district_id",
-        "awc_location_months"."district_name" AS "district_name",
-        "awc_location_months"."district_site_code" AS "district_site_code",
-        "awc_location_months"."state_id" AS "state_id",
-        "awc_location_months"."state_name" AS "state_name",
-        "awc_location_months"."state_site_code" AS "state_site_code",
-        "awc_location_months"."aggregation_level" AS "aggregation_level",
-        "awc_location_months"."block_map_location_name" AS "block_map_location_name",
-        "awc_location_months"."district_map_location_name" AS "district_map_location_name",
-        "awc_location_months"."state_map_location_name" AS "state_map_location_name",
-        "awc_location_months"."month" AS "month",
-        "agg_thr_data"."beneficiary_type" AS "beneficiary_type",
-        "agg_thr_data"."caste" AS "caste",
-        "agg_thr_data"."disabled" AS "disabled",
-        "agg_thr_data"."minority" AS "minority",
-        "agg_thr_data"."resident" AS "resident",
-        COALESCE("agg_thr_data"."thr_eligible", 0) AS "thr_eligible",
-        COALESCE("agg_thr_data"."rations_21_plus_distributed", 0) AS "rations_21_plus_distributed"
-    FROM "public"."awc_location_months" "awc_location_months"
-    LEFT JOIN "public"."agg_thr_data" "agg_thr_data" ON (
-        ("awc_location_months"."month" = "agg_thr_data"."month") AND
-        ("awc_location_months"."aggregation_level" = "agg_thr_data"."aggregation_level") AND
-        ("awc_location_months"."state_id" = "agg_thr_data"."state_id") AND
-        ("awc_location_months"."district_id" = "agg_thr_data"."district_id") AND
-        ("awc_location_months"."block_id" = "agg_thr_data"."block_id") AND
-        ("awc_location_months"."supervisor_id" = "agg_thr_data"."supervisor_id") AND
-        ("awc_location_months"."awc_id" = "agg_thr_data"."awc_id")
     );
 
 DROP VIEW IF EXISTS daily_attendance_view CASCADE;
@@ -487,99 +449,3 @@ CREATE VIEW agg_awc_daily_view AS
         ("awc_location"."supervisor_id" = "agg_awc"."supervisor_id") AND
         ("awc_location"."doc_id" = "agg_awc"."awc_id")
     );
-
-CREATE TABLE IF NOT EXISTS public."config_report_icds-cas_static-child_health_cases_a46c129f"
-(
-  doc_id text NOT NULL,
-  inserted_at text,
-  person_name text,
-  modified_on date,
-  opened_on date,
-  closed_on date,
-  closed integer,
-  owner_id text,
-  case_id text NOT NULL,
-  household_id text NOT NULL,
-  mother_id text,
-  awc_id text NOT NULL,
-  supervisor_id text,
-  block_id text,
-  district_id text,
-  state_id text,
-  dob date,
-  sex text,
-  zscore_grading_wfa text,
-  open_count integer,
-  birth_weight numeric(64,16),
-  weighed_birth_open_count integer,
-  lbw_open_count integer,
-  last_date_gmp date,
-  open_weighed integer,
-  is_ebf_open_count integer,
-  diet_diversity_open_count integer,
-  diet_quantity_open_count integer,
-  hand_washing_open_count integer,
-  timely_bf_open_count integer,
-  comp_feeding_yes_open_count integer,
-  is_pretem_or_lbw_open_count integer,
-  sev_mal_open_count integer,
-  mod_mal_open_count integer,
-  norm_mal_open_count integer,
-  open_not_weighed_count integer,
-  date_death date,
-  age_at_death_yrs integer,
-  dead_child_count integer,
-  resident text,
-  disabled text,
-  caste text,
-  minority text,
-  name text,
-  mother_name text,
-  bf_at_birth text,
-  fully_immunized_date date,
-  CONSTRAINT "config_report_icds-cas_static-child_health_cases_a46c129f_pkey" PRIMARY KEY (doc_id, case_id)
-);
-
-
-DROP VIEW IF EXISTS child_health_monthly_view CASCADE;
-CREATE VIEW child_health_monthly_view AS
-    SELECT
-        "child_list".case_id,
-        "child_list".awc_id,
-        "child_list".supervisor_id,
-        "child_list".block_id,
-        "child_list".district_id,
-        "child_list".state_id,
-        "awc_location".awc_site_code,
-        "child_list".name AS person_name,
-        "child_list".mother_name,
-        "child_list".opened_on,
-        "child_list".closed_on,
-        "child_list".closed,
-        "child_list".dob,
-        "child_list".sex,
-        "child_list".fully_immunized_date,
-        child_health_monthly.month,
-        child_health_monthly.age_in_months,
-        child_health_monthly.open_in_month,
-        child_health_monthly.valid_in_month,
-        child_health_monthly.wer_eligible,
-        child_health_monthly.valid_all_registered_in_month,
-        child_health_monthly.nutrition_status_last_recorded,
-        child_health_monthly.current_month_nutrition_status,
-        child_health_monthly.nutrition_status_weighed,
-        child_health_monthly.num_rations_distributed,
-        child_health_monthly.pse_eligible,
-        child_health_monthly.pse_days_attended,
-        child_health_monthly.born_in_month,
-        child_health_monthly.recorded_weight,
-        child_health_monthly.recorded_height,
-        child_health_monthly.thr_eligible,
-        child_health_monthly.stunting_last_recorded,
-        child_health_monthly.current_month_stunting,
-        child_health_monthly.wasting_last_recorded,
-        child_health_monthly.current_month_wasting,
-        GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized
-   FROM "config_report_icds-cas_static-child_health_cases_a46c129f" "child_list"
-     LEFT JOIN child_health_monthly child_health_monthly ON "child_list".case_id = child_health_monthly.case_id
-     LEFT JOIN awc_location awc_location ON "child_list".awc_id = awc_location.doc_id;

@@ -38,7 +38,7 @@ describe('Map Or Sector View Directive', function () {
         assert.equal(controller.chartOptions.chart.type, 'multiBarHorizontalChart');
         assert.deepEqual(controller.chartOptions.chart.margin, {
             bottom: 40,
-            left: 350,
+            left: 100,
         });
         assert.equal(controller.chartOptions.chart.showControls, false);
         assert.equal(controller.chartOptions.chart.showLegend, false);

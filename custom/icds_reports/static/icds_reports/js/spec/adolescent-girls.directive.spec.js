@@ -15,6 +15,7 @@ describe('Adolescent Girls Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -24,6 +25,9 @@ describe('Adolescent Girls Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('adolescent_girls').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<adolescent-girls data='test'></adolescent-girls>");
         var compiled = $compile(element)($scope);
@@ -99,9 +103,9 @@ describe('Adolescent Girls Directive', function () {
         var result = controller.templatePopup({properties: {name: 'test'}}, {valid: 14, all: 28});
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>test</p>' +
-            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>14</strong>' +
-            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>28</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>14</strong></div>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>28</strong></div>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>50.00%</strong></div>' +
             '</div>';
         assert.equal(result, expected);
     });
@@ -197,14 +201,29 @@ describe('Adolescent Girls Directive', function () {
     it('tests horizontal chart tooltip content', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
-            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>0</strong>' +
-            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>25</strong>' +
-            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>NaN%</strong>' +
+            '<div>Number of adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>0</strong></div>' +
+            '<div>Total number of adolescent girls (11 - 14 years) who are registered: <strong>25</strong></div>' +
+            '<div>Percentage of registered adolescent girls (11 - 14 years) who are enrolled for Anganwadi Services: <strong>NaN%</strong></div>' +
             '</div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
         var result = controllermapOrSectorView.chartOptions.chart.tooltip.contentGenerator(utils.d);
         assert.equal(expected, result);
+    });
+
+    it('tests disable locations for user', function () {
+        controller.userLocationId = 'test_id4';
+        controller.location = {name: 'name4', location_id: 'test_id4'};
+        controller.selectedLocations.push(
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
+        );
+        var index = controller.getDisableIndex();
+        assert.equal(index, 2);
     });
 });

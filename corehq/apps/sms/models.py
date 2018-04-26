@@ -8,7 +8,7 @@ import uuid
 from dimagi.ext.couchdbkit import *
 
 from datetime import datetime, timedelta
-from django.db import models, transaction, IntegrityError
+from django.db import models, transaction, IntegrityError, connection
 from django.http import Http404
 from collections import namedtuple
 from corehq.apps.app_manager.dbaccessors import get_app
@@ -293,6 +293,42 @@ class SMS(SMSBase):
             queued_sms.processed_timestamp = None
             self.delete()
             queued_sms.save()
+
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of SMS sent and received over the given date range
+        for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, direction, count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'direction', 'sms_count'])
+
+        query = """
+        SELECT  (date AT TIME ZONE %s)::DATE AS date,
+                direction,
+                COUNT(*) AS sms_count
+        FROM    sms_sms
+        WHERE   domain = %s
+        AND     date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND     date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        AND     (direction = 'I' OR (direction = 'O' and processed))
+        GROUP BY 1, 2
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
 
 
 class QueuedSMS(SMSBase):
@@ -942,7 +978,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
     ERROR_SUBEVENT_ERROR = 'SUBEVENT_ERROR'
     ERROR_TOUCHFORMS_ERROR = 'TOUCHFORMS_ERROR'
     ERROR_INTERNAL_SERVER_ERROR = 'INTERNAL_SERVER_ERROR'
-    ERROR_GATEWAY_ERROR = 'GATEWAY_ERROR'
     ERROR_NO_SUITABLE_GATEWAY = 'NO_SUITABLE_GATEWAY'
     ERROR_GATEWAY_NOT_FOUND = 'GATEWAY_NOT_FOUND'
     ERROR_NO_EMAIL_ADDRESS = 'NO_EMAIL_ADDRESS'
@@ -989,8 +1024,6 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             ugettext_noop('An error occurred in the formplayer service.'),
         ERROR_INTERNAL_SERVER_ERROR:
             ugettext_noop('Internal Server Error'),
-        ERROR_GATEWAY_ERROR:
-            ugettext_noop('Gateway error.'),
         ERROR_NO_SUITABLE_GATEWAY:
             ugettext_noop('No suitable gateway could be found.'),
         ERROR_GATEWAY_NOT_FOUND:
@@ -1432,6 +1465,92 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
             status=cls.STATUS_IN_PROGRESS
         )
         return qs.order_by('-date')[0] if qs.count() > 0 else None
+
+    @staticmethod
+    def get_counts_by_date(domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of messaging events at the subevent level over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when grouping counts by date,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A list of (date, error_count, total_count) named tuples
+        """
+
+        CountTuple = namedtuple('CountTuple', ['date', 'error_count', 'total_count'])
+
+        query = """
+        SELECT      (A.date AT TIME ZONE %s)::DATE AS date,
+                    SUM(
+                        CASE
+                        WHEN B.status = 'ERR' OR C.error OR (B.id IS NULL AND A.status = 'ERR')
+                        THEN 1
+                        ELSE 0
+                        END
+                    ) AS error_count,
+                    COUNT(*) AS total_count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [time_zone, domain, start_date, time_zone, end_date, time_zone]
+            )
+            return [CountTuple(*row) for row in cursor.fetchall()]
+
+    @classmethod
+    def get_counts_of_errors(cls, domain, start_date, end_date, time_zone):
+        """
+        Retrieves counts of errors at the event, subevent, or sms levels over the
+        given date range for the given domain.
+
+        :param domain: the domain
+        :param start_date: the start date, as a date type
+        :param end_date: the end date (inclusive), as a date type
+        :param time_zone: the time zone to use when filtering,
+        as a string type (e.g., 'America/New_York')
+
+        :return: A dictionary with each key being an error code and each value
+        being the count of that error's occurrences
+        """
+
+        query = """
+        SELECT      COALESCE(C.system_error_message, B.error_code, A.error_code) AS error,
+                    COUNT(*) AS count
+        FROM        sms_messagingevent A
+        LEFT JOIN   sms_messagingsubevent B
+        ON          A.id = B.parent_id
+        LEFT JOIN   sms_sms C
+        ON          B.id = C.messaging_subevent_id
+        WHERE       A.domain = %s
+        AND         A.date >= (%s + TIME '00:00') AT TIME ZONE %s
+        AND         A.date < (%s + 1 + TIME '00:00') AT TIME ZONE %s
+        GROUP BY    1
+        """
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                query,
+                [domain, start_date, time_zone, end_date, time_zone]
+            )
+            return {
+                error: count
+                for error, count in cursor.fetchall()
+                if error and error != cls.ERROR_SUBEVENT_ERROR
+            }
 
 
 class MessagingSubEvent(models.Model, MessagingStatusMixin):
@@ -2767,7 +2886,7 @@ class DailyOutboundSMSLimitReached(models.Model):
     """
 
     # The domain name that reached its daily outbound SMS limit as defined
-    # on Domain.daily_outbound_sms_limit. This can be empty string if
+    # on Domain.get_daily_outbound_sms_limit(). This can be empty string if
     # we reached the limit for outbound SMS not tied to a domain.
     domain = models.CharField(max_length=126)
 
