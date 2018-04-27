@@ -58,6 +58,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
+from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -273,13 +274,9 @@ def mass_email(request):
             real_email = form.cleaned_data['real_email']
 
             if real_email:
-                recipients = WebUser.view(
-                    'users/mailing_list_emails',
-                    reduce=False,
-                    include_docs=True,
-                ).all()
+                recipients = [h['username'] for h in UserES().web_users().run().hits]
             else:
-                recipients = [request.couch_user]
+                recipients = [request.couch_user.username]
 
             for recipient in recipients:
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
@@ -289,7 +286,7 @@ def mass_email(request):
                     'email_body': body_html,
                 })
 
-                send_html_email_async.delay(subject, recipient.username, html_content, text_content,
+                send_html_email_async.delay(subject, recipient, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')
