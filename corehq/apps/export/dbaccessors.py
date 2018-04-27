@@ -1,9 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-import itertools
-
-from dimagi.utils.couch.database import safe_delete, iter_docs
+from dimagi.utils.couch.database import safe_delete
 from corehq.util.test_utils import unit_testing_only
 from corehq.apps.reports.models import CaseExportSchema, FormExportSchema
 
@@ -74,13 +71,6 @@ def get_form_export_instances(domain):
     return _get_export_instance(FormExportInstance, key)
 
 
-def iter_form_export_instances(domain):
-    from .models import FormExportInstance
-
-    key = [domain, 'FormExportInstance']
-    return _iter_export_instances(FormExportInstance, key)
-
-
 def get_case_export_instances(domain):
     from .models import CaseExportInstance
 
@@ -88,15 +78,10 @@ def get_case_export_instances(domain):
     return _get_export_instance(CaseExportInstance, key)
 
 
-def _iter_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
-    exports = itertools.chain(old_exports_getter(domain), new_exports_getter(domain))
-    if not has_deid_permissions:
-        return (e for e in exports if not e.is_safe)
-    return exports  # Unsorted
-
-
 def _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter):
-    exports = _iter_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
+    exports = old_exports_getter(domain) + new_exports_getter(domain)
+    if not has_deid_permissions:
+        exports = [e for e in exports if not e.is_safe]
     return sorted(exports, key=lambda x: x.name)
 
 
@@ -111,10 +96,6 @@ def get_form_exports_by_domain(domain, has_deid_permissions):
     new_exports_getter = get_form_export_instances
     return _get_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_getter)
 
-def iter_form_exports_by_domain(domain, has_deid_permissions):
-    old_exports_getter = FormExportSchema.get_stale_exports  # Still returns a list
-    new_exports_gen = iter_form_export_instances
-    return _iter_saved_exports(domain, has_deid_permissions, old_exports_getter, new_exports_gen)
 
 def get_export_count_by_domain(domain):
     exports = get_form_exports_by_domain(domain, True)
@@ -131,18 +112,6 @@ def _get_export_instance(cls, key):
         reduce=False,
     ).all()
     return [cls.wrap(result['doc']) for result in results]
-
-
-def _iter_export_instances(cls, key):
-    results = cls.get_db().view(
-        'export_instances_by_domain/view',
-        startkey=key,
-        endkey=key + [{}],
-        include_docs=False,
-        reduce=False,
-    ).all()
-    result_ids = [result['id'] for result in results]
-    return (cls.wrap(doc) for doc in iter_docs(cls.get_db(), result_ids))
 
 
 def get_all_daily_saved_export_instance_ids():

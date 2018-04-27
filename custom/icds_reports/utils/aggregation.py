@@ -510,7 +510,8 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         FROM "{ucr_tablename}"
         WHERE timeend >= %(current_month_start)s AND
               timeend < %(next_month_start)s AND
-              state_id = %(state_id)s {where_line}
+              state_id = %(state_id)s {where_line} AND
+              child_health_case_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING

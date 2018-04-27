@@ -2,10 +2,12 @@ from __future__ import absolute_import, division
 from __future__ import unicode_literals
 import json
 import os
+import time
 import zipfile
 
 from collections import defaultdict
 from datetime import datetime, timedelta
+from functools import wraps
 
 import operator
 
@@ -544,3 +546,21 @@ def person_has_aadhaar_column(beta):
 
 def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
+
+
+def track_time(func):
+    """A decorator to track the duration an aggregation script takes to execute"""
+    from custom.icds_reports.models import AggregateSQLProfile
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        AggregateSQLProfile(
+            name=str(func),
+            duration=int(end - start)
+        )
+        return result
+
+    return wrapper
