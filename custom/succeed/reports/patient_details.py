@@ -39,7 +39,7 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
             return None
         return CommCareCase.get(self.request.GET['patient_id'])
 
-    def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None, parent_id=None):
+    def get_form_url(self, app_dict, app_build_id, module_idx, form, case_id=None):
         try:
             module = app_dict['modules'][module_idx]
             if len(module['forms']) == 1:
@@ -49,14 +49,11 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         except IndexError:
             form_idx = None
 
-        if case_id is None and parent_id is not None:
-            url = ""
-        else:
-            url = webapps_url(domain=self.domain,
-                              app_id=app_build_id,
-                              module_id=module_idx,
-                              form_id=form_idx,
-                              case_id=case_id)
+        url = webapps_url(domain=self.domain,
+                          app_id=app_build_id,
+                          module_id=module_idx,
+                          form_id=form_idx,
+                          case_id=case_id)
         return html.escape(url)
 
     def update_app_info(self):
