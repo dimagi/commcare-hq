@@ -27,7 +27,7 @@ class AggregateTableDefinition(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
 
     # primary data source reference
-    primary_data_source = models.UUIDField()  # id of DataSourceConfig
+    primary_data_source_id = models.UUIDField()  # id of DataSourceConfig
     primary_data_source_key = models.CharField(default='doc_id', max_length=MAX_COLUMN_NAME_LENGTH)
 
     # aggregation config
