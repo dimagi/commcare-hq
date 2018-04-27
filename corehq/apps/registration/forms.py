@@ -64,7 +64,7 @@ class RegisterWebUserForm(forms.Form):
         required=False,
         label=mark_safe_lazy(_(
             """I have read and agree to the
-            <a href="http://www.dimagi.com/terms/"
+            <a href="http://www.dimagi.com/terms/latest/privacy/"
                target="_blank">
                CommCare HQ Terms of Service and Business Agreement</a>.""")))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
@@ -316,7 +316,7 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                         label="",
                                         help_text=mark_safe_lazy(_(
                                             """I have read and agree to the
-                                               <a href="http://www.dimagi.com/terms/"
+                                               <a href="http://www.dimagi.com/terms/latest/privacy/"
                                                   target="_blank">
                                                   CommCare HQ Terms of Service and Business Agreement
                                                </a>.""")))
