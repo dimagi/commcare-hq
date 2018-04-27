@@ -96,7 +96,7 @@ from memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response, get_url_base
+from dimagi.utils.web import json_response
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -260,6 +260,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
 
+    
 @require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
