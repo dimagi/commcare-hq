@@ -291,6 +291,7 @@ class CouchSqlDomainMigrator(object):
         assert not stale_get_export_count(domain_name)
         assert not any(custom_report_domain == domain_name
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
+        assert domain_name not in settings.OTHER_DOMAINS_WITH_CUSTOM_MODULES
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         if self.with_progress:
