@@ -19,13 +19,14 @@
     </script>
 {% endblock %}
 {% block reportcontent %}
-    <div class="alert">
+    <br><br>
+    <div class="alert alert-warning">
         <p>
             This is the email mailing list tool. Please exercise caution
             when using it.
         </p>
         </p>
-            Leave the email all users checkbox unchecked to send a test
+            Leave the <strong>email all users</strong> checkbox unchecked to send a test
             email only to yourself. This is useful for verifying that
             your formatting is correct before sending a real message.
         </p>
@@ -41,6 +42,7 @@
                 <input
                     name="email_subject"
                     type="text"
+                    class="form-control"
                     placeholder="Enter subject...">
                 </input>
             </div>
@@ -49,48 +51,47 @@
                 <label for="email_body">
                     Body
                 </label>
-                <textarea name="email_body" rows="10" placeholder="Enter body..."></textarea>
+                <textarea name="email_body" class="form-control" rows="10" placeholder="Enter body..."></textarea>
             </div>
 
-            <div class="controls">
-                <label class="checkbox">
+            <div class="checkbox">
+                <label>
                     <input id="real_email" type="checkbox" name="real_email" />
-                    Email ALL users on the mailing list.
+                    Email ALL web users.
                 </label>
             </div>
-            <input type="submit" class="btn" value="Send"/>
+            <input type="submit" class="btn btn-default" value="Send"/>
         </fieldset>
     </form>
 
-    <div id="warning_modal" class="modal hide fade">
-        <div class="modal-header">
-            <a class="close" data-dismiss="modal">&times;</a>
-            <h3>Do you really want to email ALL of the users?
-                <small>This is not a test</small>
-            </h3>
-        </div>
-        <div class="modal-body">
-            <p>
-                <span class="label label-warning">
-                    <i class="icon-white icon-warning-sign"></i>
-                    Bad things will happen if you don't read this
-                </span>
-            </p>
-            <p>
-                By checking this box you are saying you want to email all
-                users on our mailing list. This means every CommCare web user
-                who has not opted out and has at least one active domain.
-            </p>
-            <p>
-                Leaving this box unchecked will send an email to ONLY you.
-                It is highly recommended you send a test message like that 
-                first to make sure the formatting of our email is as you
-                intended.
-            </p>
+    <div id="warning_modal" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <a class="close" data-dismiss="modal">&times;</a>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <h4 class="modal-title">Do you really want to email ALL of the users?</h4>
+                </div>
+                <div class="modal-body">
+                    <p>
+                        By checking this box you are saying you want to email all
+                        web users. This means EVERY CommCare web user who has at
+                        least one active domain.
+                    </p>
+                    <p>
+                        Leaving this box unchecked will send an email to ONLY you.
+                        It is highly recommended you send a test message like that
+                        first to make sure the formatting of your email is as you
+                        intended.
+                    </p>
 
-            <div class="modal-footer">
-                <a id="cancel_email" href="#" data-dismiss="modal" class="btn">I changed my mind, uncheck the box!</a>
-                <a id="accept_mass_email" data-dismiss="modal" class="btn btn-danger">I really want to email everyone</a>
+                    <div class="modal-footer">
+                        <a id="cancel_email" href="#" data-dismiss="modal" class="btn btn-default">I changed my mind, uncheck the box!</a>
+                        <a id="accept_mass_email" data-dismiss="modal" class="btn btn-danger">I really want to email everyone</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
