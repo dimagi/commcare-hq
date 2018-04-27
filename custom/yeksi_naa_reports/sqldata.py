@@ -434,36 +434,50 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, records):
-        total_row = []
-        data = defaultdict(lambda: defaultdict(int))
-        for record in records:
-            if not self.date_in_selected_date_range(record['real_date_repeat']):
-                continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if self.denominator_exists(record['final_pna_stock']):
-                data[month_index]['final_pna_stock'] += record['final_pna_stock']['html']
-                if record['loss_amt']:
-                    data[month_index]['loss_amt'] += record['loss_amt']['html']
-
+    def calculate_total_row(self, data):
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Taux par Région')
+            total_row = [{
+                'html': 'Taux par Région',
+            }]
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append('Taux par District')
+            total_row = [{
+                'html': 'Taux par District',
+            }]
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('')
+            total_row = [{
+                'html': '',
+            }]
         else:
-            total_row.append('Taux par Pays')
-        for month_index in range(len(self.months)):
-            if data[month_index]:
-                total_row.append(
-                    self.percent_fn(
-                        data[month_index]['loss_amt'],
-                        data[month_index]['final_pna_stock']
-                    )
-                )
-            else:
-                total_row.append('pas de données')
+            total_row = [{
+                'html': 'Taux par Pays',
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.months)):
+            numerator = sum(
+                data[loc_id][i]['loss_amt'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock']
+            )
+            denominator = sum(
+                data[loc_id][i]['final_pna_stock'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
+            total_value = self.percent_fn(
+                numerator,
+                denominator
+            )
+            total_row.append({
+                'html': total_value,
+            })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        total_row.append({
+            'html': total_value,
+        })
         return total_row
 
     @property
@@ -488,38 +502,77 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
+    def get_average_loss_rate_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['final_pna_stock']:
+                numerator += data_in_month['loss_amt']
+                denominator += data_in_month['final_pna_stock']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_loss_rate_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.months)):
+                if data[loc_id][i]['final_pna_stock']:
+                    month_value = self.percent_fn(
+                        data[loc_id][i]['loss_amt'],
+                        data[loc_id][i]['final_pna_stock']
+                    )
+                    row.append({
+                        'html': month_value,
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_average_loss_rate_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
     def get_loss_rate_per_month(self, records):
-        data = {}
+        data = defaultdict(list)
         loc_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = ['pas de données'] * len(self.months)
+                for i in range(len(self.months)):
+                    data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if self.denominator_exists(record['final_pna_stock']):
-                data[record[self.loc_id]][month_index] = self.percent_fn(
-                    record['loss_amt']['html'] if record['loss_amt'] else 0,
-                    record['final_pna_stock']['html']
-                )
+                if record['loss_amt']:
+                    data[record[self.loc_id]][month_index]['loss_amt'] += record['loss_amt']['html']
+                data[record[self.loc_id]][month_index]['final_pna_stock'] += record['final_pna_stock']['html']
         return loc_names, data
 
     @property
     def rows(self):
         records = self.get_data()
         loc_names, data = self.get_loss_rate_per_month(records)
-        rows = []
-        for loc_id in data:
-            row = [loc_names[loc_id]]
-            row.extend(data[loc_id])
-            rows.append(row)
-        self.total_row = self.calculate_total_row(records)
-        return rows
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_loss_rate_to_rows(loc_names, data)
 
     @property
     def headers(self):
         headers = super(LossRateData, self).headers
+        headers.add_column(DataTablesColumn('Taux moyen'))
         return headers
 
 
@@ -530,48 +583,52 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, records):
-        total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'expired_pna_valuation': 0,
-                'final_pna_stock_valuation': 0
-            }
-        for record in records:
-            if not self.date_in_selected_date_range(record['real_date_repeat']):
-                continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
-            if self.denominator_exists(record['final_pna_stock_valuation']):
-                if record['expired_pna_valuation']:
-                    data[month_index]['expired_pna_valuation'] += record['expired_pna_valuation']['html']
-                data[month_index]['final_pna_stock_valuation'] += record['final_pna_stock_valuation']['html']
-
+    def calculate_total_row(self, data):
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par Région',
-            })
+            }]
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par District',
-            })
+            }]
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append({
+            total_row = [{
                 'html': '',
-            })
+            }]
         else:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par Pays',
-            })
-        for monthly_data in data.values():
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.months)):
+            numerator = sum(
+                data[loc_id][i]['expired_pna_valuation'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock_valuation']
+            )
+            denominator = sum(
+                data[loc_id][i]['final_pna_stock_valuation'] for loc_id in data if
+                data[loc_id][i]['final_pna_stock_valuation']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
             total_value = self.percent_fn(
-                monthly_data['expired_pna_valuation'],
-                monthly_data['final_pna_stock_valuation']
+                numerator,
+                denominator
             )
             total_row.append({
                 'html': total_value,
                 'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
             })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        total_row.append({
+            'html': total_value,
+            'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+        })
         return total_row
 
     @property
@@ -596,49 +653,81 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
+    def get_average_expiration_rate_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['final_pna_stock_valuation']:
+                numerator += data_in_month['expired_pna_valuation']
+                denominator += data_in_month['final_pna_stock_valuation']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+                'style': 'color: red' if self.cell_value_bigger_than(value, 5) else '',
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_expiration_rate_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.months)):
+                if data[loc_id][i]['final_pna_stock_valuation']:
+                    month_value = self.percent_fn(
+                        data[loc_id][i]['expired_pna_valuation'],
+                        data[loc_id][i]['final_pna_stock_valuation']
+                    )
+                    row.append({
+                        'html': month_value,
+                        'style': 'color: red' if self.cell_value_bigger_than(month_value, 5) else '',
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_average_expiration_rate_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
     def get_expiration_rate_per_month(self, records):
-        data = {}
+        data = defaultdict(list)
         loc_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
             if record[self.loc_id] not in data:
-                data[record[self.loc_id]] = []
                 for i in range(len(self.months)):
-                    data[record[self.loc_id]].append({
-                        'html': 'pas de données',
-                    })
+                    data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if self.denominator_exists(record['final_pna_stock_valuation']):
-                month_value = self.percent_fn(
-                    record['expired_pna_valuation']['html'] if record['expired_pna_valuation'] else None,
+                if record['expired_pna_valuation']:
+                    data[record[self.loc_id]][month_index]['expired_pna_valuation'] += \
+                        record['expired_pna_valuation']['html']
+                data[record[self.loc_id]][month_index]['final_pna_stock_valuation'] += \
                     record['final_pna_stock_valuation']['html']
-                )
-                data[record[self.loc_id]][month_index] = {
-                    'html': month_value,
-                    'style': 'color: red' if self.cell_value_bigger_than(month_value, 5) else '',
-                }
         return loc_names, data
 
     @property
     def rows(self):
         records = self.get_data()
         loc_names, data = self.get_expiration_rate_per_month(records)
-
-        rows = []
-        for loc_id in data:
-            row = [{
-                'html': loc_names[loc_id],
-            }]
-            row.extend(data[loc_id])
-            rows.append(row)
-        self.total_row = self.calculate_total_row(records)
-        return rows
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_expiration_rate_to_rows(loc_names, data)
 
     @property
     def headers(self):
         headers = super(ExpirationRateData, self).headers
+        headers.add_column(DataTablesColumn('Taux moyen'))
         return headers
 
 
@@ -649,27 +738,50 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def get_total_row(self, data):
-        total_row = []
-        if 'district_id' in self.config and self.config['district_id']:
-            total_row.append('Taux par District')
+    def calculate_total_row(self, data):
+        if 'region_id' in self.config and self.config['region_id']:
+            total_row = [{
+                'html': 'Taux par Région',
+            }]
+        elif 'district_id' in self.config and self.config['district_id']:
+            total_row = [{
+                'html': 'Taux par District',
+            }]
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append('Taux par PPS')
-        elif 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Taux par Région')
+            total_row = [{
+                'html': 'Taux par PPS',
+            }]
         else:
-            total_row.append('Taux par Pays')
+            total_row = [{
+                'html': 'Taux par Pays',
+            }]
+        total_numerator = 0
+        total_denominator = 0
         for i in range(len(self.months)):
-            total_row.append(self.percent_fn(
-                sum(
-                    data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
-                    data[loc_id][i]['pps_total_amt_owed']
-                ),
-                sum(
-                    data[loc_id][i]['pps_total_amt_owed'] for loc_id in data if
-                    data[loc_id][i]['pps_total_amt_owed']
-                )
-            ))
+            numerator = sum(
+                data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
+                data[loc_id][i]['pps_total_amt_owed']
+            )
+            denominator = sum(
+                data[loc_id][i]['pps_total_amt_owed'] for loc_id in data if
+                data[loc_id][i]['pps_total_amt_owed']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
+            total_value = self.percent_fn(
+                numerator,
+                denominator
+            )
+            total_row.append({
+                'html': total_value,
+            })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        total_row.append({
+            'html': total_value,
+        })
         return total_row
 
     @property
@@ -697,6 +809,49 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             columns.append(DatabaseColumn("Region Name", SimpleColumn('region_name')))
         return columns
 
+    def get_recovery_rate_by_pps_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['pps_total_amt_owed']:
+                numerator += data_in_month['pps_total_amt_paid']
+                denominator += data_in_month['pps_total_amt_owed']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_recovery_rate_by_pps_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.months)):
+                if data[loc_id][i]['pps_total_amt_owed']:
+                    month_value = self.percent_fn(
+                        data[loc_id][i]['pps_total_amt_paid'],
+                        data[loc_id][i]['pps_total_amt_owed']
+                    )
+                    row.append({
+                        'html': month_value,
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_recovery_rate_by_pps_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
     def get_recovery_rate_by_pps_per_month(self, records):
         data = defaultdict(list)
         loc_names = {}
@@ -714,37 +869,18 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 data[record[self.loc_id]][month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']
         return loc_names, data
 
-    def parse_recovery_rate_by_pps_to_rows(self, loc_name, data):
-        row = [loc_name]
-        for i in range(len(self.months)):
-            if data[i]['pps_total_amt_owed']:
-                row.append(
-                    self.percent_fn(
-                        data[i]['pps_total_amt_paid'],
-                        data[i]['pps_total_amt_owed']
-                    )
-                )
-            else:
-                row.append('pas de données')
-        return row
-
     @property
     def rows(self):
         records = self.get_data()
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
-
-        rows = []
-        for loc_id in data:
-            rows.append(
-                self.parse_recovery_rate_by_pps_to_rows(loc_names[loc_id], data[loc_id])
-            )
-
-        self.total_row = self.get_total_row(data)
-        return rows
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
 
     @property
     def headers(self):
-        return super(RecoveryRateByPPSData, self).headers
+        headers = super(RecoveryRateByPPSData, self).headers
+        headers.add_column(DataTablesColumn('Taux moyen'))
+        return headers
 
 
 class RecoveryRateByDistrictData(LogisticienDataSource):
@@ -754,36 +890,46 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, records):
-        total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'montant_paye': 0,
-                'montant_reel_a_payer': 0
-            }
-        for record in records:
-            if not self.date_in_selected_date_range(record['date_echeance']):
-                continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['date_echeance'])
-            if self.denominator_exists(record['montant_reel_a_payer']):
-                if record['montant_paye']:
-                    data[month_index]['montant_paye'] += record['montant_paye']['html']
-                data[month_index]['montant_reel_a_payer'] += record['montant_reel_a_payer']['html']
-
+    def calculate_total_row(self, data):
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append('Taux par Région')
+            total_row = [{
+                'html': 'Taux par Région',
+            }]
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append('Taux par District')
+            total_row = [{
+                'html': 'Taux par District',
+            }]
         else:
-            total_row.append('Taux par Pays')
-        for monthly_data in data.values():
-            total_row.append(
-                self.percent_fn(
-                    monthly_data['montant_paye'],
-                    monthly_data['montant_reel_a_payer']
-                )
+            total_row = [{
+                'html': 'Taux par Pays',
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.months)):
+            numerator = sum(
+                data[loc_id][i]['montant_paye'] for loc_id in data if
+                data[loc_id][i]['montant_reel_a_payer']
             )
+            denominator = sum(
+                data[loc_id][i]['montant_reel_a_payer'] for loc_id in data if
+                data[loc_id][i]['montant_reel_a_payer']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
+            total_value = self.percent_fn(
+                numerator,
+                denominator
+            )
+            total_row.append({
+                'html': total_value,
+            })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        total_row.append({
+            'html': total_value,
+        })
         return total_row
 
     @property
@@ -801,39 +947,79 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         ]
         return columns
 
+    def get_recovery_rate_by_district_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['montant_reel_a_payer']:
+                numerator += data_in_month['montant_paye']
+                denominator += data_in_month['montant_reel_a_payer']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_recovery_rate_by_district_to_rows(self, loc_names, data):
+        rows = []
+        for loc_id in data:
+            row = [{
+                'html': loc_names[loc_id],
+            }]
+            for i in range(len(self.months)):
+                if data[loc_id][i]['montant_reel_a_payer']:
+                    month_value = self.percent_fn(
+                        data[loc_id][i]['montant_paye'],
+                        data[loc_id][i]['montant_reel_a_payer']
+                    )
+                    row.append({
+                        'html': month_value,
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_recovery_rate_by_district_in_location(data[loc_id]))
+            rows.append(row)
+        return rows
+
     def get_recovery_rate_by_district_per_month(self, records):
-        data = {}
-        district_names = {}
+        data = defaultdict(list)
+        loc_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['date_echeance']):
                 continue
             if record['district_id'] not in data:
-                data[record['district_id']] = ['pas de données'] * len(self.months)
-                district_names[record['district_id']] = record['district_name']
+                for i in range(len(self.months)):
+                    data[record['district_id']].append(defaultdict(int))
+                loc_names[record['district_id']] = record['district_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['date_echeance'])
             if self.denominator_exists(record['montant_reel_a_payer']):
-                data[record['district_id']][month_index] = self.percent_fn(
-                    record['montant_paye']['html'] if record['montant_paye'] else None,
+                if record['montant_paye']:
+                    data[record['district_id']][month_index]['montant_paye'] += \
+                        record['montant_paye']['html']
+                data[record['district_id']][month_index]['montant_reel_a_payer'] += \
                     record['montant_reel_a_payer']['html']
-                )
-        return district_names, data
+        return loc_names, data
 
     @property
     def rows(self):
         records = self.get_data()
         district_names, data = self.get_recovery_rate_by_district_per_month(records)
-
-        rows = []
-        for district in data:
-            row = [district_names[district]]
-            row.extend(data[district])
-            rows.append(row)
-        self.total_row = self.calculate_total_row(records)
-        return rows
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_recovery_rate_by_district_to_rows(district_names, data)
 
     @property
     def headers(self):
         headers = super(RecoveryRateByDistrictData, self).headers
+        headers.add_column(DataTablesColumn('Taux moyen'))
         return headers
 
 
@@ -844,48 +1030,52 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, records):
-        total_row = []
-        data = {}
-        for i in range(len(self.months)):
-            data[i] = {
-                'nb_products_stockout': 0,
-                'count_products_select': 0
-            }
-        for record in records:
-            if not self.date_in_selected_date_range(record['real_date']):
-                continue
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['count_products_select']:
-                if record['nb_products_stockout']:
-                    data[month_index]['nb_products_stockout'] += record['nb_products_stockout']
-                data[month_index]['count_products_select'] += record['count_products_select']
-
+    def calculate_total_row(self, data):
         if 'region_id' in self.config and self.config['region_id']:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par Région',
-            })
+            }]
         elif 'district_id' in self.config and self.config['district_id']:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par District',
-            })
+            }]
         elif 'pps_id' in self.config and self.config['pps_id']:
-            total_row.append({
+            total_row = [{
                 'html': '',
-            })
+            }]
         else:
-            total_row.append({
+            total_row = [{
                 'html': 'Taux par Pays',
-            })
-        for monthly_data in data.values():
+            }]
+        total_numerator = 0
+        total_denominator = 0
+        for i in range(len(self.months)):
+            numerator = sum(
+                data[loc_id][i]['nb_products_stockout'] for loc_id in data if
+                data[loc_id][i]['count_products_select']
+            )
+            denominator = sum(
+                data[loc_id][i]['count_products_select'] for loc_id in data if
+                data[loc_id][i]['count_products_select']
+            )
+            total_numerator += numerator
+            total_denominator += denominator
             total_value = self.percent_fn(
-                monthly_data['nb_products_stockout'],
-                monthly_data['count_products_select']
+                numerator,
+                denominator
             )
             total_row.append({
                 'html': total_value,
                 'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
             })
+        total_value = self.percent_fn(
+            total_numerator,
+            total_denominator
+        )
+        total_row.append({
+            'html': total_value,
+            'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+        })
         return total_row
 
     @property
@@ -903,37 +1093,75 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         ]
         return columns
 
-    @property
-    def rows(self):
-        records = self.get_data()
-        data = {}
+    def get_average_rupture_rate_in_location(self, data_per_localization):
+        numerator = 0
+        denominator = 0
+        for data_in_month in data_per_localization:
+            if data_in_month and data_in_month['count_products_select']:
+                numerator += data_in_month['nb_products_stockout']
+                denominator += data_in_month['count_products_select']
+        if denominator:
+            value = self.percent_fn(
+                numerator,
+                denominator,
+            )
+            return {
+                'html': value,
+                'style': 'color: red' if self.cell_value_bigger_than(value, 2) else '',
+            }
+        else:
+            return {
+                'html': 'pas de données',
+            }
+
+    def parse_rupture_rate_to_rows(self, pps_names, data):
+        rows = []
+        for pps_id in data:
+            row = [{
+                'html': pps_names[pps_id],
+            }]
+            for i in range(len(self.months)):
+                if data[pps_id][i]['count_products_select']:
+                    month_value = self.percent_fn(
+                        data[pps_id][i]['nb_products_stockout'],
+                        data[pps_id][i]['count_products_select']
+                    )
+                    row.append({
+                        'html': month_value,
+                        'style': 'color: red' if self.cell_value_bigger_than(month_value, 2) else '',
+                    })
+                else:
+                    row.append({
+                        'html': 'pas de données',
+                    })
+            row.append(self.get_average_rupture_rate_in_location(data[pps_id]))
+            rows.append(row)
+        return rows
+
+    def get_rupture_rate_per_month(self, records):
+        data = defaultdict(list)
         pps_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['real_date']):
                 continue
             if record['pps_id'] not in data:
-                data[record['pps_id']] = ['pas de données'] * len(self.months)
+                for i in range(len(self.months)):
+                    data[record['pps_id']].append(defaultdict(int))
                 pps_names[record['pps_id']] = record['pps_name']
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
             if record['count_products_select']:
-                month_value = self.percent_fn(
-                    record['nb_products_stockout'],
-                    record['count_products_select']
-                )
-                data[record['pps_id']][month_index] = {
-                    'html': month_value,
-                    'style': 'color: red' if self.cell_value_bigger_than(month_value, 2) else '',
-                }
+                if record['nb_products_stockout']:
+                    data[record['pps_id']][month_index]['nb_products_stockout'] += \
+                        record['nb_products_stockout']
+                data[record['pps_id']][month_index]['count_products_select'] += record['count_products_select']
+        return pps_names, data
 
-        rows = []
-        for pps in data:
-            row = [{
-                'html': pps_names[pps],
-            }]
-            row.extend(data[pps])
-            rows.append(row)
-        self.total_row = self.calculate_total_row(records)
-        return rows
+    @property
+    def rows(self):
+        records = self.get_data()
+        pps_names, data = self.get_rupture_rate_per_month(records)
+        self.total_row = self.calculate_total_row(data)
+        return self.parse_rupture_rate_to_rows(pps_names, data)
 
     @cached_property
     def loc_id(self):
@@ -942,6 +1170,7 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def headers(self):
         headers = super(RuptureRateByPPSData, self).headers
+        headers.add_column(DataTablesColumn('Taux moyen'))
         return headers
 
 
