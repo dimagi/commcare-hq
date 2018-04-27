@@ -23,6 +23,7 @@ def send_gateway_fee_report_out():
     billables_in_month = SmsBillable.objects.filter(
         date_sent__year=first_day_previous_month.year,
         date_sent__month=first_day_previous_month.month,
+        is_valid=True,
     )
     cost_by_backend = {
         backend_api_id: sum(billable.gateway_charge for billable in
