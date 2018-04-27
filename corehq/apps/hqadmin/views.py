@@ -95,12 +95,13 @@ from memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response
+from dimagi.utils.web import json_response, get_url_base
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from . import service_checks, escheck
 from .forms import (
-    AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
+    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from .history import get_recent_changes, download_changes
@@ -257,6 +258,50 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
+
+@require_superuser
+def mass_email(request):
+    if not request.couch_user.is_staff:
+        raise Http404()
+
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body = form.cleaned_data['email_body']
+            real_email = form.cleaned_data['real_email']
+
+            if real_email:
+                recipients = WebUser.view(
+                    'users/mailing_list_emails',
+                    reduce=False,
+                    include_docs=True,
+                ).all()
+            else:
+                recipients = [request.couch_user]
+
+            for recipient in recipients:
+                params = {
+                    'email_body': body,
+                    'user_id': recipient.get_id,
+                    'unsub_url': get_url_base() +
+                                 reverse('unsubscribe', args=[recipient.get_id])
+                }
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+
+                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
+                                email_from=settings.DEFAULT_FROM_EMAIL)
+
+            messages.success(request, 'Your email(s) were sent successfully.')
+
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
 
 
 @require_superuser_or_developer
