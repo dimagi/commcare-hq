@@ -62,14 +62,20 @@ class Requests(object):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def delete(self, uri, **kwargs):
+        kwargs.setdefault('headers', {'Accept': 'application/json'})
         return self.send_request(requests.delete, self.get_url(uri),
                                  auth=(self.username, self.password), **kwargs)
 
     def get(self, uri, *args, **kwargs):
+        kwargs.setdefault('headers', {'Accept': 'application/json'})
         return self.send_request(requests.get, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
+        kwargs.setdefault('headers', {
+            'Content-type': 'application/json',
+            'Accept': 'application/json'
+        })
         return self.send_request(requests.post, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
