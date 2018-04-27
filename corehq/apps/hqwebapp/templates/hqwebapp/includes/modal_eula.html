@@ -3,31 +3,37 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h4 class="modal-title">{% trans "CommCare HQ Terms of Service and Business Agreement" %}</h4>
+                <h4 class="modal-title">{% trans "CommCare HQ Terms" %}</h4>
             </div>
             <div class="modal-body">
                 {% blocktrans %}
-                    In accordance with our EU-US and Swiss-US Privacy Shield, and EU General Data Protection
-                    Regulation (GDPR) compliance, please review and accept our new
-                {% endblocktrans %}
+                    Heads up! On May 25, 2018 our new
                     <a href="http://www.dimagi.com/terms/" target="_blank">
-                        {% blocktrans %}
-                            Terms of Service, Privacy Policy and Business Agreement
-                        {% endblocktrans %}
+                            Privacy Policy, Terms of Service, Business Agreement, and Acceptable Use Policy
                     </a>
-                {% blocktrans %}
-                    .
+                    (collectively, "Terms") will go into effect. We are clarifying our terms and addressing
+                    some new privacy laws in Europe. The spirit of our previous terms remains unchanged and,
+                    as always, you are the owner of your data.
+                    <a href="https://dimagi.com/blog/" target="_blank">Click here</a> to learn more.
+
                     <br><br>
-                    Thanks for using CommCare!
+
+                    Click on the 'I Agree' button to let us know that you agree to our new Terms. Please note
+                    that starting May 25, 2018, to continue using CommCareHQ, you will be required to agree to
+                    our new Terms.
+
                     <br><br>
-                    - Dimagi
+
+                    Thank you,
+                    <br><br>
+                    - The Dimagi Team
                 {% endblocktrans %}
             </div>
             <div class="modal-footer">
                 <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
                     {% csrf_token %}
                     <input name="next" type="hidden" value="{{ request.path }}" />
-                    <button type="submit" class="btn btn-primary">{% trans 'Accept and Continue' %}</button>
+                    <button type="submit" class="btn btn-primary">{% trans 'I Agree' %}</button>
                 </form>
             </div>
             </div>
