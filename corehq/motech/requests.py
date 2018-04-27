@@ -28,7 +28,7 @@ def log_request(func):
         else:
             return response
         finally:
-            request_headers = kwargs.pop('headers') or {}
+            request_headers = kwargs.pop('headers', {})
             RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
                            request_headers, func, *args, **kwargs)
 
