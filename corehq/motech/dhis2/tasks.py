@@ -10,7 +10,7 @@ from celery.task import periodic_task, task
 
 from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
-from corehq.motech.dhis2.api import JsonApiRequest
+from corehq.motech.requests import Requests
 from corehq.motech.models import RequestLog
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
@@ -42,7 +42,7 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     dataset_maps = get_dataset_maps(domain_name)
     if not dhis2_conn or not dataset_maps:
         return  # Nothing to do
-    api = JsonApiRequest(
+    requests = Requests(
         domain_name,
         dhis2_conn.server_url,
         dhis2_conn.username,
@@ -51,36 +51,8 @@ def send_datasets(domain_name, send_now=False, send_date=None):
     endpoint = 'dataValueSets'
     for dataset_map in dataset_maps:
         if send_now or dataset_map.should_send_on_date(send_date):
-            domain_log_level = getattr(dhis2_conn, 'log_level', logging.INFO)
-            try:
-                dataset = dataset_map.get_dataset(send_date)
-                response = api.post(endpoint, dataset)
-            except Exception as err:
-                log_level = logging.ERROR
-                if log_level >= domain_log_level:
-                    RequestLog.log(
-                        log_level,
-                        api.domain_name,
-                        str(err),
-                        response_status=None,
-                        response_body=None,
-                        request_headers=api.headers,
-                        method_func=api.post,
-                        request_url=api.get_request_url(endpoint),
-                    )
-            else:
-                log_level = logging.INFO
-                if log_level >= domain_log_level:
-                    RequestLog.log(
-                        log_level,
-                        api.domain_name,
-                        None,
-                        response_status=response.status_code,
-                        response_body=response.content,
-                        request_headers=api.headers,
-                        method_func=api.post,
-                        request_url=api.get_request_url(endpoint),
-                    )
+            dataset = dataset_map.get_dataset(send_date)
+            requests.post(endpoint, json=dataset)
 
 
 @periodic_task(
