@@ -34,7 +34,7 @@ class TestDashboard3(YeksiTestCase):
              'Février 2018', 'Mars 2018']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', 'pas de données',
                  'pas de données', 'pas de données', 'pas de données', 'pas de données', '100.00%'],
@@ -117,7 +117,7 @@ class TestDashboard3(YeksiTestCase):
              'Février 2018', 'Mars 2018']
         )
         self.assertItemsEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', '0.00', '0.00', '0.00',
                  '0.00', '0.00', '0.00'],

@@ -32,7 +32,7 @@ class TestDashboard2(YeksiTestCase):
              u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [{u'html': u'New Test Region'}, {u'html': u'43.41%'}, {u'html': u'16.59%'}, {u'html': u'7.56%'},
                  {u'html': u'3.17%'}, {u'html': u'1.95%'}, {u'html': u'0.73%'}, {u'html': u'12.24%'}],
@@ -85,7 +85,7 @@ class TestDashboard2(YeksiTestCase):
              u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [{u'html': u'New Test Region'}, {u'style': u'color: red', u'html': u'38.77%'},
                  {u'style': u'color: red', u'html': u'29.67%'}, {u'style': u'color: red', u'html': u'17.14%'},
@@ -149,7 +149,7 @@ class TestDashboard2(YeksiTestCase):
              u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [{u'html': u'District Sud'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
                  {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
@@ -233,7 +233,7 @@ class TestDashboard2(YeksiTestCase):
              'Février 2018', 'Mars 2018', u'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [{u'html': u'New Test Region'}, {u'html': u'77.30%'}, {u'html': u'63.63%'}, {u'html': u'53.65%'},
                  {u'html': u'55.93%'}, {u'html': u'63.43%'}, {u'html': u'90.75%'}, {u'html': u'67.39%'}],
@@ -285,7 +285,7 @@ class TestDashboard2(YeksiTestCase):
              u'Mars 2018', u'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [
                     {u'html': u'P2'},

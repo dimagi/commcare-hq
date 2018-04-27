@@ -33,7 +33,7 @@ class TestDashboard1(YeksiTestCase):
              'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [
                     {'html': 'New Test Region'},
@@ -145,7 +145,7 @@ class TestDashboard1(YeksiTestCase):
              'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
                 [
                     {'html': 'P2'},

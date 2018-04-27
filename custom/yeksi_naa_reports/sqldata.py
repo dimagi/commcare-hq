@@ -418,7 +418,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
         rows = self.parse_availability_data_to_rows(loc_names, data)
         if self.loc_id == 'pps_id':
             self.total_row = self.calculate_total_row(rows)
-        return rows
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -567,7 +567,8 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
         records = self.get_data()
         loc_names, data = self.get_loss_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_loss_rate_to_rows(loc_names, data)
+        rows = self.parse_loss_rate_to_rows(loc_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -722,7 +723,8 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
         records = self.get_data()
         loc_names, data = self.get_expiration_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_expiration_rate_to_rows(loc_names, data)
+        rows = self.parse_expiration_rate_to_rows(loc_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -874,7 +876,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         records = self.get_data()
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
+        rows = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -1014,7 +1017,8 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
         records = self.get_data()
         district_names, data = self.get_recovery_rate_by_district_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_recovery_rate_by_district_to_rows(district_names, data)
+        rows = self.parse_recovery_rate_by_district_to_rows(district_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -1161,7 +1165,8 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
         records = self.get_data()
         pps_names, data = self.get_rupture_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_rupture_rate_to_rows(pps_names, data)
+        rows = self.parse_rupture_rate_to_rows(pps_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @cached_property
     def loc_id(self):
@@ -1249,7 +1254,8 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
         records = self.get_data()
         product_names, data = self.get_product_satisfaction_rate_per_month(records)
         self.total_row = self.calculate_total_row(data)
-        return self.parse_satisfaction_rate_to_rows(product_names, data)
+        rows = self.parse_satisfaction_rate_to_rows(product_names, data)
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
@@ -1325,7 +1331,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
             row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
-        return rows
+        return sorted(rows, key=lambda x: x[0])
 
     @property
     def headers(self):
