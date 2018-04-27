@@ -92,3 +92,51 @@ class ConnectionManagerTests(SimpleTestCase):
                 ['default', 'default', 'default'],
                 [manager.get_load_balanced_read_engine_id('default') for i in range(3)]
             )
+
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 4}.get(x, 0))
+    def test_standby_filtering(self, *args):
+        reporting_dbs = {
+            'ucr_engine': {
+                'WRITE': 'ucr',
+                'READ': [('ucr', 8), ('other', 1)]
+            },
+        }
+        with override_settings(REPORTING_DATABASES=reporting_dbs):
+            # should always return the `other` db since `ucr` has bad replication delay
+            manager = ConnectionManager()
+            self.assertEqual(
+                ['other', 'other', 'other'],
+                [manager.get_load_balanced_read_engine_id('ucr_engine') for i in range(3)]
+            )
+
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+    def test_load_balanced_read_apps(self, mock):
+        load_balanced_apps = {
+            'users': [
+                ('users_db1', 5),
+            ]
+        }
+
+        with override_settings(
+            LOAD_BALANCED_APPS=load_balanced_apps,
+            DATABASES = {
+                'default': _get_db_config('default'),
+                'users_db1': _get_db_config('users_db1')}):
+            manager = ConnectionManager()
+            self.assertEqual(
+                manager.get_load_balanced_read_engine_id('users', default="default_option"),
+                'users_db1'
+            )
+
+        with override_settings(LOAD_BALANCED_APPS=load_balanced_apps):
+            # load_balanced_db should be part of settings.DATABASES
+            with self.assertRaises(AssertionError):
+                ConnectionManager().get_load_balanced_read_engine_id('users')
+
+
+        # If `LOAD_BALANCED_APPS` is not set for an app, it should point to default kwarg
+        manager = ConnectionManager()
+        self.assertEqual(
+            manager.get_load_balanced_read_engine_id('users', default='default_option'),
+            'default_option'
+        )
