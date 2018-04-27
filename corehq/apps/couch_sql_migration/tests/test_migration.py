@@ -95,6 +95,8 @@ class MigrationTestCase(BaseMigrationTestCase):
     def test_migration_custom_report(self):
         with self.assertRaises(AssertionError):
             self._do_migration("up-nrhm")
+        with self.assertRaises(AssertionError):
+            self._do_migration("logistics")
 
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
