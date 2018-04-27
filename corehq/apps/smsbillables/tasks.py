@@ -31,7 +31,7 @@ def send_gateway_fee_report_out():
         for backend_api_id in map(lambda _dict: _dict['backend_api_id'], backend_api_ids)
     }
 
-    subject = ("[{}] Cost per SMS Gateway Monthly Summary".format(settings.SERVER_ENVIRONMENT))
+    subject = "[{}] Cost per SMS Gateway Monthly Summary".format(settings.SERVER_ENVIRONMENT)
 
     send_HTML_email(
         subject,
