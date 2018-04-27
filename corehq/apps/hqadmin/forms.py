@@ -13,7 +13,8 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 
 class EmailForm(forms.Form):
     email_subject = forms.CharField(max_length=100)
-    email_body = forms.CharField()
+    email_body_html = forms.CharField()
+    email_body_text = forms.CharField()
     real_email = forms.BooleanField(required=False)
 
 class BrokenBuildsForm(forms.Form):
