@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.core.management.base import BaseCommand
 from corehq.apps.users.models import CouchUser
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.apps.users.const import REDACTED_USERNAME
 from io import StringIO
 from lxml import etree
 import sys
@@ -12,7 +13,6 @@ import logging
 
 
 logger = logging.getLogger(__name__)
-NEW_USERNAME = "Redacted User (Right To Forget)"
 
 
 class Command(BaseCommand):
@@ -34,10 +34,10 @@ class Command(BaseCommand):
             "Update {} form(s) for user {} in domain {}? (y/n): ".format(len(form_ids), username, domain))
         if input_response == "y":
             for form_data in this_form_accessor.iter_forms(form_ids):
-                form_attachment_xml_new = self.update_form_data(form_data, NEW_USERNAME)
+                form_attachment_xml_new = self.update_form_data(form_data, REDACTED_USERNAME)
                 this_form_accessor.modify_attachment_xml_and_metadata(form_data,
                                                                       form_attachment_xml_new,
-                                                                      NEW_USERNAME)
+                                                                      REDACTED_USERNAME)
             logging.info("Updated {} form(s) for user {} in domain {}".format(len(form_ids), username, domain))
         elif input_response == "n":
             logging.info("No forms updated, exiting.")

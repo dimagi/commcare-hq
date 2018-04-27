@@ -4,6 +4,7 @@ from django.test import TestCase
 
 from corehq.blobs.tests.util import TemporaryFilesystemBlobDB
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+from corehq.apps.users.const import REDACTED_USERNAME
 from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.utils import TestFormMetadata
@@ -41,8 +42,6 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
     </n0:meta>
 </data>"""
 
-NEW_USERNAME = "replacement_username"
-
 
 class UpdateFormTests(TestCase):
 
@@ -50,7 +49,7 @@ class UpdateFormTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        actual_form_xml = Command().update_form_data(form, NEW_USERNAME)
+        actual_form_xml = Command().update_form_data(form, REDACTED_USERNAME)
         self.assertXMLEqual(EXPECTED_FORM_XML, actual_form_xml)
 
 
@@ -67,8 +66,8 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         form = get_simple_wrapped_form(uuid.uuid4().hex,
                                        metadata=TestFormMetadata(domain=DOMAIN),
                                        simple_form=GDPR_SIMPLE_FORM)
-        new_form_xml = Command().update_form_data(form, NEW_USERNAME)
-        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, NEW_USERNAME)
+        new_form_xml = Command().update_form_data(form, REDACTED_USERNAME)
+        FormAccessors(DOMAIN).modify_attachment_xml_and_metadata(form, new_form_xml, REDACTED_USERNAME)
 
         # Test that the metadata changed in the database
         actual_form_xml = form.get_attachment("form.xml")
@@ -78,7 +77,7 @@ class GDPRScrubUserFromFormsCouchTests(TestCase):
         refetched_form = FormAccessors(DOMAIN).get_form(form.form_id)
         self.assertEqual(len(refetched_form.history), 1)
         self.assertEqual(refetched_form.history[0].operation, "gdpr_scrub")
-        self.assertEqual(refetched_form.metadata.username, NEW_USERNAME)
+        self.assertEqual(refetched_form.metadata.username, REDACTED_USERNAME)
 
 
 @use_sql_backend
