@@ -23,7 +23,7 @@ class JsonApiRequestTests(SimpleTestCase):
 
     def test_authentication(self):
         with patch('corehq.motech.requests.RequestLog', Mock()), \
-             patch('corehq.motech.requests.requests') as requests_mock:
+                patch('corehq.motech.requests.requests') as requests_mock:
             content = {'code': TEST_API_USERNAME}
             content_json = json.dumps(content)
             response_mock = Mock()
@@ -43,7 +43,7 @@ class JsonApiRequestTests(SimpleTestCase):
 
     def test_send_data_value_set(self):
         with patch('corehq.motech.requests.RequestLog', Mock()), \
-             patch('corehq.motech.requests.requests') as requests_mock:
+                patch('corehq.motech.requests.requests') as requests_mock:
             payload = {'dataValues': [
                 {'dataElement': self.data_element_id, 'period': "201701",
                  'orgUnit': self.org_unit_id, 'value': "180"},

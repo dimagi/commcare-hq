@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 from base64 import b64decode
 import bz2
 from datetime import datetime
-import logging
 
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -11,7 +10,6 @@ from celery.task import periodic_task, task
 from corehq import toggles
 from corehq.motech.dhis2.dbaccessors import get_dhis2_connection, get_dataset_maps
 from corehq.motech.requests import Requests
-from corehq.motech.models import RequestLog
 from toggle.shortcuts import find_domains_with_toggle_enabled
 
 
