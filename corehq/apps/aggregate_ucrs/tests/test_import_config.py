@@ -17,7 +17,7 @@ class ConfigImportTest(TestCase, AggregationBaseTestMixin):
         aggregate_table_definition = import_aggregation_models_from_spec(spec)
         self.assertEqual(1, AggregateTableDefinition.objects.count())
         table_def = AggregateTableDefinition.objects.get(pk=aggregate_table_definition.pk)
-        self.assertEqual('550c3cd432d931387e75e8506b5caf9e', table_def.primary_data_source.hex)
+        self.assertEqual('550c3cd432d931387e75e8506b5caf9e', table_def.primary_data_source_id.hex)
         self.assertEqual(4, table_def.primary_columns.count())
         self.assertEqual(1, table_def.secondary_tables.count())
         secondary_table = table_def.secondary_tables.get()
