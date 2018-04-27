@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
+
+import mock
 from collections import Counter
 
 from django.test import override_settings
@@ -55,7 +57,8 @@ class ConnectionManagerTests(SimpleTestCase):
             'other': 'postgresql+psycopg2://:@localhost:5432/other'
         })
 
-    def test_read_load_balancing(self):
+    @mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', return_value=0)
+    def test_read_load_balancing(self, *args):
         reporting_dbs = {
             'ucr': {
                 'WRITE': 'ucr',
@@ -69,6 +72,7 @@ class ConnectionManagerTests(SimpleTestCase):
                 'ucr': 'postgresql+psycopg2://:@localhost:5432/ucr',
                 'other': 'postgresql+psycopg2://:@localhost:5432/other'
             })
+
 
             # test that load balancing works with a 10% margin for randomness
             total_requests = 10000

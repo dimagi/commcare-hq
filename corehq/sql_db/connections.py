@@ -1,7 +1,6 @@
 from __future__ import division
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from numpy import random
 from contextlib import contextmanager
 from six.moves.urllib.parse import urlencode
 import six
@@ -15,14 +14,13 @@ from django.core import signals
 
 from corehq.util.test_utils import unit_testing_only
 
-from .util import filter_out_stale_standbys
+from .util import select_db_for_read
 
 
 DEFAULT_ENGINE_ID = 'default'
 UCR_ENGINE_ID = 'ucr'
 ICDS_UCR_ENGINE_ID = 'icds-ucr'
 ICDS_TEST_UCR_ENGINE_ID = 'icds-test-ucr'
-ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
 
 
 def get_icds_ucr_db_alias():
@@ -110,28 +108,9 @@ class ConnectionManager(object):
 
     def get_load_balanced_read_engine_id(self, engine_id, default=None):
         read_dbs = self.read_database_mapping.get(engine_id, [])
-        # convert to a db to weight dictionary
-        weights_by_db = {db: weight for db, weight in read_dbs}
+        load_balanced_db = select_db_for_read(read_dbs)
 
-        # filter out stale standby dbs
-        fresh_dbs = filter_out_stale_standbys(
-            weights_by_db.keys(), ACCEPTABLE_STANDBY_DELAY_SECONDS
-        )
-        dbs = []
-        weights = []
-        for db, weight in six.iteritems(weights_by_db):
-            if db in fresh_dbs:
-                dbs.append(db)
-                weights.append(weight)
-
-        if dbs:
-            # normalize weights of remaining dbs
-            total_weight = sum(weights)
-            normalized_weights = [weight / total_weight for weight in weights]
-            return random.choice(dbs, p=normalized_weights)
-        elif default:
-            return default
-        return engine_id
+        return load_balanced_db or default or engine_id
 
     def close_scoped_sessions(self):
         for helper in self._session_helpers.values():
@@ -166,24 +145,25 @@ class ConnectionManager(object):
         else:
             for engine_id, db_config in reporting_db_config.items():
                 write_db = db_config
-                read = None
+                weighted_read_dbs = None
                 if isinstance(db_config, dict):
                     write_db = db_config['WRITE']
-                    read = db_config['READ']
-                    assert set(read.keys()).issubset(set(settings.DATABASES.keys()))
+                    weighted_read_dbs = db_config['READ']
+                    dbs = [db for db, weight in weighted_read_dbs]
+                    assert set(dbs).issubset(set(settings.DATABASES))
 
                 self._add_django_db(engine_id, write_db)
-                if read:
-                    self.read_database_mapping[engine_id] = read
-                    for read_db, weighting in read:
+                if weighted_read_dbs:
+                    self.read_database_mapping[engine_id] = weighted_read_dbs
+                    for read_db, weighting in weighted_read_dbs:
                         assert read_db == write_db or read_db not in self.db_connection_map, read_db
                         if read_db != write_db:
                             self._add_django_db(read_db, read_db)
 
-        for app, weights in settings.LOAD_BALANCED_APPS.items():
-            self.read_database_mapping[app] = weights
-            dbs = weights.keys()
-            assert set(dbs).issubset(set(settings.DATABASES.keys()))
+        for app, weighted_read_dbs in settings.LOAD_BALANCED_APPS.items():
+            self.read_database_mapping[app] = weighted_read_dbs
+            dbs = [db for db, weight in weighted_read_dbs]
+            assert set(dbs).issubset(set(settings.DATABASES))
 
         if DEFAULT_ENGINE_ID not in self.db_connection_map:
             self._add_django_db(DEFAULT_ENGINE_ID, 'default')

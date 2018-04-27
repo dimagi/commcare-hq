@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
+from numpy import random
 
 from django.conf import settings
 from django import db
@@ -12,8 +13,11 @@ import six
 from memoized import memoized
 
 from corehq.sql_db.config import partition_config
-from corehq.sql_db.models import PartitionedModel
 from corehq.util.quickcache import quickcache
+
+
+ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
+LOAD_BALANCE_FREQUENCY_SECONDS = 30
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -137,6 +141,7 @@ def handle_connection_failure(get_db_aliases=get_default_db_aliases):
 
 
 def get_all_sharded_models():
+    from corehq.sql_db.models import PartitionedModel
     for subclass in _get_all_nested_subclasses(PartitionedModel):
         if not subclass._meta.abstract:
             yield subclass
@@ -167,10 +172,6 @@ def get_standby_databases():
     return standby_dbs
 
 
-STANDBY_DELAY_FRESHNESS = 30
-
-
-@quickcache(['db_alias'], timeout=STANDBY_DELAY_FRESHNESS)
 def get_replication_delay_for_standby(db_alias):
     """
     Finds the replication delay for given database by running a SQL query on standby database.
@@ -197,9 +198,46 @@ def get_replication_delay_for_standby(db_alias):
         [(delay, )] = cursor.fetchall()
         return delay
 
+
 def filter_out_stale_standbys(dbs, delay_threshold):
     return [
         db
         for db in dbs
         if get_replication_delay_for_standby(db) <= delay_threshold
     ]
+
+
+@quickcache([], timeout=LOAD_BALANCE_FREQUENCY_SECONDS, skip_arg=lambda *args: settings.UNIT_TESTING)
+def select_db_for_read(weighted_dbs):
+    """
+    Returns a randomly selected database per the weights assigned from 
+        a list of databases. If any database is standby and its replication has
+        more than accesptable delay, that db is dropped from selection
+
+    Args:
+        weighted_dbs: a list of tuple of db and the weight.
+            [
+                ("pgmain", 5),
+                ("pgmainstandby", 5)
+            ]
+
+    """
+    # convert to a db to weight dictionary
+    weights_by_db = {db: weight for db, weight in weighted_dbs}
+
+    # filter out stale standby dbs
+    fresh_dbs = filter_out_stale_standbys(
+        weights_by_db.keys(), ACCEPTABLE_STANDBY_DELAY_SECONDS
+    )
+    dbs = []
+    weights = []
+    for db, weight in six.iteritems(weights_by_db):
+        if db in fresh_dbs:
+            dbs.append(db)
+            weights.append(weight)
+
+    if dbs:
+        # normalize weights of remaining dbs
+        total_weight = sum(weights)
+        normalized_weights = [float(weight) / total_weight for weight in weights]
+        return random.choice(dbs, p=normalized_weights)
