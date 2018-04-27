@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import logging
 
+import requests
+
 from corehq.motech.models import RequestLog
 from corehq.motech.utils import pformat_json
 
@@ -37,8 +39,6 @@ def log_request(func):
 
 class Requests(object):
     def __init__(self, domain_name, base_url, username, password):
-        import requests
-        self.requests = requests
         self.domain_name = domain_name
         self.base_url = base_url
         self.username = username
@@ -51,7 +51,7 @@ class Requests(object):
             response = method_func(*args, **kwargs)
             if raise_for_status:
                 response.raise_for_status()
-        except self.requests.RequestException as err:
+        except requests.RequestException as err:
             err_request, err_response = parse_request_exception(err)
             logger.error('Request: %s', err_request)
             logger.error('Response: %s', err_response)
@@ -62,15 +62,15 @@ class Requests(object):
         return '/'.join((self.base_url.rstrip('/'), uri.lstrip('/')))
 
     def delete(self, uri, **kwargs):
-        return self.requests.delete(self.get_url(uri),
-                                    auth=(self.username, self.password), **kwargs)
+        return self.send_request(requests.delete, self.get_url(uri),
+                                 auth=(self.username, self.password), **kwargs)
 
     def get(self, uri, *args, **kwargs):
-        return self.send_request(self.requests.get, self.get_url(uri), *args,
+        return self.send_request(requests.get, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
     def post(self, uri, *args, **kwargs):
-        return self.send_request(self.requests.post, self.get_url(uri), *args,
+        return self.send_request(requests.post, self.get_url(uri), *args,
                                  auth=(self.username, self.password), **kwargs)
 
 
