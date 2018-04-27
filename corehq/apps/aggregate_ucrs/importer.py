@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition, PrimaryColumn, SecondaryTableDefinition, \
     SecondaryColumn
 
@@ -23,14 +25,13 @@ def _create_or_update_table_definition(spec):
         )
 
     table_definition.display_name = spec.display_name
-    table_definition.primary_data_source_id = spec.primary_table.data_source_id
+    table_definition.primary_data_source_id = UUID(spec.primary_table.data_source_id)
     table_definition.primary_data_source_key = spec.primary_table.key_column
     table_definition.aggregation_unit = spec.aggregation_config.unit
     table_definition.aggregation_start_column = spec.aggregation_config.start_column
     table_definition.aggregation_end_column = spec.aggregation_config.end_column
     table_definition.save()
     return table_definition
-
 
 def _update_primary_columns(spec, table_definition):
     found_column_ids = set()
