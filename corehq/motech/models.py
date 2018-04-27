@@ -25,6 +25,9 @@ class RequestLog(models.Model):
     response_status = models.IntegerField(null=True)
     response_body = models.TextField(blank=True, null=True)
 
+    class Meta:
+        db_table = 'dhis2_jsonapilog'
+
     @staticmethod
     def log(log_level, domain_name, request_error, response_status, response_body, request_headers, method_func,
             request_url, data=None, **params):
