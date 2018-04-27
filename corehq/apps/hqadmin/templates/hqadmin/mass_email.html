@@ -13,7 +13,7 @@
                 });
 
                 $('#accept_mass_email').click(function() {
-                    $('#real_email').attr('checked', 'checked');
+                    $('#real_email').prop('checked', 'checked');
                 });
         });
     </script>
@@ -48,10 +48,17 @@
             </div>
 
             <div class="form-group">
-                <label for="email_body">
-                    Body
+                <label for="email_body_html">
+                    Body (HTML)
                 </label>
-                <textarea name="email_body" class="form-control" rows="10" placeholder="Enter body..."></textarea>
+                <textarea name="email_body_html" class="form-control vertical-resize" rows="5" placeholder="Enter HTML..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="email_body_text">
+                    Body (Text Only)
+                </label>
+                <textarea name="email_body_text" class="form-control vertical-resize" rows="5" placeholder="Enter plain text..."></textarea>
             </div>
 
             <div class="checkbox">

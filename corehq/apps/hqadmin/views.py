@@ -268,7 +268,8 @@ def mass_email(request):
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
-            body = form.cleaned_data['email_body']
+            body_html = form.cleaned_data['email_body_html']
+            body_text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
 
             if real_email:
@@ -281,20 +282,19 @@ def mass_email(request):
                 recipients = [request.couch_user]
 
             for recipient in recipients:
-                params = {
-                    'email_body': body,
-                    'user_id': recipient.get_id,
-                    'unsub_url': get_url_base() +
-                                 reverse('unsubscribe', args=[recipient.get_id])
-                }
-                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
-                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
+                    'email_body': body_text,
+                })
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", {
+                    'email_body': body_html,
+                })
 
-                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
+                send_html_email_async.delay(subject, recipient.username, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')
-
+        else:
+            messages.error(request, 'Form wasn\'t valid.')
     else:
         form = EmailForm()
 
