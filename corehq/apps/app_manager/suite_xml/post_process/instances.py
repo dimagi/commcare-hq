@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 import re
+from django.utils.translation import ugettext as _
+
 from corehq import toggles
 from corehq.apps.app_manager.exceptions import DuplicateInstanceIdError
 from corehq.apps.app_manager.suite_xml.contributors import PostProcessor
@@ -87,7 +89,8 @@ class EntryInstances(PostProcessor):
 
         for instance in custom_instances:
             if instance.instance_id in known_instance_ids:
-                raise DuplicateInstanceIdError(instance.instance_id)
+                raise DuplicateInstanceIdError(
+                    _("Duplicate custom instance in {}: {}").format(entry.command.id, instance.instance_id))
             # Remove custom instances from required instances, but add them even if they aren't referenced anywhere
             required_instances.discard(instance.instance_id)
         return {
