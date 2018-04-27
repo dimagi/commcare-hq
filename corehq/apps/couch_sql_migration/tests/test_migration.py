@@ -22,7 +22,6 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.reports.models import HQExportSchema
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -88,7 +87,7 @@ class MigrationTestCase(BaseMigrationTestCase):
             self._do_migration(self.domain_name)
         COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
 
-    @patch.object(HQExportSchema, "get_db", MagicMock())
+    @patch("corehq.apps.couch_sql_migration.couchsqlmigration.stale_get_export_count", MagicMock(return_value=100))
     def test_migration_old_exports(self):
         with self.assertRaises(AssertionError):
             self._do_migration(self.domain_name)
