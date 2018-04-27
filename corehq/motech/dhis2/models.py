@@ -26,8 +26,11 @@ class Dhis2Connection(Document):
     server_url = StringProperty()
     username = StringProperty()
     password = StringProperty()
-    log_level = IntegerProperty()
 
+    @classmethod
+    def wrap(cls, data):
+        data.pop('log_level', None)
+        return super(Dhis2Connection, cls).wrap(data)
 
 class DataValueMap(DocumentSchema):
     column = StringProperty(required=True)
