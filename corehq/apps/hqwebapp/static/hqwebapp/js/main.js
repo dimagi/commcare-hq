@@ -287,11 +287,17 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
-        // EULA modal (only rendered on page if user hasn't agreed to terms)
-        $("#eulaModal").modal({
-            keyboard: false,
-            backdrop: 'static',
-        });
+        // EULA modal
+        var cookieName = "gdpr_rollout";
+        if (!$.cookie(cookieName)) {
+            $("#eula-snooze").click(function() {
+                $.cookie(cookieName, true, { expires: 1, path: '/' });
+            });
+            $("#eulaModal").modal({
+                keyboard: false,
+                backdrop: 'static',
+            });
+        }
 
         // CDA modal
         _.each($(".remote-modal"), function(modal) {
