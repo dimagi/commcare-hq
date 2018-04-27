@@ -568,9 +568,10 @@
         {# Report Issue #}
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
-        {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' %}
+        {% if EULA_COMPLIANCE %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+                {% include 'hqwebapp/includes/modal_eula.html' %}
+            {% endif %}
         {% endif %}
 
         {# 30 Day Trial #}
