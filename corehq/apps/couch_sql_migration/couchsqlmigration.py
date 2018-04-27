@@ -15,6 +15,7 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -28,7 +29,7 @@ from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -55,9 +56,7 @@ def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
 class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
-        assert should_use_sql_backend(domain)
-        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain)
-
+        self._assert_no_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
         self.domain = domain
@@ -285,6 +284,13 @@ class CouchSqlDomainMigrator(object):
                 'stock state', ledger_value.ledger_reference.as_id(),
                 filter_ledger_diffs(diffs)
             )
+
+    def _assert_no_migration_restrictions(self, domain_name):
+        assert should_use_sql_backend(domain_name)
+        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
+        assert not stale_get_export_count(domain_name)
+        assert not any(custom_report_domain == domain_name
+                       for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         if self.with_progress:
