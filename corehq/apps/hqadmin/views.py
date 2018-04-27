@@ -95,7 +95,7 @@ from memoized import memoized
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
-from dimagi.utils.web import json_response, get_url_base
+from dimagi.utils.web import json_response
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -259,6 +259,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
 
+    
 @require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
@@ -268,7 +269,8 @@ def mass_email(request):
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
-            body = form.cleaned_data['email_body']
+            body_html = form.cleaned_data['email_body_html']
+            body_text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
 
             if real_email:
@@ -281,20 +283,19 @@ def mass_email(request):
                 recipients = [request.couch_user]
 
             for recipient in recipients:
-                params = {
-                    'email_body': body,
-                    'user_id': recipient.get_id,
-                    'unsub_url': get_url_base() +
-                                 reverse('unsubscribe', args=[recipient.get_id])
-                }
-                text_content = render_to_string("hqadmin/email/mass_email_base.txt", params)
-                html_content = render_to_string("hqadmin/email/mass_email_base.html", params)
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
+                    'email_body': body_text,
+                })
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", {
+                    'email_body': body_html,
+                })
 
-                send_html_email_async.delay(subject, recipient.email, html_content, text_content,
+                send_html_email_async.delay(subject, recipient.username, html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your email(s) were sent successfully.')
-
+        else:
+            messages.error(request, 'Form wasn\'t valid.')
     else:
         form = EmailForm()
 
