@@ -26,7 +26,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
     activate, LANGUAGE_SESSION_KEY)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
-                                           login_required)
+                                           login_required, two_factor_exempt)
 from django.urls import reverse
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -114,6 +114,7 @@ class MyAccountSettingsView(BaseMyAccountView):
     template_name = 'settings/edit_my_account.html'
 
     @use_select2
+    @two_factor_exempt
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         # this is only here to add the login_required decorator

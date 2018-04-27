@@ -9,6 +9,7 @@ Supports psuedo-tables using dls and real tables.
 """
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import collections
 import datetime
 
@@ -117,7 +118,7 @@ def _to_html(val, key=None, level=0, timeago=False):
     return mark_safe(ret)
 
 
-def get_display_data(data, prop_def, processors=None, timezone=pytz.utc, info_url=None):
+def get_display_data(data, prop_def, processors=None, timezone=pytz.utc):
     # when prop_def came from a couchdbkit document, it will be a LazyDict with
     # a broken pop method.  This conversion also has the effect of a shallow
     # copy, which we want.
@@ -138,6 +139,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc, info_ur
     format = prop_def.pop('format', None)
     process = prop_def.pop('process', None)
     timeago = prop_def.get('timeago', False)
+    has_history = prop_def.pop('has_history', False)
 
     val = eval_expr(expr, data)
 
@@ -165,7 +167,7 @@ def get_display_data(data, prop_def, processors=None, timezone=pytz.utc, info_ur
         "expr": expr_name,
         "name": name,
         "value": val,
-        "info_url": info_url.replace("__placeholder__", expr) if info_url is not None else None,
+        "has_history": has_history,
     }
 
 
@@ -188,7 +190,7 @@ def eval_expr(expr, dict_data):
         return dict_data.get(expr, None)
 
 
-def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc, info_url=None):
+def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc):
     """
     Return a low-level definition of a group of tables, given a data object and
     a high-level declarative definition of the table rows and value
@@ -204,8 +206,7 @@ def get_tables_as_rows(data, definition, processors=None, timezone=pytz.utc, inf
                 data,
                 prop,
                 timezone=timezone,
-                processors=processors,
-                info_url=info_url) for prop in row]
+                processors=processors) for prop in row]
             for row in section['layout']]
 
         max_row_len = max(list(map(len, rows))) if rows else 0
@@ -246,7 +247,7 @@ def get_default_definition(keys, num_columns=1, name=None, assume_phonetimes=Tru
     # but doesn't hurt either, and is easier than trying to detect.
     # I believe no caller uses this on non-phone-time datetimes
     # but if something does, we'll have to do this in a more targetted way
-    layout = chunked([{"expr": prop, "is_phone_time": assume_phonetimes}
+    layout = chunked([{"expr": prop, "is_phone_time": assume_phonetimes, "has_history": True}
                       for prop in keys], num_columns)
 
     return [

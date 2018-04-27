@@ -1,10 +1,12 @@
 {
     "domains": [
         "enikshay",
-        "enikshay-reports-qa"
+        "enikshay-reports-qa",
+        "enikshay-test"
     ],
     "server_environment": [
-        "enikshay"
+        "enikshay",
+        "softlayer"
     ],
     "data_source_table": "episode",
     "report_id": "patient_overview_mobile",

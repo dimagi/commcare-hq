@@ -111,17 +111,6 @@ class SelectApplicationFilter(BaseSingleOptionFilter):
             'version': app.version}) for app in apps_for_domain]
 
 
-class MultiCaseGroupFilter(BaseMultipleOptionFilter):
-    slug = "case_group"
-    label = ugettext_lazy("Case Group")
-    default_text = ugettext_lazy("All Case Groups")
-    placeholder = ugettext_lazy('Click to select case groups')
-
-    @property
-    def options(self):
-        return get_case_group_meta_in_domain(self.domain)
-
-
 class RepeaterFilter(BaseSingleOptionFilter):
     slug = 'repeater'
     label = ugettext_lazy('Repeater')

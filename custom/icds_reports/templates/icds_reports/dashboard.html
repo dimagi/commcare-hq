@@ -65,6 +65,7 @@
         <script type="text/javascript" src="{% static 'js/angular-services/demographics.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/infrastructure.service.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/angular-services/issnip.service.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/angular-services/baseControllers.service.js' %}"></script>
 
         <script type="text/javascript" src="{% static 'js/directives/filters/filters.directive.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/directives/kpi/kpi.directive.js' %}"></script>
@@ -285,6 +286,7 @@
 <script>
     angular.module('icdsApp').constant('locationHierarchy', {{ location_hierarchy | JSON }});
     angular.module('icdsApp').constant('userLocationId', {{ user_location_id | JSON }});
+    angular.module('icdsApp').constant('allUserLocationId', {{ all_user_location_id | JSON }});
     angular.module('icdsApp').constant('reportAnIssueUrl', {{ report_an_issue_url | JSON }});
     angular.module('icdsApp').constant('isWebUser', {{ is_web_user | JSON }});
     angular.module('icdsApp').constant('haveAccessToFeatures', {{ have_access_to_features | JSON }});

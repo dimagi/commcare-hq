@@ -67,9 +67,11 @@ from corehq.apps.app_manager.models import (
     ReportAppConfig,
     UpdateCaseAction,
     FixtureSelect,
-    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations, CustomIcon)
+    DefaultCaseSearchProperty, get_all_mobile_filter_configs, get_auto_filter_configurations,
+)
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps, require_deploy_apps
+from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
 from six.moves import map
 
 logger = logging.getLogger(__name__)
@@ -187,7 +189,7 @@ def _get_basic_module_view_context(app, module, case_property_builder):
             app, module, case_property_builder, module.case_type),
         'case_list_form_not_allowed_reasons': _case_list_form_not_allowed_reasons(module),
         'child_module_enabled': (
-            toggles.BASIC_CHILD_MODULE.enabled(app.domain)
+            toggles.BASIC_CHILD_MODULE.enabled(app.domain) and not module.is_training_module
         ),
     }
 
@@ -255,7 +257,7 @@ def _get_report_module_context(app, module):
             'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
-            'supportSyncDelay': app.mobile_ucr_restore_version != MOBILE_UCR_VERSION_1,
+            'mobileUcrVersion': app.mobile_ucr_restore_version,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
@@ -263,6 +265,7 @@ def _get_report_module_context(app, module):
             'autoFilterChoices': auto_filter_choices,
             'dateRangeOptions': [choice._asdict() for choice in get_simple_dateranges()],
         },
+        'uuids_by_instance_id': get_uuids_by_instance_id(app.domain),
     }
     return context
 
@@ -315,7 +318,8 @@ def _get_valid_parents_for_child_module(app, module):
     # The current module is not allowed, but its parent is
     # Shadow modules are not allowed
     return [parent_module for parent_module in app.modules if (parent_module.unique_id not in invalid_ids)
-            and not parent_module == module and parent_module.doc_type != "ShadowModule"]
+            and not parent_module == module and parent_module.doc_type != "ShadowModule"
+            and not parent_module.is_training_module]
 
 
 def _case_list_form_options(app, module, case_type_, lang=None):
@@ -607,6 +611,13 @@ def _new_report_module(request, domain, app, name, lang):
 
 def _new_shadow_module(request, domain, app, name, lang):
     module = app.add_module(ShadowModule.new_module(name, lang))
+    app.save()
+    return back_to_main(request, domain, app_id=app.id, module_id=module.id)
+
+
+def _new_training_module(request, domain, app, name, lang):
+    name = name or 'Training'
+    module = app.add_module(Module.new_training_module(name, lang))
     app.save()
     return back_to_main(request, domain, app_id=app.id, module_id=module.id)
 
@@ -911,6 +922,7 @@ def edit_report_module(request, domain, app_id, module_unique_id):
         )
         return HttpResponseBadRequest(_("There was a problem processing your request."))
 
+    get_uuids_by_instance_id.clear(domain)
     return json_response('success')
 
 
@@ -1061,6 +1073,10 @@ MODULE_TYPE_MAP = {
     },
     'shadow': {
         FN: _new_shadow_module,
+        VALIDATIONS: []
+    },
+    'training': {
+        FN: _new_training_module,
         VALIDATIONS: []
     },
 }

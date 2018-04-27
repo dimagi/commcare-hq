@@ -127,20 +127,11 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user.save()
 
         email = new_user.email
-        properties = {}
 
         if self.request.user_agent.is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(
-                email, True, toggles.NAMESPACE_USER
-            )
-            variation = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                email, toggles.NAMESPACE_USER
-            )
-            properties = {
-                "mobile_signups_test_march2018test": "variation" if variation else "control"
-            }
+            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
 
-        track_workflow(email, "Requested new account", properties)
+        track_workflow(email, "Requested new account")
         login(self.request, new_user)
 
     @allow_remote_invocation
@@ -185,7 +176,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 'success': True,
                 'is_mobile_experience': (
                     toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                        username, toggles.NAMESPACE_USER) and
+                        username) and
                     toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
                         username, toggles.NAMESPACE_USER)
                 ),

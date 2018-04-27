@@ -17,6 +17,7 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
+from corehq.elastic import iter_es_docs, ScanResult
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
 from corehq.util.datadog.gauges import datadog_histogram
@@ -333,13 +334,23 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 
 
 def get_export_documents(export_instance, filters):
+    # Pull doc ids from elasticsearch and stream to disk
     query = _get_export_query(export_instance, filters)
-    # size here limits each scroll request, not the total number of results
-    # We believe we can occasionally hit the 5m limit to process a single scroll window
-    # with a window size of 1000 (https://manage.dimagi.com/default.asp?248384).
-    # Thus, smaller window size is intentional
-    # Another option we have is to bump the "scroll" parameter up from "5m"
-    return query.size(200).scroll()
+    _, temp_path = tempfile.mkstemp()
+    with open(temp_path, 'w') as f:
+        scroll_result = query.scroll_ids()
+        for doc_id in scroll_result:
+            f.write(doc_id + '\n')
+
+    def iter_export_docs():
+        # Stream doc ids from disk and fetch documents from ES in chunks
+        with open(temp_path) as f:
+            doc_ids = (doc_id.strip() for doc_id in f)
+            for doc in iter_es_docs(query.index, doc_ids):
+                yield doc
+        os.remove(temp_path)
+
+    return ScanResult(scroll_result.count, iter_export_docs())
 
 
 def _get_export_query(export_instance, filters):
@@ -360,7 +371,7 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
     the given documents.
     :param writer: An open _Writer
     :param export_instance: An ExportInstance
-    :param documents: A ScanResult, or if progress_tracker is None, any iterable yielding documents
+    :param documents: An iterable yielding documents
     :param progress_tracker: A task for soil to track progress against
     :return: None
     """

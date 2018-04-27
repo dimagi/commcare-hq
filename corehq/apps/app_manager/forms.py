@@ -126,7 +126,7 @@ class PromptUpdateSettingsForm(forms.Form):
 
         self.fields['app_version'].choices = [(LATEST_APP_VALUE, 'Latest Released Version')] + [
             (app.version, 'Version {}'.format(app.version))
-            for app in get_all_built_app_ids_and_versions(domain, app_id)[0:10]
+            for app in get_all_built_app_ids_and_versions(domain, app_id)[-10:]
         ]
 
         self.helper = FormHelper()

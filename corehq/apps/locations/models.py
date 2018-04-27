@@ -7,6 +7,7 @@ from functools import partial
 from bulk_update.helper import bulk_update as bulk_update_helper
 
 import jsonfield
+from django.conf import settings
 from django.db import models, transaction
 from django_cte import CTEQuerySet
 from memoized import memoized
@@ -16,7 +17,7 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
-from corehq.apps.locations.queryutil import ComparedQuerySet
+from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
@@ -270,11 +271,13 @@ class LocationQueriesMixin(object):
 
         ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
         assert isinstance(ids_query, ComparedQuerySet), ids_query
-        return ComparedQuerySet(
-            self.filter(id__in=ids_query._mptt_set),
+        result = ComparedQuerySet(
+            self.filter(id__in=ids_query._mptt_set) if ids_query._mptt_set is not None else None,
             self.filter(id__in=ids_query._cte_set) if ids_query._cte_set is not None else None,
-            ids_query,
+            TimingContext("accessible_to_user"),
         )
+        result._timing += ids_query._timing
+        return result
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -312,10 +315,10 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
             return None
 
     def get_queryset(self):
-        return (
-            LocationQuerySet(self.model, using=self._db)
-            .order_by(self.tree_id_attr, self.left_attr)  # mptt default
-        )
+        query = LocationQuerySet(self.model, using=self._db)
+        if not settings.IS_LOCATION_CTE_ONLY:
+            query = query.order_by(self.tree_id_attr, self.left_attr)  # mptt default
+        return query
 
     def get_from_user_input(self, domain, user_input):
         """

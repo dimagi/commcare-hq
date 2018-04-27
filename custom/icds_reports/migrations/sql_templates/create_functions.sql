@@ -131,12 +131,14 @@ DECLARE
   _agg_complementary_feeding_table text;
   _ucr_child_tasks_table text;
   _agg_thr_form_table text;
+  _agg_gm_form_table text;
   _start_date date;
   _end_date date;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'child_health_monthly' || '_' || _start_date;
+  _agg_gm_form_table := 'icds_dashboard_growth_monitoring_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
@@ -338,6 +340,16 @@ BEGIN
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
       'days_ration_given_child = agg.days_ration_given_child  ' ||
     'FROM ' || quote_ident(_agg_thr_form_table) || ' agg ' ||
+    'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'zscore_grading_hfa = agg.zscore_grading_hfa, ' ||
+      'zscore_grading_hfa_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
+      'zscore_grading_wfh = agg.zscore_grading_wfh, ' ||
+      'zscore_grading_wfh_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_wfh_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
+      'muac_grading = agg.muac_grading, ' ||
+      'muac_grading_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.muac_grading_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END ' ||
+    'FROM ' || quote_ident(_agg_gm_form_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
@@ -561,7 +573,13 @@ BEGIN
     'valid_all_registered_in_month, ' ||
     'ebf_no_info_recorded, ' ||
     'weighed_and_height_measured_in_month,' ||
-    'weighed_and_born_in_month ' ||
+    'weighed_and_born_in_month, ' ||
+    'zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2, ' ||
+    'wasting_moderate_v2, ' ||
+    'wasting_severe_v2 ' ||
     ')' ||
   '(SELECT ' ||
     'state_id, ' ||
@@ -623,7 +641,8 @@ BEGIN
     'sum(valid_all_registered_in_month), ' ||
     'sum(ebf_no_info_recorded), ' ||
     'sum(CASE WHEN nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END) ' ||
+    'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END), ' ||
+    '0, 0, 0, 0, 0, 0 ' ||
     'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
     'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident)';
@@ -647,7 +666,13 @@ BEGIN
     'counsel_play_cf_video = temp.counsel_comp_feeding_vid, ' ||
     'cf_initiation_in_month = temp.cf_initiation_in_month, ' ||
     'cf_initiation_eligible = temp.cf_initiation_eligible, ' ||
-    'days_ration_given_child = temp.days_ration_given_child ' ||
+    'days_ration_given_child = temp.days_ration_given_child, ' ||
+    'zscore_grading_hfa_normal = temp.zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate = temp.zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe = temp.zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2 = temp.wasting_normal_v2, ' ||
+    'wasting_moderate_v2 = temp.wasting_moderate_v2, ' ||
+    'wasting_severe_v2 = temp.wasting_severe_v2 ' ||
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, disabled, minority, resident, ' ||
       'sum(cf_eligible) as cf_eligible, ' ||
@@ -660,7 +685,22 @@ BEGIN
       'sum(counsel_comp_feeding_vid) as counsel_comp_feeding_vid, ' ||
       'sum(cf_initiation_in_month) as cf_initiation_in_month, ' ||
       'sum(cf_initiation_eligible) as cf_initiation_eligible, ' ||
-      'sum(days_ration_given_child) as days_ration_given_child ' ||
+      'sum(days_ration_given_child) as days_ration_given_child, ' ||
+      'sum(CASE WHEN zscore_grading_hfa_recorded_in_month = 1 AND zscore_grading_hfa = 3 THEN 1 ELSE 0 END) as zscore_grading_hfa_normal, ' ||
+      'sum(CASE WHEN zscore_grading_hfa_recorded_in_month = 1 AND zscore_grading_hfa = 2 THEN 1 ELSE 0 END) as zscore_grading_hfa_moderate, ' ||
+      'sum(CASE WHEN zscore_grading_hfa_recorded_in_month = 1 AND zscore_grading_hfa = 1 THEN 1 ELSE 0 END) as zscore_grading_hfa_severe, ' ||
+      'sum(CASE ' ||
+        'WHEN zscore_grading_wfh_recorded_in_month = 1 AND zscore_grading_wfh = 3 THEN 1 ' ||
+        'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 3 THEN 1 ' ||
+        'ELSE 0 END) as wasting_normal_v2, ' ||
+      'sum(CASE ' ||
+        'WHEN zscore_grading_wfh_recorded_in_month = 1 AND zscore_grading_wfh = 2 THEN 1 ' ||
+        'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 2 THEN 1 ' ||
+        'ELSE 0 END) as wasting_moderate_v2, ' ||
+      'sum(CASE ' ||
+        'WHEN zscore_grading_wfh_recorded_in_month = 1 AND zscore_grading_wfh = 1 THEN 1 ' ||
+        'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 1 THEN 1 ' ||
+        'ELSE 0 END) as wasting_severe_v2 ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, disabled, minority, resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
@@ -717,7 +757,13 @@ BEGIN
       'sum(ebf_no_info_recorded), ' ||
       'sum(weighed_and_height_measured_in_month), ' ||
       'sum(weighed_and_born_in_month), ' ||
-      'sum(days_ration_given_child) ';
+      'sum(days_ration_given_child), ' ||
+      'sum(zscore_grading_hfa_normal), ' ||
+      'sum(zscore_grading_hfa_moderate), ' ||
+      'sum(zscore_grading_hfa_severe), ' ||
+      'sum(wasting_normal_v2), ' ||
+      'sum(wasting_moderate_v2), ' ||
+      'sum(wasting_severe_v2) ';
 
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
     'state_id, ' ||

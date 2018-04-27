@@ -40,7 +40,7 @@ def clean_exception(exception):
     # couchdbkit doesn't provide a better way for us to catch this exception
     if (
         isinstance(exception, AssertionError) and
-        exception.message.startswith('received an invalid response of type')
+        six.text_type(exception).startswith('received an invalid response of type')
     ):
         message = ("It looks like couch returned an invalid response to "
                    "couchdbkit.  This could contain sensitive information, "

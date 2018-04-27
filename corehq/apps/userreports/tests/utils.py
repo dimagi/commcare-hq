@@ -10,6 +10,7 @@ import uuid
 from mock import patch
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
@@ -84,7 +85,7 @@ def doc_to_change(doc):
         document=doc,
         metadata=ChangeMeta(
             document_id=doc['_id'],
-            data_source_type=data_sources.COUCH,
+            data_source_type=data_sources.SOURCE_COUCH,
             data_source_name=CommCareCase.get_db().dbname,
             document_type=doc['doc_type'],
             document_subtype=doc.get('type'),
@@ -130,3 +131,17 @@ def mock_sql_backend():
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
                  return_value=(get_sample_data_source(), None))
+
+
+def get_simple_xform():
+    xform = XFormBuilder()
+    xform.new_question('first_name', 'First Name', data_type='string')
+    xform.new_question('last_name', 'Last Name', data_type='string')
+    xform.new_question('children', 'Children', data_type='int')
+    xform.new_question('dob', 'Date of Birth', data_type='date')
+    xform.new_question('state', 'State', data_type='select', choices={
+        'MA': 'MA',
+        'MN': 'MN',
+        'VT': 'VT',
+    })
+    return xform.tostring()

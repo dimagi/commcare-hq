@@ -209,6 +209,9 @@ class DashboardView(TemplateView):
         kwargs.update(self.kwargs)
         kwargs['location_hierarchy'] = location_hierarchy_config(self.domain)
         kwargs['user_location_id'] = self.couch_user.get_location_id(self.domain)
+        kwargs['all_user_location_id'] = list(self.request.couch_user.get_sql_locations(
+            self.kwargs['domain']
+        ).location_ids())
         kwargs['have_access_to_features'] = icds_pre_release_features(self.couch_user)
         kwargs['have_access_to_all_locations'] = self.couch_user.has_permission(
             self.domain, 'access_all_locations'
@@ -575,7 +578,13 @@ class AwcReportsView(BaseReportView):
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s %s" % (order_by_name_column, order_dir)
+                elif order_by_name_column == 'current_month_nutrition_status':
+                    order_by_name_column = 'current_month_nutrition_status_sort'
+                elif order_by_name_column == 'current_month_stunting':
+                    order_by_name_column = 'current_month_stunting_sort'
+                elif order_by_name_column == 'current_month_wasting':
+                    order_by_name_column = 'current_month_wasting_sort'
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
 
                 data = get_awc_report_beneficiary(
                     start,
@@ -584,12 +593,10 @@ class AwcReportsView(BaseReportView):
                     order,
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
-                    tuple(two_before.timetuple())[:3],
-                    domain
+                    tuple(two_before.timetuple())[:3]
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                domain,
                 self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
@@ -690,7 +697,8 @@ class ExportIndicatorView(View):
                 awcs,
                 pdf_format,
                 month,
-                year
+                year,
+                request.couch_user
             )
             task_id = task.task_id
             return JsonResponse(data={'task_id': task_id})

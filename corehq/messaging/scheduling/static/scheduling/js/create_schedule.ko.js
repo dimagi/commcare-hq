@@ -302,6 +302,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             return '';
         });
 
+        self.saveBroadcastText = ko.computed(function() {
+            if(self.send_frequency() === 'immediately') {
+                return gettext("Send Broadcast");
+            } else {
+                return gettext("Schedule Broadcast");
+            }
+        });
+
         self.initDatePicker = function(element) {
             element.datepicker({dateFormat : "yy-mm-dd"});
         };

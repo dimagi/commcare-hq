@@ -184,31 +184,3 @@ class JsonApiLog(models.Model):
             response_status=response_status,
             response_body=response_body,
         )
-
-    @property
-    def pp_request_headers(self):
-        """
-        Pretty-print the request headers
-        """
-        return pformat_json(self.request_headers)
-
-    @property
-    def pp_request_params(self):
-        """
-        Pretty-print the request params
-        """
-        return pformat_json(self.request_params)
-
-    @property
-    def pp_request_body(self):
-        """
-        Pretty-print the request body
-        """
-        return pformat_json(self.request_body)
-
-    @property
-    def pp_response_body(self):
-        """
-        Pretty-print the response body
-        """
-        return pformat_json(self.response_body)

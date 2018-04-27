@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division
 from __future__ import unicode_literals
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from django.conf import settings
 
 
 class MessagingRuleProgressHelper(object):
@@ -65,3 +66,11 @@ class MessagingRuleProgressHelper(object):
             return 100
 
         return int(round(100.0 * current / total, 0))
+
+
+def use_phone_entries():
+    """
+    Phone entries are not used in ICDS because they're not needed and
+    it helps performance to avoid keeping them up to date.
+    """
+    return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
