@@ -106,7 +106,14 @@ class ConnectionManager(object):
         """
         return self._get_or_create_helper(engine_id).engine
 
-    def get_load_balanced_read_engine_id(self, engine_id, default=None):
+    def get_load_balanced_read_db_alais(self, engine_id, default=None):
+        """
+        returns the load balanced read db alias based on list of read databases
+            and their weights obtained from settings.REPORTING_DATABASES and
+            settings.LOAD_BALANCED_APPS.
+
+            If a suitable db is not found returns the `default` or `engine_id` itself
+        """
         read_dbs = self.read_database_mapping.get(engine_id, [])
         load_balanced_db = select_db_for_read(read_dbs)
 
