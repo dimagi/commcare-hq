@@ -1,22 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
-
-import yaml
 from django.test import SimpleTestCase
 
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.aggregate_ucrs.parser import AggregationSpec
+from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 
 
-class ConfigParseTest(SimpleTestCase, TestFileMixin):
-    file_path = ('data', 'table_definitions')
-    root = os.path.dirname(__file__)
+class ConfigParseTest(SimpleTestCase, AggregationBaseTestMixin):
 
     def test_parse_basic_definition(self):
-        config_yml = self.get_file('aggregate_sample_definition', 'yml')
-        config_json = yaml.load(config_yml)
-        spec = AggregationSpec.wrap(config_json)
+        spec = self.get_config_spec()
         self.assertEqual('pregnancy_cases', spec.primary_table.data_source_id)
         self.assertEqual('doc_id', spec.primary_table.key_column)
         self.assertEqual(4, len(spec.primary_table.columns))

@@ -1,24 +1,19 @@
-import os
-import yaml
+from __future__ import absolute_import
+from __future__ import unicode_literals
 from django.test import TestCase
 
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-from corehq.util.test_utils import TestFileMixin
-from corehq.apps.aggregate_ucrs.parser import AggregationSpec
+from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 
 
-class ConfigImportTest(TestCase, TestFileMixin):
-    file_path = ('data', 'table_definitions')
-    root = os.path.dirname(__file__)
+class ConfigImportTest(TestCase, AggregationBaseTestMixin):
 
     def setUp(self):
         AggregateTableDefinition.objects.all().delete()
 
     def test_import_from_basic_definition(self):
-        config_yml = self.get_file('aggregate_sample_definition', 'yml')
-        config_json = yaml.load(config_yml)
-        spec = AggregationSpec.wrap(config_json)
+        spec = self.get_config_spec()
         aggregate_table_definition = import_aggregation_models_from_spec(spec)
         self.assertEqual(1, AggregateTableDefinition.objects.count())
         table_def = AggregateTableDefinition.objects.get(pk=aggregate_table_definition.pk)
