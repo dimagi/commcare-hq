@@ -260,7 +260,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
 
-    
+
 @require_superuser
 def mass_email(request):
     if not request.couch_user.is_staff:
