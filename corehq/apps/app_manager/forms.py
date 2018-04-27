@@ -10,6 +10,7 @@ from django.utils.translation import ugettext as _, ugettext_lazy
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
+from corehq.apps.linked_domain.models import DomainLink
 from corehq.toggles import LINKED_DOMAINS
 
 from .dbaccessors import get_all_built_app_ids_and_versions
@@ -61,17 +62,20 @@ class CopyApplicationForm(forms.Form):
         )
 
     def clean_domain(self):
-        domain_name = self.cleaned_data['domain']
-        domain = Domain.get_by_name(domain_name)
-        if domain is None:
+        domain = self.cleaned_data['domain']
+        domain_obj = Domain.get_by_name(domain)
+        if domain_obj is None:
             raise forms.ValidationError("A valid project space is required.")
-        return domain_name
+        return domain
 
     def clean(self):
         domain = self.cleaned_data.get('domain')
         if self.cleaned_data.get('linked'):
             if not LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+            if DomainLink.all_objects.filter(linked_domain=domain).exists():
+                raise forms.ValidationError(
+                    "The target project space is already linked to a different domain")
         return self.cleaned_data
 
 
