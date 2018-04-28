@@ -275,7 +275,7 @@ def mass_email(request):
             real_email = form.cleaned_data['real_email']
 
             if real_email:
-                recipients = [h['username'] for h in UserES().web_users().run().hits]
+                recipients = [h['username'] for h in UserES().web_users().source('username').run().hits]
             else:
                 recipients = [request.couch_user.username]
 
