@@ -261,7 +261,7 @@ class RecentCouchChangesView(BaseAdminSectionView):
         }
 
 
-@require_superuser
+@require_superuser_or_developer
 def mass_email(request):
     if not request.couch_user.is_staff:
         raise Http404()
