@@ -179,7 +179,7 @@ def get_all_model_iterators_builders_for_domain(model_class, domain, limit_to_db
 
     if limit_to_db:
         if limit_to_db not in using:
-            raise DomainDumpError('DB specified is not valide for '
+            raise DomainDumpError('DB specified is not valid for '
                                   'model class: {} not in {}'.format(limit_to_db, using))
         using = [limit_to_db]
 
