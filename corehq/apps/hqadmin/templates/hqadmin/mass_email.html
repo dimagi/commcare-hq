@@ -35,6 +35,10 @@
         {% csrf_token %}
         <fieldset>
             <legend>Email</legend>
+            <div class="help-block">
+                You can use the text <code>{% verbatim %}{{ first_name }}{% endverbatim %}</code> to substitute the user's first name.
+                If their name is unknown, their email address will be substituted.
+            </div>
             <div class="form-group">
                 <label for="email_subject">
                     Subject
