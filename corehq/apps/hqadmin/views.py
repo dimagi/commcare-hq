@@ -30,10 +30,12 @@ from django.http import (
 )
 from django.http.response import Http404
 from django.shortcuts import render, redirect
+from django.template import Context, Template
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
+from dimagi.utils.web import get_site_domain
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
@@ -263,36 +265,43 @@ class RecentCouchChangesView(BaseAdminSectionView):
 
 @require_superuser_or_developer
 def mass_email(request):
-    if not request.couch_user.is_staff:
-        raise Http404()
-
     if request.method == "POST":
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
-            body_html = form.cleaned_data['email_body_html']
-            body_text = form.cleaned_data['email_body_text']
+            body_html = Template(form.cleaned_data['email_body_html'])
+            body_text = Template(form.cleaned_data['email_body_text'])
             real_email = form.cleaned_data['real_email']
 
             if real_email:
-                recipients = [h['username'] for h in UserES().web_users().run().hits]
+                recipients = [{
+                    'username': h['username'],
+                    'first_name': h['first_name'] or 'CommCare User',
+                } for h in UserES().web_users().run().hits]
             else:
-                recipients = [request.couch_user.username]
+                recipients = [{
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }]
 
             for recipient in recipients:
+                context = recipient
+                context.update({
+                    'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+                })
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
-                    'email_body': body_text,
+                    'email_body': body_text.render(Context(context)),
                 })
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", {
-                    'email_body': body_html,
+                    'email_body': body_html.render(Context(context)),
                 })
 
-                send_html_email_async.delay(subject, recipient, html_content, text_content,
+                send_html_email_async.delay(subject, recipient['username'], html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
-            messages.success(request, 'Your email(s) were sent successfully.')
+            messages.success(request, 'Your {} email(s) were sent successfully.'.format(len(recipients)))
         else:
-            messages.error(request, 'Form wasn\'t valid.')
+            messages.error(request, 'Something went wrong.')
     else:
         form = EmailForm()
 
