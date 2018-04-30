@@ -79,8 +79,11 @@ hqDefine("reports/js/data_corrections", function() {
             self.initQuery();
             self.generateSearchableNames();
         };
+        self.breakWord = function(str) {
+            return str.replace(/([\/_])/g, "$1\u200B");
+        };
         var innerTemplate = _.map(self.displayProperties, function(p) {
-            return _.template("<span data-bind='text: <%= property %>, visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
+            return _.template("<span data-bind='text: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
         }).join("");
         self.propertyTemplate = {
             nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),
