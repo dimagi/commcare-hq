@@ -77,7 +77,7 @@ hqDefine("reports/js/data_corrections", function() {
             self.initQuery();
         };
         self.breakWord = function(str) {
-            return str.replace(/([\/_])/g, "$1\u200B");
+            return str.replace(/([\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
         };
         var innerTemplate = _.map(self.displayProperties, function(p) {
             return _.template("<span data-bind='text: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
