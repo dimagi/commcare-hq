@@ -231,23 +231,23 @@ BEGIN
     'low_birth_weight_born_in_month, ' ||
     'bf_at_birth_born_in_month, ' ||
     'ebf_eligible, ' ||
+    '0, ' ||
     'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
     'cf_eligible, ' ||
     'fully_immunized_eligible, ' ||
     'fully_immunized_on_time, ' ||
     'fully_immunized_late, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
-    'NULL, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
     'counsel_immediate_breastfeeding, ' ||
     'weight_recorded_in_month, ' ||
     'height_recorded_in_month, ' ||
