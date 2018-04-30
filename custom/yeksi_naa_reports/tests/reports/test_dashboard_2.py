@@ -14,6 +14,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -28,39 +29,37 @@ class TestDashboard2(YeksiTestCase):
         total_row = loss_rate_report['total_row']
         self.assertEqual(
             headers,
-            [u'R\xe9gion', u'Octobre 2017', u'Novembre 2017', u'D\xe9cembre 2017', u'Janvier 2018',
-             u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
             rows,
             sorted([
-                [{u'html': u'New Test Region'}, {u'html': u'43.41%'}, {u'html': u'16.59%'}, {u'html': u'7.56%'},
-                 {u'html': u'3.17%'}, {u'html': u'1.95%'}, {u'html': u'0.73%'}, {u'html': u'12.24%'}],
-                [{u'html': u'Region Test'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Region 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Saint-Louis'}, {u'html': u'6.36%'}, {u'html': u'9.88%'},
-                 {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'8.00%'}],
-                [{u'html': u'Dakar'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Fatick'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'9.69%'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'9.69%'}],
-                [{u'html': u'Thies'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}]
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'}, {'html': '9.69%'}, {'html': '5.49%'},
+                 {'html': '0.75%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '5.48%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Saint-Louis'}, {'html': '6.36%'}, {'html': '9.88%'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '2.94%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '5.92%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [{u'html': u'Taux par Pays'}, {u'html': u'21.93%'}, {u'html': u'11.79%'}, {u'html': u'7.56%'},
-             {u'html': u'3.17%'}, {u'html': u'1.95%'}, {u'html': u'0.73%'}, {u'html': u'10.81%'}]
+            [
+                {'html': 'Taux par Pays'}, {'html': '6.36%'}, {'html': '9.79%'}, {'html': '3.61%'},
+                {'html': '0.75%'}, {'html': '2.94%'}, {'html': '0.00%'}, {'html': '5.74%'}
+            ]
         )
 
     def test_expiration_rate_report(self):
@@ -68,6 +67,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -82,49 +82,41 @@ class TestDashboard2(YeksiTestCase):
         total_row = expiration_rate_report['total_row']
         self.assertEqual(
             headers,
-            [u'R\xe9gion', u'Octobre 2017', u'Novembre 2017', u'D\xe9cembre 2017', u'Janvier 2018',
-             u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
             rows,
             sorted([
-                [{u'html': u'New Test Region'}, {u'style': u'color: red', u'html': u'38.77%'},
-                 {u'style': u'color: red', u'html': u'29.67%'}, {u'style': u'color: red', u'html': u'17.14%'},
-                 {u'style': u'color: red', u'html': u'13.19%'}, {u'style': u'color: red', u'html': u'7.76%'},
-                 {u'style': u'', u'html': u'1.32%'}, {u'style': u'color: red', u'html': u'17.97%'}],
-                [{u'html': u'Region Test'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Region 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Saint-Louis'}, {u'style': u'color: red', u'html': u'6.50%'},
-                 {u'style': u'color: red', u'html': u'8.55%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'style': u'color: red', u'html': u'7.47%'}],
-                [{u'html': u'Dakar'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-                [{u'html': u'Fatick'}, {u'html': u'pas de donn\xe9es'},
-                 {u'style': u'color: red', u'html': u'7.75%'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'style': u'color: red', u'html': u'7.75%'}],
-                [{u'html': u'Thies'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}]
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'},
+                 {'style': 'color: red', 'html': '7.75%'}, {'style': '', 'html': '3.59%'},
+                 {'style': '', 'html': '3.51%'}, {'html': 'pas de donn\xe9es'},
+                 {'style': '', 'html': '2.70%'}, {'style': 'color: red', 'html': '5.11%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Saint-Louis'}, {'style': 'color: red', 'html': '6.50%'},
+                 {'style': 'color: red', 'html': '8.55%'}, {'style': '', 'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '1.12%'},
+                 {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '4.93%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
             [
-                {u'html': u'Taux par Pays'},
-                {u'style': u'color: red', u'html': u'16.76%'},
-                {u'style': u'color: red', u'html': u'12.79%'},
-                {u'style': u'color: red', u'html': u'17.14%'},
-                {u'style': u'color: red', u'html': u'13.19%'},
-                {u'style': u'color: red', u'html': u'7.76%'},
-                {u'style': u'', u'html': u'1.32%'},
-                {u'style': u'color: red', u'html': u'12.85%'}
+                {'html': 'Taux par Pays'}, {'style': 'color: red', 'html': '6.50%'},
+                {'style': 'color: red', 'html': '8.17%'}, {'style': '', 'html': '2.34%'},
+                {'style': '', 'html': '3.51%'}, {'style': '', 'html': '1.12%'},
+                {'style': '', 'html': '2.70%'}, {'style': '', 'html': '5.00%'}
             ]
         )
 
@@ -133,6 +125,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -147,73 +140,73 @@ class TestDashboard2(YeksiTestCase):
         total_row = recovery_rate_by_district_report['total_row']
         self.assertEqual(
             headers,
-            [u'R\xe9gion', u'Octobre 2017', u'Novembre 2017', u'D\xe9cembre 2017', u'Janvier 2018',
-             u'F\xe9vrier 2018', u'Mars 2018', u'Taux moyen']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
             rows,
             sorted([
-                [{u'html': u'District Sud'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Khombole'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Joal Fadiouth'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Test 2'}, {u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'0.00%'}],
-                [{u'html': u'Thies'}, {u'html': u'100.00%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Mbao'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Tivaoune'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Pikine'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District Gu\xe9diawaye'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'District M\xe9kh\xe9'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'DISTRICT PNA'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'100.00%'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'Dakar'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'0.00%'}, {u'html': u'0.00%'}],
-                [{u'html': u'District Thiadiaye'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}],
-                [{u'html': u'New York'}, {u'html': u'19.15%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'19.15%'}],
-                [{u'html': u'Dakar'}, {u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'0.00%'}],
-                [{u'html': u'District Centre'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'0.00%'}, {u'html': u'0.00%'}],
-                [{u'html': u'District Test'}, {u'html': u'100.00%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'100.00%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'100.00%'}]
+                [{'html': 'District Sud'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Khombole'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Joal Fadiouth'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Test 2'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
+                [{'html': 'Thies'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}],
+                [{'html': 'District Mbao'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Tivaoune'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Pikine'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Gu\xe9diawaye'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District M\xe9kh\xe9'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'DISTRICT PNA'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '100.00%'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'District Thiadiaye'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'New York'}, {'html': '19.15%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '19.15%'}],
+                [{'html': 'Dakar'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
+                [{'html': 'District Centre'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'District Test'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [{u'html': u'Taux par Pays'}, {u'html': u'44.46%'}, {u'html': u'0.00%'}, {u'html': u'0.00%'},
-             {u'html': u'100.00%'}, {u'html': u'100.00%'}, {u'html': u'75.86%'}, {u'html': u'80.43%'}]
+            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': '0.00%'}, {'html': '0.00%'},
+             {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'}, {'html': '80.43%'}]
         )
 
     def test_recovery_rate_by_pps_report_country_level(self):
@@ -221,6 +214,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -236,36 +230,36 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             headers,
             ['Région', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
-             'Février 2018', 'Mars 2018', u'Taux moyen']
+             'Février 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
             rows,
             sorted([
-                [{u'html': u'New Test Region'}, {u'html': u'77.30%'}, {u'html': u'63.63%'}, {u'html': u'53.65%'},
-                 {u'html': u'55.93%'}, {u'html': u'63.43%'}, {u'html': u'90.75%'}, {u'html': u'67.39%'}],
-                [{u'html': u'Region Test'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'28.12%'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'28.12%'}],
-                [{u'html': u'Region 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'46.15%'}, {u'html': u'46.15%'}],
-                [{u'html': u'Dakar'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'0.00%'}, {u'html': u'0.00%'}],
-                [{u'html': u'Saint-Louis'}, {u'html': u'68.82%'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'68.82%'}],
-                [{u'html': u'Fatick'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'90.47%'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'90.47%'}],
-                [{u'html': u'Thies'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-                 {u'html': u'100.00%'}, {u'html': u'100.00%'}]], key=lambda x: x[0])
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'}, {'html': '90.47%'}, {'html': '2.75%'},
+                 {'html': '0.00%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '23.82%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '46.15%'}, {'html': '46.15%'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '28.12%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '28.12%'}],
+                [{'html': 'Saint-Louis'}, {'html': '63.85%'}, {'html': '87.68%'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '52.57%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}]
+            ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [{u'html': u'Taux par Pays'}, {u'html': u'71.97%'}, {u'html': u'69.87%'}, {u'html': u'53.65%'},
-             {u'html': u'55.93%'}, {u'html': u'56.75%'}, {u'html': u'89.46%'}, {u'html': u'67.01%'}]
+            [
+                {'html': 'Taux par Pays'}, {'html': '63.85%'}, {'html': '88.53%'}, {'html': '1.59%'},
+                {'html': '0.00%'}, {'html': '12.04%'}, {'html': '22.04%'}, {'html': '42.44%'}
+            ]
         )
 
     def test_recovery_rate_by_pps_report_pps_level(self):
@@ -273,6 +267,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -287,26 +282,21 @@ class TestDashboard2(YeksiTestCase):
         total_row = recovery_rate_by_pps_report['total_row']
         self.assertEqual(
             headers,
-            [u'PPS', u'Octobre 2017', u'Novembre 2017', u'D\xe9cembre 2017', u'Janvier 2018', u'F\xe9vrier 2018',
-             u'Mars 2018', u'Taux moyen']
+            ['PPS', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018', 'F\xe9vrier 2018',
+             'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
             rows,
             sorted([
-                [
-                    {u'html': u'P2'},
-                    {u'html': u'75.47%'},
-                    {u'html': u'pas de donn\xe9es'},
-                    {u'html': u'pas de donn\xe9es'},
-                    {u'html': u'pas de donn\xe9es'},
-                    {u'html': u'pas de donn\xe9es'},
-                    {u'html': u'pas de donn\xe9es'},
-                    {u'html': u'75.47%'}
-                ]
+                [{'html': 'P2'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [{u'html': u'Taux par PPS'}, {u'html': u'75.47%'}, {u'html': u'0.00%'}, {u'html': u'0.00%'},
-             {u'html': u'0.00%'}, {u'html': u'0.00%'}, {u'html': u'0.00%'}, {u'html': u'75.47%'}]
+            [
+                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': '0.00%'}, {'html': '0.00%'},
+                {'html': '0.00%'}, {'html': '0.00%'}, {'html': '0.00%'}, {'html': '37.38%'}
+            ]
         )

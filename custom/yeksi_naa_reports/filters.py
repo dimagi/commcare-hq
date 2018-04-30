@@ -12,6 +12,8 @@ from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
 from six.moves import range
 
+from custom.yeksi_naa_reports.sqldata import ProgramData
+
 
 class LocationFilter(AsyncLocationFilter):
     label = ugettext_noop("Location")
@@ -62,4 +64,31 @@ class MonthsDateFilter(BaseReportFilter):
             'starting_year': int(self.request.GET.get('year_start', datetime.date.today().year)),
             'current_month': int(self.request.GET.get('month_end', datetime.date.today().month)),
             'current_year': int(self.request.GET.get('year_end', datetime.date.today().year)),
+        }
+
+
+class ProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+
+    @classmethod
+    def program(cls):
+        program_filter = [{
+            'name': 'All',
+            'value': "%%",
+        }]
+        programs = ProgramData(config={'domain': u'test-pna'}).rows
+        for program in programs:
+            program_filter.append({
+                'name': program[1],
+                'value': "%{0}%".format(program[0]),
+            })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
         }
