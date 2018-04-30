@@ -262,7 +262,7 @@ BEGIN
     'current_month_wasting, ' ||
     'valid_in_month, ' ||
     'valid_all_registered_in_month, ' ||
-    '0, ' ||
+    'ebf_eligible, ' ||
     'dob, ' ||
     'sex, ' ||
     'age_tranche, ' ||
