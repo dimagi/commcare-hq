@@ -11,9 +11,12 @@ def log_celery_task_exception(task_id, exception, traceback, einfo, *args, **kwa
 
 
 class SignalHandlerContext(object):
-    def __init__(self, signals, handler):
+    def __init__(self, signals, handler, default_handler=signal.SIG_DFL):
+        if type(signals) is not list:
+            signals = [signals]
         self.signals = signals
         self.handler = handler
+        self.default_handler = default_handler
 
     def __enter__(self):
         for sig in self.signals:
@@ -21,4 +24,4 @@ class SignalHandlerContext(object):
 
     def __exit__(self, *args, **kwargs):
         for sig in self.signals:
-            signal.signal(sig, signal.SIG_DFL)
+            signal.signal(sig, self.default_handler)
