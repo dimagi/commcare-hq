@@ -133,7 +133,7 @@ class _CaseRelationshipManager(object):
             """same as a _CaseTypeEquivalence but with a memory of the case types visited"""
 
         equivalence_queue = deque(
-            TmpEquivalence(case_type, _CaseTypeRef(case_type, ()), visited_case_types=())
+            TmpEquivalence(case_type, _CaseTypeRef(case_type, ()), visited_case_types=frozenset())
             for case_type in self.parent_type_map
         )
 
@@ -153,7 +153,7 @@ class _CaseRelationshipManager(object):
                             eq.expansion.case_type,
                             eq.expansion.relationship_path + (relationship,)
                         ),
-                        visited_case_types=tuple(sorted(set(eq.visited_case_types + (parent,))))
+                        visited_case_types=eq.visited_case_types | {parent}
                     )
                     already_visited = (new_equivalence in all_possible_equivalences)
                     if not already_visited:
