@@ -5,17 +5,28 @@ from __future__ import unicode_literals
 
 from collections import defaultdict
 from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn
-from sqlagg.filters import EQ, BETWEEN
+from sqlagg.filters import EQ, BETWEEN, SqlFilter, get_column, bindparam
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData
 from custom.yeksi_naa_reports.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
-    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
 from memoized import memoized
 from six.moves import range
+
+
+class ContainsFilter(SqlFilter):
+    def __init__(self, column_name, contains):
+        self.column_name = column_name
+        self.contains = contains
+
+    def build_expression(self, table):
+        column = get_column(table, self.column_name)
+        return column.like(bindparam(self.contains))
 
 
 class YeksiSqlData(SqlData):
@@ -81,7 +92,7 @@ class VisiteDeLOperateurDataSource(YeksiSqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        filters = [BETWEEN("real_date", "startdate", "enddate"), ContainsFilter("select_programs", "program")]
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -131,7 +142,10 @@ class VisiteDeLOperateurPerProductDataSource(YeksiSqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        filters = [
+            BETWEEN("real_date_repeat", "startdate", "enddate"),
+            ContainsFilter("select_programs", "program")
+        ]
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -217,6 +231,53 @@ class LogisticienDataSource(YeksiSqlData):
         for month in self.month_headers():
             headers.add_column(month)
         return headers
+
+
+class ProgramsDataSource(YeksiSqlData):
+
+    @property
+    def filters(self):
+        return []
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM)
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('ID'))
+        headers.add_column(DataTablesColumn('Name'))
+        return headers
+
+
+class ProgramData(ProgramsDataSource):
+    slug = 'program'
+    comment = 'Program names'
+    title = 'Program'
+    show_total = True
+    custom_total_calculate = True
+
+    @property
+    def group_by(self):
+        group_by = ['program_id', 'program_name']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Program Name", SimpleColumn('program_name')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        rows = []
+        for record in records:
+            rows.append([record['program_id'], record['program_name']])
+        self.total_row = []
+        return sorted(rows, key=lambda x: x[0])
 
 
 class AvailabilityData(VisiteDeLOperateurDataSource):

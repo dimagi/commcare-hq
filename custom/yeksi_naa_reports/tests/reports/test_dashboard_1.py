@@ -14,6 +14,7 @@ class TestDashboard1(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -36,88 +37,151 @@ class TestDashboard1(YeksiTestCase):
             rows,
             sorted([
                 [
-                    {'html': 'New Test Region'},
-                    {'style': 'color: red', 'html': '50.00%'},
-                    {'style': 'color: red', 'html': '50.00%'},
-                    {'style': 'color: red', 'html': '0.00%'},
-                    {'style': 'color: red', 'html': '0.00%'},
-                    {'style': 'color: red', 'html': '50.00%'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': 'color: red', 'html': '41.67%'}
+                    {u'html': u'Dakar'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'}
                 ],
                 [
-                    {'html': 'Region Test'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'}
+                    {u'html': u'Fatick'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'color: red', u'html': u'33.33%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'color: red', u'html': u'0.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'color: red', u'html': u'58.33%'}
                 ],
                 [
-                    {'html': 'Region 1'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '50.00%'},
-                    {'style': 'color: red', 'html': '50.00%'}
+                    {u'html': u'Region 1'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'color: red', u'html': u'50.00%'},
+                    {u'style': u'color: red', u'html': u'50.00%'}
                 ],
                 [
-                    {'html': 'Saint-Louis'},
-                    {'style': 'color: red', 'html': '75.00%'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '75.00%'}
+                    {u'html': u'Region Test'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'}
                 ],
                 [
-                    {'html': 'Dakar'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': '100.00%'}
+                    {u'html': u'Saint-Louis'},
+                    {u'style': u'color: red', u'html': u'75.00%'},
+                    {u'style': u'color: red', u'html': u'33.33%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'color: red', u'html': u'77.08%'}
                 ],
                 [
-                    {'html': 'Fatick'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '33.33%'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '33.33%'}
-                ],
-                [
-                    {'html': 'Thies'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '87.50%'},
-                    {'style': 'color: red', 'html': '87.50%'}
+                    {u'html': u'Thies'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'color: red', u'html': u'87.50%'},
+                    {u'style': u'color: red', u'html': u'87.50%'}
                 ]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
             [
-                {'html': 'Disponibilit\xe9 (%)'},
-                {'style': 'color: red', 'html': '83.33%'},
-                {'style': 'color: red', 'html': '40.00%'},
-                {'style': 'color: red', 'html': '33.33%'},
-                {'style': 'color: red', 'html': '66.67%'},
-                {'style': 'color: red', 'html': '83.33%'},
-                {'style': 'color: red', 'html': '88.89%'},
-                {'style': 'color: red', 'html': '76.00%'}
+                {u'html': u'Disponibilit\xe9 (%)'},
+                {u'style': u'color: red', u'html': u'90.00%'},
+                {u'style': u'color: red', u'html': u'33.33%'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'style': u'color: red', u'html': u'80.00%'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'style': u'color: red', u'html': u'88.24%'},
+                {u'style': u'color: red', u'html': u'83.67%'}
+            ]
+        )
+
+    def test_availability_report_with_chosen_program(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'location_id': '',
+            'program': '%a99fe8331e3dbcc127917e41af45ad81%',
+            'month_start': '10',
+            'year_start': '2017',
+            'month_end': '3',
+            'year_end': '2018',
+        }
+
+        dashboard1_report = Dashboard1Report(request=mock, domain='test-pna')
+
+        availability_report = dashboard1_report.report_context['reports'][0]['report_table']
+        headers = availability_report['headers'].as_export_table[0]
+        rows = availability_report['rows']
+        total_row = availability_report['total_row']
+
+        self.assertEqual(
+            headers,
+            ['Région', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen de disponibilité']
+        )
+        self.assertEqual(
+            rows,
+            sorted([
+                [
+                    {u'html': u'Region 1'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'color: red', u'html': u'50.00%'},
+                    {u'style': u'color: red', u'html': u'50.00%'}
+                ],
+                [
+                    {u'html': u'Region Test'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'}
+                ],
+                [
+                    {u'html': u'Thies'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'},
+                    {u'style': u'', u'html': u'100.00%'}
+                ]
+            ], key=lambda x: x[0])
+        )
+        self.assertEqual(
+            total_row,
+            [
+                {u'html': u'Disponibilit\xe9 (%)'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'html': u'pas de donn\xe9es'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'style': u'', u'html': u'100.00%'},
+                {u'style': u'color: red', u'html': u'66.67%'},
+                {u'style': u'color: red', u'html': u'91.67%'}
             ]
         )
 
@@ -126,6 +190,7 @@ class TestDashboard1(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -148,28 +213,28 @@ class TestDashboard1(YeksiTestCase):
             rows,
             sorted([
                 [
-                    {'html': 'P2'},
-                    {'style': '', 'html': '100%'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'}
+                    {u'html': u'P2'},
+                    {u'style': u'', u'html': u'100%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100%'},
+                    {u'style': u'', u'html': u'pas de donn\xe9es'},
+                    {u'style': u'', u'html': u'100.00%'}
                 ]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
             [
-                {'html': 'Disponibilit\xe9 (%)'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'}
+                {u'html': u'Disponibilit\xe9 (%)'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'0.00%'}
             ]
         )
 
@@ -178,6 +243,7 @@ class TestDashboard1(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -196,114 +262,110 @@ class TestDashboard1(YeksiTestCase):
              'Février 2018', 'Mars 2018', 'Taux moyen']
         )
         expected = [
-            [{u'html': u'test pps 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+            [{u'html': u'District Test 2'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'New Test PPS 1'}, {u'style': u'color: red', u'html': u'35.00%'},
-             {u'style': u'color: red', u'html': u'25.00%'}, {u'style': u'color: red', u'html': u'20.00%'},
-             {u'style': u'color: red', u'html': u'15.00%'}, {u'style': u'color: red', u'html': u'5.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'F1'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'color: red', u'html': u'50.00%'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'style': u'', u'html': u'0.00%'}, {u'style': u'color: red', u'html': u'16.67%'}],
-            [{u'html': u'P2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+            [{u'html': u'F2'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'G1'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'color: red', u'html': u'66.67%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'color: red', u'html': u'33.33%'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'color: red', u'html': u'50.00%'}],
+            [{u'html': u'Ngor'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'P1'}, {u'style': u'color: red', u'html': u'33.33%'},
+             {u'style': u'color: red', u'html': u'50.00%'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'color: red', u'html': u'40.00%'}],
+            [{u'html': u'P2'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'F2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS Alexis'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'Virage 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'G1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'Virage 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 3'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'style': u'color: red', u'html': u'7.69%'}, {u'html': u'pas de donn\xe9es'},
-             {u'style': u'color: red', u'html': u'7.69%'}],
-            [{u'html': u'SL2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'color: red', u'html': u'30.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'color: red', u'html': u'30.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'F1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 3'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'Ngor'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'PPS 3'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'PPS 3'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'SL1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'P1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'Virage 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
+             {u'style': u'color: red', u'html': u'50.00%'}, {u'style': u'color: red', u'html': u'50.00%'}],
+            [{u'html': u'PPS Alexis'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
             [{u'html': u'Pps test 2 bbb'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'SL1'}, {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'SL2'}, {u'style': u'', u'html': u'0.00%'}, {u'style': u'color: red', u'html': u'50.00%'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'color: red', u'html': u'12.50%'}],
+            [{u'html': u'Virage 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'style': u'color: red', u'html': u'20.00%'}, {u'style': u'color: red', u'html': u'20.00%'}],
+            [{u'html': u'Virage 1'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'Virage 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
             [{u'html': u'Virage 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
              {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'District Test 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'New Test PPS 2'}, {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'},
-             {u'style': u'color: red', u'html': u'10.00%'}, {u'style': u'color: red', u'html': u'20.00%'},
-             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'},
-             {u'style': u'color: red', u'html': u'5.00%'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}],
-            [{u'html': u'PPS 2'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
-             {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'}]
+             {u'style': u'', u'html': u'0.00%'}, {u'style': u'', u'html': u'0.00%'}],
+            [{u'html': u'test pps 1'}, {u'html': u'pas de donn\xe9es'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}, {u'html': u'pas de donn\xe9es'},
+             {u'html': u'pas de donn\xe9es'}, {u'style': u'', u'html': u'0.00%'}]
         ]
         self.assertEqual(
             len(rows),
@@ -314,13 +376,9 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                {u'html': u'Taux par Pays'},
-                {u'style': u'color: red', u'html': u'23.33%'},
-                {u'style': u'color: red', u'html': u'16.67%'},
-                {u'style': u'color: red', u'html': u'16.67%'},
-                {u'style': u'color: red', u'html': u'16.67%'},
-                {u'style': u'color: red', u'html': u'4.65%'},
-                {u'style': u'', u'html': u'0.00%'},
-                {u'style': u'color: red', u'html': u'12.44%'}
+                {u'html': u'Taux par Pays'}, {u'style': u'color: red', u'html': u'7.14%'},
+                {u'style': u'color: red', u'html': u'35.71%'}, {u'style': u'', u'html': u'0.00%'},
+                {u'style': u'color: red', u'html': u'9.09%'}, {u'style': u'color: red', u'html': u'13.64%'},
+                {u'style': u'color: red', u'html': u'4.65%'}, {u'style': u'color: red', u'html': u'10.81%'}
             ]
         )
