@@ -293,17 +293,19 @@ class CouchSqlDomainMigrator(object):
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
+        doc_count = sum([
+            get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
+            for doc_type in doc_types
+        ])
+        if self.timing_context:
+            current_timer = self.timing_context.peek()
+            current_timer.normalize_denominator = doc_count
+
         if self.with_progress:
-            doc_count = sum([
-                get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-                for doc_type in doc_types
-            ])
-            if self.timing_context:
-                current_timer = self.timing_context.peek()
-                current_timer.normalize_denominator = doc_count
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
+            self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
 
     def _send_timings(self, timing_context):
