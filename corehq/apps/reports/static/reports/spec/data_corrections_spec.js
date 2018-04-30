@@ -169,12 +169,6 @@ describe('Data Corrections', function () {
             // Display spanish values
             model.updateDisplayProperty("spanish");
             assertVisibleText(["anaranjado", "rojo", "amarillo"]);
-
-            // Display french, but search based on spanish values
-            model.updateDisplayProperty("french");
-            assertVisibleText(["orange", "rouge", "jaune"]);
-            search("rojo");
-            assertVisibleProperties(["red"]);
         });
     });
 });

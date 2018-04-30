@@ -19,10 +19,9 @@
  *          propertyPrefix: HTML string to display before each property. Rendered as a knockout template that has
  *              access to the property.
  *          propertySuffix: Same idea as proeprtyPrefix.
- *          displayProperties: A list of objects, each with the keys 'property', 'name', and optionally 'search'.
+ *          displayProperties: A list of objects, each with the keys 'property' and 'name'.
  *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
- *              user toggle between display properties. Search, which defaults to match property, lets the user
- *              search by a different property.
+ *              user toggle between display properties.
  */
 hqDefine("reports/js/data_corrections", function() {
     // Represents a single property/value pair, e.g., a form question and its response
@@ -68,7 +67,6 @@ hqDefine("reports/js/data_corrections", function() {
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
             self.isLargeModal(self.columnsPerPage() === 2);
             self.isFullScreenModal(self.columnsPerPage() === 3);
-            self.generateSearchableNames();
         });
 
         // Support for displaying different property attributes (e.g., name and id)
@@ -77,7 +75,6 @@ hqDefine("reports/js/data_corrections", function() {
         self.updateDisplayProperty = function(newValue) {
             self.displayProperty(newValue);
             self.initQuery();
-            self.generateSearchableNames();
         };
         self.breakWord = function(str) {
             return str.replace(/([\/_])/g, "$1\u200B");
@@ -104,7 +101,7 @@ hqDefine("reports/js/data_corrections", function() {
 
             // Cycle over all items on previous pages
             while (added < self.itemsPerPage() * (self.currentPage() - 1) && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.searchableNames[index])) {
+                if (self.matchesQuery(self.propertyNames()[index])) {
                     added++;
                 }
                 index++;
@@ -113,7 +110,7 @@ hqDefine("reports/js/data_corrections", function() {
             // Add as many items as fit on a page
             added = 0;
             while (added < self.itemsPerPage() && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.searchableNames[index])) {
+                if (self.matchesQuery(self.propertyNames()[index])) {
                     var name = self.propertyNames()[index];
                     if (!self.properties[name]) {
                         self.properties[name] = new PropertyModel({ name: name });
@@ -161,28 +158,9 @@ hqDefine("reports/js/data_corrections", function() {
         };
         self.query.subscribe(function() {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
             self.render();
         });
-
-        // Because of how search is implemented, it's useful to store a list of the values that we're going to
-        // search against, ordered the same way properties are displayed. Regenerate this list each time
-        // the current display property changes.
-        self.searchableNames = [];
-        self.generateSearchableNames = function() {
-            if (self.displayProperty() === 'name') {
-                self.searchableNames = self.propertyNames();
-            } else {
-                var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
-                    search = displayPropertyObj.search || displayPropertyObj.property;
-                self.searchableNames = [];
-                _.each(self.propertyNames(), function(name) {
-                    if (self.properties[name]) {
-                        self.searchableNames.push(self.properties[name][search]);
-                    }
-                });
-            }
-        };
 
         // Saving
         self.submitForm = function(model, e) {
@@ -230,7 +208,6 @@ hqDefine("reports/js/data_corrections", function() {
                     display: _.without(data, 'name', 'value'),
                 }));
             }));
-            self.generateSearchableNames();
             self.initQuery();
             self.currentPage(1);
             self.showError(false);

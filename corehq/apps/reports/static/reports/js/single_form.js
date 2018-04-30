@@ -40,9 +40,8 @@ hqDefine("reports/js/single_form", function() {
                     name: gettext('Labels'),
                 },
                 {
-                    property: 'splitName',
+                    property: 'name',
                     name: gettext('Question IDs'),
-                    search: 'name',
                 },
             ],
             saveUrl: initialPageData.reverse("edit_form", options.instance_id),
