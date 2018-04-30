@@ -89,15 +89,14 @@ class Command(ResourceStaticCommand):
 
         # Write out resource_versions.js for all js files in resource_versions
         # Exclude formdesigner directory, which contains a ton of files, none of which are required by HQ
-        if settings.STATIC_CDN:
-            filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
-            with open(filename, 'w') as fout:
-                fout.write("requirejs.config({ paths: %s });" % json.dumps({
-                    file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
-                                                 ".js?version=%s" % version if version else "")
-                    for file, version in six.iteritems(resource_versions)
-                    if file.endswith(".js") and not file.startswith("formdesigner")
-                }, indent=2))
-            resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
+        filename = os.path.join(self.root_dir, 'staticfiles', 'hqwebapp', 'js', 'resource_versions.js')
+        with open(filename, 'w') as fout:
+            fout.write("requirejs.config({ paths: %s });" % json.dumps({
+                file[:-3]: "{}{}{}{}".format(settings.STATIC_CDN, settings.STATIC_URL, file[:-3],
+                                             ".js?version=%s" % version if version else "")
+                for file, version in six.iteritems(resource_versions)
+                if file.endswith(".js") and not file.startswith("formdesigner")
+            }, indent=2))
+        resource_versions["hqwebapp/js/resource_versions.js"] = self.get_hash(filename)
 
         self.overwrite_resources(resource_versions)
