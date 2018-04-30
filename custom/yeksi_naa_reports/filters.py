@@ -46,12 +46,12 @@ class MonthsDateFilter(BaseReportFilter):
     @classmethod
     def months(cls):
         return [
-            {u'name': 'Janvier', u'value': 1}, {u'name': 'Février', u'value': 2},
-            {u'name': 'Mars', u'value': 3}, {u'name': 'Avril', u'value': 4},
-            {u'name': 'Mai', u'value': 5}, {u'name': 'Juin', u'value': 6},
-            {u'name': 'Juillet', u'value': 7}, {u'name': 'Août', u'value': 8},
-            {u'name': 'Septembre', u'value': 9}, {u'name': 'Octobre', u'value': 10},
-            {u'name': 'Novembre', u'value': 11}, {u'name': 'Décembre', u'value': 12}
+            {'name': 'Janvier', 'value': 1}, {'name': 'Février', 'value': 2},
+            {'name': 'Mars', 'value': 3}, {'name': 'Avril', 'value': 4},
+            {'name': 'Mai', 'value': 5}, {'name': 'Juin', 'value': 6},
+            {'name': 'Juillet', 'value': 7}, {'name': 'Août', 'value': 8},
+            {'name': 'Septembre', 'value': 9}, {'name': 'Octobre', 'value': 10},
+            {'name': 'Novembre', 'value': 11}, {'name': 'Décembre', 'value': 12}
         ]
 
     @property
@@ -78,7 +78,7 @@ class ProgramFilter(BaseReportFilter):
             'name': 'All',
             'value': "%%",
         }]
-        programs = ProgramData(config={'domain': u'test-pna'}).rows
+        programs = ProgramData(config={'domain': 'test-pna'}).rows
         for program in programs:
             program_filter.append({
                 'name': program[1],
