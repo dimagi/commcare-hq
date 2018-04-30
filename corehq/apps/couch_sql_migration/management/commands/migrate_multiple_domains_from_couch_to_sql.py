@@ -7,7 +7,7 @@ from django.core.management.base import CommandError, BaseCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, get_diff_db)
-from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import _blow_away_migration
+from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import _blow_away_migration  # noqa
 from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started, couch_sql_migration_in_progress,
     set_couch_sql_migration_not_started, set_couch_sql_migration_complete
