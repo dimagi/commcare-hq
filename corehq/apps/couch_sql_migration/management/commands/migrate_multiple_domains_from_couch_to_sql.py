@@ -7,7 +7,9 @@ from django.core.management.base import CommandError, BaseCommand
 
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, get_diff_db)
-from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import _blow_away_migration  # noqa
+from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
+    _blow_away_migration, _init_sigterm_handler, _default_sigterm_handlers
+)
 from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started, couch_sql_migration_in_progress,
     set_couch_sql_migration_not_started, set_couch_sql_migration_complete
@@ -58,8 +60,11 @@ class Command(BaseCommand):
             return
 
         set_couch_sql_migration_started(domain)
+        _init_sigterm_handler(domain)
 
         do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+
+        _default_sigterm_handlers()
         stats = self.get_diff_stats(domain)
         if stats:
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
