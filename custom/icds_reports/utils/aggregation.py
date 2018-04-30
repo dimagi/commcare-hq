@@ -259,7 +259,10 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         MAX(counsel_adequate_bf) OVER w AS counsel_adequate_bf,
         LAST_VALUE(not_breastfeeding) OVER w AS not_breastfeeding
         FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WHERE timeend >= %(current_month_start)s AND
+              timeend < %(next_month_start)s AND
+              state_id = %(state_id)s AND
+              child_health_case_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
