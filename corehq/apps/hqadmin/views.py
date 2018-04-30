@@ -275,12 +275,12 @@ def mass_email(request):
             if real_email:
                 recipients = [{
                     'username': h['username'],
-                    'first_name': h['first_name'] or h['username'],
+                    'first_name': h['first_name'] or 'CommCare User',
                 } for h in UserES().web_users().run().hits]
             else:
                 recipients = [{
                     'username': request.couch_user.username,
-                    'first_name': request.couch_user.first_name or request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
             for recipient in recipients:
