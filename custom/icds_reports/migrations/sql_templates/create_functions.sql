@@ -367,7 +367,7 @@ BEGIN
       'ebf_in_month = COALESCE(agg.is_ebf, 0), ' ||
       'ebf_drinking_liquid = GREATEST(agg.water_or_milk, agg.other_milk_to_child, agg.tea_other, 0), ' ||
       'ebf_eating = COALESCE(agg.eating, 0), ' ||
-      'ebf_not_breastfeeding_reason = COALESCE(agg.not_breastfeeding, ' || quote_literal('not_breastfeeding') || '), ' ||
+      'ebf_not_breastfeeding_reason = agg.not_breastfeeding, ' ||
       'counsel_ebf = GREATEST(agg.counsel_exclusive_bf, agg.counsel_only_milk, 0), ' ||
       'counsel_adequate_bf = COALESCE(agg.counsel_adequate_bf, 0), ' ||
       'ebf_no_info_recorded = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.latest_time_end_processed) = ' || quote_literal(_start_date) || ') THEN 0 ELSE 1 END ' ||
