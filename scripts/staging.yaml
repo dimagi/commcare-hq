@@ -60,7 +60,6 @@ branches:
   - jr/drilldown-filters-again # jordan April 23
   - jls/add-js-to-sentry # Jenny April 26
   - jls/bring-back-mass-emails # Jenny April 27
-  - jls/non-prod-resource-versions # Jenny April 30
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
