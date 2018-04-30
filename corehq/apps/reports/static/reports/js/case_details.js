@@ -60,7 +60,7 @@ hqDefine("reports/js/case_details", function() {
         });
 
         self.breakWord = function(str) {
-            return str.replace(/([\/_])/g, "$1\u200B");
+            return str.replace(/([\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
         };
 
         // Handle pagination and filtering, filling visibleItems with whatever should be on the current page
