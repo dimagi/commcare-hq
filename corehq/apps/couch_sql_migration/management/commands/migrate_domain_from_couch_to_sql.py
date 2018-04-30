@@ -19,6 +19,7 @@ from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.util.markup import shell_green, shell_red
+from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 from six.moves import input, zip_longest
@@ -65,9 +66,8 @@ class Command(BaseCommand):
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
             set_couch_sql_migration_started(domain)
-            _init_sigterm_handler(domain)
-            do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
-            _default_sigterm_handlers()
+            with SignalHandlerContext([signal.SIGTERM, signal.SIGINT], _get_sigterm_handler(domain)):
+                do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
@@ -197,19 +197,13 @@ def _confirm(message):
         raise CommandError('abort')
 
 
-def _init_sigterm_handler(domain):
-    def sigterm_handler(signal, frame):
+def _get_sigterm_handler(domain):
+    def _sigterm_handler(signal, frame):
         _logger.error("{} signal received".format(signal))
         set_couch_sql_migration_not_started(domain)
         _blow_away_migration(domain)
         sys.exit(1)
-    signal.signal(signal.SIGTERM, sigterm_handler)
-    signal.signal(signal.SIGINT, sigterm_handler)
-
-
-def _default_sigterm_handlers():
-    signal.signal(signal.SIGTERM, signal.SIGDFL)
-    signal.signal(signal.SIGINT, signal.SIGDFL)
+    return _sigterm_handler
 
 
 def _blow_away_migration(domain):

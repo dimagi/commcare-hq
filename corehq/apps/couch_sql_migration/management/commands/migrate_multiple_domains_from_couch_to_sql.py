@@ -8,7 +8,7 @@ from django.core.management.base import CommandError, BaseCommand
 from corehq.apps.couch_sql_migration.couchsqlmigration import (
     do_couch_to_sql_migration, get_diff_db)
 from corehq.apps.couch_sql_migration.management.commands.migrate_domain_from_couch_to_sql import (
-    _blow_away_migration, _init_sigterm_handler, _default_sigterm_handlers
+    _blow_away_migration, _get_sigterm_handler
 )
 from corehq.apps.couch_sql_migration.progress import (
     set_couch_sql_migration_started, couch_sql_migration_in_progress,
@@ -21,8 +21,10 @@ from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.log import with_progress_bar
 from corehq.util.markup import shell_green, SimpleTableWriter, TableRowFormatter
+from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
+import signal
 
 
 class Command(BaseCommand):
@@ -60,11 +62,10 @@ class Command(BaseCommand):
             return
 
         set_couch_sql_migration_started(domain)
-        _init_sigterm_handler(domain)
 
-        do_couch_to_sql_migration(domain, with_progress=False, debug=False)
+        with SignalHandlerContext([signal.SIGTERM, signal.SIGINT], _get_sigterm_handler(domain)):
+            do_couch_to_sql_migration(domain, with_progress=False, debug=False)
 
-        _default_sigterm_handlers()
         stats = self.get_diff_stats(domain)
         if stats:
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
