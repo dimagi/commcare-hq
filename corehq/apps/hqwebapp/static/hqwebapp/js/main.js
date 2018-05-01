@@ -289,13 +289,10 @@ hqDefine('hqwebapp/js/main', [
 
         // EULA modal
         var cookieName = "gdpr_rollout";
-        if (!$.cookie(cookieName)) {    // user has not asked to be reminded tomorrow
+        if (!$.cookie(cookieName)) {
             $("#eula-snooze").click(function() {
                 $.cookie(cookieName, true, { expires: 1, path: '/' });
             });
-
-            // appcues content involves its own modal, which we don't control but need to keep out of the way
-            var $appcues = $(".appcues");
             $("#eula-agree").click(function() {
                 $(this).disableButton();
                 $.ajax({
@@ -303,16 +300,12 @@ hqDefine('hqwebapp/js/main', [
                     method: "POST",
                     success: function() {
                         $("#eulaModal").modal('hide');
-                        $appcues.removeClass("hide");
                     },
                     error: function() {
                         // do nothing, user will get the popup again on next page load
-                        $appcues.removeClass("hide");
                     },
                 });
             });
-
-            $appcues.addClass("hide");
             $("#eulaModal").modal({
                 keyboard: false,
                 backdrop: 'static',
