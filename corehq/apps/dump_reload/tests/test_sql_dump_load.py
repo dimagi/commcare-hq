@@ -311,7 +311,7 @@ class TestSQLDumpLoad(BaseDumpLoadTest):
         )
         self.addCleanup(user.delete)
 
-        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml') as f:
+        with open('corehq/ex-submodules/couchforms/tests/data/devicelogs/devicelog.xml', 'rb') as f:
             xml = f.read()
         submit_form_locally(xml, self.domain_name)
 
