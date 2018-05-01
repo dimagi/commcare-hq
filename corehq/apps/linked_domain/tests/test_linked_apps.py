@@ -166,7 +166,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
     @staticmethod
     def _get_image_data(filename):
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
-        with open(image_path, 'r') as f:
+        with open(image_path, 'rb') as f:
             return f.read()
 
     def test_remote_app(self):
