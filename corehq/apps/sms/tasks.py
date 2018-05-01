@@ -27,7 +27,7 @@ from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.messaging.util import use_phone_entries
-from corehq.toggles import RETRY_SMS_INDEFINITELY
+from corehq.toggles import RETRY_SMS_INDEFINITELY, USE_SMS_WITH_INACTIVE_CONTACTS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection, release_lock
@@ -263,7 +263,7 @@ class OutboundDailyCounter(object):
     @property
     def daily_limit(self):
         if self.domain_object:
-            return self.domain_object.daily_outbound_sms_limit
+            return self.domain_object.get_daily_outbound_sms_limit()
         else:
             # If the message isn't tied to a domain, still impose a limit.
             # Outbound messages not tied to a domain can happen when unregistered
@@ -506,7 +506,10 @@ def _sync_user_phone_numbers(couch_user_id):
     with CriticalSection([couch_user.phone_sync_key], timeout=5 * 60):
         phone_entries = couch_user.get_phone_entries()
 
-        if couch_user.is_deleted():
+        if (
+            couch_user.is_deleted() or
+            (not couch_user.is_active and not USE_SMS_WITH_INACTIVE_CONTACTS.enabled(couch_user.domain))
+        ):
             for phone_number in phone_entries.values():
                 phone_number.delete()
             return

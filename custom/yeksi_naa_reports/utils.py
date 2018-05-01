@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT = "yeksi_naa_reports_visite_de_l_operateur_per_product"
+YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM = "yeksi_naa_reports_visite_de_l_operateur_per_program"
 YEKSI_NAA_REPORTS_LOGISTICIEN = 'yeksi_naa_reports_logisticien'
 
 
@@ -64,8 +65,8 @@ class YeksiNaaReportConfigMixin(object):
             enddate = startdate + relativedelta(month=1) - relativedelta(day=1)
         config['startdate'] = startdate
         config['enddate'] = enddate
-        if self.request.GET.get('language'):
-            config['language'] = self.request.GET.get('language')
+        if self.request.GET.get('program'):
+            config['program'] = self.request.GET.get('program')
         self.config_update(config)
         return config
 
@@ -158,154 +159,3 @@ class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMix
             table.append(_unformat_row(total_row))
 
         return [export_sheet_name, table]
-
-
-class Translation(object):
-    yeksi_naa_reports = {
-        'english': 'Yeksi Naa Reports',
-        'french': 'Rapports Yeksi Naa',
-    }
-    dashboard_1 = {
-        'english': 'Dashboard 1',
-        'french': 'Tableau de Bord 1',
-    }
-    dashboard_2 = {
-        'english': 'Dashboard 2',
-        'french': 'Tableau de Bord 2',
-    }
-    dashboard_3 = {
-        'english': 'Dashboard 3',
-        'french': 'Tableau de Bord 3',
-    }
-    fetching_additional_data_please_wait = {
-        'english': 'Fetching additional data, please wait...',
-        'french': 'Veuillez patienter',
-    }
-    loading_report = {
-        'english': 'Loading Report',
-        'french': 'Chargement du rapport',
-    }
-    PPS = {
-        'english': 'PPS',
-        'french': 'PPS',
-    }
-    district = {
-        'english': 'District',
-        'french': 'District',
-    }
-    region = {
-        'english': 'Region',
-        'french': 'Région',
-    }
-    availability = {
-        'english': 'Availability',
-        'french': 'Disponibilité',
-    }
-    availability_rate = {
-        'english': 'Availability Rate',
-        'french': 'Taux de Disponibilité',
-    }
-    availability_of_the_products_at_the_PPS_level_how_many_PPS_had_ALL_products_in_stock = {
-        'english': 'Availability of the products at the PPS level: how many PPS had ALL products in stock',
-        'french': 'Disponibilité de la gamme au niveau PPS : combien de PPS ont eu tous les produits disponibles',
-    }
-    availability_percentage = {
-        'english': 'Availability (%)',
-        'french': 'Disponibilité (%)',
-    }
-    no_data_entered = {
-        'english': 'no data entered',
-        'french': 'pas de données',
-    }
-    avg_availability = {
-        'english': 'Avg. Availability',
-        'french': 'Taux moyen de disponibilité',
-    }
-    loss_rate = {
-        'english': 'Loss Rate',
-        'french': 'Taux de Perte',
-    }
-    products_lost_excluding_expired_products = {
-        'english': 'Products lost (excluding expired products)',
-        'french': 'Taux de Perte (hors péremption)',
-    }
-    rate_by_region = {
-        'english': 'Rate by Region',
-        'french': 'Taux par Région',
-    }
-    rate_by_district = {
-        'english': 'Rate by District',
-        'french': 'Taux par District',
-    }
-    rate_by_country = {
-        'english': 'Rate by Country',
-        'french': 'Taux par Pays',
-    }
-    expiration_rate = {
-        'english': 'expiration rate',
-        'french': 'Taux de Péremption',
-    }
-    products_lost_through_expiration = {
-        'english': 'Products lost through expiration',
-        'french': 'Valorisation des produits périmés PNA',
-    }
-    lapse_expiration_rate = {
-        'english': 'Lapse (expiration) rate',
-        'french': 'Taux de Péremption',
-    }
-    recovery_rate = {
-        'english': 'Recovery Rate',
-        'french': 'Taux de Recouvrement',
-    }
-    recovery_rate_by_PPS = {
-        'english': 'Recovery rate by PPS',
-        'french': 'Taux de Recouvrement au niveau du PPS',
-    }
-    total_amount_paid_vs_owed = {
-        'english': 'Total amount paid vs. owed',
-        'french': 'Somme des montants payés sur total dû',
-    }
-    recovery_rate_by_district = {
-        'english': 'Recovery rate by District',
-        'french': 'Taux de Recouvrement au niveau du District',
-    }
-    rupture_rate = {
-        'english': 'Rupture rate',
-        'french': 'Taux de Rupture',
-    }
-    rupture_rate_by_PPS = {
-        'english': 'Rupture rate by PPS',
-        'french': 'Taux de Rupture par PPS',
-    }
-    num_of_products_stocked_out_vs_all_products_of_the_PPS = {
-        'english': '# of products stocked out vs. all products of the PPS',
-        'french': 'Nombre de produits en rupture sur le nombre total de produits du PPS',
-    }
-    satisfaction_rate = {
-        'english': 'Satisfaction Rate',
-        'french': 'Taux de satisfaction',
-    }
-    satisfaction_rate_after_delivery = {
-        'english': 'Satisfaction Rate after delivery',
-        'french': 'Taux de satisfaction (après livraison)',
-    }
-    percentage_products_ordered_vs_delivered = {
-        'english': '% products ordered vs. delivered',
-        'french': '% de produits commandés vs. deliverés',
-    }
-    total_CFA = {
-        'english': 'Total (CFA)',
-        'french': 'Total (CFA)',
-    }
-    product = {
-        'english': 'Product',
-        'french': 'Produit',
-    }
-    valuation_of_PNA_stock_per_product = {
-        'english': 'Valuation of PNA Stock per product',
-        'french': 'Valeur des stocks PNA disponible (chaque produit)',
-    }
-    stock_value_of_available_PNA_products_per_product = {
-        'english': 'Stock value of available PNA products, per product',
-        'french': 'Valeur des stocks PNA disponible (chaque produit)',
-    }

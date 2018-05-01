@@ -1,11 +1,12 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reports.filters.base import BaseReportFilter
 from django.utils.translation import ugettext_lazy
 
 
 class ScheduleInstanceFilter(BaseReportFilter):
-    label = ugettext_lazy("")
+    label = ""
     slug = 'schedule_instance_filter'
     template = 'scheduling/schedule_instance_filter.html'
 

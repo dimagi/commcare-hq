@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
@@ -13,11 +14,11 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -28,30 +29,37 @@ class TestDashboard2(YeksiTestCase):
         total_row = loss_rate_report['total_row']
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
-                ['New Test Region', '43.41%', '16.59%', '7.56%', '3.17%', '1.95%', '0.73%'],
-                ['Region Test', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Region 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Saint-Louis', '6.36%', '9.88%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered'],
-                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Fatick', 'no data entered', '9.69%', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Thies', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered']
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'}, {'html': '9.69%'}, {'html': '5.49%'},
+                 {'html': '0.75%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '5.48%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Saint-Louis'}, {'html': '6.36%'}, {'html': '9.88%'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '2.94%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '5.92%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Rate by Country', '21.93%', '11.79%', '7.56%', '3.17%', '1.95%', '0.73%']
+            [
+                {'html': 'Taux par Pays'}, {'html': '6.36%'}, {'html': '9.79%'}, {'html': '3.61%'},
+                {'html': '0.75%'}, {'html': '2.94%'}, {'html': '0.00%'}, {'html': '5.74%'}
+            ]
         )
 
     def test_expiration_rate_report(self):
@@ -59,11 +67,11 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -74,30 +82,42 @@ class TestDashboard2(YeksiTestCase):
         total_row = expiration_rate_report['total_row']
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
-                ['New Test Region', '38.77%', '29.67%', '17.14%', '13.19%', '7.76%', '1.32%'],
-                ['Region Test', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Region 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Saint-Louis', '6.50%', '8.55%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered'],
-                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Fatick', 'no data entered', '7.75%', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Thies', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered']
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'},
+                 {'style': 'color: red', 'html': '7.75%'}, {'style': '', 'html': '3.59%'},
+                 {'style': '', 'html': '3.51%'}, {'html': 'pas de donn\xe9es'},
+                 {'style': '', 'html': '2.70%'}, {'style': 'color: red', 'html': '5.11%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}],
+                [{'html': 'Saint-Louis'}, {'style': 'color: red', 'html': '6.50%'},
+                 {'style': 'color: red', 'html': '8.55%'}, {'style': '', 'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '1.12%'},
+                 {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '4.93%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Rate by Country', '16.76%', '12.79%', '17.14%', '13.19%', '7.76%', '1.32%']
+            [
+                {'html': 'Taux par Pays'}, {'style': 'color: red', 'html': '6.50%'},
+                {'style': 'color: red', 'html': '8.17%'}, {'style': '', 'html': '2.34%'},
+                {'style': '', 'html': '3.51%'}, {'style': '', 'html': '1.12%'},
+                {'style': '', 'html': '2.70%'}, {'style': '', 'html': '5.00%'}
+            ]
         )
 
     def test_recovery_rate_by_district_report(self):
@@ -105,11 +125,11 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -120,51 +140,73 @@ class TestDashboard2(YeksiTestCase):
         total_row = recovery_rate_by_district_report['total_row']
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['R\xe9gion', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018',
+             'F\xe9vrier 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
-                ['District Sud', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%'],
-                ['District Khombole', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['District Joal Fadiouth', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['District Test 2', '0.00%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Thies', '100.00%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['District Mbao', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%'],
-                ['District Tivaoune', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['District Pikine', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['District Gu\xe9diawaye', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['District M\xe9kh\xe9', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['DISTRICT PNA', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 '100.00%', '100.00%'],
-                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '0.00%'],
-                ['District Thiadiaye', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '100.00%'],
-                ['New York', '19.15%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Dakar', '0.00%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['District Centre', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered', '0.00%'],
-                ['District Test', '100.00%', 'no data entered', 'no data entered', '100.00%',
-                 'no data entered', 'no data entered']
+                [{'html': 'District Sud'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Khombole'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Joal Fadiouth'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Test 2'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
+                [{'html': 'Thies'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}],
+                [{'html': 'District Mbao'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Tivaoune'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Pikine'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District Gu\xe9diawaye'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'District M\xe9kh\xe9'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'DISTRICT PNA'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '100.00%'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'District Thiadiaye'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}],
+                [{'html': 'New York'}, {'html': '19.15%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '19.15%'}],
+                [{'html': 'Dakar'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}],
+                [{'html': 'District Centre'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'District Test'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Rate by Country', '44.46%', '0.00%', '0.00%', '100.00%', '100.00%', '75.86%']
+            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': '0.00%'}, {'html': '0.00%'},
+             {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'}, {'html': '80.43%'}]
         )
 
     def test_recovery_rate_by_pps_report_country_level(self):
@@ -172,11 +214,11 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -187,30 +229,37 @@ class TestDashboard2(YeksiTestCase):
         total_row = recovery_rate_by_pps_report['total_row']
         self.assertEqual(
             headers,
-            ['Region', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['Région', 'Octobre 2017', 'Novembre 2017', 'Décembre 2017', 'Janvier 2018',
+             'Février 2018', 'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
-                ['New Test Region', '77.30%', '63.63%', '53.65%', '55.93%', '63.43%', '90.75%'],
-                ['Region Test', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 '28.12%', 'no data entered'],
-                ['Region 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '46.15%'],
-                ['Dakar', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '0.00%'],
-                ['Saint-Louis', '68.82%', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Fatick', 'no data entered', '90.47%', 'no data entered', 'no data entered',
-                 'no data entered', 'no data entered'],
-                ['Thies', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered', '100.00%']
+                [{'html': 'Dakar'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '0.00%'}, {'html': '0.00%'}],
+                [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'}, {'html': '90.47%'}, {'html': '2.75%'},
+                 {'html': '0.00%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '23.82%'}],
+                [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '46.15%'}, {'html': '46.15%'}],
+                [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '28.12%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '28.12%'}],
+                [{'html': 'Saint-Louis'}, {'html': '63.85%'}, {'html': '87.68%'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '52.57%'}],
+                [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
+                 {'html': '100.00%'}, {'html': '100.00%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Rate by Country', '71.97%', '69.87%', '53.65%', '55.93%', '56.75%', '89.46%']
+            [
+                {'html': 'Taux par Pays'}, {'html': '63.85%'}, {'html': '88.53%'}, {'html': '1.59%'},
+                {'html': '0.00%'}, {'html': '12.04%'}, {'html': '22.04%'}, {'html': '42.44%'}
+            ]
         )
 
     def test_recovery_rate_by_pps_report_pps_level(self):
@@ -218,11 +267,11 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
+            'program': '%%',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
             'year_end': '2018',
-            'language': 'english',
         }
 
         dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
@@ -233,121 +282,21 @@ class TestDashboard2(YeksiTestCase):
         total_row = recovery_rate_by_pps_report['total_row']
         self.assertEqual(
             headers,
-            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
+            ['PPS', 'Octobre 2017', 'Novembre 2017', 'D\xe9cembre 2017', 'Janvier 2018', 'F\xe9vrier 2018',
+             'Mars 2018', 'Taux moyen']
         )
         self.assertEqual(
-            sorted(rows, key=lambda x: x[0]),
+            rows,
             sorted([
-                ['P2', '75.47%', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-                 'no data entered']
+                [{'html': 'P2'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            ['Rate by PPS', '75.47%', '0.00%', '0.00%', '0.00%', '0.00%', '0.00%']
-        )
-
-    def test_rupture_rate_by_pps_report(self):
-        mock = MagicMock()
-        mock.couch_user = self.user
-        mock.GET = {
-            'location_id': '',
-            'month_start': '10',
-            'year_start': '2017',
-            'month_end': '3',
-            'year_end': '2018',
-            'language': 'english',
-        }
-
-        dashboard2_report = Dashboard2Report(request=mock, domain='test-pna')
-
-        rupture_rate_by_pps_report = dashboard2_report.report_context['reports'][4]['report_table']
-        headers = rupture_rate_by_pps_report['headers'].as_export_table[0]
-        rows = rupture_rate_by_pps_report['rows']
-        total_row = rupture_rate_by_pps_report['total_row']
-        self.assertEqual(
-            headers,
-            ['PPS', 'October 2017', 'November 2017', 'December 2017', 'January 2018',
-             'February 2018', 'March 2018']
-        )
-        expected = [
-            ['test pps 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['New Test PPS 1', '35.00%', '25.00%', '20.00%', '15.00%', '5.00%', '0.00%'],
-            ['PPS 3', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['F2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS Alexis', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Virage 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['SL2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['G1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Virage 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 3', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             '7.69%', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['F1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Ngor', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['P2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['SL1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['P1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 3', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Virage 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Pps test 2 bbb', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['Virage 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['District Test 2', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered', 'no data entered'],
-            ['PPS 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['New Test PPS 2', '0.00%', '0.00%', '10.00%', '20.00%', '0.00%', '0.00%'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 1', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered'],
-            ['PPS 2', 'no data entered', 'no data entered', 'no data entered', 'no data entered',
-             'no data entered', 'no data entered']
-        ]
-        self.assertEqual(
-            len(rows),
-            len(expected)
-        )
-        for row in expected:
-            self.assertIn(row, rows)
-        self.assertEqual(
-            total_row,
-            ['Rate by Country', '23.33%', '16.67%', '16.67%', '16.67%', '4.65%', '0.00%']
+            [
+                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': '0.00%'}, {'html': '0.00%'},
+                {'html': '0.00%'}, {'html': '0.00%'}, {'html': '0.00%'}, {'html': '37.38%'}
+            ]
         )

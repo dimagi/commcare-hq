@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import datetime
+import six
 from django.urls import reverse
 from corehq import privileges
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
@@ -20,7 +22,7 @@ from corehq.apps.hqadmin.reports import (
 from corehq.apps.hqpillow_retry.views import PillowErrorsReport
 from corehq.apps.linked_domain.views import DomainLinkHistoryReport
 from corehq.apps.reports.standard import (
-    monitoring, inspect, export,
+    monitoring, inspect,
     deployments, sms, ivr
 )
 from corehq.apps.reports.standard.forms import reports as receiverwrapper
@@ -242,7 +244,8 @@ def _make_report_class(config, show_in_dropdown=False, show_in_nav=False):
             )
         return show_item
 
-    return type('DynamicReport{}'.format(config._id), (GenericReportView,), {
+    bytes_config_id = config._id.encode('utf-8') if isinstance(config._id, six.text_type) else config._id
+    return type(str(b'DynamicReport{}'.format(bytes_config_id)), (GenericReportView,), {
         'name': config.title,
         'description': config.description or None,
         'get_url': get_url,
@@ -297,12 +300,6 @@ def get_report_builder_count(domain):
     report_builder_reports = [c for c in configs if c.report_meta.created_by_builder]
     return len(report_builder_reports)
 
-
-DATA_INTERFACES = (
-    (ugettext_lazy("Export Data"), (
-        export.DeidExportReport,
-    )),
-)
 
 EDIT_DATA_INTERFACES = (
     (ugettext_lazy('Edit Data'), (

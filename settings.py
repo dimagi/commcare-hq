@@ -74,7 +74,10 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = BASE_DIR
+
+# These templates are put on the server during deploy by fabric
 SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
+
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -118,6 +121,7 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
+MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -672,29 +676,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-####### Pillow Retry Queue Settings #######
-
-# Setting this to False no pillowtop errors will get processed.
 PILLOW_RETRY_QUEUE_ENABLED = False
-
-# If an error still has not been processed in this number of minutes, enqueue it
-# again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
-
-# Number of minutes to wait before retrying an unsuccessful processing attempt
-PILLOW_RETRY_REPROCESS_INTERVAL = 5
-
-# Max number of processing attempts before giving up on processing the error
-PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
-
-# The backoff factor by which to increase re-process intervals by.
-# next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
-PILLOW_RETRY_BACKOFF_FACTOR = 2
-
-# After an error's total attempts exceeds this number it will only be re-attempted
-# once after being reset. This is to prevent numerous retries of errors that aren't
-# getting fixed
-PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
@@ -876,6 +858,18 @@ DATADOG_APP_KEY = None
 
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 WAREHOUSE_DATABASE_ALIAS = 'default'
+
+# A dict of django apps in which the reads are
+# split betweeen the primary and standby db machines
+# Example format:
+# {
+# "users":
+#     {
+#      ["pgmain", 5],
+#      ["pgmainstandby", 5]
+#     }
+# }
+LOAD_BALANCED_APPS = {}
 
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
@@ -1211,7 +1205,15 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        }
+        },
+        'main_couch_sql_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': MAIN_COUCH_SQL_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -2015,6 +2017,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
@@ -2059,7 +2062,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json')
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2235,8 +2239,6 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'ews-ghana': 'custom.ewsghana',
     'ews-ghana-1': 'custom.ewsghana',
     'ewsghana-6': 'custom.ewsghana',
@@ -2250,7 +2252,6 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
-    'psi-unicef': 'psi',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
     'test-pna': 'custom.yeksi_naa_reports',
@@ -2346,6 +2347,7 @@ if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
         'changeme',  # default value in localsettings.example.py
         'staging',
         'softlayer',
+        'production',
     ]
 else:
     IS_LOCATION_CTE_ONLY = False

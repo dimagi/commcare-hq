@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-04-17 19:47+0000\n"
+"POT-Creation-Date: 2018-05-01 19:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -455,13 +455,17 @@ msgstr "Continuar con el caso registrado"
 msgid "Show All"
 msgstr "Mostrar Todo"
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:238
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:240
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:326
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:331
 msgid "You have unsaved changes in your report list module"
 msgstr "Tiene cambios sin guardar en la lista de caso de su módulo"
+
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:424
+msgid "This code is used in multiple places."
+msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/releases/app_diff.js:84
 msgid "Crunching app diff..."
@@ -2373,16 +2377,16 @@ msgstr ""
 msgid "We were unable to save this answer. Please try again later."
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:183
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:182
 msgid "Form successfully saved!"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:408
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:407
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:26
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:436
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:435
 msgid "Please wait..."
 msgstr "Por favor espere..."
 
@@ -2486,6 +2490,14 @@ msgstr "Usted tiene cambios sin guardar en su diccionario de datos."
 msgid ""
 "You have unsaved changes to this case type. Are you sure you would like to "
 "continue?"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:164
+msgid "Case Reassignment (via HQ)"
+msgstr ""
+
+#: corehq/apps/data_interfaces/static/data_interfaces/js/case_management.js:172
+msgid "Search for users or groups"
 msgstr ""
 
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:30
@@ -2615,10 +2627,8 @@ msgid "Excel (older versions)"
 msgstr "Excel (versiones antiguas)"
 
 #: corehq/apps/export/static/export/js/models.js:197
-#, fuzzy
-#| msgid "Excel 2007"
 msgid "Excel 2007+"
-msgstr "Excel 2007"
+msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:510
 msgid "The table path should end with []"
@@ -2701,7 +2711,7 @@ msgid "Clear"
 msgstr "Borrar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports/static/reports/js/filters/main.js:71
+#: corehq/apps/reports/static/reports/js/filters/main.js:67
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
@@ -2845,23 +2855,39 @@ msgstr ""
 msgid "Error saving user"
 msgstr "Error al guardar el usuario"
 
-#: corehq/apps/locations/static/locations/js/location_tree.async.js:288
+#: corehq/apps/locations/static/locations/js/location_tree.js:288
 msgid "You have successfully archived the location <%=name%>"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.async.js:291
+#: corehq/apps/locations/static/locations/js/location_tree.js:291
 msgid ""
 "You have successfully deleted the location <%=name%> and all of its child "
 "locations"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/location_tree.async.js:294
+#: corehq/apps/locations/static/locations/js/location_tree.js:294
 msgid ""
 "An error occurred while deleting your location. If the problem persists, "
 "please report an issue"
 msgstr ""
 "Ocurrió un error al eliminar su ubicación. Si el problema persiste, por "
 "favor reporte un problema"
+
+#: corehq/apps/locations/static/locations/js/widgets_main.js:9
+msgid "Choose a primary location"
+msgstr ""
+
+#: corehq/apps/locations/static/locations/js/widgets_main.js:11
+#, fuzzy
+#| msgid "Yes, log in as this user"
+msgid "No locations set for this user"
+msgstr "Sí, ingresar como este usuario"
+
+#: corehq/apps/locations/static/locations/js/widgets_main.js:23
+#, fuzzy
+#| msgid "Select a group"
+msgid "Select a Location"
+msgstr "Seleccione un grupo"
 
 #: corehq/apps/registration/static/registration/js/new_user.ko.js:118
 msgid "Please enter your name."
@@ -3000,37 +3026,12 @@ msgstr "Reportes Incluidos"
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
-#: corehq/apps/reports/static/reports/js/export.manager.js:86
-msgid ""
-"Oh no! Your download was unable to be completed. We have been notified and "
-"are already hard at work solving this issue."
-msgstr ""
-"¡Oh no! Su descarga no se completó. Ya fuimos notificados sobre esto y "
-"estamos trabajando duro para resolver este inconveniente."
-
-#: corehq/apps/reports/static/reports/js/export.manager.js:196
-#: corehq/apps/reports/static/reports/js/export.manager.js:218
-msgid ""
-"Sorry, something unexpected went wrong and your download could not be "
-"completed. Please try again and report an issue if the problem persists."
-msgstr ""
-"Lo sentimos, algo inesperado sucedió y su descarga no se completó. Por favor "
-"intente de nuevo y reporte el inconveniente si el problema persiste."
-
-#: corehq/apps/reports/static/reports/js/export.manager.js:325
-msgid ""
-"No valid sheets were available for Custom Bulk Export. Please check for "
-"duplicate sheet names."
-msgstr ""
-"No se encontró hojas válidas disponibles para la Exportación General "
-"Personalizada. Por favor revise si hay nombres de hojas duplicadas."
-
-#: corehq/apps/reports/static/reports/js/filters/main.js:139
+#: corehq/apps/reports/static/reports/js/filters/main.js:135
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr "Todo"
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:152
+#: corehq/apps/reports/static/reports/js/filters/main.js:148
 msgid "Select a group"
 msgstr "Seleccione un grupo"
 
@@ -3150,6 +3151,7 @@ msgstr "Reproceso fallido"
 #: corehq/apps/reports_core/static/reports_core/js/base_template_new.js:37
 msgid "Showing the current page of data. Switch pages to see more data."
 msgstr ""
+"Mostrando la página actual de datos. Cambie de páginas para ver más datos."
 
 #: corehq/apps/reports_core/static/reports_core/js/maps.js:29
 msgid "Streets"
@@ -3159,7 +3161,11 @@ msgstr "Calles"
 msgid "Satellite"
 msgstr "Satélite"
 
-#: corehq/apps/sms/static/sms/js/add_gateway.js:10
+#: corehq/apps/sms/static/sms/js/add_gateway.js:9
+msgid "Remove"
+msgstr "Eliminar"
+
+#: corehq/apps/sms/static/sms/js/add_gateway.js:23
 msgid "You must have at least one phone number."
 msgstr "Debe tener al menos un número de teléfono."
 
@@ -3507,6 +3513,14 @@ msgstr ""
 msgid "every month"
 msgstr ""
 
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:307
+msgid "Send Broadcast"
+msgstr ""
+
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:309
+msgid "Schedule Broadcast"
+msgstr ""
+
 #: corehq/messaging/scheduling/static/scheduling/js/dashboard.js:61
 msgid "(no errors over the given date range)"
 msgstr ""
@@ -3576,3 +3590,12 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
 msgid "Failed to cancel"
 msgstr ""
+
+#~ msgid "show"
+#~ msgstr "mostrar"
+
+#~ msgid "hide"
+#~ msgstr "ocultar"
+
+#~ msgid "toggle"
+#~ msgstr "alternar"
