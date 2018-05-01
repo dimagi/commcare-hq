@@ -287,7 +287,39 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
-        // EULA and CDA modals
+        // EULA modal
+        var cookieName = "gdpr_rollout";
+        if (!$.cookie(cookieName)) {    // user has not asked to be reminded tomorrow
+            $("#eula-snooze").click(function() {
+                $.cookie(cookieName, true, { expires: 1, path: '/' });
+            });
+
+            // appcues content involves its own modal, which we don't control but need to keep out of the way
+            var $appcues = $(".appcues");
+            $("#eula-agree").click(function() {
+                $(this).disableButton();
+                $.ajax({
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("agree_to_eula"),
+                    method: "POST",
+                    success: function() {
+                        $("#eulaModal").modal('hide');
+                        $appcues.removeClass("hide");
+                    },
+                    error: function() {
+                        // do nothing, user will get the popup again on next page load
+                        $appcues.removeClass("hide");
+                    },
+                });
+            });
+
+            $appcues.addClass("hide");
+            $("#eulaModal").modal({
+                keyboard: false,
+                backdrop: 'static',
+            });
+        }
+
+        // CDA modal
         _.each($(".remote-modal"), function(modal) {
             var $modal = $(modal);
             $modal.on("show show.bs.modal", function() {
