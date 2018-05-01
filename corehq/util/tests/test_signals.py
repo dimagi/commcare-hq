@@ -10,7 +10,7 @@ class SignalsTests(TestCase):
     def tearDown(self):
         signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    def test_signals_do_something(self):
+    def test_signals_are_handled(self):
         test_data = {}
 
         def signal_handler(signal, frame):
@@ -21,7 +21,7 @@ class SignalsTests(TestCase):
 
         self.assertTrue(test_data["floppy ears"])
 
-    def test_returns_to_default(self):
+    def test_returns_to_default_on_exit(self):
         test_data = {}
 
         def signal_handler(signal, frame):
