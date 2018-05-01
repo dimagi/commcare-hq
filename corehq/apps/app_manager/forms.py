@@ -39,12 +39,13 @@ class CopyApplicationForm(forms.Form):
         export_zipped_apps_enabled = kwargs.pop('export_zipped_apps_enabled', False)
         super(CopyApplicationForm, self).__init__(*args, **kwargs)
         fields = ['domain', 'name', 'toggles']
+        self.from_domain = from_domain
         if app:
             self.fields['name'].initial = app.name
         if export_zipped_apps_enabled:
             self.fields['gzip'] = forms.FileField(required=False)
             fields.append('gzip')
-        if LINKED_DOMAINS.enabled(from_domain):
+        if LINKED_DOMAINS.enabled(self.from_domain):
             fields.append(PrependedText('linked', ''))
 
         self.helper = FormHelper()
@@ -73,6 +74,10 @@ class CopyApplicationForm(forms.Form):
         if self.cleaned_data.get('linked'):
             if not LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
+            link = DomainLink.objects.filter(linked_domain=domain)
+            if link and link[0].master_domain != domain:
+                raise forms.ValidationError(
+                    "The target project space is already linked to a different domain")
         return self.cleaned_data
 
 
