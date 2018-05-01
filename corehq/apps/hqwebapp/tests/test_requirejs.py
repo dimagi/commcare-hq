@@ -9,28 +9,29 @@ from django.test import SimpleTestCase
 
 class TestRequireJS(SimpleTestCase):
 
-    def setUp(self):
-        super(TestRequireJS, self).setUp()
+    @classmethod
+    def setUpClass(cls):
+        super(TestRequireJS, cls).setUpClass()
         prefix = os.path.join(os.getcwd(), 'corehq')
 
         proc = subprocess.Popen(["find", prefix, "-name", "*.js"], stdout=subprocess.PIPE)
         (out, err) = proc.communicate()
-        self.js_files = [f for f in out.split("\n") if f
+        cls.js_files = [f for f in out.split("\n") if f
                     and not re.search(r'/_design/', f)
                     and not re.search(r'couchapps', f)
                     and not re.search(r'/vellum/', f)]
 
-        self.hqdefine_files = []
-        self.requirejs_files = []
-        for filename in self.js_files:
+        cls.hqdefine_files = []
+        cls.requirejs_files = []
+        for filename in cls.js_files:
             proc = subprocess.Popen(["grep", "^\s*hqDefine", filename], stdout=subprocess.PIPE)
             (out, err) = proc.communicate()
             if out:
-                self.hqdefine_files.append(filename)
+                cls.hqdefine_files.append(filename)
                 proc = subprocess.Popen(["grep", "hqDefine.*,.*\[", filename], stdout=subprocess.PIPE)
                 (out, err) = proc.communicate()
                 if out:
-                    self.requirejs_files.append(filename)
+                    cls.requirejs_files.append(filename)
 
 
     def test_files_match_modules(self):
