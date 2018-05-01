@@ -364,6 +364,20 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
+        {# Report Issue #}
+        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+
+        {% if EULA_COMPLIANCE %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+                {% registerurl 'agree_to_eula' %}
+                {% include 'hqwebapp/includes/modal_eula.html' %}
+            {% endif %}
+        {% endif %}
+
+        {# 30 Day Trial #}
+        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+
+
         {% block additional_initial_page_data %}
             {% comment %}
                 fallback place to put initial page data for templates where it's
@@ -564,18 +578,6 @@
             <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
-
-        {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {% if EULA_COMPLIANCE %}
-            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-                {% include 'hqwebapp/includes/modal_eula.html' %}
-            {% endif %}
-        {% endif %}
-
-        {# 30 Day Trial #}
-        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

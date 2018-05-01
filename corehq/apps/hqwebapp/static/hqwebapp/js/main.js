@@ -293,6 +293,19 @@ hqDefine('hqwebapp/js/main', [
             $("#eula-snooze").click(function() {
                 $.cookie(cookieName, true, { expires: 1, path: '/' });
             });
+            $("#eula-agree").click(function() {
+                $(this).disableButton();
+                $.ajax({
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("agree_to_eula"),
+                    method: "POST",
+                    success: function() {
+                        $("#eulaModal").modal('hide');
+                    },
+                    error: function() {
+                        // do nothing, user will get the popup again on next page load
+                    },
+                });
+            });
             $("#eulaModal").modal({
                 keyboard: false,
                 backdrop: 'static',

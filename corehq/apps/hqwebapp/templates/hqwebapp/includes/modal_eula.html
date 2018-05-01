@@ -1,5 +1,5 @@
 {% load i18n %}
-<div class="modal fade" id="eulaModal">
+<div class="modal fade" id="eulaModal" style="z-index: 2147483548;"><!-- This is ridiculous, needed for Appcues -->
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -30,15 +30,11 @@
                 {% endblocktrans %}
             </div>
             <div class="modal-footer">
-                <form id="eula-agree" action="{% url "agree_to_eula" %}" method="POST">
-                    <button id="eula-snooze" class="btn btn-default" data-dismiss="modal">
-                        {% trans "Remind me tomorrow" %}
-                    </button>
-                    {% csrf_token %}
-                    <input name="next" type="hidden" value="{{ request.path }}" />
-                    <button type="submit" class="btn btn-primary">{% trans 'I Agree' %}</button>
-                </form>
+                <button id="eula-snooze" class="btn btn-default" data-dismiss="modal">
+                    {% trans "Remind me tomorrow" %}
+                </button>
+                <button id="eula-agree" type="submit" class="btn btn-primary">{% trans 'I Agree' %}</button>
             </div>
-            </div>
+        </div>
     </div>
 </div>
