@@ -58,7 +58,7 @@
             </p>
             {% endif %}
         {% endif %}
-
+        {% include 'scheduling/partial/custom_daily_event_templates.html' %}
         <form id="conditional-alert-form" class="form form-horizontal main-form" method="POST" action="#">
             {% crispy basic_info_form %}
             <ul class="nav nav-tabs">
@@ -79,11 +79,7 @@
                 </div>
                 <div class="tab-pane {% if schedule_form_active %}active{% endif %}" id="schedule">
                     <div class="row">
-                        <div id="create-schedule-form" class="col-sm-12">
-                            {% crispy schedule_form schedule_form.before_content %}
-                            {% crispy schedule_form.standalone_content_form %}
-                            {% crispy schedule_form schedule_form.after_content %}
-                        </div>
+                        {% include 'scheduling/partial/schedule_form.html' %}
                     </div>
                 </div>
             </div>

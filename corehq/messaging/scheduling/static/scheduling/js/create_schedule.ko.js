@@ -1,4 +1,15 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
+    ko.bindingHandlers.useTimePicker = {
+        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+            $(element).timepicker({
+                showMeridian: false,
+                showSeconds: false,
+                defaultTime: $(element).val() || '0:00',
+            });
+        },
+        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {}
+    };
+
     var MessageViewModel = function(language_code, message) {
         var self = this;
 
@@ -68,6 +79,33 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
     };
 
+    var EventAndContentViewModel = function(initial_values) {
+        var self = this;
+        ContentViewModel.call(self, initial_values);
+
+        self.day = ko.observable(initial_values.day || '0');
+        self.time = ko.observable(initial_values.time || '0:00');
+        self.case_property_name = ko.observable(initial_values.case_property_name);
+    };
+
+    EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
+    EventAndContentViewModel.prototype.constructor = EventAndContentViewModel;
+
+    var CustomDailyEventContainer = function(id) {
+        var self = this;
+
+        var custom_daily_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_daily_event_formset;
+        if(id < custom_daily_event_formset.length) {
+            self.eventAndContentViewModel = new EventAndContentViewModel(custom_daily_event_formset[id]);
+        } else {
+            self.eventAndContentViewModel = new EventAndContentViewModel({});
+        }
+
+        self.templateId = ko.computed(function() {
+            return 'id_custom_daily_event_template_' + id;
+        });
+    };
+
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         select2_user_group_recipients, select2_user_organization_recipients, select2_location_types,
         select2_case_group_recipients, current_visit_scheduler_form) {
@@ -118,6 +156,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.displayed_email_trial_message = false;
         self.content = ko.observable(initial_values.content);
         self.standalone_content_form = new ContentViewModel(initial_values.standalone_content_form);
+        self.custom_daily_events = ko.observableArray();
         self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(current_visit_scheduler_form,
             'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
         self.visit_scheduler_app_and_form_unique_id.init();
@@ -158,7 +197,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.setRepeatOptionText = function(newValue) {
             var option = $('option[value="repeat_every_1"]');
-            if(newValue === 'daily') {
+            if(newValue === 'daily' || newValue === 'custom_daily') {
                 option.text(gettext("every day"));
             } else if(newValue === 'weekly') {
                 option.text(gettext("every week"));
@@ -169,8 +208,16 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.send_frequency.subscribe(self.setRepeatOptionText);
 
-        self.showTimeInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+        self.usesCustomEventDefinitions = ko.computed(function() {
+            return self.send_frequency() === 'custom_daily';
+        });
+
+        self.showSharedTimeInput = ko.computed(function() {
+            return (
+                self.send_frequency() === 'daily' ||
+                self.send_frequency() === 'weekly' ||
+                self.send_frequency() === 'monthly'
+            );
         });
 
         self.showStartDateInput = ko.computed(function() {
@@ -322,18 +369,34 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             element.datepicker({dateFormat : "yy-mm-dd"});
         };
 
-        self.initTimePicker = function(element) {
-            element.timepicker({
-                showMeridian: false,
-                showSeconds: false,
-                defaultTime: element.val() || false,
-            });
+        self.getNextCustomDailyEventIndex = function() {
+            var count = $('#id_custom-daily-event-TOTAL_FORMS').val();
+            return parseInt(count);
         };
+
+        self.addCustomDailyEvent = function() {
+            var id = self.getNextCustomDailyEventIndex();
+            $('#id_custom_daily_event_templates').append(
+                 $('#id_custom_daily_event_empty_form_container').html().replace(/__prefix__/g, id)
+            );
+            $('#id_custom-daily-event-TOTAL_FORMS').val(id + 1);
+            self.custom_daily_events.push(new CustomDailyEventContainer(id));
+        };
+
+        self.useTimeInput = ko.computed(function() {
+            return self.send_time_type() === 'SPECIFIC_TIME' || self.send_time_type() === 'RANDOM_TIME';
+        });
+
+        self.useCasePropertyTimeInput = ko.computed(function() {
+            return self.send_time_type() === 'CASE_PROPERTY_TIME';
+        });
 
         self.init = function () {
             self.initDatePicker($("#id_schedule-start_date"));
-            self.initTimePicker($("#id_schedule-send_time"));
             self.setRepeatOptionText(self.send_frequency());
+            for(var i = 0; i < self.getNextCustomDailyEventIndex(); i++) {
+                self.custom_daily_events.push(new CustomDailyEventContainer(i));
+            }
         };
     };
 

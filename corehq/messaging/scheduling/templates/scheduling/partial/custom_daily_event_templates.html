@@ -1,0 +1,15 @@
+{% load crispy_forms_tags %}
+
+
+<div id="id_custom_daily_event_templates">
+    <div id="id_custom_daily_event_empty_form_container">
+        <script type="text/html" id="id_custom_daily_event_template___prefix__">
+            {% crispy schedule_form.custom_daily_event_formset.empty_form %}
+        </script>
+    </div>
+    {% for form in schedule_form.custom_daily_event_formset %}
+        <script type="text/html" id="id_custom_daily_event_template_{{ forloop.counter0 }}">
+            {% crispy form %}
+        </script>
+    {% endfor %}
+</div>
