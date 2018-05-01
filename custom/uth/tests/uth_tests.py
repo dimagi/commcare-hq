@@ -117,7 +117,7 @@ class VscanTests(UTHTests):
             for f in files:
                 packed_directory[
                     os.path.join(os.path.split(directory)[-1], f)
-                ] = open(os.path.join(root, f))
+                ] = open(os.path.join(root, f), 'rb')
 
         return packed_directory
 
@@ -143,7 +143,7 @@ class ImageUploadTests(UTHTests):
 
         for root, dirs, files in os.walk(directory):
             for f in files:
-                packed_directory[f] = open(os.path.join(root, f))
+                packed_directory[f] = open(os.path.join(root, f), 'rb')
 
         return packed_directory
 
