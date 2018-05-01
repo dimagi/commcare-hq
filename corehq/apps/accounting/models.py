@@ -976,6 +976,7 @@ class Subscriber(models.Model):
 
 
 class VisibleSubscriptionManager(models.Manager):
+    use_in_migrations = True
 
     def get_queryset(self):
         return super(VisibleSubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
@@ -985,6 +986,7 @@ class DisabledManager(models.Manager):
 
     def get_queryset(self):
         raise NotImplementedError
+
 
 class Subscription(models.Model):
     """
