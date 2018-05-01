@@ -144,7 +144,7 @@ class CouchDumpLoadTest(TestCase):
     def test_multimedia(self):
         from corehq.apps.hqmedia.models import CommCareAudio, CommCareImage, CommCareVideo
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', 'commcare-hq-logo.png')
-        with open(image_path, 'r') as f:
+        with open(image_path, 'rb') as f:
             image_data = f.read()
 
         image = CommCareImage.get_by_data(image_data)
