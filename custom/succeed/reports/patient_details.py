@@ -4,7 +4,7 @@ from couchdbkit.exceptions import ResourceNotFound
 from corehq.apps.reports.generic import ElasticProjectInspectionReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from corehq.apps.cloudcare.api import get_cloudcare_app
-from corehq.apps.cloudcare.utils import webapps_url
+from corehq.apps.cloudcare.utils import webapps_module_case_form
 from django.utils import html
 from memoized import memoized
 from custom.succeed.utils import get_app_build, SUCCEED_CM_APPNAME, SUCCEED_PM_APPNAME, SUCCEED_CHW_APPNAME, \
@@ -49,11 +49,11 @@ class PatientDetailsReport(CustomProjectReport, ElasticProjectInspectionReport, 
         except IndexError:
             form_idx = None
 
-        url = webapps_url(domain=self.domain,
-                          app_id=app_build_id,
-                          module_id=module_idx,
-                          form_id=form_idx,
-                          case_id=case_id)
+        url = webapps_module_case_form(domain=self.domain,
+                                       app_id=app_build_id,
+                                       module_id=module_idx,
+                                       form_id=form_idx,
+                                       case_id=case_id)
         return html.escape(url)
 
     def update_app_info(self):

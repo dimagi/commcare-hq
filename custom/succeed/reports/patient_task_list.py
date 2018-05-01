@@ -7,7 +7,7 @@ from sqlagg.base import AliasColumn
 from sqlagg.columns import SimpleColumn
 from sqlagg.filters import EQ, OR, IN
 from corehq.apps.cloudcare.api import get_cloudcare_app
-from corehq.apps.cloudcare.utils import webapps_url
+from corehq.apps.cloudcare.utils import webapps_module_case_form
 from corehq.apps.reports.sqlreport import SqlTabularReport, AggregateColumn, DatabaseColumn, DataFormatter, \
     TableDataFormat
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
@@ -57,11 +57,11 @@ class PatientTaskListReport(SqlTabularReport, CustomProjectReport, ProjectReport
         except IndexError:
             form_idx = None
 
-        return html.escape(webapps_url(domain=self.domain,
-                                       app_id=app_build_id,
-                                       module_id=module_idx,
-                                       form_id=form_idx,
-                                       case_id=case_id))
+        return html.escape(webapps_module_case_form(domain=self.domain,
+                                                    app_id=app_build_id,
+                                                    module_id=module_idx,
+                                                    form_id=form_idx,
+                                                    case_id=case_id))
 
     def name_link(self, name, doc_id, is_closed):
         if is_closed == 0:

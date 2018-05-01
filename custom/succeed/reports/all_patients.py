@@ -17,7 +17,7 @@ from custom.succeed.reports.patient_task_list import PatientTaskListReport
 from custom.utils.utils import clean_IN_filter_value
 from memoized import memoized
 from corehq.apps.cloudcare.api import get_cloudcare_app
-from corehq.apps.cloudcare.utils import webapps_url
+from corehq.apps.cloudcare.utils import webapps_module_case_form
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin
 from django.utils import html
 from custom.succeed.reports import EMPTY_FIELD, CM7, CM_APP_CM_MODULE, OUTPUT_DATE_FORMAT
@@ -84,11 +84,11 @@ def edit_link(case_id, app_dict, latest_build):
     module = app_dict['modules'][CM_APP_CM_MODULE]
     form_idx = [ix for (ix, f) in enumerate(module['forms']) if f['xmlns'] == CM7][0]
     return html.mark_safe("<a target='_blank' class='ajax_dialog' href='%s'>Edit</a>") \
-        % html.escape(webapps_url(domain=app_dict['domain'],
-                                  app_id=latest_build,
-                                  module_id=CM_APP_CM_MODULE,
-                                  form_id=form_idx,
-                                  case_id=case_id))
+        % html.escape(webapps_module_case_form(domain=app_dict['domain'],
+                                               app_id=latest_build,
+                                               module_id=CM_APP_CM_MODULE,
+                                               form_id=form_idx,
+                                               case_id=case_id))
 
 
 def case_link(name, case_id):
