@@ -470,7 +470,7 @@ class CustomDailyEventForm(ContentForm):
                     twbscrispy.InlineField('day', data_bind='value: day'),
                     css_class='col-sm-4',
                 ),
-                crispy.HTML("<span>%s</span>" % _("day(s) after schedule begins")),
+                crispy.HTML('<label class="control-label">%s</label>' % _("day(s) after schedule begins")),
             ),
             hqcrispy.B3MultiField(
                 _("Time to Send"),
@@ -581,7 +581,7 @@ class ScheduleForm(Form):
             (SEND_DAILY, ugettext_lazy('Daily')),
             (SEND_WEEKLY, ugettext_lazy('Weekly')),
             (SEND_MONTHLY, ugettext_lazy('Monthly')),
-            (SEND_CUSTOM_DAILY, ugettext_lazy('Custom')),
+            (SEND_CUSTOM_DAILY, ugettext_lazy('Custom Schedule')),
         )
     )
     weekdays = MultipleChoiceField(
@@ -2378,7 +2378,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 crispy.Div(
-                    crispy.HTML("<span>%s</span>" % _("day(s)")),
+                    crispy.HTML('<label class="control-label">%s</label>' % _("day(s)")),
                     data_bind="visible: start_offset_type() !== '%s'" % self.START_OFFSET_ZERO,
                 ),
                 data_bind=("visible: (send_frequency() === '%s' || send_frequency() === '%s') "
