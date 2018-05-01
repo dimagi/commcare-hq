@@ -209,7 +209,7 @@ class CouchSqlDomainMigrator(object):
             _migrate_case_attachments(couch_case, sql_case)
             try:
                 CaseAccessorSQL.save_case(sql_case)
-            except IntegrityError as e:
+            except IntegrityError:
                 # case re-created by form processing so just mark the case as deleted
                 CaseAccessorSQL.soft_delete_cases(
                     self.domain,
@@ -324,7 +324,7 @@ class CouchSqlDomainMigrator(object):
 
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
-NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 1, 5, 10, 30, 60)
+NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
 
 
 def _wrap_form(doc):
