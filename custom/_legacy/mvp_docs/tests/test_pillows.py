@@ -23,6 +23,7 @@ from mvp_docs.pillows import (
     process_indicators_for_case, process_indicators_for_form
 )
 from pillowtop.feed.couch import change_from_couch_row, get_current_seq
+from io import open
 
 INDICATOR_TEST_DOMAIN = 'indicator-domain'
 INDICATOR_TEST_NAMESPACE = 'indicator_test'

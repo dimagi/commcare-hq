@@ -10,6 +10,7 @@ from casexml.apps.case.models import CommCareCase
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext, EvaluationContext
+from io import open
 
 TEST_DATA_SOURCE = 'test_drtb_v3.json'
 

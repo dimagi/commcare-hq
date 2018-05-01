@@ -20,6 +20,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
+from io import open
 
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):

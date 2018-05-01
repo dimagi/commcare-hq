@@ -12,6 +12,7 @@ from corehq.blobs.exceptions import ArgumentError
 from corehq.blobs.tests.util import get_id
 from corehq.util.test_utils import generate_cases, patch_datadog
 from six.moves import zip
+from io import open
 
 
 class _BlobDBTests(object):
