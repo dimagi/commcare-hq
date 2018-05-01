@@ -6,6 +6,7 @@ import uuid
 
 import redis
 from couchdbkit.exceptions import ResourceNotFound
+from lxml import etree
 
 from casexml.apps.case import const
 from casexml.apps.case.cleanup import rebuild_case_from_actions
@@ -14,7 +15,9 @@ from casexml.apps.case.util import get_case_xform_ids
 from casexml.apps.case.xform import get_case_updates
 from corehq.blobs.mixin import bulk_atomic_blobs
 from corehq.form_processor.backends.couch.dbaccessors import CaseAccessorCouch
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.utils import extract_meta_instance_id
+from couchforms.const import ATTACHMENT_NAME
 from couchforms.models import (
     XFormInstance, XFormDeprecated, XFormDuplicate,
     doc_types, XFormError, SubmissionErrorLog,
@@ -80,6 +83,47 @@ class FormProcessorCouch(object):
     def hard_delete_case_and_forms(cls, domain, case, xforms):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
+
+    # TODO: add tests
+    @classmethod
+    def update_responses(cls, xform, value_responses_map, user_id):
+        from corehq.form_processor.utils.xform import update_response
+
+        from corehq.form_processor.interfaces.processor import FormProcessorInterface
+        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
+        interface = FormProcessorInterface(xform.domain)
+        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        new_form = XFormInstance.wrap(existing_form.to_json())
+
+        xml = etree.fromstring(existing_form.fetch_attachment(ATTACHMENT_NAME))
+        dirty = False
+        for question, response in value_responses_map.iteritems():
+            if update_response(xml, question, response, xmlns=existing_form.xmlns):
+                dirty = True
+
+            data = new_form.form_data
+            i = XFormQuestionValueIterator(question)
+            for (qid, repeat_index) in i:
+                data = data[qid]
+                if repeat_index is not None:
+                    data = data[repeat_index]
+            data[i.last()] = response
+
+        if dirty:
+            from corehq.form_processor.models import Attachment
+            from corehq.form_processor.parsers.form import apply_deprecation
+            new_form._deferred_blobs = None     # will be re-populated by apply_deprecation
+            new_form.external_blobs.clear()     # will be re-populated by apply_deprecation
+            existing_form, new_form = apply_deprecation(existing_form, new_form)
+            new_xml = etree.tostring(xml)
+
+            interface.store_attachments(new_form, [
+                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+            ])
+            interface.save_processed_models([new_form, existing_form])
+            return True
+
+        return False
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None):
