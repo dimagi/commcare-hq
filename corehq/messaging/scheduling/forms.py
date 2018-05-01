@@ -464,6 +464,13 @@ class CustomDailyEventForm(ContentForm):
 
     def get_layout_fields(self):
         return [
+            crispy.Div(
+                crispy.Field(
+                    'DELETE',
+                    data_bind="checked: deleted"
+                ),
+                data_bind="visible: false"
+            ),
             hqcrispy.B3MultiField(
                 _("Event will send"),
                 crispy.Div(
@@ -511,17 +518,16 @@ class CustomDailyEventForm(ContentForm):
         super(CustomDailyEventForm, self).__init__(*args, **kwargs)
         self.helper = ScheduleForm.create_form_helper()
         self.helper.layout = crispy.Layout(
-            crispy.Fieldset(
-                _("Event for <strong>Day {}, Time {}{}</strong>").format(
-                    '<span data-bind="text: day"></span>',
-                    '<span data-bind="text: time, visible: $root.useTimeInput()"></span>',
-                    '<span data-bind="text: case_property_name,visible: $root.useCasePropertyTimeInput()"></span>',
+            crispy.Div(
+                crispy.Fieldset(
+                    '<span data-bind="template: { name: \'id_custom_daily_event_legend\' }"></span>',
+                    *self.get_layout_fields(),
+                    data_bind=(
+                        "visible: $root.send_frequency() === '%s' && !deleted()"
+                        % ScheduleForm.SEND_CUSTOM_DAILY
+                    )
                 ),
-                *self.get_layout_fields(),
-                data_bind=(
-                    "with: eventAndContentViewModel, "
-                    "visible: $root.send_frequency() === '%s'" % ScheduleForm.SEND_CUSTOM_DAILY
-                )
+                data_bind='with: eventAndContentViewModel',
             ),
         )
 
@@ -972,6 +978,7 @@ class ScheduleForm(Form):
             CustomDailyEventForm,
             formset=BaseCustomDailyEventFormSet,
             extra=0,
+            can_delete=True,
         )
         self.custom_daily_event_formset = CustomDailyEventFormSet(
             *args,

@@ -1,7 +1,21 @@
+{% load i18n %}
 {% load crispy_forms_tags %}
 
 
 <div id="id_custom_daily_event_templates">
+    <script type="text/html" id="id_custom_daily_event_legend">
+        <span class="btn btn-danger" data-bind="click: function() { $root.markCustomDailyEventDeleted($parent.event_id); }">
+            <i class="fa fa-remove"></i>
+        </span>
+        {% trans "Event for" %}
+        <strong>
+            {% trans "Day" %}
+            <span data-bind="text: day"></span>,
+            {% trans "Time" %}
+            <span data-bind="text: time, visible: $root.useTimeInput()"></span>
+            <span data-bind="text: case_property_name, visible: $root.useCasePropertyTimeInput()"></span>
+        </strong>
+    </script>
     <div id="id_custom_daily_event_empty_form_container">
         <script type="text/html" id="id_custom_daily_event_template___prefix__">
             {% crispy schedule_form.custom_daily_event_formset.empty_form %}

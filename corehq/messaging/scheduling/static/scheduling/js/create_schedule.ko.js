@@ -86,6 +86,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.day = ko.observable(initial_values.day || '0');
         self.time = ko.observable(initial_values.time || '0:00');
         self.case_property_name = ko.observable(initial_values.case_property_name);
+        self.deleted = ko.observable(initial_values.DELETE);
     };
 
     EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
@@ -93,6 +94,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
     var CustomDailyEventContainer = function(id) {
         var self = this;
+
+        self.event_id = id;
 
         var custom_daily_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_daily_event_formset;
         if(id < custom_daily_event_formset.length) {
@@ -381,6 +384,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             );
             $('#id_custom-daily-event-TOTAL_FORMS').val(id + 1);
             self.custom_daily_events.push(new CustomDailyEventContainer(id));
+        };
+
+        self.markCustomDailyEventDeleted = function(event_id) {
+            $.each(self.custom_daily_events(), function(index, value) {
+                if(value.event_id === event_id) {
+                    value.eventAndContentViewModel.deleted(true);
+                };
+            });
         };
 
         self.useTimeInput = ko.computed(function() {
