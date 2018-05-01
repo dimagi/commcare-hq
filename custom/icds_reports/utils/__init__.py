@@ -477,7 +477,8 @@ def zip_folder(pdf_files):
     return zip_hash
 
 
-def create_pdf_file(pdf_hash, pdf_context):
+def create_pdf_file(pdf_context):
+    pdf_hash = uuid.uuid4().hex
     template = get_template("icds_reports/icds_app/pdf/issnip_monthly_register.html")
     resultFile = cStringIO()
     client = get_redis_client()
