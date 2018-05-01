@@ -1,12 +1,14 @@
 hqDefine('hqwebapp/js/main', [
     "jquery",
     "underscore",
+    "hqwebapp/js/initial_page_data",
     "hqwebapp/js/alert_user",
     "analytix/js/google",
     "hqwebapp/js/hq_extensions.jquery",
 ], function(
     $,
     _,
+    initialPageData,
     alertUser,
     googleAnalytics
 ) {
@@ -290,26 +292,33 @@ hqDefine('hqwebapp/js/main', [
         // EULA modal
         var cookieName = "gdpr_rollout";
         if (!$.cookie(cookieName)) {
-            $("#eula-snooze").click(function() {
-                $.cookie(cookieName, true, { expires: 1, path: '/' });
-            });
-            $("#eula-agree").click(function() {
-                $(this).disableButton();
-                $.ajax({
-                    url: hqImport("hqwebapp/js/initial_page_data").reverse("agree_to_eula"),
-                    method: "POST",
-                    success: function() {
-                        $("#eulaModal").modal('hide');
-                    },
-                    error: function() {
-                        // do nothing, user will get the popup again on next page load
-                    },
+            var $modal = $("#eulaModal");
+            if ($modal.length) {
+                $("body").addClass("has-eula");
+                $("#eula-snooze").click(function() {
+                    $.cookie(cookieName, true, { expires: 1, path: '/' });
+                    $("body").removeClass("has-eula");
                 });
-            });
-            $("#eulaModal").modal({
-                keyboard: false,
-                backdrop: 'static',
-            });
+                $("#eula-agree").click(function() {
+                    $(this).disableButton();
+                    $.ajax({
+                        url: initialPageData.reverse("agree_to_eula"),
+                        method: "POST",
+                        success: function() {
+                            $("#eulaModal").modal('hide');
+                            $("body").removeClass("has-eula");
+                        },
+                        error: function() {
+                            // do nothing, user will get the popup again on next page load
+                            $("body").removeClass("has-eula");
+                        },
+                    });
+                });
+                $modal.modal({
+                    keyboard: false,
+                    backdrop: 'static',
+                });
+            }
         }
 
         // CDA modal
