@@ -75,7 +75,7 @@ class CopyApplicationForm(forms.Form):
             if not LINKED_DOMAINS.enabled(domain):
                 raise forms.ValidationError("The target project space does not have linked apps enabled.")
             link = DomainLink.objects.filter(linked_domain=domain)
-            if link and link[0].master_domain != domain:
+            if link and link[0].master_domain != self.from_domain:
                 raise forms.ValidationError(
                     "The target project space is already linked to a different domain")
         return self.cleaned_data
