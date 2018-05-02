@@ -15,6 +15,7 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
+from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -28,7 +29,7 @@ from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
     clear_local_domain_sql_backend_override
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -55,9 +56,7 @@ def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
 class CouchSqlDomainMigrator(object):
     def __init__(self, domain, with_progress=True, debug=False):
         from corehq.apps.tzmigration.planning import DiffDB
-        assert should_use_sql_backend(domain)
-        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain)
-
+        self._assert_no_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
         self.domain = domain
@@ -210,7 +209,7 @@ class CouchSqlDomainMigrator(object):
             _migrate_case_attachments(couch_case, sql_case)
             try:
                 CaseAccessorSQL.save_case(sql_case)
-            except IntegrityError as e:
+            except IntegrityError:
                 # case re-created by form processing so just mark the case as deleted
                 CaseAccessorSQL.soft_delete_cases(
                     self.domain,
@@ -286,18 +285,27 @@ class CouchSqlDomainMigrator(object):
                 filter_ledger_diffs(diffs)
             )
 
+    def _assert_no_migration_restrictions(self, domain_name):
+        assert should_use_sql_backend(domain_name)
+        assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
+        assert not stale_get_export_count(domain_name)
+        assert not any(custom_report_domain == domain_name
+                       for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
+
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
+        doc_count = sum([
+            get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
+            for doc_type in doc_types
+        ])
+        if self.timing_context:
+            current_timer = self.timing_context.peek()
+            current_timer.normalize_denominator = doc_count
+
         if self.with_progress:
-            doc_count = sum([
-                get_doc_count_in_domain_by_type(self.domain, doc_type, XFormInstance.get_db())
-                for doc_type in doc_types
-            ])
-            if self.timing_context:
-                current_timer = self.timing_context.peek()
-                current_timer.normalize_denominator = doc_count
             prefix = "{} ({})".format(progress_name, ', '.join(doc_types))
             return with_progress_bar(iterable, doc_count, prefix=prefix, oneline=False)
         else:
+            self.log_info("{} ({})".format(doc_count, ', '.join(doc_types)))
             return iterable
 
     def _send_timings(self, timing_context):
@@ -316,7 +324,7 @@ class CouchSqlDomainMigrator(object):
 
 
 TIMING_BUCKETS = (0.1, 1, 5, 10, 30, 60, 60 * 5, 60 * 10, 60 * 60, 60 * 60 * 12, 60 * 60 * 24)
-NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 1, 5, 10, 30, 60)
+NORMALIZED_TIMING_BUCKETS = (0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 1, 2, 3, 5, 10, 30)
 
 
 def _wrap_form(doc):

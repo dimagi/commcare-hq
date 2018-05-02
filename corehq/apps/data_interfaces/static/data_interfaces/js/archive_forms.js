@@ -24,6 +24,7 @@ hqDefine("data_interfaces/js/archive_forms", function() {
         $(allFormsButtonSelector).prop('checked', false);
     }
 
+    // Similar to case_management.js, would be good to combine the two
     $(function() {
         // bindings for 'all' button
         $(document).on('click', managementSelector + ' a.select-visible', function() {
