@@ -63,11 +63,16 @@ class RegisterWebUserForm(forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe_lazy(_(
-            """I have read and agree to the
-            <a data-toggle='modal'
-               data-target='#eulaModal'
-               href='#eulaModal'>
-               CommCare HQ End User License Agreement</a>.""")))
+            """I have read and agree to Dimagi's
+            <a href="http://www.dimagi.com/terms/latest/privacy/"
+               target="_blank">Privacy Policy</a>,
+            <a href="http://www.dimagi.com/terms/latest/tos/"
+               target="_blank">Terms of Service</a>,
+            <a href="http://www.dimagi.com/terms/latest/ba/"
+               target="_blank">Business Agreement</a>, and
+            <a href="http://www.dimagi.com/terms/latest/aup/"
+               target="_blank">Acceptable Use Policy</a>
+            .""")))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -240,7 +245,7 @@ class RegisterWebUserForm(forms.Form):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
             raise forms.ValidationError(
-                "You must agree to our End User License Agreement in order "
+                "You must agree to our Terms of Service and Business Agreement in order "
                 "to register an account."
             )
         return data
@@ -316,12 +321,16 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
                                         help_text=mark_safe_lazy(_(
-                                            """I have read and agree to the
-                                               <a data-toggle='modal'
-                                                  data-target='#eulaModal'
-                                                  href='#eulaModal'>
-                                                  CommCare HQ End User License Agreement
-                                               </a>.""")))
+                                            """I have read and agree to Dimagi's
+                                                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                                                    target="_blank">Privacy Policy</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/tos/"
+                                                    target="_blank">Terms of Service</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/ba/"
+                                                    target="_blank">Business Agreement</a>, and
+                                                <a href="http://www.dimagi.com/terms/latest/aup/"
+                                                    target="_blank">Acceptable Use Policy</a>
+                                               .""")))
 
     def __init__(self, *args, **kwargs):
         super(WebUserInvitationForm, self).__init__(*args, **kwargs)
@@ -361,7 +370,8 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError('You must agree to our End User License Agreement in order to register an account.')
+            raise forms.ValidationError('You must agree to our Terms of Service and Business Agreement '
+                                        'in order to register an account.')
         return data
 
 
