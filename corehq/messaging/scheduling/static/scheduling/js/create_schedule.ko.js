@@ -87,6 +87,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.time = ko.observable(initial_values.time || '0:00');
         self.case_property_name = ko.observable(initial_values.case_property_name);
         self.deleted = ko.observable(initial_values.DELETE);
+        self.order = ko.observable(initial_values.ORDER);
     };
 
     EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
@@ -394,6 +395,53 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             });
         };
 
+        self.getCustomDailyEventIndex = function(event_id, arr) {
+            var item_index = null;
+            $.each(arr, function(index, value) {
+                if(value.event_id === event_id) {
+                    item_index = index;
+                }
+            });
+            return item_index;
+        };
+
+        self.moveCustomDailyEventUp = function(event_id) {
+            var new_array = self.custom_daily_events();
+            var item_index = self.getCustomDailyEventIndex(event_id, new_array);
+            var swapped_item = null;
+
+            while(item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+                swapped_item = new_array[item_index - 1];
+                new_array[item_index - 1] = new_array[item_index];
+                new_array[item_index] = swapped_item;
+                item_index -= 1;
+            }
+
+            self.custom_daily_events(new_array);
+        };
+
+        self.moveCustomDailyEventDown = function(event_id) {
+            var new_array = self.custom_daily_events();
+            var item_index = self.getCustomDailyEventIndex(event_id, new_array);
+            var swapped_item = null;
+
+            while((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+                swapped_item = new_array[item_index + 1];
+                new_array[item_index + 1] = new_array[item_index];
+                new_array[item_index] = swapped_item;
+                item_index += 1;
+            }
+
+            self.custom_daily_events(new_array);
+        };
+
+        self.custom_daily_events.subscribe(function(newValue) {
+            // update the order for all events when the array changes
+            $.each(newValue, function(index, value) {
+                value.eventAndContentViewModel.order(index);
+            });
+        });
+
         self.useTimeInput = ko.computed(function() {
             return self.send_time_type() === 'SPECIFIC_TIME' || self.send_time_type() === 'RANDOM_TIME';
         });
@@ -405,9 +453,15 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.init = function () {
             self.initDatePicker($("#id_schedule-start_date"));
             self.setRepeatOptionText(self.send_frequency());
+
+            var custom_daily_events = [];
             for(var i = 0; i < self.getNextCustomDailyEventIndex(); i++) {
-                self.custom_daily_events.push(new CustomDailyEventContainer(i));
+                custom_daily_events.push(new CustomDailyEventContainer(i));
             }
+            custom_daily_events.sort(function(item1, item2) {
+                return item1.eventAndContentViewModel.order() - item2.eventAndContentViewModel.order();
+            });
+            self.custom_daily_events(custom_daily_events);
         };
     };
 

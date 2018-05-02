@@ -15,6 +15,12 @@
             <span data-bind="text: time, visible: $root.useTimeInput()"></span>
             <span data-bind="text: case_property_name, visible: $root.useCasePropertyTimeInput()"></span>
         </strong>
+        <span class="btn" data-bind="click: function() { $root.moveCustomDailyEventUp($parent.event_id); }">
+            <i class="fa fa-arrow-up"></i>
+        </span>
+        <span class="btn" data-bind="click: function() { $root.moveCustomDailyEventDown($parent.event_id); }">
+            <i class="fa fa-arrow-down"></i>
+        </span>
     </script>
     <div id="id_custom_daily_event_empty_form_container">
         <script type="text/html" id="id_custom_daily_event_template___prefix__">

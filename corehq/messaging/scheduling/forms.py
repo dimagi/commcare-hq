@@ -466,6 +466,10 @@ class CustomDailyEventForm(ContentForm):
         return [
             crispy.Div(
                 crispy.Field(
+                    'ORDER',
+                    data_bind="value: order"
+                ),
+                crispy.Field(
                     'DELETE',
                     data_bind="checked: deleted"
                 ),
@@ -978,6 +982,7 @@ class ScheduleForm(Form):
             CustomDailyEventForm,
             formset=BaseCustomDailyEventFormSet,
             extra=0,
+            can_order=True,
             can_delete=True,
         )
         self.custom_daily_event_formset = CustomDailyEventFormSet(
