@@ -1404,8 +1404,8 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
-            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes cases created by the user and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
         ))
