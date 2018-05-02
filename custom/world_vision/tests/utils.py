@@ -4,6 +4,7 @@ import json
 import os
 from django.test import TestCase
 from casexml.apps.case.models import CommCareCase
+from io import open
 
 
 class WVTest(TestCase):
