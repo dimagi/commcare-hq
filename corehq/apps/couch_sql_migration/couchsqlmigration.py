@@ -39,6 +39,7 @@ from couchforms.models import XFormInstance, doc_types as form_doc_types, all_kn
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
+from gevent.pool import Pool
 import six
 import logging
 _logger = logging.getLogger('main_couch_sql_datamigration')
@@ -146,15 +147,19 @@ class CouchSqlDomainMigrator(object):
         )
 
     def _copy_unprocessed_forms(self):
+        pool = Pool(10)
         for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
             assert couch_form_json['problem']
             couch_form_json['doc_type'] = 'XFormError'
-            self._migrate_unprocessed_form(couch_form_json)
+            pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
         changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
-            self._migrate_unprocessed_form(couch_form_json)
+            pool.spawn(self._migrate_unprocessed_form, couch_form_json)
+
+        while not pool.join(timeout=5):
+            self.log_info('Waiting on {} docs'.format(len(pool)))
 
     def _migrate_unprocessed_form(self, couch_form_json):
         self.log_debug('Processing doc: {}({})'.format(couch_form_json['doc_type'], couch_form_json['_id']))
@@ -175,48 +180,55 @@ class CouchSqlDomainMigrator(object):
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
+        pool = Pool(10)
         changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
         for change in self._with_progress(doc_types, changes):
-            couch_case = CommCareCase.wrap(change.get_document())
-            self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
-            try:
-                first_action = couch_case.actions[0]
-            except IndexError:
-                first_action = CommCareCaseAction()
+            pool.spawn(self._copy_unprocessed_case, change)
 
-            sql_case = CommCareCaseSQL(
-                case_id=couch_case.case_id,
-                domain=self.domain,
-                type=couch_case.type or '',
-                name=couch_case.name,
-                owner_id=couch_case.owner_id or couch_case.user_id or '',
-                opened_on=couch_case.opened_on or first_action.date,
-                opened_by=couch_case.opened_by or first_action.user_id,
-                modified_on=couch_case.modified_on,
-                modified_by=couch_case.modified_by or couch_case.user_id or '',
-                server_modified_on=couch_case.server_modified_on,
-                closed=couch_case.closed,
-                closed_on=couch_case.closed_on,
-                closed_by=couch_case.closed_by,
-                deleted=True,
-                deletion_id=couch_case.deletion_id,
-                deleted_on=couch_case.deletion_date,
-                external_id=couch_case.external_id,
-                case_json=couch_case.dynamic_case_properties()
+        while not pool.join(timeout=5):
+            self.log_info('Waiting on {} docs'.format(len(pool)))
+
+    def _copy_unprocessed_case(self, change):
+        couch_case = CommCareCase.wrap(change.get_document())
+        self.log_debug('Processing doc: {}({})'.format(couch_case['doc_type'], change.id))
+        try:
+            first_action = couch_case.actions[0]
+        except IndexError:
+            first_action = CommCareCaseAction()
+
+        sql_case = CommCareCaseSQL(
+            case_id=couch_case.case_id,
+            domain=self.domain,
+            type=couch_case.type or '',
+            name=couch_case.name,
+            owner_id=couch_case.owner_id or couch_case.user_id or '',
+            opened_on=couch_case.opened_on or first_action.date,
+            opened_by=couch_case.opened_by or first_action.user_id,
+            modified_on=couch_case.modified_on,
+            modified_by=couch_case.modified_by or couch_case.user_id or '',
+            server_modified_on=couch_case.server_modified_on,
+            closed=couch_case.closed,
+            closed_on=couch_case.closed_on,
+            closed_by=couch_case.closed_by,
+            deleted=True,
+            deletion_id=couch_case.deletion_id,
+            deleted_on=couch_case.deletion_date,
+            external_id=couch_case.external_id,
+            case_json=couch_case.dynamic_case_properties()
+        )
+        _migrate_case_actions(couch_case, sql_case)
+        _migrate_case_indices(couch_case, sql_case)
+        _migrate_case_attachments(couch_case, sql_case)
+        try:
+            CaseAccessorSQL.save_case(sql_case)
+        except IntegrityError:
+            # case re-created by form processing so just mark the case as deleted
+            CaseAccessorSQL.soft_delete_cases(
+                self.domain,
+                [sql_case.case_id],
+                sql_case.deleted_on,
+                sql_case.deletion_id
             )
-            _migrate_case_actions(couch_case, sql_case)
-            _migrate_case_indices(couch_case, sql_case)
-            _migrate_case_attachments(couch_case, sql_case)
-            try:
-                CaseAccessorSQL.save_case(sql_case)
-            except IntegrityError:
-                # case re-created by form processing so just mark the case as deleted
-                CaseAccessorSQL.soft_delete_cases(
-                    self.domain,
-                    [sql_case.case_id],
-                    sql_case.deleted_on,
-                    sql_case.deletion_id
-                )
 
     def _calculate_case_diffs(self):
         cases = {}
