@@ -651,7 +651,7 @@ def migrate_domain(domain, dryrun=False, force_convert_columns=False):
         toggle_js_domain_cachebuster.clear(domain)
 
     for meta in metas:
-        if not meta.skipped_tables and not meta.skipped_columns:
+        if not any([meta.skipped_tables, meta.skipped_columns, meta.has_case_history]):
             continue
 
         output = '* Export information for export: {} *'.format(meta.old_export_url)

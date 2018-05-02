@@ -160,6 +160,14 @@
                                     <span ng-if="export.emailedExport.hasFile">
                                         <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
                                         <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
+
+                                        {# The reason this is in a "display: none" span is because a normal if/else statement #}
+                                        {# breaks variable access in this context, I suspect because of some angular jankiness #}
+                                        <span {% if not request|toggle_enabled:"SUPPORT" %} style="display: none;" {% endif %}>
+                                            &nbsp;&nbsp;&nbsp;
+                                            <strong>{% trans "Last Downloaded:" %}</strong> {{ export.emailedExport.fileData.lastAccessed }}
+                                        </span>
+
                                     </span>
                                     &nbsp;&nbsp;
                                     {% angularjs %}
