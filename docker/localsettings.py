@@ -1,6 +1,7 @@
 ####### Configuration for CommCareHQ Running in docker #######
 
 from __future__ import absolute_import
+from __future__ import unicode_literals
 import os
 
 DATABASES = {
@@ -96,13 +97,13 @@ if USE_PARTITIONED_DATABASE:
 
 ####### Couch Config ######
 COUCH_DATABASES = {
-    'default': {
+    b'default': {
         # for production this ought to be set to true on your configured couch instance
-        'COUCH_HTTPS': False,
-        'COUCH_SERVER_ROOT': 'couch:5984',  # 6984 for https couch
-        'COUCH_USERNAME': '',
-        'COUCH_PASSWORD': '',
-        'COUCH_DATABASE_NAME': 'commcarehq'
+        b'COUCH_HTTPS': False,
+        b'COUCH_SERVER_ROOT': b'couch:5984',  # 6984 for https couch
+        b'COUCH_USERNAME': b'',
+        b'COUCH_PASSWORD': b'',
+        b'COUCH_DATABASE_NAME': b'commcarehq'
     }
 }
 

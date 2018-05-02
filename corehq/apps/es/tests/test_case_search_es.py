@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from unittest import TestCase
+from django.test.testcases import SimpleTestCase
 
 from corehq.apps.es.case_search import CaseSearchES, flatten_result, RELEVANCE_SCORE
 from corehq.apps.es.tests.utils import ElasticTestMixin
 from corehq.elastic import SIZE_LIMIT
 
 
-class TestCaseSearchES(ElasticTestMixin, TestCase):
+class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
 
     def setUp(self):
         self.es = CaseSearchES()
@@ -105,7 +105,9 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                             }
                                         }
                                     }
-                                },
+                                }
+                            ],
+                            "should": [
                                 {
                                     "nested": {
                                         "path": "case_properties",
@@ -127,9 +129,7 @@ class TestCaseSearchES(ElasticTestMixin, TestCase):
                                             }
                                         }
                                     }
-                                }
-                            ],
-                            "should": [
+                                },
                                 {
                                     "nested": {
                                         "path": "case_properties",

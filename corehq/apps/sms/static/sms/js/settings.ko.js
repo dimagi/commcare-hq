@@ -45,6 +45,7 @@ hqDefine("sms/js/settings.ko", function() {
             'sms_case_registration_user_id'
         );
         self.sms_case_registration_user_id.init();
+        self.override_daily_outbound_sms_limit = ko.observable();
 
         self.showDefaultSMSResponse = ko.computed(function() {
             return self.use_default_sms_response() === "ENABLED";
@@ -118,6 +119,7 @@ hqDefine("sms/js/settings.ko", function() {
             self.use_sms_conversation_times(initial.use_sms_conversation_times);
             self.use_custom_chat_template(initial.use_custom_chat_template);
             self.sms_case_registration_enabled(initial.sms_case_registration_enabled);
+            self.override_daily_outbound_sms_limit(initial.override_daily_outbound_sms_limit);
 
             if(initial.restricted_sms_times_json.length > 0) {
                 for(var i = 0; i < initial.restricted_sms_times_json.length; i++) {

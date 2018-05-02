@@ -25,14 +25,14 @@
     {% if report_table.pagination.is_on %}
         <tr>
             <td colspan="{{ report_table.headers.header|length }}" class="dataTables_empty">
-                {% trans "Fetching additional data, please wait..." %}
+                {% trans "Veuillez patienter..." %}
             </td>
         </tr>
     {% endif %}
     {% for row in report_table.rows %}
         <tr>
             {% for col in row %}
-                {% include 'reports/async/partials/tabular_cell.html' %}
+                {% include 'yeksi_naa/partials/tabular_cell.html' %}
             {% endfor %}
         </tr>
     {% endfor %}
@@ -42,7 +42,7 @@
         <tfoot>
         <tr>
             {% for col in report_table.total_row %}
-                <td>{% if col.html != None %}{{ col.html|safe }}{% else %}{{ col|safe }}{% endif %}</td>
+                {% include 'yeksi_naa/partials/tabular_cell.html' %}
             {% endfor %}
         </tr>
         </tfoot>

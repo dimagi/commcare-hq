@@ -210,12 +210,12 @@
         "expression": {
           "type": "property_path",
           "property_path": [
-            "pna_final_stock"
+            "final_pna_stock"
           ]
         },
         "datatype": "integer",
         "is_primary_key": false,
-        "column_id": "pna_final_stock",
+        "column_id": "final_pna_stock",
         "is_nullable": true,
         "type": "expression"
       },
@@ -358,6 +358,60 @@
           "type": "root_doc"
         },
         "column_id": "supply-point"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "ideal_topup"
+          ]
+        },
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "ideal_topup",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "amt_delivered_convenience"
+          ]
+        },
+        "datatype": "integer",
+        "is_primary_key": false,
+        "column_id": "amt_delivered_convenience",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "select_programs"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "select_programs"
       }
     ],
     "named_expressions": {},

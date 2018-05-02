@@ -7,6 +7,8 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
+    'locations/js/location_drilldown',
+    'reports_core/js/choice_list_utils',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
@@ -16,7 +18,9 @@ hqDefine("reports/js/filters/main", [
     select2Filter,
     phoneNumberFilter,
     buttonGroup,
-    scheduleInstanceFilter
+    scheduleInstanceFilter,
+    locationDrilldown,
+    choiceListUtils
 ) {
     var init = function() {
         // Datespans
@@ -39,6 +43,28 @@ hqDefine("reports/js/filters/main", [
                     $(standardHQReport.filterAccordion).trigger('hqreport.filter.datespan.enddate', dates[1]);
                     $('#report_filter_datespan_enddate').val(dates[1]);
                 });
+            }
+        });
+
+        // other Datespans *groan* TODO unify on this one
+        $('.report-filter-datespan-filter').each(function(i, el) {
+            var $el = $(el), data = $el.data();
+            var $filterStart = $("#" + data.cssId + "-start");
+            var $filterEnd = $("#" + data.cssId + "-end");
+
+            $el.createBootstrap3DefaultDateRangePicker();
+            $el.on('apply change', function () {
+                var separator = $().getDateRangeSeparator();
+                var dates = $el.val().split(separator);
+                $filterStart.val(dates[0]);
+                $filterEnd.val(dates[1]);
+            });
+
+            if (!$el.val() && $filterStart.val() && $filterEnd.val()) {
+                var text = $filterStart.val() + $().getDateRangeSeparator() + $filterEnd.val();
+                $el.val(text);
+            } else if (!$el.val()) {
+                $el.val(gettext("Show All Dates"));
             }
         });
 
@@ -121,6 +147,71 @@ hqDefine("reports/js/filters/main", [
                 allowClear: true,
                 placeholder: gettext("Select a group"),
             });
+        });
+        $('.report-filter-location-async').each(function(i, el) {
+            var $el = $(el), data = $el.data();
+            var model = locationDrilldown.locationSelectViewModel({
+                "hierarchy": data.hierarchy,
+                "show_location_filter": data.makeOptional && !data.locId ? "n" : "y",
+                "loc_url": data.locationUrl,
+                "auto_drill": data.autoDrill,
+                "max_drilldown_length": data.maxDrilldownLength,
+            });
+            $el.koApplyBindings(model);
+            model.load(data.locs, data.locId);
+        });
+        $('.report-filter-logtag').each(function(i, el) {
+            var $el = $(el), data = $el.data();
+            if (data.defaultOn) {
+                $el.attr("name", "");
+                $el.change(function () {
+                    $el.attr("name", "logtag");
+                });
+            }
+            if (data.errorOnly) {
+                $("#device-log-errors-only-checkbox").change(function () {
+                    var multiSelect = $el;
+                    if ($el.prop('checked')) {
+                        $el.attr("name", "errors_only");
+                        multiSelect.attr("name", "");
+                        multiSelect.addClass("hide");
+                    } else {
+                        $el.attr("name", "");
+                        if (!data.defaultOn) {
+                            multiSelect.attr("name", "logtag");
+                        }
+                        multiSelect.removeClass("hide");
+                    }
+                });
+            }
+        });
+
+        $('.report-filter-dynamic-choice-list').each(function (i, el) {
+            var $el = $(el), data = $el.data();
+            var initialValues = _.map(data.initialValues, function(value) {
+                    return choiceListUtils.formatValueForSelect2(value);
+                }),
+                // TODO: Ideally the separator would be defined in one place. Right now it is
+                //       also defined corehq.apps.userreports.reports.filters.CHOICE_DELIMITER
+                separator = "\u001F";
+
+            $el.select2({
+                minimumInputLength: 0,
+                multiple: true,
+                separator: separator,
+                allowClear: true,
+                // allowClear only respected if there is a non empty placeholder
+                placeholder: " ",
+                ajax: {
+                    url: data.ajaxFilterUrl,
+                    dataType: 'json',
+                    quietMillis: 250,
+                    data: choiceListUtils.getApiQueryParams,
+                    results: choiceListUtils.formatPageForSelect2,
+                    cache: true,
+                },
+            });
+            $el.select2('data', initialValues);
         });
     };
 

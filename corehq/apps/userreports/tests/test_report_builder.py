@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import os
 from django.test import TestCase
 from mock import patch
 
@@ -15,12 +14,7 @@ from corehq.apps.userreports.reports.builder.forms import (
     ConfigureListReportForm,
     ConfigureTableReportForm,
     DataSourceBuilder)
-
-
-def read(rel_path):
-    path = os.path.join(os.path.dirname(__file__), *rel_path)
-    with open(path) as f:
-        return f.read()
+from corehq.apps.userreports.tests.utils import get_simple_xform
 
 
 class ReportBuilderDBTest(TestCase):
@@ -33,7 +27,7 @@ class ReportBuilderDBTest(TestCase):
         cls.app = Application.new_app(cls.domain, 'Untitled Application')
         module = cls.app.add_module(Module.new_module('Untitled Module', None))
         module.case_type = cls.case_type
-        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', read(['data', 'forms', 'simple.xml']))
+        cls.form = cls.app.new_form(module.id, "Untitled Form", 'en', get_simple_xform())
         cls.app.save()
 
     @classmethod
@@ -61,7 +55,7 @@ class DataSourceBuilderTest(ReportBuilderDBTest):
                 "property_name": "xmlns"
             },
             "type": "boolean_expression",
-            "property_value": "http://openrosa.org/formdesigner/8C8E527C-C0DE-470A-A8A9-8348FFB0B904"
+            "property_value": self.form.xmlns
         }
         self.assertEqual(expected_filter, builder.filter)
 

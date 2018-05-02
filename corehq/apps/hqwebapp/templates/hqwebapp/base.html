@@ -416,7 +416,7 @@
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
-                    'notifications/js/notifications_service',
+                    'notifications/js/notifications_service_main',
                     'analytix/js/appcues',
                     'analytix/js/drift',
                     'analytix/js/google',
@@ -445,7 +445,8 @@
         {# JavaScript Display Logic Libaries #}
 
         {% if request.couch_user and not requirejs_main %}
-        <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+            <script src="{% static 'notifications/js/notifications_service.js' %}"></script>
+            <script src="{% static 'notifications/js/notifications_service_main.js' %}"></script>
         {% endif %}
 
         {% if request.use_angular_js and not requirejs_main %}

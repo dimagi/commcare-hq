@@ -1,4 +1,4 @@
-hqDefine("export/js/custom_export_view", function() {
+hqDefine("export/js/customize_export", function() {
     var CustomExportView = {
         wrap: function(o, translations, has_excel_dashboard_access) {
             var self = ko.mapping.fromJS(o);

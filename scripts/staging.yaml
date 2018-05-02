@@ -51,15 +51,15 @@ name: autostaging
 branches:
   - vellum-staging # J$ 11/13
   - jls/privacy-policy  # Jenny 3/19
-  - fr/property-changes-paginated+jls/data-corrections-forms # Jenny April 9
   - jls/data-corrections-forms  # Jenny 3/27
-  - fr/property-changes-paginated # FR 29/3
-  - np/training-module  # NP 4/2
+  - ce/app-status-staging+np/training-module # CE 4/10
   - je/report-builder-button # J$ 4/3
-  - np/flavor  # NP 4/5
   - ce/auto-batches # Cal April 6
-  - ce/user-loc-query # Cal April 9
-  - es/mobile-ucr-slugs  # Ethan April 9
+  - ce/app-status-staging # Cal April 9
+  - emord-patch-1 # J$ April 19 (upgrading celery)
+  - jr/drilldown-filters-again # jordan April 23
+  - jls/add-js-to-sentry # Jenny April 26
+  - jls/bring-back-mass-emails # Jenny April 27
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

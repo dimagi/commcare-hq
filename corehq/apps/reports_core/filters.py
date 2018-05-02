@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 from datetime import datetime, time
 from corehq.apps.locations.models import SQLLocation
@@ -24,7 +25,6 @@ class BaseFilter(object):
     Base object for filters.
     """
     template = None
-    javascript_template = None
     # setting this to True makes the report using the filter a location_safe report (has_location_filter())
     location_filter = False
 
@@ -107,8 +107,7 @@ class BaseFilter(object):
 
 
 class DatespanFilter(BaseFilter):
-    template = 'reports_core/filters/datespan_filter/datespan_filter.html'
-    javascript_template = 'reports_core/filters/datespan_filter/datespan_filter.js'
+    template = 'reports_core/filters/datespan_filter.html'
 
     def __init__(self, name, label='Datespan Filter', css_id=None, compare_as_string=False):
         self.label = label
@@ -334,7 +333,7 @@ class ChoiceListFilter(BaseFilter):
         choice = transform_from_datatype(self.datatype)(raw_value) if raw_value != SHOW_ALL_CHOICE else raw_value
         choice_values = [c.value for c in self.choices]
         if choice not in choice_values:
-            raise FilterValueException(_(u'Choice "{choice}" not found in choices: {choices}')
+            raise FilterValueException(_('Choice "{choice}" not found in choices: {choices}')
                                        .format(choice=choice,
                                                choices=choice_values))
         return next(choice_obj for choice_obj in self.choices if choice_obj.value == choice)
@@ -349,8 +348,7 @@ class DynamicChoiceListFilter(BaseFilter):
 
     The choices are generated dynamically based on the database.
     """
-    template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.html'
-    javascript_template = 'reports_core/filters/dynamic_choice_list_filter/dynamic_choice_list.js'
+    template = 'reports_core/filters/dynamic_choice_list.html'
 
     def __init__(self, name, field, datatype, label, show_all, url_generator, choice_provider,
                  ancestor_expression=None, css_id=None):
@@ -416,8 +414,7 @@ class MultiFieldDynamicChoiceListFilter(DynamicChoiceListFilter):
 
 
 class LocationDrilldownFilter(BaseFilter):
-    template = 'reports_core/filters/location_async/location_async.html'
-    javascript_template = 'reports_core/filters/location_async/location_async.js'
+    template = 'reports_core/filters/location_async.html'
     location_filter = True
 
     def __init__(self, name, field, datatype, label, domain, include_descendants,

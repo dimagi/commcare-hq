@@ -443,8 +443,14 @@ class ESQuery(object):
         return self.size(0).run().total
 
     def get_ids(self):
-        """Performs a minimal query to get the ids of the matching documents"""
+        """Performs a minimal query to get the ids of the matching documents
+
+        For very large sets of IDs, use ``scroll_ids`` instead"""
         return self.exclude_source().run().doc_ids
+
+    def scroll_ids(self):
+        """Returns a generator of all matching ids"""
+        return self.exclude_source().size(5000).scroll()
 
 
 class ESQuerySet(object):

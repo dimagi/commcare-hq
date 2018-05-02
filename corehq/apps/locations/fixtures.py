@@ -221,17 +221,20 @@ def get_location_fixture_queryset(user):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
     timing = TimingContext("get_location_fixture_queryset")
-    with timing("mptt"):
-        mptt_set = mptt_get_location_fixture_queryset(user)
+    if settings.IS_LOCATION_CTE_ONLY:
+        mptt_set = None
+    else:
+        with timing("mptt"):
+            mptt_set = _mptt_get_location_fixture_queryset(user)
     if settings.IS_LOCATION_CTE_ENABLED:
         with timing("cte"):
-            cte_set = cte_get_location_fixture_queryset(user)
+            cte_set = _cte_get_location_fixture_queryset(user)
     else:
         cte_set = None
     return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
-def cte_get_location_fixture_queryset(user):
+def _cte_get_location_fixture_queryset(user):
 
     user_locations = user.get_sql_locations(user.domain)
 
@@ -258,7 +261,7 @@ def cte_get_location_fixture_queryset(user):
     return result
 
 
-def mptt_get_location_fixture_queryset(user):
+def _mptt_get_location_fixture_queryset(user):
     user_locations = user.get_sql_locations(user.domain).prefetch_related('location_type')
 
     all_locations = _get_include_without_expanding_locations(user.domain, user_locations)
@@ -274,7 +277,7 @@ def mptt_get_location_fixture_queryset(user):
 
         locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
         locs_at_or_above_expand_from = (SQLLocation.active_objects
-                                        .mptt_get_queryset_ancestors(expand_from_locations, include_self=True))
+                                        ._mptt_get_queryset_ancestors(expand_from_locations, include_self=True).prefetch_related('parent', 'location_type__code'))
         locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
         if location_type.include_only.exists():
             locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
@@ -301,7 +304,7 @@ def _get_locs_to_expand_from(domain, user_location, expand_from):
     else:
         ancestors = (
             user_location
-            .mptt_get_ancestors(include_self=True)
+            ._mptt_get_ancestors(include_self=True)
             .filter(location_type=expand_from, is_archived=False)
             .prefetch_related('location_type')
         )
@@ -312,8 +315,8 @@ def _get_children(expand_from_locations, expand_to_level):
     """From the topmost location, get all the children we want to sync
     """
     children = (SQLLocation.active_objects
-                .mptt_get_queryset_descendants(expand_from_locations)
-                .prefetch_related('location_type'))
+                ._mptt_get_queryset_descendants(expand_from_locations)
+                .prefetch_related('location_type__code', 'parent'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children

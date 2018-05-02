@@ -53,7 +53,7 @@ from django.utils.translation import override, ugettext as _, ugettext
 from django.utils.translation import ugettext_lazy
 from couchdbkit.exceptions import BadValueError
 
-from corehq.apps.app_manager.app_schemas.case_properties import ParentCasePropertyBuilder
+from corehq.apps.app_manager.app_schemas.case_properties import get_parent_type_map
 from corehq.apps.app_manager.detail_screen import PropertyXpathGenerator
 from corehq.apps.linked_domain.applications import get_master_app_version, get_latest_master_app_release
 from corehq.apps.app_manager.suite_xml.utils import get_select_chain
@@ -85,6 +85,7 @@ from corehq.apps.accounting.utils import domain_has_privilege
 
 from corehq.apps.app_manager.commcare_settings import check_condition
 from corehq.apps.app_manager.const import *
+from corehq.apps.app_manager.const import USERCASE_TYPE
 from corehq.apps.app_manager.xpath import (
     dot_interpolate,
     interpolate_xpath,
@@ -1275,15 +1276,15 @@ class FormBase(DocumentSchema):
     def is_case_list_form(self):
         return bool(self.case_list_modules)
 
-    def get_save_to_case_updates(self, case_type):
+    def get_save_to_case_updates(self):
         """
         Get a flat list of case property names from save to case questions
         """
-        updates = set()
+        updates_by_case_type = defaultdict(set)
         for save_to_case_update in self.case_references_data.get_save_references():
-            if save_to_case_update.case_type == case_type:
-                updates |= set(save_to_case_update.properties)
-        return updates
+            case_type = save_to_case_update.case_type
+            updates_by_case_type[case_type].update(save_to_case_update.properties)
+        return updates_by_case_type
 
 
 class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
@@ -1409,6 +1410,41 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
                 self.unique_id,
                 "%s is not a valid question" % question_path
             )
+
+    def get_all_case_updates(self):
+        """
+        Collate contributed case updates from all sources within the form
+
+        Subclass must have helper methods defined:
+
+        - get_case_updates
+        - get_all_contributed_subcase_properties
+        - get_save_to_case_updates
+
+        :return: collated {<case_type>: set([<property>])}
+
+        """
+        updates_by_case_type = defaultdict(set)
+
+        for case_type, updates in self.get_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_all_contributed_subcase_properties().items():
+            updates_by_case_type[case_type].update(updates)
+
+        for case_type, updates in self.get_save_to_case_updates().items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
+
+    def get_case_updates_for_case_type(self, case_type):
+        """
+        Like get_case_updates filtered by a single case type
+
+        subclass must implement `get_case_updates`
+
+        """
+        return self.get_case_updates().get(case_type, [])
 
 
 class JRResourceProperty(StringProperty):
@@ -1794,16 +1830,20 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
+    def get_case_updates(self):
         # This method is used by both get_all_case_properties and
         # get_usercase_properties. In the case of usercase properties, use
         # the usercase_update action, and for normal cases, use the
         # update_case action
-        if case_type == self.get_module().case_type or case_type == USERCASE_TYPE:
-            format_key = self.get_case_property_name_formatter()
-            action = self.actions.usercase_update if case_type == USERCASE_TYPE else self.actions.update_case
-            return [format_key(*item) for item in action.update.items()]
-        return []
+        case_type = self.get_module().case_type
+        format_key = self.get_case_property_name_formatter()
+
+        return {
+            case_type: {
+                format_key(*item) for item in self.actions.update_case.update.items()},
+            USERCASE_TYPE: {
+                format_key(*item) for item in self.actions.usercase_update.update.items()}
+        }
 
     @memoized
     def get_subcase_types(self):
@@ -1835,20 +1875,25 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
             self.actions.load_from_form = PreloadAction()
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                if case_type != module_case_type and (
-                        self.actions.open_case.is_active() or
-                        self.actions.update_case.is_active() or
-                        self.actions.close_case.is_active()):
-                    parent_types.add((module_case_type, subcase.reference_id or 'parent'))
-        return parent_types, case_properties
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
+        return case_properties
+
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        parent_case_type = self.get_module().case_type
+        for subcase in self.actions.subcases:
+            child_case_type = subcase.case_type
+            if child_case_type != parent_case_type and (
+                    self.actions.open_case.is_active() or
+                    self.actions.update_case.is_active() or
+                    self.actions.close_case.is_active()):
+                case_relationships_by_child_type[child_case_type].add(
+                    (parent_case_type, subcase.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -2343,6 +2388,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     root_module_id = StringProperty()
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
+    is_training_module = BooleanProperty(default=False)
 
     @property
     def is_surveys(self):
@@ -2707,7 +2753,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 hasAutocomplete=True,
             )]
         )
-        module = Module(
+        module = cls(
             name={(lang or 'en'): name or ugettext("Untitled Module")},
             forms=[],
             case_type='',
@@ -2717,6 +2763,12 @@ class Module(ModuleBase, ModuleDetailsMixin):
             ),
         )
         module.get_or_create_unique_id()
+        return module
+
+    @classmethod
+    def new_training_module(cls, name, lang):
+        module = cls.new_module(name, lang)
+        module.is_training_module = True
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -2769,6 +2821,18 @@ class Module(ModuleBase, ModuleDetailsMixin):
         if module_case_hierarchy_has_circular_reference(self):
             errors.append({
                 'type': 'circular case hierarchy',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.root_module.is_training_module:
+            errors.append({
+                'type': 'training module parent',
+                'module': self.get_module_info(),
+            })
+
+        if self.root_module and self.is_training_module:
+            errors.append({
+                'type': 'training module child',
                 'module': self.get_module_info(),
             })
 
@@ -3060,37 +3124,43 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
         return errors
 
-    def get_case_updates(self, case_type):
-        updates = set()
+    def get_case_updates(self):
+        updates_by_case_type = defaultdict(set)
         format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
-            if action.case_type == case_type:
-                updates.update(format_key(*item)
-                               for item in six.iteritems(action.case_properties))
+            case_type = action.case_type
+            updates_by_case_type[case_type].update(
+                format_key(*item) for item in six.iteritems(action.case_properties))
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)
-            scheduler_updates = xform.get_scheduler_case_updates()[case_type]
+            scheduler_updates = xform.get_scheduler_case_updates()
         else:
-            scheduler_updates = set()
+            scheduler_updates = {}
 
-        return updates.union(scheduler_updates)
+        for case_type, updates in scheduler_updates.items():
+            updates_by_case_type[case_type].update(updates)
+
+        return updates_by_case_type
 
     @memoized
-    def get_parent_types_and_contributed_properties(self, module_case_type, case_type):
-        parent_types = set()
-        case_properties = set()
+    def get_all_contributed_subcase_properties(self):
+        case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            if subcase.case_type == case_type:
-                case_properties.update(
-                    list(subcase.case_properties.keys())
-                )
-                for case_index in subcase.case_indices:
-                    parent = self.actions.get_action_from_tag(case_index.tag)
-                    if parent:
-                        parent_types.add((parent.case_type, case_index.reference_id or 'parent'))
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
+        return case_properties
 
-        return parent_types, case_properties
+    @memoized
+    def get_contributed_case_relationships(self):
+        case_relationships_by_child_type = defaultdict(set)
+        for subcase in self.actions.get_subcase_actions():
+            child_case_type = subcase.case_type
+            for case_index in subcase.case_indices:
+                parent = self.actions.get_action_from_tag(case_index.tag)
+                if parent:
+                    case_relationships_by_child_type[child_case_type].add(
+                        (parent.case_type, case_index.reference_id or 'parent'))
+        return case_relationships_by_child_type
 
     def update_app_case_meta(self, app_case_meta):
         from corehq.apps.reports.formdetails.readable import FormQuestionResponse
@@ -4039,6 +4109,7 @@ class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
+    # ID of the ReportConfiguration
     report_id = StringProperty(required=True)
     header = DictProperty()
     localized_description = DictProperty()
@@ -4048,7 +4119,9 @@ class ReportAppConfig(DocumentSchema):
     complete_graph_configs = DictProperty(GraphConfiguration)
 
     filters = SchemaDictProperty(ReportAppFilter)
+    # Unique ID of this mobile report config
     uuid = StringProperty(required=True)
+    report_slug = StringProperty(required=False)  # optional, user-provided
     sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
@@ -4077,6 +4150,10 @@ class ReportAppConfig(DocumentSchema):
             from corehq.apps.userreports.models import get_report_config
             self._report = get_report_config(self.report_id, domain)[0]
         return self._report
+
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
 
 
 class ReportModule(ModuleBase):
@@ -4155,6 +4232,16 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
+    def has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.report_configs)
+
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
@@ -4165,6 +4252,11 @@ class ReportModule(ModuleBase):
         elif not self.reports:
             errors.append({
                 'type': 'no reports',
+                'module': self.get_module_info(),
+            })
+        if self.has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
                 'module': self.get_module_info(),
             })
         return errors
@@ -4705,6 +4797,11 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
     use_j2me_endpoint = BooleanProperty(default=False)
 
+    target_commcare_flavor = StringProperty(
+        default='none',
+        choices=['none', TARGET_COMMCARE, TARGET_COMMCARE_LTS]
+    )
+
     # Whether or not the Application has had any forms submitted against it
     has_submissions = BooleanProperty(default=False)
 
@@ -5083,17 +5180,23 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def odk_media_profile_url(self):
         return reverse('download_odk_media_profile', args=[self.domain, self._id])
 
-    def get_odk_qr_code(self, with_media=False, build_profile_id=None):
+    def get_odk_qr_code(self, with_media=False, build_profile_id=None, download_target_version=False):
         """Returns a QR code, as a PNG to install on CC-ODK"""
+        filename = 'qrcode.png' if not download_target_version else 'qrcode-targeted.png'
         try:
-            return self.lazy_fetch_attachment("qrcode.png")
+            return self.lazy_fetch_attachment(filename)
         except ResourceNotFound:
             from pygooglechart import QRChart
             HEIGHT = WIDTH = 250
             code = QRChart(HEIGHT, WIDTH)
             url = self.odk_profile_url if not with_media else self.odk_media_profile_url
+            kwargs = []
             if build_profile_id is not None:
-                url += '?profile={profile_id}'.format(profile_id=build_profile_id)
+                kwargs.append('profile={profile_id}'.format(profile_id=build_profile_id))
+            if download_target_version:
+                kwargs.append('download_target_version=true')
+            url += '?' + '&'.join(kwargs)
+
             code.add_data(url)
 
             # "Level L" error correction with a 0 pixel margin
@@ -5103,7 +5206,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
             os.close(f)
             with open(fname, "rb") as f:
                 png_data = f.read()
-                self.lazy_put_attachment(png_data, "qrcode.png",
+                self.lazy_put_attachment(png_data, filename,
                                          content_type="image/png")
             return png_data
 
@@ -5522,7 +5625,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return s
 
     def create_profile(self, is_odk=False, with_media=False,
-                       template='app_manager/profile.xml', build_profile_id=None):
+                       template='app_manager/profile.xml', build_profile_id=None, target_commcare_flavor=None):
         self__profile = self.profile
         app_profile = defaultdict(dict)
 
@@ -5570,6 +5673,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
         apk_heartbeat_url = self.heartbeat_url
         locale = self.get_build_langs(build_profile_id)[0]
+        target_package_id = {
+            TARGET_COMMCARE: 'org.commcare.dalvik',
+            TARGET_COMMCARE_LTS: 'org.commcare.lts',
+        }.get(target_commcare_flavor)
         return render_to_string(template, {
             'is_odk': is_odk,
             'app': self,
@@ -5583,6 +5690,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             'build_profile_id': build_profile_id,
             'locale': locale,
             'apk_heartbeat_url': apk_heartbeat_url,
+            'target_package_id': target_package_id,
         }).encode('utf-8')
 
     @property
@@ -5694,6 +5802,29 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             '{}suite.xml'.format(prefix): self.create_suite(build_profile_id),
             '{}media_suite.xml'.format(prefix): self.create_media_suite(build_profile_id),
         }
+        if self.target_commcare_flavor != 'none':
+            files['{}profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.xml'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=False,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
+            files['{}media_profile-{}.ccpr'.format(prefix, self.target_commcare_flavor)] = self.create_profile(
+                is_odk=True,
+                with_media=True,
+                build_profile_id=build_profile_id,
+                target_commcare_flavor=self.target_commcare_flavor,
+            )
 
         practice_user_restore = self.create_practice_user_restore(build_profile_id)
         if practice_user_restore:
@@ -6003,7 +6134,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ModuleNotFoundException as ex:
                 errors.append({
                     "type": "missing module",
-                    "message": ex.message
+                    "message": six.text_type(ex)
                 })
 
         for form in self.get_forms():
@@ -6096,8 +6227,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     @quickcache(['self._id', 'self.version'])
     def get_case_metadata(self):
         from corehq.apps.reports.formdetails.readable import AppCaseMetadata
-        builder = ParentCasePropertyBuilder(self)
-        case_relationships = builder.get_parent_type_map(self.get_case_types())
+        # todo: fix this to expect a list of parent types
+        # todo: and get rid of if_multiple_parents_arbitrarily_pick_one arg
+        case_relationships = get_parent_type_map(self, if_multiple_parents_arbitrarily_pick_one=True)
         meta = AppCaseMetadata()
         descriptions_dict = get_case_property_description_dict(self.domain)
 

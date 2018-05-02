@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 ES_META = {
     # Default settings for all indexes on ElasticSearch
     'default': {

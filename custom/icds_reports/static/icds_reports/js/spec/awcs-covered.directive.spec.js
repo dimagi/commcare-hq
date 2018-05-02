@@ -15,6 +15,7 @@ describe('AWCs Covered Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -25,6 +26,9 @@ describe('AWCs Covered Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('awcs_covered').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<awcs-covered data='test'></awcs-covered>");
         var compiled = $compile(element)($scope);
@@ -85,7 +89,7 @@ describe('AWCs Covered Directive', function () {
             + '<p>test</p>'
             + '<p>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least one Household Registration form.</p>'
-            + '<div>Number of AWCs Launched: <strong>15</strong></div>';
+            + '<div>Number of AWCs Launched: <strong>15</strong></div></div>';
 
         assert.equal(result, expected);
     });
@@ -193,9 +197,9 @@ describe('AWCs Covered Directive', function () {
         var month = {value: "Jul 2017", series: []};
 
         var expected = '<p><strong>Jul 2017</strong></p><br/>'
-            + 'Total AWCs that have launched ICDS-CAS. '
+            + '<div>Total AWCs that have launched ICDS-CAS. '
             + 'AWCs are considered launched after submitting at least'
-            + ' one Household Registration form.'
+            + ' one Household Registration form.<strong></strong></div>'
             + '<div>Number of AWCs Launched: <strong>72</strong></div>';
 
         var result = controller.tooltipContent(month.value, data.y);
@@ -206,7 +210,7 @@ describe('AWCs Covered Directive', function () {
         var expected = '<div class="hoverinfo" style="max-width: 200px !important; white-space: normal;">' +
             '<p>Ambah</p>' +
             '<p>Total AWCs that have launched ICDS-CAS. AWCs are considered launched after submitting at least one Household Registration form.</p>' +
-            '<div>Number of AWCs Launched: <strong>0</strong></div>';
+            '<div>Number of AWCs Launched: <strong>0</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
@@ -218,14 +222,14 @@ describe('AWCs Covered Directive', function () {
         controller.userLocationId = 'test_id4';
         controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
         );
         var index = controller.getDisableIndex();
-        assert.equal(index, 3);
+        assert.equal(index, 2);
     });
 });

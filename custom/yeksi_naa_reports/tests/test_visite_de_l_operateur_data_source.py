@@ -27,7 +27,7 @@ class TestVisiteDeLOperatour(TestDataSourceExpressions):
                 'real_date': '2018-03-07',
                 'pps_is_outstock': 0,
                 'nb_products_stockout': 0,
-                'pps_nb_products': 0,
+                'count_products_select': 0,
                 'supply-point': 'fd79174541fa4f3b9924af69ee3db7ad',
                 'pps_total_amt_paid': 0,
                 'pps_total_amt_owed': 0,
@@ -53,7 +53,7 @@ class TestVisiteDeLOperatour(TestDataSourceExpressions):
         real_date = self.get_expression('real_date', 'date')
         pps_is_outstock = self.get_expression('pps_is_outstock', 'string')
         nb_products_stockout = self.get_expression('nb_products_stockout', 'integer')
-        pps_nb_products = self.get_expression('pps_nb_products', 'integer')
+        count_products_select = self.get_expression('count_products_select', 'integer')
         supply_point = self.get_expression('supply-point', 'string')
         pps_total_amt_paid = self.get_expression('pps_total_amt_paid', 'integer')
         pps_total_amt_owed = self.get_expression('pps_total_amt_owed', 'integer')
@@ -66,7 +66,7 @@ class TestVisiteDeLOperatour(TestDataSourceExpressions):
         self.assertEquals(real_date(form, EvaluationContext(form, 0)), date(2018, 3, 1))
         self.assertEquals(pps_is_outstock(form, EvaluationContext(form, 0)), False)
         self.assertEquals(nb_products_stockout(form, EvaluationContext(form, 0)), 0)
-        self.assertEquals(pps_nb_products(form, EvaluationContext(form, 0)), 0)
+        self.assertEquals(count_products_select(form, EvaluationContext(form, 0)), 0)
         self.assertEquals(supply_point(form, EvaluationContext(form, 0)), 'fd79174541fa4f3b9924af69ee3db7ad')
         self.assertEquals(pps_total_amt_paid(form, EvaluationContext(form, 0)), 0)
         self.assertEquals(pps_total_amt_owed(form, EvaluationContext(form, 0)), 0)

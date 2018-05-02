@@ -11,6 +11,7 @@ from django.utils.functional import cached_property
 
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT = "yeksi_naa_reports_visite_de_l_operateur_per_product"
+YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM = "yeksi_naa_reports_visite_de_l_operateur_per_program"
 YEKSI_NAA_REPORTS_LOGISTICIEN = 'yeksi_naa_reports_logisticien'
 
 
@@ -64,6 +65,8 @@ class YeksiNaaReportConfigMixin(object):
             enddate = startdate + relativedelta(month=1) - relativedelta(day=1)
         config['startdate'] = startdate
         config['enddate'] = enddate
+        if self.request.GET.get('program'):
+            config['program'] = self.request.GET.get('program')
         self.config_update(config)
         return config
 

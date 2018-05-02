@@ -243,12 +243,12 @@
           "type": "property_path",
           "property_path": [
             "form",
-            "pps_nb_products"
+            "count_products_select"
           ]
         },
         "datatype": "integer",
         "is_primary_key": false,
-        "column_id": "pps_nb_products",
+        "column_id": "count_products_select",
         "is_nullable": true,
         "type": "expression"
       },
@@ -300,6 +300,23 @@
         "datatype": "integer",
         "is_primary_key": false,
         "column_id": "pps_total_amt_owed",
+        "is_nullable": true,
+        "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "expression": {
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "select_programs"
+          ]
+        },
+        "datatype": "string",
+        "is_primary_key": false,
+        "column_id": "select_programs",
         "is_nullable": true,
         "type": "expression"
       }

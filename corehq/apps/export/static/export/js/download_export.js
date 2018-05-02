@@ -21,4 +21,8 @@ hqDefine('export/js/download_export', function() {
             return $('#id_user_types');
         },
     });
+
+    $(function() {
+        hqImport("reports/js/filters/main").init();
+    });
 });

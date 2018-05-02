@@ -16,6 +16,7 @@ describe('AWC Daily Status Directive', function () {
 
     beforeEach(module('icdsApp', function ($provide) {
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -26,6 +27,9 @@ describe('AWC Daily Status Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('awc_daily_status').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<awc-daily-status data='test'></awc-daily-status>");
         var compiled = $compile(element)($scope);
@@ -86,7 +90,7 @@ describe('AWC Daily Status Directive', function () {
             '<p>test</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>5</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>10</strong></div>' +
-            '<div>% of AWCs open yesterday: <strong>50.00%</strong></div>';
+            '<div>% of AWCs open yesterday: <strong>50.00%</strong></div></div>';
 
         assert.equal(result, expected);
     });
@@ -204,7 +208,7 @@ describe('AWC Daily Status Directive', function () {
             '<p>Ambah</p>' +
             '<div>Total number of AWCs that were open yesterday: <strong>0</strong></div>' +
             '<div>Total number of AWCs that have been launched: <strong>25</strong></div>' +
-            '<div>% of AWCs open yesterday: <strong>NaN%</strong></div>';
+            '<div>% of AWCs open yesterday: <strong>NaN%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };
@@ -216,14 +220,14 @@ describe('AWC Daily Status Directive', function () {
         controller.userLocationId = 'test_id4';
         controller.location = {name: 'name4', location_id: 'test_id4'};
         controller.selectedLocations.push(
-            {name: 'name1', location_id: 'test_id1'},
-            {name: 'name2', location_id: 'test_id2'},
-            {name: 'name3', location_id: 'test_id3'},
-            {name: 'name4', location_id: 'test_id4'},
-            {name: 'name5', location_id: 'test_id5'},
-            {name: 'name6', location_id: 'test_id6'}
+            {name: 'name1', location_id: 'test_id1', user_have_access: 0},
+            {name: 'name2', location_id: 'test_id2', user_have_access: 0},
+            {name: 'name3', location_id: 'test_id3', user_have_access: 0},
+            {name: 'name4', location_id: 'test_id4', user_have_access: 1},
+            {name: 'All', location_id: 'all', user_have_access: 0},
+            null
         );
         var index = controller.getDisableIndex();
-        assert.equal(index, 3);
+        assert.equal(index, 2);
     });
 });

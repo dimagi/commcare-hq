@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import division
+from __future__ import unicode_literals
 import json
 import logging
 import os
@@ -55,7 +56,7 @@ from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -97,7 +98,7 @@ def format_traceback_the_way_python_does(type, exc, tb):
     NameError: name 'name' is not defined
     """
 
-    return u'Traceback (most recent call last):\n{}{}: {}'.format(
+    return 'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
         six.text_type(exc)
@@ -151,10 +152,7 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.SERVER_ENVIRONMENT == 'production':
-                url = "https://www.dimagi.com/"
-            else:
-                url = reverse('login')
+            url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -361,6 +359,7 @@ def _login(req, domain_name, template_name):
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
+@two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
     # this view, and the one below, is overridden because
@@ -412,6 +411,7 @@ class CloudCareLoginView(HQLoginView):
     ]
 
 
+@two_factor_exempt
 def logout(req):
     referer = req.META.get('HTTP_REFERER')
     domain = get_domain_from_url(urlparse(referer).path) if referer else None
@@ -464,7 +464,7 @@ def dropbox_upload(request, download_id):
             uploader = DropboxUploadHelper.objects.get(download_id=download_id)
             messages.warning(
                 request,
-                u'The file is in the process of being synced to dropbox! It is {0:.2f}% '
+                'The file is in the process of being synced to dropbox! It is {0:.2f}% '
                 'complete.'.format(uploader.progress * 100)
             )
             return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
@@ -473,7 +473,7 @@ def dropbox_upload(request, download_id):
 
         messages.success(
             request,
-            _(u"Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
+            _("Apps/{app}/{dest} is queued to sync to dropbox! You will receive an email when it"
                 " completes.".format(app=settings.DROPBOX_APP_NAME, dest=dest))
         )
 
@@ -516,12 +516,12 @@ def jserror(request):
             browser_name = parsed_agent['browser'].get('name', DATADOG_UNKNOWN)
 
     datadog_counter(JSERROR_COUNT, tags=[
-        u'os:{}'.format(os),
-        u'browser_version:{}'.format(browser_version),
-        u'browser_name:{}'.format(browser_name),
-        u'url:{}'.format(sanitize_url(request.POST.get('page', None))),
-        u'file:{}'.format(request.POST.get('filename')),
-        u'bot:{}'.format(bot),
+        'os:{}'.format(os),
+        'browser_version:{}'.format(browser_version),
+        'browser_name:{}'.format(browser_name),
+        'url:{}'.format(sanitize_url(request.POST.get('page', None))),
+        'file:{}'.format(request.POST.get('filename')),
+        'bot:{}'.format(bot),
     ])
 
     return HttpResponse('')
@@ -577,12 +577,12 @@ class BugReportView(View):
             domain = "<no domain>"
 
         message = (
-            u"username: {username}\n"
-            u"full name: {full_name}\n"
-            u"domain: {domain}\n"
-            u"url: {url}\n"
-            u"datetime: {datetime}\n"
-            u"User Agent: {user_agent}\n"
+            "username: {username}\n"
+            "full name: {full_name}\n"
+            "domain: {domain}\n"
+            "url: {url}\n"
+            "datetime: {datetime}\n"
+            "User Agent: {user_agent}\n"
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
@@ -602,18 +602,18 @@ class BugReportView(View):
             if len(matching_subscriptions) >= 1:
                 software_plan = matching_subscriptions[0].plan_version
             else:
-                software_plan = u'domain has no active subscription'
+                software_plan = 'domain has no active subscription'
 
             message += ((
-                u"software plan: {software_plan}\n"
-                u"Is self start: {self_started}\n"
-                u"Feature Flags: {feature_flags}\n"
-                u"Feature Previews: {feature_previews}\n"
-                u"Is scale backend: {scale_backend}\n"
-                u"Has Support Hand-off Info: {has_handoff_info}\n"
-                u"Internal Project Information: {internal_info_link}\n"
-                u"Project description: {project_description}\n"
-                u"Sentry Error: {sentry_error}\n"
+                "software plan: {software_plan}\n"
+                "Is self start: {self_started}\n"
+                "Feature Flags: {feature_flags}\n"
+                "Feature Previews: {feature_previews}\n"
+                "Is scale backend: {scale_backend}\n"
+                "Has Support Hand-off Info: {has_handoff_info}\n"
+                "Internal Project Information: {internal_info_link}\n"
+                "Project description: {project_description}\n"
+                "Sentry Error: {sentry_error}\n"
             ).format(
                 software_plan=software_plan,
                 self_started=domain_object.internal.self_started,
@@ -626,11 +626,11 @@ class BugReportView(View):
                 sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
             ))
 
-        subject = u'{subject} ({domain})'.format(subject=report['subject'], domain=domain)
+        subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
         cc = [el for el in report['cc'].strip().split(",") if el]
 
         if full_name and not any([c in full_name for c in '<>"']):
-            reply_to = u'"{full_name}" <{email}>'.format(**report)
+            reply_to = '"{full_name}" <{email}>'.format(**report)
         else:
             reply_to = report['email']
 
@@ -639,7 +639,7 @@ class BugReportView(View):
         if settings.HQ_ACCOUNT_ROOT in reply_to:
             reply_to = settings.SERVER_EMAIL
 
-        message += u"Message:\n\n{message}\n".format(message=report['message'])
+        message += "Message:\n\n{message}\n".format(message=report['message'])
         if req.POST.get('five-hundred-report'):
             extra_message = ("This messge was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")

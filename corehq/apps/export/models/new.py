@@ -1674,7 +1674,7 @@ class FormExportDataSchema(ExportDataSchema):
 
         case_updates = OrderedSet()
         for form in forms:
-            for update in form.get_case_updates(form.get_module().case_type):
+            for update in form.get_case_updates_for_case_type(form.get_module().case_type):
                 case_updates.add(update)
 
         for form in forms:
@@ -1989,10 +1989,7 @@ class CaseExportDataSchema(ExportDataSchema):
             [case_type],
             include_parent_properties=False
         )
-        parent_types, _ = (
-            ParentCasePropertyBuilder(app)
-            .get_parent_types_and_contributed_properties(case_type)
-        )
+        parent_types = ParentCasePropertyBuilder(app).get_case_relationships_for_case_type(case_type)
         case_schemas = []
         case_schemas.append(cls._generate_schema_from_case_property_mapping(
             case_property_mapping,
@@ -2597,6 +2594,8 @@ class ExportMigrationMeta(Document):
     converted_columns = SchemaListProperty(ConversionMeta)
 
     is_remote_app_migration = BooleanProperty(default=False)
+
+    has_case_history = BooleanProperty(default=False)
 
     migration_date = DateTimeProperty()
 

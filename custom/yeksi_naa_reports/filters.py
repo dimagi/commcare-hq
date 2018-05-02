@@ -1,7 +1,7 @@
 # encoding: utf-8
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import calendar
+
 from django.urls import reverse
 from django.utils.translation import ugettext_noop
 from corehq.apps.locations.util import location_hierarchy_config, load_locs_json
@@ -11,6 +11,8 @@ import json
 from corehq.apps.reports.filters.base import BaseReportFilter
 import datetime
 from six.moves import range
+
+from custom.yeksi_naa_reports.sqldata import ProgramData
 
 
 class LocationFilter(AsyncLocationFilter):
@@ -39,17 +41,18 @@ class LocationFilter(AsyncLocationFilter):
 class MonthsDateFilter(BaseReportFilter):
     template = "yeksi_naa/months_datespan.html"
     slug = 'datespan'
-    label = "Date Range"
+    label = "Plage de dates"
 
     @classmethod
     def months(cls):
-        month_pairs = []
-        for month_number in range(1, 13):
-            month_pairs.append({
-                'name': calendar.month_name[month_number],
-                'value': month_number,
-            })
-        return month_pairs
+        return [
+            {'name': 'Janvier', 'value': 1}, {'name': 'Février', 'value': 2},
+            {'name': 'Mars', 'value': 3}, {'name': 'Avril', 'value': 4},
+            {'name': 'Mai', 'value': 5}, {'name': 'Juin', 'value': 6},
+            {'name': 'Juillet', 'value': 7}, {'name': 'Août', 'value': 8},
+            {'name': 'Septembre', 'value': 9}, {'name': 'Octobre', 'value': 10},
+            {'name': 'Novembre', 'value': 11}, {'name': 'Décembre', 'value': 12}
+        ]
 
     @property
     def filter_context(self):
@@ -61,4 +64,31 @@ class MonthsDateFilter(BaseReportFilter):
             'starting_year': int(self.request.GET.get('year_start', datetime.date.today().year)),
             'current_month': int(self.request.GET.get('month_end', datetime.date.today().month)),
             'current_year': int(self.request.GET.get('year_end', datetime.date.today().year)),
+        }
+
+
+class ProgramFilter(BaseReportFilter):
+    template = "yeksi_naa/program_filter.html"
+    slug = 'program'
+    label = "Programme"
+
+    @classmethod
+    def program(cls):
+        program_filter = [{
+            'name': 'All',
+            'value': "%%",
+        }]
+        programs = ProgramData(config={'domain': 'test-pna'}).rows
+        for program in programs:
+            program_filter.append({
+                'name': program[1],
+                'value': "%{0}%".format(program[0]),
+            })
+        return program_filter
+
+    @property
+    def filter_context(self):
+        return {
+            'programs': self.program(),
+            'chosen_program': self.request.GET.get('program', ''),
         }

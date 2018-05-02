@@ -46,6 +46,7 @@ class SubmissionErrorReport(DeploymentsReport):
                                    DataTablesColumn(_("Error Message"), sortable=False))
         if self.support_toggle_enabled:
             headers.add_column(DataTablesColumn(_("Re-process Form")))
+        headers.custom_sort = [[2, "desc"]]
         return headers
 
     _submitfilter = None
@@ -58,7 +59,7 @@ class SubmissionErrorReport(DeploymentsReport):
 
     @property
     def sort_params(self):
-        sort_col_idx = int(self.request.GET.get('iSortCol_0', None))
+        sort_col_idx = int(self.request.GET['iSortCol_0'])
         col = self.headers.header[sort_col_idx]
         sort_prop = hasattr(col, "prop_name") and col.prop_name
         desc = self.request.GET.get('sSortDir_0') == 'desc'

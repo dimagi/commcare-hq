@@ -8,7 +8,7 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.messaging.scheduling.util import utcnow
-from corehq.messaging.util import MessagingRuleProgressHelper
+from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.util.celery_utils import no_result_task
 from dimagi.utils.couch import CriticalSection
@@ -44,12 +44,18 @@ def _sync_case_for_messaging(domain, case_id):
     case = CaseAccessors(domain).get_case(case_id)
     sms_tasks.clear_case_caches(case)
 
-    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+    if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
 
-    handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
-    if handler_ids:
-        reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
+    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+        # This runs rules from the old reminders framework. ICDS only uses
+        # the new reminders framework now, so we can spare redis and couch
+        # some hits by not running this at all.
+        # When all environments are on the new framework, we can remove these
+        # lines entirely.
+        handler_ids = CaseReminderHandler.get_handler_ids_for_case_post_save(case.domain, case.type)
+        if handler_ids:
+            reminders_tasks._process_case_changed_for_case(domain, case, handler_ids)
 
     rules = AutomaticUpdateRule.by_domain_cached(case.domain, AutomaticUpdateRule.WORKFLOW_SCHEDULING)
     rules_by_case_type = AutomaticUpdateRule.organize_rules_by_case_type(rules)

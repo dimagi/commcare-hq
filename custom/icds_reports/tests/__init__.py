@@ -37,6 +37,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
     'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
+    'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
 }
 
 

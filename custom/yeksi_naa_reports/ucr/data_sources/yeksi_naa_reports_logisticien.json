@@ -86,7 +86,7 @@
             "datatype": null,
             "type": "property_path",
             "property_path": [
-              "opened_on"
+              "date_echeance"
             ]
           },
           "type": "month_start_date"
@@ -95,7 +95,7 @@
         "is_primary_key": false,
         "is_nullable": true,
         "type": "expression",
-        "column_id": "opened_on"
+        "column_id": "date_echeance"
       },
       {
         "comment": null,

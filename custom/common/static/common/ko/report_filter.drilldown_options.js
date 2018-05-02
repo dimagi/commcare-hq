@@ -1,5 +1,7 @@
+/* globals drilldownFinalNotification */
+
 //probably we need clear this file
-//copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/report_filter.drilldown_options.js
+//copy/paste from https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/reports/static/reports/js/filters/drilldown_options.js
 
 ko.bindingHandlers.select2 = {
     init: function(el, valueAccessor, allBindingsAccessor, viewModel) {
@@ -61,12 +63,12 @@ ko.bindingHandlers.select2 = {
     }
 };
 
-var DrilldownOptionFilterControl = function (options) {
-    var self = this;
+var drilldownOptionFilterControl = function (options) {
+    var self = {};
 
-    self.notification = new DrilldownFinalNotification(options.notifications);
+    self.notification = drilldownFinalNotification(options.notifications);
     self.controls = ko.observableArray(ko.utils.arrayMap(options.controls, function (select) {
-        return new DrilldownOption(select, options.drilldown_map);
+        return drilldownOption(select, options.drilldown_map);
     }));
 
     self.init = function () {
@@ -112,14 +114,14 @@ var DrilldownOptionFilterControl = function (options) {
 
 };
 
-var DrilldownOption = function (select, drilldown_map) {
-    var self = this;
+var drilldownOption = function (select, drilldownMap) {
+    var self = {};
     self.label = select.label;
     self.default_text = select.default_text;
     self.slug = select.slug;
     self.level = select.level;
 
-    self.control_options = ko.observableArray((self.level === 0) ? drilldown_map : []);
+    self.control_options = ko.observableArray((self.level === 0) ? drilldownMap : []);
     self.selected = ko.observableArray();
 
     self.is_visible = ko.computed(function () {
@@ -135,10 +137,11 @@ var DrilldownOption = function (select, drilldown_map) {
     self.show_next_drilldown = ko.computed(function () {
         return !(self.control_options().length);
     });
+    return {};
 };
 
 $.fn.drilldownOptionFilter = function (options) {
-    var viewModel = new DrilldownOptionFilterControl(options);
+    var viewModel = new drilldownOptionFilterControl(options);
     $(this).koApplyBindings(viewModel);
     viewModel.init();
 };
