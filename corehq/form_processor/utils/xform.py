@@ -9,6 +9,7 @@ import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
@@ -206,3 +207,19 @@ def resave_form(domain, form):
         publish_form_saved(form)
     else:
         XFormInstance.get_db().save_doc(form.to_json())
+
+
+def update_response(xml, question, response, xmlns=None):
+    '''
+    Given a form submission's xml element, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = xml
+    i = XFormQuestionValueIterator(question)
+    for (qid, index) in i:
+        node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
+    node = node.find("{{{}}}{}".format(xmlns, i.last()))
+    if node is not None and node.text != response:
+        node.text = response
+        return True
+    return False
