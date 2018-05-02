@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
+from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomDataSource
 from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
 from corehq.apps.userreports.util import get_backend_id
@@ -15,7 +16,8 @@ class ConfigurableReportDataSource(object):
         query the SQL or ES datasource table.
     """
 
-    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by, backend=None):
+    def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by,
+                 backend=None, custom_query_provider=None):
         """
             config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
         """
@@ -38,8 +40,10 @@ class ConfigurableReportDataSource(object):
         else:
             self._backend = None
 
+        self._custom_query_provider = custom_query_provider
+
     @classmethod
-    def from_spec(cls, spec, include_prefilters=False, backend=None):
+    def from_spec(cls, spec, include_prefilters=False, backend=None, custom_query_provider=None):
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         filters = spec.filters if include_prefilters else spec.filters_without_prefilters
         return cls(
@@ -50,6 +54,7 @@ class ConfigurableReportDataSource(object):
             columns=spec.report_columns,
             order_by=order_by,
             backend=backend,
+            custom_query_provider=custom_query_provider
         )
 
     @property
@@ -61,7 +66,14 @@ class ConfigurableReportDataSource(object):
     @property
     def data_source(self):
         if self._data_source is None:
-            if self.backend == UCR_ES_BACKEND:
+            if self._custom_query_provider:
+                self._data_source = ConfigurableReportCustomDataSource(
+                    self.domain, self.config, self._filters,
+                    self._aggregation_columns, self._columns,
+                    self._order_by
+                )
+                self._data_source.set_provider(self._custom_query_provider)
+            elif self.backend == UCR_ES_BACKEND:
                 self._data_source = ConfigurableReportEsDataSource(
                     self.domain, self.config, self._filters,
                     self._aggregation_columns, self._columns,

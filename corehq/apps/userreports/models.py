@@ -449,6 +449,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     sort_expression = ListProperty()
     soft_rollout = DecimalProperty(default=0)
     report_meta = SchemaProperty(ReportMeta)
+    custom_query_provider = StringProperty(required=False)
 
     def __unicode__(self):
         return '{} - {}'.format(self.domain, self.title)

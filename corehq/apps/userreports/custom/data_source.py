@@ -7,12 +7,12 @@ from memoized import memoized
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
+from dimagi.utils.modules import to_function
 
 
 class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
-    @property
-    def _provider(self):
-        pass
+    def set_provider(self, provider_string):
+        self._provider = to_function(provider_string, failhard=True)
 
     @property
     def filters(self):
