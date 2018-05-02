@@ -71,8 +71,8 @@ class RegisterWebUserForm(forms.Form):
             <a href="http://www.dimagi.com/terms/latest/ba/"
                target="_blank">Business Agreement</a>, and
             <a href="http://www.dimagi.com/terms/latest/aup/"
-               target="_blank">Acceptable Use Policy</a>
-            .""")))
+               target="_blank">Acceptable Use Policy</a>.
+            """)))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -329,8 +329,8 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
                                                 <a href="http://www.dimagi.com/terms/latest/ba/"
                                                     target="_blank">Business Agreement</a>, and
                                                 <a href="http://www.dimagi.com/terms/latest/aup/"
-                                                    target="_blank">Acceptable Use Policy</a>
-                                               .""")))
+                                                    target="_blank">Acceptable Use Policy</a>.
+                                               """)))
 
     def __init__(self, *args, **kwargs):
         super(WebUserInvitationForm, self).__init__(*args, **kwargs)
