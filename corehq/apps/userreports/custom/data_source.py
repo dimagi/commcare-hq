@@ -5,36 +5,66 @@ from django.utils.decorators import method_decorator
 from memoized import memoized
 
 from corehq.apps.reports.api import ReportDataSource
+from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.apps.userreports.decorators import catch_and_raise_exceptions
 from corehq.apps.userreports.mixins import ConfigurableReportDataSourceMixin
+from corehq.apps.userreports.util import get_indicator_adapter
 from dimagi.utils.modules import to_function
 
 
 class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, ReportDataSource):
+    @property
+    @memoized
+    def helper(self):
+        if self.config.backend_id == 'SQL':
+            return ConfigurableReportCustomSQLDataSourceHelper(self)
+
     def set_provider(self, provider_string):
-        self._provider = to_function(provider_string, failhard=True)
-
-    @property
-    def filters(self):
-        pass
-
-    @property
-    def order_by(self):
-        pass
-
-    @property
-    def columns(self):
-        pass
+        self._provider = to_function(provider_string, failhard=True)(self)
 
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
-        return self._provider.get_data(start, limit)
+        return self._provider.get_data(self, start, limit)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
-        return self._provider.get_total_records()
+        return self._provider.get_total_records(self)
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
-        return self._provider.get_total_row()
+        return self._provider.get_total_row(self)
+
+
+class ConfigurableReportCustomSQLDataSourceHelper(object):
+    def __init__(self, report_data_source):
+        self.report_data_source = report_data_source
+        self.adapter = get_indicator_adapter(self.report_data_source.config)
+
+    def session_helper(self):
+        return self.adapter.session_helper
+
+    def get_table(self):
+        return self.adapter.get_table()
+
+    @property
+    def _filters(self):
+        return [
+            _f
+            for _f in [
+                fv.to_sql_filter() for fv in self.report_data_source._filter_values.values()
+            ]
+            if _f
+        ]
+
+    @property
+    def sql_alchemy_filters(self):
+        return [f.build_expression(self.get_table()) for f in self._filters if f]
+
+    @property
+    def sql_alchemy_filter_values(self):
+        return {
+            k: v
+            for fv in self.report_data_source._filter_values.values()
+            for k, v in fv.to_sql_values().items()
+        }

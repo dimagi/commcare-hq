@@ -43,7 +43,7 @@ class ConfigurableReportDataSource(object):
         self._custom_query_provider = custom_query_provider
 
     @classmethod
-    def from_spec(cls, spec, include_prefilters=False, backend=None, custom_query_provider=None):
+    def from_spec(cls, spec, include_prefilters=False, backend=None):
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         filters = spec.filters if include_prefilters else spec.filters_without_prefilters
         return cls(
@@ -54,7 +54,7 @@ class ConfigurableReportDataSource(object):
             columns=spec.report_columns,
             order_by=order_by,
             backend=backend,
-            custom_query_provider=custom_query_provider
+            custom_query_provider=spec.custom_query_provider
         )
 
     @property
