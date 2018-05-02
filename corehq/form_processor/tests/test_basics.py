@@ -18,7 +18,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
-from corehq.form_processor.interfaces.processor import FormProcessorInterface
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, XFormQuestionValueIterator
 from corehq.form_processor.models import XFormInstanceSQL
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.backends.couch.update_strategy import coerce_to_datetime
@@ -482,3 +482,14 @@ def _submit_case_block(create, case_id, **kwargs):
             ).as_xml()
         ], domain=domain
     )
+
+
+class IteratorTests(TestCase):
+    def test_iterator(self):
+        i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
+        self.assertIsNone(i.last())
+        self.assertEqual(i.next(), ('group', None))
+        self.assertEqual(i.next(), ('repeat_group', 1))
+        with self.assertRaises(StopIteration):
+            i.next()
+        self.assertEqual(i.last(), 'question_id')
