@@ -24,10 +24,7 @@ class AlertSchedule(Schedule):
 
     def set_next_event_due_timestamp(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
-        instance.next_event_due += timedelta(
-            hours=current_event.time_to_wait.hour,
-            minutes=current_event.time_to_wait.minute
-        )
+        instance.next_event_due += timedelta(minutes=current_event.minutes_to_wait)
 
     def get_current_event_content(self, instance):
         current_event = self.memoized_events[instance.current_event_num]
@@ -63,7 +60,7 @@ class AlertSchedule(Schedule):
             event = AlertEvent(
                 order=1,
                 schedule=self,
-                time_to_wait=time(0, 0),
+                minutes_to_wait=0,
             )
             event.content = content
             event.save()
@@ -71,7 +68,7 @@ class AlertSchedule(Schedule):
 
 class AlertEvent(Event):
     schedule = models.ForeignKey('scheduling.AlertSchedule', on_delete=models.CASCADE)
-    time_to_wait = models.TimeField()
+    minutes_to_wait = models.IntegerField()
 
 
 class ImmediateBroadcast(Broadcast):
