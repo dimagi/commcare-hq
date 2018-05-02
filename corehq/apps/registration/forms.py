@@ -63,10 +63,16 @@ class RegisterWebUserForm(forms.Form):
     eula_confirmed = forms.BooleanField(
         required=False,
         label=mark_safe_lazy(_(
-            """I have read and agree to the
+            """I have read and agree to Dimagi's
             <a href="http://www.dimagi.com/terms/latest/privacy/"
-               target="_blank">
-               CommCare HQ Terms of Service and Business Agreement</a>.""")))
+               target="_blank">Privacy Policy</a>,
+            <a href="http://www.dimagi.com/terms/latest/tos/"
+               target="_blank">Terms of Service</a>,
+            <a href="http://www.dimagi.com/terms/latest/ba/"
+               target="_blank">Business Agreement</a>, and
+            <a href="http://www.dimagi.com/terms/latest/aup/"
+               target="_blank">Acceptable Use Policy</a>
+            .""")))
     atypical_user = forms.BooleanField(required=False, widget=forms.HiddenInput())
     is_mobile = forms.BooleanField(required=False, widget=forms.HiddenInput())
 
@@ -315,11 +321,16 @@ class WebUserInvitationForm(NoAutocompleteMixin, DomainRegistrationForm):
     eula_confirmed = forms.BooleanField(required=False,
                                         label="",
                                         help_text=mark_safe_lazy(_(
-                                            """I have read and agree to the
-                                               <a href="http://www.dimagi.com/terms/latest/privacy/"
-                                                  target="_blank">
-                                                  CommCare HQ Terms of Service and Business Agreement
-                                               </a>.""")))
+                                            """I have read and agree to Dimagi's
+                                                <a href="http://www.dimagi.com/terms/latest/privacy/"
+                                                    target="_blank">Privacy Policy</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/tos/"
+                                                    target="_blank">Terms of Service</a>,
+                                                <a href="http://www.dimagi.com/terms/latest/ba/"
+                                                    target="_blank">Business Agreement</a>, and
+                                                <a href="http://www.dimagi.com/terms/latest/aup/"
+                                                    target="_blank">Acceptable Use Policy</a>
+                                               .""")))
 
     def __init__(self, *args, **kwargs):
         super(WebUserInvitationForm, self).__init__(*args, **kwargs)
