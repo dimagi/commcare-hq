@@ -296,7 +296,7 @@ def mass_email(request):
                     'email_body': body_html.render(Context(context)),
                 })
 
-                send_html_email_async.delay(subject, recipient.username, html_content, text_content,
+                send_html_email_async.delay(subject, recipient['username'], html_content, text_content,
                                 email_from=settings.DEFAULT_FROM_EMAIL)
 
             messages.success(request, 'Your {} email(s) were sent successfully.'.format(len(recipients)))
