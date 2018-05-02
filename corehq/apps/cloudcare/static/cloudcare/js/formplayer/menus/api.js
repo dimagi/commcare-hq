@@ -24,7 +24,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
             if (!_.contains(accessibleAppIds, params.appId)) {
                 FormplayerFrontend.trigger(
                     'showError',
-                    gettext("Permission Denied"),
+                    gettext("Permission Denied")
                 );
                 FormplayerFrontend.trigger('navigateHome');
                 return;
