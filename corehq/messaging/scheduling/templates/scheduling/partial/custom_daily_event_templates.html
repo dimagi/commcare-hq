@@ -7,11 +7,11 @@
         <span class="btn btn-danger" data-bind="click: function() { $root.markCustomDailyEventDeleted($parent.event_id); }">
             <i class="fa fa-remove"></i>
         </span>
-        {% trans "Event for" %}
+        {% trans "Send on" %}
         <strong>
             {% trans "Day" %}
-            <span data-bind="text: day"></span>,
-            {% trans "Time" %}
+            <span data-bind="text: day"></span>
+            {% trans "at" %}
             <span data-bind="text: time, visible: $root.useTimeInput()"></span>
             <span data-bind="text: case_property_name, visible: $root.useCasePropertyTimeInput()"></span>
         </strong>

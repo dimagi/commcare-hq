@@ -83,7 +83,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         var self = this;
         ContentViewModel.call(self, initial_values);
 
-        self.day = ko.observable(initial_values.day || '0');
+        self.day = ko.observable(initial_values.day || '1');
         self.time = ko.observable(initial_values.time || '0:00');
         self.case_property_name = ko.observable(initial_values.case_property_name);
         self.deleted = ko.observable(initial_values.DELETE);

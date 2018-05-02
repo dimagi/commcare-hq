@@ -414,7 +414,7 @@ class CustomDailyEventForm(ContentForm):
     # Corresponds to AbstractTimedEvent.day
     day = IntegerField(
         required=True,
-        min_value=0,
+        min_value=1,
         label='',
     )
 
@@ -446,14 +446,14 @@ class CustomDailyEventForm(ContentForm):
         result = {}
 
         if isinstance(event, TimedEvent):
-            result['day'] = event.day
+            result['day'] = event.day + 1
             result['time'] = event.time.strftime('%H:%M')
         elif isinstance(event, RandomTimedEvent):
-            result['day'] = event.day
+            result['day'] = event.day + 1
             result['time'] = event.time.strftime('%H:%M')
             result['window_length'] = event.window_length
         elif isinstance(event, CasePropertyTimedEvent):
-            result['day'] = event.day
+            result['day'] = event.day + 1
             result['case_property_name'] = event.case_property_name
         else:
             raise TypeError("Unexpected event type: %s" % type(event))
@@ -476,12 +476,12 @@ class CustomDailyEventForm(ContentForm):
                 data_bind="visible: false"
             ),
             hqcrispy.B3MultiField(
-                _("Event will send"),
+                _("Event will send on day"),
                 crispy.Div(
                     twbscrispy.InlineField('day', data_bind='value: day'),
                     css_class='col-sm-4',
                 ),
-                crispy.HTML('<label class="control-label">%s</label>' % _("day(s) after schedule begins")),
+                crispy.HTML('<label class="control-label">%s</label>' % _("of the schedule")),
             ),
             hqcrispy.B3MultiField(
                 _("Time to Send"),
