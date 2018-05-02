@@ -70,7 +70,7 @@ class Command(BaseCommand):
         if stats:
             self.stderr.write("Migration has diffs, aborting for domain {}".format(domain))
             self.abort(domain)
-            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10]))
+            writer = SimpleTableWriter(self.stdout, TableRowFormatter([50, 10, 10, 10, 10]))
             writer.write_table(['Doc Type', '# Couch', '# SQL', '# Diffs', '# Docs with Diffs'], [
                 (doc_type,) + stat for doc_type, stat in stats.items()
             ])
