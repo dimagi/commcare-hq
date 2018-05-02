@@ -35,6 +35,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
+from dimagi.utils.web import get_site_domain
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
@@ -284,11 +285,15 @@ def mass_email(request):
                 }]
 
             for recipient in recipients:
+                context = recipient
+                context.update({
+                    'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+                })
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
-                    'email_body': body_text.render(Context(recipient)),
+                    'email_body': body_text.render(Context(context)),
                 })
                 html_content = render_to_string("hqadmin/email/mass_email_base.html", {
-                    'email_body': body_html.render(Context(recipient)),
+                    'email_body': body_html.render(Context(context)),
                 })
 
                 send_html_email_async.delay(subject, recipient, html_content, text_content,
