@@ -337,7 +337,8 @@ def mass_email(request):
                     'file_obj': csv_file,
                 }
                 send_html_email_async(
-                    subject, request.couch_user.username, message, text_content=message, file_attachments=[attachment]
+                    subject, request.couch_user.username, message,
+                    text_content=message, file_attachments=[attachment]
                 )
 
             messages.success(request, '{} email(s) were sent successfully and {} failed.{}'.format(
