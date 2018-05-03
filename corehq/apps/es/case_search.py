@@ -17,6 +17,7 @@ from warnings import warn
 import six
 from django.utils.dateparse import parse_date
 from django.utils.translation import ugettext as _
+from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
     CASE_PROPERTIES_PATH,
@@ -97,7 +98,30 @@ class CaseSearchES(CaseES):
         Search for all cases where case property `key` fulfills the date range criteria.
         """
         return self._add_query(case_property_range_query(key, gt, gte, lt, lte), clause)
+
+    def xpath_query(self, domain, xpath):
+        """Search for cases using an XPath predicate expression.
+
+        Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
+        e.g you can do things like:
+
+        - case properties: "first_name = 'dolores' and last_name = 'abernathy'"
+        - date ranges: "first_came_online >= '2017-08-12' or died <= '2020-11-15"
+        - numeric ranges: "age >= 100 and height < 1.25"
+        - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
+        """
+        from corehq.apps.case_search.filter_dsl import (
+            CaseFilterError,
+            build_filter_from_ast,
         )
+
+        try:
+            return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
+        except (TypeError, RuntimeError) as e:
+            raise CaseFilterError(
+                _("Malformed query: {}".format(e)),
+                None,
+            )
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
