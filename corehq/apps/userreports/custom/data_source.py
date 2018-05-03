@@ -22,10 +22,26 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
     def set_provider(self, provider_string):
         self._provider = to_function(provider_string, failhard=True)(self)
 
+    @property
+    def columns(self):
+        db_columns = [c for conf in self.column_configs for c in conf.columns]
+        return db_columns
+
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
-        return self._provider.get_data(self, start, limit)
+        ret = self._provider.get_data(self, start, limit)
+        formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
+        formatted_data = list(formatter.format(ret, group_by=self.group_by).values())
+
+        for report_column in self.top_level_db_columns:
+            report_column.format_data(formatted_data)
+
+        for computed_column in self.top_level_computed_columns:
+            for row in formatted_data:
+                row[computed_column.column_id] = computed_column.wrapped_expression(row)
+
+        return formatted_data
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):

@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from memoized import memoized
 from sqlalchemy.sql import func
 
@@ -95,7 +96,10 @@ class MPR2APersonCases(object):
 
     def get_data(self, report_data_source, start, limit):
         query_obj = self._get_query_object(report_data_source)
-        return [r._asdict() for r in query_obj.group_by(self.table.c.owner_id).all()]
+        return OrderedDict([
+            (r.owner_id, r._asdict())
+            for r in query_obj.group_by(self.table.c.owner_id).all()
+        ])
 
     def get_total_row(self, report_data_source):
         query_obj = self._get_query_object(report_data_source, total_row=True)
