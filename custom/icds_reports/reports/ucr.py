@@ -1,3 +1,6 @@
+from __future__ import absolute_import
+from __future__ import unicode_literals
+
 from collections import OrderedDict
 from memoized import memoized
 from sqlalchemy.sql import func
@@ -26,7 +29,7 @@ class MPR2APersonCases(object):
         # also want to show owner_ids without any dead/closed cases
         # Could likely be made more efficient with a subquery
         # Note that for mobile reports date_death is always included in the filter anyways
-        column = (columns.closed_on != None) & (columns.date_death != None)
+        column = (columns.closed_on != None) & (columns.date_death != None)  # noqa: E711
         column &= {
             "F": columns.sex == "F",
             "M": columns.sex == "M",
