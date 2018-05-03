@@ -211,7 +211,7 @@ def filter_out_stale_standbys(dbs, delay_threshold):
 @quickcache(['weighted_dbs'], timeout=LOAD_BALANCE_FREQUENCY_SECONDS, skip_arg=lambda *args: settings.UNIT_TESTING)
 def select_db_for_read(weighted_dbs):
     """
-    Returns a randomly selected database per the weights assigned from 
+    Returns a randomly selected database per the weights assigned from
         a list of databases. If any database is standby and its replication has
         more than accesptable delay, that db is dropped from selection
 
