@@ -9,9 +9,8 @@ import jsonfield.fields
 
 class Migration(migrations.Migration):
 
-    initial = True
-
     dependencies = [
+        ('dhis2', '0004_auto_20171122_0827'),
     ]
 
     state_operations = [
