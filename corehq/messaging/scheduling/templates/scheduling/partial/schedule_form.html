@@ -4,9 +4,9 @@
 <div id="create-schedule-form" class="col-sm-12">
     {% crispy schedule_form schedule_form.before_content %}
     {% crispy schedule_form.standalone_content_form %}
-    <div id="id_custom_daily_event_formset">
-        {{ schedule_form.custom_daily_event_formset.management_form|crispy }}
-        <div data-bind="foreach: custom_daily_events, afterRender: afterRenderCustomDailyEvent">
+    <div id="id_custom_event_formset">
+        {{ schedule_form.custom_event_formset.management_form|crispy }}
+        <div data-bind="foreach: custom_events">
             <div data-bind="template: { name: templateId }"></div>
         </div>
     </div>

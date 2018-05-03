@@ -406,10 +406,10 @@ class ContentForm(Form):
         return values
 
 
-class CustomDailyEventForm(ContentForm):
+class CustomEventForm(ContentForm):
     # Prefix to avoid name collisions; this means all input
-    # names in the HTML are prefixed with "content-"
-    prefix = 'custom-daily-event'
+    # names in the HTML are prefixed with "custom-event"
+    prefix = 'custom-event'
 
     # Corresponds to AbstractTimedEvent.day
     day = IntegerField(
@@ -516,15 +516,15 @@ class CustomDailyEventForm(ContentForm):
                 ),
                 data_bind="visible: $root.send_time_type() === '%s'" % TimedSchedule.EVENT_CASE_PROPERTY_TIME
             ),
-        ] + super(CustomDailyEventForm, self).get_layout_fields()
+        ] + super(CustomEventForm, self).get_layout_fields()
 
     def __init__(self, *args, **kwargs):
-        super(CustomDailyEventForm, self).__init__(*args, **kwargs)
+        super(CustomEventForm, self).__init__(*args, **kwargs)
         self.helper = ScheduleForm.create_form_helper()
         self.helper.layout = crispy.Layout(
             crispy.Div(
                 crispy.Fieldset(
-                    '<span data-bind="template: { name: \'id_custom_daily_event_legend\' }"></span>',
+                    '<span data-bind="template: { name: \'id_custom_event_legend\' }"></span>',
                     *self.get_layout_fields(),
                     data_bind=(
                         "visible: $root.send_frequency() === '%s' && !deleted()"
@@ -536,11 +536,11 @@ class CustomDailyEventForm(ContentForm):
         )
 
 
-class BaseCustomDailyEventFormSet(BaseFormSet):
+class BaseCustomEventFormSet(BaseFormSet):
 
     def __init__(self, *args, **kwargs):
-        kwargs['prefix'] = CustomDailyEventForm.prefix
-        super(BaseCustomDailyEventFormSet, self).__init__(*args, **kwargs)
+        kwargs['prefix'] = CustomEventForm.prefix
+        super(BaseCustomEventFormSet, self).__init__(*args, **kwargs)
 
     def clean(self):
         if any(self.errors):
@@ -729,7 +729,7 @@ class ScheduleForm(Form):
     # Daily, Weekly, or Monthly).
     standalone_content_form = None
 
-    custom_daily_event_formset = None
+    custom_event_formset = None
 
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
@@ -738,7 +738,7 @@ class ScheduleForm(Form):
         result = [super(ScheduleForm, self).is_valid()]
 
         if self.cleaned_data.get('send_frequency') == self.SEND_CUSTOM_DAILY:
-            result.append(self.custom_daily_event_formset.is_valid())
+            result.append(self.custom_event_formset.is_valid())
         else:
             result.append(self.standalone_content_form.is_valid())
 
@@ -785,8 +785,8 @@ class ScheduleForm(Form):
 
     def add_initial_for_custom_daily_schedule(self, initial):
         initial['send_frequency'] = self.SEND_CUSTOM_DAILY
-        initial['custom_daily_event_formset'] = [
-            CustomDailyEventForm.compute_initial(event)
+        initial['custom_event_formset'] = [
+            CustomEventForm.compute_initial(event)
             for event in self.initial_schedule.memoized_events
         ]
 
@@ -978,17 +978,17 @@ class ScheduleForm(Form):
             **kwargs
         )
 
-        CustomDailyEventFormSet = formset_factory(
-            CustomDailyEventForm,
-            formset=BaseCustomDailyEventFormSet,
+        CustomEventFormSet = formset_factory(
+            CustomEventForm,
+            formset=BaseCustomEventFormSet,
             extra=0,
             can_order=True,
             can_delete=True,
         )
-        self.custom_daily_event_formset = CustomDailyEventFormSet(
+        self.custom_event_formset = CustomEventFormSet(
             *args,
             form_kwargs={'schedule_form': self},
-            initial=schedule_form_initial.get('custom_daily_event_formset', []),
+            initial=schedule_form_initial.get('custom_event_formset', []),
             **kwargs
         )
 
@@ -1068,7 +1068,7 @@ class ScheduleForm(Form):
                 hqcrispy.B3MultiField(
                     '',
                     crispy.HTML(
-                        '<span data-bind="click: addCustomDailyEvent" class="btn btn-success">'
+                        '<span data-bind="click: addCustomEvent" class="btn btn-success">'
                         '<i class="fa fa-plus"></i> %s</span>'
                         % _("Add Event")
                     ),
@@ -1348,7 +1348,7 @@ class ScheduleForm(Form):
         for field_name in self.fields.keys():
             values[field_name] = self[field_name].value()
         values['standalone_content_form'] = self.standalone_content_form.current_values
-        values['custom_daily_event_formset'] = [form.current_values for form in self.custom_daily_event_formset]
+        values['custom_event_formset'] = [form.current_values for form in self.custom_event_formset]
         return values
 
     @property

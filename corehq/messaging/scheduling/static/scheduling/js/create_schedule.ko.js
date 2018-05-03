@@ -93,20 +93,20 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
     EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
     EventAndContentViewModel.prototype.constructor = EventAndContentViewModel;
 
-    var CustomDailyEventContainer = function(id) {
+    var CustomEventContainer = function(id) {
         var self = this;
 
         self.event_id = id;
 
-        var custom_daily_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_daily_event_formset;
-        if(id < custom_daily_event_formset.length) {
-            self.eventAndContentViewModel = new EventAndContentViewModel(custom_daily_event_formset[id]);
+        var custom_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_event_formset;
+        if(id < custom_event_formset.length) {
+            self.eventAndContentViewModel = new EventAndContentViewModel(custom_event_formset[id]);
         } else {
             self.eventAndContentViewModel = new EventAndContentViewModel({});
         }
 
         self.templateId = ko.computed(function() {
-            return 'id_custom_daily_event_template_' + id;
+            return 'id_custom_event_template_' + id;
         });
     };
 
@@ -160,7 +160,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.displayed_email_trial_message = false;
         self.content = ko.observable(initial_values.content);
         self.standalone_content_form = new ContentViewModel(initial_values.standalone_content_form);
-        self.custom_daily_events = ko.observableArray();
+        self.custom_events = ko.observableArray();
         self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(current_visit_scheduler_form,
             'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
         self.visit_scheduler_app_and_form_unique_id.init();
@@ -373,29 +373,29 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             element.datepicker({dateFormat : "yy-mm-dd"});
         };
 
-        self.getNextCustomDailyEventIndex = function() {
-            var count = $('#id_custom-daily-event-TOTAL_FORMS').val();
+        self.getNextCustomEventIndex = function() {
+            var count = $('#id_custom-event-TOTAL_FORMS').val();
             return parseInt(count);
         };
 
-        self.addCustomDailyEvent = function() {
-            var id = self.getNextCustomDailyEventIndex();
-            $('#id_custom_daily_event_templates').append(
-                 $('#id_custom_daily_event_empty_form_container').html().replace(/__prefix__/g, id)
+        self.addCustomEvent = function() {
+            var id = self.getNextCustomEventIndex();
+            $('#id_custom_event_templates').append(
+                 $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id)
             );
-            $('#id_custom-daily-event-TOTAL_FORMS').val(id + 1);
-            self.custom_daily_events.push(new CustomDailyEventContainer(id));
+            $('#id_custom-event-TOTAL_FORMS').val(id + 1);
+            self.custom_events.push(new CustomEventContainer(id));
         };
 
-        self.markCustomDailyEventDeleted = function(event_id) {
-            $.each(self.custom_daily_events(), function(index, value) {
+        self.markCustomEventDeleted = function(event_id) {
+            $.each(self.custom_events(), function(index, value) {
                 if(value.event_id === event_id) {
                     value.eventAndContentViewModel.deleted(true);
                 };
             });
         };
 
-        self.getCustomDailyEventIndex = function(event_id, arr) {
+        self.getCustomEventIndex = function(event_id, arr) {
             var item_index = null;
             $.each(arr, function(index, value) {
                 if(value.event_id === event_id) {
@@ -405,9 +405,9 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             return item_index;
         };
 
-        self.moveCustomDailyEventUp = function(event_id) {
-            var new_array = self.custom_daily_events();
-            var item_index = self.getCustomDailyEventIndex(event_id, new_array);
+        self.moveCustomEventUp = function(event_id) {
+            var new_array = self.custom_events();
+            var item_index = self.getCustomEventIndex(event_id, new_array);
             var swapped_item = null;
 
             while(item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
@@ -417,12 +417,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                 item_index -= 1;
             }
 
-            self.custom_daily_events(new_array);
+            self.custom_events(new_array);
         };
 
-        self.moveCustomDailyEventDown = function(event_id) {
-            var new_array = self.custom_daily_events();
-            var item_index = self.getCustomDailyEventIndex(event_id, new_array);
+        self.moveCustomEventDown = function(event_id) {
+            var new_array = self.custom_events();
+            var item_index = self.getCustomEventIndex(event_id, new_array);
             var swapped_item = null;
 
             while((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
@@ -432,10 +432,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
                 item_index += 1;
             }
 
-            self.custom_daily_events(new_array);
+            self.custom_events(new_array);
         };
 
-        self.custom_daily_events.subscribe(function(newValue) {
+        self.custom_events.subscribe(function(newValue) {
             // update the order for all events when the array changes
             $.each(newValue, function(index, value) {
                 value.eventAndContentViewModel.order(index);
@@ -454,14 +454,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             self.initDatePicker($("#id_schedule-start_date"));
             self.setRepeatOptionText(self.send_frequency());
 
-            var custom_daily_events = [];
-            for(var i = 0; i < self.getNextCustomDailyEventIndex(); i++) {
-                custom_daily_events.push(new CustomDailyEventContainer(i));
+            var custom_events = [];
+            for(var i = 0; i < self.getNextCustomEventIndex(); i++) {
+                custom_events.push(new CustomEventContainer(i));
             }
-            custom_daily_events.sort(function(item1, item2) {
+            custom_events.sort(function(item1, item2) {
                 return item1.eventAndContentViewModel.order() - item2.eventAndContentViewModel.order();
             });
-            self.custom_daily_events(custom_daily_events);
+            self.custom_events(custom_events);
         };
     };
 
