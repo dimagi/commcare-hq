@@ -5,7 +5,6 @@ from django.utils.translation import ugettext_lazy
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from corehq.util.soft_assert import soft_assert
-from no_exceptions.exceptions import Http401
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
@@ -14,6 +13,9 @@ organization hierarchy. You do not currently have an assigned location, and
 will be unable to access CommCareHQ until that is corrected. Please contact
 your project administrator to be assigned to a location.
 """)
+
+
+_assert_user_and_domain = soft_assert(notify_admins=True)
 
 
 class LocationAccessMiddleware(MiddlewareMixin):
@@ -33,14 +35,12 @@ class LocationAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
-        if (
-            domain and not user
-            and not is_location_safe(view_fn, request, view_args, view_kwargs)
-        ):
-            # if domain and not user, then self.apply_location_access(request) is going to set
-            # request.can_access_all_locations = True, but that's not a good idea if the view is not location-safe.
-            # Better to throw a 401.
-            raise Http401('Please log in before requesting this URL')
+
+        if domain:
+            # This should eventually be made into a hard requirement, but I'm
+            # not yet sure what that might break
+            _assert_user_and_domain(user, "A request was just made with a domain but no user. "
+                                          "Is this normal?  How can we authenticate it?")
 
         self.apply_location_access(request)
 
