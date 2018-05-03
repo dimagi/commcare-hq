@@ -1,181 +1,4 @@
 hqDefine("reports/js/case_details", function() {
-    var PropertyModel = function(options) {
-        var self = this;
-        self.name = options.name;
-        self.value = ko.observable(options.value || '');
-        self.dirty = ko.observable(false);
-    };
-
-    var EditPropertiesModel = function(options) {
-        var self = this;
-
-        self.propertyNames = ko.observableArray();  // ordered list of names, populated by ajax call because it's slow
-        self.properties = {};                       // map of name => PropertyModel, populated in init
-
-        // If there are a lot of items, make a bigger modal and render properties as columns
-        // Supports a small one-column modal, a larger two-column modal, or a full-screen three-column modal
-        self.itemsPerColumn = 12;
-        self.columnsPerPage = ko.observable(1);
-        self.itemsPerPage = ko.computed(function() {
-            return self.itemsPerColumn * self.columnsPerPage();
-        });
-        self.columnClass = ko.observable('');
-        self.isFullScreenModal = ko.observable(false);
-        self.isLargeModal = ko.observable(false);
-        self.propertyNames.subscribe(function(newValue) {
-            self.columnsPerPage(Math.min(3, Math.ceil(newValue.length / self.itemsPerColumn)));
-            self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
-            self.isLargeModal(self.columnsPerPage() === 2);
-            self.isFullScreenModal(self.columnsPerPage() === 3);
-        });
-
-        // This modal supports pagination and a search box, all of which is done client-side
-        self.currentPage = ko.observable();
-        self.totalPages = ko.observable();  // observable because it will change if there's a search query
-        self.query = ko.observable();
-
-        self.showSpinner = ko.observable(true);
-        self.showPagination = ko.computed(function() {
-            return !self.showSpinner() && self.propertyNames().length > self.itemsPerPage();
-        });
-        self.showError = ko.observable(false);
-        self.showRetry = ko.observable(false);
-        self.disallowSave = ko.computed(function() {
-            return self.showSpinner() || self.showError();
-        });
-
-        self.incrementPage = function(increment) {
-            var newCurrentPage = self.currentPage() + increment;
-            if (newCurrentPage <= 0 || newCurrentPage > self.totalPages()) {
-                return;
-            }
-            self.currentPage(newCurrentPage);
-        };
-
-        self.visibleItems = ko.observableArray([]);     // All items visible on the current page
-        self.visibleColumns = ko.observableArray([]);   // visibleItems broken down into columns for rendering; an array of arrays
-
-        self.showNoData = ko.computed(function() {
-            return !self.showError() && self.visibleItems().length === 0;
-        });
-
-        self.breakWord = function(str) {
-            return str.replace(/([\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
-        };
-
-        // Handle pagination and filtering, filling visibleItems with whatever should be on the current page
-        // Forces a re-render because it clears and re-fills visibleColumns
-        self.render = function() {
-            var added = 0,
-                index = 0;
-
-            // Remove all items
-            self.visibleItems.splice(0);
-
-            // Cycle over all items on previous pages
-            while (added < self.itemsPerPage() * (self.currentPage() - 1) && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
-                    added++;
-                }
-                index++;
-            }
-
-            // Add as many items as fit on a page
-            added = 0;
-            while (added < self.itemsPerPage() && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
-                    var name = self.propertyNames()[index];
-                    if (!self.properties[name]) {
-                        self.properties[name] = new PropertyModel({ name: name });
-                    }
-                    self.visibleItems.push(self.properties[name]);
-                    added++;
-                }
-                index++;
-            }
-
-            // Break visibleItems into separate columns for rendering
-            self.visibleColumns.splice(0);
-            var itemsPerColumn = self.itemsPerPage() / self.columnsPerPage();
-            for (var i = 0; i < self.itemsPerPage(); i += itemsPerColumn) {
-                self.visibleColumns.push(self.visibleItems.slice(i, i + itemsPerColumn));
-            }
-        };
-
-        self.initQuery = function() {
-            self.query("");
-        };
-
-        self.query.subscribe(function() {
-            self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames(), self.matchesQuery).length / self.itemsPerPage()) || 1);
-            self.render();
-        });
-
-        // Track an array of page numbers, e.g., [1, 2, 3], to render the pagination widget.
-        // Having it as an array makes knockout rendering simpler.
-        self.visiblePages = ko.observableArray([]);
-        self.totalPages.subscribe(function(newValue) {
-            self.visiblePages(_.map(_.range(newValue), function(p) { return p + 1; }));
-        });
-
-        self.matchesQuery = function(propertyName) {
-            return !self.query() || propertyName.toLowerCase().indexOf(self.query().toLowerCase()) !== -1;
-        };
-
-        self.currentPage.subscribe(self.render);
-
-        self.submitForm = function(model, e) {
-            var $button = $(e.currentTarget);
-            $button.disableButton();
-            $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("edit_case"),
-                data: _.mapObject(self.properties, function(model) {
-                    return model.value();
-                }),
-                success: function() {
-                    window.location.reload();
-                },
-                error: function() {
-                    $button.enableButton();
-                    self.showRetry(true);
-                },
-            });
-            return true;
-        };
-
-        self.init = function() {
-            self.properties = _.extend({}, _.mapObject(options.properties, function(value, name) {
-                return new PropertyModel({
-                    name: name,
-                    value: value,
-                });
-            }));
-            self.initQuery();
-            self.currentPage(1);
-            self.showError(false);
-            self.showRetry(false);
-            self.render();
-        };
-
-        $.get({
-            url: hqImport("hqwebapp/js/initial_page_data").reverse('case_property_names'),
-            success: function(names) {
-                _.each(names, function(name) {
-                    self.propertyNames.push(name);
-                });
-                self.showSpinner(false);
-                self.init();
-            },
-            error: function() {
-                self.showSpinner(false);
-                self.showError(true);
-            },
-        });
-
-        return self;
-    };
-
     var XFormDataModel = function(data) {
         var self = this;
         self.id = ko.observable(data.id);
@@ -248,7 +71,14 @@ hqDefine("reports/js/case_details", function() {
                 "type": "GET",
                 "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
                 "success": function(data) {
-                    $("#xform_data_panel").html(data);
+                    var $panel = $("#xform_data_panel");
+                    $panel.html(data.html);
+                    hqImport("reports/js/single_form").initSingleForm({
+                        instance_id: data.xform_id,
+                        form_question_map: data.question_response_map,
+                        ordered_question_values: data.ordered_question_values,
+                        container: $panel,
+                    });
                 },
             });
         };
@@ -375,16 +205,12 @@ hqDefine("reports/js/case_details", function() {
             return false;
         });
 
-        var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
-            $editPropertiesModal = $("#edit-dynamic-properties");
-        if ($editPropertiesModal.length) {
-            $("#edit-dynamic-properties-trigger").click(function() {
-                $editPropertiesModal.modal();
-            });
-            $editPropertiesModal.koApplyBindings(new EditPropertiesModel({
-                properties: initial_page_data('dynamic_properties'),
-            }));
-        }
+        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
+        hqImport("reports/js/data_corrections").init($("#case-actions .data-corrections-trigger"), $("body > .data-corrections-modal"), {
+            properties: initialPageData.get('dynamic_properties'),
+            propertyNamesUrl: initialPageData.reverse('case_property_names'),
+            saveUrl: initialPageData.reverse("edit_case"),
+        });
 
         $("#history").koApplyBindings(new XFormListViewModel());
 
