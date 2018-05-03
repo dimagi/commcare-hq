@@ -12,6 +12,7 @@ from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
+from celery import group
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -289,7 +290,8 @@ def mass_email(request):
                     'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
-            send_mass_emails.delay(request.couch_user, recipients, subject, html_template, text_template)
+            task = send_mass_emails.s(request.couch_user, recipients, subject, html_template, text_template)
+            group([task])().get()
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong.')
