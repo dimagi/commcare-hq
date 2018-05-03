@@ -110,6 +110,7 @@ def send_mass_emails(self, couch_user, recipients, subject, html_template, text_
             text_content=message, file_attachments=[attachment]
         )
 
+
 @task(queue="email_queue",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_single_mass_email(self, subject, recipient, html_content,

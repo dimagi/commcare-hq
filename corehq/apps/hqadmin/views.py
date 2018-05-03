@@ -98,7 +98,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
-from corehq.apps.hqadmin.tasks import send_single_mass_email, send_mass_emails
+from corehq.apps.hqadmin.tasks import send_mass_emails
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from . import service_checks, escheck
