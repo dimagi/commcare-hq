@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import io
 import itertools
 import six.moves.html_parser
 import json
@@ -12,6 +13,7 @@ from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
+from celery import group
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -30,10 +32,13 @@ from django.http import (
 )
 from django.http.response import Http404
 from django.shortcuts import render, redirect
+from django.template import Context, Template
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
+from dimagi.utils.csv import UnicodeWriter
+from dimagi.utils.web import get_site_domain
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
@@ -58,6 +63,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
+from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -96,11 +102,13 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from corehq.apps.hqadmin.tasks import send_single_mass_email
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from . import service_checks, escheck
 from .forms import (
-    AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
+    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from .history import get_recent_changes, download_changes
@@ -257,6 +265,94 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
+
+
+@require_superuser_or_developer
+def mass_email(request):
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            body_html = Template(form.cleaned_data['email_body_html'])
+            body_text = Template(form.cleaned_data['email_body_text'])
+            real_email = form.cleaned_data['real_email']
+
+            if real_email:
+                recipients = [{
+                    'username': h['username'],
+                    'first_name': h['first_name'] or 'CommCare User',
+                } for h in UserES().web_users().run().hits]
+            else:
+                recipients = [{
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': 'mcfailure fail face',
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }]
+
+            tasks = []
+            for recipient in recipients:
+                context = recipient
+                context.update({
+                    'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
+                })
+
+                text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
+                    'email_body': body_text.render(Context(context)),
+                })
+                html_content = render_to_string("hqadmin/email/mass_email_base.html", {
+                    'email_body': body_html.render(Context(context)),
+                })
+
+                tasks.append(send_single_mass_email.s(subject, recipient['username'],
+                                html_content, text_content, email_from=settings.DEFAULT_FROM_EMAIL))
+
+            result = group(tasks)().get()
+            successes = [email for (email, error) in result if not error]
+            failures = [(email, error) for (email, error) in result if error]
+
+            if len(failures):
+                subject = "Mass email failures"
+                csv_file = io.BytesIO()
+                writer = UnicodeWriter(csv_file)
+                writer.writerow(['Email', 'Error'])
+                writer.writerows(failures)
+
+                message = (
+                    "Subject: {subject},\n"
+                    "Total successes: {success_count} \n Total errors: {failure_count} \n"
+                    "".format(
+                        subject=subject,
+                        success_count=len(successes),
+                        failure_count=len(failures))
+                )
+
+                attachment = {
+                    'title': "mass_email_failures.csv",
+                    'mimetype': 'text/csv',
+                    'file_obj': csv_file,
+                }
+                send_html_email_async(
+                    subject, request.couch_user.username, message,
+                    text_content=message, file_attachments=[attachment]
+                )
+
+            messages.success(request, '{} email(s) were sent successfully and {} failed.{}'.format(
+                             len(successes), len(failures),
+                             ' You will receive an email summarizing the failures' if len(failures) else ''))
+        else:
+            messages.error(request, 'Something went wrong.')
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
 
 
 @require_superuser_or_developer
