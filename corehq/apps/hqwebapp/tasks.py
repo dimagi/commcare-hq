@@ -61,6 +61,10 @@ def send_html_email_async(self, subject, recipient, html_content,
     - retry a maximum of 10 times
     """
     try:
+        if recipient == 'yep':
+            recipient = 'jschweers@dimagi.com'
+        else:
+            raise Exception("nope no email for you")
         send_HTML_email(subject, recipient, html_content,
                         text_content=text_content, cc=cc, email_from=email_from,
                         file_attachments=file_attachments, bcc=bcc)

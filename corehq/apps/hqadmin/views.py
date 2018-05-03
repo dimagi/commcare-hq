@@ -284,6 +284,7 @@ def mass_email(request):
                     'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
+            recipients = [{'username': x, 'first_name': x} for x in ['yep', 'nope', 'yep', 'nope', 'yep']]
             for recipient in recipients:
                 context = recipient
                 context.update({
