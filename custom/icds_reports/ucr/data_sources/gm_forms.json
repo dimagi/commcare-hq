@@ -552,7 +552,7 @@
     "sql_settings": {
       "partition_config": [
         {
-          "column": "timeend",
+          "column": "last_date_gmp",
           "subtype": "date",
           "constraint": "month"
         }
