@@ -203,10 +203,10 @@ def get_replication_delay_for_standby(db_alias):
 @memoized
 def get_standby_delays_by_db():
     ret = {}
-    for db, config in six.iteritems(settings.DATABASES):
+    for _db, config in six.iteritems(settings.DATABASES):
         delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
         if delay:
-            ret[db] = delay
+            ret[_db] = delay
     return ret
 
 
