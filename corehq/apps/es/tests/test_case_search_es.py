@@ -36,18 +36,23 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                         "path": "case_properties",
                                         "query": {
                                             "filtered": {
-                                                "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "name"
+                                                "query": {
+                                                    "match_all": {
                                                     }
                                                 },
-                                                "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "redbeard",
-                                                            "fuzziness": "0"
+                                                "filter": {
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "redbeard"
+                                                            }
                                                         }
-                                                    }
+                                                    )
                                                 }
                                             }
                                         }
@@ -90,16 +95,21 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                         "query": {
                                             "filtered": {
                                                 "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "name"
-                                                    }
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key": "name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "redbeard"
+                                                            }
+                                                        }
+                                                    )
                                                 },
                                                 "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "redbeard",
-                                                            "fuzziness": "0"
-                                                        }
+                                                    "match_all": {
                                                     }
                                                 }
                                             }
@@ -136,16 +146,21 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                         "query": {
                                             "filtered": {
                                                 "filter": {
-                                                    "term": {
-                                                        "case_properties.key": "parrot_name"
-                                                    }
+                                                    "and": (
+                                                        {
+                                                            "term": {
+                                                                "case_properties.key": "parrot_name"
+                                                            }
+                                                        },
+                                                        {
+                                                            "term": {
+                                                                "case_properties.value.exact": "polly"
+                                                            }
+                                                        }
+                                                    )
                                                 },
                                                 "query": {
-                                                    "match": {
-                                                        "case_properties.value": {
-                                                            "query": "polly",
-                                                            "fuzziness": "0"
-                                                        }
+                                                    "match_all": {
                                                     }
                                                 }
                                             }
