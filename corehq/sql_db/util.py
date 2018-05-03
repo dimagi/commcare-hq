@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import unicode_literals
 import uuid
 from collections import defaultdict
@@ -207,7 +208,7 @@ def filter_out_stale_standbys(dbs, delay_threshold):
     ]
 
 
-@quickcache([], timeout=LOAD_BALANCE_FREQUENCY_SECONDS, skip_arg=lambda *args: settings.UNIT_TESTING)
+@quickcache(['weighted_dbs'], timeout=LOAD_BALANCE_FREQUENCY_SECONDS, skip_arg=lambda *args: settings.UNIT_TESTING)
 def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from 
@@ -223,7 +224,7 @@ def select_db_for_read(weighted_dbs):
 
     """
     # convert to a db to weight dictionary
-    weights_by_db = {db: weight for db, weight in weighted_dbs}
+    weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
     fresh_dbs = filter_out_stale_standbys(
@@ -231,9 +232,9 @@ def select_db_for_read(weighted_dbs):
     )
     dbs = []
     weights = []
-    for db, weight in six.iteritems(weights_by_db):
-        if db in fresh_dbs:
-            dbs.append(db)
+    for _db, weight in six.iteritems(weights_by_db):
+        if _db in fresh_dbs:
+            dbs.append(_db)
             weights.append(weight)
 
     if dbs:
