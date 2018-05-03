@@ -36,6 +36,7 @@ from corehq.util.test_utils import (
 from couchforms.models import XFormInstance
 from corehq.util.test_utils import patch_datadog
 from mock import patch, MagicMock
+from io import open
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):

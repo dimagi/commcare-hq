@@ -27,6 +27,7 @@ from testil import replattr, tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport, ExportConfiguration
+from io import open
 
 NOT_SET = object()
 

@@ -5,10 +5,10 @@ restkit==4.2.2
 iso8601==0.1.11
 jsonobject==0.8.0
 jsonobject-couchdbkit==0.9.0.0
-celery==3.1.18
+celery==3.1.25
 # required by django-digest
 decorator==4.0.11
-django==1.11.12
+django==1.11.13
 django-braces==1.8.1
 django-celery==3.2.1
 django-crispy-forms==1.7.0
@@ -110,3 +110,4 @@ html5lib==1.0b8
 xhtml2pdf==0.0.6
 qrcode==5.3
 django-user-agents==0.3.2
+csv342==1.0.0

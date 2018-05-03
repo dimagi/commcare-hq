@@ -17,6 +17,7 @@ from corehq.apps.userreports.specs import FactoryContext
 from corehq.apps.users.models import CommCareUser
 from couchforms.models import XFormInstance
 import os
+from io import open
 
 
 class ChampTestCase(TestCase):
