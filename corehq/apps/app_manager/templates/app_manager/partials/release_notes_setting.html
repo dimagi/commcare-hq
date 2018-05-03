@@ -1,0 +1,44 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+
+
+<div id="release-notes-setting">
+    <div class="form-group">
+        <label class="control-label col-sm-2">
+        {% trans "Make this 'Update Information' form" %}
+        <span class="hq-help-template"
+              data-title="{% trans "Auto Capture Location" %}"
+              data-content="{% blocktrans %}GET HELP TEXT FROM PRODUCT.{% endblocktrans %}"
+        ></span>
+        </label>
+        <div class="col-sm-8">
+            <input type="checkbox"
+                data-bind="checked: is_release_notes_form, click:$root.toggle_enable,
+                value: is_release_notes_form,
+                enable: is_allowed_to_be_release_notes_form"
+                value="true"
+           />
+           <input type="hidden" name="is_release_notes_form"
+                  data-bind="value: is_release_notes_form"/>
+        </div>
+    </div>
+    <div class="form-group" data-bind="visible: is_release_notes_form">
+        <label class="control-label col-sm-2">
+        {% trans "Enable this" %}
+        <span class="hq-help-template"
+              data-title="{% trans "Enable this" %}"
+              data-content="{% blocktrans %}GET HELP TEXT FROM PRODUCT.{% endblocktrans %}"
+        ></span>
+        </label>
+        <div class="col-sm-8">
+            <input type="checkbox"
+                class="col-sm-8" 
+                data-bind="checked: enable_release_notes,
+                enable: is_allowed_to_be_release_notes_form,
+                value: enable_release_notes",
+                value="true" />
+            <input type="hidden" name="enable_release_notes"
+                   data-bind="value: enable_release_notes"/>
+        </div>
+    </div>
+</div>
