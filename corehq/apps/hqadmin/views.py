@@ -30,12 +30,10 @@ from django.http import (
 )
 from django.http.response import Http404
 from django.shortcuts import render, redirect
-from django.template import Context, Template
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
-from dimagi.utils.web import get_site_domain
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
@@ -99,7 +97,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
-from corehq.apps.hqwebapp.tasks import send_html_email_async
+from corehq.apps.hqadmin.tasks import send_mass_emails
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from . import service_checks, escheck
@@ -269,8 +267,8 @@ def mass_email(request):
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
-            body_html = Template(form.cleaned_data['email_body_html'])
-            body_text = Template(form.cleaned_data['email_body_text'])
+            html = form.cleaned_data['email_body_html']
+            text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
 
             if real_email:
@@ -282,24 +280,16 @@ def mass_email(request):
                 recipients = [{
                     'username': request.couch_user.username,
                     'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': 'mcfailure fail face',
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
-            for recipient in recipients:
-                context = recipient
-                context.update({
-                    'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
-                })
-                text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
-                    'email_body': body_text.render(Context(context)),
-                })
-                html_content = render_to_string("hqadmin/email/mass_email_base.html", {
-                    'email_body': body_html.render(Context(context)),
-                })
-
-                send_html_email_async.delay(subject, recipient['username'], html_content, text_content,
-                                email_from=settings.DEFAULT_FROM_EMAIL)
-
-            messages.success(request, 'Your {} email(s) were sent successfully.'.format(len(recipients)))
+            send_mass_emails.delay(request.couch_user.username, recipients, subject, html, text)
+            messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong.')
     else:
