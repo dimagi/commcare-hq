@@ -57,4 +57,4 @@ def set_couch_sql_migration_complete(domain):
 
 
 def total_couch_domains_remaining():
-    return DomainES().AND(filters.term('use_sql_backend', False)).count()
+    return DomainES().filter(filters.term('use_sql_backend', False)).count()
