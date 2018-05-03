@@ -11,7 +11,7 @@ from celery.task.base import periodic_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
-from django.template import Context
+from django.template import Context, Template
 from django.template.loader import render_to_string
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
@@ -62,7 +62,7 @@ def check_non_dimagi_superusers():
 
 
 @task(queue="email_queue", bind=True, acks_late=True)
-def send_mass_emails(self, couch_user, recipients, subject, html_template, text_template):
+def send_mass_emails(self, couch_user, recipients, subject, html, text):
     tasks = []
     for recipient in recipients:
         context = recipient
@@ -70,6 +70,8 @@ def send_mass_emails(self, couch_user, recipients, subject, html_template, text_
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
         })
 
+        html_template = Template(html)
+        text_template = Template(text)
         text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
             'email_body': text_template.render(Context(context)),
         })

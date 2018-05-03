@@ -31,7 +31,6 @@ from django.http import (
 )
 from django.http.response import Http404
 from django.shortcuts import render, redirect
-from django.template import Template
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
@@ -269,8 +268,8 @@ def mass_email(request):
         form = EmailForm(request.POST)
         if form.is_valid():
             subject = form.cleaned_data['email_subject']
-            html_template = Template(form.cleaned_data['email_body_html'])
-            text_template = Template(form.cleaned_data['email_body_text'])
+            html = form.cleaned_data['email_body_html']
+            text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
 
             if real_email:
@@ -290,7 +289,7 @@ def mass_email(request):
                     'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
-            task = send_mass_emails.s(request.couch_user, recipients, subject, html_template, text_template)
+            task = send_mass_emails.s(request.couch_user, recipients, subject, html, text)
             group([task])().get()
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
