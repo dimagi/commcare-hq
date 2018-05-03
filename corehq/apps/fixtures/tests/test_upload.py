@@ -48,6 +48,10 @@ validation_test_cases = [
         "Excel-sheet 'things' does not contain the column 'field: name' "
         "as specified in its 'types' definition",
     ]),
+    ('has_no_field_column_extra_rows', [
+        "Excel-sheet 'things' does not contain the column 'field: name' "
+        "as specified in its 'types' definition",
+    ]),
     ('has_extra_column', [
         "Excel-sheet 'things' has an extra column"
         "'field: fun_fact' that's not defined in its 'types' definition",
