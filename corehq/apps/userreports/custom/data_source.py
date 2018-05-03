@@ -31,6 +31,9 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
         ret = self._provider.get_data(self, start, limit)
+
+        # A way to bypass these transforms should be implemented.
+        # We can format data more efficiently in custom code if necessary
         formatter = DataFormatter(DictDataFormat(self.columns, no_value=None))
         formatted_data = list(formatter.format(ret, group_by=self.group_by).values())
 
