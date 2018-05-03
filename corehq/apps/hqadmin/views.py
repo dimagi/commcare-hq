@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
+import io
 import itertools
 import six.moves.html_parser
 import json
@@ -12,6 +13,7 @@ from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
+from celery import group
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -35,6 +37,7 @@ from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext as _, ugettext_lazy
+from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.web import get_site_domain
 from django.views.decorators.http import require_POST
 from django.views.generic import FormView, TemplateView, View
@@ -99,6 +102,7 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from corehq.apps.hqadmin.tasks import send_single_mass_email
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
@@ -282,14 +286,21 @@ def mass_email(request):
                 recipients = [{
                     'username': request.couch_user.username,
                     'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': 'mcfailure fail face',
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
-            recipients = [{'username': x, 'first_name': x} for x in ['yep', 'nope', 'yep', 'nope', 'yep']]
+            tasks = []
             for recipient in recipients:
                 context = recipient
                 context.update({
                     'url_prefix': '' if settings.STATIC_CDN else 'http://' + get_site_domain(),
                 })
+
                 text_content = render_to_string("hqadmin/email/mass_email_base.txt", {
                     'email_body': body_text.render(Context(context)),
                 })
@@ -297,10 +308,41 @@ def mass_email(request):
                     'email_body': body_html.render(Context(context)),
                 })
 
-                send_html_email_async.delay(subject, recipient['username'], html_content, text_content,
-                                email_from=settings.DEFAULT_FROM_EMAIL)
+                tasks.append(send_single_mass_email.s(subject, recipient['username'],
+                                html_content, text_content, email_from=settings.DEFAULT_FROM_EMAIL))
 
-            messages.success(request, 'Your {} email(s) were sent successfully.'.format(len(recipients)))
+            result = group(tasks)().get()
+            successes = [email for (email, error) in result if not error]
+            failures = [(email, error) for (email, error) in result if error]
+
+            if len(failures):
+                subject = "Mass email failures"
+                csv_file = io.BytesIO()
+                writer = UnicodeWriter(csv_file)
+                writer.writerow(['Email', 'Error'])
+                writer.writerows(failures)
+
+                message = (
+                    "Subject: {subject},\n"
+                    "Total successes: {success_count} \n Total errors: {failure_count} \n"
+                    "".format(
+                        subject=subject,
+                        success_count=len(successes),
+                        failure_count=len(failures))
+                )
+
+                attachment = {
+                    'title': "mass_email_failures.csv",
+                    'mimetype': 'text/csv',
+                    'file_obj': csv_file,
+                }
+                send_html_email_async(
+                    subject, request.couch_user.username, message, text_content=message, file_attachments=[attachment]
+                )
+
+            messages.success(request, '{} email(s) were sent successfully and {} failed.{}'.format(
+                             len(successes), len(failures),
+                             ' You will receive an email summarizing the failures' if len(failures) else ''))
         else:
             messages.error(request, 'Something went wrong.')
     else:

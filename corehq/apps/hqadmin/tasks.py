@@ -3,13 +3,16 @@ from __future__ import unicode_literals
 from datetime import date, timedelta
 
 from celery.schedules import crontab
+from celery.task import task
 from celery.task.base import periodic_task
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.util.soft_assert import soft_assert
 from dimagi.utils.logging import notify_error
+from dimagi.utils.django.email import send_HTML_email
 from pillowtop.utils import get_couch_pillow_instances
 from .utils import check_for_rewind
 
@@ -48,3 +51,25 @@ def check_non_dimagi_superusers():
     if non_dimagis_superuser:
         _soft_assert_superusers(
             False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
+
+
+@task(queue="email_queue",
+      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def send_single_mass_email(self, subject, recipient, html_content,
+                          text_content=None, cc=None,
+                          email_from=settings.DEFAULT_FROM_EMAIL,
+                          file_attachments=None, bcc=None):
+    '''
+    Returns tuple of (email, Exception) where Exception is None if the mail succeeded
+    Skips send_html_email_async's retry logic in favor of notifying on all failures.
+    '''
+    try:
+        import re
+        if not re.search(r'@', recipient):
+            raise Exception("nope no email")
+        send_HTML_email(subject, recipient, html_content,
+                        text_content=text_content, cc=cc, email_from=email_from,
+                        file_attachments=file_attachments, bcc=bcc)
+        return (recipient, None)
+    except Exception as e:
+        return (recipient, e)
