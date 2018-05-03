@@ -274,7 +274,7 @@ def flatten_result(hit):
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')
-        if key and value:
+        if key is not None and not key.startswith("@") and value:
             result[key] = value
     return result
 
