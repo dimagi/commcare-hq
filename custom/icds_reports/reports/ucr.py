@@ -52,5 +52,3 @@ class MPR2APersonCases(object):
 
     def get_total_records(self, report_data_source):
         return self._get_query_object(report_data_source).count()
-
-mpr_2a_person_cases = MPR2APersonCases

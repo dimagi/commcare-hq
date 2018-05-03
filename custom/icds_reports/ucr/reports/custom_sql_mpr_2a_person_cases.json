@@ -13,7 +13,7 @@
     "title": "MPR - 2a - Person cases (Custom SQL) (Static)",
     "description": "",
     "visible": false,
-    "custom_query_provider": "custom.icds_reports.reports.ucr.mpr_2a_person_cases",
+    "custom_query_provider": "custom.icds_reports.reports.ucr.MPR2APersonCases",
     "aggregation_columns": [
       "owner_id"
     ],
