@@ -1,11 +1,25 @@
+{% load compress %}
 {% load hq_shared_tags %}
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>CommCareHQ Test</title>
+
+    {% include 'hqwebapp/includes/less.html' with debug=False %}
+
     <!-- Mocha and test-only dependencies -->
     <link href="{% static 'mocha/mocha.css' %}" type="text/css" rel="stylesheet"></link>
+
+    <style type="text/css">
+        /* Override bootstrap's .progress styles for the Mocha progress widget. */
+        #mocha-stats .progress {
+            height: auto;
+            background-color: transparent;
+            box-shadow: none;
+        }
+    </style>
+
     <script src="{% static 'mocha/mocha.js' %}"></script>
     <script src="{% static 'chai/chai.js' %}"></script>
     <script src="{% static 'sinon/index.js' %}"></script>
@@ -40,7 +54,7 @@
       <div id="mocha-fixtures" style="display:none">
       {% block fixtures %}{% endblock %}
       </div>
-
+      <div id="mocha-sandbox"></div>
       {% block mocha_tests %}{% endblock %}
       <script charset="utf-8">
   	      // Only tests run in real browser, injected script run if options.run == true
