@@ -156,7 +156,7 @@ def case_property_filter(key, value):
     return filters.nested(
         CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key".format(CASE_PROPERTIES_PATH), key),
+            filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), key),
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
         )
     )
@@ -174,7 +174,7 @@ def exact_case_property_text_query(key, value):
         queries.filtered(
             queries.match_all(),
             filters.AND(
-                filters.term('{}.key'.format(CASE_PROPERTIES_PATH), key),
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), key),
                 filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
             )
         )
@@ -252,7 +252,7 @@ def _base_property_query(key, query):
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key'.format(CASE_PROPERTIES_PATH), key),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), key),
         )
     )
 

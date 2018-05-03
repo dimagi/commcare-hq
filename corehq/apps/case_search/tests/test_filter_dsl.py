@@ -31,7 +31,7 @@ class TestFilterDsl(SimpleTestCase):
                             "and": (
                                 {
                                     "term": {
-                                        "case_properties.key": "name"
+                                        "case_properties.key.exact": "name"
                                     }
                                 },
                                 {
@@ -57,7 +57,7 @@ class TestFilterDsl(SimpleTestCase):
                     "filtered": {
                         "filter": {
                             "term": {
-                                "case_properties.key": "dob"
+                                "case_properties.key.exact": "dob"
                             }
                         },
                         "query": {
@@ -82,7 +82,7 @@ class TestFilterDsl(SimpleTestCase):
                     "filtered": {
                         "filter": {
                             "term": {
-                                "case_properties.key": "number"
+                                "case_properties.key.exact": "number"
                             }
                         },
                         "query": {
@@ -117,7 +117,7 @@ class TestFilterDsl(SimpleTestCase):
                                             "and": (
                                                 {
                                                     "term": {
-                                                        "case_properties.key": "name"
+                                                        "case_properties.key.exact": "name"
                                                     }
                                                 },
                                                 {
@@ -144,7 +144,7 @@ class TestFilterDsl(SimpleTestCase):
                                             "and": (
                                                 {
                                                     "term": {
-                                                        "case_properties.key": "name"
+                                                        "case_properties.key.exact": "name"
                                                     }
                                                 },
                                                 {
@@ -167,7 +167,7 @@ class TestFilterDsl(SimpleTestCase):
                             "filtered": {
                                 "filter": {
                                     "term": {
-                                        "case_properties.key": "dob"
+                                        "case_properties.key.exact": "dob"
                                     }
                                 },
                                 "query": {

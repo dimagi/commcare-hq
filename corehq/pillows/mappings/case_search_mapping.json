@@ -17,7 +17,12 @@
             "properties": {
                 "key": {
                     "type": "string",
-                    "index" : "not_analyzed"
+                    "fields": {
+                        "exact": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    }
                 },
                 "value": {
                     "type": "string",
@@ -41,7 +46,8 @@
             "type": "boolean"
         },
         "closed_by": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "closed_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -60,21 +66,9 @@
             },
             "type": "multi_field"
         },
-        "export_tag": {
-            "type": "string"
-        },
         "external_id": {
-            "fields": {
-                "exact": {
-                    "index": "not_analyzed",
-                    "type": "string"
-                },
-                "external_id": {
-                    "index": "analyzed",
-                    "type": "string"
-                }
-            },
-            "type": "multi_field"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "indices": {
             "type": "nested",
@@ -85,21 +79,26 @@
                     "type": "string"
                 },
                 "identifier": {
+                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_id": {
+                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_type": {
+                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "relationship": {
+                    "index": "not_analyzed",
                     "type": "string"
                 }
             }
         },
         "location_id": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "modified_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -119,18 +118,16 @@
             "type": "multi_field"
         },
         "opened_by": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "opened_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
         "owner_id": {
-            "type": "string"
-        },
-        "referrals": {
-            "enabled": false,
-            "type": "object"
+            "type": "string",
+            "index": "not_analyzed"
         },
         "server_modified_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -150,10 +147,8 @@
             "type": "multi_field"
         },
         "user_id": {
-            "type": "string"
-        },
-        "version": {
-            "type": "string"
+            "type": "string",
+            "index": "not_analyzed"
         }
     }
 }

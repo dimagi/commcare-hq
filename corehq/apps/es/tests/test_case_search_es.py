@@ -44,7 +44,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                     "and": (
                                                         {
                                                             "term": {
-                                                                "case_properties.key": "name"
+                                                                "case_properties.key.exact": "name"
                                                             }
                                                         },
                                                         {
@@ -98,7 +98,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                     "and": (
                                                         {
                                                             "term": {
-                                                                "case_properties.key": "name"
+                                                                "case_properties.key.exact": "name"
                                                             }
                                                         },
                                                         {
@@ -125,7 +125,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                             "filtered": {
                                                 "filter": {
                                                     "term": {
-                                                        "case_properties.key": "parrot_name"
+                                                        "case_properties.key.exact": "parrot_name"
                                                     }
                                                 },
                                                 "query": {
@@ -149,7 +149,7 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                                     "and": (
                                                         {
                                                             "term": {
-                                                                "case_properties.key": "parrot_name"
+                                                                "case_properties.key.exact": "parrot_name"
                                                             }
                                                         },
                                                         {
