@@ -21,6 +21,10 @@ class MPR2APersonCases(object):
 
     def _column_helper(self, x, y, z=None):
         columns = self.table.c
+        # These first two filters could be added to the where clause, but we
+        # also want to show owner_ids without any dead/closed cases
+        # Could likely be made more efficient with a subquery
+        # Note that for mobile reports date_death is always included in the filter anyways
         column = (columns.closed_on != None) & (columns.date_death != None)
         column &= {
             "F": columns.sex == "F",
