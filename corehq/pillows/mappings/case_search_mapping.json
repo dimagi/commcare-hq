@@ -16,10 +16,17 @@
             "dynamic": false,
             "properties": {
                 "key": {
-                    "type": "string"
+                    "type": "string",
+                    "index" : "not_analyzed"
                 },
                 "value": {
-                    "type": "string"
+                    "type": "string",
+                    "fields": {
+                        "exact": {
+                            "index": "not_analyzed",
+                            "type": "string"
+                        }
+                    }
                 },
                 "value_numeric": {
                     "type": "double"
