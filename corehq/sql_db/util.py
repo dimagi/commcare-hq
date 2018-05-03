@@ -200,11 +200,24 @@ def get_replication_delay_for_standby(db_alias):
         return delay
 
 
-def filter_out_stale_standbys(dbs, delay_threshold):
+@memoized
+def get_standby_delays_by_db():
+    ret = {}
+    for db, config in six.iteritems(settings.DATABASES):
+        delay = config.get('HQ_ACCEPTABLE_STANDBY_DELAY')
+        if delay:
+            ret[db] = delay
+    return ret
+
+
+def filter_out_stale_standbys(dbs):
+    # from given list of databases filters out those with more than
+    #   acceptable standby delay, if that database is a standby
+    delays_by_db = get_standby_delays_by_db()
     return [
         db
         for db in dbs
-        if get_replication_delay_for_standby(db) <= delay_threshold
+        if get_replication_delay_for_standby(db) <= delays_by_db.get(db, ACCEPTABLE_STANDBY_DELAY_SECONDS)
     ]
 
 
@@ -227,9 +240,7 @@ def select_db_for_read(weighted_dbs):
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(
-        weights_by_db.keys(), ACCEPTABLE_STANDBY_DELAY_SECONDS
-    )
+    fresh_dbs = filter_out_stale_standbys(weights_by_db.keys())
     dbs = []
     weights = []
     for _db, weight in six.iteritems(weights_by_db):

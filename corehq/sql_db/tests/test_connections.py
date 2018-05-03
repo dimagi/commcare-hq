@@ -9,6 +9,7 @@ from django.test import override_settings
 from django.test.testcases import SimpleTestCase
 
 from corehq.sql_db.connections import ConnectionManager
+from corehq.sql_db.util import filter_out_stale_standbys
 from six.moves import range
 
 
@@ -20,6 +21,7 @@ def _get_db_config(db_name):
         'PASSWORD': '',
         'HOST': 'localhost',
         'PORT': '5432',
+        'HQ_ACCEPTABLE_STANDBY_DELAY': 3
     }
 
 
@@ -140,3 +142,10 @@ class ConnectionManagerTests(SimpleTestCase):
             manager.get_load_balanced_read_db_alais('users', default='default_option'),
             'default_option'
         )
+
+    def test_filter_out_stale_standbys(self, *args):
+        with mock.patch('corehq.sql_db.util.get_replication_delay_for_standby', lambda x: {'ucr': 2, 'default': 4}.get(x, 0)):
+            self.assertEqual(
+                filter_out_stale_standbys(['ucr', 'default']),
+                ['ucr']
+            )
