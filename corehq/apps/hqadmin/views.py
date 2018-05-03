@@ -12,6 +12,7 @@ from collections import defaultdict, namedtuple, OrderedDict, Counter
 from datetime import timedelta, date, datetime
 
 import dateutil
+from celery import group
 from couchdbkit import ResourceNotFound
 from django.conf import settings
 from django.contrib import messages
@@ -58,6 +59,7 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
+from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -96,11 +98,12 @@ from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.django.management import export_as_csv_action
 from dimagi.utils.parsing import json_format_date
 from dimagi.utils.web import json_response
+from corehq.apps.hqadmin.tasks import send_mass_emails
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
 from . import service_checks, escheck
 from .forms import (
-    AuthenticateAsForm, BrokenBuildsForm, SuperuserManagementForm,
+    AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
 from .history import get_recent_changes, download_changes
@@ -257,6 +260,47 @@ class RecentCouchChangesView(BaseAdminSectionView):
             'domain_data': {'key': 'domains', 'values': _to_chart_data(domain_counts)},
             'doc_type_data': {'key': 'doc types', 'values': _to_chart_data(doc_type_counts)},
         }
+
+
+@require_superuser_or_developer
+def mass_email(request):
+    if request.method == "POST":
+        form = EmailForm(request.POST)
+        if form.is_valid():
+            subject = form.cleaned_data['email_subject']
+            html = form.cleaned_data['email_body_html']
+            text = form.cleaned_data['email_body_text']
+            real_email = form.cleaned_data['real_email']
+
+            if real_email:
+                recipients = [{
+                    'username': h['username'],
+                    'first_name': h['first_name'] or 'CommCare User',
+                } for h in UserES().web_users().run().hits]
+            else:
+                recipients = [{
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': 'mcfailure fail face',
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
+                }]
+
+            task = send_mass_emails.s(request.couch_user, recipients, subject, html, text)
+            group([task])().get()
+            messages.success(request, 'Task started. You will receive an email summarizing the results.')
+        else:
+            messages.error(request, 'Something went wrong.')
+    else:
+        form = EmailForm()
+
+    context = get_hqadmin_base_context(request)
+    context['hide_filters'] = True
+    context['form'] = form
+    return render(request, "hqadmin/mass_email.html", context)
 
 
 @require_superuser_or_developer
