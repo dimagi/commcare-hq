@@ -56,6 +56,7 @@ def get_per_domain_context(project, request=None):
     return {
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
+        'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
     }
 
 
