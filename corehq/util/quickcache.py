@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import warnings
 import hashlib
 from quickcache.django_quickcache import get_django_quickcache
+from quickcache import ForceSkipCache
 from celery._state import get_current_task
 from corehq.util.global_request import get_request
 
@@ -19,11 +20,12 @@ def get_session_key():
     """
     returns a 7 character string that varies with the current "session" (task or request)
     """
+    session_id = None
     current_task = get_current_task()
     if current_task:
         # at least in tests, current_task may have the same id between different tasks!
         session_id = current_task.request.id
-    else:
+    if not session_id:
         request = get_request()
         if request:
             session_id = str(id(get_request()))
@@ -34,8 +36,10 @@ def get_session_key():
         # hash it so that similar numbers end up very different (esp. because we're truncating)
         return hashlib.md5(session_id).hexdigest()[:7]
     else:
-        # arbitrary 7-letter that is clearly not from a session
-        return 'xxxxxxx'
+        # quickcache catches this and skips the cache
+        # this happens during tests (outside a fake task/request context)
+        # and during management commands
+        raise ForceSkipCache("Not part of a session")
 
 
 quickcache = get_django_quickcache(timeout=5 * 60, memoize_timeout=10,
