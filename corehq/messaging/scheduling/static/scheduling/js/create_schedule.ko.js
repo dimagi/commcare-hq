@@ -86,8 +86,25 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.day = ko.observable(initial_values.day || '1');
         self.time = ko.observable(initial_values.time || '0:00');
         self.case_property_name = ko.observable(initial_values.case_property_name);
+        self.minutes_to_wait = ko.observable(initial_values.minutes_to_wait || '0');
         self.deleted = ko.observable(initial_values.DELETE);
         self.order = ko.observable(initial_values.ORDER);
+
+        self.waitTimeDisplay = ko.computed(function() {
+            var minutes_to_wait = parseInt(self.minutes_to_wait());
+            if(minutes_to_wait >= 0) {
+                var hours = Math.floor(minutes_to_wait / 60);
+                var minutes = minutes_to_wait % 60;
+                var hours_text = hours + ' ' + gettext('hour(s)');
+                var minutes_text = minutes + ' ' + gettext('minute(s)');
+                if(hours > 0) {
+                    return hours_text + ', ' + minutes_text;
+                } else {
+                    return minutes_text;
+                }
+            }
+            return '';
+        });
     };
 
     EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
@@ -213,19 +230,11 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.send_frequency.subscribe(self.setRepeatOptionText);
 
         self.usesCustomEventDefinitions = ko.computed(function() {
-            return self.send_frequency() === 'custom_daily';
+            return self.send_frequency() === 'custom_daily' || self.send_frequency() === 'custom_immediate';
         });
 
         self.showSharedTimeInput = ko.computed(function() {
-            return (
-                self.send_frequency() === 'daily' ||
-                self.send_frequency() === 'weekly' ||
-                self.send_frequency() === 'monthly'
-            );
-        });
-
-        self.showStartDateInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+            return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly']) !== -1;
         });
 
         self.showWeekdaysInput = ko.computed(function() {
@@ -236,12 +245,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             return self.send_frequency() === 'monthly';
         });
 
-        self.showStopInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
-        });
-
-        self.showRepeatInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+        self.usesTimedSchedule = ko.computed(function() {
+            return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly', 'custom_daily']) !== -1;
         });
 
         self.calculateDailyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
