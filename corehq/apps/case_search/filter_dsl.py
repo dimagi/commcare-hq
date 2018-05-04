@@ -46,7 +46,7 @@ def build_filter_from_ast(domain, node):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
     """
 
-    OP_MAPPING = {
+    OPERATOR_MAPPING = {
         'and': filters.AND,
         'not': filters.NOT,
         'or': filters.OR,
@@ -138,9 +138,9 @@ def build_filter_from_ast(domain, node):
         if node.op in list(COMPARISON_MAPPING.keys()):
             return case_property_range_query(serialize(node.left), **{COMPARISON_MAPPING[node.op]: node.right})
 
-        if node.op in list(OP_MAPPING.keys()):
+        if node.op in list(OPERATOR_MAPPING.keys()):
             # This is another branch in the tree
-            return OP_MAPPING[node.op](visit(node.left), visit(node.right))
+            return OPERATOR_MAPPING[node.op](visit(node.left), visit(node.right))
 
         raise CaseFilterError(
             _("We don't know what to do with operator '{}'. Please try reformatting your query.".format(node.op)),
