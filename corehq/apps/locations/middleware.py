@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
+from corehq.apps.domain.auth import determine_authtype_from_header
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 from corehq.util.soft_assert import soft_assert
@@ -36,7 +37,10 @@ class LocationAccessMiddleware(MiddlewareMixin):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
 
-        if domain:
+        # Initial digest requests will not have any auth information
+        # this will be handled elsewhere - we can safely ignore
+        has_auth = determine_authtype_from_header(request, default='NONE') != 'NONE'
+        if domain and has_auth:
             # This should eventually be made into a hard requirement, but I'm
             # not yet sure what that might break
             _assert_user_and_domain(user, "A request was just made with a domain but no user. "
