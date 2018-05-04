@@ -60,6 +60,7 @@ branches:
   - jls/add-js-to-sentry # Jenny April 26
   - jls/bring-back-mass-emails # Jenny April 27
   - jr/parallelize-state-independent-parts # jordan May 3
+  - nh/motech/uncouple # Norman: May the fourth
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
