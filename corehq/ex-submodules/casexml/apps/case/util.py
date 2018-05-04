@@ -189,7 +189,7 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     for (modified_on, action, case_transaction) in actions:
         if action:
             property_changed = action.dynamic_properties.get(case_property_name)
-            if include_create_fields:
+            if include_create_fields and not property_changed:
                 property_changed = getattr(action, case_property_name, None)
 
             if property_changed:
