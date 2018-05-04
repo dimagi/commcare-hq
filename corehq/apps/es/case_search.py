@@ -53,9 +53,9 @@ class CaseSearchES(CaseES):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
+    def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
-        Search for all cases where case property `key` has text value `value`
+        Search for all cases where case property with name `case_property_name`` has text value `value`
 
         Usage: (CaseSearchES()
                 .domain('swashbucklers')
@@ -71,33 +71,40 @@ class CaseSearchES(CaseES):
             positive_clause = clause != queries.MUST_NOT
             return (
                 # fuzzy match
-                self._add_query(case_property_text_query(key, value, fuzziness='AUTO'), clause)
+                self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
                 # exact match. added to improve the score of exact matches
-                ._add_query(exact_case_property_text_query(key, value),
+                ._add_query(exact_case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
-            return self._add_query(exact_case_property_text_query(key, value), clause)
+            return self._add_query(exact_case_property_text_query(case_property_name, value), clause)
 
-    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
+    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
-        Search for all cases where case property `key` matches the regular expression in `regex`
+        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
         """
         return self._add_query(
-            _base_property_query(key, queries.regexp("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)),
+            _base_property_query(case_property_name, queries.regexp(
+                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)
+            ),
             clause,
         )
 
-    def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+    def numeric_range_case_property_query(self, case_property_name, gt=None,
+                                          gte=None, lt=None, lte=None, clause=queries.MUST):
         """
-        Search for all cases where case property `key` fulfills the range criteria.
+        Search for all cases where case property `case_property_name` fulfills the range criteria.
         """
-        return self._add_query(case_property_range_query(key, gt, gte, lt, lte), clause)
+        return self._add_query(
+            case_property_range_query(case_property_name, gt, gte, lt, lte),
+            clause
+        )
 
-    def date_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+    def date_range_case_property_query(self, case_property_name, gt=None,
+                                       gte=None, lt=None, lte=None, clause=queries.MUST):
         """
-        Search for all cases where case property `key` fulfills the date range criteria.
+        Search for all cases where case property `case_property_name` fulfills the date range criteria.
         """
-        return self._add_query(case_property_range_query(key, gt, gte, lt, lte), clause)
+        return self._add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
 
     def xpath_query(self, domain, xpath):
         """Search for cases using an XPath predicate expression.
@@ -151,18 +158,18 @@ class CaseSearchES(CaseES):
         )
 
 
-def case_property_filter(key, value):
+def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
     return filters.nested(
         CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), key),
+            filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name),
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
         )
     )
 
 
-def exact_case_property_text_query(key, value):
+def exact_case_property_text_query(case_property_name, value):
     """Filter by case property.
 
     This performs an exact match on the value in the case property, including
@@ -174,14 +181,14 @@ def exact_case_property_text_query(key, value):
         queries.filtered(
             queries.match_all(),
             filters.AND(
-                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), key),
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
                 filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
             )
         )
     )
 
 
-def case_property_text_query(key, value, fuzziness='0'):
+def case_property_text_query(case_property_name, value, fuzziness='0'):
     """Filter by case_properties.key and do a text search in case_properties.value
 
     This does not do exact matches on the case property value. If the value has
@@ -190,12 +197,12 @@ def case_property_text_query(key, value, fuzziness='0'):
 
     """
     return _base_property_query(
-        key,
+        case_property_name,
         queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
     )
 
 
-def case_property_range_query(key, gt=None, gte=None, lt=None, lte=None):
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
     """Returns cases where case property `key` fall into the range provided.
 
     """
@@ -205,7 +212,7 @@ def case_property_range_query(key, gt=None, gte=None, lt=None, lte=None):
         # numeric range
         kwargs = {key: float(value) for key, value in six.iteritems(kwargs) if value is not None}
         return _base_property_query(
-            key,
+            case_property_name,
             queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), **kwargs)
         )
     except ValueError:
@@ -215,7 +222,7 @@ def case_property_range_query(key, gt=None, gte=None, lt=None, lte=None):
     # date range
     kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
     return _base_property_query(
-        key,
+        case_property_name,
         queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), **kwargs)
     )
 
@@ -247,12 +254,12 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
-def _base_property_query(key, query):
+def _base_property_query(case_property_name, query):
     return queries.nested(
         CASE_PROPERTIES_PATH,
         queries.filtered(
             query,
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), key),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
         )
     )
 
