@@ -20,6 +20,9 @@
 {% endblock %}
 {% block reportcontent %}
     <br><br>
+    {% if form.errors %}
+        <div class="alert alert-danger">{{ form.errors }}</div>
+    {% endif %}
     <div class="alert alert-warning">
         <p>
             This is the email mailing list tool. Please exercise caution
