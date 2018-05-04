@@ -280,6 +280,12 @@ def mass_email(request):
                 recipients = [{
                     'username': request.couch_user.username,
                     'first_name': request.couch_user.first_name or 'CommCare User',
+                }, {
+                    'username': 'failure mcfailface',
+                    'first_name': 'failure',
+                }, {
+                    'username': request.couch_user.username,
+                    'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
             send_mass_emails.delay(request.couch_user.username, recipients, subject, html, text)
