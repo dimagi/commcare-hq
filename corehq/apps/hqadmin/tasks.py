@@ -86,7 +86,6 @@ def send_mass_emails(self, username, recipients, subject, html, text):
         except Exception as e:
             failures.append((recipient['username'], e))
 
-    subject = "Mass email summary"
     message = (
         "Subject: {subject},\n"
         "Total successes: {success_count} \n Total errors: {failure_count} \n"
@@ -97,7 +96,7 @@ def send_mass_emails(self, username, recipients, subject, html, text):
     )
 
     send_html_email_async(
-        subject, username, message,
+        "Mass email summary", username, message,
         text_content=message, file_attachments=[
             _mass_email_attachment('successes', ['Email'], successes),
             _mass_email_attachment('failures', ['Email', 'Error'], failures)]
