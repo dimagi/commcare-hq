@@ -5,7 +5,6 @@ from datetime import date, timedelta
 import io
 
 from celery.schedules import crontab
-from celery import group
 from celery.task import task
 from celery.task.base import periodic_task
 from django.conf import settings
