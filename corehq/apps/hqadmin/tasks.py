@@ -13,6 +13,7 @@ from django.db.models import Q
 from django.template import Context, Template
 from django.template.loader import render_to_string
 
+from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.soft_assert import soft_assert
@@ -60,8 +61,19 @@ def check_non_dimagi_superusers():
             False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))
 
 
-@task(queue="email_queue", bind=True, acks_late=True)
-def send_mass_emails(self, username, recipients, subject, html, text):
+@task(queue="email_queue")
+def send_mass_emails(username, real_email, subject, html, text):
+    if real_email:
+        recipients = [{
+            'username': h['username'],
+            'first_name': h['first_name'] or 'CommCare User',
+        } for h in UserES().web_users().run().hits]
+    else:
+        recipients = [{
+            'username': username,
+            'first_name': 'CommCare User',
+        }]
+
     successes = []
     failures = []
     for recipient in recipients:

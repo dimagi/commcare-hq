@@ -58,7 +58,6 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import filters
 from corehq.apps.es.domains import DomainES
-from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.reporting.exceptions import HistoTypeNotFoundException
 from corehq.apps.hqadmin.service_checks import run_checks
 from corehq.apps.hqwebapp.views import BaseSectionPageView
@@ -270,19 +269,7 @@ def mass_email(request):
             html = form.cleaned_data['email_body_html']
             text = form.cleaned_data['email_body_text']
             real_email = form.cleaned_data['real_email']
-
-            if real_email:
-                recipients = [{
-                    'username': h['username'],
-                    'first_name': h['first_name'] or 'CommCare User',
-                } for h in UserES().web_users().run().hits]
-            else:
-                recipients = [{
-                    'username': request.couch_user.username,
-                    'first_name': request.couch_user.first_name or 'CommCare User',
-                }]
-
-            send_mass_emails.delay(request.couch_user.username, recipients, subject, html, text)
+            send_mass_emails.delay(request.couch_user.username, real_email, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong, see below.')
