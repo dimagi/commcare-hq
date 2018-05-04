@@ -1,15 +1,11 @@
 {
   "domains": [
     "icds-dashboard-qa",
-    "icds-sql",
-    "icds-test",
-    "icds-cas",
-    "icds-cas-sandbox"
+    "icds-cas"
   ],
   "server_environment": [
     "softlayer",
-    "icds-new",
-    "icds"
+    "icds-new"
   ],
   "config": {
     "table_id": "static-infrastructure_form",
