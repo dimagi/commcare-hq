@@ -75,15 +75,6 @@
                         <div class="col-sm-offset-3 col-sm-9">
                             <div class="checkbox">
                                 <label>
-                                    <input type="checkbox"
-                                           data-bind="checked: agreedToPrivacyPolicy, disable: isProcessing" />
-                                    {% blocktrans %}
-                                        I agree to Dimagi's <a href="http://www.dimagi.com/policy" target="_blank">Privacy Policy</a>.
-                                    {% endblocktrans %}
-                                </label>
-                            </div>
-                            <div class="checkbox">
-                                <label>
                                     <input type="checkbox" name="autopay" data-bind="checked: isAutopay, disable: isProcessing"/>
                                     {% trans 'Use this card to autopay' %}
                                 </label>
@@ -104,7 +95,7 @@
                     </button>
                     <button type="button" class="btn btn-success"
                             data-bind="click: saveCard,
-                                       enable: agreedToPrivacyPolicy() && !isProcessing()">
+                                       enable: !isProcessing()">
                         {% trans 'Save' %}
                     </button>
                 </div>
