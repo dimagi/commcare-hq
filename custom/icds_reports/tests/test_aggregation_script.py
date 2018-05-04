@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from datetime import date, time
 from decimal import Decimal
 import os
@@ -14,6 +14,7 @@ from django.test.testcases import TestCase, override_settings
 from corehq.sql_db.connections import connection_manager
 from six.moves import zip
 from six.moves import range
+from io import open
 
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')

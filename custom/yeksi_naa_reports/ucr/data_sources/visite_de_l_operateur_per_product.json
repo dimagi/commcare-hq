@@ -390,6 +390,28 @@
         "column_id": "amt_delivered_convenience",
         "is_nullable": true,
         "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "select_programs"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "select_programs"
       }
     ],
     "named_expressions": {},

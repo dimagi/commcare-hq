@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
+from io import open
 
 
 DOC_ID = 'repeat-id'

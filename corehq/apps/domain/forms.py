@@ -1969,7 +1969,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     )
 
     trial_length = forms.ChoiceField(
-        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        choices=[(days, "%d days" % days) for days in [15, 30, 60, 90]],
         label="Trial Length",
     )
 
@@ -1989,12 +1989,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.Div(
                 crispy.Div(
-                    crispy.HTML(_(
-                        '<p><i class="fa fa-info-circle"></i> The trial includes '
-                        'access to all features, 5 mobile workers, and 25 SMS.  Fees '
-                        'apply for users or SMS in excess of these limits (1 '
-                        'USD/user/month, regular SMS fees).</p>'
-                    )),
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '

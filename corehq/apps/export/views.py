@@ -989,6 +989,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
                 'fileId': fileId,
                 'size': filesizeformat(size),
                 'lastUpdated': naturaltime(last_updated),
+                'lastAccessed': naturaltime(last_accessed),
                 'showExpiredWarning': (
                     last_accessed and
                     last_accessed <

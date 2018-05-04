@@ -21,6 +21,7 @@ from custom.icds_reports.tasks import (
     move_ucr_data_into_aggregation_tables,
     _aggregate_child_health_pnc_forms
 )
+from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',

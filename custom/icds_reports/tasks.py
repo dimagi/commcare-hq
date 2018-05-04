@@ -7,7 +7,6 @@ from datetime import date, datetime, timedelta
 import io
 import logging
 import os
-import uuid
 
 from celery import chain
 from celery.schedules import crontab
@@ -352,19 +351,15 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
 
     if pdf_format == 'one':
         report_context['reports'] = report_data
-        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
+        cache_key = create_pdf_file(report_context)
     else:
         for data in report_data:
-            pdf_hash = uuid.uuid4().hex
             report_context['reports'] = [data]
+            pdf_hash = create_pdf_file(report_context)
             pdf_files.append({
                 'uuid': pdf_hash,
                 'location_name': data['awc_name']
             })
-            create_pdf_file(
-                pdf_hash,
-                report_context
-            )
         cache_key = zip_folder(pdf_files)
 
     params = {

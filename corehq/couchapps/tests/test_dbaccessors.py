@@ -7,6 +7,7 @@ from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from django.test import TestCase
 from dimagi.utils.make_uuid import random_hex
+from io import open
 
 DOMAIN = 'test-attachments'
 FORM_XML = """<?xml version='1.0' ?>

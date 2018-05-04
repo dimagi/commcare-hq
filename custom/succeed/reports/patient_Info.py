@@ -211,7 +211,7 @@ class PatientInfoReport(PatientDetailsReport):
         if is_cm(user):
             ret['upcoming_appointments_url'] = self.get_form_url(self.cm_app_dict, self.latest_cm_build,
                                                                  CM_APP_APPOINTMENTS_MODULE, AP2,
-                                                                 parent_id=ret['patient']['_id'])
+                                                                 ret['patient']['_id'])
 
         ret['general_information'] = patient_info.general_information
         ret['contact_information'] = patient_info.contact_information

@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ElementTree
 
 from dimagi.utils.parsing import json_format_date
 from testapps.test_pillowtop.utils import real_pillow_settings
+from io import open
 
 
 class TestReports(IntraHealthTestCase):
