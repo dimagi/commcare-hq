@@ -617,7 +617,8 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         ]
 
     def compare_with_old_data_query(self):
-        # only partially implements this comparison for now
+        # Really big query. will need to be broken up to actually run with reasonable output.
+        # However I'm leaving it here for reference
         month = self.month.replace(day=1)
         return """
         SELECT agg.case_id
@@ -630,7 +631,18 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
                  (chm_ucr.nutrition_status_last_recorded = 'moderately_underweight' AND agg.zscore_grading_wfa = 2) OR
                  (chm_ucr.nutrition_status_last_recorded = 'normal' AND agg.zscore_grading_wfa IN (3,4)) OR
                  (chm_ucr.nutrition_status_last_recorded IS NULL AND agg.zscore_grading_wfa = 0) OR
-                 (chm_ucr.weight_recorded_in_month = agg.weight_child AND agg.latest_time_end_processed BETWEEN %(month)s AND %(next_month)s)
+                 (chm_ucr.weight_recorded_in_month = agg.weight_child AND agg.weight_child_last_recorded BETWEEN %(month)s AND %(next_month)s)
+              )) AND
+              (chm_ucr.height_eligible = 1 AND (
+                 (chm_ucr.stunting_last_recorded = 'severe' AND agg.zscore_grading_hfa = 1) OR
+                 (chm_ucr.stunting_last_recorded = 'moderate' AND agg.zscore_grading_hfa = 2) OR
+                 (chm_ucr.stunting_last_recorded = 'normal' AND agg.zscore_grading_hfa = 3) OR
+                 (chm_ucr.stunting_last_recorded IS NULL AND agg.zscore_grading_hfa = 0) OR
+                 (chm_ucr.height_recorded_in_month = agg.height_child AND agg.height_child_last_recorded BETWEEN %(month)s AND %(next_month)s) OR
+                 (chm_ucr.wasting_last_recorded = 'severe' AND agg.zscore_grading_wfh = 1) OR
+                 (chm_ucr.wasting_last_recorded = 'moderate' AND agg.zscore_grading_wfh = 2) OR
+                 (chm_ucr.wasting_last_recorded = 'normal' AND agg.zscore_grading_wfh = 3) OR
+                 (chm_ucr.wasting_last_recorded IS NULL AND agg.zscore_grading_hfa = 0)
               ))
         """.format(
             child_health_monthly_ucr=self._old_ucr_tablename,
