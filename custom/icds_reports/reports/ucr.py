@@ -9,6 +9,14 @@ from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomQ
 
 
 class MPR2APersonCases(ConfigurableReportCustomQueryProvider):
+    """Simplified query:
+
+    SELECT owner_id,
+           COUNT(*) FILTER WHERE (sex=X AND resident=Y AND age_death=Z) AS dead_X_Y_Z_count
+    FROM ucr_table
+    WHERE (location_id = A & date_death > B)
+    GROUP BY owner_id
+    """
     def __init__(self, report_data_source):
         self.report_data_source = report_data_source
         self.helper = self.report_data_source.helper
