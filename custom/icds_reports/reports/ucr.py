@@ -5,8 +5,10 @@ from collections import OrderedDict
 from memoized import memoized
 from sqlalchemy.sql import func
 
+from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomQueryProvider
 
-class MPR2APersonCases(object):
+
+class MPR2APersonCases(ConfigurableReportCustomQueryProvider):
     def __init__(self, report_data_source):
         self.report_data_source = report_data_source
         self.helper = self.report_data_source.helper
@@ -97,16 +99,20 @@ class MPR2APersonCases(object):
             query = query.group_by(self.table.c.owner_id)
         return query
 
-    def get_data(self, report_data_source, start, limit):
-        query_obj = self._get_query_object(report_data_source)
+    def get_data(self, start=None, limit=None):
+        query_obj = self._get_query_object(self.report_data_source)
+        if start:
+            query_obj = query_obj.start(start)
+        if limit:
+            query_obj = query_obj.limit(limit)
         return OrderedDict([
             (r.owner_id, r._asdict())
-            for r in query_obj.group_by(self.table.c.owner_id).all()
+            for r in query_obj.all()
         ])
 
-    def get_total_row(self, report_data_source):
-        query_obj = self._get_query_object(report_data_source, total_row=True)
+    def get_total_row(self):
+        query_obj = self._get_query_object(self.report_data_source, total_row=True)
         return ["Total"] + [r for r in query_obj.first()]
 
-    def get_total_records(self, report_data_source):
-        return self._get_query_object(report_data_source).count()
+    def get_total_records(self):
+        return self._get_query_object(self.report_data_source).count()

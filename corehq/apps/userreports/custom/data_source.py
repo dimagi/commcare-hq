@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from abc import ABCMeta, abstractmethod
 from django.utils.decorators import method_decorator
 from memoized import memoized
+import six
 
 from corehq.apps.reports.api import ReportDataSource
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
@@ -30,7 +32,7 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
     @memoized
     @method_decorator(catch_and_raise_exceptions)
     def get_data(self, start=None, limit=None):
-        ret = self._provider.get_data(self, start, limit)
+        ret = self._provider.get_data(start, limit)
 
         # A way to bypass these transforms should be implemented.
         # We can format data more efficiently in custom code if necessary
@@ -48,11 +50,11 @@ class ConfigurableReportCustomDataSource(ConfigurableReportDataSourceMixin, Repo
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_records(self):
-        return self._provider.get_total_records(self)
+        return self._provider.get_total_records()
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
-        return self._provider.get_total_row(self)
+        return self._provider.get_total_row()
 
 
 class ConfigurableReportCustomSQLDataSourceHelper(object):
@@ -87,3 +89,33 @@ class ConfigurableReportCustomSQLDataSourceHelper(object):
             for fv in self.report_data_source._filter_values.values()
             for k, v in fv.to_sql_values().items()
         }
+
+
+class ConfigurableReportCustomQueryProvider(six.with_metaclass(ABCMeta, object)):
+    @abstractmethod
+    def get_data(self, start, limit):
+        """This method is run before transformations defined in the UCR occur,
+        meaning any data returned will be transformed as defined in the report
+        configuration.
+
+        :return: OrderedDict([
+                    ((aggregation_columns), {column1: value1, column2: value2, ...})
+                ])
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_total_row(self):
+        """Returns the total row of report.
+        Method is unnecessary if calculate_total is false for all columns.
+
+        :return: ["Total", col1_total, col2_total, ...]
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_total_records(self):
+        """
+        :return: Number of rows in this report after filters and aggregations are applied
+        """
+        raise NotImplementedError
