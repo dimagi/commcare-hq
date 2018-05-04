@@ -9,6 +9,7 @@ from corehq.apps.hqwebapp import crispy as hqcrispy
 from crispy_forms import layout as crispy
 from crispy_forms import bootstrap as twbscrispy
 from crispy_forms.helper import FormHelper
+from datetime import datetime, timedelta
 from dateutil import parser
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -446,6 +447,10 @@ class CustomEventForm(ContentForm):
         label='',
     )
 
+    @property
+    def is_deleted(self):
+        return self['DELETE'].value()
+
     def clean_day(self):
         if not self.schedule_form.cleaned_data_uses_timed_schedule():
             return None
@@ -534,6 +539,8 @@ class CustomEventForm(ContentForm):
     def get_layout_fields(self):
         return [
             crispy.Div(
+                # These fields are added to the form automatically by Django when defining
+                # the formset, but we still have to add them to our layout.
                 crispy.Field(
                     'ORDER',
                     data_bind="value: order"
@@ -609,7 +616,7 @@ class CustomEventForm(ContentForm):
                 crispy.Fieldset(
                     '<span data-bind="template: { name: \'id_custom_event_legend\' }"></span>',
                     *self.get_layout_fields(),
-                    data_bind="visible: $root.usesCustomEventDefinitions() && !deleted()"
+                    data_bind="visible: !deleted()"
                 ),
                 data_bind='with: eventAndContentViewModel',
             ),
@@ -622,11 +629,165 @@ class BaseCustomEventFormSet(BaseFormSet):
         kwargs['prefix'] = CustomEventForm.prefix
         super(BaseCustomEventFormSet, self).__init__(*args, **kwargs)
 
+    @property
+    def non_deleted_forms(self):
+        return sorted(
+            [form for form in self.forms if not form.is_deleted],
+            key=lambda form: form['ORDER'].value()
+        )
+
+    def validate_alert_schedule_min_tick(self, custom_event_forms):
+        for form in custom_event_forms[1:]:
+            if form.cleaned_data['minutes_to_wait'] < 5:
+                form.add_error(
+                    'minutes_to_wait',
+                    ValidationError(
+                        _("Minutes to wait must be greater than or equal to 5 for all events after the first.")
+                    )
+                )
+
+    def validate_timed_schedule_order(self, schedule_form, custom_event_forms):
+        """
+        We can't automatically sort the events on day and time because the
+        time for some events is pulled from a case property at reminder run time.
+        So we just raise an error when the events are out of order and
+        let the user order them appropriately.
+        """
+        send_time_type = schedule_form.cleaned_data['send_time_type']
+        prev_form = None
+        passed_validation = True
+        for form in custom_event_forms:
+            if prev_form:
+                if send_time_type in (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME):
+                    if(
+                        (form.cleaned_data['day'], form.cleaned_data['time']) <
+                        (prev_form.cleaned_data['day'], prev_form.cleaned_data['time'])
+                    ):
+                        form.add_error(
+                            'time',
+                            ValidationError(
+                                _("The day and time for this event are out of order. "
+                                  "Please move this event into the correct order.")
+                            )
+                        )
+                        passed_validation = False
+                elif send_time_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+                    if form.cleaned_data['day'] < prev_form.cleaned_data['day']:
+                        form.add_error(
+                            'day',
+                            ValidationError(
+                                _("The day for this event is out of order. "
+                                  "Please move this event into the correct order.")
+                            )
+                        )
+                        passed_validation = False
+                else:
+                    raise ValueError("Unexpected value for send_time_type: '%s'" % send_time_type)
+
+            prev_form = form
+
+        return passed_validation
+
+    def validate_random_timed_events_do_not_overlap(self, schedule_form, custom_event_forms):
+        if schedule_form.cleaned_data['send_time_type'] != TimedSchedule.EVENT_RANDOM_TIME:
+            return True
+
+        prev_form = None
+        passed_validation = True
+        for form in custom_event_forms:
+            if prev_form:
+                prev_window_end_time = (
+                    datetime(2000, 1, 1) +
+                    timedelta(
+                        days=prev_form.cleaned_data['day'],
+                        hours=prev_form.cleaned_data['time'].hour,
+                        minutes=prev_form.cleaned_data['time'].minute + prev_form.cleaned_data['window_length']
+                    )
+                )
+
+                curr_window_start_time = (
+                    datetime(2000, 1, 1) +
+                    timedelta(
+                        days=form.cleaned_data['day'],
+                        hours=form.cleaned_data['time'].hour,
+                        minutes=form.cleaned_data['time'].minute
+                    )
+                )
+
+                if prev_window_end_time > curr_window_start_time:
+                    prev_form.add_error(
+                        'window_length',
+                        ValidationError(
+                            _("This random time window overlaps with the next event's window. "
+                              "Please adjust your events accordingly to prevent overlapping windows.")
+                        )
+                    )
+                    passed_validation = False
+
+            prev_form = form
+
+        return passed_validation
+
+    def validate_timed_schedule_min_tick(self, schedule_form, custom_event_forms):
+        if schedule_form.cleaned_data['send_time_type'] not in (
+            TimedSchedule.EVENT_SPECIFIC_TIME,
+            TimedSchedule.EVENT_RANDOM_TIME,
+        ):
+            return True
+
+        prev_form = None
+        passed_validation = True
+        for form in custom_event_forms:
+            if prev_form:
+                prev_time = (
+                    datetime(2000, 1, 1) +
+                    timedelta(
+                        days=prev_form.cleaned_data['day'],
+                        hours=prev_form.cleaned_data['time'].hour,
+                        minutes=prev_form.cleaned_data['time'].minute
+                    )
+                )
+
+                curr_time = (
+                    datetime(2000, 1, 1) +
+                    timedelta(
+                        days=form.cleaned_data['day'],
+                        hours=form.cleaned_data['time'].hour,
+                        minutes=form.cleaned_data['time'].minute
+                    )
+                )
+
+                if (curr_time - prev_time) < timedelta(minutes=5):
+                    form.add_error(
+                        'time',
+                        ValidationError(_("Events must occur at least 5 minutes apart."))
+                    )
+                    passed_validation = False
+
+            prev_form = form
+
+        return passed_validation
+
     def clean(self):
-        if any(self.errors):
+        non_deleted_forms = self.non_deleted_forms
+
+        if any(form.errors for form in non_deleted_forms):
             return
 
-        raise RuntimeError("Cleaning will be added in a later commit")
+        if len(non_deleted_forms) == 0:
+            raise ValidationError(_("Please add at least one event"))
+
+        schedule_form = non_deleted_forms[0].schedule_form
+        if schedule_form.cleaned_data_uses_alert_schedule():
+            self.validate_alert_schedule_min_tick(non_deleted_forms)
+        elif schedule_form.cleaned_data_uses_timed_schedule():
+            # Use short-circuiting to only continue validating if the previous
+            # validation passes
+            (self.validate_timed_schedule_order(schedule_form, non_deleted_forms) and
+             self.validate_random_timed_events_do_not_overlap(schedule_form, non_deleted_forms) and
+             self.validate_timed_schedule_min_tick(schedule_form, non_deleted_forms))
+        else:
+            raise ValueError("Unexpected schedule type")
 
 
 class ScheduleForm(Form):
@@ -820,14 +981,14 @@ class ScheduleForm(Form):
         # Make sure .is_valid() is called on all appropriate forms before returning.
         # Don't let the result of one short-circuit the expression and prevent calling the others.
 
-        result = [super(ScheduleForm, self).is_valid()]
+        schedule_form_is_valid = super(ScheduleForm, self).is_valid()
+        custom_event_formset_is_valid = self.custom_event_formset.is_valid()
+        standalone_content_form_is_valid = self.standalone_content_form.is_valid()
 
         if self.cleaned_data_uses_custom_event_definitions():
-            result.append(self.custom_event_formset.is_valid())
+            return schedule_form_is_valid and custom_event_formset_is_valid
         else:
-            result.append(self.standalone_content_form.is_valid())
-
-        return all(result)
+            return schedule_form_is_valid and standalone_content_form_is_valid
 
     def update_send_frequency_choices(self, initial_value):
         def filter_function(two_tuple):
