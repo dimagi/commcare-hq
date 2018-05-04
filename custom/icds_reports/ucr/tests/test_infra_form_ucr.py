@@ -1,5 +1,5 @@
 from __future__ import absolute_import
-# from __future__ import unicode_literals
+from __future__ import unicode_literals
 
 from custom.icds_reports.ucr.tests.test_base_form_ucr import BaseFormsTest
 
