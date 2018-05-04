@@ -5,7 +5,6 @@ from datetime import date, timedelta
 import io
 
 from celery.schedules import crontab
-from celery import group
 from celery.task import task
 from celery.task.base import periodic_task
 from django.conf import settings
@@ -101,6 +100,7 @@ def send_mass_emails(self, username, recipients, subject, html, text):
             _mass_email_attachment('successes', ['Email'], successes),
             _mass_email_attachment('failures', ['Email', 'Error'], failures)]
     )
+
 
 def _mass_email_attachment(name, header, rows):
     csv_file = io.BytesIO()
