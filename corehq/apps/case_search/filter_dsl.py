@@ -61,8 +61,10 @@ def build_filter_from_ast(domain, node):
     EQ = "="
     NEQ = "!="
 
-    def walk_related_cases(node):
+    def _walk_related_cases(node):
         """Return a query that will fulfill the filter on the related case.
+
+        :param node: a node returned from eulxml.xpath.parse of the form `parent/grandparent/property = 'value'`
 
         Since ES has no way of performing joins, we filter down in stages:
         1. Find the ids of all cases where the condition is met
@@ -71,33 +73,44 @@ def build_filter_from_ast(domain, node):
         3. Return the lowest of these ids as an related case query filter
         """
 
-        ids = parent_property_lookup(node)  # the ids of the highest level cases that match the case_property
+        # fetch the ids of the highest level cases that match the case_property
+        # i.e. all the cases which have `property = 'value'`
+        ids = _parent_property_lookup(node)
 
-        # walk down the tree and select all child cases
+        # get the related case path we need to walk, i.e. `parent/grandparent/property`
         n = node.left
-        while is_related_case_lookup(n):
+        while _is_related_case_lookup(n):
+            # This walks down the tree and finds case ids that match each identifier
+            # This is basically performing multiple "joins" to find related cases since ES
+            # doesn't have a way to relate models together
+
+            # Get the path to the related case, e.g. `parent/grandparent`
+            # On subsequent run throughs, it walks down the tree (e.g. n = [parent, /, grandparent])
             n = n.left
-            # Performs a "join" to find related cases
-            # Fetches all the case ids from ES which are children of the previous level
-            # This has the potential to be a very large list
-            ids = child_case_lookup(ids, identifier=serialize(n.right))
+            identifier = serialize(n.right)  # the identifier at this step, e.g. `grandparent`
+
+            # get the ids of the cases that point at the previous level's cases
+            # this has the potential of being a very large list
+            ids = _child_case_lookup(ids, identifier=identifier)
             if not ids:
                 break
+
+        # after walking the full tree, get the final level we are interested in, i.e. `parent`
         final_identifier = serialize(n.left)
         return reverse_index_case_query(ids, final_identifier)
 
-    def parent_property_lookup(node):
+    def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
         new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
         return CaseSearchES().domain(domain).xpath_query(domain, new_query).scroll_ids()
 
-    def child_case_lookup(case_ids, identifier):
+    def _child_case_lookup(case_ids, identifier):
         """returns a list of all case_ids who have parents `case_id` with the relationship `identifier`
         """
         return CaseSearchES().domain(domain).get_child_cases(case_ids, identifier).scroll_ids()
 
-    def is_related_case_lookup(node):
+    def _is_related_case_lookup(node):
         """Returns whether a particular AST node is a related case lookup
 
         e.g. `parent/host/thing = 'foo'`
@@ -111,9 +124,9 @@ def build_filter_from_ast(domain, node):
                 serialize(node)
             )
 
-        if is_related_case_lookup(node):
+        if _is_related_case_lookup(node):
             # this node represents a filter on a property for a related case
-            return walk_related_cases(node)
+            return _walk_related_cases(node)
 
         if node.op in [EQ, NEQ]:
             if isinstance(node.left, Step) and isinstance(node.right, integer_types + (string_types, float)):
