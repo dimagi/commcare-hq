@@ -56,6 +56,7 @@ hqDefine('locations/js/location_tree', function() {
                 children: locs,
                 can_edit: options.can_edit_root,
                 expanded: true,
+                show_inactive: options.show_inactive,
             }, this));
         };
     }
@@ -157,6 +158,7 @@ hqDefine('locations/js/location_tree', function() {
         this.depth = depth || 0;
         this.children_status = ko.observable('not_loaded');
         this.expanded = ko.observable(false);
+        this.show_inactive = ko.observable();
 
         this.reloadLocationSearchSelect = locationUtils.reloadLocationSearchSelect;
         this.clearLocationSelection = locationUtils.clearLocationSelection.bind(this, root);
@@ -182,6 +184,7 @@ hqDefine('locations/js/location_tree', function() {
             this.is_archived(data.is_archived);
             this.can_edit(data.can_edit);
             this.expanded(data.expanded);
+            this.show_inactive(data.show_inactive);
 
             if (data.children_status !== null && data.children_status !== undefined) {
                 this.children_status(data.children_status);
@@ -227,7 +230,7 @@ hqDefine('locations/js/location_tree', function() {
 
         this.load_children_async = function(callback) {
             this.children_status('loading');
-            api_get_children(this.uuid(), data.show_inactive, function(resp) {
+            api_get_children(this.uuid(), this.show_inactive(), function(resp) {
                 loc.set_children(resp);
                 if (callback) {
                     callback(loc);
