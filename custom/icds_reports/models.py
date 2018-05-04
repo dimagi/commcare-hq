@@ -383,9 +383,15 @@ class AggChildHealthMonthly(models.Model):
     wasting_moderate = models.IntegerField(blank=True, null=True)
     wasting_severe = models.IntegerField(blank=True, null=True)
     wasting_normal = models.IntegerField(blank=True, null=True)
+    wasting_moderate_v2 = models.IntegerField(blank=True, null=True)
+    wasting_severe_v2 = models.IntegerField(blank=True, null=True)
+    wasting_normal_v2 = models.IntegerField(blank=True, null=True)
     stunting_moderate = models.IntegerField(blank=True, null=True)
     stunting_severe = models.IntegerField(blank=True, null=True)
     stunting_normal = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_moderate = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_severe = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_normal = models.IntegerField(blank=True, null=True)
     pnc_eligible = models.IntegerField(blank=True, null=True)
     thr_eligible = models.IntegerField(blank=True, null=True)
     rations_21_plus_distributed = models.IntegerField(blank=True, null=True)
@@ -521,6 +527,10 @@ class ChildHealthMonthlyView(models.Model):
     current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
     current_month_stunting_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_sort = models.IntegerField(blank=True, null=True)
+    current_month_stunting_v2 = models.TextField(blank=True, null=True)
+    current_month_wasting_v2 = models.TextField(blank=True, null=True)
+    current_month_stunting_v2_sort = models.IntegerField(blank=True, null=True)
+    current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -929,8 +939,20 @@ class ChildHealthMonthly(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
+    current_month_stunting_sort = models.IntegerField(blank=True, null=True)
+    current_month_wasting_sort = models.IntegerField(blank=True, null=True)
+    mother_name = models.TextField(blank=True, null=True)
+    fully_immunized = models.IntegerField(blank=True, null=True)
     immunization_in_month = models.SmallIntegerField(blank=True, null=True)
     days_ration_given_child = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_hfa = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_hfa_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_wfh = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    muac_grading = models.SmallIntegerField(blank=True, null=True)
+    muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -1028,3 +1050,13 @@ class AggregateGrowthMonitoringForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class UcrTableNameMapping(models.Model):
+    table_type = models.TextField(primary_key=True)
+    table_name = models.TextField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'ucr_table_name_mapping'

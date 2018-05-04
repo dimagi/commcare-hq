@@ -2146,3 +2146,74 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION create_child_health_monthly_view() RETURNS VOID AS
+$BODY$
+DECLARE
+  _ucr_child_list_table text;
+BEGIN
+  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_list') INTO _ucr_child_list_table;
+
+  EXECUTE 'DROP VIEW IF EXISTS child_health_monthly_view CASCADE';
+  EXECUTE 'CREATE VIEW child_health_monthly_view AS ' ||
+    'SELECT' ||
+        '"child_list".case_id, ' ||
+        '"child_list".awc_id, ' ||
+        '"child_list".supervisor_id, ' ||
+        '"child_list".block_id, ' ||
+        '"child_list".district_id, ' ||
+        '"child_list".state_id, ' ||
+        '"child_list".name AS person_name, ' ||
+        '"child_list".mother_name, ' ||
+        '"child_list".dob, ' ||
+        '"child_list".sex, ' ||
+        'child_health_monthly.month, ' ||
+        'child_health_monthly.age_in_months, ' ||
+        'child_health_monthly.open_in_month, ' ||
+        'child_health_monthly.valid_in_month, ' ||
+        'child_health_monthly.nutrition_status_last_recorded, ' ||
+        'child_health_monthly.current_month_nutrition_status, ' ||
+        'child_health_monthly.pse_days_attended, ' ||
+        'child_health_monthly.recorded_weight, ' ||
+        'child_health_monthly.recorded_height, ' ||
+        'child_health_monthly.current_month_stunting, ' ||
+        'child_health_monthly.current_month_wasting, ' ||
+        'child_health_monthly.thr_eligible, ' ||
+        'GREATEST(child_health_monthly.fully_immunized_on_time, child_health_monthly.fully_immunized_late) AS fully_immunized, ' ||
+        'CASE WHEN child_health_monthly.current_month_nutrition_status = ' || quote_literal('severely_underweight') || ' THEN 1' ||
+            'WHEN child_health_monthly.current_month_nutrition_status = ' || quote_literal('moderately_underweight') || ' THEN 2' ||
+            'WHEN child_health_monthly.current_month_nutrition_status = ' || quote_literal('normal') || ' THEN 3' ||
+            'ELSE 4 END AS current_month_nutrition_status_sort,' ||
+        'CASE WHEN child_health_monthly.current_month_stunting = ' || quote_literal('severe') || ' THEN 1' ||
+            'WHEN child_health_monthly.current_month_stunting = ' || quote_literal('moderate') || ' THEN 2' ||
+            'WHEN child_health_monthly.current_month_stunting = ' || quote_literal('normal') || ' THEN 3' ||
+            'ELSE 4 END AS current_month_stunting_sort,' ||
+        'CASE WHEN child_health_monthly.current_month_wasting = ' || quote_literal('severe') || ' THEN 1' ||
+            'WHEN child_health_monthly.current_month_wasting = ' || quote_literal('moderate') || '  THEN 2' ||
+            'WHEN child_health_monthly.current_month_wasting = ' || quote_literal('normal') || ' THEN 3' ||
+            'ELSE 4 END AS current_month_wasting_sort,' ||
+        'CASE ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 1 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN ' || quote_literal('severe') || ' ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 2 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN ' || quote_literal('moderate') || ' ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 3 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN ' || quote_literal('normal') || ' ' ||
+          'ELSE ' || quote_literal('') || ' END AS current_month_stunting_v2, ' ||
+        'CASE ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 1 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 1 AND child_health_monthly.muac_grading_recorded_in_month = 1) THEN ' || quote_literal('severe') || ' ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 2 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 2 AND child_health_monthly.muac_grading_recorded_in_month = 2) THEN ' || quote_literal('moderate') || ' ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 3 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 3 AND child_health_monthly.muac_grading_recorded_in_month = 3) THEN ' || quote_literal('normal') || ' ' ||
+          'ELSE '' || quote_literal('''') || '' END AS current_month_wasting_v2, ' ||
+        'CASE ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 1 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN 1 ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 2 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN 2 ' ||
+          'WHEN child_health_monthly.zscore_grading_hfa = 3 AND child_health_monthly.zscore_grading_hfa_recorded_in_month = 1 THEN 3 ' ||
+          'ELSE 4 END AS current_month_stunting_v2_sort,' ||
+        'CASE ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 1 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 1 AND child_health_monthly.muac_grading_recorded_in_month = 1) THEN 1 ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 2 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 2 AND child_health_monthly.muac_grading_recorded_in_month = 2) THEN 2 ' ||
+          'WHEN (child_health_monthly.zscore_grading_wfh = 3 AND child_health_monthly.zscore_grading_wfh_recorded_in_month = 1) OR (child_health_monthly.muac_grading = 3 AND child_health_monthly.muac_grading_recorded_in_month = 3) THEN 3 ' ||
+          'ELSE 4 END AS current_month_wasting_v2_sort ' ||
+   'FROM' || quote_ident(_ucr_child_list_table) ||  ' "child_list"' ||
+     'LEFT JOIN child_health_monthly child_health_monthly ON "child_list".doc_id = child_health_monthly.case_id';
+END;
+$BODY$
+LANGUAGE plpgsql;

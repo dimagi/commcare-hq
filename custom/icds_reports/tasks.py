@@ -18,7 +18,7 @@ from django.db.models import F
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -33,7 +33,7 @@ from custom.icds_reports.models import (
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
     AggregateChildHealthTHRForms,
-)
+    UcrTableNameMapping)
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
 from dimagi.utils.chunked import chunked
@@ -51,6 +51,26 @@ DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id i
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 
 
+UCR_TABLE_NAME_MAPPING = [
+    {'type': "awc_location", 'name': 'static-awc_location'},
+    {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
+    {'type': 'ccs_record_monthly', 'name': 'extended_ccs_record_monthly_tableau'},
+    {'type': 'child_health_monthly', 'name': 'extended_child_health_monthly_tableau'},
+    {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
+    {'type': 'household', 'name': 'static-household_cases'},
+    {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
+    {'type': 'person', 'name': 'static-person_cases_v2'},
+    {'type': 'usage', 'name': 'static-usage_forms'},
+    {'type': 'vhnd', 'name': 'static-vhnd_form'},
+    {'type': 'complementary_feeding', 'name': 'static-complementary_feeding_forms'},
+    {'type': 'aww_user', 'name': 'static-commcare_user_cases'},
+    {'type': 'child_tasks', 'name': 'static-child_tasks_cases'},
+    {'type': 'pregnant_tasks', 'name': 'static-pregnant-tasks_cases'},
+    {'type': 'thr_form', 'name': 'static-dashboard_thr_forms'},
+    {'type': 'child_list', 'name': 'static-child_health_cases'},
+]
+
+
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
@@ -60,6 +80,11 @@ def run_move_ucr_data_into_aggregation_tables_task(date=None):
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_dates = []
+
+    # probably this should be run one time, for now I leave this in aggregations script (not a big cost)
+    # but remove issues when someone add new table to mapping, also we don't need to add new rows manually
+    # on production servers
+    _update_ucr_table_mapping()
 
     first_day_of_month = date.replace(day=1)
     for interval in range(intervals - 1, 0, -1):
@@ -74,6 +99,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
             _update_aggregate_locations_tables(cursor)
+            _create_child_health_monthly_view()
 
         tasks = []
 
@@ -202,6 +228,10 @@ def _run_custom_sql_script(commands, day):
     with connections[db_alias].cursor() as cursor:
         for command in commands:
             cursor.execute(command, [day])
+
+
+def _create_child_health_monthly_view():
+    _run_custom_sql_script(["SELECT create_child_health_monthly_view()"])
 
 
 def aggregate_awc_daily(day):
@@ -454,3 +484,13 @@ def _send_data_validation_email(csv_columns, month, bad_data):
 def _icds_add_awcs_to_file(csv_writer, error_type, rows):
     for row in rows:
         csv_writer.writerow((error_type, ) + row)
+
+
+def _update_ucr_table_mapping():
+    celery_task_logger.info("Started updating ucr_table_name_mapping table")
+    for table in UCR_TABLE_NAME_MAPPING:
+        UcrTableNameMapping.objects.get_or_create(
+            table_type=table['type'],
+            table_name=get_table_name(DASHBOARD_DOMAIN, table['name'])
+        )
+    celery_task_logger.info("Ended updating ucr_table_name_mapping table")
