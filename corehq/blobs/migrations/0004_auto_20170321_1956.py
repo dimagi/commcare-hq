@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.blobs.migrate import assert_migration_complete
-from corehq.sql_db.operations import HqRunPython
+# from corehq.blobs.migrate import assert_migration_complete
+# from corehq.sql_db.operations import HqRunPython
 
 
 class Migration(migrations.Migration):
@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(*assert_migration_complete("cases")),
+        # HqRunPython(*assert_migration_complete("cases")),
     ]

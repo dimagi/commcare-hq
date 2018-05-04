@@ -614,13 +614,13 @@ class ExportInstanceFilters(DocumentSchema):
         return True
 
 
-class CaseExportInstanceFilters(ExportInstanceFilters):
+class CaseExportInstanceFilters(ExportInstanceFilters):#
     sharing_groups = ListProperty(StringProperty)
     show_all_data = BooleanProperty(default=True)
     show_project_data = BooleanProperty()
 
 
-class FormExportInstanceFilters(ExportInstanceFilters):
+class FormExportInstanceFilters(ExportInstanceFilters):#
     user_types = ListProperty(IntegerProperty, default=[HQUserType.REGISTERED])
 
 

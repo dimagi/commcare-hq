@@ -17,6 +17,8 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
+
+from corehq.apps.export.filters import ModifiedOnRangeFilter
 from corehq.elastic import iter_es_docs, ScanResult
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename
@@ -305,7 +307,7 @@ def get_export_writer(export_instances, allow_pagination=True):
     return writer
 
 
-def get_export_download(export_instances, filters, filename=None):
+def get_export_download(export_instances, filters, filename=None, username=None, metadata=None):
     from corehq.apps.export.tasks import populate_export_download_task
 
     download = DownloadBase()
@@ -313,12 +315,13 @@ def get_export_download(export_instances, filters, filename=None):
         export_instances,
         filters,
         download.download_id,
-        filename=filename
+        filename=filename,
+        username=username,
     ))
     return download
 
 
-def get_export_file(export_instances, filters, progress_tracker=None):
+def get_export_file(export_instances, filters, progress_tracker=None, username=None):
     """
     Return an export file for the given ExportInstance and list of filters
     # TODO: Add a note about cleaning up the file?
@@ -329,6 +332,15 @@ def get_export_file(export_instances, filters, progress_tracker=None):
             # TODO: Don't get the docs multiple times if you don't have to
             docs = get_export_documents(export_instance, filters)
             write_export_instance(writer, export_instance, docs, progress_tracker)
+
+        writer.writer._init_table('metadata_table', 'metadata')
+        writer.writer._write_row('metadata_table', ['Downloaded By:', username])
+        print filters
+        print [filter.to_es_filter() for filter in filters]
+        for filter in filters:
+            if isinstance(filter, ModifiedOnRangeFilter):
+                writer.writer._write_row('metadata_table', ['Date Range - Start:', filter.gte])
+                writer.writer._write_row('metadata_table', ['Date Range - End:', filter.lt])
 
     return ExportFile(writer.path, writer.format)
 

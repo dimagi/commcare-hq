@@ -86,7 +86,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         update: ko.bindingHandlers.value.update,
     };
 
-    ko.bindingHandlers.sortable = {
+    ko.bindingHandlers.sortable = { //
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
                 if (item._sortableOrder === undefined) {

@@ -414,7 +414,7 @@ class BaseDownloadExportView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseP
                 'default_date_range': _(
                     "You have no submissions in this project."
                 ),
-                'show_no_submissions_warning': True,
+                'show_no_submissions_warning': False,
             })
 
         return context
@@ -2080,10 +2080,14 @@ class GenericDownloadNewExportMixin(object):
         self._check_deid_permissions(export_instances)
         self._check_export_size(export_instances, export_filters)
 
+        metadata = self._get_metadata(in_data)
+
         return get_export_download(
             export_instances=export_instances,
             filters=export_filters,
-            filename=self._get_filename(export_instances)
+            filename=self._get_filename(export_instances),
+            username=self.request.couch_user.username,
+            metadata=metadata,
         )
 
     def _get_filename(self, export_instances):
@@ -2144,6 +2148,7 @@ class GenericDownloadNewExportMixin(object):
         mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
             filter_form_data[ExpandedMobileWorkerFilter.slug]
         )
+
         try:
             export_filter = self.get_filters(filter_form_data, mobile_user_and_group_slugs)
         except ExportFormValidationException:
@@ -2151,7 +2156,20 @@ class GenericDownloadNewExportMixin(object):
                 _("Form did not validate.")
             )
 
+        print export_filter
+        print export_specs
+
         return export_filter, export_specs
+
+    def _get_metadata(self, in_data):
+        filter_form_data, _ = self._get_form_data_and_specs(in_data)
+        date_range = filter_form_data['date_range']
+        mobile_user_and_group_slugs = self._get_mobile_user_and_group_slugs(
+            filter_form_data[ExpandedMobileWorkerFilter.slug]
+        )
+
+        print date_range
+        print mobile_user_and_group_slugs
 
 
 @location_safe
@@ -2163,7 +2181,7 @@ class DownloadNewFormExportView(GenericDownloadNewExportMixin, DownloadFormExpor
     def _get_export(self, domain, export_id):
         return FormExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):#
         filter_form = self._get_filter_form(filter_form_data)
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
@@ -2214,8 +2232,9 @@ class DownloadNewCaseExportView(GenericDownloadNewExportMixin, DownloadCaseExpor
     def _get_export(self, domain, export_id):
         return CaseExportInstance.get(export_id)
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):#
         filter_form = self._get_filter_form(filter_form_data)
+        print type(filter_form)
         if not self.request.can_access_all_locations:
             accessible_location_ids = (SQLLocation.active_objects.accessible_location_ids(
                 self.request.domain,
@@ -2285,7 +2304,7 @@ class DownloadNewSmsExportView(GenericDownloadNewExportMixin, BaseDownloadExport
             SMSExportDataSchema.get_latest_export_schema(domain, include_metadata)
         )
 
-    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):
+    def get_filters(self, filter_form_data, mobile_user_and_group_slugs):#
         filter_form = self._get_filter_form(filter_form_data)
         return filter_form.get_filter()
 

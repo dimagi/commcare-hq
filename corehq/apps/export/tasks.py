@@ -23,13 +23,15 @@ logger = logging.getLogger('export_migration')
 
 
 @task(queue='export_download_queue')
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
+def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60,
+                                  username=None):
     export_file = get_export_file(
         export_instances,
         filters,
         # We don't have a great way to calculate progress if it's a bulk download,
         # so only track the progress for single instance exports.
-        progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
+        progress_tracker=populate_export_download_task if len(export_instances) == 1 else None,
+        username=username,
     )
 
     file_format = Format.from_format(export_file.format)
