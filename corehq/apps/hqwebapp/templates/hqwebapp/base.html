@@ -268,6 +268,7 @@
                             {% include 'hqwebapp/includes/global_navigation_bar.html' %}
                         {% else %}
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                            <a href="http://sites.dimagi.com/commcare-demo-2" target="_blank" class="btn btn-primary-dark navbar-btn">{% trans 'Get Demo' %}</a>
                         {% endif %}
                         </div>
                         {% block tabs %}
