@@ -21,7 +21,7 @@ class TestCasePropertyChanged(TestCase):
     def setUp(self):
         self.domain = "isildur"
         self.factory = CaseFactory(self.domain)
-        self.case = self.factory.create_case(owner_id='owner', case_name="Aragorn")
+        self.case = self.factory.create_case(owner_id='owner', case_name="Aragorn", update={"sword": "Narsil"})
         self.other_case = self.factory.create_case()
 
     def tearDown(self):
@@ -140,3 +140,20 @@ class TestCasePropertyChanged(TestCase):
         self.assertEqual(len(changes), 2)
         self.assertEqual(changes[0].new_value, 'Strider')
         self.assertEqual(changes[1].new_value, 'Aragorn')
+
+    @run_with_all_backends
+    def test_blank_change(self):
+        self.factory.create_or_update_case(
+            CaseStructure(
+                self.case.case_id,
+                attrs={
+                    "update": {
+                        'sword': ''
+                    },
+                }),
+        )
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        changes, _ = get_paged_changes_to_case_property(case, 'sword')
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].new_value, '')
+        self.assertEqual(changes[1].new_value, 'Narsil')
