@@ -55,7 +55,6 @@ branches:
   - je/report-builder-button # J$ 4/3
   - ce/auto-batches # Cal April 6
   - ce/app-status-staging # Cal April 9
-  - emord-patch-1 # J$ April 19 (upgrading celery)
   - jr/drilldown-filters-again # jordan April 23
   - jls/add-js-to-sentry # Jenny April 26
   - jls/bring-back-mass-emails # Jenny April 27
