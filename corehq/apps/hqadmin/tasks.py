@@ -81,7 +81,7 @@ def send_mass_emails(self, username, recipients, subject, html, text):
 
         try:
             send_HTML_email(subject, recipient['username'], html_content, text_content=text_content)
-            successes.append((recipient['username']))
+            successes.append((recipient['username'], None))
         except Exception as e:
             failures.append((recipient['username'], e))
 
@@ -97,15 +97,15 @@ def send_mass_emails(self, username, recipients, subject, html, text):
     send_html_email_async(
         "Mass email summary", username, message,
         text_content=message, file_attachments=[
-            _mass_email_attachment('successes', ['Email'], successes),
-            _mass_email_attachment('failures', ['Email', 'Error'], failures)]
+            _mass_email_attachment('successes', successes),
+            _mass_email_attachment('failures', failures)]
     )
 
 
-def _mass_email_attachment(name, header, rows):
+def _mass_email_attachment(name, rows):
     csv_file = io.BytesIO()
     writer = UnicodeWriter(csv_file)
-    writer.writerow(header)
+    writer.writerow(['Email', 'Error'])
     writer.writerows(rows)
     attachment = {
         'title': "mass_email_{}.csv".format(name),
