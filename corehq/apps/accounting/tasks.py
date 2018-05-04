@@ -640,7 +640,6 @@ def _get_domains_with_invoices_over_threshold(today):
                                       subscription__service_type=SubscriptionType.PRODUCT,
                                       date_paid__isnull=True,
                                       date_due__lt=today)\
-        .exclude(subscription__plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)\
         .order_by('date_due')\
         .select_related('subscription__subscriber')
 
@@ -650,9 +649,9 @@ def _get_domains_with_invoices_over_threshold(today):
         domain = invoice.get_domain()
         if domain not in domains:
             domains.add(domain)
-            total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=domain)\
-                .aggregate(Sum('balance'))['balance__sum']
+            total = invoices.filter(
+                subscription__subscriber__domain=domain
+            ).aggregate(Sum('balance'))['balance__sum']
             if total >= 100:
                 yield domain, invoice, total
 
