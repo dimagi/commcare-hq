@@ -56,7 +56,7 @@ hqDefine('locations/js/location_tree', function() {
                 children: locs,
                 can_edit: options.can_edit_root,
                 expanded: true,
-                show_inactive: options.show_inactive
+                show_inactive: options.show_inactive,
             }, this));
         };
     }
