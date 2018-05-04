@@ -62,8 +62,9 @@ def check_non_dimagi_superusers():
 
 
 @task(queue="email_queue", bind=True, acks_late=True)
-def send_mass_emails(self, couch_user, recipients, subject, html, text):
-    tasks = []
+def send_mass_emails(self, username, recipients, subject, html, text):
+    successes = []
+    failures = []
     for recipient in recipients:
         context = recipient
         context.update({
@@ -79,57 +80,37 @@ def send_mass_emails(self, couch_user, recipients, subject, html, text):
             'email_body': html_template.render(Context(context)),
         })
 
-        tasks.append(send_single_mass_email.s(subject, recipient['username'],
-                        html_content, text_content, email_from=settings.DEFAULT_FROM_EMAIL))
+        try:
+            send_HTML_email(subject, recipient['username'], html_content, text_content=text_content)
+            successes.append((recipient['username'], None))
+        except Exception as e:
+            failures.append((recipient['username'], e))
 
-    result = group(tasks)().get()
-    successes = [email for (email, error) in result if not error]
-    failures = [(email, error) for (email, error) in result if error]
+    subject = "Mass email summary"
+    message = (
+        "Subject: {subject},\n"
+        "Total successes: {success_count} \n Total errors: {failure_count} \n"
+        "".format(
+            subject=subject,
+            success_count=len(successes),
+            failure_count=len(failures))
+    )
 
-    if len(failures):
-        subject = "Mass email failures"
-        csv_file = io.BytesIO()
-        writer = UnicodeWriter(csv_file)
-        writer.writerow(['Email', 'Error'])
-        writer.writerows(failures)
+    send_html_email_async(
+        subject, username, message,
+        text_content=message, file_attachments=[
+            _mass_email_attachment('successes', ['Email'], successes),
+            _mass_email_attachment('failures', ['Email', 'Error'], failures)]
+    )
 
-        message = (
-            "Subject: {subject},\n"
-            "Total successes: {success_count} \n Total errors: {failure_count} \n"
-            "".format(
-                subject=subject,
-                success_count=len(successes),
-                failure_count=len(failures))
-        )
-
-        attachment = {
-            'title': "mass_email_failures.csv",
-            'mimetype': 'text/csv',
-            'file_obj': csv_file,
-        }
-        send_html_email_async(
-            subject, couch_user.username, message,
-            text_content=message, file_attachments=[attachment]
-        )
-
-
-@task(queue="email_queue",
-      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def send_single_mass_email(self, subject, recipient, html_content,
-                          text_content=None, cc=None,
-                          email_from=settings.DEFAULT_FROM_EMAIL,
-                          file_attachments=None, bcc=None):
-    '''
-    Returns tuple of (email, Exception) where Exception is None if the mail succeeded
-    Skips send_html_email_async's retry logic in favor of notifying on all failures.
-    '''
-    try:
-        import re
-        if not re.search(r'@', recipient):
-            raise Exception("nope no email")
-        send_HTML_email(subject, recipient, html_content,
-                        text_content=text_content, cc=cc, email_from=email_from,
-                        file_attachments=file_attachments, bcc=bcc)
-        return (recipient, None)
-    except Exception as e:
-        return (recipient, e)
+def _mass_email_attachment(name, header, rows):
+    csv_file = io.BytesIO()
+    writer = UnicodeWriter(csv_file)
+    writer.writerow(header)
+    writer.writerows(rows)
+    attachment = {
+        'title': "mass_email_{}.csv".format(name),
+        'mimetype': 'text/csv',
+        'file_obj': csv_file,
+    }
+    return attachment

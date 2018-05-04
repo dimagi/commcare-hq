@@ -282,7 +282,7 @@ def mass_email(request):
                     'first_name': request.couch_user.first_name or 'CommCare User',
                 }]
 
-            send_mass_emails.delay(request.couch_user, recipients, subject, html, text)
+            send_mass_emails.delay(request.couch_user.username, recipients, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
             messages.error(request, 'Something went wrong, see below.')
