@@ -454,7 +454,6 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.token = ko.observable();
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
-        self.agreedToPrivacyPolicy = ko.observable(false);
         self.newSavedCard = ko.observable(false);
 
         self.autopayCard = ko.computed(function(){
@@ -470,7 +469,7 @@ hqDefine('accounting/js/payment_method_handler', function () {
         self.isSaved = ko.observable(false);
 
         self.cardFormIsValid = ko.computed(function () {
-            return self.isSaved() || (!self.isSaved() && self.agreedToPrivacyPolicy());
+            return self.isSaved() || !self.isSaved();
         });
 
         self.showErrors = ko.computed(function () {
