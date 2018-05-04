@@ -158,19 +158,8 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 }
 
             username = reg_form.cleaned_data['email']
-
-            couch_user = CouchUser.get_by_username(username)
             appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
                                                               toggles.NAMESPACE_USER)
-            if couch_user:
-                hubspot_fields = {
-                    "appcues_test": "On" if appcues_ab_test else "Off",
-                }
-                if reg_form.cleaned_data['persona']:
-                    hubspot_fields['buyer_persona'] = reg_form.cleaned_data['persona']
-                    if reg_form.cleaned_data['persona_other']:
-                        hubspot_fields['buyer_persona_other'] = reg_form.cleaned_data['persona_other']
-                update_hubspot_properties.delay(couch_user, hubspot_fields)
 
             return {
                 'success': True,
