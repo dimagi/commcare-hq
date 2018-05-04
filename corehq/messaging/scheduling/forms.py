@@ -800,19 +800,19 @@ class ScheduleForm(Form):
 
         self.fields['default_language_code'].choices = choices
 
-    def add_intial_for_immediate_schedule(self, initial):
+    def add_initial_for_immediate_schedule(self, initial):
         initial['send_frequency'] = self.SEND_IMMEDIATELY
 
-    def add_intial_for_daily_schedule(self, initial):
+    def add_initial_for_daily_schedule(self, initial):
         initial['send_frequency'] = self.SEND_DAILY
 
-    def add_intial_for_weekly_schedule(self, initial):
+    def add_initial_for_weekly_schedule(self, initial):
         weekdays = [(self.initial_schedule.start_day_of_week + e.day) % 7
                     for e in self.initial_schedule.memoized_events]
         initial['send_frequency'] = self.SEND_WEEKLY
         initial['weekdays'] = [six.text_type(day) for day in weekdays]
 
-    def add_intial_for_monthly_schedule(self, initial):
+    def add_initial_for_monthly_schedule(self, initial):
         initial['send_frequency'] = self.SEND_MONTHLY
         initial['days_of_month'] = [six.text_type(e.day) for e in self.initial_schedule.memoized_events]
 
@@ -933,7 +933,7 @@ class ScheduleForm(Form):
             )
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
-                    self.add_intial_for_immediate_schedule(result)
+                    self.add_initial_for_immediate_schedule(result)
                 elif schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE:
                     self.add_initial_for_custom_immediate_schedule(result)
                 else:
@@ -943,11 +943,11 @@ class ScheduleForm(Form):
                     )
             elif isinstance(schedule, TimedSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_DAILY:
-                    self.add_intial_for_daily_schedule(result)
+                    self.add_initial_for_daily_schedule(result)
                 elif schedule.ui_type == Schedule.UI_TYPE_WEEKLY:
-                    self.add_intial_for_weekly_schedule(result)
+                    self.add_initial_for_weekly_schedule(result)
                 elif schedule.ui_type == Schedule.UI_TYPE_MONTHLY:
-                    self.add_intial_for_monthly_schedule(result)
+                    self.add_initial_for_monthly_schedule(result)
                 elif schedule.ui_type == Schedule.UI_TYPE_CUSTOM_DAILY:
                     self.add_initial_for_custom_daily_schedule(result)
                 else:
