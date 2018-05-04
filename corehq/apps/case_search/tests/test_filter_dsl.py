@@ -5,7 +5,7 @@ from elasticsearch.exceptions import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from corehq.apps.case_search.filter_dsl import build_filter_from_ast
+from corehq.apps.case_search.filter_dsl import build_filter_from_ast, CaseFilterError
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
@@ -186,6 +186,16 @@ class TestFilterDsl(SimpleTestCase):
 
         built_filter = build_filter_from_ast("domain", parsed)
         self.assertEqual(expected_filter, built_filter)
+
+    def test_self_reference(self):
+        with self.assertRaises(CaseFilterError):
+            build_filter_from_ast(None, parse_xpath("name = other_property"))
+
+        with self.assertRaises(CaseFilterError):
+            build_filter_from_ast(None, parse_xpath("name > other_property"))
+
+        with self.assertRaises(CaseFilterError):
+            build_filter_from_ast(None, parse_xpath("parent/name > other_property"))
 
 
 class TestFilterDslLookups(TestCase):

@@ -102,6 +102,8 @@ def build_filter_from_ast(domain, node):
     def _parent_property_lookup(node):
         """given a node of the form `parent/foo = 'thing'`, return all case_ids where `foo = thing`
         """
+        if isinstance(node.right, Step):
+            _raise_step_RHS(node)
         new_query = "{} {} '{}'".format(serialize(node.left.right), node.op, node.right)
         return CaseSearchES().domain(domain).xpath_query(domain, new_query).scroll_ids()
 
@@ -116,6 +118,14 @@ def build_filter_from_ast(domain, node):
         e.g. `parent/host/thing = 'foo'`
         """
         return hasattr(node, 'left') and hasattr(node.left, 'op') and node.left.op == '/'
+
+    def _raise_step_RHS(node):
+        raise CaseFilterError(
+            _("You cannot reference a case property on the right side "
+              "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
+              "quotation marks.").format(serialize(node.right)),
+            serialize(node)
+        )
 
     def visit(node):
         if not hasattr(node, 'op'):
@@ -136,12 +146,7 @@ def build_filter_from_ast(domain, node):
                     return filters.NOT(q)
                 return q
             elif isinstance(node.right, Step):
-                raise CaseFilterError(
-                    _("You cannot reference a case property on the right side "
-                      "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-                      "quotation marks.").format(serialize(node.right)),
-                    serialize(node)
-                )
+                _raise_step_RHS(node)
             else:
                 raise CaseFilterError(
                     _("We didn't understand what you were trying to do with {}").format(serialize(node)),
@@ -149,7 +154,13 @@ def build_filter_from_ast(domain, node):
                 )
 
         if node.op in list(COMPARISON_MAPPING.keys()):
-            return case_property_range_query(serialize(node.left), **{COMPARISON_MAPPING[node.op]: node.right})
+            try:
+                return case_property_range_query(serialize(node.left), **{COMPARISON_MAPPING[node.op]: node.right})
+            except TypeError:
+                raise CaseFilterError(
+                    _("The right hand side of a comparison must be a number or date"),
+                    serialize(node),
+                )
 
         if node.op in list(OPERATOR_MAPPING.keys()):
             # This is another branch in the tree
