@@ -10,6 +10,8 @@ from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from memoized import memoized
+
+from custom.yeksi_naa_reports.reports import Dashboard1Report, Dashboard2Report, Dashboard3Report
 from dimagi.utils.parsing import json_format_date
 from six.moves import zip
 from six.moves import range
