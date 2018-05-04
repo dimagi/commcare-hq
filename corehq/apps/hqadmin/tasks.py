@@ -82,7 +82,7 @@ def send_mass_emails(self, username, recipients, subject, html, text):
 
         try:
             send_HTML_email(subject, recipient['username'], html_content, text_content=text_content)
-            successes.append((recipient['username'], None))
+            successes.append(recipient['username'])
         except Exception as e:
             failures.append((recipient['username'], e))
 
