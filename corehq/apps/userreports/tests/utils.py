@@ -4,7 +4,6 @@ from datetime import datetime
 from decimal import Decimal
 import functools
 import json
-import yaml
 import os
 import uuid
 
@@ -32,9 +31,9 @@ def get_sample_report_config():
 
 def get_sample_data_source():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
-    sample_file = os.path.join(folder, 'sample_data_source.yaml')
+    sample_file = os.path.join(folder, 'sample_data_source.json')
     with open(sample_file) as f:
-        structure = yaml.load(f)
+        structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)
 
 
