@@ -291,7 +291,7 @@ def mass_email(request):
             send_mass_emails.delay(request.couch_user.username, recipients, subject, html, text)
             messages.success(request, 'Task started. You will receive an email summarizing the results.')
         else:
-            messages.error(request, 'Something went wrong.')
+            messages.error(request, 'Something went wrong, see below.')
     else:
         form = EmailForm()
 
