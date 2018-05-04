@@ -414,7 +414,7 @@ class CustomEventForm(ContentForm):
 
     # Corresponds to AbstractTimedEvent.day
     day = IntegerField(
-        required=True,
+        required=False,
         min_value=1,
         label='',
     )
@@ -445,6 +445,65 @@ class CustomEventForm(ContentForm):
         min_value=0,
         label='',
     )
+
+    def clean_day(self):
+        if not self.schedule_form.cleaned_data_uses_timed_schedule():
+            return None
+
+        day = self.cleaned_data.get('day')
+        if not isinstance(day, int):
+            raise ValidationError(_("This field is required"))
+
+        # Django handles the rest of the validation
+        return day
+
+    def clean_time(self):
+        if (
+            not self.schedule_form.cleaned_data_uses_timed_schedule() or
+            self.schedule_form.cleaned_data.get('send_time_type') not in [
+                TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME
+            ]
+        ):
+            return None
+
+        return validate_time(self.cleaned_data.get('time'))
+
+    def clean_window_length(self):
+        if (
+            not self.schedule_form.cleaned_data_uses_timed_schedule() or
+            self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_RANDOM_TIME
+        ):
+            return None
+
+        window_length = self.cleaned_data.get('window_length')
+        if not isinstance(window_length, int):
+            raise ValidationError(_("This field is required"))
+
+        # Django handles the rest of the validation
+        return window_length
+
+    def clean_case_property_name(self):
+        if (
+            not self.schedule_form.cleaned_data_uses_timed_schedule() or
+            self.schedule_form.cleaned_data.get('send_time_type') != TimedSchedule.EVENT_CASE_PROPERTY_TIME
+        ):
+            return None
+
+        return validate_case_property_name(
+            self.cleaned_data.get('case_property_name'),
+            allow_parent_case_references=False,
+        )
+
+    def clean_minutes_to_wait(self):
+        if not self.schedule_form.cleaned_data_uses_alert_schedule():
+            return None
+
+        minutes_to_wait = self.cleaned_data.get('minutes_to_wait')
+        if not isinstance(minutes_to_wait, int):
+            raise ValidationError(_("This field is required"))
+
+        # Django handles the rest of the validation
+        return minutes_to_wait
 
     @staticmethod
     def compute_initial(event):
@@ -1658,6 +1717,14 @@ class ScheduleForm(Form):
 
     def cleaned_data_uses_alert_schedule(self):
         return self.cleaned_data.get('send_frequency') in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE)
+
+    def cleaned_data_uses_timed_schedule(self):
+        return self.cleaned_data.get('send_frequency') in (
+            self.SEND_DAILY,
+            self.SEND_WEEKLY,
+            self.SEND_MONTHLY,
+            self.SEND_CUSTOM_DAILY,
+        )
 
     def clean_send_time(self):
         if (

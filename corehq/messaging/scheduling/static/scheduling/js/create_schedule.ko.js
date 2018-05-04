@@ -4,7 +4,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             $(element).timepicker({
                 showMeridian: false,
                 showSeconds: false,
-                defaultTime: $(element).val() || '0:00',
+                defaultTime: $(element).val() || '',
             });
         },
         update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {}
@@ -83,10 +83,10 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         var self = this;
         ContentViewModel.call(self, initial_values);
 
-        self.day = ko.observable(initial_values.day || '1');
-        self.time = ko.observable(initial_values.time || '0:00');
+        self.day = ko.observable(initial_values.day);
+        self.time = ko.observable(initial_values.time);
         self.case_property_name = ko.observable(initial_values.case_property_name);
-        self.minutes_to_wait = ko.observable(initial_values.minutes_to_wait || '0');
+        self.minutes_to_wait = ko.observable(initial_values.minutes_to_wait);
         self.deleted = ko.observable(initial_values.DELETE);
         self.order = ko.observable(initial_values.ORDER);
 
@@ -119,7 +119,14 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         if(id < custom_event_formset.length) {
             self.eventAndContentViewModel = new EventAndContentViewModel(custom_event_formset[id]);
         } else {
-            self.eventAndContentViewModel = new EventAndContentViewModel({});
+            self.eventAndContentViewModel = new EventAndContentViewModel(
+                {
+                    day: 1,
+                    time: '12:00',
+                    minutes_to_wait: 0,
+                    deleted: false
+                }
+            );
         }
 
         self.templateId = ko.computed(function() {
