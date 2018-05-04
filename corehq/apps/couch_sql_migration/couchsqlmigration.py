@@ -22,7 +22,7 @@ from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
-    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL
+    CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
 )
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
@@ -405,7 +405,7 @@ def _copy_form_properties(domain, sql_form, couch_form):
 
 
 def _migrate_form_attachments(sql_form, couch_form):
-    """Copy over attachement meta - includes form.xml"""
+    """Copy over attachment meta - includes form.xml"""
     attachments = []
     for name, blob in six.iteritems(couch_form.blobs):
         attachments.append(XFormAttachmentSQL(
@@ -466,8 +466,23 @@ def _migrate_case_actions(couch_case, sql_case):
 
 
 def _migrate_case_attachments(couch_case, sql_case):
-    # TODO: maybe wait until case attachments are in blobdb
-    pass
+    """Copy over attachment meta """
+    attachments = []
+    for name, attachment in six.iteritems(couch_case.case_attachments):
+        attachments.append(CaseAttachmentSQL(
+            name=name,
+            case=sql_case,
+            identifier=attachment.identifier,
+            attachment_src=attachment.attachment_src,
+            attachment_from=attachment.attachment_from,
+            content_type=attachment.server_mime,
+            content_length=attachment.content_length,
+            blob_id=attachment.id,
+            blob_bucket=couch_case._blobdb_bucket(),
+            properties=attachment.attachment_properties,
+            md5=attachment.server_md5
+        ))
+    sql_case.unsaved_attachments = attachments
 
 
 def _migrate_case_indices(couch_case, sql_case):
