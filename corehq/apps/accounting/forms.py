@@ -2114,7 +2114,8 @@ class ResendEmailForm(forms.Form):
             record = WireBillingRecord.generate_record(self.invoice)
         else:
             record = BillingRecord.generate_record(self.invoice)
-        record.send_email(contact_emails=contact_emails)
+        for email in contact_emails:
+            record.send_email(contact_email=email)
 
 
 class SuppressInvoiceForm(forms.Form):

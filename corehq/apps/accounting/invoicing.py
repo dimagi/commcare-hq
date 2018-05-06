@@ -159,7 +159,8 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                record.send_email(contact_emails=self.recipients)
+                for email in self.recipients:
+                    record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
@@ -315,7 +316,8 @@ class DomainWireInvoiceFactory(object):
 
         if record.should_send_email:
             try:
-                record.send_email(contact_emails=self.contact_emails)
+                for email in self.contact_emails:
+                    record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:
