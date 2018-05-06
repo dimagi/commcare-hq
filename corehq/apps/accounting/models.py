@@ -1227,7 +1227,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1245,11 +1245,6 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        if 'date_delay_invoicing' in kwargs:
-            date_delay_invoicing = kwargs.pop('date_delay_invoicing')
-        else:
-            date_delay_invoicing = self.date_delay_invoicing
-
         new_subscription = Subscription(
             account=account if account else self.account,
             plan_version=new_plan_version,
@@ -1266,7 +1261,6 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=False,
             skip_auto_downgrade_reason='',
-            **kwargs
         )
 
         new_subscription.save()

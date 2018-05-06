@@ -1877,10 +1877,13 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def subscription_default_fields(self):
-        return {
+        fields = {
             'internal_change': True,
             'web_user': self.web_user,
         }
+        if self.current_subscription:
+            fields['date_delay_invoicing'] = self.current_subscription.date_delay_invoicing
+        return fields
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
