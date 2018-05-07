@@ -10,7 +10,7 @@ Next Steps: Please review the attached detailed invoice, and to confirm one of t
 - These charges are NOT real, or the charges are real but should be waived (if the users are test and can be deactivated or the customer should be on a higher plan level with more users included, etc)
 
 
-Please email your your PM, project backstop, and CC accounts@dimagi.com once you’ve determined the appropriate next steps.
+Please email your your PM, project backstop, and CC {{ accounts_email }} once you’ve determined the appropriate next steps.
 
 Thanks,
 Accounts
