@@ -23,7 +23,7 @@ from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, \
     DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column, default_age_interval, get_age_filters, \
     wasting_severe_column, wasting_moderate_column, wasting_normal_column, stunting_severe_column, \
-    stunting_moderate_column, stunting_normal_column
+    stunting_moderate_column, stunting_normal_column, current_month_stunting_column, current_month_wasting_column
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -1906,12 +1906,12 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             'severely_underweight': RawFilter("current_month_nutrition_status = 'severely_underweight'"),
             'moderately_underweight': RawFilter("current_month_nutrition_status = 'moderately_underweight'"),
             'normal_wfa': RawFilter("current_month_nutrition_status = 'normal'"),
-            'severely_stunted': RawFilter("current_month_stunting = 'severe'"),
-            'moderately_stunted': RawFilter("current_month_stunting = 'moderate'"),
-            'normal_hfa': RawFilter("current_month_stunting = 'normal'"),
-            'severely_wasted': RawFilter("current_month_wasting = 'severe'"),
-            'moderately_wasted': RawFilter("current_month_wasting = 'moderate'"),
-            'normal_wfh': RawFilter("current_month_wasting = 'normal'"),
+            'severely_stunted': RawFilter("{} = 'severe'".format(current_month_stunting_column(self.beta))),
+            'moderately_stunted': RawFilter("{} = 'moderate'".format(current_month_stunting_column(self.beta))),
+            'normal_hfa': RawFilter("{} = 'normal'".format(current_month_stunting_column(self.beta))),
+            'severely_wasted': RawFilter("{} = 'severe'".format(current_month_wasting_column(self.beta))),
+            'moderately_wasted': RawFilter("{} = 'moderate'".format(current_month_wasting_column(self.beta))),
+            'normal_wfh': RawFilter("{} = 'normal'".format(current_month_wasting_column(self.beta))),
         }[filter_name]
 
     def _build_additional_filters(self, filters):
@@ -2002,7 +2002,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Weight-for-Height Status (in Month)',
-                SimpleColumn('current_month_wasting'),
+                SimpleColumn(current_month_wasting_column(self.beta)),
                 format_fn=lambda x: get_status(
                     x,
                     'wasted',
@@ -2013,7 +2013,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Height-for-Age status (in Month)',
-                SimpleColumn('current_month_stunting'),
+                SimpleColumn(current_month_stunting_column(self.beta)),
                 format_fn=lambda x: get_status(
                     x,
                     'stunted',

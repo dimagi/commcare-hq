@@ -574,6 +574,14 @@ def stunting_normal_column(beta):
     return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
 
 
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+
+
 def default_age_interval(beta):
     return '0 - 5 years' if beta else '6 - 60 months'
 
