@@ -35,6 +35,7 @@ from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
 
 OPERATORS = {
     "==": operator.eq,
@@ -575,6 +576,21 @@ def stunting_normal_column(beta):
 
 def default_age_interval(beta):
     return '0 - 5 years' if beta else '6 - 60 months'
+
+
+def get_age_filters(beta):
+    if beta:
+        return [
+            NOT(EQ('age_tranche', 'age_72'))
+        ]
+    return [
+        AND([
+            NOT(EQ('age_tranche', 'age_0')),
+            NOT(EQ('age_tranche', 'age_6')),
+            NOT(EQ('age_tranche', 'age_72'))
+        ])
+    ]
+
 
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""

@@ -21,7 +21,9 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, \
-    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column
+    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column, default_age_interval, get_age_filters, \
+    wasting_severe_column, wasting_moderate_column, wasting_normal_column, stunting_severe_column, \
+    stunting_moderate_column, stunting_normal_column
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -295,10 +297,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.loc_key = '%s_id' % loc_level
+        self.beta = beta
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -420,39 +423,27 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
             AggregateColumn(
                 'Percent children with severe acute malnutrition (weight-for-height)',
                 percent_num,
-                [
-                    SumColumn('wasting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                {
+                    SumColumn(
+                        wasting_severe_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'weighed_and_height_measured_in_month',
                         alias='weighed_and_height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
-                ],
+                },
                 slug='wasting_severe'
             ),
             AggregateColumn(
                 'Percent children with moderate acute malnutrition (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn('wasting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_moderate_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_moderate'
@@ -461,13 +452,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children normal (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn('wasting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_normal_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_normal'
@@ -476,23 +464,14 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with severe stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_severe_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='stunting_severe'
@@ -501,13 +480,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with moderate stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_moderate_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_moderate'
@@ -516,13 +492,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with normal (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_normal_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_normal'
@@ -2181,8 +2154,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with severe acute '
-                                          'malnutrition (weight-for-height)',
+                                'header': (
+                                    'Children from {} with severe acute '
+                                    'malnutrition (weight-for-height)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'wasting_severe',
                                 'average': [],
                                 'format': 'percent',
@@ -2191,8 +2166,8 @@ class FactSheetsReport(object):
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': (
-                                    'Children from 6 - 60 months with moderate '
-                                    'acute malnutrition (weight-for-height)'
+                                    'Children from {} years with moderate acute '
+                                    'malnutrition (weight-for-height)'.format(default_age_interval(self.beta))
                                 ),
                                 'slug': 'wasting_moderate',
                                 'average': [],
@@ -2201,14 +2176,20 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with normal weight-for-height',
+                                'header': (
+                                    'Children from {} with normal '
+                                    'weight-for-height'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'wasting_normal',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
+                                'header': (
+                                    'Children from {} years with severe stunting '
+                                    '(height-for-age)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_severe',
                                 'average': [],
                                 'format': 'percent',
@@ -2216,7 +2197,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
+                                'header': (
+                                    'Children from {} with moderate stunting '
+                                    '(height-for-age)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_moderate',
                                 'average': [],
                                 'format': 'percent',
@@ -2224,7 +2208,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with normal height-for-age',
+                                'header': (
+                                    'Children from {} with normal '
+                                    'height-for-age'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_normal',
                                 'average': [],
                                 'format': 'percent'
@@ -2623,6 +2610,7 @@ class FactSheetsReport(object):
                 config=self.config,
                 loc_level=self.loc_level,
                 show_test=self.show_test,
+                beta=self.beta
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
                 config=self.config,

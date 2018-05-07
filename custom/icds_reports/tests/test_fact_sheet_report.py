@@ -23,6 +23,19 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
         loc_level = get_location_level(config.get('aggregation_level'))
         return FactSheetsReport(config=config, loc_level=loc_level).get_data()
 
+    def get_data_icds_feature_flag(self):
+        config = {
+            'aggregation_level': 1,
+            'month': datetime(2017, 6, 1).date(),
+            'previous_month': datetime(2017, 5, 1).date(),
+            'two_before': datetime(2017, 4, 1).date(),
+            'category': 'maternal_and_child_nutrition',
+            'domain': 'icds-cas'
+        }
+
+        loc_level = get_location_level(config.get('aggregation_level'))
+        return FactSheetsReport(config=config, loc_level=loc_level, beta=True).get_data()
+
     def test_section_amount(self):
         self.assertEqual(len(self.get_data()['config']['sections']), 1)
 
@@ -174,6 +187,28 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             }
         )
 
+    def test_wasting_severe_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][6],
+            {
+                'average': {
+                    'html': 2.380952380952381,
+                    'sort_key': 2.380952380952381
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
+                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)',
+                'reverseColors': True,
+                'slug': 'wasting_severe'
+            }
+        )
+
     def test_wasting_moderate(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][7],
@@ -191,6 +226,28 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)',
+                'reverseColors': True,
+                'slug': 'wasting_moderate'
+            }
+        )
+
+    def test_wasting_moderate_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][7],
+            {
+                'average': {
+                    'html': 2.380952380952381,
+                    'sort_key': 2.380952380952381
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 3.225806451612903, 'sort_key': 3.225806451612903},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)',
                 'reverseColors': True,
                 'slug': 'wasting_moderate'
             }
@@ -217,6 +274,27 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             }
         )
 
+    def test_wasting_normal_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][8],
+            {
+                'average': {
+                    'html': 0.0,
+                    'sort_key': 0.0
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with normal weight-for-height'},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with normal weight-for-height',
+                'slug': 'wasting_normal'
+            }
+        )
+
     def test_stunting_severe(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][9],
@@ -234,6 +312,28 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
+                'reverseColors': True,
+                'slug': 'stunting_severe'
+            }
+        )
+
+    def test_stunting_sever_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data()['config']['sections'][0]['rows_config'][9],
+            {
+                'average': {
+                    'html': 0.0,
+                    'sort_key': 0.0
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with severe stunting (height-for-age)'},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with severe stunting (height-for-age)',
                 'reverseColors': True,
                 'slug': 'stunting_severe'
             }
@@ -261,6 +361,28 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             }
         )
 
+    def test_stunting_moderate_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][10],
+            {
+                'average': {
+                    'html': 0.0,
+                    'sort_key': 0.0
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with moderate stunting (height-for-age)'},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with moderate stunting (height-for-age)',
+                'reverseColors': True,
+                'slug': 'stunting_moderate'
+            }
+        )
+
     def test_stunting_normal(self):
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][11],
@@ -278,6 +400,27 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
                 'data_source': 'AggChildHealthMonthlyDataSource',
                 'format': 'percent',
                 'header': 'Children from 6 - 60 months with normal height-for-age',
+                'slug': 'stunting_normal'
+            }
+        )
+
+    def test_stunting_normal_icds_feature_flag(self):
+        self.assertDictEqual(
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][11],
+            {
+                'average': {
+                    'html': 2.3255813953488373,
+                    'sort_key': 2.3255813953488373
+                },
+                'data': [
+                    {'html': 'Children from 0 - 5 years with normal height-for-age'},
+                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 0.0, 'sort_key': 0.0},
+                    {'html': 0}
+                ],
+                'data_source': 'AggChildHealthMonthlyDataSource',
+                'format': 'percent',
+                'header': 'Children from 0 - 5 years with normal height-for-age',
                 'slug': 'stunting_normal'
             }
         )
