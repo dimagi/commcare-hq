@@ -102,7 +102,7 @@ BEGIN
     'nutrition_status_last_recorded, ' ||
     'current_month_nutrition_status, ' ||
     'nutrition_status_weighed, ' ||
-    'num_rations_distributed, ' ||
+    'CASE WHEN thr_eligible = 1 THEN 0 ELSE NULL END,' ||
     'pse_eligible, ' ||
     'pse_days_attended, ' ||
     'born_in_month, ' ||
@@ -219,6 +219,7 @@ BEGIN
     ') ';
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'num_rations_distributed = CASE WHEN chm_monthly.thr_eligible = 1 THEN COALESCE(agg.days_ration_given_child, 0) ELSE NULL END, ' ||
       'days_ration_given_child = agg.days_ration_given_child  ' ||
     'FROM ' || quote_ident(_agg_thr_form_table) || ' agg ' ||
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
