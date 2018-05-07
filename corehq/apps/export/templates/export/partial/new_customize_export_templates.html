@@ -53,7 +53,7 @@
                         <a class="btn btn-xs btn-primary" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
                         <a class="btn btn-xs btn-default" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
                     </th>
-                    <th class="col-sm-6"><!-- TODO: shrink if extra columns are present -->
+                    <th data-bind="attr: { 'class': $root.questionColumnClass }">
                         {% if export_instance.type == 'form' %}
                             {% trans "Question" %}
                         {% else %}
@@ -95,7 +95,7 @@
                             </span>
                         </button>
                     </th>
-                    <th class="col-sm-5"><!-- TODO: shrink if extra columns are present -->
+                    <th data-bind="attr: { 'class': $root.displayColumnClass }">
                         {% trans "Display" %}<br />
                         {% if export_instance.type == 'form' %}
                         <a
@@ -114,7 +114,7 @@
                     <th class="col-sm-2">{% trans "Type" %}</th>
                     {% endif %}
                     {% if allow_deid %}
-                    <th class="col-sm-2" class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
+                    <th class="col-sm-2 deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
                     {% endif %}
                 </tr>
                 </thead>
