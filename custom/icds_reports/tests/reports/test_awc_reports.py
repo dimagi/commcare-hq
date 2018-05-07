@@ -1267,8 +1267,8 @@ class TestAWCReport(TestCase):
                 "label": "Early Initiation of Breastfeeding",
                 'help_text': (
                     "Percentage of children who were put to the breast within one hour of birth. "
-                        "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' "
-                        "rich in nutrients and encourages exclusive breastfeeding practice"
+                    "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' "
+                    "rich in nutrients and encourages exclusive breastfeeding practice"
                 ),
             }
         )
