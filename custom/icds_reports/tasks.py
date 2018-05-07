@@ -99,7 +99,11 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
 def _create_aggregate_functions(cursor):
     try:
-        sql_file_names = ('create_functions.sql', 'insert_into_child_health_monthly.sql',)
+        sql_file_names = (
+            'create_functions.sql',
+            'insert_into_child_health_monthly.sql',
+            'aggregate_child_health.sql',
+        )
         for sql_file_name in sql_file_names:
             path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', sql_file_name)
             celery_task_logger.info("Starting icds reports %s", sql_file_name)
