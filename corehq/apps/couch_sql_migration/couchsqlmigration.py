@@ -477,7 +477,7 @@ def _migrate_case_attachments(couch_case, sql_case):
             attachment_from=attachment.attachment_from,
             content_type=attachment.server_mime,
             content_length=attachment.content_length,
-            blob_id=attachment.id,
+            blob_id=blob.id,
             blob_bucket=couch_case._blobdb_bucket(),
             properties=attachment.attachment_properties,
             md5=attachment.server_md5
