@@ -24,4 +24,4 @@ hqDefine("userreports/js/build_in_progress_warning", function() {
             });
         })();
     }
-})
+});
