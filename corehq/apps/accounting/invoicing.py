@@ -24,6 +24,7 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
+    SubscriptionType
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
@@ -159,8 +160,11 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                for email in self.recipients:
-                    record.send_email(contact_email=email)
+                if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
+                    record.send_email(contact_email=invoice.account.dimagi_contact, cc_emails=self.recipients)
+                else:
+                    for email in self.recipients:
+                        record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
