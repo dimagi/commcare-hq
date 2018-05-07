@@ -15,7 +15,8 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.messages import wasting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, wasting_moderate_column, wasting_severe_column, wasting_normal_column, default_age_interval
+    get_child_locations, wasting_moderate_column, wasting_severe_column, wasting_normal_column, \
+    default_age_interval
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -42,7 +43,7 @@ def get_prevalence_of_severe_data_map(domain, config, loc_level, show_test=False
             if icds_feature_flag:
                 queryset = queryset.exclude(age_tranche=72)
             else:
-                queryset= queryset.exclude(age_tranche__in=[0, 6, 72])
+                queryset = queryset.exclude(age_tranche__in=[0, 6, 72])
         return queryset
 
     data_for_map = defaultdict(lambda: {

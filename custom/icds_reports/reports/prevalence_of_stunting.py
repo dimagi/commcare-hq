@@ -14,7 +14,8 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
-    get_child_locations, stunting_moderate_column, stunting_severe_column, stunting_normal_column, default_age_interval
+    get_child_locations, stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
+    default_age_interval
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -352,7 +353,9 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
-    __, __, chosen_filters = chosen_filters_to_labels(config, default_interval=default_age_interval(icds_feature_flag))
+    __, __, chosen_filters = chosen_filters_to_labels(
+        config, default_interval=default_age_interval(icds_feature_flag)
+    )
 
     return {
         "tooltips_data": dict(tooltips_data),

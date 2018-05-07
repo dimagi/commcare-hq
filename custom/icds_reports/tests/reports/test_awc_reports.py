@@ -1070,8 +1070,8 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Wasting (Weight-for-Height)",
                 "help_text": (
-                    "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with weight-for-height "
-                    "below -3 standard deviations of the WHO Child Growth Standards median. "
+                    "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
+                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median. "
                     "<br/><br/>"
                     "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
                     "undernutrition usually as a consequence of insufficient food intake or a high "

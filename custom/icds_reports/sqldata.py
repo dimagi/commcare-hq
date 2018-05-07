@@ -21,9 +21,10 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, \
-    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column, default_age_interval, get_age_filters, \
-    wasting_severe_column, wasting_moderate_column, wasting_normal_column, stunting_severe_column, \
-    stunting_moderate_column, stunting_normal_column, current_month_stunting_column, current_month_wasting_column
+    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column, default_age_interval, \
+    get_age_filters, wasting_severe_column, wasting_moderate_column, wasting_normal_column, \
+    stunting_severe_column, stunting_moderate_column, stunting_normal_column, current_month_stunting_column, \
+    current_month_wasting_column
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -1102,7 +1103,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate wasting',
                 percent,
                 [
-                    SumColumn(wasting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
+                    SumColumn(
+                        wasting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_moderate_wasting'
@@ -1111,7 +1114,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal weight-for-height',
                 percent,
                 [
-                    SumColumn(wasting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
+                    SumColumn(
+                        wasting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_normal_wasting'
@@ -1120,7 +1125,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with severe stunting',
                 percent,
                 [
-                    SumColumn(stunting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
+                    SumColumn(
+                        stunting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
@@ -1133,7 +1140,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate stunting',
                 percent,
                 [
-                    SumColumn(stunting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
+                    SumColumn(
+                        stunting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_moderate_stunting'
@@ -1142,7 +1151,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal height-for-age',
                 percent,
                 [
-                    SumColumn(stunting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
+                    SumColumn(
+                        stunting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'

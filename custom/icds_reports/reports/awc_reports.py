@@ -16,8 +16,9 @@ from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
     AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
-    person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, wasting_severe_column, \
-    stunting_moderate_column, stunting_severe_column, current_month_stunting_column, current_month_wasting_column
+    person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
+    wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
+    current_month_wasting_column
 from custom.icds_reports.const import MapColors
 import six
 
@@ -436,8 +437,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Underweight (Weight-for-Age)'),
                     'help_text': _((
                         "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
-                        "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. "
-                        "Children who are moderately or severely underweight have a higher risk of mortality. "
+                        "weight-for-age less than -2 standard deviations of the WHO Child "
+                        "Growth Standards median. Children who are moderately or severely underweight "
+                        "have a higher risk of mortality. "
                     )),
                     'percent': percent_diff(
                         'underweight',
@@ -974,7 +976,9 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
     }
 
 
-@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'], timeout=30 * 60)
+@quickcache([
+    'start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'
+],timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, icds_features_flag):
 
     data = ChildHealthMonthlyView.objects.filter(
