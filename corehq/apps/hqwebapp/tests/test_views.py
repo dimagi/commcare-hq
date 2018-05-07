@@ -1,16 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-
-import doctest
-
-from django.test import TestCase, SimpleTestCase
+from django.test import TestCase
 from django.urls import reverse
 
 from corehq.apps.domain.tests.test_views import BaseAutocompleteTest
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-import corehq.apps.hqwebapp.views
-from corehq.apps.hqwebapp.views import json_iterdump
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
@@ -122,25 +117,3 @@ class TestBugReport(TestCase):
 
         # Shouldn't be able to update description as commcare user
         self.assertIsNone(domain_object.project_description)
-
-
-class JsonIteratorTests(SimpleTestCase):
-
-    def test_no_gen(self):
-        data = {'foo': [0, 1, 2]}
-        iterator = json_iterdump(data)
-        json_data = ''.join(iterator)
-        self.assertEqual(json_data, '{"foo": [0, 1, 2]}')
-
-    def test_gen(self):
-        data = {'foo': (i for i in range(3))}
-        iterator = json_iterdump(data)
-        json_data = ''.join(iterator)
-        self.assertEqual(json_data, '{"foo": [0, 1, 2]}')
-
-
-class DocTests(SimpleTestCase):
-
-    def test_doctests(self):
-        results = doctest.testmod(corehq.apps.hqwebapp.views)
-        self.assertEqual(results.failed, 0)

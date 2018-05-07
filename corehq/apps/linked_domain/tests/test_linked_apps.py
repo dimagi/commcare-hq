@@ -20,6 +20,7 @@ from corehq.apps.app_manager.tests.util import TestXmlMixin
 from corehq.apps.app_manager.views.utils import overwrite_app, _get_form_id_map
 from corehq.apps.hqmedia.models import CommCareImage, CommCareMultimedia
 from corehq.apps.linked_domain.util import convert_app_for_remote_linking
+from io import open
 
 
 class BaseLinkedAppsTest(TestCase, TestXmlMixin):
@@ -165,7 +166,7 @@ class TestRemoteLinkedApps(BaseLinkedAppsTest):
     @staticmethod
     def _get_image_data(filename):
         image_path = os.path.join('corehq', 'apps', 'hqwebapp', 'static', 'hqwebapp', 'images', filename)
-        with open(image_path, 'r') as f:
+        with open(image_path, 'rb') as f:
             return f.read()
 
     def test_remote_app(self):

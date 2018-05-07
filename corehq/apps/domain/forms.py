@@ -1877,10 +1877,13 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def subscription_default_fields(self):
-        return {
+        fields = {
             'internal_change': True,
             'web_user': self.web_user,
         }
+        if self.current_subscription:
+            fields['date_delay_invoicing'] = self.current_subscription.date_delay_invoicing
+        return fields
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1969,7 +1972,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     )
 
     trial_length = forms.ChoiceField(
-        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        choices=[(days, "%d days" % days) for days in [15, 30, 60, 90]],
         label="Trial Length",
     )
 
@@ -1989,12 +1992,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.Div(
                 crispy.Div(
-                    crispy.HTML(_(
-                        '<p><i class="fa fa-info-circle"></i> The trial includes '
-                        'access to all features, 5 mobile workers, and 25 SMS.  Fees '
-                        'apply for users or SMS in excess of these limits (1 '
-                        'USD/user/month, regular SMS fees).</p>'
-                    )),
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '

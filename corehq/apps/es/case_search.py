@@ -10,16 +10,24 @@ from corehq.apps.es import case_search as case_search_es
          .domain('testproject')
 """
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
-from corehq.apps.es.aggregations import TermsAggregation, BucketResult
+
+from six import string_types
+
+from corehq.apps.case_search.const import (
+    INDICES_PATH,
+    REFERENCED_ID,
+    CASE_PROPERTIES_PATH,
+    RELEVANCE_SCORE,
+    VALUE_DATE,
+    VALUE_NUMERIC,
+    VALUE_TEXT,
+)
+from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_ALIAS
 
 from . import filters, queries
-
-PATH = "case_properties"
-RELEVANCE_SCORE = "commcare_search_score"
 
 
 class CaseSearchES(CaseES):
@@ -41,7 +49,8 @@ class CaseSearchES(CaseES):
 
     def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
         """
-        Search for a case property.
+        Search for all cases where case property `key` has text value `value`
+
         Usage: (CaseSearchES()
                 .domain('swashbucklers')
                 .case_property_query("name", "rebdeard", "must", fuzzy=True)
@@ -52,39 +61,49 @@ class CaseSearchES(CaseES):
         Can be chained with regular filters . Running a set_query after this will destroy it.
         Clauses can be any of SHOULD, MUST, or MUST_NOT
         """
-        # Filter by case_properties.key and do a text search in case_properties.value
-        result = self
         if fuzzy:
-            # Results must at least match the fuzzy value, and exact matches are weighted higher. `clause` param
-            # is overridden to do this.
-            fuzzy_query = queries.nested(
-                PATH,
-                queries.filtered(
-                    queries.match(value, '{}.value'.format(PATH), fuzziness='AUTO'),
-                    filters.term('{}.key'.format(PATH), key),
-                )
-            )
-            result = result._add_query(fuzzy_query, queries.MUST)
-            clause = queries.SHOULD
-
-        exact_query = queries.nested(
-            PATH,
-            queries.filtered(
-                queries.match(value, '{}.value'.format(PATH), fuzziness='0'),
-                filters.term('{}.key'.format(PATH), key),
-            )
-        )
-        return result._add_query(exact_query, clause)
+            positive_clause = clause != queries.MUST_NOT
+            return (
+                # fuzzy match
+                self._add_query(self._get_text_query(key, value, fuzziness='AUTO'), clause)
+                # exact match. added to improve the score of exact matches
+                ._add_query(self._get_text_query(key, value, fuzziness='0'),
+                            queries.SHOULD if positive_clause else clause))
+        else:
+            return self._add_query(self._get_text_query(key, value, fuzziness='0'), clause)
 
     def regexp_case_property_query(self, key, regex, clause=queries.MUST):
-        new_query = queries.nested(
-            PATH,
-            queries.filtered(
-                filters.term('{}.key'.format(PATH), key),
-                queries.regexp('{}.value'.format(PATH), regex)
-            )
+        """
+        Search for all cases where case property `key` matches the regular expression in `regex`
+        """
+        return self._add_query(
+            self._get_query(key, queries.regexp("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)),
+            clause,
         )
-        return self._add_query(new_query, clause)
+
+    def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+        """
+        Search for all cases where case property `key` fulfills the range criteria.
+        """
+        return self._add_query(
+            self._get_query(
+                key,
+                queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), gt, gte, lt, lte)
+            ),
+            clause,
+        )
+
+    def date_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+        """
+        Search for all cases where case property `key` fulfills the date range criteria.
+        """
+        return self._add_query(
+            self._get_query(
+                key,
+                queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), gt, gte, lt, lte)
+            ),
+            clause,
+        )
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
@@ -102,13 +121,43 @@ class CaseSearchES(CaseES):
             )
         return self
 
+    def _get_text_query(self, key, value, fuzziness):
+        # Filter by case_properties.key and do a text search in case_properties.value
+        return self._get_query(
+            key,
+            queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
+        )
+
+    def _get_query(self, key, query):
+        return queries.nested(
+            CASE_PROPERTIES_PATH,
+            queries.filtered(
+                query,
+                filters.term('{}.key'.format(CASE_PROPERTIES_PATH), key),
+            )
+        )
+
+    def get_child_cases(self, case_ids):
+        """Returns all cases that reference cases with id: `case_ids`
+        """
+        if isinstance(case_ids, string_types):
+            case_ids = [case_ids]
+
+        return self._add_query(
+            queries.nested(
+                INDICES_PATH,
+                queries.match(" ".join(case_ids), '{}.{}'.format(INDICES_PATH, REFERENCED_ID))
+            ),
+            queries.MUST,
+        )
+
 
 def case_property_filter(key, value):
     return filters.nested(
-        PATH,
+        CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key".format(PATH), key),
-            filters.term("{}.value".format(PATH), value),
+            filters.term("{}.key".format(CASE_PROPERTIES_PATH), key),
+            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
         )
     )
 

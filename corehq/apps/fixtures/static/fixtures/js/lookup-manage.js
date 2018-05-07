@@ -233,8 +233,8 @@ hqDefine("fixtures/js/lookup-manage", [
         return self;
     }
 
-    function App() {
-        var self = this;
+    function appModel() {
+        var self = {};
         self.data_types = ko.observableArray([]);
         self.loading = ko.observable(0);
         self.file = ko.observable();
@@ -378,10 +378,12 @@ hqDefine("fixtures/js/lookup-manage", [
                 },
             });
         };
+
+        return self;
     }
 
     var el = $('#fixtures-ui');
-    var app = new App();
+    var app = appModel();
     el.koApplyBindings(app);
     el.removeClass('hide');
     app.loadData();

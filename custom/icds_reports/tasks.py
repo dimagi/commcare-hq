@@ -7,7 +7,6 @@ from datetime import date, datetime, timedelta
 import io
 import logging
 import os
-import uuid
 
 from celery import chain
 from celery.schedules import crontab
@@ -36,7 +35,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthTHRForms,
 )
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features
+from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
@@ -155,13 +154,14 @@ def icds_aggregation_task(self, date, func):
         )
         notify_exception(
             None, message="Error occurred during ICDS aggregation",
-            details={'func': func.__name, 'date': date, 'error': exc}
+            details={'func': func.__name__, 'date': date, 'error': exc}
         )
         self.retry(exc=exc)
 
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
 
+@track_time
 def _aggregate_cf_forms(day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -172,6 +172,7 @@ def _aggregate_cf_forms(day):
         AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
 
 
+@track_time
 def _aggregate_gm_forms(day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -207,10 +208,12 @@ def aggregate_awc_daily(day):
     _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
 
 
+@track_time
 def _update_months_table(day):
     _run_custom_sql_script(["SELECT update_months_table(%s)"], day)
 
 
+@track_time
 def _child_health_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('child_health_monthly', %s)",
@@ -218,6 +221,7 @@ def _child_health_monthly_table(day):
     ], day)
 
 
+@track_time
 def _ccs_record_monthly_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('ccs_record_monthly', %s)",
@@ -225,6 +229,7 @@ def _ccs_record_monthly_table(day):
     ], day)
 
 
+@track_time
 def _daily_attendance_table(day):
     _run_custom_sql_script([
         "SELECT create_new_table_for_month('daily_attendance', %s)",
@@ -232,6 +237,7 @@ def _daily_attendance_table(day):
     ], day)
 
 
+@track_time
 def _agg_child_health_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
@@ -239,6 +245,7 @@ def _agg_child_health_table(day):
     ], day)
 
 
+@track_time
 def _agg_ccs_record_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_ccs_record', %s)",
@@ -246,6 +253,7 @@ def _agg_ccs_record_table(day):
     ], day)
 
 
+@track_time
 def _agg_awc_table(day):
     _run_custom_sql_script([
         "SELECT create_new_aggregate_table_for_month('agg_awc', %s)",
@@ -330,19 +338,15 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
 
     if pdf_format == 'one':
         report_context['reports'] = report_data
-        cache_key = create_pdf_file(uuid.uuid4().hex, report_context)
+        cache_key = create_pdf_file(report_context)
     else:
         for data in report_data:
-            pdf_hash = uuid.uuid4().hex
             report_context['reports'] = [data]
+            pdf_hash = create_pdf_file(report_context)
             pdf_files.append({
                 'uuid': pdf_hash,
                 'location_name': data['awc_name']
             })
-            create_pdf_file(
-                pdf_hash,
-                report_context
-            )
         cache_key = zip_folder(pdf_files)
 
     params = {

@@ -145,10 +145,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             # delete all existing rows for this doc to ensure we aren't left with stale data
             delete = table.delete(table.c.doc_id == doc['_id'])
             connection.execute(delete)
-            for row in rows:
-                all_values = {i.column.database_column_name: i.value for i in row}
-                insert = table.insert().values(**all_values)
-                connection.execute(insert)
+
+        with self.session_helper.session_context() as session:
+            session.bulk_insert_mappings(self.get_sqlalchemy_mapping(), [
+                {i.column.database_column_name: i.value for i in row}
+                for row in rows
+            ])
 
     def delete(self, doc):
         table = self.get_table()
