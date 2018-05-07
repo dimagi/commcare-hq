@@ -188,9 +188,10 @@
                                         'data-toggle': column.help_text ? 'tooltip' : null
                                     },
                                     css: {
-                                        'export-tooltip': column.translatedHelp()
+                                        'export-tooltip': column.translatedHelp(),
+                                        'break-all-words': 1,
                                     }
-                                " style="word-break: break-all;"></code>
+                                "></code>
                             <!-- /ko -->
                             <!-- ko if: column.isEditable() -->
                             <input
