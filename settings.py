@@ -377,7 +377,6 @@ HQ_APPS = (
     'custom.hki',
     'corehq.motech.openmrs',
     'custom.champ',
-    'custom.yeksi_naa_reports',
 )
 
 ENIKSHAY_APPS = (
