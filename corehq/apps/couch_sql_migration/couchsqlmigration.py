@@ -6,6 +6,7 @@ import os
 import uuid
 from copy import deepcopy
 from datetime import datetime
+from time import time, sleep
 
 from django.db.utils import IntegrityError
 
@@ -37,13 +38,16 @@ from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from gevent.pool import Pool
 import six
 import logging
+from collections import defaultdict, deque
 _logger = logging.getLogger('main_couch_sql_datamigration')
+
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -617,3 +621,59 @@ def commit_migration(domain_name):
         assert should_use_sql_backend(domain_name)
     datadog_counter("commcare.couch_sql_migration.total_committed")
     _logger.info("committed migration for {}".format(domain))
+
+
+class PartiallyLockingQueue(object):
+    def __init__(self, key_base):
+        self.queue_by_id = defaultdict(deque)
+        self.key_base = "%s.%%s.%%s" % key_base  # <key_base>.<lock_type>.<obj_id>
+        self.redis = get_redis_client()
+        self.expire_time = 60
+
+    def try_obj(self, obj_id, queued_obj):
+        if not self.check_lock(obj_id):
+            self.set_lock(obj_id)
+            return queued_obj
+        self.add_item(obj_id, queued_obj)
+        return None
+
+    def get_next(self):
+        for obj_id, queue in self.queue_by_id:
+            if not self.check_lock(obj_id):
+                self.set_lock(obj_id)
+                return obj_id, queue.popleft()
+        return None, None
+
+    def has_next(self):
+        for obj_id, queue in self.queue_by_id:
+            if len(queue) > 0:
+                return True
+        return False
+
+    def add_item(self, obj_id, queued_obj):
+        self.queue_by_id[obj_id].append(queued_obj)
+
+    def check_lock(self, obj_id):
+        value = self.redis.get(self.get_obj_lock_key(obj_id))
+        if not value:
+            return False
+        if value < time():
+            return True
+        self.release_lock(obj_id)
+        raise LockTimeoutException("Object {} should not be taking so long for this action".format(obj_id))
+
+    def set_lock(self, obj_id):
+        return self.redis.setnx(self.get_obj_lock_key(obj_id), expires=self.get_expiry_time())
+
+    def release_lock(self, obj_id):
+        self.redis.delete(self._get_lock_key(obj_id))
+
+    def get_expiry_time(self):
+        return time() + self.expire_time
+
+    def get_obj_lock_key(self, obj_id):
+        return self.key_base % ("obj", obj_id)
+
+
+class LockTimeoutException(Exception):
+    pass
