@@ -18,6 +18,7 @@ from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrappe
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -177,6 +178,12 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
     include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
+
+    if not should_use_sql_backend(case_transaction.form.domain):
+        # couch domains return 2 transactions for case properties created in a create form
+        if case_transaction.is_case_create and not include_create_fields:
+            return False
+
     case_updates = get_case_updates(case_transaction.form)
 
     actions = []
@@ -189,10 +196,10 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     for (modified_on, action, case_transaction) in actions:
         if action:
             property_changed = action.dynamic_properties.get(case_property_name)
-            if include_create_fields:
+            if include_create_fields and not property_changed:
                 property_changed = getattr(action, case_property_name, None)
 
-            if property_changed:
+            if property_changed is not None:
                 return PropertyChangedInfo(case_transaction, property_changed, modified_on)
 
     return False

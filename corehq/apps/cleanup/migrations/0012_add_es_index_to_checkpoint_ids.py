@@ -12,7 +12,7 @@ RENAMES = (
     ("applications-to-elasticsearch", "ApplicationToElasticsearchPillow-hqapps_2016-10-20_1835"),
     ("all-cases-to-elasticsearch", "CaseToElasticsearchPillow-hqcases_2016-03-04"),
     ("all-xforms-to-elasticsearch", "XFormToElasticsearchPillow-xforms_2016-07-07"),
-    ("case-search-to-elasticsearch", "CaseSearchToElasticsearchPillow-case_search_2018-04-18"),
+    ("case-search-to-elasticsearch", "CaseSearchToElasticsearchPillow-case_search_2018-04-27"),
     ("GroupPillow", "GroupPillow-hqgroups_20150403_1501"),
     ("GroupToUserPillow", "GroupToUserPillow-hqusers_2016-09-29"),
     ("KafkaDomainPillow", "KafkaDomainPillow-hqdomains_2016-08-08"),

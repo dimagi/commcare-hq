@@ -21,8 +21,6 @@ from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, Dict
 
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('icds_month_start', 'custom.icds_reports.ucr.expressions.month_start'),
-    ('icds_month_end', 'custom.icds_reports.ucr.expressions.month_end'),
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
     ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
     ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
@@ -349,60 +347,6 @@ class ICDSUserLocation(JsonObject):
 
 def _datetime_now():
     return datetime.utcnow()
-
-
-def month_start(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_start_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def month_end(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_end_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
 
 
 def parent_id(spec, context):

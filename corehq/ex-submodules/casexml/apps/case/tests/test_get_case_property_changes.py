@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
+
 from datetime import datetime
 
 import pytz
@@ -9,8 +10,8 @@ from django.test import TestCase
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import (
-    get_all_changes_to_case_property,
     get_datetime_case_property_changed,
+    get_paged_changes_to_case_property,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
@@ -18,8 +19,9 @@ from corehq.form_processor.tests.utils import run_with_all_backends
 
 class TestCasePropertyChanged(TestCase):
     def setUp(self):
-        self.factory = CaseFactory('domain')
-        self.case = self.factory.create_case(owner_id='owner')
+        self.domain = "isildur"
+        self.factory = CaseFactory(self.domain)
+        self.case = self.factory.create_case(owner_id='owner', case_name="Aragorn", update={"sword": "Narsil"})
         self.other_case = self.factory.create_case()
 
     def tearDown(self):
@@ -49,7 +51,7 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors('domain').get_case(self.case.case_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
 
         self.assertEqual(
             updated_on.replace(tzinfo=pytz.UTC),
@@ -93,7 +95,7 @@ class TestCasePropertyChanged(TestCase):
                     "date_modified": day_2,
                 }),
         )
-        case = CaseAccessors('domain').get_case(self.case.case_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
 
         self.assertEqual(
             day_2.replace(tzinfo=pytz.UTC),
@@ -102,7 +104,7 @@ class TestCasePropertyChanged(TestCase):
 
     @run_with_all_backends
     def test_owner_id_changed(self):
-        changes = get_all_changes_to_case_property(self.case, 'owner_id')
+        changes, _ = get_paged_changes_to_case_property(self.case, 'owner_id')
         self.assertEqual(len(changes), 1)
         self.assertEqual(changes[0].new_value, 'owner')
 
@@ -115,9 +117,43 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
-        case = CaseAccessors('domain').get_case(self.case.case_id)
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
 
-        changes = get_all_changes_to_case_property(case, 'owner_id')
+        changes, _ = get_paged_changes_to_case_property(case, 'owner_id')
         self.assertEqual(len(changes), 2)
-        self.assertEqual(changes[0].new_value, 'owner')
-        self.assertEqual(changes[1].new_value, 'new_owner')
+        self.assertEqual(changes[0].new_value, 'new_owner')
+        self.assertEqual(changes[1].new_value, 'owner')
+
+    @run_with_all_backends
+    def test_name_changed(self):
+        self.factory.create_or_update_case(
+            CaseStructure(
+                self.case.case_id,
+                attrs={
+                    "update": {
+                        'name': 'Strider'
+                    },
+                }),
+        )
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        changes, _ = get_paged_changes_to_case_property(case, 'name')
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].new_value, 'Strider')
+        self.assertEqual(changes[1].new_value, 'Aragorn')
+
+    @run_with_all_backends
+    def test_blank_change(self):
+        self.factory.create_or_update_case(
+            CaseStructure(
+                self.case.case_id,
+                attrs={
+                    "update": {
+                        'sword': ''
+                    },
+                }),
+        )
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        changes, _ = get_paged_changes_to_case_property(case, 'sword')
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].new_value, '')
+        self.assertEqual(changes[1].new_value, 'Narsil')
