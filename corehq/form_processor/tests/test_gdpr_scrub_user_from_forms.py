@@ -9,6 +9,7 @@ from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
+from corehq.apps.users.const import REDACTED_USERNAME
 
 import uuid
 
@@ -36,11 +37,11 @@ EXPECTED_FORM_XML = """<?xml version='1.0' ?>
         <n0:deviceID>DEV IL</n0:deviceID>
         <n0:timeStart>2013-04-19T16:53:02.000000Z</n0:timeStart>
         <n0:timeEnd>2013-04-19T16:52:02.000000Z</n0:timeEnd>
-        <n0:username>replacement_username</n0:username>
+        <n0:username>{}</n0:username>
         <n0:userID>cruella_deville</n0:userID>
         <n1:appVersion xmlns:n1="http://commcarehq.org/xforms"></n1:appVersion>
     </n0:meta>
-</data>"""
+</data>""".format(REDACTED_USERNAME)
 
 
 class UpdateFormTests(TestCase):
