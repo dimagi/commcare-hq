@@ -85,6 +85,16 @@
                                 <span class="btn btn-primary" id="add-input" data-bind="click: addParameter"><i class="fa fa-plus"></i> Add input</span>
                             </div>
                         </div>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <strong>XPath Expression</strong>
+                            </div>
+                            <div class="panel-body">
+                                <div class="form-group" style="width:100%">
+                                    <textarea style="min-width: 50%" spellcheck="false" class="form-control" name="xpath" type="text" placeholder="e.g: name = 'tyrion' or nickname='the imp'" data-bind="value: xpath"> </textarea>
+                                </div>
+                            </div>
+                        </div>
                         {% if query_additions %}
                         <div class="panel panel-default">
                             <div class="panel-heading">
