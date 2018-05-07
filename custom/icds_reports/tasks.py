@@ -74,6 +74,7 @@ UCR_TABLE_NAME_MAPPING = [
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'create_functions.sql'),
     ('migrations', 'sql_templates', 'insert_into_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'aggregate_child_health.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
 ]
 
