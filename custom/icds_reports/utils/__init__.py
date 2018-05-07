@@ -549,6 +549,30 @@ def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
 
 
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2' if beta else 'wasting_severe'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2' if beta else 'wasting_normal'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_norlam' if beta else 'stunting_normal'
+
+
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile

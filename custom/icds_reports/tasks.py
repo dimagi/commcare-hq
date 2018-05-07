@@ -220,7 +220,7 @@ def _aggregate_thr_forms(day):
 
 
 @transaction.atomic
-def _run_custom_sql_script(commands, day):
+def _run_custom_sql_script(commands, day=None):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
         return

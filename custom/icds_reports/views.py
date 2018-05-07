@@ -276,7 +276,9 @@ class ProgramSummaryView(BaseReportView):
 
         data = {}
         if step == 'maternal_child':
-            data = get_maternal_child_data(domain, config, include_test)
+            data = get_maternal_child_data(
+                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
+            )
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,

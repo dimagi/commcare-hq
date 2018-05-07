@@ -49,13 +49,44 @@ class TestMaternalChildData(TestCase):
                 "all": 31,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children (6-60 months) with weight-for-height below"
-                             " -3 standard deviations of the WHO Child Growth Standards median. "
-                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of"
-                             " acute undernutrition usually as a consequence of insufficient "
-                             "food intake or a high incidence of infectious diseases.",
+                "help_text": "Percentage of children (6-60 months) with weight-for-height below -3 standard "
+                             "deviations of the WHO Child Growth Standards median."
+                             "<br/><br/>"
+                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                             "undernutrition usually as a consequence of insufficient food intake or a high "
+                             "incidence of infectious diseases.",
                 "percent": 41.935483870967715,
                 "value": 8,
+                "label": "Wasting (Weight-for-Height)"
+            }
+        )
+
+    def test_data_wasting_weight_for_height_icds_feature_flag_enabled(self):
+        self.assertDictEqual(
+            get_maternal_child_data(
+                'icds-cas',
+                {
+                    'month': (2017, 5, 1),
+                    'prev_month': (2017, 4, 1),
+                    'aggregation_level': 1
+                },
+                False,
+                True
+            )['records'][0][1],
+            {
+                "redirect": "wasting",
+                "color": "green",
+                "all": 31,
+                "frequency": "month",
+                "format": "percent_and_div",
+                "help_text": "Percentage of children between 0-5 years enrolled for Anganwadi Services with "
+                             "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
+                             "<br/><br/>"
+                             "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                             "undernutrition usually as a consequence of insufficient food intake or a high "
+                             "incidence of infectious diseases.",
+                "percent": -64.51612903225806,
+                "value": 1,
                 "label": "Wasting (Weight-for-Height)"
             }
         )
@@ -76,12 +107,42 @@ class TestMaternalChildData(TestCase):
                 "all": 32,
                 "frequency": "month",
                 "format": "percent_and_div",
-                "help_text": "Percentage of children (6-60 months) with height-for-age below -2Z"
-                             " standard deviations of the WHO Child Growth Standards median. "
-                             "Stunting is a sign of chronic undernutrition and has "
-                             "long lasting harmful consequences on the growth of a child",
+                "help_text": "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
+                             "of the WHO Child Growth Standards median."
+                             "<br/><br/>"
+                             "Stunting is a sign of chronic undernutrition "
+                             "and has long lasting harmful consequences on the growth of a child",
                 "percent": -27.43055555555556,
                 "value": 19,
+                "label": "Stunting (Height-for-Age)"
+            }
+        )
+
+    def test_data_stunting_height_for_age_icds_feature_flag_enabled(self):
+        self.assertDictEqual(
+            get_maternal_child_data(
+                'icds-cas',
+                {
+                    'month': (2017, 5, 1),
+                    'prev_month': (2017, 4, 1),
+                    'aggregation_level': 1
+                },
+                False,
+                True
+            )['records'][1][0],
+            {
+                "redirect": "stunting",
+                "color": "red",
+                "all": 32,
+                "frequency": "month",
+                "format": "percent_and_div",
+                "help_text": "Percentage of children between 0-5 years enrolled for Anganwadi Services  with "
+                             "height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. "
+                             "<br/><br/>"
+                             "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+                             "on the growth of a child",
+                "percent": "Data in the previous reporting period was 0",
+                "value": 0,
                 "label": "Stunting (Height-for-Age)"
             }
         )
