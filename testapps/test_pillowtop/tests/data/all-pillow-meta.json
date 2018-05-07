@@ -30,7 +30,7 @@
     "CaseSearchToElasticsearchPillow": {
         "advertised_name": "CaseSearchToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "CaseSearchToElasticsearchPillow-test_case_search_2018-04-18",
+        "checkpoint_id": "CaseSearchToElasticsearchPillow-test_case_search_2018-04-27",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "CaseSearchToElasticsearchPillow"
     },

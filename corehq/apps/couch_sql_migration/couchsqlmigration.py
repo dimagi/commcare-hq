@@ -233,7 +233,7 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        pool = Pool(5)
+        pool = Pool(10)
         changes = _get_case_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
