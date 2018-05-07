@@ -11,13 +11,8 @@ hqDefine('case_search/js/case_search', function(){
         self.results = ko.observableArray();
         self.count = ko.observable();
         self.case_data_url = caseDataUrl;
-        self.parameters = ko.observableArray([{
-            key: "",
-            value: "",
-            clause: "must",
-            fuzzy: false,
-            regex: '',
-        }]);
+        self.xpath = ko.observable();
+        self.parameters = ko.observableArray();
 
         self.addParameter = function(){
             self.parameters.push({
@@ -43,11 +38,16 @@ hqDefine('case_search/js/case_search', function(){
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
                     includeClosed: self.includeClosed(),
+                    xpath: self.xpath(),
                 }
                 )},
                 success: function(data){
                     self.results(data.values);
                     self.count(data.count);
+                },
+                error: function(response){
+                    var alertUser = hqImport("hqwebapp/js/alert_user").alert_user;
+                    alertUser(response.responseJSON.message, 'danger');
                 },
             });
         };
