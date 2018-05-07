@@ -1089,23 +1089,11 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with severe wasting',
                 percent,
                 [
-                    SumColumn('wasting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(wasting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     SumColumn(
                         'weighed_and_height_measured_in_month',
                         alias='weighed_and_height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='percent_severe_wasting'
@@ -1114,13 +1102,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate wasting',
                 percent,
                 [
-                    SumColumn('wasting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(wasting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_moderate_wasting'
@@ -1129,13 +1111,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal weight-for-height',
                 percent,
                 [
-                    SumColumn('wasting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(wasting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_normal_wasting'
@@ -1144,23 +1120,11 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with severe stunting',
                 percent,
                 [
-                    SumColumn('stunting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(stunting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='percent_severe_stunting'
@@ -1169,13 +1133,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate stunting',
                 percent,
                 [
-                    SumColumn('stunting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(stunting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_moderate_stunting'
@@ -1184,13 +1142,7 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal height-for-age',
                 percent,
                 [
-                    SumColumn('stunting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(stunting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
