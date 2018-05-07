@@ -104,6 +104,8 @@ class CouchSqlDomainMigrator(object):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
+        self.queues = PartiallyLockingQueue(self._get_lock_key())
+        pool = Pool(10)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -114,11 +116,41 @@ class CouchSqlDomainMigrator(object):
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            try:
-                self._migrate_form_and_associated_models(wrapped_form)
-            except Exception:
-                self.log_error("Unable to migrate form: {}".format(change.id))
-                raise
+
+            case_doc = wrapped_form.form.get('case')
+            if case_doc:  # if this form involves a case check if we can process it
+                case_id = case_doc["@case_id"]
+                if self.queues.try_obj(case_id):
+                    pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form, case_id)
+            else:  # if not, just go ahead and process it
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+
+            # regularly check if we can empty the queues
+            case_id, wrapped_form = self.queues.get_next()
+            while wrapped_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form, case_id)
+                case_id, wrapped_form = self.queues.get_next()
+
+        # finish up the queues once all changes have been iterated through
+        while self.queues.has_next():
+            case_id, wrapped_form = self.queues.get_next()
+            if wrapped_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form, case_id)
+            else:
+                sleep(0)  # swap greenlets
+
+    def _migrate_form_and_associated_models_async(self, wrapped_form, case_id=None):
+        try:
+            self._migrate_form_and_associated_models(wrapped_form)
+        except Exception:
+            self.log_error("Unable to migrate form: {}".format(wrapped_form.form_id))
+            raise
+        finally:
+            if case_id:
+                self.queues.release_lock(case_id)
+
+    def _get_lock_key(self):
+        return "couch_sql_migration.{}".format(self.domain)
 
     def _migrate_form_and_associated_models(self, couch_form):
         sql_form = _migrate_form(self.domain, couch_form)
