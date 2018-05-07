@@ -27,41 +27,6 @@
             <!-- /ko -->
         </legend>
         <div class="col-sm-12" data-bind="visibleFade: table.selected">
-            <div class="form-group pull-right btn-group">
-                <!-- Advanced Button -->
-                <button type="button" class="btn btn-default" data-bind="
-                    click: table.toggleShowAdvanced,
-                    css: {active: table.showAdvanced}">
-                    <span data-bind="visible: !table.showAdvanced()">
-                    {% trans "Show Advanced Questions" %}
-                    </span>
-                    <span data-bind="visible: table.showAdvanced">
-                    {% trans "Hide Advanced Questions" %}
-                    </span>
-                </button>
-
-                <!-- Deleted Button -->
-                <button class="btn btn-default" data-bind="
-                    click: $root.toggleShowDeleted.bind($root),
-                    css: {active: table.showDeleted}
-                    ">
-                    <span data-bind="visible: !table.showDeleted()">
-                    {% if export_instance.type == 'form' %}
-                        {% trans "Show Deleted Questions" %}
-                    {% else %}
-                        {% trans "Show Deleted Properties" %}
-                    {% endif %}
-                    </span>
-
-                    <span data-bind="visible: table.showDeleted()">
-                    {% if export_instance.type == 'form' %}
-                        {% trans "Hide Deleted Questions" %}
-                    {% else %}
-                        {% trans "Hide Deleted Properties" %}
-                    {% endif %}
-                    </span>
-                </button>
-            </div>
             <div class="form-group">
                 <label class="col-sm-4 col-md-3 col-lg-2 control-label">{% trans "Sheet Name" %}</label>
                 <div class="col-sm-9 col-md-8 col-lg-6">
@@ -85,16 +50,51 @@
                 <thead>
                 <tr class="nodrag nodrop">
                     <th class="col-sm-1"></th>
-                    <th class="col-sm-1">{% trans "Include this Field?" %}<br />
+                    <th class="col-sm-1">{% trans "Include?" %}<br />
                         <a class="btn btn-xs btn-primary" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
                         <a class="btn btn-xs btn-default" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
                     </th>
                     <th class="col-sm-5"><!-- TODO: shrink if extra columns are present -->
-                    {% if export_instance.type == 'form' %}
-                        {% trans "Question" %}
-                    {% else %}
-                        {% trans "Property" %}
-                    {% endif %}
+                        {% if export_instance.type == 'form' %}
+                            {% trans "Question" %}
+                        {% else %}
+                            {% trans "Property" %}
+                        {% endif %}
+                        <br />
+
+                        <!-- Advanced Button -->
+                        <button type="button" class="btn btn-default btn-xs" data-bind="
+                            click: table.toggleShowAdvanced,
+                            css: {active: table.showAdvanced}">
+                            <span data-bind="visible: !table.showAdvanced()">
+                            {% trans "Show Advanced Questions" %}
+                            </span>
+                            <span data-bind="visible: table.showAdvanced">
+                            {% trans "Hide Advanced Questions" %}
+                            </span>
+                        </button>
+
+                        <!-- Deleted Button -->
+                        <button class="btn btn-default btn-xs" data-bind="
+                            click: $root.toggleShowDeleted.bind($root),
+                            css: {active: table.showDeleted}
+                            ">
+                            <span data-bind="visible: !table.showDeleted()">
+                            {% if export_instance.type == 'form' %}
+                                {% trans "Show Deleted Questions" %}
+                            {% else %}
+                                {% trans "Show Deleted Properties" %}
+                            {% endif %}
+                            </span>
+
+                            <span data-bind="visible: table.showDeleted()">
+                            {% if export_instance.type == 'form' %}
+                                {% trans "Hide Deleted Questions" %}
+                            {% else %}
+                                {% trans "Hide Deleted Properties" %}
+                            {% endif %}
+                            </span>
+                        </button>
                     </th>
                     <th class="col-sm-5"><!-- TODO: shrink if extra columns are present -->
                         {% trans "Display" %}<br />
