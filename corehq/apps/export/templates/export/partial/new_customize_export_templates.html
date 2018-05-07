@@ -87,19 +87,19 @@
                     <table class="table table-bordered table-striped table-condensed" id="field-select">
                         <thead>
                         <tr class="nodrag nodrop">
-                            <th></th>
-                            <th>{% trans "Include this Field?" %}<br />
+                            <th class="col-sm-1"></th>
+                            <th class="col-sm-1">{% trans "Include this Field?" %}<br />
                                 <a class="btn btn-xs btn-primary" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
                                 <a class="btn btn-xs btn-default" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
                             </th>
-                            <th>
+                            <th class="col-sm-5"><!-- TODO: shrink if extra columns are present -->
                             {% if export_instance.type == 'form' %}
                                 {% trans "Question" %}
                             {% else %}
                                 {% trans "Property" %}
                             {% endif %}
                             </th>
-                            <th>
+                            <th class="col-sm-5"><!-- TODO: shrink if extra columns are present -->
                                 {% trans "Display" %}<br />
                                 {% if export_instance.type == 'form' %}
                                 <a
@@ -115,10 +115,10 @@
                                 {% endif %}
                             </th>
                             {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-                            <th>{% trans "Type" %}</th>
+                            <th class="col-sm-2">{% trans "Type" %}</th>
                             {% endif %}
                             {% if allow_deid %}
-                            <th class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
+                            <th class="col-sm-2" class="deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
                             {% endif %}
                         </tr>
                         </thead>
@@ -185,7 +185,7 @@
                                     <!-- ko if: !column.isEditable() -->
                                     <code data-toggle="tooltip" data-placement="top"
                                         data-bind="
-                                            text: column.formatProperty(),
+                                            text: column.formatProperty() + column.formatProperty() + column.formatProperty() + column.formatProperty() + column.formatProperty(),
                                             attr: {
                                                 'data-original-title': column.help_text,
                                                 'data-toggle': column.help_text ? 'tooltip' : null
@@ -193,7 +193,7 @@
                                             css: {
                                                 'export-tooltip': column.translatedHelp()
                                             }
-                                        "></code>
+                                        " style="word-break: break-all;"></code>
                                     <!-- /ko -->
                                     <!-- ko if: column.isEditable() -->
                                     <input
@@ -283,11 +283,10 @@
                                 </td>
                                 {% endif %}
                             </tr>
-
                         </tbody>
                     </table>
-                </div>
-            </div>
+                </div><!-- end .col-md-X -->
+            </div><!-- end .form-group -->
         </div>
     </div>
 </script>
