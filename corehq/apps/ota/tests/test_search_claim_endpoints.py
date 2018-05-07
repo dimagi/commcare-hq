@@ -155,21 +155,16 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                                     "query": {
                                         "filtered": {
                                             "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "phone_number"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "91999"
-                                                        }
-                                                    }
-                                                ),
+                                                "term": {
+                                                    "case_properties.key": "phone_number"
+                                                }
                                             },
                                             "query": {
-                                                "match_all": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "91999",
+                                                        "fuzziness": "0"
+                                                    }
                                                 }
                                             }
                                         }
@@ -182,22 +177,16 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                                     "query": {
                                         "filtered": {
                                             "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "special_id"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "abc123546"
-                                                        }
-                                                    }
-                                                )
-
+                                                "term": {
+                                                    "case_properties.key": "special_id"
+                                                }
                                             },
                                             "query": {
-                                                "match_all": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "abc123546",
+                                                        "fuzziness": "0"
+                                                    }
                                                 }
                                             }
                                         }
@@ -210,22 +199,16 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                                     "query": {
                                         "filtered": {
                                             "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": "this should be"
-                                                        }
-                                                    }
-                                                )
-
+                                                "term": {
+                                                    "case_properties.key": "name"
+                                                }
                                             },
                                             "query": {
-                                                "match_all": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this should be",
+                                                        "fuzziness": "0"
+                                                    }
                                                 }
                                             }
                                         }
@@ -238,23 +221,16 @@ class CaseSearchTests(TestCase, ElasticTestMixin):
                                     "query": {
                                         "filtered": {
                                             "filter": {
-                                                "and": (
-                                                    {
-                                                        "term": {
-                                                            "case_properties.key.exact": "other_name"
-                                                        }
-                                                    },
-                                                    {
-                                                        "term": {
-                                                            "case_properties.value.exact": (
-                                                                "this word should not be gone"
-                                                            )
-                                                        }
-                                                    }
-                                                )
+                                                "term": {
+                                                    "case_properties.key": "other_name"
+                                                }
                                             },
                                             "query": {
-                                                "match_all": {
+                                                "match": {
+                                                    "case_properties.value": {
+                                                        "query": "this word should not be gone",
+                                                        "fuzziness": "0"
+                                                    }
                                                 }
                                             }
                                         }
@@ -418,7 +394,6 @@ class CaseClaimEndpointTests(TestCase):
 
     @run_with_all_backends
     def test_search_endpoint(self):
-        self.maxDiff = None
         known_result = (
             '<results id="case">'  # ("case" is not the case type)
             '<case case_id="{case_id}" '
@@ -431,6 +406,7 @@ class CaseClaimEndpointTests(TestCase):
             '<date_opened>2016-04-17</date_opened>'
             '<commcare_search_score>xxx</commcare_search_score>'
             '<location_id>None</location_id>'
+            '<referrals>None</referrals>'
             '</case>'
             '</results>'.format(
                 case_id=self.case_id,
@@ -453,7 +429,6 @@ class CaseClaimEndpointTests(TestCase):
 
     @patch('corehq.apps.es.es_query.run_query')
     def test_search_query_addition(self, run_query_mock):
-        self.maxDiff = None
         new_must_clause = {
             "bool": {
                 "should": [
@@ -463,21 +438,13 @@ class CaseClaimEndpointTests(TestCase):
                             "query": {
                                 "filtered": {
                                     "filter": {
-                                        "and": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "is_inactive"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": "yes"
-                                                }
-                                            }
-                                        ]
+                                        "term": {"case_properties.key": "is_inactive"}
                                     },
                                     "query": {
-                                        "match_all": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "fuzziness": "0", "query": "yes"
+                                            }
                                         }
                                     }
                                 }
@@ -490,21 +457,13 @@ class CaseClaimEndpointTests(TestCase):
                             "query": {
                                 "filtered": {
                                     "filter": {
-                                        "and": [
-                                            {
-                                                "term": {
-                                                    "case_properties.key.exact": "awaiting_claim"
-                                                }
-                                            },
-                                            {
-                                                "term": {
-                                                    "case_properties.value.exact": "yes"
-                                                }
-                                            }
-                                        ]
+                                        "term": {"case_properties.key": "awaiting_claim"}
                                     },
                                     "query": {
-                                        "match_all": {
+                                        "match": {
+                                            "case_properties.value": {
+                                                "fuzziness": "0", "query": "yes"
+                                            }
                                         }
                                     }
                                 }
@@ -556,18 +515,12 @@ class CaseClaimEndpointTests(TestCase):
                                         'path': 'case_properties',
                                         'query': {
                                             'filtered': {
-                                                'filter': {
-                                                    "and": (
-                                                        {
-                                                            'term': {'case_properties.key.exact': 'name'}
-                                                        },
-                                                        {
-                                                            'term': {'case_properties.value.exact': some_case_name}
-                                                        }
-                                                    )
-                                                },
+                                                'filter': {'term': {'case_properties.key': 'name'}},
                                                 'query': {
-                                                    'match_all': {
+                                                    'match': {
+                                                        'case_properties.value': {
+                                                            'query': some_case_name, 'fuzziness': '0'
+                                                        }
                                                     }
                                                 }
                                             }

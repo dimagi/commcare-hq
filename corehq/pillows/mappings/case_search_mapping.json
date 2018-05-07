@@ -16,22 +16,10 @@
             "dynamic": false,
             "properties": {
                 "key": {
-                    "type": "string",
-                    "fields": {
-                        "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        }
-                    }
+                    "type": "string"
                 },
                 "value": {
-                    "type": "string",
-                    "fields": {
-                        "exact": {
-                            "index": "not_analyzed",
-                            "type": "string"
-                        }
-                    }
+                    "type": "string"
                 },
                 "value_numeric": {
                     "type": "double"
@@ -46,8 +34,7 @@
             "type": "boolean"
         },
         "closed_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "string"
         },
         "closed_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -66,9 +53,21 @@
             },
             "type": "multi_field"
         },
+        "export_tag": {
+            "type": "string"
+        },
         "external_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "fields": {
+                "exact": {
+                    "index": "not_analyzed",
+                    "type": "string"
+                },
+                "external_id": {
+                    "index": "analyzed",
+                    "type": "string"
+                }
+            },
+            "type": "multi_field"
         },
         "indices": {
             "type": "nested",
@@ -79,26 +78,21 @@
                     "type": "string"
                 },
                 "identifier": {
-                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_id": {
-                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "referenced_type": {
-                    "index": "not_analyzed",
                     "type": "string"
                 },
                 "relationship": {
-                    "index": "not_analyzed",
                     "type": "string"
                 }
             }
         },
         "location_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "string"
         },
         "modified_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -118,16 +112,18 @@
             "type": "multi_field"
         },
         "opened_by": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "string"
         },
         "opened_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
         "owner_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "string"
+        },
+        "referrals": {
+            "enabled": false,
+            "type": "object"
         },
         "server_modified_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -147,8 +143,10 @@
             "type": "multi_field"
         },
         "user_id": {
-            "type": "string",
-            "index": "not_analyzed"
+            "type": "string"
+        },
+        "version": {
+            "type": "string"
         }
     }
 }
