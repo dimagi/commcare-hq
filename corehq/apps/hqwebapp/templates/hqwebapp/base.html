@@ -351,14 +351,20 @@
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
                             {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
-                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
+                                <a href="http://www.dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
                             &nbsp;|&nbsp;
-                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">
+                                {% trans "Privacy" %}
+                            </a>
                             &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">
+                                {% trans "Terms of Service" %}
+                            </a>
                             &nbsp;|&nbsp;
-                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/ba/" target="_blank">
+                                {% trans "Business Agreement" %}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -368,6 +374,20 @@
         {% endif %}
         {# modals #}
         {% block modals %}{% endblock modals %}
+
+        {# Report Issue #}
+        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+
+        {% if EULA_COMPLIANCE %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+                {% registerurl 'agree_to_eula' %}
+                {% include 'hqwebapp/includes/modal_eula.html' %}
+            {% endif %}
+        {% endif %}
+
+        {# 30 Day Trial #}
+        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+
 
         {% block additional_initial_page_data %}
             {% comment %}
@@ -419,6 +439,7 @@
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
+                    'hqwebapp/js/main',
                     'notifications/js/notifications_service_main',
                     'analytix/js/appcues',
                     'analytix/js/drift',
@@ -568,17 +589,6 @@
             <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
-
-        {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
-        {% endif %}
-
-        {# 30 Day Trial #}
-        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 
