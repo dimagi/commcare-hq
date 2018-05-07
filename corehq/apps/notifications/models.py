@@ -44,7 +44,7 @@ class Notification(models.Model):
         After five notifications all notifications should be marked as read.
         """
         notes = cls.objects.filter(Q(domain_specific=False) | Q(domains__overlap=couch_user.domains),
-                                     is_active=True, activated__gt=django_user.date_joined)[:limit]
+                                     is_active=True, activated__gt=django_user.date_joined).distinct()[:limit]
         read_notifications = set(cls.objects.filter(users_read=django_user).values_list('id', flat=True))
 
         def _fmt_note(note_idx):

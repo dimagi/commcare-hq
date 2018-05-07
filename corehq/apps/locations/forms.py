@@ -248,7 +248,8 @@ class LocationForm(forms.Form):
             try:
                 loc_type_obj = (LocationType.objects
                                 .filter(domain=self.domain)
-                                .get(Q(code=loc_type) | Q(name=loc_type)))
+                                .get(Q(code=loc_type) | Q(name=loc_type))
+                                .distinct())
             except LocationType.DoesNotExist:
                 raise forms.ValidationError(_("LocationType '{}' not found").format(loc_type))
             else:

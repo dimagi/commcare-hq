@@ -55,7 +55,7 @@ def create_historical_checkpoints():
 def check_non_dimagi_superusers():
     non_dimagis_superuser = ', '.join((get_user_model().objects.filter(
         (Q(is_staff=True) | Q(is_superuser=True)) & ~Q(username__endswith='@dimagi.com')
-    ).values_list('username', flat=True)))
+    ).values_list('username', flat=True)).distinct())
     if non_dimagis_superuser:
         _soft_assert_superusers(
             False, "{non_dimagis} have superuser privileges".format(non_dimagis=non_dimagis_superuser))

@@ -102,7 +102,7 @@ class CaseProcessingResult(object):
                     Q(domain=self.domain),
                     Q(owner_id__in=list(flags_to_save)),
                     Q(is_clean=True) | Q(hint__isnull=True)
-                )
+                ).distinct()
                 for flag in flags_to_update:
                     flag.is_clean = False
                     flag.hint = flags_to_save[flag.owner_id]

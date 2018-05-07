@@ -299,7 +299,7 @@ class LocationQueriesMixin(object):
         """
         Accepts partial matches, matches against name and site_code.
         """
-        return self.filter(self._user_input_filter(domain, user_input))
+        return self.filter(self._user_input_filter(domain, user_input)).distinct()
 
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
