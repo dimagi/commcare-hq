@@ -2238,7 +2238,21 @@ class ScheduleForm(Form):
         return schedule
 
     def save_custom_immediate_schedule(self):
-        raise RuntimeError('This will be implemented in a later commit')
+        event_and_content_objects = [
+            (form.distill_event(), form.distill_content())
+            for form in self.custom_event_formset.non_deleted_forms
+        ]
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_alert_schedule(schedule)
+            schedule.set_custom_alert(event_and_content_objects, extra_options=extra_scheduling_options)
+        else:
+            schedule = AlertSchedule.create_custom_alert(self.domain, event_and_content_objects,
+                extra_options=extra_scheduling_options)
+
+        return schedule
 
     def save_schedule(self):
         send_frequency = self.cleaned_data['send_frequency']

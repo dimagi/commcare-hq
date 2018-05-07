@@ -30,6 +30,7 @@ class Schedule(models.Model):
     UI_TYPE_WEEKLY = 'W'
     UI_TYPE_MONTHLY = 'M'
     UI_TYPE_CUSTOM_DAILY = 'CD'
+    UI_TYPE_CUSTOM_IMMEDIATE = 'CI'
     UI_TYPE_UNKNOWN = 'X'
 
     schedule_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
