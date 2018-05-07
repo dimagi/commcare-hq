@@ -2259,6 +2259,11 @@ DOMAIN_MODULE_MAP = {
     'test-pna': 'custom.yeksi_naa_reports',
 }
 
+# Domains mapping which use custom reports from several modules
+CUSTOM_REPORTS_DOMAINS_MAP = {
+    'ipm-senegal': ('custom.intrahealth', 'custom.yeksi_naa_reports')
+}
+
 THROTTLE_SCHED_REPORTS_PATTERNS = (
     # Regex patterns matching domains whose scheduled reports use a
     # separate queue so that they don't hold up the background queue.

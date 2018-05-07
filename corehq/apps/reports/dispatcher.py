@@ -92,18 +92,30 @@ class ReportDispatcher(View):
                 reports = reports(project) if project else tuple()
             return tuple(reports)
 
+        def get_custom_reports(name_of_module):
+            module = __import__(name_of_module, fromlist=[b'reports'])
+            if hasattr(module, 'reports'):
+                reports = getattr(module, 'reports')
+                return process(getattr(reports, attr_name, ()))
+            else:
+                return ()
+
         corehq_reports = process(getattr(reports, attr_name, ()))
 
         module_name = settings.DOMAIN_MODULE_MAP.get(domain)
+        multi_custom_reports_module_names = settings.CUSTOM_REPORTS_DOMAINS_MAP.get(domain)
+
         if module_name is None:
             custom_reports = ()
+        elif multi_custom_reports_module_names is not None:
+            custom_reports = []
+            for name_of_module in multi_custom_reports_module_names:
+                reports = get_custom_reports(name_of_module)
+                if reports:
+                    custom_reports.extend(reports)
+            custom_reports = tuple(custom_reports)
         else:
-            module = __import__(module_name, fromlist=[b'reports'])
-            if hasattr(module, 'reports'):
-                reports = getattr(module, 'reports')
-                custom_reports = process(getattr(reports, attr_name, ()))
-            else:
-                custom_reports = ()
+            custom_reports = get_custom_reports(module_name)
 
             # soon to be removed
             if not custom_reports:

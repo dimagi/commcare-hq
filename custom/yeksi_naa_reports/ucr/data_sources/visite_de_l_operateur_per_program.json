@@ -1,6 +1,7 @@
 {
   "domains": [
-    "test-pna"
+    "test-pna",
+    "ipm-senegal"
   ],
   "config": {
     "table_id": "yeksi_naa_reports_visite_de_l_operateur_per_program",
