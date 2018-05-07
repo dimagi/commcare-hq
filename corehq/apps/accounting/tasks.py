@@ -378,7 +378,8 @@ def create_wire_credits_invoice(domain_name,
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
         try:
-            record.send_email(contact_emails=contact_emails)
+            for email in contact_emails:
+                record.send_email(contact_email=email)
         except Exception as e:
             log_accounting_error(
                 "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
