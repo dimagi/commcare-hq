@@ -119,8 +119,8 @@ BEGIN
     'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
     'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
     'sum(wer_eligible), ' ||
-    'sum(thr_eligible), ' ||
-    'sum(rations_21_plus_distributed), ' ||
+    '0, ' ||
+    '0, ' ||
     'sum(pse_eligible), ' ||
     'sum(pse_attended_16_days), ' ||
     'sum(born_in_month), ' ||
@@ -190,7 +190,9 @@ BEGIN
     'zscore_grading_hfa_severe = temp.zscore_grading_hfa_severe, ' ||
     'wasting_normal_v2 = temp.wasting_normal_v2, ' ||
     'wasting_moderate_v2 = temp.wasting_moderate_v2, ' ||
-    'wasting_severe_v2 = temp.wasting_severe_v2 ' ||
+    'wasting_severe_v2 = temp.wasting_severe_v2, ' ||
+    'thr_eligible = temp.thr_eligible, ' ||
+    'rations_21_plus_distributed = temp.rations_21_plus_distributed '
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, disabled, minority, resident, ' ||
       'sum(cf_eligible) as cf_eligible, ' ||
@@ -218,7 +220,9 @@ BEGIN
       'sum(CASE ' ||
         'WHEN zscore_grading_wfh_recorded_in_month = 1 AND zscore_grading_wfh = 1 THEN 1 ' ||
         'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 1 THEN 1 ' ||
-        'ELSE 0 END) as wasting_severe_v2 ' ||
+        'ELSE 0 END) as wasting_severe_v2, ' ||
+      'sum(thr_eligible) as thr_eligible, '
+      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed '
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, disabled, minority, resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
