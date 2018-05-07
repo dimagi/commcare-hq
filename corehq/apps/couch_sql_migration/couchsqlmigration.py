@@ -467,9 +467,9 @@ def _migrate_case_actions(couch_case, sql_case):
 
 def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
-    attachments = []
     for name, attachment in six.iteritems(couch_case.case_attachments):
-        attachments.append(CaseAttachmentSQL(
+        blob = couch_case.blobs[name]
+        sql_case.track_create(CaseAttachmentSQL(
             name=name,
             case=sql_case,
             identifier=attachment.identifier,
@@ -482,7 +482,6 @@ def _migrate_case_attachments(couch_case, sql_case):
             properties=attachment.attachment_properties,
             md5=attachment.server_md5
         ))
-    sql_case.unsaved_attachments = attachments
 
 
 def _migrate_case_indices(couch_case, sql_case):
