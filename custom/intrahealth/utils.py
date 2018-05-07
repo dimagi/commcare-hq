@@ -305,7 +305,7 @@ class YeksiNaaMixin(YeksiNaaLocationMixin, YeksiNaaReportConfigMixin):
 class MultiReport(CustomProjectReport, YeksiNaaMixin, ProjectReportParametersMixin):
 
     title = ''
-    report_template_path = "intrahealth/yeksi_naa_multi_report.html"
+    report_template_path = "yeksi_naa/multi_report.html"
     flush_layout = True
     export_format_override = 'csv'
 

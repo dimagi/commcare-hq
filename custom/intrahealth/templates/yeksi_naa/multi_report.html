@@ -21,7 +21,7 @@
     {% for thisreport in reports %}
         <br/>
         <h2 class="media-heading" style="text-align: center">{{ thisreport.report_table.title }}<br/><small>{{ thisreport.report_table.comment }}</small><br/></h2>
-        {% include 'intrahealth/partials/yeksi_naa_report_table.html' with report_table=thisreport.report_table %}
+        {% include 'yeksi_naa/partials/report_table.html' with report_table=thisreport.report_table %}
         <br/>
     {% endfor %}
 {% endif %}

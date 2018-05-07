@@ -86,7 +86,7 @@ class FRMonthFilter(MonthFilter):
 class YeksiNaaLocationFilter(AsyncLocationFilter):
     label = ugettext_noop("Location")
     slug = "yeksi_naa_location_async"
-    template = 'intrahealth/yeksi_naa_location_filter.html'
+    template = 'yeksi_naa/location_filter.html'
 
     @property
     def filter_context(self):
@@ -107,7 +107,7 @@ class YeksiNaaLocationFilter(AsyncLocationFilter):
 
 
 class MonthsDateFilter(BaseReportFilter):
-    template = "intrahealth/months_datespan.html"
+    template = "yeksi_naa/months_datespan.html"
     slug = 'datespan'
     label = "Plage de dates"
 
@@ -136,7 +136,7 @@ class MonthsDateFilter(BaseReportFilter):
 
 
 class ProgramFilter(BaseReportFilter):
-    template = "intrahealth/program_filter.html"
+    template = "yeksi_naa/program_filter.html"
     slug = 'program'
     label = "Programme"
 
