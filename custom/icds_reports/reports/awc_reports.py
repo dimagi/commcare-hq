@@ -17,7 +17,7 @@ from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, wasting_severe_column, \
-    stunting_moderate_column, stunting_severe_column
+    stunting_moderate_column, stunting_severe_column, current_month_stunting_column, current_month_wasting_column
 from custom.icds_reports.const import MapColors
 import six
 
@@ -974,8 +974,8 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
     }
 
 
-@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before'], timeout=30 * 60)
-def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before):
+@quickcache(['start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'], timeout=30 * 60)
+def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, icds_features_flag):
 
     data = ChildHealthMonthlyView.objects.filter(
         month=datetime(*month),
@@ -1014,12 +1014,12 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             recorded_weight=row_data.recorded_weight or 0,
             recorded_height=row_data.recorded_height or 0,
             current_month_stunting=get_status(
-                row_data.current_month_stunting,
+                getattr(row_data, current_month_stunting_column(icds_features_flag)),
                 'stunted',
                 'Normal height for age'
             ),
             current_month_wasting=get_status(
-                row_data.current_month_wasting,
+                getattr(row_data, current_month_wasting_column(icds_features_flag)),
                 'wasted',
                 'Normal weight for height'
             ),

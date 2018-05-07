@@ -979,8 +979,8 @@ class ChildrenExport(ExportableMixin, SqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
-    def __init__(self, config=None, loc_level=1, show_test=False):
-        super(ChildrenExport, self).__init__(config, loc_level, show_test)
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
+        super(ChildrenExport, self).__init__(config, loc_level, show_test, beta)
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -1882,13 +1882,14 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
-    def __init__(self, config=None, loc_level=1, show_test=False):
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         config.update({
             '5_years': 60,
         })
         self.config = config
         self.loc_level = loc_level
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def group_by(self):
