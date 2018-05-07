@@ -551,7 +551,8 @@ class AwcReportsView(BaseReportView):
                 config,
                 tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
-                include_test
+                include_test,
+                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
@@ -759,18 +760,23 @@ class PrevalenceOfSevereView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_severe_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_severe_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
 
         return JsonResponse(data={
             'report_data': data,
@@ -800,18 +806,24 @@ class PrevalenceOfStuntingView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
 
         return JsonResponse(data={
             'report_data': data,
