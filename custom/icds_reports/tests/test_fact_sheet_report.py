@@ -319,7 +319,7 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
 
     def test_stunting_sever_icds_feature_flag(self):
         self.assertDictEqual(
-            self.get_data()['config']['sections'][0]['rows_config'][9],
+            self.get_data_icds_feature_flag()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
                     'html': 0.0,

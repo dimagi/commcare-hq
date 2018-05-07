@@ -2223,7 +2223,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][0]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2257,7 +2257,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][1]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2291,7 +2291,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][2]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2325,7 +2325,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][3]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2359,7 +2359,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2393,7 +2393,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][5]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2427,7 +2427,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][6]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2461,7 +2461,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][7]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2495,7 +2495,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][8]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2529,7 +2529,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][9]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2562,14 +2562,14 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_data_length(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         self.assertEqual(
             len(data['data']),
             10
         )
 
     def test_awc_report_beneficiary_data_without_data(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         del data['data']
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2587,7 +2587,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_keys(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         self.assertJSONEqual(
             json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
             json.dumps(

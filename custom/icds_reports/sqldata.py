@@ -2119,7 +2119,7 @@ class FactSheetsReport(object):
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': (
-                                    'Children from {} years with moderate acute '
+                                    'Children from {} with moderate acute '
                                     'malnutrition (weight-for-height)'.format(default_age_interval(self.beta))
                                 ),
                                 'slug': 'wasting_moderate',
@@ -2140,7 +2140,7 @@ class FactSheetsReport(object):
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': (
-                                    'Children from {} years with severe stunting '
+                                    'Children from {} with severe stunting '
                                     '(height-for-age)'.format(default_age_interval(self.beta))
                                 ),
                                 'slug': 'stunting_severe',
