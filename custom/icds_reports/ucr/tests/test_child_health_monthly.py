@@ -197,46 +197,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         self._submit_form(form)
 
-    def _submit_thr_rations_form(
-            self, form_date, case_id, rations_distributed=0, case_id_2=None):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_THR_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        add_element(form, 'thr_given_child', '1')
-
-        child_thr = ElementTree.Element('child_thr')
-        child_thr_persons = ElementTree.Element('child_persons')
-        child_thr_repeat1 = ElementTree.Element('item')
-        add_element(child_thr_repeat1, 'child_health_case_id', case_id)
-        if rations_distributed > 0:
-            add_element(child_thr_repeat1, 'days_ration_given_child', rations_distributed)
-            add_element(child_thr_repeat1, 'distribute_ration_child', 'yes')
-        else:
-            add_element(child_thr_repeat1, 'distribute_ration_child', 'no')
-        child_thr_persons.append(child_thr_repeat1)
-        if case_id_2 is not None:
-            child_thr_repeat2 = ElementTree.Element('item')
-            add_element(child_thr_repeat2, 'child_health_case_id', case_id_2)
-            add_element(child_thr_repeat2, 'days_ration_given_child', 25)
-            add_element(child_thr_repeat2, 'distribute_ration_child', 'yes')
-            child_thr_persons.append(child_thr_repeat2)
-        child_thr.append(child_thr_persons)
-        form.append(child_thr)
-
-        self._submit_form(form)
-
     def _submit_delivery_form(
             self, form_date, case_id, nutrition_status=None, case_id_2=None):
 
@@ -774,48 +734,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('nutrition_status_weighed', 0),
                  ('nutrition_status_unweighed', 1)],
              ),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_thr_rations(self):
-        case_id = uuid.uuid4().hex
-        case_id_2 = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2015, 1, 12),
-            date_opened=datetime(2015, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-        self._create_case(
-            case_id=case_id_2,
-            dob=date(2015, 1, 12),
-            date_opened=datetime(2015, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 2, 2),
-            case_id=case_id,
-            rations_distributed=5,
-            case_id_2=case_id_2,
-        )
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 2, 6),
-            case_id=case_id,
-            rations_distributed=6,
-            case_id_2=case_id_2,
-        )
-        self._submit_thr_rations_form(
-            form_date=datetime(2016, 3, 10),
-            case_id=case_id,
-            rations_distributed=21,
-            case_id_2=case_id_2,
-        )
-
-        cases = [
-            (0, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
-            (1, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
-            (2, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
