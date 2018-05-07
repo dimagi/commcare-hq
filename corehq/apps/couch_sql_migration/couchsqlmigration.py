@@ -89,7 +89,9 @@ class CouchSqlDomainMigrator(object):
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_context = timing_context
             with timing_context('main_forms'):
-                self._process_main_forms()
+                self.queues = PartiallyLockingQueue(self._get_lock_key())
+                with self.queues():
+                    self._process_main_forms()
             with timing_context("unprocessed_forms"):
                 self._copy_unprocessed_forms()
             with timing_context("unprocessed_cases"):
@@ -104,7 +106,6 @@ class CouchSqlDomainMigrator(object):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
-        self.queues = PartiallyLockingQueue(self._get_lock_key())
         pool = Pool(10)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
@@ -120,7 +121,7 @@ class CouchSqlDomainMigrator(object):
             case_doc = wrapped_form.form.get('case')
             if case_doc:  # if this form involves a case check if we can process it
                 case_id = case_doc["@case_id"]
-                if self.queues.try_obj(case_id):
+                if self.queues.try_obj(case_id, wrapped_form):
                     pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form, case_id)
             else:  # if not, just go ahead and process it
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
@@ -662,22 +663,32 @@ class PartiallyLockingQueue(object):
         self.redis = get_redis_client()
         self.expire_time = 60
 
+    def __call__(self):
+        return self
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        for obj_id, queue in self.queue_by_id.iteritems():
+            self.release_lock(obj_id)
+
     def try_obj(self, obj_id, queued_obj):
         if not self.check_lock(obj_id):
-            self.set_lock(obj_id)
-            return queued_obj
+            if self.set_lock(obj_id):
+                return queued_obj
         self.add_item(obj_id, queued_obj)
         return None
 
     def get_next(self):
-        for obj_id, queue in self.queue_by_id:
+        for obj_id, queue in self.queue_by_id.iteritems():
             if not self.check_lock(obj_id):
-                self.set_lock(obj_id)
-                return obj_id, queue.popleft()
+                if self.set_lock(obj_id):
+                    return obj_id, queue.popleft()
         return None, None
 
     def has_next(self):
-        for obj_id, queue in self.queue_by_id:
+        for obj_id, queue in self.queue_by_id.iteritems():
             if len(queue) > 0:
                 return True
         return False
@@ -689,16 +700,18 @@ class PartiallyLockingQueue(object):
         value = self.redis.get(self.get_obj_lock_key(obj_id))
         if not value:
             return False
-        if value < time():
+        if value > time():
             return True
         self.release_lock(obj_id)
         raise LockTimeoutException("Object {} should not be taking so long for this action".format(obj_id))
 
     def set_lock(self, obj_id):
-        return self.redis.setnx(self.get_obj_lock_key(obj_id), expires=self.get_expiry_time())
+        expiry_time = self.get_expiry_time()
+        value = self.redis.get_or_set(self.get_obj_lock_key(obj_id), expiry_time)
+        return expiry_time == value
 
     def release_lock(self, obj_id):
-        self.redis.delete(self._get_lock_key(obj_id))
+        self.redis.delete(self.get_obj_lock_key(obj_id))
 
     def get_expiry_time(self):
         return time() + self.expire_time
