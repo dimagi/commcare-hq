@@ -2949,7 +2949,7 @@ class PaymentRecord(models.Model):
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    transaction_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)
