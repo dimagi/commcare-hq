@@ -536,6 +536,33 @@ class CustomEventForm(ContentForm):
 
         return result
 
+    def distill_event(self):
+        if self.schedule_form.cleaned_data_uses_alert_schedule():
+            return AlertEvent(
+                minutes_to_wait=self.cleaned_data['minutes_to_wait'],
+            )
+        else:
+            send_time_type = self.schedule_form.cleaned_data['send_time_type']
+            day = self.cleaned_data['day'] - 1
+            if send_time_type == TimedSchedule.EVENT_SPECIFIC_TIME:
+                return TimedEvent(
+                    day=day,
+                    time=self.cleaned_data['time'],
+                )
+            elif send_time_type == TimedSchedule.EVENT_RANDOM_TIME:
+                return TimedEvent(
+                    day=day,
+                    time=self.cleaned_data['time'],
+                    window_length=self.cleaned_data['window_length'],
+                )
+            elif send_time_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
+                return CasePropertyTimedEvent(
+                    day=day,
+                    case_property_name=self.cleaned_data['case_property_name'],
+                )
+            else:
+                raise ValueError("Unexpected value for send_time_type: '%s'" % send_time_type)
+
     def get_layout_fields(self):
         return [
             crispy.Div(
@@ -768,6 +795,27 @@ class BaseCustomEventFormSet(BaseFormSet):
 
         return passed_validation
 
+    def validate_repeat_every_on_schedule_form(self, schedule_form, custom_event_forms):
+        if schedule_form.cleaned_data_uses_alert_schedule():
+            return True
+
+        # Don't bother validating this unless the schedule_form is valid
+        if not super(ScheduleForm, schedule_form).is_valid():
+            return False
+
+        if schedule_form.distill_total_iterations() == 1:
+            return True
+
+        last_day = custom_event_forms[-1].cleaned_data['day']
+        if last_day > schedule_form.distill_repeat_every():
+            raise ValidationError(
+                _("There is a mismatch between the last event's day and how often you have "
+                  "chosen to repeat the schedule above. Based on the day of the last event, "
+                  "you must repeat every {} days at a minimum.").format(last_day)
+            )
+
+        return True
+
     def clean(self):
         non_deleted_forms = self.non_deleted_forms
 
@@ -785,7 +833,8 @@ class BaseCustomEventFormSet(BaseFormSet):
             # validation passes
             (self.validate_timed_schedule_order(schedule_form, non_deleted_forms) and
              self.validate_random_timed_events_do_not_overlap(schedule_form, non_deleted_forms) and
-             self.validate_timed_schedule_min_tick(schedule_form, non_deleted_forms))
+             self.validate_timed_schedule_min_tick(schedule_form, non_deleted_forms) and
+             self.validate_repeat_every_on_schedule_form(schedule_form, non_deleted_forms))
         else:
             raise ValueError("Unexpected schedule type")
 
@@ -2054,7 +2103,6 @@ class ScheduleForm(Form):
         return schedule
 
     def save_daily_schedule(self):
-        form_data = self.cleaned_data
         repeat_every = self.distill_repeat_every()
         total_iterations = self.distill_total_iterations()
         content = self.standalone_content_form.distill_content()
@@ -2153,7 +2201,41 @@ class ScheduleForm(Form):
         return schedule
 
     def save_custom_daily_schedule(self):
-        raise RuntimeError('This will be implemented in a later commit')
+        event_and_content_objects = [
+            (form.distill_event(), form.distill_content())
+            for form in self.custom_event_formset.non_deleted_forms
+        ]
+        total_iterations = self.distill_total_iterations()
+
+        if total_iterations == 1:
+            # Just give a default value which is the minimum value
+            repeat_every = event_and_content_objects[-1][0].day + 1
+        else:
+            repeat_every = self.distill_repeat_every()
+
+        extra_scheduling_options = self.distill_extra_scheduling_options()
+
+        if self.initial_schedule:
+            schedule = self.initial_schedule
+            self.assert_timed_schedule(schedule)
+            schedule.set_custom_daily_schedule(
+                event_and_content_objects,
+                total_iterations=total_iterations,
+                start_offset=self.distill_start_offset(),
+                extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
+            )
+        else:
+            schedule = TimedSchedule.create_custom_daily_schedule(
+                self.domain,
+                event_and_content_objects,
+                total_iterations=total_iterations,
+                start_offset=self.distill_start_offset(),
+                extra_options=extra_scheduling_options,
+                repeat_every=repeat_every,
+            )
+
+        return schedule
 
     def save_custom_immediate_schedule(self):
         raise RuntimeError('This will be implemented in a later commit')
