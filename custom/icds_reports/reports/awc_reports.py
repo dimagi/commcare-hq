@@ -978,7 +978,7 @@ def get_awc_report_infrastructure(domain, config, month, show_test=False):
 
 @quickcache([
     'start', 'length', 'draw', 'order', 'awc_id', 'month', 'two_before', 'icds_features_flag'
-],timeout=30 * 60)
+], timeout=30 * 60)
 def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_before, icds_features_flag):
 
     data = ChildHealthMonthlyView.objects.filter(
