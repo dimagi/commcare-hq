@@ -5,8 +5,9 @@ from collections import namedtuple, defaultdict
 from datetime import timedelta
 from itertools import chain
 import re
-import six
 
+from requests import RequestException
+import six
 from six.moves import zip
 
 from casexml.apps.case.mock import CaseBlock
@@ -378,7 +379,7 @@ def get_patient_by_id(requests, patient_identifier_type, patient_identifier):
             return get_patient_by_uuid(requests, patient_identifier)
         else:
             return get_patient_by_identifier(requests, patient_identifier_type, patient_identifier)
-    except requests.RequestException as err:
+    except RequestException as err:
         # This message needs to be useful to an administrator because
         # it will be shown in the Repeat Records report.
         http_error_msg = (
