@@ -9,7 +9,6 @@ from corehq.form_processor.tests.utils import use_sql_backend
 from corehq.apps.users.management.commands.gdpr_scrub_user_from_forms import Command
 from corehq.form_processor.utils import TestFormMetadata
 from corehq.form_processor.utils import get_simple_wrapped_form
-from corehq.apps.users.const import REDACTED_USERNAME
 
 import uuid
 
