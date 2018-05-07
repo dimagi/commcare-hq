@@ -116,7 +116,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
                     this.enable_release_notes(false);
                 }
                 return true;
-            }
+            },
         });
 
         var $shadowParent = $('#shadow-parent');

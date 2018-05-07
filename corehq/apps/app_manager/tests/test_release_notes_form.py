@@ -9,7 +9,7 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.tests.util import TestXmlMixin, extract_xml_partial
+from corehq.apps.app_manager.tests.util import TestXmlMixin
 
 
 class ReleaseFormsSetupMixin(object):
@@ -179,9 +179,9 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
         </partial>
         """
         self.assertXmlPartialEqual(expected, suite, "./menu")
-        
 
-class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixin): 
+
+class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixin):
     file_path = ('data',)
 
     def setUp(self):
@@ -206,4 +206,4 @@ class ReleaseNotesResourceFileTest(TestCase, ReleaseFormsSetupMixin, TestXmlMixi
         copy = self.factory.app.make_build()
         copy.save()
         with self.assertRaises(ResourceNotFound):
-            self.assertTrue(copy.lazy_fetch_attachment('files/modules-0/forms-0.xml'))        
+            self.assertTrue(copy.lazy_fetch_attachment('files/modules-0/forms-0.xml'))
