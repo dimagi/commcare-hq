@@ -573,6 +573,9 @@ def stunting_normal_column(beta):
     return 'zscore_grading_hfa_norlam' if beta else 'stunting_normal'
 
 
+def default_age_interval(beta):
+    return '0 - 5 years' if beta else '6 - 60 months'
+
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
