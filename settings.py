@@ -2025,6 +2025,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2062,7 +2064,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
     os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json')
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
+    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [

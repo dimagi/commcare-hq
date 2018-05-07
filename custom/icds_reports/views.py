@@ -22,7 +22,7 @@ from django.views.generic.base import View, TemplateView, RedirectView
 
 
 from corehq import toggles
-from corehq.apps.cloudcare.utils import webapps_url
+from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
@@ -222,7 +222,7 @@ class DashboardView(TemplateView):
             kwargs['is_web_user'] = True
         elif is_commcare_user and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
-            kwargs['report_an_issue_url'] = webapps_url(
+            kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,

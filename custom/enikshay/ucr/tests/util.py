@@ -12,6 +12,7 @@ from corehq.apps.userreports.expressions import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.specs import FactoryContext
+from io import open
 
 
 class TestDataSourceExpressions(SimpleTestCase):

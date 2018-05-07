@@ -5,6 +5,7 @@ import json
 import os
 from django.test import TestCase
 from custom.bihar.models import BiharCase, CareBiharFluff
+from io import open
 
 
 class TestHomeVisits(TestCase):

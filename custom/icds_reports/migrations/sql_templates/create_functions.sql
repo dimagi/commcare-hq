@@ -429,17 +429,16 @@ BEGIN
     EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || '(case_id)';
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' ccs_monthly SET ' ||
-      'anc_in_month = 1 ' ||
+      'anc_in_month =  (' ||
+        '(CASE WHEN ut.due_list_date_anc_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' THEN 1 ELSE 0 END) + ' ||
+        '(CASE WHEN ut.due_list_date_anc_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' THEN 1 ELSE 0 END) + ' ||
+        '(CASE WHEN ut.due_list_date_anc_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' THEN 1 ELSE 0 END) + ' ||
+        '(CASE WHEN ut.due_list_date_anc_4 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' THEN 1 ELSE 0 END)' ||
+      ') ' ||
     'FROM ' || quote_ident(_ucr_pregnant_tasks_table) || ' ut ' ||
-    'WHERE ccs_monthly.case_id = ut.ccs_record_case_id AND (' ||
-      'ut.due_list_date_anc_1 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
-      'ut.due_list_date_anc_2 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
-      'ut.due_list_date_anc_3 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) || ' OR ' ||
-      'ut.due_list_date_anc_4 BETWEEN ' || quote_literal(_start_date) || ' AND ' || quote_literal(_end_date) ||
-    ') ';
+    'WHERE ccs_monthly.case_id = ut.ccs_record_case_id';
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
-        -- There may be better indexes to put here. Should investigate what tableau queries
 END;
 $BODY$
 LANGUAGE plpgsql;
