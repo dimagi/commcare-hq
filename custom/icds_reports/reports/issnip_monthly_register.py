@@ -11,14 +11,17 @@ from django.utils.functional import cached_property
 
 from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, \
     ChildHealthMonthlyURC
+from custom.icds_reports.utils import stunting_moderate_column, stunting_severe_column, wasting_moderate_column, \
+    wasting_severe_column
 
 DATA_NOT_ENTERED = "Data Not Entered"
 AWC_LOCATION_LEVEL = 5
 
 
 class ISSNIPMonthlyReport(object):
-    def __init__(self, config):
+    def __init__(self, config, icds_feature_flag=False):
         self.config = config
+        self.icds_feature_flag = icds_feature_flag
 
     def filter_by(self, config, column, default=0):
         return Case(
@@ -255,59 +258,59 @@ class ISSNIPMonthlyReport(object):
             boys_stunted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             girls_stunted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             boys_stunted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             girls_stunted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'stunting_moderate')) + Sum(self.filter_by({
+            }, stunting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'stunting_severe')),
+            }, stunting_severe_column(self.icds_feature_flag))),
             boys_wasted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'M'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             girls_wasted_0_3=Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['0', '6', '12', '24', '36'],
                 'gender': 'F'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             boys_wasted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'M'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             girls_wasted_3_5=Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'wasting_moderate')) + Sum(self.filter_by({
+            }, wasting_moderate_column(self.icds_feature_flag))) + Sum(self.filter_by({
                 'age_tranche__in': ['48', '60'],
                 'gender': 'F'
-            }, 'wasting_severe')),
+            }, wasting_severe_column(self.icds_feature_flag))),
             sc_boys_6_36=Sum(self.filter_by({
                 'caste': 'sc',
                 'gender': 'M',

@@ -364,7 +364,7 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
         'awc_id': awcs,
         'month': selected_date,
         'domain': domain
-    }).to_pdf_format
+    }, icds_feature_flag=icds_pre_release_features(couch_user)).to_pdf_format
 
     if pdf_format == 'one':
         report_context['reports'] = report_data
