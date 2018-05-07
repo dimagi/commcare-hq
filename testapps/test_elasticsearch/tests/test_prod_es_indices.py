@@ -34,7 +34,7 @@ class ProdIndexManagementTest(SimpleTestCase):
 EXPECTED_PROD_INDICES = [
     {
         "alias": "case_search",
-        "index": "test_case_search_2018-04-18",
+        "index": "test_case_search_2018-04-27",
         "type": "case",
         "meta": {
             "settings": {

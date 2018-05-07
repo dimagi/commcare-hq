@@ -52,8 +52,12 @@ def _get_case_properties(doc_dict):
     domain = doc_dict.get('domain')
     assert domain
     base_case_properties = [
+        {'key': '@case_id', 'value': doc_dict.get('_id')},
+        {'key': '@case_type', 'value': doc_dict.get('type')},
+        {'key': '@owner_id', 'value': doc_dict.get('owner_id')},
+        {'key': '@status', 'value': 'closed' if doc_dict.get('closed') else 'open'},
         {'key': 'name', 'value': doc_dict.get('name')},
-        {'key': 'external_id', 'value': doc_dict.get('external_id')}
+        {'key': 'external_id', 'value': doc_dict.get('external_id')},
     ]
     if should_use_sql_backend(domain):
         dynamic_case_properties = OrderedDict(doc_dict['case_json'])

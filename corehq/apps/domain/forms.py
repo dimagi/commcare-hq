@@ -1633,9 +1633,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
-    confirm_legal = forms.BooleanField(
-        required=True,
-    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1647,12 +1644,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
-        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
-            'I have read and agree to the <a href="%(pa_url)s" '
-            'target="_blank">Software Product Agreement</a>.'
-        ) % {
-            'pa_url': reverse("product_agreement"),
-        })
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
@@ -1674,10 +1665,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
-            ),
-            crispy.Fieldset(
-                _("Re-Confirm Product Agreement"),
-                'confirm_legal',
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(

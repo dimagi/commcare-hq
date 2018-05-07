@@ -12,12 +12,18 @@ from corehq.apps.es import case_search as case_search_es
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from six import string_types
+from warnings import warn
+
+import six
+from django.utils.dateparse import parse_date
+from django.utils.translation import ugettext as _
+from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
+    CASE_PROPERTIES_PATH,
+    IDENTIFIER,
     INDICES_PATH,
     REFERENCED_ID,
-    CASE_PROPERTIES_PATH,
     RELEVANCE_SCORE,
     VALUE_DATE,
     VALUE_NUMERIC,
@@ -47,9 +53,9 @@ class CaseSearchES(CaseES):
         except (KeyError, TypeError):
             return []
 
-    def case_property_query(self, key, value, clause=queries.MUST, fuzzy=False):
+    def case_property_query(self, case_property_name, value, clause=queries.MUST, fuzzy=False):
         """
-        Search for all cases where case property `key` has text value `value`
+        Search for all cases where case property with name `case_property_name`` has text value `value`
 
         Usage: (CaseSearchES()
                 .domain('swashbucklers')
@@ -65,45 +71,64 @@ class CaseSearchES(CaseES):
             positive_clause = clause != queries.MUST_NOT
             return (
                 # fuzzy match
-                self._add_query(self._get_text_query(key, value, fuzziness='AUTO'), clause)
+                self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
                 # exact match. added to improve the score of exact matches
-                ._add_query(self._get_text_query(key, value, fuzziness='0'),
+                ._add_query(exact_case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
-            return self._add_query(self._get_text_query(key, value, fuzziness='0'), clause)
+            return self._add_query(exact_case_property_text_query(case_property_name, value), clause)
 
-    def regexp_case_property_query(self, key, regex, clause=queries.MUST):
+    def regexp_case_property_query(self, case_property_name, regex, clause=queries.MUST):
         """
-        Search for all cases where case property `key` matches the regular expression in `regex`
+        Search for all cases where case property `case_property_name` matches the regular expression in `regex`
         """
         return self._add_query(
-            self._get_query(key, queries.regexp("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)),
-            clause,
-        )
-
-    def numeric_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
-        """
-        Search for all cases where case property `key` fulfills the range criteria.
-        """
-        return self._add_query(
-            self._get_query(
-                key,
-                queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), gt, gte, lt, lte)
+            _base_property_query(case_property_name, queries.regexp(
+                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)
             ),
             clause,
         )
 
-    def date_range_case_property_query(self, key, gt=None, gte=None, lt=None, lte=None, clause=queries.MUST):
+    def numeric_range_case_property_query(self, case_property_name, gt=None,
+                                          gte=None, lt=None, lte=None, clause=queries.MUST):
         """
-        Search for all cases where case property `key` fulfills the date range criteria.
+        Search for all cases where case property `case_property_name` fulfills the range criteria.
         """
         return self._add_query(
-            self._get_query(
-                key,
-                queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), gt, gte, lt, lte)
-            ),
-            clause,
+            case_property_range_query(case_property_name, gt, gte, lt, lte),
+            clause
         )
+
+    def date_range_case_property_query(self, case_property_name, gt=None,
+                                       gte=None, lt=None, lte=None, clause=queries.MUST):
+        """
+        Search for all cases where case property `case_property_name` fulfills the date range criteria.
+        """
+        return self._add_query(case_property_range_query(case_property_name, gt, gte, lt, lte), clause)
+
+    def xpath_query(self, domain, xpath):
+        """Search for cases using an XPath predicate expression.
+
+        Enter an arbitrary XPath predicate in the context of the case. Also supports related case lookups.
+        e.g you can do things like:
+
+        - case properties: "first_name = 'dolores' and last_name = 'abernathy'"
+        - date ranges: "first_came_online >= '2017-08-12' or died <= '2020-11-15"
+        - numeric ranges: "age >= 100 and height < 1.25"
+        - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
+        """
+        from corehq.apps.case_search.filter_dsl import (
+            CaseFilterError,
+            build_filter_from_ast,
+        )
+
+        try:
+            return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
+        except (TypeError, RuntimeError) as e:
+            raise CaseFilterError(
+                _("Malformed query: {}".format(e)),
+                None,
+            )
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
@@ -121,43 +146,120 @@ class CaseSearchES(CaseES):
             )
         return self
 
-    def _get_text_query(self, key, value, fuzziness):
-        # Filter by case_properties.key and do a text search in case_properties.value
-        return self._get_query(
-            key,
-            queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
-        )
-
-    def _get_query(self, key, query):
-        return queries.nested(
-            CASE_PROPERTIES_PATH,
-            queries.filtered(
-                query,
-                filters.term('{}.key'.format(CASE_PROPERTIES_PATH), key),
-            )
-        )
-
-    def get_child_cases(self, case_ids):
-        """Returns all cases that reference cases with id: `case_ids`
+    def get_child_cases(self, case_ids, identifier):
+        """Returns all cases that reference cases with ids: `case_ids`
         """
-        if isinstance(case_ids, string_types):
+        if isinstance(case_ids, six.string_types):
             case_ids = [case_ids]
 
         return self._add_query(
-            queries.nested(
-                INDICES_PATH,
-                queries.match(" ".join(case_ids), '{}.{}'.format(INDICES_PATH, REFERENCED_ID))
-            ),
+            reverse_index_case_query(case_ids, identifier),
             queries.MUST,
         )
 
 
-def case_property_filter(key, value):
+def case_property_filter(case_property_name, value):
+    warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
     return filters.nested(
         CASE_PROPERTIES_PATH,
         filters.AND(
-            filters.term("{}.key".format(CASE_PROPERTIES_PATH), key),
+            filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name),
             filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+        )
+    )
+
+
+def exact_case_property_text_query(case_property_name, value):
+    """Filter by case property.
+
+    This performs an exact match on the value in the case property, including
+    letter casing and punctuation.
+
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            filters.AND(
+                filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+            )
+        )
+    )
+
+
+def case_property_text_query(case_property_name, value, fuzziness='0'):
+    """Filter by case_properties.key and do a text search in case_properties.value
+
+    This does not do exact matches on the case property value. If the value has
+    multiple words, they will be OR'd together in this query. You may want to
+    use the `exact_case_property_text_query` instead.
+
+    """
+    return _base_property_query(
+        case_property_name,
+        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
+    )
+
+
+def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lte=None):
+    """Returns cases where case property `key` fall into the range provided.
+
+    """
+    kwargs = {'gt': gt, 'gte': gte, 'lt': lt, 'lte': lte}
+    # if its a number, use it
+    try:
+        # numeric range
+        kwargs = {key: float(value) for key, value in six.iteritems(kwargs) if value is not None}
+        return _base_property_query(
+            case_property_name,
+            queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), **kwargs)
+        )
+    except ValueError:
+        pass
+
+    # if its a date, use it
+    # date range
+    kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
+    return _base_property_query(
+        case_property_name,
+        queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), **kwargs)
+    )
+
+
+def reverse_index_case_query(case_ids, identifier=None):
+    """Fetches related cases related by `identifier`.
+
+    For example, in a regular parent/child relationship, given a list of parent
+    case ids, this will return all the child cases which point to the parents
+    with identifier `parent`.
+
+    """
+    if isinstance(case_ids, six.string_types):
+            case_ids = [case_ids]
+
+    if identifier is None:      # some old relationships don't have an identifier specified
+        f = filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), list(case_ids)),
+    else:
+        f = filters.AND(
+            filters.term('{}.{}'.format(INDICES_PATH, REFERENCED_ID), list(case_ids)),
+            filters.term('{}.{}'.format(INDICES_PATH, IDENTIFIER), identifier),
+        )
+    return queries.nested(
+        INDICES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            f
+        )
+    )
+
+
+def _base_property_query(case_property_name, query):
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            query,
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
         )
     )
 
@@ -179,7 +281,7 @@ def flatten_result(hit):
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')
-        if key and value:
+        if key is not None and not key.startswith("@") and value:
             result[key] = value
     return result
 

@@ -21,7 +21,6 @@ hqDefine("accounting/js/stripe_card_manager", function() {
 
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
-        self.agreedToPrivacyPolicy = ko.observable(false);
         self.errorMsg = ko.observable('');
 
         var submit = function(){
