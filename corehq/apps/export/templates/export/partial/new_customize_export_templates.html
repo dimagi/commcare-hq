@@ -111,7 +111,15 @@
                         {% endif %}
                     </th>
                     {% if export_instance.type == 'case' and request|feature_preview_enabled:"SPLIT_MULTISELECT_CASE_EXPORT"%}
-                    <th class="col-sm-2">{% trans "Type" %}</th>
+                    <th class="col-sm-2">
+                        {% trans "Type" %}
+                        <span data-bind="
+                            makeHqHelp: {
+                                name: '{% trans "Split multi-select data" %}',
+                                placement: 'left'
+                            }
+                        "></span>
+                    </th>
                     {% endif %}
                     {% if allow_deid %}
                     <th class="col-sm-2 deid-column" data-bind="visible: $root.isDeidColumnVisible()">{% trans "Sensitivity" %}</th>
@@ -213,12 +221,6 @@
                                     submit: column.addUserDefinedOption
                                 ">
                                 <div class="form-group">
-                                    <span class="pull-right" data-bind="
-                                        makeHqHelp: {
-                                            name: '{% trans "Split multi-select data" %}',
-                                            placement: 'left'
-                                        }
-                                    "></span>
                                     <select style="width:200px" class="form-control" data-bind="
                                         options: hqImport('export/js/const').USER_DEFINED_SPLIT_TYPES,
                                         value: column.split_type,
