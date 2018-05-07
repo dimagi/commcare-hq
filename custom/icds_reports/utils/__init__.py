@@ -570,7 +570,7 @@ def stunting_severe_column(beta):
 
 
 def stunting_normal_column(beta):
-    return 'zscore_grading_hfa_norlam' if beta else 'stunting_normal'
+    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
 
 
 def default_age_interval(beta):
