@@ -284,7 +284,7 @@ class YeksiNaaReportConfigMixin(object):
             enddate = startdate + relativedelta(month=1) - relativedelta(day=1)
         config['startdate'] = startdate
         config['enddate'] = enddate
-        config['program'] = self.request.GET.get('program', '%%')
+        config['program'] = self.request.GET.get('program')
         self.config_update(config)
         return config
 

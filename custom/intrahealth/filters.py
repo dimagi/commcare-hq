@@ -143,7 +143,7 @@ class ProgramFilter(BaseReportFilter):
     def program(self):
         program_filter = [{
             'name': 'All',
-            'value': "%%",
+            'value': "",
         }]
         programs = ProgramData(config={'domain': self.domain}).rows
         for program in programs:
