@@ -488,8 +488,8 @@ class IteratorTests(TestCase):
     def test_iterator(self):
         i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
         self.assertIsNone(i.last())
-        self.assertEqual(i.next(), ('group', None))
-        self.assertEqual(i.next(), ('repeat_group', 1))
+        self.assertEqual(next(i), ('group', None))
+        self.assertEqual(next(i), ('repeat_group', 1))
         with self.assertRaises(StopIteration):
-            i.next()
+            next(i)
         self.assertEqual(i.last(), 'question_id')

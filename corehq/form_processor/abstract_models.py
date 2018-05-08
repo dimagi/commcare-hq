@@ -357,4 +357,4 @@ class CaseAttachmentMixin(IsImageMixin):
         if self.identifier and (self.attachment_src == self.attachment_from is None):
             return False
         else:
-            return True 
+            return True

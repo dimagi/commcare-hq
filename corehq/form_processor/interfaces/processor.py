@@ -268,7 +268,7 @@ class XFormQuestionValueIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if len(self.levels) > 1:
             return self._next()
         raise StopIteration
@@ -284,4 +284,4 @@ class XFormQuestionValueIterator(object):
             self._last = self._next()[0]
         return self._last
 
-    __next__ = next
+    next = __next__     # For Py2 compatibility

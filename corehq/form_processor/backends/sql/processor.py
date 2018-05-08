@@ -199,7 +199,8 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')) or new_xform.user_id or 'unknown'
+        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')
+                    or new_xform.user_id or 'unknown')
         operation = XFormOperationSQL(
             user_id=user_id,
             date=new_xform.edited_on,
