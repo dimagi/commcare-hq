@@ -249,9 +249,25 @@ class ExportableMixin(object):
 
 class NationalAggregationDataSource(SqlData):
 
-    def __init__(self, config, data_source=None):
+    def __init__(self, config, data_source=None, show_test=False, beta=False):
         super(NationalAggregationDataSource, self).__init__(config)
         self.data_source = data_source
+        self.excluded_states = get_test_state_locations_id(self.config['domain'])
+        self.beta = beta
+        self.config.update({
+            'aggregation_level': 1,
+            'age_0': '0',
+            'age_6': '6',
+            'age_12': '12',
+            'age_24': '24',
+            'age_36': '36',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72',
+            'excluded_states': self.excluded_states
+        })
+        clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def table_name(self):
@@ -263,10 +279,13 @@ class NationalAggregationDataSource(SqlData):
 
     @property
     def filters(self):
-        return [
-            RawFilter('aggregation_level = 1'),
+        filters = [
+            EQFilter('aggregation_level', 'aggregation_level'),
             EQFilter('month', 'previous_month')
         ]
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+        return filters
 
     @property
     def group_by(self):
@@ -424,7 +443,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
             AggregateColumn(
                 'Percent children with severe acute malnutrition (weight-for-height)',
                 percent_num,
-                {
+                [
                     SumColumn(
                         wasting_severe_column(self.beta),
                         filters=self.filters + get_age_filters(self.beta)
@@ -434,7 +453,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                         alias='weighed_and_height_measured_in_month',
                         filters=self.filters + get_age_filters(self.beta)
                     )
-                },
+                ],
                 slug='wasting_severe'
             ),
             AggregateColumn(
@@ -2571,18 +2590,18 @@ class FactSheetsReport(object):
     def data_sources(self):
         return {
             'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
             ),
             'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
@@ -2591,7 +2610,12 @@ class FactSheetsReport(object):
 
     @memoized
     def get_data_for_national_aggregatation(self, data_source_name):
-        return NationalAggregationDataSource(self.config, self.data_sources[data_source_name]).get_data()
+        return NationalAggregationDataSource(
+            self.config.copy(),
+            self.data_sources[data_source_name],
+            show_test=self.show_test,
+            beta=self.beta
+        ).get_data()
 
     def _get_collected_sections(self, config_list):
         sections_by_slug = OrderedDict()
