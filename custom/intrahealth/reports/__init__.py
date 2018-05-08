@@ -15,6 +15,10 @@ from six.moves import zip
 from six.moves import range
 import six
 
+from custom.intrahealth.reports.dashboard_1 import Dashboard1Report
+from custom.intrahealth.reports.dashboard_2 import Dashboard2Report
+from custom.intrahealth.reports.dashboard_3 import Dashboard3Report
+
 
 def get_localized_months():
     #Returns chronological list of months in french language
@@ -161,4 +165,9 @@ CUSTOM_REPORTS = (
         FicheConsommationReport,
         RecapPassageReport
     )),
+    ("Rapports Yeksi Naa", (
+        Dashboard1Report,
+        Dashboard2Report,
+        Dashboard3Report,
+    ))
 )

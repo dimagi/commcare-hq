@@ -3,8 +3,8 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
 
-from custom.yeksi_naa_reports.tests.utils import YeksiTestCase
-from custom.yeksi_naa_reports.reports import Dashboard2Report
+from custom.intrahealth.tests.utils import YeksiTestCase
+from custom.intrahealth.reports import Dashboard2Report
 
 
 class TestDashboard2(YeksiTestCase):

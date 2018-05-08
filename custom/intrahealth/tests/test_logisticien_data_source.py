@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
-from custom.yeksi_naa_reports.tests.utils import TestDataSourceExpressions
+from custom.intrahealth.tests.utils import TestDataSourceExpressions
 
 LOGISTICIEN_DATA_SOURCE = 'yeksi_naa_reports_logisticien.json'
 
