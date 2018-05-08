@@ -2,24 +2,24 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from django import forms
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
-from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 
 
 class AppTranslationsForm(forms.Form):
-    app_id = forms.ChoiceField(label=ugettext_noop("App"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_noop("Build Number"), required=True)
-    source_lang = forms.ChoiceField(label=ugettext_noop("Source Language"),
-                                    choices=[('en', 'English')])
-    target_lang = forms.ChoiceField(label=ugettext_noop("Source Language"),
-                                    choices=[('hin', 'Hindi'), ('mr', 'Marathi'),
-                                             ('te', 'telugu')])
+    app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
+    version = forms.IntegerField(label=ugettext_lazy("Build Number"), required=True)
+    source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
+                                    choices=[('en', ugettext_lazy('English'))])
+    target_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
+                                    choices=[('hin', ugettext_lazy('Hindi')),
+                                             ('mr', ugettext_lazy('Marathi')),
+                                             ('te', ugettext_lazy('telugu'))])
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -37,7 +37,7 @@ class AppTranslationsForm(forms.Form):
             'target_lang',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    _("Submit Translation To Transifex"),
+                    ugettext_lazy("Submit files for translation to Transifex"),
                     type="submit",
                     css_class="btn btn-primary btn-lg disable-on-submit",
                 )
