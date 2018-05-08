@@ -158,7 +158,7 @@ hqDefine("reports/js/data_corrections", function() {
         };
         self.query.subscribe(function() {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalPages(Math.ceil(_.filter(self.propertyNames(), self.matchesQuery).length / self.itemsPerPage()) || 1);
             self.render();
         });
 
