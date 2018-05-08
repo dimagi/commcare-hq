@@ -12,7 +12,12 @@ from django.db.utils import IntegrityError
 
 import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult, get_case_updates, get_case_ids_from_form
+from casexml.apps.case.xform import (
+    get_all_extensions_to_close,
+    CaseProcessingResult,
+    get_case_updates,
+    get_case_ids_from_form
+)
 from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -650,7 +655,7 @@ def commit_migration(domain_name):
 
 
 class PartiallyLockingQueue(object):
-    def __init__(self, queue_id_param):
+    def __init__(self, queue_id_param="id"):
         self.queue_by_lock_id = defaultdict(deque)
         self.lock_ids_by_queue_id = defaultdict(list)
         self.currently_locked = set()
