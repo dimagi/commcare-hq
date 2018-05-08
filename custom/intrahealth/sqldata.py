@@ -894,7 +894,9 @@ class VisiteDeLOperateurDataSource(YeksiSqlData):
 
     @property
     def filters(self):
-        filters = [BETWEEN("real_date", "startdate", "enddate"), ContainsFilter("select_programs", "program")]
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if self.config.get('program'):
+            filters.append(ContainsFilter("select_programs", "program"))
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -944,10 +946,9 @@ class VisiteDeLOperateurPerProductDataSource(YeksiSqlData):
 
     @property
     def filters(self):
-        filters = [
-            BETWEEN("real_date_repeat", "startdate", "enddate"),
-            ContainsFilter("select_programs", "program")
-        ]
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        if self.config.get('program'):
+            filters.append(ContainsFilter("select_programs", "program"))
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
