@@ -17,6 +17,19 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 defer = $.Deferred(),
                 options,
                 menus;
+
+            // Make sure the user has access to this app
+            var accessibleApps = hqImport("hqwebapp/js/initial_page_data").get("apps"),
+                accessibleAppIds = _.pluck(accessibleApps, '_id');
+            if (!_.contains(accessibleAppIds, params.appId)) {
+                FormplayerFrontend.trigger(
+                    'showError',
+                    gettext("Permission Denied")
+                );
+                FormplayerFrontend.trigger('navigateHome');
+                return;
+            }
+
             options = {
                 success: function (parsedMenus, response) {
                     if (response.status === 'retry') {
