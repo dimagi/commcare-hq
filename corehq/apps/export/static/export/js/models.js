@@ -62,7 +62,7 @@ hqDefine('export/js/models', function () {
         // Set column widths
         self.questionColumnClass = ko.computed(function() {
             var width = 6;
-            if (self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
@@ -72,7 +72,7 @@ hqDefine('export/js/models', function () {
         });
         self.displayColumnClass = ko.computed(function() {
             var width = 5;
-            if (self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
                 width--;
             }
             if (self.isDeidColumnVisible()) {
