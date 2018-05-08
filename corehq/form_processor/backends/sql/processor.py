@@ -100,7 +100,6 @@ class FormProcessorSQL(object):
         case.deleted = True
         publish_case_saved(case)
 
-    # TODO: add tests
     @classmethod
     def update_responses(cls, xform, value_responses_map, user_id):
         from corehq.form_processor.utils.xform import update_response
@@ -199,8 +198,8 @@ class FormProcessorSQL(object):
     @classmethod
     def apply_deprecation(cls, existing_xform, new_xform):
         existing_xform.state = XFormInstanceSQL.DEPRECATED
-        user_id = (new_xform.auth_context and new_xform.auth_context.get('user_id')
-                    or new_xform.user_id or 'unknown')
+        default_user_id = new_xform.user_id or 'unknown'
+        user_id = new_xform.auth_context and new_xform.auth_context.get('user_id') or default_user_id
         operation = XFormOperationSQL(
             user_id=user_id,
             date=new_xform.edited_on,

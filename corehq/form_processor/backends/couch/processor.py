@@ -84,7 +84,6 @@ class FormProcessorCouch(object):
         docs = [case._doc] + [f._doc for f in xforms]
         case.get_db().bulk_delete(docs)
 
-    # TODO: add tests
     @classmethod
     def update_responses(cls, xform, value_responses_map, user_id):
         from corehq.form_processor.utils.xform import update_response
