@@ -207,7 +207,11 @@ class WorkbookJSONReader(object):
         self.worksheets = []
 
         for worksheet in self.wb.worksheets:
-            ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            try:
+                ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            except IndexError:
+                raise JSONReaderError('This Excel workbook has unrecognised formatting. Please try downloading '
+                                      'the lookup table first, and then add data to it.')
             self.worksheets_by_title[worksheet.title] = ws
             self.worksheets.append(ws)
 
