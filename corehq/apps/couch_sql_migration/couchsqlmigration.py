@@ -6,7 +6,7 @@ import os
 import uuid
 from copy import deepcopy
 from datetime import datetime
-from time import time, sleep
+from time import sleep
 
 from django.db.utils import IntegrityError
 
@@ -38,7 +38,6 @@ from corehq.util.datadog.gauges import datadog_counter
 from corehq.util.datadog.utils import bucket_value
 from corehq.util.pagination import PaginationEventHandler
 from couchforms.models import XFormInstance, doc_types as form_doc_types, all_known_formlike_doc_types
-from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
@@ -89,9 +88,7 @@ class CouchSqlDomainMigrator(object):
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_context = timing_context
             with timing_context('main_forms'):
-                self.queues = PartiallyLockingQueue(self._get_lock_key())
-                with self.queues():
-                    self._process_main_forms()
+                self._process_main_forms()
             with timing_context("unprocessed_forms"):
                 self._copy_unprocessed_forms()
             with timing_context("unprocessed_cases"):
@@ -106,6 +103,7 @@ class CouchSqlDomainMigrator(object):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
+        self.queues = PartiallyLockingQueue()  # needs to be on self to release appropriately
         pool = Pool(10)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
@@ -149,9 +147,6 @@ class CouchSqlDomainMigrator(object):
         finally:
             if case_id:
                 self.queues.release_lock(case_id)
-
-    def _get_lock_key(self):
-        return "couch_sql_migration.{}".format(self.domain)
 
     def _migrate_form_and_associated_models(self, couch_form):
         sql_form = _migrate_form(self.domain, couch_form)
@@ -657,21 +652,9 @@ def commit_migration(domain_name):
 
 
 class PartiallyLockingQueue(object):
-    def __init__(self, key_base):
+    def __init__(self):
         self.queue_by_id = defaultdict(deque)
-        self.key_base = "%s.%%s.%%s" % key_base  # <key_base>.<lock_type>.<obj_id>
-        self.redis = get_redis_client()
-        self.expire_time = 60
-
-    def __call__(self):
-        return self
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for obj_id, queue in self.queue_by_id.iteritems():
-            self.release_lock(obj_id)
+        self.currently_locked = set()
 
     def try_obj(self, obj_id, queued_obj):
         if not self.check_lock(obj_id):
@@ -697,28 +680,10 @@ class PartiallyLockingQueue(object):
         self.queue_by_id[obj_id].append(queued_obj)
 
     def check_lock(self, obj_id):
-        value = self.redis.get(self.get_obj_lock_key(obj_id))
-        if not value:
-            return False
-        if value > time():
-            return True
-        self.release_lock(obj_id)
-        raise LockTimeoutException("Object {} should not be taking so long for this action".format(obj_id))
+        return obj_id in self.currently_locked
 
     def set_lock(self, obj_id):
-        expiry_time = self.get_expiry_time()
-        value = self.redis.get_or_set(self.get_obj_lock_key(obj_id), expiry_time)
-        return expiry_time == value
+        self.currently_locked.add(obj_id)
 
     def release_lock(self, obj_id):
-        self.redis.delete(self.get_obj_lock_key(obj_id))
-
-    def get_expiry_time(self):
-        return time() + self.expire_time
-
-    def get_obj_lock_key(self, obj_id):
-        return self.key_base % ("obj", obj_id)
-
-
-class LockTimeoutException(Exception):
-    pass
+        self.currently_locked.remove(obj_id)
