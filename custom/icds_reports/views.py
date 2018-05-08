@@ -1569,6 +1569,7 @@ class ICDSImagesAccessorAPI(View):
 
 
 @location_safe
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
 class ICDSAppTranslations(BaseDomainView):
     page_title = ugettext_lazy('ICDS App Translations')
     urlname = 'icds_app_translations'

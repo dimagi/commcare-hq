@@ -1528,3 +1528,11 @@ TRAINING_MODULE = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
