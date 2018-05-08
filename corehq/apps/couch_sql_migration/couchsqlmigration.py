@@ -652,38 +652,73 @@ def commit_migration(domain_name):
 
 
 class PartiallyLockingQueue(object):
-    def __init__(self):
-        self.queue_by_id = defaultdict(deque)
+    def __init__(self, queued_id_param):
+        self.queue_by_locked_id = defaultdict(deque)
+        self.locked_ids_by_queued_id = defaultdict(list)
         self.currently_locked = set()
+        self.queued_id_param = queued_id_param
 
-    def try_obj(self, obj_id, queued_obj):
-        if not self.check_lock(obj_id):
-            if self.set_lock(obj_id):
-                return queued_obj
-        self.add_item(obj_id, queued_obj)
-        return None
+    def try_obj(self, obj_ids, queued_obj):
+        if self.check_lock(obj_ids):
+            self.add_item(obj_ids, queued_obj)
+            return False
+        for obj_id in obj_ids:
+            queue = self.queue_by_locked_id[obj_id]
+            if queue:
+                self.add_item(obj_ids, queued_obj)
+                return False
+        self.set_lock(obj_ids)
+        return True
 
     def get_next(self):
-        for obj_id, queue in self.queue_by_id.iteritems():
-            if not self.check_lock(obj_id):
-                if self.set_lock(obj_id):
-                    return obj_id, queue.popleft()
+        for obj_id, queue in self.queue_by_locked_id.iteritems():
+            peeked_obj = queue[0]
+            peeked_id = self.get_queued_obj_id(peeked_obj)
+            locked_ids = self.locked_ids_by_queued_id[peeked_id]
+            for locked_id in locked_ids:
+                first_in_queue = self.queue_by_locked_id[locked_id][0]  # can assume there always will be one
+                if not self.get_queued_obj_id(first_in_queue) == peeked_id:
+                    continue
+            if not self.check_lock(locked_ids):
+                if self.set_lock(locked_ids):
+                    self.remove_item(peeked_obj)
+                    return obj_id, peeked_obj
         return None, None
 
     def has_next(self):
-        for obj_id, queue in self.queue_by_id.iteritems():
+        for _, queue in self.queue_by_locked_id.iteritems():
             if len(queue) > 0:
                 return True
         return False
 
-    def add_item(self, obj_id, queued_obj):
-        self.queue_by_id[obj_id].append(queued_obj)
+    def add_item(self, obj_ids, queued_obj):
+        for obj_id in obj_ids:
+            self.queue_by_locked_id[obj_id].append(queued_obj)
+        self.locked_ids_by_queued_id[self.get_queued_obj_id(queued_obj)] = obj_ids
 
-    def check_lock(self, obj_id):
-        return obj_id in self.currently_locked
+    def remove_item(self, queued_obj):
+        """ Removes a queued obj from data model
 
-    def set_lock(self, obj_id):
-        self.currently_locked.add(obj_id)
+        assumes the obj is the first in every queue it inhabits
+        """
+        queued_obj_id = self.get_queued_obj_id(queued_obj)
+        locked_ids = self.locked_ids_by_queued_id.get(queued_obj_id)
+        for locked_id in locked_ids:
+            self.queue_by_locked_id[locked_id].popleft()
+        del self.locked_ids_by_queued_id[queued_obj_id]
 
-    def release_lock(self, obj_id):
-        self.currently_locked.remove(obj_id)
+    def get_locked_ids_for_queued_obj(self, queued_obj):
+        obj_id = self.get_queued_obj_id(queued_obj)
+        return self.locked_ids_by_queued_id.get(obj_id)
+
+    def check_lock(self, obj_ids):
+        return any(obj_id in self.currently_locked for obj_id in obj_ids)
+
+    def set_lock(self, obj_ids):
+        self.currently_locked.update(obj_ids)
+
+    def release_lock(self, obj_ids):
+        self.currently_locked.difference_update(obj_ids)
+
+    def get_queued_obj_id(self, queued_obj):
+        return getattr(queued_obj, self.queued_id_param)
