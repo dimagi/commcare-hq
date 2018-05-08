@@ -6,6 +6,7 @@ from collections import namedtuple
 
 from couchdbkit.exceptions import BulkSaveError
 from django.conf import settings
+from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
@@ -140,7 +141,27 @@ class FormProcessorInterface(object):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     def update_responses(self, xform, value_responses_map, user_id):
-        return self.processor.update_responses(xform, value_responses_map, user_id)
+        from corehq.form_processor.utils.xform import update_response
+
+        xml = xform.get_xml_element()
+        dirty = False
+        for question, response in value_responses_map.iteritems():
+            if update_response(xml, question, response, xmlns=xform.xmlns):
+                dirty = True
+
+        if dirty:
+            from couchforms.const import ATTACHMENT_NAME
+            from corehq.form_processor.models import Attachment
+            existing_form, new_form = self.processor.new_form_from_old(xml, xform, value_responses_map, user_id)
+            new_xml = etree.tostring(xml)
+            interface = FormProcessorInterface(xform.domain)
+            interface.store_attachments(new_form, [
+                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+            ])
+            interface.save_processed_models([new_form, existing_form])
+            return True
+
+        return False
 
     def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)

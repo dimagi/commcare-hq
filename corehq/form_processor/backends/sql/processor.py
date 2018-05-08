@@ -101,45 +101,27 @@ class FormProcessorSQL(object):
         publish_case_saved(case)
 
     @classmethod
-    def update_responses(cls, xform, value_responses_map, user_id):
-        from corehq.form_processor.utils.xform import update_response
-
+    def new_form_from_old(cls, xml, xform, value_responses_map, user_id):
         from corehq.form_processor.interfaces.processor import FormProcessorInterface
         from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         interface = FormProcessorInterface(xform.domain)
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
 
-        xml = xform.get_xml_element()
-        dirty = False
-        for question, response in value_responses_map.iteritems():
-            if update_response(xml, question, response, xmlns=xform.xmlns):
-                dirty = True
+        new_xml = etree.tostring(xml)
+        form_json = convert_xform_to_json(new_xml)
+        new_form = interface.new_xform(form_json)
+        new_form.user_id = user_id
+        new_form.domain = existing_form.domain
+        new_form.app_id = existing_form.app_id
+        new_form.xmlns = existing_form.xmlns
+        new_form.received_on = existing_form.received_on
+        new_form.edited_on = datetime.datetime.utcnow()
 
-        if dirty:
-            new_xml = etree.tostring(xml)
-            form_json = convert_xform_to_json(new_xml)
-            new_form = interface.new_xform(form_json)
-            new_form.user_id = user_id
-            new_form.domain = existing_form.domain
-            new_form.app_id = existing_form.app_id
-            new_form.xmlns = existing_form.xmlns
-            new_form.received_on = existing_form.received_on
-            new_form.edited_on = datetime.datetime.utcnow()
-
-            from couchforms.const import ATTACHMENT_NAME
-            from corehq.form_processor.models import Attachment
-            existing_form, new_form = cls.apply_deprecation(existing_form, new_form)
-            existing_form = cls.assign_new_id(existing_form)
-            new_form.deprecated_form_id = existing_form.get_id
-            new_form.edited_on = datetime.datetime.utcnow()
-
-            interface.store_attachments(new_form, [
-                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
-            ])
-            interface.save_processed_models([new_form, existing_form])
-            return True
-
-        return False
+        existing_form, new_form = cls.apply_deprecation(existing_form, new_form)
+        existing_form = cls.assign_new_id(existing_form)
+        new_form.deprecated_form_id = existing_form.get_id
+        new_form.edited_on = datetime.datetime.utcnow()
+        return (existing_form, new_form)
 
     @classmethod
     def save_processed_models(cls, processed_forms, cases=None, stock_result=None, publish_to_kafka=True):

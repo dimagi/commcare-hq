@@ -404,7 +404,6 @@ class FormAccessorTestsSQL(TestCase):
 class FormAccessorsTests(TestCase):
 
     def tearDown(self):
-        return
         FormProcessorTestUtils.delete_all_xforms(DOMAIN)
         super(FormAccessorsTests, self).tearDown()
 
