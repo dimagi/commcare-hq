@@ -2,13 +2,14 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
 from copy import copy, deepcopy
-import json
 from datetime import datetime
+import json
 
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.utils.translation import ugettext as _
+import yaml
 
 from corehq.sql_db.connections import UCR_ENGINE_ID
 from corehq.util.quickcache import quickcache
@@ -622,8 +623,7 @@ class StaticDataSourceConfiguration(JsonObject):
     @classmethod
     def _all(cls):
         for path in settings.STATIC_DATA_SOURCES:
-            with open(path) as f:
-                yield cls.wrap(json.load(f)), path
+            yield cls.wrap(_read_file(path)), path
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
@@ -661,9 +661,8 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def _get_from_metadata(cls, metadata):
-        with open(metadata.path) as f:
-            wrapped = cls.wrap(json.load(f))
-            return cls._get_datasource_config(wrapped, metadata.domain)
+        wrapped = cls.wrap(_read_file(metadata.path))
+        return cls._get_datasource_config(wrapped, metadata.domain)
 
     @classmethod
     def _get_datasource_config(cls, static_config, domain):
@@ -695,8 +694,7 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def _all(cls):
         for path in settings.STATIC_UCR_REPORTS:
-            with open(path) as f:
-                yield cls.wrap(json.load(f)), path
+            yield cls.wrap(_read_file(path)), path
 
     @classmethod
     @quickcache([], skip_arg='rebuild')
@@ -779,10 +777,9 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def _get_from_metadata(cls, metadata):
-        with open(metadata.path) as f:
-            wrapped = cls.wrap(json.load(f))
-            domain = metadata.domain
-            return cls._get_report_config(wrapped, domain)
+        wrapped = cls.wrap(_read_file(metadata.path))
+        domain = metadata.domain
+        return cls._get_report_config(wrapped, domain)
 
     @classmethod
     def _get_report_config(cls, static_config, domain):
@@ -962,3 +959,11 @@ def get_report_config(config_id, domain):
     """
     config = get_report_configs([config_id], domain)[0]
     return config, report_config_id_is_static(config_id)
+
+
+def _read_file(path):
+    with open(path) as f:
+        if path.endswith('.json'):
+            return json.load(f)
+        else:
+            return yaml.load(f)
