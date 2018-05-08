@@ -73,7 +73,7 @@
         "transform": {},
         "is_nullable": true,
         "is_primary_key": false,
-        "column_id": "supervisor_id",9
+        "column_id": "supervisor_id",
         "create_index": false,
         "type": "expression"
       },
