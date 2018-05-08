@@ -70,7 +70,7 @@ def get_username_and_password_from_request(request):
     may be null."""
     from corehq.apps.hqwebapp.utils import decode_password
 
-    if 'HTTP_AUTHORIZATION' not in request.META:
+    if 'HTTP_AUTHORIZATION' not in request.META and 'username' not in request.GET:
         return None, None
 
     def _decode(string):
@@ -80,19 +80,23 @@ def get_username_and_password_from_request(request):
             # https://sentry.io/dimagi/commcarehq/issues/391378081/
             return string.decode('latin1')
 
-    auth = request.META['HTTP_AUTHORIZATION'].split()
     username = password = None
-    if auth[0].lower() == DIGEST:
-        try:
-            digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
-            username = digest.username
-        except UnicodeDecodeError:
-            pass
-    elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(b':', 1)
-        # decode password submitted from mobile app login
-        password = decode_password(password)
-        username, password = _decode(username), _decode(password)
+    if 'HTTP_AUTHORIZATION' in request.META:
+        auth = request.META['HTTP_AUTHORIZATION'].split()
+        if auth[0].lower() == DIGEST:
+            try:
+                digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
+                username = digest.username
+            except UnicodeDecodeError:
+                pass
+        elif auth[0].lower() == BASIC:
+            username, password = base64.b64decode(auth[1]).split(b':', 1)
+            # decode password submitted from mobile app login
+            password = decode_password(password)
+            username, password = _decode(username), _decode(password)
+    else:
+        # Return the username for API requests that pass it as a GET parameter
+        username = request.GET['username']
     return username, password
 
 
