@@ -20,6 +20,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
 from django.utils.translation import ugettext as _, ugettext_lazy
+from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -35,6 +36,8 @@ from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import send_translation_files_to_transifex
+from custom.icds.translations.integrations.client import TransifexApiClient
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
@@ -1585,9 +1588,13 @@ class ICDSAppTranslations(BaseDomainView):
 
     @property
     def page_context(self):
-        return {
-            'translations_form': self.translations_form
+        transifex_details_available = transifex_details_available_for_domain(self.domain)
+        context = {
+            'integration_available': transifex_details_available
         }
+        if transifex_details_available:
+            context['translations_form'] = self.translations_form
+        return context
 
     def section_url(self):
         return
@@ -1596,14 +1603,30 @@ class ICDSAppTranslations(BaseDomainView):
         available_versions = get_available_versions_for_app(self.domain, app_id)
         return version in available_versions
 
+    @staticmethod
+    def ensure_source_language(form_data):
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('source_lang')
+        transifex_account_details = settings.TRANSIFEX_DETAILS
+        client = TransifexApiClient(transifex_account_details.get('token'),
+                                    transifex_account_details.get('organization'),
+                                    transifex_project_slug)
+        project_source_langugage_code = client.project_details().json().get('source_language_code')
+        return project_source_langugage_code == source_language_code
+
     def post(self, request, *args, **kwargs):
-        form = self.translations_form
-        if form.is_valid():
-            form_data = form.cleaned_data
-            version = form.cleaned_data['version']
-            if version and not self.ensure_version_available(version, form_data.get('app_id')):
-                messages.error(request, _('Version not available for app'))
-            else:
-                send_translation_files_to_transifex.delay(request.domain, form_data)
-                messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        if not transifex_details_available_for_domain(self.domain):
+            messages.error(request, _('Transifex account not set up for this environment'))
+        else:
+            form = self.translations_form
+            if form.is_valid():
+                form_data = form.cleaned_data
+                version = form.cleaned_data['version']
+                if version and not self.ensure_version_available(version, form_data.get('app_id')):
+                    messages.error(request, _('Version not available for app'))
+                elif not self.ensure_source_language(form_data):
+                    messages.error(request, _('Source lang selected not available for the project'))
+                else:
+                    send_translation_files_to_transifex.delay(request.domain, form_data)
+                    messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return self.get(request, *args, **kwargs)

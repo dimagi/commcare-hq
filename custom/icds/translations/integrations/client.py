@@ -43,3 +43,9 @@ class TransifexApiClient():
         return requests.post(
             url, data=json.dumps(data), auth=self._auth, headers=headers,
         )
+
+    def project_details(self):
+        url = "https://www.transifex.com/api/2/project/{}/".format(self.project)
+        return requests.get(
+            url, auth=self._auth,
+        )
