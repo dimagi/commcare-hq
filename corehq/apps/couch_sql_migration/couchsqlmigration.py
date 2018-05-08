@@ -655,7 +655,23 @@ def commit_migration(domain_name):
 
 
 class PartiallyLockingQueue(object):
+    """ Data structure that holds a queue of objects returning them as locks become free
+
+    This is not currently thread safe
+
+    Interface:
+    `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
+        processed immediately
+    `.get_next()` use to get the next object off the queue that can be processed
+    `.has_next()` use to make sure there are still objects in the queue
+    `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
+        with an object once finished processing
+    """
+
     def __init__(self, queue_id_param="id"):
+        """
+        :queue_id_param string: param of the queued objects to pull an id from
+        """
         self.queue_by_lock_id = defaultdict(deque)
         self.lock_ids_by_queue_id = defaultdict(list)
         self.currently_locked = set()
@@ -665,10 +681,20 @@ class PartiallyLockingQueue(object):
         self.get_queue_obj_id = get_queue_obj_id
 
     def try_obj(self, lock_ids, queue_obj):
-        if self.check_lock(lock_ids):
+        """ Checks if the object can acquire some locks. If not, adds item to queue
+
+        :lock_ids list<string>: list of ids that this object needs to wait on
+        :queue_obj object: whatever kind of object is being queued
+
+        First checks the current locks, then makes sure this object would be the first in each
+        queue it would sit in
+
+        Returns :boolean: True if it acquired the lock, False if it was added to queue
+        """
+        if self.check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
             self.add_item(lock_ids, queue_obj)
             return False
-        for lock_id in lock_ids:
+        for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
             queue = self.queue_by_lock_id[lock_id]
             if queue:
                 self.add_item(lock_ids, queue_obj)
@@ -677,6 +703,13 @@ class PartiallyLockingQueue(object):
         return True
 
     def get_next(self):
+        """ Returns the next object that can be processed
+
+        Iterates through the first object in each queue, then checks that that object is the
+        first in every lock queue it is in
+
+        Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
+        """
         for lock_id, queue in self.queue_by_lock_id.iteritems():
             peeked_obj = queue[0]
             peeked_id = self.get_queue_obj_id(peeked_obj)
@@ -687,16 +720,27 @@ class PartiallyLockingQueue(object):
                     continue
             if self.set_lock(lock_ids):
                 self.remove_item(peeked_obj)
-                return lock_ids, peeked_obj
-        return None, None
+                return peeked_obj
+        return None
 
     def has_next(self):
+        """ Makes sure there are still objects in the queue
+
+        Returns :boolean: True if there are objs left, False if not
+        """
         for _, queue in self.queue_by_lock_id.iteritems():
             if len(queue) > 0:
                 return True
         return False
 
     def release_lock_for_queue_obj(self, queue_obj):
+        """ Releases all locks for an object in the queue
+
+        :queue_obj obj: An object of the type in the queues
+
+        At some point in the future it might raise an exception if it trys
+        releasing a lock that isn't held
+        """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
         self.release_lock(lock_ids)
@@ -709,10 +753,19 @@ class PartiallyLockingQueue(object):
     def remove_item(self, queued_obj):
         """ Removes a queued obj from data model
 
-        assumes the obj is the first in every queue it inhabits
+        :queue_obj obj: An object of the type in the queues
+
+        Assumes the obj is the first in every queue it inhabits. This seems reasonable
+        for the intended use case, as this function should only be used by `.get_next`.
+
+        Raises UnexpectedObjectException if this assumption doesn't hold
         """
         queued_obj_id = self.get_queue_obj_id(queued_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queued_obj_id)
+        for lock_id in lock_ids:
+            queue = self.queue_by_lock_id[lock_id]
+            if self.get_queue_obj_id(queue[0]) != queued_obj_id:
+                raise UnexpectedObjectException("This object shouldn't be removed")
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
@@ -731,3 +784,7 @@ class PartiallyLockingQueue(object):
 
     def release_lock(self, lock_ids):
         self.currently_locked.difference_update(lock_ids)
+
+
+class UnexpectedObjectException(Exception):
+    pass
