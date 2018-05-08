@@ -3,20 +3,22 @@ import requests
 import os
 import json
 
+from custom.icds.translations.integrations.const import API_USER
+
 
 class TransifexApiClient():
     def __init__(self, token, orgranization, project):
-        self.username = "api"
+        self.username = API_USER
         self.token = token
         self.organization = orgranization
         self.project = project
 
     @property
     def _auth(self):
-        return (self.username, self.token)
+        return self.username, self.token
 
     def list_resources(self):
-        url = "http://api.transifex.com/organizations/{}/projects/{}/resources".format(
+        url = "https://api.transifex.com/organizations/{}/projects/{}/resources".format(
             self.organization,
             self.project
         )

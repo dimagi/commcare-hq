@@ -14,7 +14,8 @@ from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 
 class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy("Build Number"), required=False)
+    version = forms.IntegerField(label=ugettext_lazy("Build Number"), required=False,
+                                 help_text=ugettext_lazy("Leave blank to use current application state"))
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
     source_lang = forms.ChoiceField(label=ugettext_lazy("Source Language"),
@@ -32,10 +33,11 @@ class AppTranslationsForm(forms.Form):
         self.helper.field_class = 'col-sm-4 col-md-5 col-lg-3'
 
         self.fields['app_id'].choices = tuple((app.id, app.name) for app in get_brief_apps_in_domain(domain))
-        self.fields['transifex_project_slug'].choices = (
-            tuple((slug, slug)
-                  for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
-        )
+        if settings.TRANSIFEX_DETAILS:
+            self.fields['transifex_project_slug'].choices = (
+                tuple((slug, slug)
+                      for slug in settings.TRANSIFEX_DETAILS.get('project').get(domain))
+            )
         self.helper.layout = Layout(
             'app_id',
             'version',
