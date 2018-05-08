@@ -1586,12 +1586,6 @@
           "supervisor_id",
           "dob"
         ]
-      },
-      {
-        "column_ids": [
-          "supervisor_id",
-          "modified_on"
-        ]
       }
     ],
     "disable_destructive_rebuild": true
