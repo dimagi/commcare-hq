@@ -3,12 +3,13 @@ from __future__ import unicode_literals
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from celery.task import periodic_task
+from celery.task import task
 from django.conf import settings
 from corehq.blobs import get_blob_db
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
-
+from custom.icds.translations.integrations.transifex import Transifex
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
@@ -44,3 +45,11 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
         if run_again:
             delete_old_images.delay()
+
+
+@task
+def send_translation_files_to_transifex(domain, form_data):
+    Transifex(domain, form_data.get('app_id'),
+              form_data.get('source_lang'),
+              form_data.get('target_lang'),
+              form_data.get('version')).send_files_to_transifex()

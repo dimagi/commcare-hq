@@ -166,7 +166,7 @@ class Transifex():
             po.save(file_name)
             self.generated_files.append(file_name)
 
-    def generate_translation_files(self):
+    def send_translation_files(self):
         self.build_translations()
         self.store_translations_to_po_files()
         self.send_files_to_transifex()

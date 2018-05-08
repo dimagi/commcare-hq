@@ -1,0 +1,10 @@
+{% extends 'hqwebapp/base_section.html' %}
+{% load crispy_forms_tags %}
+{% load i18n %}
+
+{% block page_content %}
+    <form class="form form-horizontal" name="product" method="post">
+        <legend>{% trans "ICDS App Translations" %}</legend>
+        {% crispy translations_form %}
+    </form>
+{% endblock %}
