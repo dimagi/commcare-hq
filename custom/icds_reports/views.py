@@ -1601,7 +1601,7 @@ class ICDSAppTranslations(BaseDomainView):
         if form.is_valid():
             form_data = form.cleaned_data
             version = form.cleaned_data['version']
-            if not self.ensure_version_available(version, form_data.get('app_id')):
+            if version and not self.ensure_version_available(version, form_data.get('app_id')):
                 messages.error(request, _('Version not available for app'))
             else:
                 send_translation_files_to_transifex.delay(request.domain, form_data)

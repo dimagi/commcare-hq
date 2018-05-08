@@ -16,23 +16,24 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 
 
 class Transifex():
-    def __init__(self, domain, app_id, source_lang, target_lang=None, version=None, lang_prefix='default_'):
+    def __init__(self, domain, app_id, source_lang, project_slug, version=None, lang_prefix='default_'):
         """
         :param domain: domain name
         :param app_id: id of the app to be used
-        :param source_lang: source lang code like en
-        :param target_lang: target lang code like hin
+        :param source_lang: source lang code like en or hin
         :param version: version of the app like 10475
         :param lang_prefix: prefix if other than "default_"
         """
         self.app_id = app_id
         self.domain = domain
-        self.version = int(version)
+        if version:
+            self.version = int(version)
+        else:
+            self.version = None
+        self.key_lang = "en"  # the lang in which the string keys are, should be english
         self.source_lang = source_lang
-        self.target_lang = target_lang
+        self.project_slug = project_slug
         self.lang_prefix = lang_prefix
-        if not self.target_lang:
-            self.target_lang = self.source_lang
         self.app_id_to_build = None
         self.translations = OrderedDict()
         self.headers = dict()  # headers for each sheet name
@@ -88,8 +89,8 @@ class Transifex():
 
     def get_translation_for_sheet(self, app, sheet_name, rows):
         translations_for_sheet = OrderedDict()
+        key_lang_index = self.get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self.get_header_index(sheet_name, self.lang_prefix + self.source_lang)
-        target_lang_index = self.get_header_index(sheet_name, self.lang_prefix + self.target_lang)
         occurrences = []
         if sheet_name != u'Modules_and_forms':
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
@@ -100,8 +101,8 @@ class Transifex():
                 ref_form = app.get_form(type_and_id.id)
                 occurrences = [(id_strings.form_locale(ref_form), '')]
         for row in rows:
-            source = row[source_lang_index]
-            translation = row[target_lang_index]
+            source = row[key_lang_index]
+            translation = row[source_lang_index]
             if source not in translations_for_sheet:
                 translations_for_sheet[source] = Translation(
                     source,
@@ -122,6 +123,8 @@ class Transifex():
         self.find_build_id()
         from corehq.apps.app_manager.dbaccessors import get_app
         app = get_app(self.domain, self.app_id_to_build)
+        if self.version is None:
+            self.version = app.version
 
         rows = self.translation_data(app)
 
@@ -133,7 +136,7 @@ class Transifex():
 
     def store_translations_to_po_files(self):
         if settings.TRANSIFEX_DETAILS:
-            team = settings.TRANSIFEX_DETAILS['teams'].get(self.source_lang)
+            team = settings.TRANSIFEX_DETAILS['teams'].get(self.key_lang)
         else:
             team = ""
         now = str(datetime.datetime.now())
@@ -145,12 +148,12 @@ class Transifex():
                 'App-Id': self.app_id_to_build,
                 'PO-Creation-Date': now,
                 'Language-Team': "{lang} ({team})".format(
-                    lang=self.source_lang, team=team
+                    lang=self.key_lang, team=team
                 ),
                 'MIME-Version': '1.0',
                 'Content-Type': 'text/plain; charset=utf-8',
                 'Content-Transfer-Encoding': '8bit',
-                'Language': self.source_lang,
+                'Language': self.key_lang,
                 'Version': self.version
             }
 
@@ -179,7 +182,7 @@ class Transifex():
             client = TransifexApiClient(
                 transifex_account_details['token'],
                 transifex_account_details['organization'],
-                transifex_account_details['project']
+                self.project_slug
             )
             for filename in self.generated_files:
                 response = client.upload_resource(
