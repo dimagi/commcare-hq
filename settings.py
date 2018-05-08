@@ -608,7 +608,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8080'
+FORMPLAYER_URL = 'http://localhost:8010'
 
 ####### SMS Queue Settings #######
 
