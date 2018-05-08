@@ -682,10 +682,9 @@ class PartiallyLockingQueue(object):
                 first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
                 if not self.get_queue_obj_id(first_in_queue) == peeked_id:
                     continue
-            if not self.check_lock(lock_ids):
-                if self.set_lock(lock_ids):
-                    self.remove_item(peeked_obj)
-                    return lock_ids, peeked_obj
+            if self.set_lock(lock_ids):
+                self.remove_item(peeked_obj)
+                return lock_ids, peeked_obj
         return None, None
 
     def has_next(self):
@@ -714,7 +713,10 @@ class PartiallyLockingQueue(object):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
 
     def set_lock(self, lock_ids):
+        if self.check_lock(lock_ids):
+            return False
         self.currently_locked.update(lock_ids)
+        return True
 
     def release_lock(self, lock_ids):
         self.currently_locked.difference_update(lock_ids)
