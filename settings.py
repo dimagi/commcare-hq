@@ -925,6 +925,15 @@ ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+# TRANSIFEX_DETAILS = {
+#     'organization': 'selfproject',
+#     'project': 'icds-test',
+#     'teams': {
+#         'en': 'https://www.transifex.com/selfproject/teams/'
+#     },
+#     'token': 'api-token'
+#
+# }
 TRANSIFEX_DETAILS = None
 from env_settings import *
 
