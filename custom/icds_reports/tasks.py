@@ -70,6 +70,11 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'child_list', 'name': 'static-child_health_cases'},
 ]
 
+SQL_FUNCTION_PATHS = [
+    ('migrations', 'sql_templates', 'create_functions.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
+]
+
 
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
@@ -125,11 +130,12 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
 def _create_aggregate_functions(cursor):
     try:
-        path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
         celery_task_logger.info("Starting icds reports create_functions")
-        with open(path, "r") as sql_file:
-            sql_to_execute = sql_file.read()
-            cursor.execute(sql_to_execute)
+        for sql_function_path in SQL_FUNCTION_PATHS:
+            path = os.path.join(os.path.dirname(__file__), *sql_function_path)
+            with open(path, "r") as sql_file:
+                sql_to_execute = sql_file.read()
+                cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports create_functions")
     except Exception:
         # This is likely due to a change in the UCR models or aggregation script which should be rare
