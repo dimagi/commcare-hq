@@ -2773,7 +2773,7 @@
         {
           "column": "state_id",
           "subtype": "string_lastchars",
-          "constraint": "10"
+          "constraint": "3"
         }
       ]
     },
