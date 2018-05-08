@@ -37,6 +37,7 @@ from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import send_translation_files_to_transifex
 from custom.icds.translations.integrations.client import TransifexApiClient
+from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
@@ -1612,7 +1613,8 @@ class ICDSAppTranslations(BaseDomainView):
                                     transifex_account_details.get('organization'),
                                     transifex_project_slug)
         project_source_langugage_code = client.project_details().json().get('source_language_code')
-        return project_source_langugage_code == source_language_code
+        return project_source_langugage_code == SOURCE_LANGUAGE_MAPPING.get(source_language_code,
+                                                                            source_language_code)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
