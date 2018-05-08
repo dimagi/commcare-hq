@@ -711,6 +711,8 @@ class PartiallyLockingQueue(object):
         Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
         """
         for lock_id, queue in self.queue_by_lock_id.iteritems():
+            if len(queue) == 0:
+                continue
             peeked_obj = queue[0]
             peeked_id = self.get_queue_obj_id(peeked_obj)
             lock_ids = self.lock_ids_by_queue_id[peeked_id]
@@ -769,8 +771,6 @@ class PartiallyLockingQueue(object):
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
-            if len(queue) == 0:
-                del self.queue_by_lock_id[lock_id]
         del self.lock_ids_by_queue_id[queued_obj_id]
 
     def check_lock(self, lock_ids):
