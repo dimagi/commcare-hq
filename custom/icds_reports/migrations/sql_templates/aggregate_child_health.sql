@@ -113,11 +113,11 @@ BEGIN
     'COALESCE(minority, ' || quote_nullable(_no_text) || ') as coalesce_minority, ' ||
     'COALESCE(resident, ' || quote_nullable(_no_text) || ') as coalesce_resident, ' ||
     'sum(valid_in_month), ' ||
-    'sum(nutrition_status_weighed), ' ||
-    'sum(nutrition_status_unweighed), ' ||
-    'sum(CASE WHEN nutrition_status_normal = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
     'sum(wer_eligible), ' ||
     '0, ' ||
     '0, ' ||
@@ -147,19 +147,19 @@ BEGIN
     '5, ' ||
     'sum(pnc_eligible), ' ||
     'sum(height_eligible), ' ||
-    'sum(CASE WHEN wasting_moderate = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN wasting_severe = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN stunting_moderate = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN stunting_severe = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
+    '0, ' ||
     '0, ' ||
     '0, ' ||
     'sum(height_measured_in_month), ' ||
-    'sum(CASE WHEN wasting_normal = 1 AND nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN stunting_normal = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
+    '0, ' ||
+    '0, ' ||
     'sum(valid_all_registered_in_month), ' ||
     'sum(ebf_no_info_recorded), ' ||
-    'sum(CASE WHEN nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
-    'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END), ' ||
+    '0, ' ||
+    '0, ' ||
     '0, 0, 0, 0, 0, 0 ' ||
     'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
@@ -192,7 +192,20 @@ BEGIN
     'wasting_moderate_v2 = temp.wasting_moderate_v2, ' ||
     'wasting_severe_v2 = temp.wasting_severe_v2, ' ||
     'thr_eligible = temp.thr_eligible, ' ||
-    'rations_21_plus_distributed = temp.rations_21_plus_distributed '
+    'rations_21_plus_distributed = temp.rations_21_plus_distributed, ' ||
+    'nutrition_status_weighed = temp.nutrition_status_weighed, ' ||
+    'nutrition_status_unweighed = temp.nutrition_status_unweighed, ' ||
+    'nutrition_status_normal = temp.nutrition_status_normal, ' ||
+    'nutrition_status_moderately_underweight = temp.nutrition_status_moderately_underweight, ' ||
+    'nutrition_status_severely_underweight = temp.nutrition_status_severely_underweight, ' ||
+    'wasting_moderate = temp.wasting_moderate, ' ||
+    'wasting_severe = temp.wasting_severe, ' ||
+    'wasting_normal = temp.wasting_normal, ' ||
+    'stunting_moderate = temp.stunting_moderate, ' ||
+    'stunting_severe = temp.stunting_severe, ' ||
+    'stunting_normal = temp.stunting_normal, ' ||
+    'weighed_and_height_measured_in_month = temp.weighed_and_height_measured_in_month, ' ||
+    'weighed_and_born_in_month = temp.weighed_and_born_in_month ' ||
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, ' ||
       'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
@@ -225,7 +238,20 @@ BEGIN
         'WHEN muac_grading_recorded_in_month = 1 AND muac_grading = 1 THEN 1 ' ||
         'ELSE 0 END) as wasting_severe_v2, ' ||
       'sum(thr_eligible) as thr_eligible, '
-      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed '
+      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed, '
+      'sum(nutrition_status_weighed) as nutrition_status_weighed, ' ||
+      'sum(CASE WHEN wer_eligible = 0 OR wer_eligible IS NULL  OR nutrition_status_weighed = 1 THEN 0 ELSE 1 END) as nutrition_status_unweighed, ' ||
+      'COUNT(*) FILTER (WHERE current_month_nutrition_status = ' || quote_literal('normal') || ') as nutrition_status_normal, ' ||
+      'COUNT(*) FILTER (WHERE current_month_nutrition_status = ' || quote_literal('moderately_underweight') || ') as nutrition_status_moderately_underweight, ' ||
+      'COUNT(*) FILTER (WHERE current_month_nutrition_status = ' || quote_literal('severely_underweight') || ') as nutrition_status_severely_underweight, ' ||
+      'COUNT(*) FILTER (WHERE current_month_wasting = ' || quote_literal('normal') || ') as wasting_normal, ' ||
+      'COUNT(*) FILTER (WHERE current_month_wasting = ' || quote_literal('moderate') || ') as wasting_moderate, ' ||
+      'COUNT(*) FILTER (WHERE current_month_wasting = ' || quote_literal('severe') || ') as wasting_severe, ' ||
+      'COUNT(*) FILTER (WHERE current_month_stunting = ' || quote_literal('normal') || ') as stunting_normal, ' ||
+      'COUNT(*) FILTER (WHERE current_month_stunting = ' || quote_literal('moderate') || ') as stunting_moderate, ' ||
+      'COUNT(*) FILTER (WHERE current_month_stunting = ' || quote_literal('severe') || ') as stunting_severe, ' ||
+      'COUNT(*) FILTER (WHERE nutrition_status_weighed = 1 AND height_measured_in_month = 1) as weighed_and_height_measured_in_month, ' ||
+      'COUNT(*) FILTER (WHERE (nutrition_status_weighed = 1 AND born_in_month = 1) OR low_birth_weight_born_in_month = 1) as weighed_and_born_in_month ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
