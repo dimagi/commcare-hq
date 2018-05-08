@@ -550,7 +550,7 @@ class CustomEventForm(ContentForm):
                     time=self.cleaned_data['time'],
                 )
             elif send_time_type == TimedSchedule.EVENT_RANDOM_TIME:
-                return TimedEvent(
+                return RandomTimedEvent(
                     day=day,
                     time=self.cleaned_data['time'],
                     window_length=self.cleaned_data['window_length'],
