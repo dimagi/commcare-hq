@@ -312,7 +312,7 @@
     {% if show_properties_edit or show_case_rebuild or not case.closed and not is_usercase %}
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
-        {% if show_properties_edit %}
+        {% if show_properties_edit and dynamic_properties %}
             <button type="button" class="btn btn-default pull-left" id="edit-dynamic-properties-trigger">
                 <i class="fa fa-edit"></i>
                 {% trans 'Data Corrections' %}
