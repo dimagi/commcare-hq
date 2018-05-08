@@ -111,6 +111,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
     FormplayerFrontend.reqres.setHandler("entity:get:details", function (options, isPersistent) {
         options.isPersistent = isPersistent;
+        options.preview = FormplayerFrontend.currentUser.displayOptions.singleAppMode;
         return Menus.API.queryFormplayer(options, 'get_details');
     });
 });
