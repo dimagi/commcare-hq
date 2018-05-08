@@ -431,11 +431,10 @@ def get_all_built_app_results(domain, app_id=None):
 
 def get_available_versions_for_app(domain, app_id):
     from .models import Application
-    result = Application.get_db().view(
-        'app_manager/applications_brief',
-        startkey=[domain, app_id],
-        endkey=[domain, app_id, {}]
-    )
+    result = Application.get_db().view('app_manager/saved_app',
+                                       startkey=[domain, app_id, {}],
+                                       endkey=[domain, app_id],
+                                       descending=True)
     return [doc['value']['version'] for doc in result]
 
 
