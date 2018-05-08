@@ -445,7 +445,7 @@ class FormAccessorsTests(TestCase):
         FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         form = FormAccessors(DOMAIN).get_form(form_id)
         self.assertEqual('fruit', form.form_data['breakfast'])
-        self.assertEqual('sandwich',  form.form_data['lunch'])
+        self.assertEqual('sandwich', form.form_data['lunch'])
 
 
 @use_sql_backend
