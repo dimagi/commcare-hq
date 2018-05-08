@@ -608,7 +608,7 @@ TEST_RUNNER = 'testrunner.TwoStageTestRunner'
 HQ_ACCOUNT_ROOT = "commcarehq.org"
 
 XFORMS_PLAYER_URL = "http://localhost:4444/"  # touchform's setting
-FORMPLAYER_URL = 'http://localhost:8010'
+FORMPLAYER_URL = 'http://localhost:8080'
 
 ####### SMS Queue Settings #######
 
@@ -925,9 +925,12 @@ ASYNC_INDICATOR_QUEUE_TIMES = None
 DAYS_TO_KEEP_DEVICE_LOGS = 60
 
 MAX_RULE_UPDATES_IN_ONE_RUN = 10000
+# Example:
 # TRANSIFEX_DETAILS = {
 #     'organization': 'selfproject',
-#     'project': 'icds-test',
+#     'project': {
+#        'icds-test': ['test-1236', 'test-hindi-marathi'],
+#     },
 #     'teams': {
 #         'en': 'https://www.transifex.com/selfproject/teams/'
 #     },

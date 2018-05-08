@@ -4,7 +4,7 @@ import polib
 import datetime
 import os
 
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 from collections import namedtuple, OrderedDict
@@ -21,6 +21,7 @@ class Transifex():
         :param domain: domain name
         :param app_id: id of the app to be used
         :param source_lang: source lang code like en or hin
+        :param project_slug: project slug on transifex
         :param version: version of the app like 10475
         :param lang_prefix: prefix if other than "default_"
         """
