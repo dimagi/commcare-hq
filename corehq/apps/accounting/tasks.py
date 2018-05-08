@@ -636,25 +636,30 @@ def run_downgrade_process(today=None):
 
 
 def _get_domains_with_invoices_over_threshold(today):
-    invoices = Invoice.objects.filter(is_hidden=False,
-                                      subscription__service_type=SubscriptionType.PRODUCT,
-                                      date_paid__isnull=True,
-                                      date_due__lt=today)\
-        .exclude(subscription__plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)\
-        .order_by('date_due')\
-        .select_related('subscription__subscriber')
+    unpaid_saas_invoices = Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
+
+    overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
+        date_due__lte=today - datetime.timedelta(days=1),
+        date_due__gte=today - datetime.timedelta(days=61),
+    ).order_by('date_due').select_related('subscription__subscriber')
 
     domains = set()
 
-    for invoice in invoices:
-        domain = invoice.get_domain()
+    for overdue_invoice in overdue_saas_invoices_in_downgrade_daterange:
+        domain = overdue_invoice.get_domain()
         if domain not in domains:
-            domains.add(domain)
-            total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=domain)\
-                .aggregate(Sum('balance'))['balance__sum']
-            if total >= 100:
-                yield domain, invoice, total
+            total_overdue_to_date = unpaid_saas_invoices.filter(
+                Q(date_due__lte=overdue_invoice.date_due)
+                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+                subscription__subscriber__domain=domain,
+            ).aggregate(Sum('balance'))['balance__sum']
+            if total_overdue_to_date >= 100:
+                domains.add(domain)
+                yield domain, overdue_invoice, total_overdue_to_date
 
 
 def _is_subscription_eligible_for_downgrade_process(subscription):
