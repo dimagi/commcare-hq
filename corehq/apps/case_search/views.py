@@ -76,4 +76,8 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         if xpath:
             search = search.xpath_query(self.domain, xpath)
         search_results = search.run()
-        return json_response({'values': search_results.raw_hits, 'count': search_results.total})
+        return json_response({
+            'values': search_results.raw_hits,
+            'count': search_results.total,
+            'took': search_results.raw['took'],
+        })
