@@ -9,8 +9,10 @@ from django.db.models.aggregates import Sum, Count
 from django.db.models import Case, When, Q, F, IntegerField
 from django.utils.functional import cached_property
 
-from custom.icds_reports.sqldata import AWCInfrastructureUCR, VHNDFormUCR, CcsRecordMonthlyURC, \
-    ChildHealthMonthlyURC
+from custom.icds_reports.sqldata.awc_infrastructure import AWCInfrastructureUCR
+from custom.icds_reports.sqldata.ccs_record_monthly import CcsRecordMonthlyURC
+from custom.icds_reports.sqldata.child_health_monthly import ChildHealthMonthlyURC
+from custom.icds_reports.sqldata.vhnd_form import VHNDFormUCR
 from custom.icds_reports.utils import stunting_moderate_column, stunting_severe_column, wasting_moderate_column, \
     wasting_severe_column
 
