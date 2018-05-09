@@ -1974,6 +1974,13 @@ class BillingRecordBase(models.Model):
     def recipients(self, emails):
         self.emailed_to_list = emails
 
+    def add_recipients(self, emails):
+        if self.emailed_to_list and self.emailed_to_list != []:
+            for email in emails:
+                self.emailed_to_list.append(email)
+        else:
+            self.emailed_to_list = emails
+
     @property
     def pdf(self):
         if self._pdf is None:
@@ -2077,7 +2084,7 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.recipients = [contact_email]
+        self.add_recipients([contact_email])
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
