@@ -295,10 +295,6 @@ hqDefine('hqwebapp/js/main', [
             var $modal = $("#eulaModal");
             if ($modal.length) {
                 $("body").addClass("has-eula");
-                $("#eula-snooze").click(function() {
-                    $.cookie(cookieName, true, { expires: 1, path: '/' });
-                    $("body").removeClass("has-eula");
-                });
                 $("#eula-agree").click(function() {
                     $(this).disableButton();
                     $.ajax({
