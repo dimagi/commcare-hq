@@ -125,6 +125,10 @@
                     </small>
                 </h3>
             </div>
+            <div class="col-sm-12" data-bind="visible: query">
+                <a role="button" data-toggle="collapse" data-target="#query">Show Query</a>
+                <pre id="query" class="collapse" data-bind="text: query"></pre>
+            </div>
             <div class="col-sm-12">
                 <table class="table table-striped">
                     <thead>

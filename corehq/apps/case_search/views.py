@@ -80,4 +80,5 @@ class CaseSearchView(DomainViewMixin, TemplateView):
             'values': search_results.raw_hits,
             'count': search_results.total,
             'took': search_results.raw['took'],
+            'query': search_results.query.dumps(pretty=True),
         })
