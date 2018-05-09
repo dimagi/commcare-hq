@@ -190,7 +190,7 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
     {sheet_name} sheet into a single row (a flat tuple).
 
     This function is meant as the single point of truth for the
-    column ordering of MODULES_AND_FORMS_SHEET_NAME
+    column ordering of {sheet_name}
 
     """.format(sheet_name=MODULES_AND_FORMS_SHEET_NAME)
     assert row_type is not None
