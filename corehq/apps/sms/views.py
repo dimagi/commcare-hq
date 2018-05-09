@@ -69,6 +69,7 @@ from corehq.apps.domain.decorators import (
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
+from corehq.messaging.decorators import require_privilege_but_override_for_migrator
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
@@ -131,7 +132,7 @@ class BaseMessagingSectionView(BaseDomainView):
     def can_use_inbound_sms(self):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
+    @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
