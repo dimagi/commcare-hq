@@ -7,6 +7,7 @@ from six import integer_types, string_types
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_exists,
     case_property_range_query,
     exact_case_property_text_query,
     reverse_index_case_query,
@@ -141,8 +142,13 @@ def build_filter_from_ast(domain, node):
         if node.op in [EQ, NEQ]:
             if isinstance(node.left, Step) and isinstance(node.right, integer_types + (string_types, float)):
                 # This is a leaf node
-                q = exact_case_property_text_query(serialize(node.left), node.right)
+                case_property_name = serialize(node.left)
+                value = node.right
+                q = exact_case_property_text_query(case_property_name, value)
                 if node.op == '!=':
+                    if node.right == '':
+                        # The user is asking for all cases where a property is set e.g. `foo != ''`
+                        return filters.AND(case_property_exists(case_property_name), filters.NOT(q))
                     return filters.NOT(q)
                 return q
             elif isinstance(node.right, Step):
@@ -155,7 +161,9 @@ def build_filter_from_ast(domain, node):
 
         if node.op in list(COMPARISON_MAPPING.keys()):
             try:
-                return case_property_range_query(serialize(node.left), **{COMPARISON_MAPPING[node.op]: node.right})
+                case_property_name = serialize(node.left)
+                value = node.right
+                return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
             except TypeError:
                 raise CaseFilterError(
                     _("The right hand side of a comparison must be a number or date"),

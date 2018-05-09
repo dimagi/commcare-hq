@@ -98,6 +98,63 @@ class TestFilterDsl(SimpleTestCase):
         }
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
 
+    def test_case_property_existence(self):
+        self.maxDiff = None
+        parsed = parse_xpath("property != ''")
+        expected_filter = {
+            "and": (
+                {
+                    "nested": {
+                        "path": "case_properties",
+                        "query": {
+                            "filtered": {
+                                "filter": {
+                                    "term": {
+                                        "case_properties.key.exact": "property"
+                                    }
+                                },
+                                "query": {
+                                    "match_all": {
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "not": {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "filtered": {
+                                    "filter": {
+                                        "and": (
+                                            {
+                                                "term": {
+                                                    "case_properties.key.exact": "property"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "case_properties.value.exact": ""
+                                                }
+                                            }
+                                        )
+                                    },
+                                    "query": {
+                                        "match_all": {
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+        }
+        self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
+
+
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
         expected_filter = {
