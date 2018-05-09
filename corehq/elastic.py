@@ -12,7 +12,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -212,7 +212,10 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        return es_instance.search(es_meta.index, es_meta.type, body=q)
+        results = es_instance.search(es_meta.index, es_meta.type, body=q)
+        if results.get('_shards', {}).get('failed'):
+            datadog_counter('commcare.es.partial_results', value=1)
+        return results
     except ElasticsearchException as e:
         raise ESError(e)
 
