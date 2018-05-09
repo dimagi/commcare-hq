@@ -7,9 +7,12 @@ from django.db import migrations
 from corehq.sql_db.operations import HqRunPython
 
 
+def noop(*args, **kwargs):
+    pass
+
+
 def _convert_emailed_to_array_field(apps, schema_editor):
     BillingRecord = apps.get_model('accounting', 'BillingRecord')
-
     for record in BillingRecord.objects.all():
         if record.emailed_to != '':
             record.emailed_to_list = record.emailed_to.split(',')
@@ -27,5 +30,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        HqRunPython(_convert_emailed_to_array_field)
+        HqRunPython(_convert_emailed_to_array_field, reverse_code=noop)
     ]
