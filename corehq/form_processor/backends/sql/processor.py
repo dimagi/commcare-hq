@@ -102,9 +102,8 @@ class FormProcessorSQL(object):
 
     @classmethod
     def new_form_from_old(cls, xml, xform, value_responses_map, user_id):
-        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         from corehq.form_processor.parsers.form import apply_deprecation
-        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        existing_form = FormAccessorSQL.get_with_attachments(xform.get_id)
 
         new_xml = etree.tostring(xml)
         form_json = convert_xform_to_json(new_xml)
