@@ -213,8 +213,7 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
             raise
     try:
         results = es_instance.search(es_meta.index, es_meta.type, body=q)
-        if results.get('_shards', {}).get('failed'):
-            datadog_counter('commcare.es.partial_results', value=1)
+        report_shard_failures(results)
         return results
     except ElasticsearchException as e:
         raise ESError(e)
@@ -421,8 +420,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
 
     try:
         result = es.search(meta.index, meta.type, body=q)
-        if result.get('_shards', {}).get('failed'):
-            datadog_counter('commcare.es.partial_results', value=1)
+        report_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -502,3 +500,13 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
+
+
+def report_shard_failures(search_result):
+    """Report es shard failures to datadog
+    """
+    if not isinstance(search_result, dict):
+        return
+
+    if search_result.get('_shards', {}).get('failed'):
+        datadog_counter('commcare.es.partial_results', value=1)
