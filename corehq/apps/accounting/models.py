@@ -2077,7 +2077,7 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.recipients = contact_email
+        self.recipients = [contact_email]
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
