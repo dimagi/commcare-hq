@@ -5,6 +5,7 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.urls import reverse
@@ -900,7 +901,10 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
-        ).exclude(username=self.request.user.username)
+        )
+
+    def paginated_admins(self):
+        return Paginator(self.accounting_admin_queryset, self.limit)
 
     @property
     @memoized
@@ -916,7 +920,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for admin in self.accounting_admin_queryset:
+        for admin in self.paginated_admins().page(self.page):
             yield {
                 'itemData': self._fmt_admin_data(admin),
                 'template': 'accounting-admin-row',
