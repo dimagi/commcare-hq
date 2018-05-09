@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
@@ -20,8 +21,7 @@ def require_privilege_but_override_for_migrator(privilege):
     return decorate
 
 
-reminders_framework_permission = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
-        require_privilege_but_override_for_migrator(privileges.REMINDERS_FRAMEWORK)(*args, **kwargs)
+def reminders_framework_permission(fn):
+    return require_permission(Permissions.edit_data)(
+        require_privilege_but_override_for_migrator(privileges.REMINDERS_FRAMEWORK)(fn)
     )
-)
