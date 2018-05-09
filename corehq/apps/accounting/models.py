@@ -1952,7 +1952,6 @@ class BillingRecordBase(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    emailed_to = models.CharField(max_length=254, db_index=True)
     emailed_to_list = ArrayField(models.EmailField(), default=list)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
@@ -1965,6 +1964,10 @@ class BillingRecordBase(models.Model):
         abstract = True
 
     _pdf = None
+
+    @property
+    def emailed_to(self):
+        return ','.join(self.emailed_to_list)
 
     @property
     def recipients(self):
