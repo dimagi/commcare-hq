@@ -25,6 +25,7 @@ from corehq.pillows.mappings.reportcase_mapping import REPORT_CASE_INDEX
 from corehq.pillows.mappings.reportxform_mapping import REPORT_XFORM_INDEX
 from corehq.pillows.mappings.user_mapping import USER_INDEX
 from corehq.pillows.mappings.xform_mapping import XFORM_INDEX
+from corehq.util.datadog.gauges import datadog_counter
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import ISO_DATE_FORMAT
 from no_exceptions.exceptions import Http400
@@ -145,6 +146,8 @@ class ESView(View):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            if es_results.get('_shards', {}).get('failed'):
+                datadog_counter('commcare.es.partial_results', value=1)
         except ElasticsearchException as e:
             if 'query_string' in es_query.get('query', {}).get('filtered', {}).get('query', {}):
                 # the error may have been caused by a bad query string
@@ -331,6 +334,8 @@ class UserES(ESView):
 
         try:
             es_results = self.es.search(self.index, es_type, body=es_query)
+            if es_results.get('_shards', {}).get('failed'):
+                datadog_counter('commcare.es.partial_results', value=1)
         except ElasticsearchException as e:
             msg = "Error in elasticsearch query [%s]: %s\nquery: %s" % (
                 self.index, str(e), es_query)

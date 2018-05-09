@@ -421,6 +421,8 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
 
     try:
         result = es.search(meta.index, meta.type, body=q)
+        if result.get('_shards', {}).get('failed'):
+            datadog_counter('commcare.es.partial_results', value=1)
     except ElasticsearchException as e:
         raise ESError(e)
 
