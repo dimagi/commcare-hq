@@ -173,7 +173,14 @@
             {% endif %}
             {% if show_edit_options %}
                 {% if show_edit_submission %}
-                    {% include 'reports/partials/data_corrections_trigger.html' %}
+                    {% if request|toggle_enabled:"DATA_CORRECTIONS_FORMS" %}
+                        {% include 'reports/partials/data_corrections_trigger.html' %}
+                    {% else %}
+                        <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn
+                            btn-default" id="edit-form">
+                            <i class="fa fa-edit"></i> {% trans "Edit this form" %}
+                        </a>
+                    {% endif %}
                 {% endif %}
                 {% if not is_archived and not edit_info.was_edited %}
                 <form action="{% url "archive_form" domain instance.form_id %}" method="POST" id="archive-form">{% csrf_token %}
@@ -340,8 +347,10 @@
     </div>
 </div>
 
-{% if show_edit_options %}
-    {% if show_edit_submission %}
-        {% include 'reports/partials/data_corrections_modal.html' %}
+{% if request|toggle_enabled:"DATA_CORRECTIONS_FORMS" %}
+    {% if show_edit_options %}
+        {% if show_edit_submission %}
+            {% include 'reports/partials/data_corrections_modal.html' %}
+        {% endif %}
     {% endif %}
 {% endif %}
