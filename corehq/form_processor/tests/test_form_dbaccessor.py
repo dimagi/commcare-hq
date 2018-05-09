@@ -8,13 +8,14 @@ from django.core.files.uploadedfile import UploadedFile
 from django.test import TestCase
 
 import settings
+from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB, TemporaryFilesystemBlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.exceptions import XFormNotFound, AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-from corehq.form_processor.interfaces.processor import ProcessedForms
+from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL
 )
@@ -23,7 +24,7 @@ from corehq.form_processor.tests.utils import (
     create_form_for_test, FormProcessorTestUtils, use_sql_backend
 )
 from corehq.form_processor.utils import get_simple_form_xml, get_simple_wrapped_form
-from corehq.form_processor.utils.xform import TestFormMetadata
+from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
 from corehq.sql_db.routers import db_for_read_write
 from corehq.util.test_utils import trap_extra_setup
 from six.moves import range
@@ -336,6 +337,21 @@ class FormAccessorTestsSQL(TestCase):
 
         self._validate_deprecation(existing_form, new_form)
 
+    def test_update_responses(self):
+        formxml = FormSubmissionBuilder(
+            form_id='123',
+            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
+        ).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+
+        updates = {'breakfast': 'fruit'}
+        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        form = FormAccessors(DOMAIN).get_form(xform.form_id)
+        self.assertEqual('fruit', form.form_data['breakfast'])
+        self.assertEqual('sandwich', form.form_data['lunch'])
+        self.assertEqual(1, len(form.history))
+        self.assertEqual(XFormOperationSQL.EDIT, form.history[0].operation)
+
     def test_update_form_problem_and_state(self):
         form = create_form_for_test(DOMAIN)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
@@ -414,6 +430,19 @@ class FormAccessorsTests(TestCase):
         for form_id in ['f1', 'f2']:
             form = FormAccessors(DOMAIN).get_form(form_id)
             form.delete()
+
+    def test_update_responses(self):
+        formxml = FormSubmissionBuilder(
+            form_id='123',
+            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
+        ).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+
+        updates = {'breakfast': 'fruit'}
+        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        form = FormAccessors(DOMAIN).get_form(xform.form_id)
+        self.assertEqual('fruit', form.form_data['breakfast'])
+        self.assertEqual('sandwich', form.form_data['lunch'])
 
 
 @use_sql_backend
