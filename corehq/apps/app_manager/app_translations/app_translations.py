@@ -11,6 +11,7 @@ import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
 
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException,
@@ -106,7 +107,6 @@ def process_bulk_app_translation_upload(app, f):
             continue
 
         # CHECK FOR MISSING KEY COLUMN
-        if sheet.worksheet.title == "Modules and Forms":
         if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # Several columns on this sheet could be used to uniquely identify
             # rows. Using sheet_name for now, but unique_id could also be used.
@@ -164,7 +164,7 @@ def process_bulk_app_translation_upload(app, f):
         # This could be added if we want though
         #      (it is not that bad if a user leaves out a row)
 
-        if sheet.worksheet.title == "Modules_and_forms":
+        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # It's the first sheet
             ms = _process_modules_and_forms_sheet(rows, app)
             msgs.extend(ms)
@@ -187,12 +187,12 @@ def _make_modules_and_forms_row(row_type, sheet_name, languages,
                                 media_image, media_audio, unique_id):
     """
     assemble the various pieces of data that make up a row in the
-    "Modules_and_forms" sheet into a single row (a flat tuple).
+    {sheet_name} sheet into a single row (a flat tuple).
 
     This function is meant as the single point of truth for the
-    column ordering of Modules_and_forms
+    column ordering of MODULES_AND_FORMS_SHEET_NAME
 
-    """
+    """.format(sheet_name=MODULES_AND_FORMS_SHEET_NAME)
     assert row_type is not None
     assert sheet_name is not None
     assert isinstance(languages, list)
@@ -228,7 +228,7 @@ def expected_bulk_app_sheet_headers(app):
 
     # Add headers for the first sheet
     headers.append([
-        "Modules_and_forms",
+        MODULES_AND_FORMS_SHEET_NAME,
         _make_modules_and_forms_row(
             row_type='Type',
             sheet_name='sheet_name',
@@ -263,7 +263,7 @@ def expected_bulk_app_sheet_rows(app):
     """
 
     # keys are the names of sheets, values are lists of tuples representing rows
-    rows = {"Modules_and_forms": []}
+    rows = {MODULES_AND_FORMS_SHEET_NAME: []}
 
     for mod_index, module in enumerate(app.get_modules()):
         # This is duplicated logic from expected_bulk_app_sheet_headers,
@@ -279,7 +279,7 @@ def expected_bulk_app_sheet_rows(app):
             media_audio=[module.audio_by_language(lang) for lang in app.langs],
             unique_id=module.unique_id,
         )
-        rows["Modules_and_forms"].append(row_data)
+        rows[MODULES_AND_FORMS_SHEET_NAME].append(row_data)
 
         # Populate module sheet
         rows[module_string] = []
@@ -377,7 +377,7 @@ def expected_bulk_app_sheet_rows(app):
                 )
 
                 # Add form to the first street
-                rows["Modules_and_forms"].append(first_sheet_row)
+                rows[MODULES_AND_FORMS_SHEET_NAME].append(first_sheet_row)
 
                 if form.form_type == 'shadow_form':
                     continue

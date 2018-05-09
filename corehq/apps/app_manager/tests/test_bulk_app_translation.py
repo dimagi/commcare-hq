@@ -9,6 +9,7 @@ from io import BytesIO
 
 from mock import patch
 
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 
 from couchexport.export import export_raw
@@ -116,7 +117,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     file_path = "data", "bulk_app_translation", "basic"
 
     upload_headers = (
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "sheet_name", "default_en", "default_fra", 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', "unique_id"
         )),
         ("module1", (
@@ -128,7 +129,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_headers_bad_column = (  # bad column is default-fra
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             "Type", "sheet_name", "default_en", "default-fra",
             "icon_filepath_en", "icon_filepath_fra", "audio_filepath_en", "audio_filepath_fra", "unique_id"
         )),
@@ -142,7 +143,7 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_data = (
-        ("Modules_and_forms", (
+        (MODULES_AND_FORMS_SHEET_NAME, (
           ("Module", "module1", "My & awesome module", "", "", "", "", "", "8f4f7085a93506cba4295eab9beae8723c0cee2a"),
           ("Form", "module1_form1", "My more & awesome form", "", "", "", "", "", "", "", "93ea2a40df57d8f33b472f5b2b023882281722d4")
         )),
@@ -183,13 +184,13 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
     )
 
     upload_no_change_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'default_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'default_fra', 'icon_filepath_en', 'icon_filepath_fra', 'audio_filepath_en', 'audio_filepath_fra', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en', 'default_fra')),
         ('module1_form1', ('label', 'default_en', 'default_fra', 'audio_en', 'audio_fra', 'image_en', 'image_fra', 'video_en', 'video_fra'))
     )
 
     upload_no_change_data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1', 'My & awesome module', '', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
           ('Form', 'module1_form1', 'My more & awesome form', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
@@ -299,12 +300,13 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                'Sheet "Modules_and_forms" has fewer columns than expected. Sheet '
+                'Sheet {} has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
-                'unchanged: default_fra',
+                'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
-                'Sheet "Modules_and_forms" has unrecognized columns. Sheet will '
-                'be processed but ignoring the following columns: default-fra',
+                'Sheet {} has unrecognized columns. Sheet will '
+                'be processed but ignoring the following columns: default-fra'.format(
+                    MODULES_AND_FORMS_SHEET_NAME),
 
                 'Sheet "module1" has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
@@ -356,13 +358,13 @@ class BulkAppTranslationDownloadTest(SimpleTestCase, TestXmlMixin):
     maxDiff = None
 
     excel_headers = (
-        ('Modules_and_forms', ('Type', 'sheet_name', 'default_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
+        (MODULES_AND_FORMS_SHEET_NAME, ('Type', 'sheet_name', 'default_en', 'icon_filepath_en', 'audio_filepath_en', 'unique_id')),
         ('module1', ('case_property', 'list_or_detail', 'default_en')),
         ('module1_form1', ('label', 'default_en', 'audio_en', 'image_en', 'video_en'))
     )
 
     excel_data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1', 'Stethoscope', 'jr://file/commcare/image/module0.png', '', '58ce5c9cf6eda401526973773ef216e7980bc6cc'),
           ('Form',
            'module1_form1',
@@ -435,7 +437,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'bulk_app_translation', 'aggregate')
 
     headers = (
-        ('Modules_and_forms', (
+        (MODULES_AND_FORMS_SHEET_NAME, (
             'Type', 'sheet_name',
             'default_en', 'default_afr', 'default_fra',
             'icon_filepath_en', 'icon_filepath_afr', 'icon_filepath_fra',
@@ -454,7 +456,7 @@ class AggregateMarkdownNodeTests(SimpleTestCase, TestXmlMixin):
         ))
     )
     data = (
-        ('Modules_and_forms',
+        (MODULES_AND_FORMS_SHEET_NAME,
          (('Module', 'module1',
            'Untitled Module', 'Ongetitelde Module', 'Module Sans Titre',
            '', '', '',
