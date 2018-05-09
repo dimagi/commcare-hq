@@ -107,6 +107,7 @@ def process_bulk_app_translation_upload(app, f):
 
         # CHECK FOR MISSING KEY COLUMN
         if sheet.worksheet.title == "Modules and Forms":
+        if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # Several columns on this sheet could be used to uniquely identify
             # rows. Using sheet_name for now, but unique_id could also be used.
             if expected_columns[1] not in sheet.headers:
