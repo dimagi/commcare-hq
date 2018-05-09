@@ -151,8 +151,12 @@ class FormProcessorInterface(object):
 
         if dirty:
             from couchforms.const import ATTACHMENT_NAME
+            from corehq.form_processor.interfaces.dbaccessors import FormAccessors
             from corehq.form_processor.models import Attachment
-            existing_form, new_form = self.processor.new_form_from_old(xml, xform, value_responses_map, user_id)
+
+            existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+            existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
+                                                                        value_responses_map, user_id)
             new_xml = etree.tostring(xml)
             interface = FormProcessorInterface(xform.domain)
             interface.store_attachments(new_form, [
