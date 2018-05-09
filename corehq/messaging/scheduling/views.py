@@ -670,15 +670,23 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
-            'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
-            'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
             'is_system_admin': self.is_system_admin,
+            'criteria_form_active': True,
+            'schedule_form_active': False,
         }
+
+        if self.request.method == 'POST':
+            context.update({
+                'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
+                'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+            })
+
+        return context
 
     @cached_property
     def schedule_form(self):
