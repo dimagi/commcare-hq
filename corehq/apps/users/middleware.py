@@ -56,7 +56,7 @@ class UsersMiddleware(MiddlewareMixin):
             # us to check location-based permissions before we can check authentication.
             # See LocationAccessMiddleware.process_view()
             username, _ = get_username_and_password_from_request(request)
-            request.couch_user = CouchUser.get_by_username(username)
+            request.couch_user = CouchUser.get_by_username(username) or InvalidUser()
         if request.user and request.user.is_authenticated:
             request.couch_user = CouchUser.get_by_username(request.user.username)
             if not request.couch_user.analytics_enabled:
