@@ -603,7 +603,10 @@ class ExportInstanceFilters(DocumentSchema):
         """
         Return True if the couch_user of the given request has permission to export data with this filter.
         """
-        if self.can_access_all_locations and not request.can_access_all_locations:
+        if (
+            self.can_access_all_locations and not
+            request.couch_user.has_permission(request.domain, 'access_all_locations')
+        ):
             return False
         elif not self.can_access_all_locations:
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
