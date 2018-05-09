@@ -145,7 +145,7 @@ def build_filter_from_ast(domain, node):
                 return filters.AND(case_property_exists(case_property_name), filters.NOT(q))
             if value == '' and node.op == '=':
                 # e.g. `foo = ''`
-                # The user is asking for all cases where the case property is either the empty string ('') or not set
+                # The user is asking for all cases where the case is either the empty string ('') or not set
                 return filters.OR(filters.NOT(case_property_exists(case_property_name)), q)
             if node.op == '!=':
                 return filters.NOT(q)
