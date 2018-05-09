@@ -2470,12 +2470,7 @@ def edit_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
 
-    updates = {}
-    for name in request.POST:
-        updates.update({
-            name: request.POST[name],
-        })
-
+    updates = {name: request.POST[name] for name in request.POST}
     if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
         messages.success(request, _('Question responses saved.'))
     else:

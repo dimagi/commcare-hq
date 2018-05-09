@@ -337,21 +337,6 @@ class FormAccessorTestsSQL(TestCase):
 
         self._validate_deprecation(existing_form, new_form)
 
-    def test_update_responses(self):
-        formxml = FormSubmissionBuilder(
-            form_id='123',
-            form_properties={'breakfast': 'toast', 'lunch': 'sandwich'}
-        ).as_xml_string()
-        xform = submit_form_locally(formxml, DOMAIN).xform
-
-        updates = {'breakfast': 'fruit'}
-        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
-        form = FormAccessors(DOMAIN).get_form(xform.form_id)
-        self.assertEqual('fruit', form.form_data['breakfast'])
-        self.assertEqual('sandwich', form.form_data['lunch'])
-        self.assertEqual(1, len(form.history))
-        self.assertEqual(XFormOperationSQL.EDIT, form.history[0].operation)
-
     def test_update_form_problem_and_state(self):
         form = create_form_for_test(DOMAIN)
         self.assertEqual(XFormInstanceSQL.NORMAL, form.state)
