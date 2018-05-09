@@ -711,15 +711,22 @@ class PartiallyLockingQueue(object):
         Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
         """
         for lock_id, queue in self.queue_by_lock_id.iteritems():
+
             if len(queue) == 0:
                 continue
             peeked_obj = queue[0]
             peeked_id = self.get_queue_obj_id(peeked_obj)
+
             lock_ids = self.lock_ids_by_queue_id[peeked_id]
+            first_in_all_queues = True
             for lock_id in lock_ids:
                 first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
                 if not self.get_queue_obj_id(first_in_queue) == peeked_id:
-                    continue
+                    first_in_all_queues = False
+                    break
+            if not first_in_all_queues:
+                continue
+
             if self.set_lock(lock_ids):
                 self.remove_item(peeked_obj)
                 return peeked_obj
