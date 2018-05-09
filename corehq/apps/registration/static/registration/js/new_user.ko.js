@@ -42,12 +42,6 @@ hqDefine('registration/js/new_user.ko', function () {
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (data.persona) {
-                _kissmetrics.track.event("Persona Field Filled Out", {
-                    personaChoice: data.persona,
-                    personaOther: data.persona_other,
-                });
-            }
             if (_private.isAbPhoneNumber) {
                 _kissmetrics.track.event("Phone Number Field Filled Out");
             }
