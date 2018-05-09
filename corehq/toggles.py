@@ -1534,5 +1534,5 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'app_trans_with_transifex',
     'Translate Application Content With Transifex',
     TAG_CUSTOM,
-    namespaces=[NAMESPACE_USER]
+    namespaces=[NAMESPACE_USER, NAMESPACE_DOMAIN]
 )

@@ -22,6 +22,7 @@ from corehq.apps.app_manager.util import save_xform
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
+from corehq import toggles
 
 from django.contrib import messages
 from django.utils.translation import ugettext as _
@@ -473,6 +474,11 @@ def _process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
+        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+            sql_translation = document.sql_translation
+            _update_sql_translation_for_name('default_', sql_translation, row, app.langs)
+            sql_translation.save()
+            document.sql_translation_id = sql_translation.id
         _update_translation_dict('default_', document.name, row, app.langs)
 
         for lang in app.langs:
@@ -480,6 +486,20 @@ def _process_modules_and_forms_sheet(rows, app):
             document.set_audio(lang, row.get('audio_filepath_%s' % lang, ''))
 
     return msgs
+
+
+def _update_sql_translation_for_name(prefix, sql_translation, row, langs):
+    for lang in langs:
+        key = '%s%s' % (prefix, lang)
+        if key not in row:
+            continue
+        translation = row[key]
+        if translation:
+            sql_translation.parser.update_name(lang, translation)
+        else:
+            sql_translation.parser.update_name(lang)
+
+    sql_translation.cleanup_removed_translations('name', langs)
 
 
 def _update_translation_dict(prefix, language_dict, row, langs):

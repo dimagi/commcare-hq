@@ -952,6 +952,24 @@ class FormBase(DocumentSchema):
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    sql_translation_id = IntegerProperty()
+
+    @property
+    def sql_translation(self):
+        if not hasattr(self, '_sql_translation'):
+            if self.sql_translation_id:
+                self._sql_translation = Translation.objects.get(self.sql_translation_id)
+            else:
+                app = self.get_app()
+                self._sql_translation = Translation(
+                    resource_id=self.unique_id,
+                    resource_type="form",
+                    app_id=app.get_id,
+                    domain=app.domain,
+                    version=app.version
+                )
+        return self._sql_translation
+
 
     @classmethod
     def wrap(cls, data):
@@ -973,7 +991,6 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
-
 
     def requires_case(self):
         return False
@@ -2410,6 +2427,23 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
+    sql_translation_id = IntegerProperty()
+
+    @property
+    def sql_translation(self):
+        if not hasattr(self, '_sql_translation'):
+            if self.sql_translation_id:
+                self._sql_translation = Translation.objects.get(self.sql_translation_id)
+            else:
+                app = self.get_app()
+                self._sql_translation = Translation(
+                    resource_id=self.unique_id,
+                    resource_type="module",
+                    app_id=app.get_id,
+                    domain=app.domain,
+                    version=app.version
+                )
+        return self._sql_translation
 
     @property
     def is_surveys(self):
@@ -6617,6 +6651,87 @@ class GlobalAppConfig(Document):
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
+
+from django.db import models
+from jsonfield.fields import JSONField
+
+class Translation(models.Model):
+    """
+    resource_id = Id of the module/form
+    resource_type = type corresponding to the id
+    identifier = possibly a way to identify the purpose of translation like
+    for module ->
+    1. name
+    2. details/DetailColumn
+     { 'long':
+        { 'columns': [
+            {"en": "Name", "hin": "\u0928\u093e\u092e" },
+            {"en": "Place", "hin": "\u0928\u093e\u092e" },
+        ]},
+       'short':
+        { 'columns': [
+            {"en": "Name", "hin": "\u0928\u093e\u092e" },
+            {"en": "Place", "hin": "\u0928\u093e\u092e" },
+        ]},
+    3. others: enum, graph_annotations, graph configurations
+    for form ->
+    1. just map label but keep both markdown and default
+    """
+    RESOURCE_TYPE_CHOICES = (
+        ('module', 'module'),
+        ('form', 'form')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    domain = models.CharField(db_index=True, max_length=255)
+    app_id = models.CharField(db_index=True, max_length=255)
+    version = models.CharField(max_length=255)
+    resource_id = models.CharField(db_index=True,
+                                   max_length=255,
+                                   help_text="Id of the module/form")
+    resource_type = models.CharField(choices=RESOURCE_TYPE_CHOICES,
+                                     max_length=255,
+                                     help_text="type corresponding to the id")
+    identifier = models.CharField(max_length=255)
+    translation = JSONField(default=defaultdict(dict))
+
+    @property
+    def parser(self):
+        if self.resource_type == "module":
+            return ModuleTranslationParser(self)
+        elif self.resource_type == "form":
+            return FormTranslationParser(self)
+
+    def cleanup_removed_translations(self, for_field, langs):
+        # delete anything in language_dict that isn't in langs (anymore)
+        for lang in self.translation[for_field].keys():
+            if lang not in langs:
+                self.translation[for_field].pop(lang, None)
+
+
+class BaseTranslationParser:
+    def __init__(self, resource_translation):
+        self.resource_translation = resource_translation
+
+    def update_name(self, lang, translated_name=None):
+        if translated_name:
+            self.resource_translation.translation['name'][lang] = translated_name
+        else:
+            self.resource_translation.translation['name'].pop(lang, None)
+
+
+class ModuleTranslationParser(BaseTranslationParser):
+    def update_long_detail_column(self, lang, index, translated_detail):
+        self.resource_translation.translation['long']['columns'][index][lang] = translated_detail
+
+    def update_short_detail_column(self, lang, index, translated_detail):
+        self.resource_translation.translation['short']['columns'][index][lang] = translated_detail
+
+class FormTranslationParser(BaseTranslationParser):
+    def update_translation(self, label, translated_text, markdown=False):
+        self.resource_translation[label]['default'] = translated_text
+        if markdown:
+            self.resource_translation[label]['markdown'] = translated_text
 
 
 # backwards compatibility with suite-1.0.xml
