@@ -53,7 +53,7 @@ class FormProcessorSQL(object):
 
     @classmethod
     def copy_attachments(cls, from_form, to_form):
-        to_form.unsaved_attachments = to_form.unsaved_attachments or []
+        to_form.unsaved_attachments = getattr(to_form, 'unsaved_attachments', [])
         for name, att in from_form.attachments.items():
             to_form.unsaved_attachments.append(XFormAttachmentSQL(
                 name=att.name,
@@ -102,25 +102,18 @@ class FormProcessorSQL(object):
 
     @classmethod
     def new_form_from_old(cls, xml, xform, value_responses_map, user_id):
-        from corehq.form_processor.interfaces.processor import FormProcessorInterface
         from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-        interface = FormProcessorInterface(xform.domain)
+        from corehq.form_processor.parsers.form import apply_deprecation
         existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
 
         new_xml = etree.tostring(xml)
         form_json = convert_xform_to_json(new_xml)
-        new_form = interface.new_xform(form_json)
+        new_form = cls.new_xform(form_json)
         new_form.user_id = user_id
         new_form.domain = existing_form.domain
         new_form.app_id = existing_form.app_id
-        new_form.xmlns = existing_form.xmlns
-        new_form.received_on = existing_form.received_on
-        new_form.edited_on = datetime.datetime.utcnow()
 
-        existing_form, new_form = cls.apply_deprecation(existing_form, new_form)
-        existing_form = cls.assign_new_id(existing_form)
-        new_form.deprecated_form_id = existing_form.get_id
-        new_form.edited_on = datetime.datetime.utcnow()
+        existing_form, new_form = apply_deprecation(existing_form, new_form)
         return (existing_form, new_form)
 
     @classmethod
