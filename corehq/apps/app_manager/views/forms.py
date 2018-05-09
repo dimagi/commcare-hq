@@ -310,6 +310,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.post_form_workflow = request.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
+    if should_edit('is_release_notes_form'):
+        form.is_release_notes_form = request.POST['is_release_notes_form'] == 'true'
+    if should_edit('enable_release_notes'):
+        form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
+        if not form.is_release_notes_form and form.enable_release_notes:
+            return json_response(
+                {'message': _("You can't enable a form as release notes without allowing it as "
+                    "a release notes form <TODO messaging>")},
+                status_code=400
+            )
     if should_edit('no_vellum'):
         form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
@@ -621,6 +631,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'is_training_module': module.is_training_module,
+        'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
         'root_requires_same_case': module.root_requires_same_case(),
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
