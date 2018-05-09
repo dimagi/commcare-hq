@@ -145,10 +145,17 @@ def build_filter_from_ast(domain, node):
                 case_property_name = serialize(node.left)
                 value = node.right
                 q = exact_case_property_text_query(case_property_name, value)
+
+                if value == '' and node.op == '!=':
+                    # `foo != ''`
+                    # The user is asking for all cases where a property is set
+                    return filters.AND(case_property_exists(case_property_name), filters.NOT(q))
+                if value == '' and node.op == '=':
+                    # `foo = ''`
+                    # The user is asking for all cases where the case property is either '' or not set
+                    return filters.OR(filters.NOT(case_property_exists(case_property_name)), q)
+
                 if node.op == '!=':
-                    if node.right == '':
-                        # The user is asking for all cases where a property is set e.g. `foo != ''`
-                        return filters.AND(case_property_exists(case_property_name), filters.NOT(q))
                     return filters.NOT(q)
                 return q
             elif isinstance(node.right, Step):
