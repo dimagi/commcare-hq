@@ -6,6 +6,9 @@
         "comment": "",
         "created": "2016-03-29 @frener"
     },
+    "_all": {
+        "enabled": false
+    },
     "properties": {
         "_indexed_on": {
             "format": "__DATE_FORMATS_STRING__",
@@ -30,15 +33,17 @@
                         "exact": {
                             "index": "not_analyzed",
                             "type": "string"
+                        },
+                        "numeric": {
+                            "type": "double",
+                            "ignore_malformed": true
+                        },
+                        "date": {
+                            "type": "date",
+                            "format": "__DATE_FORMATS_STRING__",
+                            "ignore_malformed": true
                         }
                     }
-                },
-                "value_numeric": {
-                    "type": "double"
-                },
-                "value_date": {
-                    "type": "date",
-                    "format": "__DATE_FORMATS_STRING__"
                 }
             }
         },

@@ -25,9 +25,7 @@ from corehq.apps.case_search.const import (
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    VALUE_DATE,
-    VALUE_NUMERIC,
-    VALUE_TEXT,
+    VALUE,
 )
 from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
@@ -84,7 +82,7 @@ class CaseSearchES(CaseES):
         """
         return self._add_query(
             _base_property_query(case_property_name, queries.regexp(
-                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)
+                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE), regex)
             ),
             clause,
         )
@@ -164,7 +162,7 @@ def case_property_filter(case_property_name, value):
         CASE_PROPERTIES_PATH,
         filters.AND(
             filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name),
-            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
 
@@ -182,7 +180,7 @@ def exact_case_property_text_query(case_property_name, value):
             queries.match_all(),
             filters.AND(
                 filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
             )
         )
     )
@@ -198,7 +196,7 @@ def case_property_text_query(case_property_name, value, fuzziness='0'):
     """
     return _base_property_query(
         case_property_name,
-        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
+        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
     )
 
 
@@ -213,7 +211,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         kwargs = {key: float(value) for key, value in six.iteritems(kwargs) if value is not None}
         return _base_property_query(
             case_property_name,
-            queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), **kwargs)
+            queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
     except ValueError:
         pass
@@ -223,7 +221,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
     return _base_property_query(
         case_property_name,
-        queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), **kwargs)
+        queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
 
 
