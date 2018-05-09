@@ -13,3 +13,19 @@ class CaseSearchFilter(BaseSimpleFilter):
         '<a href="https://wiki.commcarehq.org/display/commcarepublic/'
         'Advanced+Case+Search" target="_blank">Case Search</a> help page'
     ))
+
+
+class XpathCaseSearchFilter(BaseSimpleFilter):
+    slug = 'search_xpath'
+    label = ugettext_lazy("Search")
+    template = "reports/filters/textarea.html"
+
+    @property
+    def filter_context(self):
+        context = super(XpathCaseSearchFilter, self).filter_context
+        context.update({
+            'placeholder': "e.g. name = 'foo' and dob <= '2017-02-12'",
+            'text': self.get_value(self.request, self.domain) or '',
+        })
+
+        return context

@@ -40,6 +40,7 @@ from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
+from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -88,7 +89,7 @@ def REPORTS(project):
         ProjectHealthDashboard,
     )
     inspect_reports = (
-        inspect.SubmitHistory, CaseListReport, OdmExportReport,
+        inspect.SubmitHistory, CaseListReport, OdmExportReport, CaseListExplorer
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,

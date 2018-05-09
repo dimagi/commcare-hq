@@ -42,9 +42,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     case_filter = {}
     ajax_pagination = True
     asynchronous = True
+    search_class = case_es.CaseES
 
     def _build_query(self):
-        query = (case_es.CaseES()
+        query = (self.search_class()
                  .domain(self.domain)
                  .size(self.pagination.count)
                  .start(self.pagination.start))
