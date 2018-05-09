@@ -7,6 +7,7 @@ from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
 from corehq.apps.domain.auth import (
+    API_KEY,
     BASIC,
     DIGEST,
     determine_authtype_from_header,
@@ -50,12 +51,7 @@ class UsersMiddleware(MiddlewareMixin):
         if request.user.is_anonymous and 'domain' in view_kwargs:
             if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
                 request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
-        if (
-            'domain' in view_kwargs and (
-                determine_authtype_from_header(request) in (BASIC, DIGEST) or
-                # Support API requests that pass the username as a GET parameter
-                'username' in request.GET)
-        ):
+        if determine_authtype_from_header(request) in (BASIC, DIGEST, API_KEY) and 'domain' in view_kwargs:
             # User is not yet authenticated, but setting request.domain (above) and request.couch_user will allow
             # us to check location-based permissions before we can check authentication.
             # See LocationAccessMiddleware.process_view()
