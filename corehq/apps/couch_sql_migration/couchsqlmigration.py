@@ -676,7 +676,7 @@ class PartiallyLockingQueue(object):
         self.lock_ids_by_queue_id = defaultdict(list)
         self.currently_locked = set()
 
-        def get_queue_obj_id(self, queue_obj):
+        def get_queue_obj_id(queue_obj):
             return getattr(queue_obj, queue_id_param)
         self.get_queue_obj_id = get_queue_obj_id
 
