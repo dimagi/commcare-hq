@@ -29,10 +29,12 @@
                 },
                 "value": {
                     "type": "string",
+                    "null_value": "",
                     "fields": {
                         "exact": {
                             "index": "not_analyzed",
-                            "type": "string"
+                            "type": "string",
+                            "null_value": ""
                         },
                         "numeric": {
                             "type": "double",
