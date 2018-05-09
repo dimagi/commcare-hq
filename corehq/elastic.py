@@ -12,7 +12,7 @@ from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_counter, datadog_histogram
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
