@@ -106,10 +106,9 @@ class ScheduledRemindersCalendarView(BaseMessagingSectionView):
     template_name = 'reminders/partial/scheduled_reminders.html'
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @method_decorator(reminders_framework_permission)
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(ScheduledRemindersCalendarView, self).dispatch(*args, **kwargs)
 
     @property
     def page_context(self):
@@ -721,14 +720,13 @@ class CreateBroadcastView(BaseMessagingSectionView):
     force_create_new_broadcast = False
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_jquery_ui
     @use_timepicker
     @use_select2
     def dispatch(self, *args, **kwargs):
         if self.reminders_migration_in_progress and not self.new_reminders_migrator:
             return HttpResponseRedirect(reverse(BroadcastListView.urlname, args=[self.domain]))
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(CreateBroadcastView, self).dispatch(*args, **kwargs)
 
     @property
     @memoized
@@ -892,10 +890,9 @@ class RemindersListView(BaseMessagingSectionView):
     page_title = ugettext_noop("Reminder Definitions")
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(request, *args, **kwargs)
+        return super(RemindersListView, self).dispatch(request, *args, **kwargs)
 
     @property
     def page_url(self):
@@ -998,7 +995,6 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     DELETE_BROADCAST = 'delete_broadcast'
 
     @method_decorator(requires_old_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_datatables
     def dispatch(self, request, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(request, *args, **kwargs)

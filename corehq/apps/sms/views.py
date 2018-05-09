@@ -169,10 +169,9 @@ class ComposeMessageView(BaseMessagingSectionView):
         return page_context
 
     @method_decorator(require_permission(Permissions.edit_data))
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_typeahead
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(ComposeMessageView, self).dispatch(*args, **kwargs)
 
 
 @require_api_user_permission(PERMISSION_POST_SMS)
@@ -1645,10 +1644,6 @@ class SubscribeSMSView(BaseMessagingSectionView):
     urlname = 'subscribe_sms'
     page_title = ugettext_noop("Subscribe SMS")
 
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    def dispatch(self, *args, **kwargs):
-        return super(SubscribeSMSView, self).dispatch(*args, **kwargs)
-
     @property
     def commtrack_settings(self):
         return Domain.get_by_name(self.domain).commtrack_settings
@@ -2006,7 +2001,6 @@ class SMSSettingsView(BaseMessagingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
     @method_decorator(domain_admin_required)
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
     @use_timepicker
     @use_select2
     def dispatch(self, request, *args, **kwargs):
