@@ -13,7 +13,6 @@ from iso8601 import iso8601
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
 from casexml.apps.case.exceptions import PhoneDateValueError
-from casexml.apps.phone.exceptions import MissingSyncLog
 from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrapped_sync_log
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
@@ -174,12 +173,12 @@ def iter_cases(case_ids, strip_history=False, wrap=True):
             yield case
 
 
-def property_changed_in_action(case_transaction, case_id, case_property_name):
+def property_changed_in_action(domain, case_transaction, case_id, case_property_name):
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
     include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
 
-    if not should_use_sql_backend(case_transaction.form.domain):
+    if not should_use_sql_backend(domain):
         # couch domains return 2 transactions for case properties created in a create form
         if case_transaction.is_case_create and not include_create_fields:
             return False
@@ -210,7 +209,12 @@ def get_latest_property_change_to_value(case, case_property_name, value):
     """
     case_transactions = case.actions
     for i, case_transaction in enumerate(case_transactions):
-        property_changed_info = property_changed_in_action(case_transaction, case.case_id, case_property_name)
+        property_changed_info = property_changed_in_action(
+            case.domain,
+            case_transaction,
+            case.case_id,
+            case_property_name
+        )
         if property_changed_info and property_changed_info.new_value == value:
             return property_changed_info
 
@@ -230,7 +234,12 @@ def get_all_changes_to_case_property(case, case_property_name):
     case_property_changes = []
     case_transactions = case.actions
     for transaction in case_transactions:
-        property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+        property_changed_info = property_changed_in_action(
+            case.domain,
+            transaction,
+            case.case_id,
+            case_property_name
+        )
         if property_changed_info:
             case_property_changes.append(property_changed_info)
 
@@ -243,7 +252,12 @@ def get_paged_changes_to_case_property(case, case_property_name, start=0, per_pa
 
     def iter_transactions(transactions):
         for i, transaction in enumerate(transactions):
-            property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+            property_changed_info = property_changed_in_action(
+                case.domain,
+                transaction,
+                case.case_id,
+                case_property_name
+            )
             if property_changed_info:
                 yield property_changed_info, i + start
         raise StopIteration
