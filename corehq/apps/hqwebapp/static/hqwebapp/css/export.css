@@ -1,0 +1,7 @@
+tr.selected-for-sort {
+    background-color: #0000FF !important;
+}
+
+.selected-for-sort > tbody > tr:nth-of-type(odd) {
+  background-color: #0000FF;
+}
