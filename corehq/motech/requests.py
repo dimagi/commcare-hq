@@ -30,9 +30,10 @@ def log_request(func):
         else:
             return response
         finally:
-            request_headers = kwargs.pop('headers', {})
-            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
-                           request_headers, func, *args, **kwargs)
+            # args will be Requests method, url, and optionally params, data or json.
+            # kwargs may include Requests method kwargs and raise_for_status.
+            kwargs.pop('raise_for_status', None)
+            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body, *args, **kwargs)
 
     return request_wrapper
 
