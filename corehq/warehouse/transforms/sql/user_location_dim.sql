@@ -30,15 +30,24 @@ FROM
 (
 	SELECT
 		user_dim.id as user_dim_id,
-		json_array_elements(json_array_elements(user_staging.domain_memberships::JSON) -> 'assigned_location_ids') as location_id,
-		json_array_elements(user_staging.domain_memberships::JSON) ->> 'domain' as domain,
-		location_dim.id as location_dim_id
-	FROM {{ user_staging }} as user_staging
+		location_dim.id as location_dim_id,
+		user_location.domain as domain
+		
+	FROM
+	(
+	SELECT
+		json_array_elements_text(memberships.value -> 'assigned_location_ids') as location_id,
+		memberships ->> 'domain' as domain,
+		user_staging.user_id as user_id,
+		user_staging.doc_type as doc_type
+	FROM {{ user_staging }} as user_staging,
+	json_array_elements(user_staging.domain_memberships::JSON) as memberships
+	) as user_location
 	LEFT JOIN {{ user_dim }} as user_dim
-	ON user_staging.user_id = user_dim.user_id
+	ON user_location.user_id = user_dim.user_id
 	LEFT JOIN {{ location_dim }} as location_dim
-	ON location_id = location_dim.location_id
-	WHERE user_staging.doc_type = 'WebUser'
+	ON user_location.location_id = location_dim.location_id
+	WHERE user_location.doc_type = 'WebUser'
 ) as webusers
 UNION
 --- mobile users
