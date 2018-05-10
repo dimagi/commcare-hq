@@ -16,11 +16,13 @@ def _convert_emailed_to_array_field(apps, schema_editor):
     for record in BillingRecord.objects.all():
         if record.emailed_to != '':
             record.emailed_to_list = record.emailed_to.split(',')
+            record.save()
 
     WireBillingRecord = apps.get_model('accounting', 'WireBillingRecord')
     for wirerecord in WireBillingRecord.objects.all():
         if wirerecord.emailed_to != '':
             wirerecord.emailed_to_list = wirerecord.emailed_to.split(',')
+            wirerecord.save()
 
 
 class Migration(migrations.Migration):
