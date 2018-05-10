@@ -636,7 +636,7 @@ class TestLockingQueues(TestCase):
     def _check_queue_dicts(self, queue_obj_id, lock_ids, location=None, present=True):
         """
         if location is None, it looks anywhere. If it is an int, it'll look in that spot
-        present determines whether it's expected to be in the dicts or not
+        present determines whether it's expected to be in the queue_by_lock_id or not
         """
         for lock_id in lock_ids:
             if location:
@@ -644,10 +644,7 @@ class TestLockingQueues(TestCase):
             else:
                 self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
 
-        if present:
-            self.assertItemsEqual(lock_ids, self.queues.lock_ids_by_queue_id[queue_obj_id])
-        else:
-            self.assertEqual([], self.queues.lock_ids_by_queue_id[queue_obj_id])
+        self.assertItemsEqual(lock_ids, self.queues.lock_ids_by_queue_id[queue_obj_id])
 
     def _check_locks(self, lock_ids, lock_set=True):
         self.assertEqual(lock_set, self.queues.check_lock(lock_ids))
@@ -714,11 +711,17 @@ class TestLockingQueues(TestCase):
 
     def test_release_locks(self):
         lock_ids = ['rubaeus', 'dirty_bastard', 'red\'s_rye']
-        self._add_to_queues('kancamagus', lock_ids)
         self._check_locks(lock_ids, lock_set=False)
         self.queues.set_lock(lock_ids)
         self._check_locks(lock_ids, lock_set=True)
         self.queues.release_lock(lock_ids)
+        self._check_locks(lock_ids, lock_set=False)
+
+        queue_obj = DummyObject('kancamagus')
+        self.queues.add_item(lock_ids, queue_obj, to_queue=False)
+        self.queues.set_lock(lock_ids)
+        self._check_locks(lock_ids, lock_set=True)
+        self.queues.release_lock_for_queue_obj(queue_obj)
         self._check_locks(lock_ids, lock_set=False)
 
 

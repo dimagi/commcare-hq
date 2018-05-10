@@ -699,6 +699,7 @@ class PartiallyLockingQueue(object):
             if queue:
                 self.add_item(lock_ids, queue_obj)
                 return False
+        self.add_item(lock_ids, queue_obj, to_queue=False)
         self.set_lock(lock_ids)
         return True
 
@@ -752,11 +753,19 @@ class PartiallyLockingQueue(object):
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
-        self.release_lock(lock_ids)
+        if lock_ids:
+            self.release_lock(lock_ids)
+            del self.lock_ids_by_queue_id[queue_obj_id]
+            return True
+        return False
 
-    def add_item(self, lock_ids, queue_obj):
-        for lock_id in lock_ids:
-            self.queue_by_lock_id[lock_id].append(queue_obj)
+    def add_item(self, lock_ids, queue_obj, to_queue=True):
+        """
+        :to_queue boolean: adds object to queues if True, just to lock tracking if not
+        """
+        if to_queue:
+            for lock_id in lock_ids:
+                self.queue_by_lock_id[lock_id].append(queue_obj)
         self.lock_ids_by_queue_id[self.get_queue_obj_id(queue_obj)] = lock_ids
 
     def remove_item(self, queued_obj):
@@ -778,7 +787,6 @@ class PartiallyLockingQueue(object):
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
-        del self.lock_ids_by_queue_id[queued_obj_id]
 
     def check_lock(self, lock_ids):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
