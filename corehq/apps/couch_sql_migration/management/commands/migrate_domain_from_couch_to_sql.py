@@ -18,6 +18,7 @@ from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.form_processor.utils.general import clear_local_domain_sql_backend_override
 from corehq.util.markup import shell_green, shell_red
 from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
@@ -201,6 +202,7 @@ def _get_sigterm_handler(domain):
     def _sigterm_handler(signal, frame):
         _logger.error("{} signal received".format(signal))
         set_couch_sql_migration_not_started(domain)
+        clear_local_domain_sql_backend_override(domain)
         _blow_away_migration(domain)
         sys.exit(1)
     return _sigterm_handler
