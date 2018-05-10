@@ -2073,6 +2073,8 @@ class BillingRecordBase(models.Model):
             cc=cc_emails
         )
         self.emailed_to_list.extend([contact_email])
+        if cc_emails:
+            self.emailed_to_list.extend(cc_emails)
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
