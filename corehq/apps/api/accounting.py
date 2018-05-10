@@ -8,8 +8,6 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
-from django.db import models
-from django.contrib.postgres.fields import ArrayField
 
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
