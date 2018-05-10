@@ -7,6 +7,7 @@ from corehq.apps.analytics.tasks import (
     track_user_sign_in_on_hubspot,
     HUBSPOT_COOKIE,
     update_hubspot_properties,
+    get_hubspot_fields_tracked_on_registration,
 )
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.registration.views import ProcessRegistrationView
@@ -164,4 +165,6 @@ def track_user_login(sender, request, user, **kwargs):
                 return
 
         meta = get_meta(request)
-        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path)
+        tracked_fields = get_hubspot_fields_tracked_on_registration(request, couch_user.get_email())
+        track_user_sign_in_on_hubspot.delay(couch_user, request.COOKIES.get(HUBSPOT_COOKIE), meta, request.path,
+                                            tracked_fields)

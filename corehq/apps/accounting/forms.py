@@ -793,6 +793,7 @@ class ChangeSubscriptionForm(forms.Form):
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
             internal_change=True,
+            date_delay_invoicing=self.subscription.date_delay_invoicing,
         )
 
 
@@ -2114,7 +2115,8 @@ class ResendEmailForm(forms.Form):
             record = WireBillingRecord.generate_record(self.invoice)
         else:
             record = BillingRecord.generate_record(self.invoice)
-        record.send_email(contact_emails=contact_emails)
+        for email in contact_emails:
+            record.send_email(contact_email=email)
 
 
 class SuppressInvoiceForm(forms.Form):

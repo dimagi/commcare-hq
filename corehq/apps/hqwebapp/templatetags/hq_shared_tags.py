@@ -18,6 +18,7 @@ from django.utils.safestring import mark_safe
 from memoized import memoized
 from django_prbac.utils import has_privilege
 
+from corehq.motech.utils import pformat_json
 from dimagi.utils.make_uuid import random_hex
 from corehq import privileges
 from corehq.apps.domain.models import Domain
@@ -101,6 +102,14 @@ try:
     from resource_versions import resource_versions
 except (ImportError, SyntaxError):
     resource_versions = {}
+
+
+@register.filter
+def pp_json(data):
+    """
+    Pretty-print data as JSON
+    """
+    return pformat_json(data)
 
 
 @register.filter

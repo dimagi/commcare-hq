@@ -976,6 +976,7 @@ class Subscriber(models.Model):
 
 
 class VisibleSubscriptionManager(models.Manager):
+    use_in_migrations = True
 
     def get_queryset(self):
         return super(VisibleSubscriptionManager, self).get_queryset().filter(is_hidden_to_ops=False)
@@ -985,6 +986,7 @@ class DisabledManager(models.Manager):
 
     def get_queryset(self):
         raise NotImplementedError
+
 
 class Subscription(models.Model):
     """
@@ -1225,7 +1227,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, **kwargs):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1243,11 +1245,6 @@ class Subscription(models.Model):
         self.is_active = False
         self.save()
 
-        if 'date_delay_invoicing' in kwargs:
-            date_delay_invoicing = kwargs.pop('date_delay_invoicing')
-        else:
-            date_delay_invoicing = self.date_delay_invoicing
-
         new_subscription = Subscription(
             account=account if account else self.account,
             plan_version=new_plan_version,
@@ -1264,7 +1261,6 @@ class Subscription(models.Model):
             funding_source=(funding_source or FundingSource.CLIENT),
             skip_auto_downgrade=False,
             skip_auto_downgrade_reason='',
-            **kwargs
         )
 
         new_subscription.save()
@@ -2050,7 +2046,7 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
-    def send_email(self, contact_emails=None):
+    def send_email(self, contact_email=None, cc_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
@@ -2061,34 +2057,30 @@ class BillingRecordBase(models.Model):
         context = self.email_context()
         email_from = self.email_from()
 
-        contact_emails = contact_emails or self.invoice.email_recipients
-        if self.is_email_throttled():
-            self.handle_throttled_email(contact_emails)
-
-        for email in contact_emails:
-            greeting = _("Hello,")
-            can_view_statement = False
-            web_user = WebUser.get_by_username(email)
-            if web_user is not None:
-                if web_user.first_name:
-                    greeting = _("Dear %s,") % web_user.first_name
-                can_view_statement = web_user.is_domain_admin(domain)
-            context['greeting'] = greeting
-            context['can_view_statement'] = can_view_statement
-            email_html = render_to_string(self.html_template, context)
-            email_plaintext = render_to_string(self.text_template, context)
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=email_from,
-                file_attachments=[pdf_attachment]
-            )
-        self.recipients = contact_emails
+        greeting = _("Hello,")
+        can_view_statement = False
+        web_user = WebUser.get_by_username(contact_email)
+        if web_user is not None:
+            if web_user.first_name:
+                greeting = _("Dear %s,") % web_user.first_name
+            can_view_statement = web_user.is_domain_admin(domain)
+        context['greeting'] = greeting
+        context['can_view_statement'] = can_view_statement
+        email_html = render_to_string(self.html_template, context)
+        email_plaintext = render_to_string(self.text_template, context)
+        send_html_email_async.delay(
+            subject, contact_email, email_html,
+            text_content=email_plaintext,
+            email_from=email_from,
+            file_attachments=[pdf_attachment],
+            cc=cc_emails
+        )
+        self.recipients = contact_email
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
-                'emails': ', '.join(contact_emails),
+                'emails': contact_email,
             }
         )
 
@@ -2953,7 +2945,7 @@ class PaymentRecord(models.Model):
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    transaction_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)

@@ -990,7 +990,7 @@ class PaymentRecordInterface(GenericTabularReport):
             queryset = queryset.filter(
                 Q(creditadjustment__credit_line__subscription__subscriber__domain=subscriber)
                 | Q(creditadjustment__credit_line__account__created_by_domain=subscriber)
-            )
+            ).distinct()
         transaction_id = PaymentTransactionIdFilter.get_value(self.request, self.domain)
         if transaction_id:
             queryset = queryset.filter(

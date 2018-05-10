@@ -7,6 +7,8 @@ from corehq.apps.domain_migration_flags.api import (
     get_migration_status)
 from corehq.apps.domain_migration_flags.models import MigrationStatus, DomainMigrationProgress
 from corehq.apps.tzmigration.api import set_tz_migration_complete
+from corehq.apps.es.domains import DomainES
+from corehq.apps.es import filters
 
 COUCH_TO_SQL_SLUG = 'couch_to_sql'
 
@@ -52,3 +54,10 @@ def set_couch_sql_migration_complete(domain):
     # we get this for free
     set_tz_migration_complete(domain)
     _notify_dimagi_users_on_domain(domain)
+
+
+def total_couch_domains_remaining():
+    return (DomainES()
+            .filter(filters.term('use_sql_backend', False))
+            .remove_default_filters()
+            .count())

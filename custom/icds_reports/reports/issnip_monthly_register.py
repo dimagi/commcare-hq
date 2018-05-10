@@ -371,7 +371,7 @@ class ISSNIPMonthlyReport(object):
         return {row['awc_id']: row for row in data}
 
     def get_awc_name(self, awc_id):
-        return SQLLocation.objects.get(location_id=awc_id).name,
+        return SQLLocation.objects.get(location_id=awc_id).name
 
     @cached_property
     def to_pdf_format(self):

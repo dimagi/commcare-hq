@@ -537,13 +537,6 @@ class _AuthorizableMixin(IsMemberOfMixin):
                 return
 
         domain_obj = Domain.get_by_name(domain, strict=True)
-        # if you haven't seen any of these by Feb 2016 you should delete this code.
-        _soft_assert = soft_assert(notify_admins=True)
-        if not _soft_assert(domain_obj,
-                            "Domain membership added before domain created",
-                            {'domain': domain}):
-            domain_obj = Domain(is_active=True, name=domain, date_created=datetime.utcnow())
-            domain_obj.save()
 
         if timezone:
             domain_membership = DomainMembership(domain=domain, timezone=timezone, **kwargs)
@@ -774,7 +767,7 @@ class DjangoUserMixin(DocumentSchema):
 
 
 class EulaMixin(DocumentSchema):
-    CURRENT_VERSION = '2.0' # Set this to the most up to date version of the eula
+    CURRENT_VERSION = '3.0'  # Set this to the most up to date version of the eula
     eulas = SchemaListProperty(LicenseAgreement)
 
     @classmethod
