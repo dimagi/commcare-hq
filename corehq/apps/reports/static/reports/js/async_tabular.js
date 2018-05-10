@@ -1,40 +1,41 @@
 hqDefine("reports/js/async_tabular", function() {
     function renderPage(data) {
-        if (data.report_table && data.report_table.datatables) {
-            var options = {
+        if (data.report_table_js_options && data.report_table_js_options.datatables) {
+            var tableConfig = data.report_table_js_options,
+                options = {
                 dataTableElem: '#report_table_' + data.slug,
-                defaultRows: data.report_table.default_rows,
-                startAtRowNum: data.report_table.start_at_row,
-                showAllRowsOption: data.report_table.show_all_rows,
+                defaultRows: tableConfig.default_rows,
+                startAtRowNum: tableConfig.start_at_row,
+                showAllRowsOption: tableConfig.show_all_rows,
                 loadingTemplateSelector: '#js-template-loading-report',
-                autoWidth: data.report_table.headers.auto_width,
+                autoWidth: tableConfig.headers.auto_width,
             };
-            if (!data.report_table.sortable) {
+            if (!tableConfig.sortable) {
                 options.defaultSort = false;
             }
-            if (data.report_table.headers.render_aoColumns) {
-                options.aoColumns = data.report_table.headers.render_aoColumns;
+            if (tableConfig.headers.render_aoColumns) {
+                options.aoColumns = tableConfig.headers.render_aoColumns;
             }
-            if (data.report_table.headers.custom_sort) {
-                options.customSort = data.report_table.headers.custom_sort;
+            if (tableConfig.headers.custom_sort) {
+                options.customSort = tableConfig.headers.custom_sort;
             }
-            if (data.report_table.pagination.hide) {
+            if (tableConfig.pagination.hide) {
                 options.show_pagination = false;
             }
-            if (data.report_table.pagination.is_on) {
+            if (tableConfig.pagination.is_on) {
                 _.extend(options, {
-                    ajaxSource: data.report_table.pagination.source,
-                    ajaxParams: data.report_table.pagination.params,
+                    ajaxSource: tableConfig.pagination.source,
+                    ajaxParams: tableConfig.pagination.params,
                 });
             }
-            if (data.report_table.bad_request_error_text) {
-                options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + data.report_table.bad_request_error_text;
+            if (tableConfig.bad_request_error_text) {
+                options.badRequestErrorText = "<span class='label label-important'>" + gettext("Sorry!") + "</span>" + tableConfig.bad_request_error_text;
             }
-            if (data.report_table.left_col.is_fixed) {
+            if (tableConfig.left_col.is_fixed) {
                 _.extend(options, {
                     fixColumns: true,
-                    fixColsNumLeft: data.report_table.left_col.fixed.num,
-                    fixColsWidth: data.report_table.left_col.fixed.width,
+                    fixColsNumLeft: tableConfig.left_col.fixed.num,
+                    fixColsWidth: tableConfig.left_col.fixed.width,
                 });
             }
             var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables(options);

@@ -664,7 +664,7 @@ class GenericReportView(object):
         if 'report_table' in self.report_context:
             report_table = self.report_context['report_table']
             context.update({
-                'report_table': {
+                'report_table_js_options': {
                     'datatables': report_table['datatables'],
                     'default_rows': report_table['default_rows'] or 10,
                     'start_at_row': report_table['start_at_row'] or 0,
