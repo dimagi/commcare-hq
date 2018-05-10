@@ -142,6 +142,15 @@
                 </tfoot>
                 {% endif %}
 
+                {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+                <tbody data-bind="
+                    multi_sortable: {
+                        data: table.columns,
+                        as: 'column',
+                        name: 'ko-export-column-template'
+                    }
+                ">
+                {% else %}
                 <tbody data-bind="
                     sortable: {
                         data: table.columns,
@@ -149,6 +158,7 @@
                         name: 'ko-export-column-template'
                     }
                 ">
+                {% endif %}
                     <tr data-bind="
                         visible: column.isVisible($parent),
                         attr: {'data-order': _sortableOrder}
