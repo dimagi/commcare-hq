@@ -1535,3 +1535,10 @@ TRAINING_MODULE = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+EXPORT_MULTISORT = StaticToggle(
+    'export_multisort',
+    'Sort multiple rows in exports at once.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
