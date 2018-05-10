@@ -12,6 +12,7 @@ from corehq.apps.reminders.models import (
     EVENT_AS_OFFSET,
 )
 from django.core.management.base import BaseCommand
+from six import moves
 
 
 class Command(BaseCommand):
@@ -45,7 +46,7 @@ class Command(BaseCommand):
 
     def ensure_migration_flag_enabled(self, domain):
         while not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
-            raw_input("Please enable REMINDERS_MIGRATION_IN_PROGRESS for '%s' and hit enter..." % domain)
+            moves.input("Please enable REMINDERS_MIGRATION_IN_PROGRESS for '%s' and hit enter..." % domain)
 
         print("REMINDERS_MIGRATION_IN_PROGRESS enabled for %s" % domain)
 
