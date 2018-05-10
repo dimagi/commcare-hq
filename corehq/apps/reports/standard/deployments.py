@@ -313,7 +313,7 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 user_dim__user_id__in=users
             ).order_by(sort_clause).select_related('user_dim', 'app_dim')
             if self.selected_app_id:
-                rows.filter(app_dim__application_id=self.selected_app_id)
+                rows = rows.filter(app_dim__application_id=self.selected_app_id)
             self._total_records = len(rows)
             return self.process_users(rows)
         else:
