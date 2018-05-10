@@ -29,6 +29,7 @@ class Command(BaseCommand):
 
     def can_migrate(self, handler):
         return (
+            not handler.locked and
             handler.reminder_type == REMINDER_TYPE_DEFAULT and
             handler.ui_type == UI_SIMPLE_FIXED and
             handler.event_interpretation == EVENT_AS_OFFSET
@@ -39,7 +40,7 @@ class Command(BaseCommand):
 
     def migration_already_done(self, domain_obj):
         if domain_obj.uses_new_reminders:
-            print("'%s' already users new reminders, nothing to do" % domain_obj.name)
+            print("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 
         return False
