@@ -163,7 +163,7 @@ class DomainInvoiceFactory(object):
                 if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
                     record.send_email(contact_email=invoice.account.dimagi_contact, cc_emails=self.recipients)
                 else:
-                    for email in self.recipients or []:
+                    for email in self.recipients:
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
