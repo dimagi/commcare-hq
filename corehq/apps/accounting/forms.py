@@ -2078,7 +2078,7 @@ class ResendEmailForm(forms.Form):
             crispy.Div(
                 crispy.HTML(
                     'This will send an email to: %s.' %
-                    ', '.join(invoice.email_recipients)
+                    ', '.join(invoice.email_recipients) #
                 ),
                 crispy.Field('additional_recipients'),
                 'resend',

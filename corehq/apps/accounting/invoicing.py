@@ -5,6 +5,7 @@ import calendar
 import datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
@@ -160,11 +161,17 @@ class DomainInvoiceFactory(object):
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
-                if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-                    record.send_email(contact_email=invoice.account.dimagi_contact, cc_emails=self.recipients)
-                else:
+                if self.recipients:
                     for email in self.recipients:
                         record.send_email(contact_email=email)
+                elif invoice.subscription.service_type != SubscriptionType.IMPLEMENTATION:
+                    for email in invoice.contact_emails:
+                        record.send_email(contact_email=email)
+                else:
+                    record.send_email(
+                        contact_email=invoice.subscription.account.dimagi_contact, # what if this is blank?
+                        cc_emails=[settings.ACCOUNTS_EMAIL],
+                    )
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:
                     log_accounting_error(e.message)
@@ -319,9 +326,10 @@ class DomainWireInvoiceFactory(object):
         record = WireBillingRecord.generate_record(wire_invoice)
 
         if record.should_send_email:
+            recipients = self.contact_emails or wire_invoice.email_recipients
             try:
-                for email in self.contact_emails:
-                    record.send_email(contact_email=email)
+                for email in recipients:
+                    record.send_email(email)
             except InvoiceEmailThrottledError as e:
                 # Currently wire invoices are never throttled
                 if not self.logged_throttle_error:

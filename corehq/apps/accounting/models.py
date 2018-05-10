@@ -2046,7 +2046,7 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
-    def send_email(self, contact_email=None, cc_emails=None):
+    def send_email(self, contact_email, cc_emails=None): # check that is still works for wires
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
