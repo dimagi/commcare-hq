@@ -30,6 +30,16 @@
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
     {% endfor %}
+    <!-- TODO -->
+    <script>
+        $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
+            var jsOptions = hqImport("hqwebapp/js/initial_page_data").get("js_options");
+            if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
+                return;
+            }
+            renderPage(data);
+        });
+    </script>
 {% endblock %}
 
 {% block stylesheets %}
