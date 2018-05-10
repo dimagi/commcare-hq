@@ -1966,10 +1966,6 @@ class BillingRecordBase(models.Model):
     _pdf = None
 
     @property
-    def emailed_to(self):
-        return ','.join(self.emailed_to_list)
-
-    @property
     def pdf(self):
         if self._pdf is None:
             return InvoicePdf.get(self.pdf_data_id)

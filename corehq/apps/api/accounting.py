@@ -8,6 +8,9 @@ from corehq.apps.accounting.models import Feature, FeatureRate, SoftwarePlanVers
     SubscriptionAdjustment, BillingRecord, Invoice
 from corehq.apps.api.resources.auth import AdminAuthentication
 from tastypie import fields
+from django.db import models
+from django.contrib.postgres.fields import ArrayField
+
 
 from corehq.apps.api.resources.meta import CustomResourceMeta
 from django_prbac.models import Role
@@ -132,6 +135,7 @@ class SubscriberResource(ModelResource):
 class BillingContactInfoResource(ModelResource):
     account = fields.IntegerField('account_id')
     emails = fields.CharField(readonly=True)
+    emailed_to = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingContactInfo.objects.all().order_by('pk')
@@ -141,6 +145,9 @@ class BillingContactInfoResource(ModelResource):
 
     def dehydrate_emails(self, bundle):
         return ','.join(bundle.obj.email_list)
+
+    def dehydrate_emailed_to(self, bundle):
+        return ','.join(bundle.obj.emailed_to)
 
 
 class BillingAccountResource(ModelResource):
