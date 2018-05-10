@@ -308,7 +308,6 @@ class ApplicationStatusReport(GetParamsMixin, PaginatedReportMixin, DeploymentsR
                 mobile_user_and_group_slugs,
                 self.request.couch_user,
             ).values_list('_id', flat=True)
-            print users
             sort_clause = self.get_sql_sort()
             rows = ApplicationStatusFact.objects.filter(
                 user_dim__user_id__in=users
