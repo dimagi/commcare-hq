@@ -2046,7 +2046,7 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
-    def send_email(self, contact_emails=None):
+    def send_email(self, contact_email=None, cc_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
@@ -2057,34 +2057,30 @@ class BillingRecordBase(models.Model):
         context = self.email_context()
         email_from = self.email_from()
 
-        contact_emails = contact_emails or self.invoice.email_recipients
-        if self.is_email_throttled():
-            self.handle_throttled_email(contact_emails)
-
-        for email in contact_emails:
-            greeting = _("Hello,")
-            can_view_statement = False
-            web_user = WebUser.get_by_username(email)
-            if web_user is not None:
-                if web_user.first_name:
-                    greeting = _("Dear %s,") % web_user.first_name
-                can_view_statement = web_user.is_domain_admin(domain)
-            context['greeting'] = greeting
-            context['can_view_statement'] = can_view_statement
-            email_html = render_to_string(self.html_template, context)
-            email_plaintext = render_to_string(self.text_template, context)
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=email_from,
-                file_attachments=[pdf_attachment]
-            )
-        self.recipients = contact_emails
+        greeting = _("Hello,")
+        can_view_statement = False
+        web_user = WebUser.get_by_username(contact_email)
+        if web_user is not None:
+            if web_user.first_name:
+                greeting = _("Dear %s,") % web_user.first_name
+            can_view_statement = web_user.is_domain_admin(domain)
+        context['greeting'] = greeting
+        context['can_view_statement'] = can_view_statement
+        email_html = render_to_string(self.html_template, context)
+        email_plaintext = render_to_string(self.text_template, context)
+        send_html_email_async.delay(
+            subject, contact_email, email_html,
+            text_content=email_plaintext,
+            email_from=email_from,
+            file_attachments=[pdf_attachment],
+            cc=cc_emails
+        )
+        self.recipients = contact_email
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
-                'emails': ', '.join(contact_emails),
+                'emails': contact_email,
             }
         )
 
@@ -2949,7 +2945,7 @@ class PaymentRecord(models.Model):
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    transaction_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)

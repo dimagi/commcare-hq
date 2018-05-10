@@ -3,8 +3,8 @@ from __future__ import unicode_literals
 from datetime import date
 
 from corehq.apps.userreports.specs import EvaluationContext
-from custom.yeksi_naa_reports.tests.utils import TestDataSourceExpressions
-from custom.yeksi_naa_reports.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT
+from custom.intrahealth.tests.utils import TestDataSourceExpressions
+from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT
 
 VISITE_DE_L_OPERATOUR_PER_PRODUCT_DATA_SOURCE = 'visite_de_l_operateur_per_product.json'
 
