@@ -23,6 +23,7 @@
     {% include 'reports/partials/graphs/charts_js.html' %}
     <script src="{% static 'case/js/cheapxml.js' %}"></script>
     <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'reports/js/async_tabular.js' %}"></script>
     <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
     <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
     <script src="{% static 'hqpillow_retry/js/pillow_errors.js' %}"></script>
@@ -30,16 +31,6 @@
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
     {% endfor %}
-    <!-- TODO -->
-    <script>
-        $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
-            var jsOptions = hqImport("hqwebapp/js/initial_page_data").get("js_options");
-            if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
-                return;
-            }
-            renderPage(data);
-        });
-    </script>
 {% endblock %}
 
 {% block stylesheets %}
