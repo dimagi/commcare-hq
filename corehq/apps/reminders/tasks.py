@@ -8,6 +8,7 @@ from corehq.apps.reminders.models import (CaseReminderHandler, CaseReminder,
     CASE_CRITERIA, REMINDER_TYPE_DEFAULT)
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from corehq.util.celery_utils import no_result_task
 from corehq.util.decorators import serial_task
 from django.conf import settings
@@ -95,6 +96,10 @@ def process_reminder_rule(handler, schedule_changed, prev_definition,
 
 @no_result_task(queue=CELERY_REMINDERS_QUEUE, acks_late=True)
 def fire_reminder(reminder_id, domain):
+    if REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
+        fire_reminder.apply_async([reminder_id, domain], countdown=60)
+        return
+
     try:
         if settings.ENTERPRISE_MODE or reminder_rate_limiter.can_perform_action(domain):
             _fire_reminder(reminder_id)
