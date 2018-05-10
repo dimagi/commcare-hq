@@ -6,7 +6,6 @@ import os
 import uuid
 from copy import deepcopy
 from datetime import datetime
-from time import sleep
 
 from django.db.utils import IntegrityError
 
@@ -47,6 +46,7 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from gevent.pool import Pool
+from gevent import sleep
 import six
 import logging
 from collections import defaultdict, deque
