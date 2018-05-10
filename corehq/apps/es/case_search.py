@@ -252,6 +252,19 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
+def case_property_exists(case_property_name):
+    """Returns cases where case_property_name is set
+
+    """
+    return queries.nested(
+        CASE_PROPERTIES_PATH,
+        queries.filtered(
+            queries.match_all(),
+            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+        )
+    )
+
+
 def _base_property_query(case_property_name, query):
     return queries.nested(
         CASE_PROPERTIES_PATH,
