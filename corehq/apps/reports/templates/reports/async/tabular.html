@@ -119,16 +119,7 @@
             </div>
         </div>
     </script>
-    <script>
-
-        $(function() {
-            $('.header-popover').popover({
-                trigger: 'hover',
-                placement: 'bottom',
-                container: 'body'
-            });
-        });
-    </script>
+    {# For custom reports, template_partial might contain javascript #}
     {% for chart in charts %}
         {% with id=forloop.counter|stringformat:"s" slug=report.slug %}
             {% include chart.template_partial with chart=chart chart_id='chart_'|add:slug|add:'_'|add:id %}

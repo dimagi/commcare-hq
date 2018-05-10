@@ -44,6 +44,12 @@ hqDefine("reports/js/async_tabular", function() {
             }
             reportTables.render();
         }
+
+        $('.header-popover').popover({
+            trigger: 'hover',
+            placement: 'bottom',
+            container: 'body'
+        });
     }
 
     $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
