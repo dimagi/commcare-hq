@@ -20,6 +20,7 @@ describe('Newborn Low Weight Directive', function () {
             {id: 'F', name: 'Female'},
         ]);
         $provide.constant("userLocationId", null);
+        $provide.constant("haveAccessToAllLocations", false);
     }));
 
     beforeEach(inject(function ($rootScope, $compile, _$httpBackend_, _$location_) {
@@ -30,6 +31,9 @@ describe('Newborn Low Weight Directive', function () {
         $httpBackend.expectGET('template').respond(200, '<div></div>');
         $httpBackend.expectGET('low_birth').respond(200, {
             report_data: ['report_test_data'],
+        });
+        $httpBackend.expectGET('icds_locations').respond(200, {
+            location_type: 'state',
         });
         var element = window.angular.element("<newborn-low-weight data='test'></newborn-low-weight>");
         var compiled = $compile(element)($scope);
@@ -91,7 +95,7 @@ describe('Newborn Low Weight Directive', function () {
             + '<div>Total Number of Newborns born in given month: <strong>20</strong></div>'
             + '<div>Number of Newborns with LBW in given month: <strong>5</strong></div>'
             + '<div>% newborns with LBW in given month: <strong>50.00%</strong></div>'
-            + '<div>% Unweighted: <strong>50.00%</strong></div>');
+            + '<div>% Unweighted: <strong>50.00%</strong></div></div>');
     });
 
     it('tests location change', function () {
@@ -211,7 +215,7 @@ describe('Newborn Low Weight Directive', function () {
             '<div>Total Number of Newborns born in given month: <strong>25</strong></div>' +
             '<div>Number of Newborns with LBW in given month: <strong>0</strong></div>' +
             '<div>% newborns with LBW in given month: <strong>NaN%</strong></div>' +
-            '<div>% Unweighted: <strong>0.00%</strong></div>';
+            '<div>% Unweighted: <strong>0.00%</strong></div></div>';
         controllermapOrSectorView.templatePopup = function (d) {
             return controller.templatePopup(d.loc, d.row);
         };

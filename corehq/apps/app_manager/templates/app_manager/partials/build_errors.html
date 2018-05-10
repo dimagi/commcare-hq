@@ -76,6 +76,12 @@
                         {% case "no forms or case list" %}
                             <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                             has no forms or case list.
+                        {% case "training module parent" %}
+                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
+                            cannot have a training module as a parent module.
+                        {% case "training module child" %}
+                            <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
+                            is a training module and therefore cannot have a parent module.
                         {% case "no reports" %}
                             <a href="{% url "view_module" domain app.id error.module.unique_id %}">{{ error.module.name|trans:langs }}</a>
                             has no reports.
@@ -110,6 +116,13 @@
                             There are references to reports that are deleted in
                             <a href="{{ module_url }}">{{ module_name }}</a>.
                             You may re-save <a href="{{ module_url }}">{{ module_name }}</a> to delete them.
+                            {% endblocktrans %}
+                        {% case "report config id duplicated" %}
+                            {% url "view_module" domain app.id error.module.unique_id as module_url %}
+                            {% blocktrans with module_name=error.module.name|trans:langs %}
+                            There are multiple reports with the same report code in
+                            <a href="{{ module_url }}">{{ module_name }}</a>.
+                            These codes must be unique.
                             {% endblocktrans %}
                         {% case "module filter has xpath error" %}
                             {% url "view_module" domain app.id error.module.unique_id as module_url %}

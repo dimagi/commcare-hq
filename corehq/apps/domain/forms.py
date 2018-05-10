@@ -1633,9 +1633,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
     plan_edition = forms.CharField(
         widget=forms.HiddenInput,
     )
-    confirm_legal = forms.BooleanField(
-        required=True,
-    )
 
     def __init__(self, account, domain, creating_user, current_subscription,
                  renewed_version, data=None, *args, **kwargs):
@@ -1647,12 +1644,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
         self.fields['plan_edition'].initial = renewed_version.plan.edition
-        self.fields['confirm_legal'].label = mark_safe(ugettext_noop(
-            'I have read and agree to the <a href="%(pa_url)s" '
-            'target="_blank">Software Product Agreement</a>.'
-        ) % {
-            'pa_url': reverse("product_agreement"),
-        })
 
         from corehq.apps.domain.views import DomainSubscriptionView
         self.helper.layout = crispy.Layout(
@@ -1674,10 +1665,6 @@ class ConfirmSubscriptionRenewalForm(EditBillingAccountInfoForm):
                 'postal_code',
                 crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, ''))
-            ),
-            crispy.Fieldset(
-                _("Re-Confirm Product Agreement"),
-                'confirm_legal',
             ),
             hqcrispy.FormActions(
                 hqcrispy.LinkButton(
@@ -1877,10 +1864,13 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def subscription_default_fields(self):
-        return {
+        fields = {
             'internal_change': True,
             'web_user': self.web_user,
         }
+        if self.current_subscription:
+            fields['date_delay_invoicing'] = self.current_subscription.date_delay_invoicing
+        return fields
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)
@@ -1969,7 +1959,7 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
     )
 
     trial_length = forms.ChoiceField(
-        choices=[(days, "%d days" % days) for days in [30, 60, 90]],
+        choices=[(days, "%d days" % days) for days in [15, 30, 60, 90]],
         label="Trial Length",
     )
 
@@ -1989,12 +1979,6 @@ class AdvancedExtendedTrialForm(InternalSubscriptionManagementForm):
             crispy.Field('trial_length', data_bind='value: trialLength'),
             crispy.Div(
                 crispy.Div(
-                    crispy.HTML(_(
-                        '<p><i class="fa fa-info-circle"></i> The trial includes '
-                        'access to all features, 5 mobile workers, and 25 SMS.  Fees '
-                        'apply for users or SMS in excess of these limits (1 '
-                        'USD/user/month, regular SMS fees).</p>'
-                    )),
                     crispy.HTML(_(
                         '<p><i class="fa fa-info-circle"></i> The trial will begin as soon '
                         'as you hit "Update" and end on <span data-bind="text: end_date"></span>.  '

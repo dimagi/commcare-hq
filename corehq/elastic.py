@@ -1,16 +1,18 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import namedtuple
 import copy
 import logging
 import time
 from six.moves.urllib.parse import unquote
 
+from dimagi.utils.chunked import chunked
 from django.conf import settings
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.datadog.gauges import datadog_counter
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -210,7 +212,9 @@ def run_query(index_name, q, debug_host=None, es_instance_alias=ES_DEFAULT_INSTA
         else:
             raise
     try:
-        return es_instance.search(es_meta.index, es_meta.type, body=q)
+        results = es_instance.search(es_meta.index, es_meta.type, body=q)
+        report_shard_failures(results)
+        return results
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -227,6 +231,14 @@ def mget_query(index_name, ids, source):
         )['docs']
     except ElasticsearchException as e:
         raise ESError(e)
+
+
+def iter_es_docs(index_name, ids):
+    """Returns a generator which pulls documents from elasticsearch in chunks"""
+    for ids_chunk in chunked(ids, 100):
+        for result in mget_query(index_name, ids_chunk, source=True):
+            if result['found']:
+                yield result['_source']
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):
@@ -408,6 +420,7 @@ def es_query(params=None, facets=None, terms=None, q=None, es_index=None, start_
 
     try:
         result = es.search(meta.index, meta.type, body=q)
+        report_shard_failures(result)
     except ElasticsearchException as e:
         raise ESError(e)
 
@@ -487,3 +500,13 @@ def fill_mapping_with_facets(facet_mapping, results, params=None):
                 for choice in facet_dict["choices"]:
                     choice["display"] = facet_dict.get('mapping').get(choice["name"], choice["name"])
     return facet_mapping
+
+
+def report_shard_failures(search_result):
+    """Report es shard failures to datadog
+    """
+    if not isinstance(search_result, dict):
+        return
+
+    if search_result.get('_shards', {}).get('failed'):
+        datadog_counter('commcare.es.partial_results', value=1)

@@ -8,7 +8,7 @@ from corehq.util.test_utils import DocTestMixin
 
 
 class SuggestedFieldTest(SimpleTestCase, DocTestMixin):
-    @mock.patch('corehq.apps.case_importer.suggested_fields.get_case_properties_for_case_type')
+    @mock.patch('corehq.apps.case_importer.suggested_fields.get_all_case_properties_for_case_type')
     @mock.patch('corehq.apps.case_importer.suggested_fields.get_special_fields')
     def _test(self, get_special_fields, get_case_properties_for_case_type,
               special_fields, case_properties, excluded_fields, expected_result):

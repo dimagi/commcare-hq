@@ -34,8 +34,13 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
             for config in all[2:]:
                 self.assertEqual('cc1', config.domain)
 
-    def test_is_static_positive(self):
+    def test_is_static_positive_json(self):
         with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'json')]):
+            example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
+            self.assertTrue(example.is_static)
+
+    def test_is_static_positive_yaml(self):
+        with override_settings(STATIC_DATA_SOURCES=[self.get_path('sample_static_data_source', 'yaml')]):
             example = list(StaticDataSourceConfiguration.all(use_server_filter=False))[0]
             self.assertTrue(example.is_static)
 

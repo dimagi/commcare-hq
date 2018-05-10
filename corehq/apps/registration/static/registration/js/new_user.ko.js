@@ -101,8 +101,8 @@ hqDefine('registration/js/new_user.ko', function () {
         throw "overwrite onModule load to remove loading indicators";
     };
 
-    module.FormViewModel = function (defaults, containerSelector, steps) {
-        var self = this;
+    module.formViewModel = function (defaults, containerSelector, steps) {
+        var self = {};
 
         module.onModuleLoad();
 
@@ -398,6 +398,8 @@ hqDefine('registration/js/new_user.ko', function () {
             );
             self.nextStep();
         };
+
+        return self;
     };
 
     return module;

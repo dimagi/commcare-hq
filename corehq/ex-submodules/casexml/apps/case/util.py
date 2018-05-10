@@ -9,7 +9,6 @@ import datetime
 from django.conf import settings
 from django.utils.dateparse import parse_datetime
 from iso8601 import iso8601
-from restkit.errors import ResourceError
 
 from casexml.apps.case.const import CASE_ACTION_UPDATE, CASE_ACTION_CREATE
 from casexml.apps.case.dbaccessors import get_indexed_case_ids
@@ -19,6 +18,7 @@ from casexml.apps.phone.models import SyncLogAssertionError, get_properly_wrappe
 from casexml.apps.phone.xml import get_case_element
 from casexml.apps.stock.models import StockReport
 from corehq.util.soft_assert import soft_assert
+from corehq.form_processor.utils import should_use_sql_backend
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 
@@ -178,6 +178,12 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     from casexml.apps.case.xform import get_case_updates
     PropertyChangedInfo = namedtuple("PropertyChangedInfo", 'transaction new_value modified_on')
     include_create_fields = case_property_name in ['owner_id', 'name', 'external_id']
+
+    if not should_use_sql_backend(case_transaction.form.domain):
+        # couch domains return 2 transactions for case properties created in a create form
+        if case_transaction.is_case_create and not include_create_fields:
+            return False
+
     case_updates = get_case_updates(case_transaction.form)
 
     actions = []
@@ -190,10 +196,10 @@ def property_changed_in_action(case_transaction, case_id, case_property_name):
     for (modified_on, action, case_transaction) in actions:
         if action:
             property_changed = action.dynamic_properties.get(case_property_name)
-            if include_create_fields:
+            if include_create_fields and not property_changed:
                 property_changed = getattr(action, case_property_name, None)
 
-            if property_changed:
+            if property_changed is not None:
                 return PropertyChangedInfo(case_transaction, property_changed, modified_on)
 
     return False
@@ -229,3 +235,35 @@ def get_all_changes_to_case_property(case, case_property_name):
             case_property_changes.append(property_changed_info)
 
     return case_property_changes
+
+
+def get_paged_changes_to_case_property(case, case_property_name, start=0, per_page=50):
+    """Return paged changes to case properties, and last transaction index checked
+    """
+
+    def iter_transactions(transactions):
+        for i, transaction in enumerate(transactions):
+            property_changed_info = property_changed_in_action(transaction, case.case_id, case_property_name)
+            if property_changed_info:
+                yield property_changed_info, i + start
+        raise StopIteration
+
+    num_actions = len(case.actions)
+    if start > num_actions:
+        return [], -1
+
+    case_transactions = iter_transactions(
+        sorted(case.actions, key=lambda t: t.server_date, reverse=True)[start:]
+    )
+
+    infos = []
+    last_index = 0
+    while len(infos) < per_page:
+        try:
+            info, last_index = next(case_transactions)
+            infos.append(info)
+        except StopIteration:
+            last_index = -1
+            break
+
+    return infos, last_index

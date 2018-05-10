@@ -20,7 +20,12 @@
     <script src="{% static 'reports/js/standard_hq_report.js' %}"></script>
     <script src="{% static 'userreports/js/report_analytix.js' %}"></script>
     {% include 'reports/partials/filters_js.html' %}
+    {% include 'reports/partials/graphs/charts_js.html' %}
+    <script src="{% static 'case/js/cheapxml.js' %}"></script>
+    <script src="{% static 'case/js/casexml.js' %}"></script>
+    <script src="{% static 'data_interfaces/js/case_management.js' %}"></script>
     <script src="{% static 'data_interfaces/js/archive_forms.js' %}"></script>
+    <script src="{% static 'hqpillow_retry/js/pillow_errors.js' %}"></script>
     {% endcompress %}
     {% for script in report.js_scripts %}
         <script src="{{ script|static }}"></script>
@@ -84,10 +89,20 @@
 
 {% block page_content %}
     {% initial_page_data 'js_options' report.js_options %}
+
+    {# Needed for case reassignment interface #}
+    {% initial_page_data "reassign_cases_enddate" datespan.enddate_param_utc %}
+    {% initial_page_data "web_user_id" request.couch_user.userID %}
+    {% initial_page_data "web_username" request.couch_user.username %}
+    {% registerurl "reassign_case_options" domain %}
+    {% registerurl "receiver_secure_post" domain %}
+
     {% if request.datespan %}
         {% initial_page_data 'startdate' datespan.startdate|date:"Y-m-d" %}
         {% initial_page_data 'enddate' datespan.enddate|date:"Y-m-d" %}
     {% endif %}
+    {% initial_page_data 'slug' report.slug %}
+
     {% block filter_panel %}
         {% include "reports/standard/partials/filter_panel.html" %}
     {% endblock %}

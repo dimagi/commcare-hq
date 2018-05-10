@@ -14,13 +14,11 @@ from django.http import Http404
 from django.utils import html, safestring
 
 from corehq.apps.users.permissions import get_extra_permissions
-from corehq.form_processor.utils import use_new_exports
 from corehq.util.log import send_HTML_email
 from corehq.util.quickcache import quickcache
 from corehq.apps.reports.const import USER_QUERY_LIMIT
 
 from couchexport.util import SerializableFunction
-from couchforms.analytics import get_first_form_submission_received
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
 from dimagi.utils.web import json_request
@@ -376,12 +374,10 @@ def create_export_filter(request, domain, export_type='form'):
 
 def get_possible_reports(domain_name):
     from corehq.apps.reports.dispatcher import (ProjectReportDispatcher, CustomProjectReportDispatcher)
-    from corehq.apps.data_interfaces.dispatcher import DataInterfaceDispatcher
 
     # todo: exports should be its own permission at some point?
     report_map = (ProjectReportDispatcher().get_reports(domain_name) +
-                  CustomProjectReportDispatcher().get_reports(domain_name) +
-                  DataInterfaceDispatcher().get_reports(domain_name))
+                  CustomProjectReportDispatcher().get_reports(domain_name))
     reports = []
     domain = Domain.get_by_name(domain_name)
     for heading, models in report_map:
@@ -459,10 +455,7 @@ def numcell(text, value=None, convert='int', raw=None):
 
 
 def datespan_from_beginning(domain_object, timezone):
-    if use_new_exports(domain_object.name):
-        startdate = domain_object.date_created
-    else:
-        startdate = get_first_form_submission_received(domain_object.name)
+    startdate = domain_object.date_created
     now = datetime.utcnow()
     datespan = DateSpan(startdate, now, timezone=timezone)
     datespan.is_default = True

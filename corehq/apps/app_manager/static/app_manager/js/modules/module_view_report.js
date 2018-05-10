@@ -3,8 +3,9 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
         var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
         var initNavMenuMedia = hqImport('app_manager/js/app_manager_media').initNavMenuMedia;
         var select2Separator = hqImport('app_manager/js/modules/report_module').select2Separator;
-        var ReportModule = hqImport('app_manager/js/modules/report_module').ReportModule;
-        var StaticFilterData = hqImport('app_manager/js/modules/report_module').StaticFilterData;
+        var reportModuleModel = hqImport('app_manager/js/modules/report_module').reportModuleModel;
+        var staticFilterDataModel = hqImport('app_manager/js/modules/report_module').staticFilterDataModel;
+        var choiceListUtils = hqImport('reports_core/js/choice_list_utils');
         // Hacky: report modules only deal with one kind of multimedia (the menu image/audio),
         // so assume nav_menu_media_specifics has one element.
         var navMenuMediaItem = initial_page_data("nav_menu_media_specifics")[0];
@@ -16,8 +17,8 @@ hqDefine("app_manager/js/modules/module_view_report", function() {
             navMenuMediaItem.default_file_name
         );
         var saveURL = hqImport("hqwebapp/js/initial_page_data").reverse("edit_report_module");
-        var staticData = new StaticFilterData(initial_page_data('static_data_options'));
-        var reportModule = new ReportModule(_.extend({}, initial_page_data("report_module_options"), {
+        var staticData = staticFilterDataModel(initial_page_data('static_data_options'));
+        var reportModule = reportModuleModel(_.extend({}, initial_page_data("report_module_options"), {
             lang: initial_page_data('lang'),
             staticFilterData: staticData,
             saveURL: saveURL,

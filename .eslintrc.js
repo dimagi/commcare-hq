@@ -25,6 +25,8 @@ module.exports = {
         "it": false,
         "describe": false,
         "beforeEach": false,
+        "nv": false,
+        "d3": false,
     },
 
     // http://eslint.org/docs/rules/

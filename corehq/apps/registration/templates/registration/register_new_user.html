@@ -129,7 +129,7 @@
               <i class="fcc fcc-flower fa-spin"></i>
             </p>
           </div>
-          {% crispy reg_form   %}
+          {% crispy reg_form %}
           <div class="form-step final-step" style="display: none;">
 
             {% include "registration/partials/register_new_user/submit_info.html" %}
@@ -143,8 +143,4 @@
     </div>
   </div>
 </div>
-{% endblock %}
-
-{% block modals %}{{ block.super }}
-    {% include 'hqwebapp/includes/modal_eula.html' %}
 {% endblock %}

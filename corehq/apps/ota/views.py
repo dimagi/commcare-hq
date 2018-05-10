@@ -1,8 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from couchdbkit import ResourceConflict
 from distutils.version import LooseVersion
 
 from datetime import datetime
+
+from django.conf import settings
 from django.http import JsonResponse, Http404, HttpResponse, HttpResponseBadRequest
 from django.utils.translation import ugettext as _
 from django.views.decorators.csrf import csrf_exempt
@@ -33,6 +37,7 @@ from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
+from dimagi.utils.parsing import string_to_utc_datetime
 
 from .models import SerialIdBucket
 from .utils import (
@@ -241,20 +246,7 @@ def heartbeat(request, domain, app_build_id):
         mobile simply needs it to be resent back in the JSON, and doesn't
         need any validation on it. This is pulled from @uniqueid from profile.xml
     """
-    def _safe_int(val):
-        try:
-            return int(val)
-        except:
-            pass
-
     app_id = request.GET.get('app_id', '')
-
-    app_version = _safe_int(request.GET.get('app_version', ''))
-    device_id = request.GET.get('device_id', '')
-    last_sync_time = request.GET.get('last_sync_time', '')
-    num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
-    num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
-    commcare_version = request.GET.get('cc_version', '')
 
     info = {"app_id": app_id}
     try:
@@ -266,37 +258,65 @@ def heartbeat(request, domain, app_build_id):
         app = get_app_cached(domain, app_build_id)
         brief_app_id = app.master_id
         info.update(LatestAppInfo(brief_app_id, domain).get_info())
+
     else:
-        couch_user = request.couch_user
-        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
-        try:
-            last_sync = adjust_text_to_datetime(last_sync_time)
-        except iso8601.ParseError:
-            last_sync = None
-        else:
-            save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
-
-        app_meta = DeviceAppMeta(
-            app_id=app_id,
-            build_id=app_build_id,
-            build_version=app_version,
-            last_heartbeat=datetime.utcnow(),
-            last_sync=last_sync,
-            num_unsent_forms=num_unsent_forms,
-            num_quarantined_forms=num_quarantined_forms
-        )
-        save_user |= update_device_meta(
-            couch_user,
-            device_id,
-            commcare_version=commcare_version,
-            device_app_meta=app_meta,
-            save=False
-        )
-
-        if save_user:
-            couch_user.save(fire_signals=False)
+        if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+            # disable on icds for now since couch still not happy
+            couch_user = request.couch_user
+            try:
+                update_user_reporting_data(app_build_id, app_id, couch_user, request)
+            except ResourceConflict:
+                # https://sentry.io/dimagi/commcarehq/issues/521967014/
+                couch_user = CouchUser.get(couch_user.user_id)
+                update_user_reporting_data(app_build_id, app_id, couch_user, request)
 
     return JsonResponse(info)
+
+
+def update_user_reporting_data(app_build_id, app_id, couch_user, request):
+    def _safe_int(val):
+        try:
+            return int(val)
+        except:
+            pass
+
+    app_version = _safe_int(request.GET.get('app_version', ''))
+    device_id = request.GET.get('device_id', '')
+    last_sync_time = request.GET.get('last_sync_time', '')
+    num_unsent_forms = _safe_int(request.GET.get('num_unsent_forms', ''))
+    num_quarantined_forms = _safe_int(request.GET.get('num_quarantined_forms', ''))
+    commcare_version = request.GET.get('cc_version', '')
+    save_user = False
+    # if mobile cannot determine app version it sends -1
+    if app_version and app_version > 0:
+        save_user = update_latest_builds(couch_user, app_id, datetime.utcnow(), app_version)
+    try:
+        last_sync = adjust_text_to_datetime(last_sync_time)
+    except iso8601.ParseError:
+        try:
+            last_sync = string_to_utc_datetime(last_sync_time)
+        except (ValueError, OverflowError):
+            last_sync = None
+    else:
+        save_user |= update_last_sync(couch_user, app_id, last_sync, app_version)
+    app_meta = DeviceAppMeta(
+        app_id=app_id,
+        build_id=app_build_id,
+        build_version=app_version,
+        last_heartbeat=datetime.utcnow(),
+        last_sync=last_sync,
+        num_unsent_forms=num_unsent_forms,
+        num_quarantined_forms=num_quarantined_forms
+    )
+    save_user |= update_device_meta(
+        couch_user,
+        device_id,
+        commcare_version=commcare_version,
+        device_app_meta=app_meta,
+        save=False
+    )
+    if save_user:
+        couch_user.save(fire_signals=False)
 
 
 @location_safe

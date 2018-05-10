@@ -328,7 +328,7 @@ class UploadItemLists(TemplateView):
             validate_fixture_file_format(file_ref.get_filename())
         except FixtureUploadError as e:
             messages.error(
-                request, _('Please fix the following formatting issues in your excel file: %s') %
+                request, _('Please fix the following formatting issues in your Excel file: %s') %
                 '<ul><li>{}</li></ul>'.format('</li><li>'.join(e.errors)),
                 extra_tags='html'
             )
@@ -381,7 +381,8 @@ class FixtureUploadStatusView(FixtureViewMixIn, BaseDomainView):
 def fixture_upload_job_poll(request, domain, download_id, template="fixtures/partials/fixture_upload_status.html"):
     try:
         context = get_download_context(download_id, require_result=True)
-    except TaskFailedError:
+    except TaskFailedError as e:
+        notify_exception(request, message=e.message)
         return HttpResponseServerError()
 
     return render(request, template, context)
@@ -431,7 +432,7 @@ def _upload_fixture_api(request, domain):
         except FixtureUploadError as e:
             return UploadFixtureAPIResponse(
                 'fail',
-                _('Please fix the following formatting issues in your excel file: %s')
+                _('Please fix the following formatting issues in your Excel file: %s')
                 % '\n'.join(e.errors))
 
         result = upload_fixture_file(domain, filename, replace=replace)

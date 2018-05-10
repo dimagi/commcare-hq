@@ -9,7 +9,7 @@ hqDefine('export/js/customize_export_old', function() {
             history_to_parents: gettext('Case History > Parent Cases'),
             parent_cases: gettext('Parent Cases'),
         };
-        var customExportView = hqImport("export/js/custom_export_view").CustomExportView.wrap({
+        var customExportView = hqImport("export/js/customize_export").CustomExportView.wrap({
             export_type: initialPageData.get('custom_export_type'),
             custom_export: initialPageData.get('custom_export'),
             table_configuration: initialPageData.get('table_configuration'),

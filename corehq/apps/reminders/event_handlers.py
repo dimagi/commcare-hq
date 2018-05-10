@@ -217,8 +217,7 @@ def fire_sms_event(reminder, handler, recipients, verified_numbers, logged_event
             elif isinstance(recipient, CouchUser) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
-            elif (is_commcarecase(recipient) and unverified_number and
-                    domain_obj.send_to_duplicated_case_numbers):
+            elif is_commcarecase(recipient) and unverified_number:
                 send_sms(reminder.domain, recipient, unverified_number,
                     message, metadata)
             else:
@@ -311,7 +310,6 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
 
             no_verified_number = verified_number is None
             cant_use_unverified_number = (unverified_number is None or
-                not domain_obj.send_to_duplicated_case_numbers or
                 form_requires_input(form))
             if no_verified_number and cant_use_unverified_number:
                 logged_subevent.error(MessagingEvent.ERROR_NO_TWO_WAY_PHONE_NUMBER)

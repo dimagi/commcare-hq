@@ -241,7 +241,7 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
             "Allow Dimagi to collect usage information to improve CommCare. "
             "You can learn more about the information we collect and the ways "
             "we use it in our "
-            '<a href="http://www.dimagi.com/policy/">privacy policy</a>'
+            '<a href="http://www.dimagi.com/terms/latest/privacy/">privacy policy</a>'
         ),
     )
 
@@ -1054,16 +1054,8 @@ class DomainRequestForm(forms.Form):
 
 
 class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
-    confirm_product_agreement = forms.BooleanField(
-        required=True,
-    )
-
     def __init__(self, account, domain, creating_user, data=None, *args, **kwargs):
         super(ConfirmExtraUserChargesForm, self).__init__(account, domain, creating_user, data=data, *args, **kwargs)
-        self.fields['confirm_product_agreement'].label = _(
-            'I have read and agree to the <a href="%(pa_url)s" target="_blank">'
-            'Software Product Subscription Agreement</a>.'
-        ) % {'pa_url': reverse('product_agreement')}
 
         from corehq.apps.users.views.mobile import MobileWorkerListView
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -1087,10 +1079,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                 crispy.Field('country', css_class="input-large accounting-country-select2",
                              data_countryname=COUNTRIES.get(self.current_country, '')),
             ),
-            hqcrispy.B3MultiField(
-                '',
-                crispy.Field('confirm_product_agreement'),
-            ),
             hqcrispy.FormActions(
                 crispy.HTML(
                     '<a href="%(user_list_url)s" class="btn btn-default">%(text)s</a>' % {
@@ -1102,13 +1090,6 @@ class ConfirmExtraUserChargesForm(EditBillingAccountInfoForm):
                     _("Confirm Billing Information"),
                     type="submit",
                     css_class='btn btn-primary disabled',
-                    disabled="disabled",
-                    css_id="submit-button-pa",
-                ),
-                crispy.HTML(
-                    '<p class="help-inline" id="submit-button-help-qa" style="vertical-align: '
-                    'top; margin-top: 5px; margin-bottom: 0px;">%s</p>' % _("Please agree to the Product Subscription "
-                                                                            "Agreement above before continuing.")
                 ),
             ),
         )

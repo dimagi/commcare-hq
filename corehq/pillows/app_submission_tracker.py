@@ -6,7 +6,7 @@ from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
 from corehq.apps.change_feed.document_types import get_doc_meta_object_from_document, \
     change_meta_from_doc_meta_and_document
-from corehq.apps.change_feed.data_sources import FORM_SQL, COUCH
+from corehq.apps.change_feed.data_sources import FORM_SQL, SOURCE_COUCH
 from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.apps.reports.analytics.esaccessors import get_last_forms_by_app
 from corehq.form_processor.backends.sql.dbaccessors import FormReindexAccessor
@@ -128,7 +128,7 @@ class CouchAppFormSubmissionTrackerReindexerFactory(ReindexerFactory):
             SubmissionErrorLog,
         ])
         return AppFormSubmissionReindexer(
-            doc_provider, COUCH, XFormInstance.get_db().dbname, **self.options
+            doc_provider, SOURCE_COUCH, XFormInstance.get_db().dbname, **self.options
         )
 
 

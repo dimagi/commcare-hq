@@ -59,6 +59,28 @@ hqDefine('export/js/models', function () {
             });
         }));
 
+        // Set column widths
+        self.questionColumnClass = ko.computed(function() {
+            var width = 6;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
+        self.displayColumnClass = ko.computed(function() {
+            var width = 5;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
+
         self.hasHtmlFormat = ko.pureComputed(function() {
             return this.export_format() === constants.EXPORT_FORMATS.HTML;
         }, self);
@@ -194,7 +216,7 @@ hqDefine('export/js/models', function () {
         } else if (format === constants.EXPORT_FORMATS.XLS) {
             return gettext('Excel (older versions)');
         } else if (format === constants.EXPORT_FORMATS.XLSX) {
-            return gettext('Excel 2007');
+            return gettext('Excel 2007+');
         }
     };
 

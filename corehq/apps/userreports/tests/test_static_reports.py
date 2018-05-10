@@ -16,8 +16,18 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
         wrapped = StaticReportConfiguration.wrap(self.get_json('static_report_config'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
 
-    def test_get_all(self):
+    def test_get_all_json(self):
         with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'json')]):
+            all = list(StaticReportConfiguration.all())
+            self.assertEqual(2, len(all))
+            example, dimagi = all
+            self.assertEqual('example', example.domain)
+            self.assertEqual('dimagi', dimagi.domain)
+            for config in all:
+                self.assertEqual('Custom Title', config.title)
+
+    def test_get_all_yaml(self):
+        with override_settings(STATIC_UCR_REPORTS=[self.get_path('static_report_config', 'yaml')]):
             all = list(StaticReportConfiguration.all())
             self.assertEqual(2, len(all))
             example, dimagi = all

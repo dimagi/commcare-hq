@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from collections import defaultdict
 import importlib
 import os
+import six
 
 from django.contrib import messages
 import settingshelper as helper
@@ -72,7 +74,10 @@ STATIC_URL = '/static/'
 STATIC_CDN = ''
 
 FILEPATH = BASE_DIR
+
+# These templates are put on the server during deploy by fabric
 SERVICE_DIR = os.path.join(FILEPATH, 'deployment', 'commcare-hq-deploy', 'fab', 'services', 'templates')
+
 # media for user uploaded media.  in general this won't be used at all.
 MEDIA_ROOT = os.path.join(FILEPATH, 'mediafiles')
 STATIC_ROOT = os.path.join(FILEPATH, 'staticfiles')
@@ -116,6 +121,7 @@ PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigratio
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
+MAIN_COUCH_SQL_DATAMIGRATION = "%s/%s" % (FILEPATH, "main_couch_sql_datamigration.log")
 
 LOCAL_LOGGING_HANDLERS = {}
 LOCAL_LOGGING_LOGGERS = {}
@@ -142,7 +148,6 @@ MIDDLEWARE = [
     'corehq.middleware.OpenRosaMiddleware',
     'corehq.util.global_request.middleware.GlobalRequestMiddleware',
     'corehq.apps.users.middleware.UsersMiddleware',
-    'corehq.apps.users.middleware.Enforce2FAMiddleware',
     'corehq.middleware.SentryContextMiddleware',
     'corehq.apps.domain.middleware.DomainMigrationMiddleware',
     'corehq.middleware.TimeoutMiddleware',
@@ -338,9 +343,7 @@ HQ_APPS = (
     'corehq.apps.zapier.apps.ZapierConfig',
 
     # custom reports
-    'a5288',
     'custom.bihar',
-    'custom.apps.gsid',
     'hsph',
     'mvp',
     'mvp_docs',
@@ -374,7 +377,6 @@ HQ_APPS = (
     'custom.hki',
     'corehq.motech.openmrs',
     'custom.champ',
-    'custom.yeksi_naa_reports',
 )
 
 ENIKSHAY_APPS = (
@@ -393,7 +395,6 @@ TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
-    'a5288',
     'captcha',
     'couchdbkit.ext.django',
     'corehq.apps.ivr',
@@ -430,6 +431,8 @@ LOGIN_REDIRECT_URL = 'homepage'
 
 # set to True or False in localsettings to override the value set way down below
 IS_LOCATION_CTE_ENABLED = None
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = None
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -672,29 +675,7 @@ REMINDERS_QUEUE_STALE_REMINDER_DURATION = 7 * 24
 REMINDERS_RATE_LIMIT_COUNT = 30
 REMINDERS_RATE_LIMIT_PERIOD = 60
 
-####### Pillow Retry Queue Settings #######
-
-# Setting this to False no pillowtop errors will get processed.
 PILLOW_RETRY_QUEUE_ENABLED = False
-
-# If an error still has not been processed in this number of minutes, enqueue it
-# again.
-PILLOW_RETRY_QUEUE_ENQUEUING_TIMEOUT = 60 * 24
-
-# Number of minutes to wait before retrying an unsuccessful processing attempt
-PILLOW_RETRY_REPROCESS_INTERVAL = 5
-
-# Max number of processing attempts before giving up on processing the error
-PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS = 3
-
-# The backoff factor by which to increase re-process intervals by.
-# next_interval = PILLOW_RETRY_REPROCESS_INTERVAL * attempts^PILLOW_RETRY_BACKOFF_FACTOR
-PILLOW_RETRY_BACKOFF_FACTOR = 2
-
-# After an error's total attempts exceeds this number it will only be re-attempted
-# once after being reset. This is to prevent numerous retries of errors that aren't
-# getting fixed
-PILLOW_RETRY_MULTI_ATTEMPTS_CUTOFF = PILLOW_RETRY_QUEUE_MAX_PROCESSING_ATTEMPTS * 3
 
 SUBMISSION_REPROCESSING_QUEUE_ENABLED = True
 
@@ -877,6 +858,18 @@ DATADOG_APP_KEY = None
 SYNCLOGS_SQL_DB_ALIAS = 'default'
 WAREHOUSE_DATABASE_ALIAS = 'default'
 
+# A dict of django apps in which the reads are
+# split betweeen the primary and standby db machines
+# Example format:
+# {
+# "users":
+#     {
+#      ["pgmain", 5],
+#      ["pgmainstandby", 5]
+#     }
+# }
+LOAD_BALANCED_APPS = {}
+
 # Override with the PEM export of an RSA private key, for use with any
 # encryption or signing workflows.
 HQ_PRIVATE_KEY = None
@@ -993,6 +986,11 @@ try:
     COUCH_DATABASES = _determine_couch_databases(COUCH_DATABASES)
 except NameError:
     COUCH_DATABASES = _determine_couch_databases(None)
+
+COUCH_DATABASES['default'] = {
+    k: v.encode('utf-8') if isinstance(v, six.text_type) else v
+    for (k, v) in COUCH_DATABASES['default'].items()
+}
 
 # Unless DISABLE_SERVER_SIDE_CURSORS has explicitly been set, default to True because Django >= 1.11.1 and our
 # hosting environments use pgBouncer with transaction pooling. For more information, see:
@@ -1206,7 +1204,15 @@ LOGGING = {
             'filename': SOFT_ASSERTS_LOG_FILE,
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 200  # Backup 2000 MB of logs
-        }
+        },
+        'main_couch_sql_datamigration': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'simple',
+            'filename': MAIN_COUCH_SQL_DATAMIGRATION,
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 20
+        },
     },
     'root': {
         'level': 'INFO',
@@ -1358,19 +1364,19 @@ INDICATOR_CONFIG = {
 COMPRESS_URL = STATIC_CDN + STATIC_URL
 
 ####### Couch Forms & Couch DB Kit Settings #######
-NEW_USERS_GROUPS_DB = 'users'
+NEW_USERS_GROUPS_DB = b'users'
 USERS_GROUPS_DB = NEW_USERS_GROUPS_DB
 
-NEW_FIXTURES_DB = 'fixtures'
+NEW_FIXTURES_DB = b'fixtures'
 FIXTURES_DB = NEW_FIXTURES_DB
 
-NEW_DOMAINS_DB = 'domains'
+NEW_DOMAINS_DB = b'domains'
 DOMAINS_DB = NEW_DOMAINS_DB
 
-NEW_APPS_DB = 'apps'
+NEW_APPS_DB = b'apps'
 APPS_DB = NEW_APPS_DB
 
-META_DB = 'meta'
+META_DB = b'meta'
 
 
 COUCHDB_APPS = [
@@ -1426,7 +1432,6 @@ COUCHDB_APPS = [
     'openclinica',
 
     # custom reports
-    'gsid',
     'hsph',
     'mvp',
     ('mvp_docs', MVP_INDICATOR_DB),
@@ -1980,7 +1985,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
-    os.path.join('custom', 'apps', 'gsid', 'data_sources', 'patient_summary.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
@@ -2012,6 +2016,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'vhnd_form.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'visitorbook_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
@@ -2019,6 +2024,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2054,9 +2061,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2160,14 +2168,10 @@ CUSTOM_DASHBOARD_PAGE_URL_NAMES = {
 REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 
 DOMAIN_MODULE_MAP = {
-    'a5288-test': 'a5288',
-    'a5288-study': 'a5288',
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
     'fri': 'custom.fri.reports',
     'fri-testing': 'custom.fri.reports',
-    'gsid': 'custom.apps.gsid',
-    'gsid-demo': 'custom.apps.gsid',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2236,8 +2240,6 @@ DOMAIN_MODULE_MAP = {
     'champ-cameroon': 'custom.champ',
 
     # From DOMAIN_MODULE_CONFIG on production
-    'dca-malawi': 'dca',
-    'eagles-fahu': 'dca',
     'ews-ghana': 'custom.ewsghana',
     'ews-ghana-1': 'custom.ewsghana',
     'ewsghana-6': 'custom.ewsghana',
@@ -2251,11 +2253,17 @@ DOMAIN_MODULE_MAP = {
     'ilsgateway-test-2': 'custom.ilsgateway',
     'ilsgateway-test3': 'custom.ilsgateway',
     'mvp-mayange': 'mvp',
-    'psi-unicef': 'psi',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
-    'test-pna': 'custom.yeksi_naa_reports',
+    'test-pna': 'custom.intrahealth',
 }
+
+THROTTLE_SCHED_REPORTS_PATTERNS = (
+    # Regex patterns matching domains whose scheduled reports use a
+    # separate queue so that they don't hold up the background queue.
+    'ews-ghana$',
+    'mvp-',
+)
 
 CASEXML_FORCE_DOMAIN_CHECK = True
 
@@ -2330,4 +2338,17 @@ if IS_LOCATION_CTE_ENABLED is None:
         'changeme',  # default value in localsettings.example.py
         'staging',
         'softlayer',
+        'production',
     ]
+
+if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
+    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
+    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
+        'localdev',
+        'changeme',  # default value in localsettings.example.py
+        'staging',
+        'softlayer',
+        'production',
+    ]
+else:
+    IS_LOCATION_CTE_ONLY = False

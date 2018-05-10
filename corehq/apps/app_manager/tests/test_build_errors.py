@@ -6,8 +6,9 @@ import os
 
 from mock import patch
 
-from corehq.apps.app_manager.models import Application, CaseList
+from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -125,3 +126,32 @@ class BuildErrorsTest(SimpleTestCase):
         errors = factory.app.validate_app()
         self._clean_unique_id(errors)
         self.assertIn(case_tile_error, errors)
+
+    def test_training_module_as_parent(self, mock):
+        factory = AppFactory(build_version='2.43')
+        app = factory.app
+
+        training_module = Module.new_training_module('training', 'en')
+        app.add_module(training_module)
+
+        child_module, _ = factory.new_basic_module('child', 'case_type', parent_module=training_module)
+
+        self.assertIn({
+            'type': 'training module parent',
+            'module': {'id': 1, 'unique_id': 'child_module', 'name': {'en': 'child module'}}
+        }, app.validate_app())
+
+    def test_training_module_as_child(self, mock):
+        factory = AppFactory(build_version='2.43')
+        app = factory.app
+
+        parent_module = Module.new_module('parent', 'en')
+        app.add_module(parent_module)
+
+        training_module, _ = factory.new_basic_module('training', 'case_type', parent_module=parent_module)
+        training_module.is_training_module = True
+
+        self.assertIn({
+            'type': 'training module child',
+            'module': {'id': 1, 'unique_id': 'training_module', 'name': {'en': 'training module'}}
+        }, app.validate_app())

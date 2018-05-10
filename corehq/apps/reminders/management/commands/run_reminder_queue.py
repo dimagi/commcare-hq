@@ -7,7 +7,7 @@ from dimagi.utils.parsing import json_format_datetime
 from corehq.apps.reminders.models import CaseReminder
 from corehq.apps.reminders.tasks import fire_reminder
 from corehq.apps.reminders.util import get_reminder_domain
-from hqscripts.generic_queue import GenericEnqueuingOperation
+from hqscripts.generic_queue import GenericEnqueuingOperation, QueueItem
 
 
 class ReminderEnqueuingOperation(GenericEnqueuingOperation):
@@ -36,16 +36,16 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
             endkey=[None, utcnow_json],
             include_docs=False,
         ).all()
-        return [{"id": e["id"], "key": e["key"][1]} for e in result]
+        return [QueueItem(e['id'], e['key'], e) for e in result]
 
     def use_queue(self):
         return settings.REMINDERS_QUEUE_ENABLED
 
-    def enqueue_item(self, _id):
-        domain = get_reminder_domain(_id)
+    def enqueue_item(self, item):
+        domain = get_reminder_domain(item.id)
         if DATA_MIGRATION.enabled(domain):
             return
-        fire_reminder.delay(_id, domain)
+        fire_reminder.delay(item.id, domain)
 
     def enqueue_directly(self, reminder):
         """
@@ -54,7 +54,10 @@ class ReminderEnqueuingOperation(GenericEnqueuingOperation):
         thread.
         """
         try:
-            self.enqueue(reminder._id, json_format_datetime(reminder.next_fire))
+            item = QueueItem(
+                reminder._id, json_format_datetime(reminder.next_fire), reminder
+            )
+            self.enqueue(item)
         except:
             # If anything goes wrong here, no problem, the handle() thread will
             # pick it up later and enqueue.

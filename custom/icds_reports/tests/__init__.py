@@ -18,6 +18,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
     'awc_mgmt': 'config_report_icds-cas_static-awc_mgt_forms_ad1b11f0',
@@ -37,6 +38,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'child_tasks': 'config_report_icds-cas_static-child_tasks_cases_3548e54b',
     'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
+    'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
 }
 
 

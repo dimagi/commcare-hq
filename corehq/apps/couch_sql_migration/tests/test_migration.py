@@ -12,6 +12,7 @@ from django.test import TestCase
 from django.test import override_settings
 
 from casexml.apps.case.mock import CaseBlock
+from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
 from corehq.apps.commtrack.helpers import make_product
 from corehq.apps.couch_sql_migration.couchsqlmigration import get_diff_db
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_type
@@ -21,7 +22,6 @@ from corehq.apps.domain_migration_flags.models import DomainMigrationProgress
 from corehq.apps.hqcase.utils import submit_case_blocks
 from corehq.apps.receiverwrapper.exceptions import LocalSubmissionError
 from corehq.apps.receiverwrapper.util import submit_form_locally
-from corehq.apps.tzmigration.timezonemigration import FormJsonDiff
 from corehq.blobs import get_blob_db
 from corehq.blobs.tests.util import TemporaryS3BlobDB
 from corehq.form_processor.backends.sql.dbaccessors import FormAccessorSQL, CaseAccessorSQL, LedgerAccessorSQL
@@ -34,6 +34,9 @@ from corehq.util.test_utils import (
     trap_extra_setup, TestFileMixin
 )
 from couchforms.models import XFormInstance
+from corehq.util.test_utils import patch_datadog
+from mock import patch, MagicMock
+from io import open
 
 
 class BaseMigrationTestCase(TestCase, TestFileMixin):
@@ -58,9 +61,12 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
         FormProcessorTestUtils.delete_all_cases_forms_ledgers()
         self.domain.delete()
 
-    def _do_migration_and_assert_flags(self, domain):
+    def _do_migration(self, domain):
         self.assertFalse(should_use_sql_backend(domain))
         call_command('migrate_domain_from_couch_to_sql', domain, MIGRATE=True, no_input=True)
+
+    def _do_migration_and_assert_flags(self, domain):
+        self._do_migration(domain)
         self.assertTrue(should_use_sql_backend(domain))
 
     def _compare_diffs(self, expected):
@@ -76,6 +82,21 @@ class BaseMigrationTestCase(TestCase, TestFileMixin):
 
 
 class MigrationTestCase(BaseMigrationTestCase):
+    def test_migration_blacklist(self):
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, True, NAMESPACE_DOMAIN)
+        with self.assertRaises(AssertionError):
+            self._do_migration(self.domain_name)
+        COUCH_SQL_MIGRATION_BLACKLIST.set(self.domain_name, False, NAMESPACE_DOMAIN)
+
+    @patch("corehq.apps.couch_sql_migration.couchsqlmigration.stale_get_export_count", MagicMock(return_value=100))
+    def test_migration_old_exports(self):
+        with self.assertRaises(AssertionError):
+            self._do_migration(self.domain_name)
+
+    def test_migration_custom_report(self):
+        with self.assertRaises(AssertionError):
+            self._do_migration("up-nrhm")
+
     def test_basic_form_migration(self):
         create_and_save_a_form(self.domain_name)
         self.assertEqual(1, len(self._get_form_ids()))
@@ -536,6 +557,18 @@ class MigrationTestCase(BaseMigrationTestCase):
         self.assertEqual(1, len(self._get_case_ids()))
         self._compare_diffs([])
 
+    def test_timings(self):
+        with patch_datadog() as received_stats:
+            self._do_migration_and_assert_flags(self.domain_name)
+        tracked_stats = [
+            'commcare.couch_sql_migration.unprocessed_cases.count.duration:',
+            'commcare.couch_sql_migration.main_forms.count.duration:',
+            'commcare.couch_sql_migration.unprocessed_forms.count.duration:',
+            'commcare.couch_sql_migration.case_diffs.count.duration:',
+            'commcare.couch_sql_migration.count.duration:',
+        ]
+        for t_stat in tracked_stats:
+            self.assertTrue(any(r_stat.startswith(t_stat) for r_stat in received_stats))
 
 class LedgerMigrationTests(BaseMigrationTestCase):
     def setUp(self):
