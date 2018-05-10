@@ -62,7 +62,7 @@ class TestFilterDsl(SimpleTestCase):
                         },
                         "query": {
                             "range": {
-                                "case_properties.value_date": {
+                                "case_properties.value.date": {
                                     "gte": "2017-02-12",
                                 }
                             }
@@ -87,7 +87,7 @@ class TestFilterDsl(SimpleTestCase):
                         },
                         "query": {
                             "range": {
-                                "case_properties.value_numeric": {
+                                "case_properties.value.numeric": {
                                     "lte": 100.32,
                                 }
                             }
@@ -172,7 +172,7 @@ class TestFilterDsl(SimpleTestCase):
                                 },
                                 "query": {
                                     "range": {
-                                        "case_properties.value_date": {
+                                        "case_properties.value.date": {
                                             "lte": "2017-02-11"
                                         }
                                     }
