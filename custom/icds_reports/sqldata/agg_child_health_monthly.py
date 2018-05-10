@@ -60,18 +60,17 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
     def order_by(self):
         return [OrderBy('month')]
 
-    @property
-    def columns(self):
+    def get_columns(self, filters):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
             AggregateColumn(
                 '% Weighing efficiency (Children <5 weighed)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                    SumColumn('nutrition_status_weighed', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('wer_eligible', alias='wer_eligible', filters=self.filters + [
+                    SumColumn('wer_eligible', alias='wer_eligible', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ])
                 ],
@@ -84,11 +83,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month_less_5',
-                        filters=self.filters + [
+                        filters=filters + [
                             NOT(EQ('age_tranche', 'age_72'))
                         ]
                     ),
-                    SumColumn('height_eligible', alias='height_eligible', filters=self.filters + [
+                    SumColumn('height_eligible', alias='height_eligible', filters=filters + [
                         AND([
                             NOT(EQ('age_tranche', 'age_0')),
                             NOT(EQ('age_tranche', 'age_6')),
@@ -100,7 +99,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
             ),
             DatabaseColumn(
                 'Total number Unweighed',
-                SumColumn('nutrition_status_unweighed', filters=self.filters + [
+                SumColumn('nutrition_status_unweighed', filters=filters + [
                     NOT(EQ('age_tranche', 'age_72'))
                 ])
             ),
@@ -108,10 +107,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent Children severely underweight (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_severely_underweight', filters=self.filters + [
+                    SumColumn('nutrition_status_severely_underweight', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                    SumColumn('nutrition_status_weighed', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
                 ],
@@ -121,10 +120,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent Children moderately underweight (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_moderately_underweight', filters=self.filters + [
+                    SumColumn('nutrition_status_moderately_underweight', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                    SumColumn('nutrition_status_weighed', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
                 ],
@@ -134,10 +133,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Percent Children normal (weight for age)',
                 percent_num,
                 [
-                    SumColumn('nutrition_status_normal', filters=self.filters + [
+                    SumColumn('nutrition_status_normal', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
-                    SumColumn('nutrition_status_weighed', filters=self.filters + [
+                    SumColumn('nutrition_status_weighed', filters=filters + [
                         NOT(EQ('age_tranche', 'age_72'))
                     ]),
                 ],
@@ -149,12 +148,12 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         wasting_severe_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     SumColumn(
                         'weighed_and_height_measured_in_month',
                         alias='weighed_and_height_measured_in_month',
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='wasting_severe'
@@ -165,7 +164,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         wasting_moderate_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
@@ -177,7 +176,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         wasting_normal_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
@@ -189,12 +188,12 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         stunting_severe_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='stunting_severe'
@@ -205,7 +204,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         stunting_moderate_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     AliasColumn('height_measured_in_month')
                 ],
@@ -217,7 +216,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 [
                     SumColumn(
                         stunting_normal_column(self.beta),
-                        filters=self.filters + get_age_filters(self.beta)
+                        filters=filters + get_age_filters(self.beta)
                     ),
                     AliasColumn('height_measured_in_month')
                 ],
@@ -300,7 +299,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Children (0 - 28 Days) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_0')],
+                    filters=filters + [EQ('age_tranche', 'age_0')],
                     alias='zero'
                 ),
                 slug='zero'
@@ -309,7 +308,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Children (28 Days - 6 mo) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_6')],
+                    filters=filters + [EQ('age_tranche', 'age_6')],
                     alias='one'
                 ),
                 slug='one'
@@ -318,7 +317,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Children (6 mo - 1 year) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [EQ('age_tranche', 'age_12')],
+                    filters=filters + [EQ('age_tranche', 'age_12')],
                     alias='two'
                 ),
                 slug='two'
@@ -327,7 +326,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Children (1 year - 3 years) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [OR([
+                    filters=filters + [OR([
                         EQ('age_tranche', 'age_24'),
                         EQ('age_tranche', 'age_36')
                     ])],
@@ -339,7 +338,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 'Children (3 years - 6 years) Seeking Services',
                 SumColumn(
                     'valid_in_month',
-                    filters=self.filters + [OR([
+                    filters=filters + [OR([
                         EQ('age_tranche', 'age_48'),
                         EQ('age_tranche', 'age_60'),
                         EQ('age_tranche', 'age_72')
@@ -358,3 +357,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                 slug='low_birth_weight'
             )
         ]
+
+    @property
+    def columns(self):
+        return self.get_columns(self.filters)

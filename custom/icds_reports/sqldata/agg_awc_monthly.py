@@ -57,8 +57,7 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, SqlData):
     def person_is_beneficiary_column(self):
         return person_is_beneficiary_column(self.beta)
 
-    @property
-    def columns(self):
+    def get_columns(self, filters):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
             # DatabaseColumn(
@@ -228,3 +227,7 @@ class AggAWCMonthlyDataSource(ProgressReportMixIn, SqlData):
                 slug='baby_weighing_scale'
             ),
         ]
+
+    @property
+    def columns(self):
+        return self.get_columns(self.filters)

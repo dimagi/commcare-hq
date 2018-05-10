@@ -47,8 +47,7 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, SqlData):
     def order_by(self):
         return [OrderBy('month')]
 
-    @property
-    def columns(self):
+    def get_columns(self, filters):
         return [
             DatabaseColumn('month', SimpleColumn('month')),
             AggregateColumn(
@@ -134,3 +133,7 @@ class AggCCSRecordMonthlyDataSource(ProgressReportMixIn, SqlData):
                 slug='trimester'
             )
         ]
+
+    @property
+    def columns(self):
+        return self.get_columns(self.filters)

@@ -4,12 +4,28 @@ from sqlagg.filters import EQ, IN, NOT
 
 from corehq.apps.reports.sqlreport import SqlData
 from corehq.apps.reports.util import get_INFilter_bindparams
+from custom.icds_reports.queries import get_test_state_locations_id
+from custom.utils.utils import clean_IN_filter_value
 
 
 class NationalAggregationDataSource(SqlData):
 
-    def __init__(self, config, excluded_states, data_source=None, show_test=False, beta=False):
+    def __init__(self, config, data_source=None, show_test=False, beta=False):
         super(NationalAggregationDataSource, self).__init__(config)
+        excluded_states = get_test_state_locations_id(self.config['domain'])
+        self.config.update({
+            'aggregation_level': 1,
+            'age_0': '0',
+            'age_6': '6',
+            'age_12': '12',
+            'age_24': '24',
+            'age_36': '36',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72',
+            'excluded_states': excluded_states
+        })
+        clean_IN_filter_value(self.config, 'excluded_states')
         self.data_source = data_source
         self.excluded_states = excluded_states
         self.beta = beta
@@ -35,9 +51,9 @@ class NationalAggregationDataSource(SqlData):
 
     @property
     def group_by(self):
-        return []
+        return ['month']
 
     @property
     def columns(self):
         # drop month column because we always fetch data here for previous month
-        return self.data_source.columns[1:]
+        return self.data_source.get_columns(self.filters)

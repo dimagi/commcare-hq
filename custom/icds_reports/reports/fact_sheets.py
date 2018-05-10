@@ -562,25 +562,12 @@ class FactSheetsReport(object):
 
     @memoized
     def get_data_for_national_aggregatation(self, data_source_name):
-        excluded_states = get_test_state_locations_id(self.config['domain'])
         national_config = {
             'domain': self.config['domain'],
             'previous_month': self.config['previous_month'],
-            'aggregation_level': 1,
-            'age_0': '0',
-            'age_6': '6',
-            'age_12': '12',
-            'age_24': '24',
-            'age_36': '36',
-            'age_48': '48',
-            'age_60': '60',
-            'age_72': '72',
-            'excluded_states': excluded_states
         }
-        clean_IN_filter_value(self.config, 'excluded_states')
         return NationalAggregationDataSource(
             national_config,
-            excluded_states,
             self.data_sources(config=national_config)[data_source_name],
             show_test=self.show_test,
             beta=self.beta
@@ -621,7 +608,10 @@ class FactSheetsReport(object):
 
     @property
     def config_list(self):
-        return [c for c in self.new_table_config if c['category'] == self.config['category'] or self.config['category'] == 'all']
+        return [
+            c for c in self.new_table_config if
+            c['category'] == self.config['category'] or self.config['category'] == 'all'
+        ]
 
     def get_data(self):
         config_list = self.config_list
