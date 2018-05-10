@@ -1754,7 +1754,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.recipients
+            return original_record.emailed_to_list
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1970,21 +1970,6 @@ class BillingRecordBase(models.Model):
         return ','.join(self.emailed_to_list)
 
     @property
-    def recipients(self):
-        return self.emailed_to_list
-
-    @recipients.setter
-    def recipients(self, emails):
-        self.emailed_to_list = emails
-
-    def add_recipients(self, emails):
-        if self.emailed_to_list and self.emailed_to_list != []:
-            for email in emails:
-                self.emailed_to_list.append(email)
-        else:
-            self.emailed_to_list = emails
-
-    @property
     def pdf(self):
         if self._pdf is None:
             return InvoicePdf.get(self.pdf_data_id)
@@ -2087,7 +2072,7 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.add_recipients([contact_email])
+        self.emailed_to_list.extend([contact_email])
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
