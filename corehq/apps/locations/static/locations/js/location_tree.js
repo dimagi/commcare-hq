@@ -18,7 +18,7 @@ hqDefine('locations/js/location_tree', function() {
         //      "can_edit_root"
 
         var self = this;
-
+        self.show_inactive = options.show_inactive;
         self.root = ko.observable();
 
         // TODO this should reference location type settings for domain
@@ -56,7 +56,6 @@ hqDefine('locations/js/location_tree', function() {
                 children: locs,
                 can_edit: options.can_edit_root,
                 expanded: true,
-                show_inactive: options.show_inactive,
             }, self));
         };
     }
@@ -158,7 +157,6 @@ hqDefine('locations/js/location_tree', function() {
         self.depth = depth || 0;
         self.children_status = ko.observable('not_loaded');
         self.expanded = ko.observable(false);
-        self.show_inactive = ko.observable();
 
         self.reloadLocationSearchSelect = locationUtils.reloadLocationSearchSelect;
         self.clearLocationSelection = locationUtils.clearLocationSelection.bind(self, root);
@@ -184,7 +182,6 @@ hqDefine('locations/js/location_tree', function() {
             self.is_archived(data.is_archived);
             self.can_edit(data.can_edit);
             self.expanded(data.expanded);
-            self.show_inactive(data.show_inactive);
 
             if (data.children_status !== null && data.children_status !== undefined) {
                 self.children_status(data.children_status);
@@ -230,7 +227,7 @@ hqDefine('locations/js/location_tree', function() {
 
         self.load_children_async = function(callback) {
             self.children_status('loading');
-            api_get_children(self.uuid(), self.show_inactive(), function(resp) {
+            api_get_children(self.uuid(), root.show_inactive, function(resp) {
                 self.set_children(resp);
                 if (callback) {
                     callback(self);
@@ -274,7 +271,7 @@ hqDefine('locations/js/location_tree', function() {
         }, self);
 
         self.show_archive_action_button = ko.computed(function() {
-            return !data.show_inactive || self.is_archived();
+            return !root.show_inactive || self.is_archived();
         }, self);
 
         self.load(data);
