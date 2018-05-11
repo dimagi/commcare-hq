@@ -236,7 +236,6 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_from_root = True
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
-        import ipdb; ipdb.set_trace()
         self._assert_fixture_matches_file(
             'expand_from_root_to_county',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
