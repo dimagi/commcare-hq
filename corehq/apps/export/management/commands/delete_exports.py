@@ -64,5 +64,5 @@ class Command(BaseCommand):
             else:
                 print("Not deleting anything, exiting!")
                 return
-            total_count = iter_bulk_delete(db, [doc['id'] for doc in exports])
+            total_count = iter_bulk_delete(db, [doc['id'] for doc in to_delete])
             print("Deleted total of {} exports succesfully!".format(total_count))
