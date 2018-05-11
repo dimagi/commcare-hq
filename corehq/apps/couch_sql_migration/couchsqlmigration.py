@@ -129,10 +129,11 @@ class CouchSqlDomainMigrator(object):
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
 
             # regularly check if we can empty the queues
-            wrapped_form = self.queues.get_next()
-            while wrapped_form:
+            while True:
+                new_wrapped_form = self.queues.get_next()
+                if not new_wrapped_form:
+                    break
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-                wrapped_form = self.queues.get_next()
 
         # finish up the queues once all changes have been iterated through
         while self.queues.has_next():
