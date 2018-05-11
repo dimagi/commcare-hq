@@ -1228,7 +1228,8 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None,
+                    auto_generate_credits=False, is_trial=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1257,6 +1258,8 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            auto_generate_credits=auto_generate_credits,
+            is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
