@@ -170,6 +170,12 @@ class TestExportInstanceDBAccessors(TestCase):
         instances = get_case_export_instances(self.domain)
         self.assertEqual(len(instances), 2)
 
+    def test_get_count_export_instances(self):
+        self.assertEqual(
+            get_export_count_by_domain(self.domain),
+            4
+        )
+
     def test_get_case_export_instances_wrong_domain(self):
         instances = get_case_export_instances('wrong')
         self.assertEqual(len(instances), 0)
