@@ -99,12 +99,18 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
 def _create_aggregate_functions(cursor):
     try:
-        path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', 'create_functions.sql')
-        celery_task_logger.info("Starting icds reports create_functions")
-        with open(path, "r") as sql_file:
-            sql_to_execute = sql_file.read()
-            cursor.execute(sql_to_execute)
-        celery_task_logger.info("Ended icds reports create_functions")
+        sql_file_names = (
+            'create_functions.sql',
+            'insert_into_child_health_monthly.sql',
+            'aggregate_child_health.sql',
+        )
+        for sql_file_name in sql_file_names:
+            path = os.path.join(os.path.dirname(__file__), 'migrations', 'sql_templates', sql_file_name)
+            celery_task_logger.info("Starting icds reports %s", sql_file_name)
+            with open(path, "r") as sql_file:
+                sql_to_execute = sql_file.read()
+                cursor.execute(sql_to_execute)
+            celery_task_logger.info("Ended icds reports %s", sql_file_name)
     except Exception:
         # This is likely due to a change in the UCR models or aggregation script which should be rare
         # First step would be to look through this error to find what function is causing the error
