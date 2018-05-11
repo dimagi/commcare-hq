@@ -147,6 +147,7 @@ class CouchSqlDomainMigrator(object):
             self.log_info('Waiting on {} docs'.format(len(pool)))
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
+        set_local_domain_sql_backend_override(self.domain)
         try:
             self._migrate_form_and_associated_models(wrapped_form)
         except Exception:
