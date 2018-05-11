@@ -302,11 +302,11 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
             self.upload_headers_bad_column,
             self.upload_data,
             expected_messages=[
-                'Sheet {} has fewer columns than expected. Sheet '
+                'Sheet "{}" has fewer columns than expected. Sheet '
                 'will be processed but the following translations will be '
                 'unchanged: default_fra'.format(MODULES_AND_FORMS_SHEET_NAME),
 
-                'Sheet {} has unrecognized columns. Sheet will '
+                'Sheet "{}" has unrecognized columns. Sheet will '
                 'be processed but ignoring the following columns: default-fra'.format(
                     MODULES_AND_FORMS_SHEET_NAME),
 
