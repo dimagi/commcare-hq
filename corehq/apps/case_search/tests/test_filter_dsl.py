@@ -99,34 +99,39 @@ class TestFilterDsl(SimpleTestCase):
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
 
     def test_case_property_existence(self):
-        self.maxDiff = None
         parsed = parse_xpath("property != ''")
         expected_filter = {
-            "and": (
-                {
-                    "nested": {
-                        "path": "case_properties",
-                        "query": {
-                            "filtered": {
-                                "filter": {
-                                    "term": {
-                                        "case_properties.key.exact": "property"
-                                    }
-                                },
+            "not": {
+                "or": (
+                    {
+                        "not": {
+                            "nested": {
+                                "path": "case_properties",
                                 "query": {
-                                    "match_all": {
+                                    "filtered": {
+                                        "query": {
+                                            "match_all": {
+                                            }
+                                        },
+                                        "filter": {
+                                            "term": {
+                                                "case_properties.key.exact": "property"
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
-                },
-                {
-                    "not": {
+                    },
+                    {
                         "nested": {
                             "path": "case_properties",
                             "query": {
                                 "filtered": {
+                                    "query": {
+                                        "match_all": {
+                                        }
+                                    },
                                     "filter": {
                                         "and": (
                                             {
@@ -140,18 +145,15 @@ class TestFilterDsl(SimpleTestCase):
                                                 }
                                             }
                                         )
-                                    },
-                                    "query": {
-                                        "match_all": {
-                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-            )
+                )
+            }
         }
+
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
 
 

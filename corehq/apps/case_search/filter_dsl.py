@@ -7,7 +7,7 @@ from six import integer_types, string_types
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
-    case_property_exists,
+    case_property_missing,
     case_property_range_query,
     exact_case_property_text_query,
     reverse_index_case_query,
@@ -137,18 +137,14 @@ def build_filter_from_ast(domain, node):
             case_property_name = serialize(node.left)
             value = node.right
 
-            q = exact_case_property_text_query(case_property_name, value)
+            if value == '':
+                q = case_property_missing(case_property_name)
+            else:
+                q = exact_case_property_text_query(case_property_name, value)
 
-            if value == '' and node.op == '!=':
-                # e.g. `foo != ''`
-                # The user is asking for all cases where a property is set, and isn't the empty string ('')
-                return filters.AND(case_property_exists(case_property_name), filters.NOT(q))
-            if value == '' and node.op == '=':
-                # e.g. `foo = ''`
-                # The user is asking for all cases where the case is either the empty string ('') or not set
-                return filters.OR(filters.NOT(case_property_exists(case_property_name)), q)
             if node.op == '!=':
                 return filters.NOT(q)
+
             return q
 
         if isinstance(node.right, Step):
