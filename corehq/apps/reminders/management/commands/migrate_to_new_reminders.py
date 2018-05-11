@@ -8,6 +8,7 @@ from corehq.apps.data_interfaces.models import (
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import (
+    CaseReminder,
     CaseReminderHandler,
     REMINDER_TYPE_DEFAULT,
     REMINDER_TYPE_ONE_TIME,
@@ -43,6 +44,7 @@ from corehq.messaging.scheduling.models import (
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
+    CaseAlertScheduleInstance,
 )
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time
@@ -73,7 +75,40 @@ class CaseReminderHandlerMigrator(BaseMigrator):
             self.rule = self.rule_migration_function(self.handler, self.schedule)
 
     def migrate_schedule_instances(self):
-        pass
+        if not isinstance(self.schedule, AlertSchedule):
+            raise TypeError("Expected AlertSchedule")
+
+        seen_case_ids = set()
+        recipient = self.rule.memoized_actions[0].definition.recipients[0]
+
+        for reminder in CaseReminder.view(
+            'reminders/by_domain_handler_case',
+            startkey=[self.handler.domain, self.handler._id],
+            endkey=[self.handler.domain, self.handler._id, {}],
+            include_docs=True
+        ).all():
+            if reminder.case_id in seen_case_ids:
+                continue
+
+            seen_case_ids.add(reminder.case_id)
+
+            instance = CaseAlertScheduleInstance(
+                domain=self.rule.domain,
+                recipient_type=recipient[0],
+                recipient_id=recipient[1],
+                current_event_num=reminder.current_event_sequence_num,
+                schedule_iteration_num=reminder.schedule_iteration_num,
+                next_event_due=reminder.next_fire,
+                active=reminder.active,
+                alert_schedule_id=self.schedule.schedule_id,
+                case_id=reminder.case_id,
+                rule_id=self.rule.pk,
+            )
+
+            if reminder.active and reminder.error:
+                self.schedule.move_to_next_event_not_in_the_past(instance)
+
+            instance.save(force_insert=True)
 
 
 class BroadcastMigrator(BaseMigrator):
