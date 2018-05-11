@@ -6,6 +6,7 @@ import os
 
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from memoized import memoized
 
 from collections import namedtuple, OrderedDict
 from corehq.apps.app_manager import id_strings
@@ -35,11 +36,15 @@ class Transifex():
         self.source_lang = source_lang
         self.project_slug = project_slug
         self.lang_prefix = lang_prefix
-        self.app_id_to_build = None
         self.translations = OrderedDict()
         self.headers = dict()  # headers for each sheet name
         self.sheet_name_to_module_or_form_type_and_id = dict()
         self.generated_files = list()
+
+    @memoized
+    @property
+    def app_id_to_build(self):
+        return self._find_build_id()
 
     def _find_build_id(self):
         # find build id if version specified
@@ -48,12 +53,10 @@ class Transifex():
             built_app_ids = get_all_built_app_ids_and_versions(self.domain, self.app_id)
             for app_built_version in built_app_ids:
                 if app_built_version.version == self.version:
-                    self.app_id_to_build = app_built_version.build_id
-                    break
-            if not self.app_id_to_build:
-                raise Exception("Build for version requested not found")
+                    return app_built_version.build_id
+            raise Exception("Build for version requested not found")
         else:
-            self.app_id_to_build = self.app_id
+            return self.app_id
 
     def _translation_data(self, app):
         # get the translations data
@@ -120,8 +123,6 @@ class Transifex():
             }
         }
         """
-        # get app or the app for the build
-        self._find_build_id()
         from corehq.apps.app_manager.dbaccessors import get_app
         app = get_app(self.domain, self.app_id_to_build)
         if self.version is None:
