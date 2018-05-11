@@ -33,7 +33,8 @@ def log_request(func):
             # args will be Requests method, url, and optionally params, data or json.
             # kwargs may include Requests method kwargs and raise_for_status.
             kwargs.pop('raise_for_status', None)
-            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body, *args, **kwargs)
+            RequestLog.log(log_level, self.domain_name, request_error, response_status, response_body,
+                           *args, **kwargs)
 
     return request_wrapper
 
