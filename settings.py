@@ -377,7 +377,6 @@ HQ_APPS = (
     'custom.hki',
     'corehq.motech.openmrs',
     'custom.champ',
-    'custom.yeksi_naa_reports',
 )
 
 ENIKSHAY_APPS = (
@@ -2037,6 +2036,8 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'child_tasks.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'thr_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'birth_preparedness_forms.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'daily_feeding_forms.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'adherence.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'data_sources', 'episode_for_cc_outbound.json'),
@@ -2072,10 +2073,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'yeksi_naa_reports', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [
@@ -2266,7 +2267,7 @@ DOMAIN_MODULE_MAP = {
     'mvp-mayange': 'mvp',
     # Used in tests.  TODO - use override_settings instead
     'ewsghana-test-input-stock': 'custom.ewsghana',
-    'test-pna': 'custom.yeksi_naa_reports',
+    'test-pna': 'custom.intrahealth',
 }
 
 THROTTLE_SCHED_REPORTS_PATTERNS = (
