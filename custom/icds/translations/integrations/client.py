@@ -7,10 +7,10 @@ from custom.icds.translations.integrations.const import API_USER
 
 
 class TransifexApiClient():
-    def __init__(self, token, orgranization, project):
+    def __init__(self, token, organization, project):
         self.username = API_USER
         self.token = token
-        self.organization = orgranization
+        self.organization = organization
         self.project = project
 
     @property
@@ -24,9 +24,9 @@ class TransifexApiClient():
         )
         return requests.get(url, auth=self._auth)
 
-    def delete_resource(self, resource):
+    def delete_resource(self, resource_slug):
         url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
-            self.project, resource)
+            self.project, resource_slug)
         return requests.delete(url, auth=self._auth)
 
     def upload_resource(self, path_to_pofile, resource_slug, resource_name):

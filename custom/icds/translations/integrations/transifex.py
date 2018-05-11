@@ -41,7 +41,7 @@ class Transifex():
         self.sheet_name_to_module_or_form_type_and_id = dict()
         self.generated_files = list()
 
-    def find_build_id(self):
+    def _find_build_id(self):
         # find build id if version specified
         if self.version:
             from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions
@@ -55,7 +55,7 @@ class Transifex():
         else:
             self.app_id_to_build = self.app_id
 
-    def translation_data(self, app):
+    def _translation_data(self, app):
         # get the translations data
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_rows
         # simply the rows of data per sheet name
@@ -65,33 +65,33 @@ class Transifex():
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_headers
         for header_row in expected_bulk_app_sheet_headers(app):
             self.headers[header_row[0]] = header_row[1]
-        self.set_sheet_name_to_module_or_form_mapping(rows[u'Modules_and_forms'])
+        self._set_sheet_name_to_module_or_form_mapping(rows[u'Modules_and_forms'])
         return rows
 
-    def set_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
+    def _set_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
         # iterate the first sheet to get unique ids for forms/modules
-        sheet_name_column_index = self.get_header_index(u'Modules_and_forms', 'sheet_name')
-        unique_id_column_index = self.get_header_index(u'Modules_and_forms', 'unique_id')
-        type_column_index = self.get_header_index(u'Modules_and_forms', 'Type')
+        sheet_name_column_index = self._get_header_index(u'Modules_and_forms', 'sheet_name')
+        unique_id_column_index = self._get_header_index(u'Modules_and_forms', 'unique_id')
+        type_column_index = self._get_header_index(u'Modules_and_forms', 'Type')
         for row in all_module_and_form_details:
             self.sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
                 row[type_column_index],
                 row[unique_id_column_index]
             )
 
-    def get_filename(self, sheet_name):
+    def _get_filename(self, sheet_name):
         return sheet_name + '_v' + str(self.version)
 
-    def get_header_index(self, sheet_name, column_name):
+    def _get_header_index(self, sheet_name, column_name):
         for index, _column_name in enumerate(self.headers[sheet_name]):
             if _column_name == column_name:
                 return index
         raise Exception("Column not found with name {}".format(column_name))
 
-    def get_translation_for_sheet(self, app, sheet_name, rows):
+    def _get_translation_for_sheet(self, app, sheet_name, rows):
         translations_for_sheet = OrderedDict()
-        key_lang_index = self.get_header_index(sheet_name, self.lang_prefix + self.key_lang)
-        source_lang_index = self.get_header_index(sheet_name, self.lang_prefix + self.source_lang)
+        key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
+        source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         occurrences = []
         if sheet_name != u'Modules_and_forms':
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
@@ -111,7 +111,7 @@ class Transifex():
                     [].extend(occurrences))
         return translations_for_sheet
 
-    def build_translations(self):
+    def _build_translations(self):
         """
         :return:
         {
@@ -121,21 +121,21 @@ class Transifex():
         }
         """
         # get app or the app for the build
-        self.find_build_id()
+        self._find_build_id()
         from corehq.apps.app_manager.dbaccessors import get_app
         app = get_app(self.domain, self.app_id_to_build)
         if self.version is None:
             self.version = app.version
 
-        rows = self.translation_data(app)
+        rows = self._translation_data(app)
 
         for sheet_name in rows:
-            file_name = self.get_filename(sheet_name)
-            self.translations[file_name] = self.get_translation_for_sheet(
+            file_name = self._get_filename(sheet_name)
+            self.translations[file_name] = self._get_translation_for_sheet(
                 app, sheet_name, rows[sheet_name]
             )
 
-    def store_translations_to_po_files(self):
+    def _store_translations_to_po_files(self):
         if settings.TRANSIFEX_DETAILS:
             team = settings.TRANSIFEX_DETAILS['teams'].get(self.key_lang)
         else:
@@ -171,12 +171,12 @@ class Transifex():
             self.generated_files.append(file_name)
 
     def send_translation_files(self):
-        self.build_translations()
-        self.store_translations_to_po_files()
-        self.send_files_to_transifex()
-        self.cleanup()
+        self._build_translations()
+        self._store_translations_to_po_files()
+        self._send_files_to_transifex()
+        self._cleanup()
 
-    def send_files_to_transifex(self):
+    def _send_files_to_transifex(self):
         transifex_account_details = settings.TRANSIFEX_DETAILS
         if transifex_account_details:
             file_uploads = {}
@@ -199,6 +199,6 @@ class Transifex():
         else:
             raise Exception(_("Transifex account details not available on this environment."))
 
-    def cleanup(self):
+    def _cleanup(self):
         for filename in self.generated_files:
             os.remove(filename)
