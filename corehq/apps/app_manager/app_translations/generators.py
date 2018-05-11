@@ -8,6 +8,7 @@ from memoized import memoized
 
 from collections import namedtuple, OrderedDict
 from corehq.apps.app_manager import id_strings
+from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences')
 Unique_ID = namedtuple('UniqueID', 'type id')
@@ -53,14 +54,14 @@ class POFileGenerator:
         from corehq.apps.app_manager.app_translations.app_translations import expected_bulk_app_sheet_headers
         for header_row in expected_bulk_app_sheet_headers(app):
             self.headers[header_row[0]] = header_row[1]
-        self._set_sheet_name_to_module_or_form_mapping(rows[u'Modules_and_forms'])
+        self._set_sheet_name_to_module_or_form_mapping(rows[MODULES_AND_FORMS_SHEET_NAME])
         return rows
 
     def _set_sheet_name_to_module_or_form_mapping(self, all_module_and_form_details):
         # iterate the first sheet to get unique ids for forms/modules
-        sheet_name_column_index = self._get_header_index(u'Modules_and_forms', 'sheet_name')
-        unique_id_column_index = self._get_header_index(u'Modules_and_forms', 'unique_id')
-        type_column_index = self._get_header_index(u'Modules_and_forms', 'Type')
+        sheet_name_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+        unique_id_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
+        type_column_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
         for row in all_module_and_form_details:
             self.sheet_name_to_module_or_form_type_and_id[row[sheet_name_column_index]] = Unique_ID(
                 row[type_column_index],
@@ -81,7 +82,7 @@ class POFileGenerator:
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
         occurrences = []
-        if sheet_name != u'Modules_and_forms':
+        if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
             if type_and_id.type == "Module":
                 ref_module = app.get_module_by_unique_id(type_and_id.id)
