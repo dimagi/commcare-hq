@@ -10,6 +10,7 @@ from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 
 
 class AppTranslationsForm(forms.Form):
@@ -27,6 +28,7 @@ class AppTranslationsForm(forms.Form):
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
+        self.domain = domain
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.label_class = 'col-sm-3 col-md-4 col-lg-2'
@@ -51,3 +53,12 @@ class AppTranslationsForm(forms.Form):
                 )
             )
         )
+
+    def clean_version(self):
+        version = self.cleaned_data['version']
+        if version:
+            app_id = self.cleaned_data['app_id']
+            available_versions = get_available_versions_for_app(self.domain, app_id)
+            if version not in available_versions:
+                raise forms.ValidationError(ugettext_lazy('Version not available for app'))
+        return version

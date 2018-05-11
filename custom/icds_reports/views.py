@@ -1600,10 +1600,6 @@ class ICDSAppTranslations(BaseDomainView):
     def section_url(self):
         return
 
-    def ensure_version_available(self, version, app_id):
-        available_versions = get_available_versions_for_app(self.domain, app_id)
-        return version in available_versions
-
     @staticmethod
     def ensure_source_language(form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
@@ -1623,12 +1619,10 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                version = form.cleaned_data['version']
-                if version and not self.ensure_version_available(version, form_data.get('app_id')):
-                    messages.error(request, _('Version not available for app'))
-                elif not self.ensure_source_language(form_data):
+                if not self.ensure_source_language(form_data):
                     messages.error(request, _('Source lang selected not available for the project'))
                 else:
                     send_translation_files_to_transifex.delay(request.domain, form_data)
                     messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                    return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)

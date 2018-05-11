@@ -41,8 +41,8 @@ class Transifex():
         self.sheet_name_to_module_or_form_type_and_id = dict()
         self.generated_files = list()
 
-    @memoized
     @property
+    @memoized
     def app_id_to_build(self):
         return self._find_build_id()
 
@@ -123,8 +123,8 @@ class Transifex():
             }
         }
         """
-        from corehq.apps.app_manager.dbaccessors import get_app
-        app = get_app(self.domain, self.app_id_to_build)
+        from corehq.apps.app_manager.dbaccessors import get_current_app
+        app = get_current_app(self.domain, self.app_id_to_build)
         if self.version is None:
             self.version = app.version
 
