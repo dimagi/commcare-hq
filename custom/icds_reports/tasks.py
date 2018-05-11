@@ -54,19 +54,19 @@ _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'ccs_record_monthly', 'name': 'extended_ccs_record_monthly_tableau'},
-    {'type': 'child_health_monthly', 'name': 'extended_child_health_monthly_tableau'},
+    {'type': 'ccs_record_monthly', 'name': 'static-ccs_record_cases_monthly_tableau_v2'},
+    {'type': 'child_health_monthly', 'name': 'static-child_cases_monthly_tableau_v2'},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
     {'type': 'person', 'name': 'static-person_cases_v2'},
     {'type': 'usage', 'name': 'static-usage_forms'},
     {'type': 'vhnd', 'name': 'static-vhnd_form'},
-    {'type': 'complementary_feeding', 'name': 'static-complementary_feeding_forms'},
+    {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
     {'type': 'aww_user', 'name': 'static-commcare_user_cases'},
     {'type': 'child_tasks', 'name': 'static-child_tasks_cases'},
     {'type': 'pregnant_tasks', 'name': 'static-pregnant-tasks_cases'},
-    {'type': 'thr_form', 'name': 'static-dashboard_thr_forms'},
+    {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
 ]
 
@@ -495,8 +495,9 @@ def _icds_add_awcs_to_file(csv_writer, error_type, rows):
 def _update_ucr_table_mapping():
     celery_task_logger.info("Started updating ucr_table_name_mapping table")
     for table in UCR_TABLE_NAME_MAPPING:
+        table_name = get_table_name(DASHBOARD_DOMAIN, table['name']) if table.get('is_ucr', True) else table['name']
         UcrTableNameMapping.objects.get_or_create(
             table_type=table['type'],
-            table_name=get_table_name(DASHBOARD_DOMAIN, table['name'])
+            table_name= table_name
         )
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
