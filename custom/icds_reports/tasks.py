@@ -495,9 +495,12 @@ def _icds_add_awcs_to_file(csv_writer, error_type, rows):
 def _update_ucr_table_mapping():
     celery_task_logger.info("Started updating ucr_table_name_mapping table")
     for table in UCR_TABLE_NAME_MAPPING:
-        table_name = get_table_name(DASHBOARD_DOMAIN, table['name']) if table.get('is_ucr', True) else table['name']
+        if table.get('is_ucr', True):
+            table_name = get_table_name(DASHBOARD_DOMAIN, table['name'])
+        else:
+            table_name = table['name']
         UcrTableNameMapping.objects.get_or_create(
             table_type=table['type'],
-            table_name= table_name
+            table_name=table_name
         )
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
