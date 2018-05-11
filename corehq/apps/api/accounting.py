@@ -133,7 +133,6 @@ class SubscriberResource(ModelResource):
 class BillingContactInfoResource(ModelResource):
     account = fields.IntegerField('account_id')
     emails = fields.CharField(readonly=True)
-    emailed_to = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingContactInfo.objects.all().order_by('pk')
@@ -143,9 +142,6 @@ class BillingContactInfoResource(ModelResource):
 
     def dehydrate_emails(self, bundle):
         return ','.join(bundle.obj.email_list)
-
-    def dehydrate_emailed_to(self, bundle):
-        return ','.join(bundle.obj.emailed_to)
 
 
 class BillingAccountResource(ModelResource):
@@ -265,8 +261,12 @@ class SubscriptionAndAdjustmentResource(ModelResource):
 
 class BillingRecordResource(ModelResource):
     invoice = fields.IntegerField('invoice_id', null=True)
+    emailed_to = fields.CharField(readonly=True)
 
     class Meta(AccountingResourceMeta):
         queryset = BillingRecord.objects.all().order_by('pk')
-        fields = ['id', 'date_created', 'emailed_to', 'pdf_data_id', 'skipped_email', 'last_modified']
+        fields = ['id', 'date_created', 'pdf_data_id', 'skipped_email', 'last_modified']
         resource_name = 'billing_record'
+
+    def dehydrate_emailed_to(self, bundle):
+        return ','.join(bundle.obj.emailed_to_list)
