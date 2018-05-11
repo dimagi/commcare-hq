@@ -1141,7 +1141,8 @@ REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
     'reminders_migration_in_progress',
     "Disables editing of reminders so that the migration to the new framework can happen.",
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
