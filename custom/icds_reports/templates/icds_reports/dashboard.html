@@ -46,9 +46,15 @@
 
         <script type="text/javascript" src="{% static 'topojson/topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'datamaps/dist/datamaps.ind.js' %}"></script>
+    {% if have_access_to_features %}
+        <script type="text/javascript" src="{% static 'js/topojsons/states_v2.topojson.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/topojsons/districts_v2.topojson.js' %}"></script>
+        <script type="text/javascript" src="{% static 'js/topojsons/blocks_v3.topojson.js' %}"></script>
+    {% else %}
         <script type="text/javascript" src="{% static 'js/topojsons/states.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/district.topojson.js' %}"></script>
         <script type="text/javascript" src="{% static 'js/topojsons/block_v2.topojson.js' %}"></script>
+    {% endif %}
         <script type="text/javascript" src="{% static 'angular-datamaps/dist/angular-datamaps.js' %}"></script>
         <script type="text/javascript" src="{% static 'angular-bootstrap/ui-bootstrap-tpls.min.js' %}"></script>
 
