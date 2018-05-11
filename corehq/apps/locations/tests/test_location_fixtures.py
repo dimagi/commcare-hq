@@ -12,6 +12,7 @@ from corehq.util.test_utils import flag_enabled
 
 from datetime import datetime, timedelta
 from django.test import TestCase
+from django.test.utils import override_settings
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq.apps.domain.shortcuts import create_domain
@@ -89,6 +90,12 @@ class FixtureHasLocationsMixin(TestXmlMixin):
         self.assertXmlEqual(desired_fixture, fixture)
 
     def assert_fixture_queryset_equals_locations(self, desired_locations):
+        actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
+        self.assertItemsEqual(actual, desired_locations)
+        self.assert_mptt_fixture_queryset_equals_locations(desired_locations)
+
+    @override_settings(IS_LOCATION_CTE_ONLY=False, IS_LOCATION_CTE_ENABLED=False)
+    def assert_mptt_fixture_queryset_equals_locations(self, desired_locations):
         actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
         self.assertItemsEqual(actual, desired_locations)
 
@@ -229,6 +236,7 @@ class LocationFixturesTest(LocationHierarchyTestCase, FixtureHasLocationsMixin):
         location_type.expand_from_root = True
         location_type.expand_to = self.locations['Suffolk'].location_type
         location_type.save()
+        import ipdb; ipdb.set_trace()
         self._assert_fixture_matches_file(
             'expand_from_root_to_county',
             ['Massachusetts', 'Suffolk', 'Middlesex', 'New York', 'New York City']
