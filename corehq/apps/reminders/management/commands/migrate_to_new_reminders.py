@@ -69,7 +69,7 @@ class CaseReminderHandlerMigrator(BaseMigrator):
 
     def migrate(self):
         with transaction.atomic():
-            self.schedule = self.schedule_migrations_function(self.handler)
+            self.schedule = self.schedule_migration_function(self.handler)
             self.rule = self.rule_migration_function(self.handler, self.schedule)
 
     def migrate_schedule_instances(self):
@@ -273,6 +273,10 @@ class Command(BaseCommand):
         if handler.use_today_if_start_date_is_blank and handler.active and handler.start_date:
             return None
 
+        for event in handler.events:
+            if event.fire_time and event.fire_time.second != 0:
+                return None
+
         if handler.reminder_type == REMINDER_TYPE_DEFAULT:
             rule_migration_function = self.get_rule_migration_function(handler)
             schedule_migration_function = self.get_rule_schedule_migration_function(handler)
@@ -331,6 +335,14 @@ class Command(BaseCommand):
             migrator.migrate()
             migrator.migrate_schedule_instances()
 
+    def confirm_migration_begin(self):
+        while True:
+            answer = moves.input("Are you sure you want to start the migration? y/n ").lower()
+            if answer == 'y':
+                return True
+            elif answer == 'n':
+                return False
+
     def handle(self, domain, **options):
         check_only = options['check']
         domain_obj = Domain.get_by_name(domain)
@@ -349,6 +361,10 @@ class Command(BaseCommand):
         print("Migration can proceed")
 
         if check_only:
+            return
+
+        if not self.confirm_migration_begin():
+            print("Migrated halted")
             return
 
         self.migrate_handlers(migrators)
