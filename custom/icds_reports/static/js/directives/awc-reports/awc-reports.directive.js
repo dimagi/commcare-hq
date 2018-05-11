@@ -1929,7 +1929,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                         return 'Total number of children between <strong>' + key.series[0].data[0] + ':</strong> ' + key.series[0].data[1];
                     },
                 },
-            }
+            },
         },
     };
 
