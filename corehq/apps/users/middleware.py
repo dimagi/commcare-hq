@@ -51,7 +51,8 @@ class UsersMiddleware(MiddlewareMixin):
         if request.user.is_anonymous and 'domain' in view_kwargs:
             if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
                 request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
-        if determine_authtype_from_header(request) in (BASIC, DIGEST, API_KEY) and 'domain' in view_kwargs:
+        auth_type = determine_authtype_from_header(request, default='NONE')
+        if auth_type in (BASIC, DIGEST, API_KEY) and 'domain' in view_kwargs:
             # User is not yet authenticated, but setting request.domain (above) and request.couch_user will allow
             # us to check location-based permissions before we can check authentication.
             # See LocationAccessMiddleware.process_view()
