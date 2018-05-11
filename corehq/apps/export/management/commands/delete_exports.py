@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import os
 
 from six.moves import input
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from corehq.apps.export.models import ExportInstance
 from dimagi.utils.couch.database import iter_bulk_delete

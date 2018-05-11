@@ -98,6 +98,8 @@ def get_form_exports_by_domain(domain, has_deid_permissions):
 
 
 def get_export_count_by_domain(domain):
+    from .models import ExportInstance
+
     return len(ExportInstance.get_db().view(
         'export_instances_by_domain/view',
         startkey=[domain],
