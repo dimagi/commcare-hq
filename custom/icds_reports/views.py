@@ -105,7 +105,6 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
-from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 
 
 @location_safe
