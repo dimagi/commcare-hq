@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -1753,7 +1754,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.recipients
+            return original_record.emailed_to_list
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1951,7 +1952,7 @@ class BillingRecordBase(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    emailed_to = models.CharField(max_length=254, db_index=True)
+    emailed_to_list = ArrayField(models.EmailField(), default=list)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
@@ -1963,14 +1964,6 @@ class BillingRecordBase(models.Model):
         abstract = True
 
     _pdf = None
-
-    @property
-    def recipients(self):
-        return self.emailed_to.split(',') if self.emailed_to else []
-
-    @recipients.setter
-    def recipients(self, emails):
-        self.emailed_to = ','.join(emails)
 
     @property
     def pdf(self):
@@ -2075,7 +2068,9 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.recipients = contact_email
+        self.emailed_to_list.extend([contact_email])
+        if cc_emails:
+            self.emailed_to_list.extend(cc_emails)
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {

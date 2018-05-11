@@ -746,7 +746,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'billing_records': [
                 {
                     'date_created': billing_record.date_created,
-                    'email_recipients': ', '.join(billing_record.recipients),
+                    'email_recipients': ', '.join(billing_record.emailed_to_list),
                     'invoice': billing_record.invoice,
                     'pdf_data_id': billing_record.pdf_data_id,
                 }
