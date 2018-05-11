@@ -44,7 +44,7 @@ class MALTTableGenerator(object):
             for monthspan in self.monthspan_list:
                 all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
                 for users in chunked(all_users, 1000):
-                    users_by_id = {user['id']: CouchUser.wrap(user['doc']) for user in users}
+                    users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
                     try:
                         malt_rows_to_save = self._get_malt_row_dicts(domain.name, monthspan, users_by_id)
                     except Exception as ex:
