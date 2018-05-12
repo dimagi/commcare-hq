@@ -131,11 +131,11 @@ BEGIN
     'thr_eligible, ' ||
     'pnc_eligible, ' ||
     'cf_initiation_eligible, ' ||
-    'height_measured_in_month, ' ||
-    'current_month_stunting, ' ||
-    'stunting_last_recorded, ' ||
-    'wasting_last_recorded, ' ||
-    'current_month_wasting, ' ||
+    '0, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
     'valid_in_month, ' ||
     'valid_all_registered_in_month, ' ||
     'ebf_no_info_recorded, ' ||
@@ -240,6 +240,7 @@ BEGIN
     'nutrition_status_weighed = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_wfa_last_recorded) = ' || quote_literal(_start_date) || ' THEN 1 ELSE 0 END, ' ||
     'recorded_weight = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.weight_child_last_recorded) = ' || quote_literal(_start_date) || ' THEN agg.weight_child ELSE NULL END, ' ||
     'recorded_height = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.height_child_last_recorded) = ' || quote_literal(_start_date) || ' THEN agg.height_child ELSE NULL END, ' ||
+    'height_measured_in_month = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.height_child_last_recorded) = ' || quote_literal(_start_date) || ' THEN 1 ELSE 0 END, ' ||
     'zscore_grading_hfa = agg.zscore_grading_hfa, ' ||
     'zscore_grading_hfa_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
     'zscore_grading_wfh = agg.zscore_grading_wfh, ' ||
