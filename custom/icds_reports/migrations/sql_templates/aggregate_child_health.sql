@@ -122,7 +122,7 @@ BEGIN
     '0, ' ||
     '0, ' ||
     'sum(pse_eligible), ' ||
-    'sum(pse_attended_16_days), ' ||
+    '0, ' ||
     'sum(born_in_month), ' ||
     'sum(low_birth_weight_born_in_month), ' ||
     'sum(bf_at_birth_born_in_month), ' ||
@@ -193,6 +193,7 @@ BEGIN
     'wasting_severe_v2 = temp.wasting_severe_v2, ' ||
     'thr_eligible = temp.thr_eligible, ' ||
     'rations_21_plus_distributed = temp.rations_21_plus_distributed, ' ||
+    'pse_attended_16_days = temp.pse_attended_16_days, ' ||
     'nutrition_status_weighed = temp.nutrition_status_weighed, ' ||
     'nutrition_status_unweighed = temp.nutrition_status_unweighed, ' ||
     'nutrition_status_normal = temp.nutrition_status_normal, ' ||
@@ -239,6 +240,7 @@ BEGIN
         'ELSE 0 END) as wasting_severe_v2, ' ||
       'sum(thr_eligible) as thr_eligible, '
       'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed, '
+      'COUNT(*) FILTER (WHERE pse_eligible = 1 AND pse_days_attended >= 16) as pse_attended_16_days, ' ||
       'sum(nutrition_status_weighed) as nutrition_status_weighed, ' ||
       'sum(CASE WHEN wer_eligible = 0 OR wer_eligible IS NULL  OR nutrition_status_weighed = 1 THEN 0 ELSE 1 END) as nutrition_status_unweighed, ' ||
       'COUNT(*) FILTER (WHERE current_month_nutrition_status = ' || quote_literal('normal') || ') as nutrition_status_normal, ' ||
