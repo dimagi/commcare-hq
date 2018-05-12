@@ -13,16 +13,19 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
     ChildHealthMonthlyAggregationHelper,
     ComplementaryFormsAggregationHelper,
+    DailyFeedingFormsChildHealthAggregationHelper,
     GrowthMonitoringFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
-    InactiveAwwsAggregationHelper)
+    InactiveAwwsAggregationHelper,
+)
 
 
 class CcsRecordMonthly(models.Model):
@@ -949,3 +952,43 @@ class AggregateInactiveAWW(models.Model):
 
     class Meta(object):
         app_label = 'icds_reports'
+
+
+class AggregateChildHealthDailyFeedingForms(models.Model):
+    """Aggregated data for child_health cases based on
+    Daily Feeding forms
+
+    A child table exists for each state_id and month.
+
+    A row exists for every child_health case that has had a daily feeding form
+    submitted against it this month.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    case_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+    sum_attended_child_ids = models.PositiveSmallIntegerField(
+        null=True,
+        help_text="Number of days the child has attended this month"
+    )
+
+    class Meta(object):
+        db_table = AGG_DAILY_FEEDING_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = DailyFeedingFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
