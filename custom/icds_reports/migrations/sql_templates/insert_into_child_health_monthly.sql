@@ -8,6 +8,7 @@ DECLARE
   _ucr_child_tasks_table text;
   _agg_thr_form_table text;
   _agg_gm_form_table text;
+  _agg_df_form_table text;
   _start_date date;
   _end_date date;
 BEGIN
@@ -15,6 +16,7 @@ BEGIN
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'child_health_monthly' || '_' || _start_date;
   _agg_gm_form_table := 'icds_dashboard_growth_monitoring_forms';
+  _agg_df_form_table := 'icds_dashboard_daily_feeding_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_health_monthly') INTO _ucr_child_monthly_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
@@ -102,7 +104,7 @@ BEGIN
     'nutrition_status_weighed, ' ||
     'num_rations_distributed, ' ||
     'pse_eligible, ' ||
-    'pse_days_attended, ' ||
+    'CASE WHEN pse_eligible = 1 THEN 0 ELSE NULL END, ' ||
     'born_in_month, ' ||
     'low_birth_weight_born_in_month, ' ||
     'bf_at_birth_born_in_month, ' ||
@@ -222,6 +224,12 @@ BEGIN
     'days_ration_given_child = agg.days_ration_given_child  ' ||
   'FROM ' || quote_ident(_agg_thr_form_table) || ' agg ' ||
   'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
+
+  -- daily feeding forms
+  EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+    'pse_days_attended = agg.sum_attended_child_ids  ' ||
+  'FROM ' || quote_ident(_agg_df_form_table) || ' agg ' ||
+  'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.pse_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
   -- growth monitoring forms
   EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
