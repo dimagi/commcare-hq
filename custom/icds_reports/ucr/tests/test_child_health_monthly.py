@@ -178,25 +178,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
 
         self._submit_form(form)
 
-    def _submit_dailyfeeding_form(
-            self, form_date, case_id):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMLNS_DAILYFEEDING_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        self._submit_form(form)
-
     def _submit_thr_rations_form(
             self, form_date, case_id, rations_distributed=0, case_id_2=None):
 
@@ -924,40 +905,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             (0, [('num_rations_distributed', 11), ('rations_21_plus_distributed', 0)]),
             (1, [('num_rations_distributed', 21), ('rations_21_plus_distributed', 1)]),
             (2, [('num_rations_distributed', 0), ('rations_21_plus_distributed', 0)]),
-        ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_pse(self):
-        case_id = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2012, 1, 12),
-            date_opened=datetime(2014, 2, 1),
-            date_modified=datetime(2016, 3, 12),
-        )
-
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 2), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 3), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 4), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 5), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 6), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 7), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 8), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 9), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 10), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 11), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 12), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 13), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 14), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 15), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 16), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 2, 17), case_id=case_id)
-        self._submit_dailyfeeding_form(form_date=datetime(2016, 3, 3), case_id=case_id)
-
-        cases = [
-            (0, [('pse_days_attended', 16), ('pse_attended_16_days', 1)]),
-            (1, [('pse_days_attended', 1), ('pse_attended_16_days', 0)]),
-            (2, [('pse_days_attended', 0), ('pse_attended_16_days', 0)]),
         ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)
 
