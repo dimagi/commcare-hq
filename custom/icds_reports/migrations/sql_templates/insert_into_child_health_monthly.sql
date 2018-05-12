@@ -97,8 +97,8 @@ BEGIN
     'open_in_month, ' ||
     'alive_in_month, ' ||
     'wer_eligible, ' ||
-    'nutrition_status_last_recorded, ' ||
-    'current_month_nutrition_status, ' ||
+    'CASE WHEN wer_eligible = 1 THEN ' || quote_literal('unknown') || ' ELSE NULL END, ' ||
+    'CASE WHEN wer_eligible = 1 THEN ' || quote_literal('unweighed') || ' ELSE NULL END, ' ||
     'nutrition_status_weighed, ' ||
     'num_rations_distributed, ' ||
     'pse_eligible, ' ||
@@ -225,6 +225,18 @@ BEGIN
 
   -- growth monitoring forms
   EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+    'nutrition_status_last_recorded = CASE ' ||
+      'WHEN chm_monthly.wer_eligible = 1 AND agg.zscore_grading_wfa = 1 THEN ' || quote_literal('severely_underweight') ||  ' '
+      'WHEN chm_monthly.wer_eligible = 1 AND agg.zscore_grading_wfa = 2 THEN ' || quote_literal('moderately_underweight') || ' '
+      'WHEN chm_monthly.wer_eligible = 1 AND agg.zscore_grading_wfa = 3 THEN ' || quote_literal('normal') || ' '
+      'WHEN chm_monthly.wer_eligible = 1 AND agg.zscore_grading_wfa = 4 THEN ' || quote_literal('normal') || ' '
+      'WHEN chm_monthly.wer_eligible = 1 THEN ' || quote_literal('unknown') || ' '
+      'ELSE NULL END, '
+    'current_month_nutrition_status = CASE ' ||
+      'WHEN (chm_monthly.wer_eligible = 1 AND date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_wfa_last_recorded) = ' || quote_literal(_start_date) || ') ' ||
+             'THEN nutrition_status_last_recorded ' ||
+      'WHEN (chm_monthly.wer_eligible = 1) THEN ' || quote_literal('unweighed') ||
+      ' ELSE NULL END, ' ||
     'zscore_grading_hfa = agg.zscore_grading_hfa, ' ||
     'zscore_grading_hfa_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
     'zscore_grading_wfh = agg.zscore_grading_wfh, ' ||
