@@ -99,7 +99,7 @@ BEGIN
     'wer_eligible, ' ||
     'CASE WHEN wer_eligible = 1 THEN ' || quote_literal('unknown') || ' ELSE NULL END, ' ||
     'CASE WHEN wer_eligible = 1 THEN ' || quote_literal('unweighed') || ' ELSE NULL END, ' ||
-    'nutrition_status_weighed, ' ||
+    '0, ' ||
     'num_rations_distributed, ' ||
     'pse_eligible, ' ||
     'pse_days_attended, ' ||
@@ -125,8 +125,8 @@ BEGIN
     'counsel_manage_breast_problems, ' ||
     'counsel_skin_to_skin, ' ||
     'counsel_immediate_breastfeeding, ' ||
-    'weight_recorded_in_month, ' ||
-    'height_recorded_in_month, ' ||
+    'NULL, ' ||
+    'NULL, ' ||
     'has_aadhar_id, ' ||
     'thr_eligible, ' ||
     'pnc_eligible, ' ||
@@ -237,6 +237,9 @@ BEGIN
              'THEN nutrition_status_last_recorded ' ||
       'WHEN (chm_monthly.wer_eligible = 1) THEN ' || quote_literal('unweighed') ||
       ' ELSE NULL END, ' ||
+    'nutrition_status_weighed = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_wfa_last_recorded) = ' || quote_literal(_start_date) || ' THEN 1 ELSE 0 END, ' ||
+    'recorded_weight = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.weight_child_last_recorded) = ' || quote_literal(_start_date) || ' THEN agg.weight_child ELSE NULL END, ' ||
+    'recorded_height = CASE WHEN date_trunc(' || quote_literal('MONTH') || ', agg.height_child_last_recorded) = ' || quote_literal(_start_date) || ' THEN agg.height_child ELSE NULL END, ' ||
     'zscore_grading_hfa = agg.zscore_grading_hfa, ' ||
     'zscore_grading_hfa_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
     'zscore_grading_wfh = agg.zscore_grading_wfh, ' ||
