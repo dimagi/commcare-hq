@@ -64,6 +64,7 @@ def process_bulk_app_translation_upload(app, f):
     msgs = []
 
     headers = expected_bulk_app_sheet_headers(app)
+    # sheets mapped to headers/columns
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
 
@@ -551,7 +552,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
         ))
         return msgs
 
-    if form.source:
+    if form.source:  # form source is the form xml stored as app attachment
         xform = form.wrapped_xform()
     else:
         # This Form doesn't have an xform yet. It is empty.
@@ -559,6 +560,14 @@ def update_form_translations(sheet, rows, missing_cols, app):
         return msgs
 
     try:
+        """
+        the form xml has an itext node, example
+        <itext>\n\t\t\t\t<translation lang="en" default="">\n\t\t\t\t\t
+        <text id="age-label">\n\t\t\t\t\t\t<value>Age</value></text>\n\t\t\t\t
+        </translation>\n\t\t\t\t<translation lang="hin">\n\t\t\t\t\t
+        <text id="age-label">\n\t\t\t\t\t\t<value>\u0906\u092f\u0941</value></text>
+        \n\t\t\t\t</translation>\n\t\t\t</itext>
+        """
         itext = xform.itext_node
     except XFormException:
         return msgs
@@ -882,11 +891,16 @@ def _update_case_list_translations(sheet, rows, app):
                 " of the case property '%s'" % row['case_property']
             ))
 
-    for row, detail in \
-            itertools.chain(zip(list_rows, short_details), zip(detail_rows, long_details)):
-
+    for index, (row, detail) in \
+            itertools.chain(
+                enumerate(zip(list_rows, short_details)),
+                enumerate(zip(detail_rows, long_details))):
         # Check that names match (user is not allowed to change property in the
         # upload). Mismatched names indicate the user probably botched the sheet.
+        if row['list_or_detail'] == 'list':
+            detail_type = 'short'
+        elif row['list_or_detail'] == 'detail':
+            detail_type = 'long'
         if row.get('id', None) != detail.field:
             msgs.append((
                 messages.error,
@@ -902,14 +916,29 @@ def _update_case_list_translations(sheet, rows, app):
 
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
+        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+            sql_translation = module.sql_translation
+            sql_translation.parser.update(app.langs, row, detail_type, index, "header")
+            sql_translation.save()
+            module.sql_translation_id = sql_translation.id
         for i, enum_value_row in enumerate(row.get('mappings', [])):
             _update_translation(enum_value_row, detail['enum'][i].value)
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                sql_translation = module.sql_translation
+                sql_translation.parser.update(app.langs, enum_value_row, detail_type, index, "enum", i)
+                sql_translation.save()
+                module.sql_translation_id = sql_translation.id
         for i, graph_annotation_row in enumerate(row.get('annotations', [])):
             _update_translation(
                 graph_annotation_row,
                 detail['graph_configuration']['annotations'][i].display_text,
                 False
             )
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                sql_translation = module.sql_translation
+                sql_translation.parser.update(app.langs, graph_annotation_row, detail_type, index, "graph_annotations", i)
+                sql_translation.save()
+                module.sql_translation_id = sql_translation.id
         for graph_config_row in row.get('configs', []):
             config_key = graph_config_row['id']
             _update_translation(
@@ -917,6 +946,11 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['locale_specific_config'][config_key],
                 False
             )
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                sql_translation = module.sql_translation
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, "graph_configuration_config", column_attr_key=config_key)
+                sql_translation.save()
+                module.sql_translation_id = sql_translation.id
         for graph_config_row in row.get('series_configs', []):
             config_key = graph_config_row['id']
             series_index = int(graph_config_row['series_index'])
@@ -925,6 +959,11 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
+            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                sql_translation = module.sql_translation
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, "graph_configuration_series", series_index, config_key)
+                sql_translation.save()
+                module.sql_translation_id = sql_translation.id
     for index, tab in enumerate(detail_tab_headers):
         if tab:
             _update_translation(tab, module.case_details.long.tabs[index].header)

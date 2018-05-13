@@ -44,6 +44,7 @@ from copy import deepcopy
 from mimetypes import guess_type
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
+from jsonfield.fields import JSONField
 
 from couchdbkit import MultipleResultsFound
 import itertools
@@ -84,6 +85,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
+from django.db import models
+
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
@@ -958,7 +961,7 @@ class FormBase(DocumentSchema):
     def sql_translation(self):
         if not hasattr(self, '_sql_translation'):
             if self.sql_translation_id:
-                self._sql_translation = Translation.objects.get(self.sql_translation_id)
+                self._sql_translation = Translation.objects.get(id=self.sql_translation_id)
             else:
                 app = self.get_app()
                 self._sql_translation = Translation(
@@ -2433,7 +2436,7 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def sql_translation(self):
         if not hasattr(self, '_sql_translation'):
             if self.sql_translation_id:
-                self._sql_translation = Translation.objects.get(self.sql_translation_id)
+                self._sql_translation = Translation.objects.get(id=self.sql_translation_id)
             else:
                 app = self.get_app()
                 self._sql_translation = Translation(
@@ -6652,8 +6655,6 @@ class GlobalAppConfig(Document):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
 
-from django.db import models
-from jsonfield.fields import JSONField
 
 class Translation(models.Model):
     """
@@ -6663,16 +6664,45 @@ class Translation(models.Model):
     for module ->
     1. name
     2. details/DetailColumn
-     { 'long':
-        { 'columns': [
-            {"en": "Name", "hin": "\u0928\u093e\u092e" },
-            {"en": "Place", "hin": "\u0928\u093e\u092e" },
-        ]},
-       'short':
-        { 'columns': [
-            {"en": "Name", "hin": "\u0928\u093e\u092e" },
-            {"en": "Place", "hin": "\u0928\u093e\u092e" },
-        ]},
+     case_details: {
+        'short or long': {
+            'columns': [{
+                'header': {
+                    "en": "Name",
+                    "hin": "\u0928\u093e\u092e"
+                },
+                'enum': [{
+                    "value": {
+                        "en": "Man",
+                        "hin": "\u091a\u093e\u091a\u093e"
+                    }
+                }],
+                'graph_configuration': {
+                  "annotations": [{
+                    "display_text": {"en": "translation"},
+                    "values": {"en": "translation"} # are these two always the same?,
+                    "x": "x_display", # not supported in bulk translation
+                    "x": "x_display", # not supported in bulk translation
+                    "lang": "en" # which language is this one for
+                  }],
+                  "locale_specific_config": {
+                    "secondary-y-title": {"en": "translation"},
+                    "x-title": {"en": "translation"},
+                    "y-title": {"en": "translation"}
+                  },
+                  "series": [{
+                    "locale_specific_config": {
+                        "name": {"en": "translation"},
+                        "x-name": {"en": "translation"}
+                    },
+                    "x_function": "some string", # not supported in bulk translation
+                    "y_function": "some string", # not supported in bulk translation
+                  }]
+                }
+                ]
+            }
+        }
+    }
     3. others: enum, graph_annotations, graph configurations
     for form ->
     1. just map label but keep both markdown and default
@@ -6719,13 +6749,214 @@ class BaseTranslationParser:
         else:
             self.resource_translation.translation['name'].pop(lang, None)
 
+    def get_translations_for(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def update(self, *args, **kwargs):
+        raise NotImplementedError
+
 
 class ModuleTranslationParser(BaseTranslationParser):
-    def update_long_detail_column(self, lang, index, translated_detail):
-        self.resource_translation.translation['long']['columns'][index][lang] = translated_detail
+    def ensure_base_dict(self, detail_type, column_index):
+        """
+        ensure that a barebone dict is present for a particular column and append if not present
+        :param detail_type: short/long
+        :param column_index: index of column
+        """
+        if detail_type not in self.resource_translation.translation['case_details']:
+            self.resource_translation.translation['case_details'][detail_type] = {'columns': []}
+        if len(self.resource_translation.translation['case_details'][detail_type]['columns']) == column_index:
+            self.resource_translation.translation['case_details'][detail_type]['columns'].append(
+                {
+                    'header': {},  # simple translations dict
+                    'enum': [],  # 'value' key to contain translations dict
+                    'graph_configuration': {
+                        'annotations': [],  # 'display_text' key to contain translations dict
+                        'series': [],  # 'locale_specific_config' to contain translations dict
+                        'locale_specific_config': defaultdict(dict),  # each key maps to a set of translations dict
+                    }
+                }
+            )
+        elif len(self.resource_translation.translation['case_details'][detail_type]['columns']) < column_index:
+            # trying to add a column out of order
+            raise Exception("adding column out of order")
 
-    def update_short_detail_column(self, lang, index, translated_detail):
-        self.resource_translation.translation['short']['columns'][index][lang] = translated_detail
+    def update(self, langs, translations, detail_type, column_index, column_attr, column_attr_index=None,
+               column_attr_key=None, prefix='default_'):
+        """
+        update a attr for a long/short column detail
+        :param langs: langs to look for in the translations dict
+        :param translations: translations dict with translations for different langs
+        :param detail_type: long/short
+        :param column_index: index of column
+        :param column_attr: the column attr to update like header, enum, graph_annotations etc
+        :param column_attr_index: index of column attr in the list
+        :param column_attr_key: if translations need to be mapped to a key within column attr
+        :param prefix: prefix is required for mapping lang to translation in translation dict
+        """
+        for lang in langs:
+            key = '%s%s' % (prefix, lang)
+            if key not in translations:
+                continue
+            translation = translations[key]
+            getattr(self, "update_{}".format(column_attr))(
+                lang, translation, detail_type, column_index,
+                column_attr_index=column_attr_index,
+                column_attr_key=column_attr_key)
+
+        # delete anything that isn't in langs (anymore)
+        for lang in self.get_translations_for(
+                detail_type, column_index, column_attr, column_attr_index, column_attr_key).keys():
+            if lang not in langs:
+                getattr(self, "update_{}".format(column_attr))(
+                    lang, None, detail_type, column_index,
+                    column_attr_index=column_attr_index,
+                    column_attr_key=column_attr_key)
+
+    def get_translations_for(self, detail_type, column_index, column_attr, column_attr_index, column_attr_key):
+        # get translation for a column attr under a specific column mapped by index
+        if column_attr == 'header':
+            return self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'header']
+        elif column_attr == 'enum':
+            return self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'enum'][column_attr_index]['value']
+        elif column_attr == 'graph_annotations':
+            return self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'graph_configuration']["annotations"][column_attr_index]['display_text']
+        elif column_attr == 'graph_configuration_config':
+            return self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'graph_configuration']['locale_specific_config'][column_attr_key]
+        elif column_attr == 'graph_configuration_series':
+            return self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'graph_configuration']["series"][column_attr_index]['locale_specific_config'][column_attr_key]
+        else:
+            raise Exception("Unexpected column_attr {}".format(column_attr))
+
+    def update_header(self, lang, translated_header, detail_type, column_index, **kwargs):
+        """
+        :param lang: lang code like en, hin
+        :param detail_type: long or short
+        :param column_index: index of column
+        :param translated_header: translated string for lang
+        """
+        self.ensure_base_dict(detail_type, column_index)
+        if translated_header:
+            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'header'][lang] = translated_header
+        else:
+            try:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'header'].pop(lang, None)
+            except (KeyError, IndexError):
+                pass
+
+    def update_enum(self, lang, translated_enum, detail_type, column_index, **kwargs):
+        """
+        :param lang: lang code like en, hin
+        :param detail_type: long or short
+        :param column_index: index of column
+        :param enum_index: index of column attr list
+        :param translated_enum: translated string for lang
+        """
+        self.ensure_base_dict(detail_type, column_index)
+        enum_index = kwargs['column_attr_index']
+        if translated_enum:
+            if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                       'enum']) == enum_index:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'enum'].append({'value': {lang: translated_enum}}
+                )
+            else:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'enum'][enum_index]['value'][lang] = translated_enum
+        else:
+            try:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'enum'][enum_index]['value'].pop(lang, None)
+            except (KeyError, IndexError):
+                pass
+
+    def update_graph_annotations(self, lang, translated_annotation, detail_type, column_index, **kwargs):
+        """
+        :param lang: lang code like en, hin
+        :param detail_type: long or short
+        :param column_index: index of detail
+        :param graph_annotation_index: annotation index
+        :param translated_annotation: translated string for lang
+        """
+        self.ensure_base_dict(detail_type, column_index)
+        graph_annotation_index = kwargs['column_attr_index']
+        if translated_annotation:
+            if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                       'graph_configuration']['annotations']) == graph_annotation_index:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']['annotations'].append(
+                    {'display_text': {
+                        lang: translated_annotation
+                    }}
+                )
+            else:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']["annotations"][graph_annotation_index]['display_text'][
+                    lang] = translated_annotation
+        else:
+            try:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']["annotations"][graph_annotation_index]['display_text'].pop(lang, None)
+            except (KeyError, IndexError):
+                pass
+
+    def update_graph_configuration_config(self, lang, translated_config, detail_type, column_index, **kwargs):
+        self.ensure_base_dict(detail_type, column_index)
+        key = kwargs['column_attr_key']
+        if translated_config:
+            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                'graph_configuration']['locale_specific_config'][key][lang] = translated_config
+        else:
+            try:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']['locale_specific_config'][key].pop(lang, None)
+            except (KeyError, IndexError):
+                pass
+
+    def update_graph_configuration_series(self, lang, translated_series_config, detail_type, column_index, **kwargs):
+        """
+        :param lang: lang code like en, hin
+        :param detail_type: long or short
+        :param column_index: index of detail
+        :param graph_annotation_index: annotation index
+        :param translated_annotation: translated string for lang
+        """
+        self.ensure_base_dict(detail_type, column_index)
+        series_index = kwargs['column_attr_index']
+        key = kwargs['column_attr_key']
+        if translated_series_config:
+            if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                       'graph_configuration']['series']) == series_index:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']['series'].append(
+                    {'locale_specific_config': {
+                        key: {lang: translated_series_config}
+                    }}
+                )
+            else:
+                if key not in self.resource_translation.translation['case_details'][detail_type][
+                        'columns'][column_index][
+                        'graph_configuration']["series"][series_index]['locale_specific_config']:
+                    self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                        'graph_configuration']["series"][series_index]['locale_specific_config'][key] = {}
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']["series"][series_index][
+                    'locale_specific_config'][key][lang] = translated_series_config
+        else:
+            try:
+                self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
+                    'graph_configuration']["series"][series_index][
+                    'locale_specific_config'][key].pop(lang)
+            except (KeyError, IndexError):
+                pass
+
 
 class FormTranslationParser(BaseTranslationParser):
     def update_translation(self, label, translated_text, markdown=False):
