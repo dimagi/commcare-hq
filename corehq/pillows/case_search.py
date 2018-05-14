@@ -1,38 +1,54 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from collections import OrderedDict
 from datetime import datetime
 
-from django.db import ProgrammingError
+import six
 from django.core.mail import mail_admins
+from django.db import ProgrammingError
 from django.utils.dateparse import parse_date
 
 from casexml.apps.case.models import CommCareCase
+from corehq.apps.case_search.const import INDEXED_ON, SYSTEM_PROPERTIES, VALUE
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import case_search_enabled_domains, \
-    case_search_enabled_for_domain
+from corehq.apps.case_search.models import (
+    case_search_enabled_domains,
+    case_search_enabled_for_domain,
+)
 from corehq.apps.change_feed import topics
-from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.case_search.const import VALUE
+from corehq.apps.change_feed.consumer.feed import (
+    KafkaChangeFeed,
+    KafkaCheckpointEventHandler,
+)
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.pillows.mappings.case_mapping import CASE_ES_TYPE
-from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX, \
-    CASE_SEARCH_MAPPING, CASE_SEARCH_INDEX_INFO
+from corehq.pillows.mappings.case_search_mapping import (
+    CASE_SEARCH_INDEX,
+    CASE_SEARCH_INDEX_INFO,
+    CASE_SEARCH_MAPPING,
+)
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from dimagi.utils.parsing import json_format_datetime
-from pillowtop.checkpoints.manager import get_checkpoint_for_elasticsearch_pillow
+from pillowtop.checkpoints.manager import (
+    get_checkpoint_for_elasticsearch_pillow,
+)
 from pillowtop.es_utils import initialize_index_and_mapping
 from pillowtop.feed.interface import Change
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors.elastic import ElasticProcessor
-from pillowtop.reindexer.change_providers.case import get_domain_case_change_provider
-from pillowtop.reindexer.reindexer import PillowChangeProviderReindexer, ReindexerFactory, \
-    ResumableBulkElasticPillowReindexer
-import six
+from pillowtop.reindexer.change_providers.case import (
+    get_domain_case_change_provider,
+)
+from pillowtop.reindexer.reindexer import (
+    PillowChangeProviderReindexer,
+    ReindexerFactory,
+    ResumableBulkElasticPillowReindexer,
+)
 
 
 def transform_case_for_elasticsearch(doc_dict):
