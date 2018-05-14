@@ -203,7 +203,7 @@ def _aggregate_cf_forms(day):
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateComplementaryFeedingForms.aggregate(state_id, force_to_date(agg_date))
+        AggregateComplementaryFeedingForms.aggregate(state_id, agg_date)
 
 
 @track_time
@@ -214,7 +214,7 @@ def _aggregate_gm_forms(day):
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateGrowthMonitoringForms.aggregate(state_id, force_to_date(agg_date))
+        AggregateGrowthMonitoringForms.aggregate(state_id, agg_date)
 
 
 @track_time
@@ -225,9 +225,10 @@ def _aggregate_child_health_pnc_forms(day):
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateChildHealthPostnatalCareForms.aggregate(state_id, force_to_date(agg_date))
+        AggregateChildHealthPostnatalCareForms.aggregate(state_id, agg_date)
 
 
+@track_time
 def _aggregate_thr_forms(day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
@@ -235,7 +236,7 @@ def _aggregate_thr_forms(day):
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateChildHealthTHRForms.aggregate(state_id, force_to_date(agg_date))
+        AggregateChildHealthTHRForms.aggregate(state_id, agg_date)
 
 
 @transaction.atomic
