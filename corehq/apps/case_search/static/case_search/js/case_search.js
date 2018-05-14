@@ -10,14 +10,11 @@ hqDefine('case_search/js/case_search', function(){
         self.includeClosed = ko.observable(false);
         self.results = ko.observableArray();
         self.count = ko.observable();
+        self.took = ko.observable();
+        self.query = ko.observable();
         self.case_data_url = caseDataUrl;
-        self.parameters = ko.observableArray([{
-            key: "",
-            value: "",
-            clause: "must",
-            fuzzy: false,
-            regex: '',
-        }]);
+        self.xpath = ko.observable();
+        self.parameters = ko.observableArray();
 
         self.addParameter = function(){
             self.parameters.push({
@@ -35,6 +32,8 @@ hqDefine('case_search/js/case_search', function(){
         self.submit = function(){
             self.results([]);
             self.count("-");
+            self.took(null);
+            self.query(null);
             $.post({
                 url: window.location.href,
                 data: {q: JSON.stringify({
@@ -43,11 +42,18 @@ hqDefine('case_search/js/case_search', function(){
                     parameters: self.parameters(),
                     customQueryAddition: self.customQueryAddition(),
                     includeClosed: self.includeClosed(),
+                    xpath: self.xpath(),
                 }
                 )},
                 success: function(data){
                     self.results(data.values);
                     self.count(data.count);
+                    self.took(data.took);
+                    self.query(data.query);
+                },
+                error: function(response){
+                    var alertUser = hqImport("hqwebapp/js/alert_user").alert_user;
+                    alertUser(response.responseJSON.message, 'danger');
                 },
             });
         };

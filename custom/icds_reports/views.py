@@ -94,7 +94,8 @@ from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, Pregna
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features
+    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
+    current_month_stunting_column, current_month_wasting_column
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
@@ -276,7 +277,9 @@ class ProgramSummaryView(BaseReportView):
 
         data = {}
         if step == 'maternal_child':
-            data = get_maternal_child_data(domain, config, include_test)
+            data = get_maternal_child_data(
+                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
+            )
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,
@@ -549,7 +552,8 @@ class AwcReportsView(BaseReportView):
                 config,
                 tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
-                include_test
+                include_test,
+                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
@@ -572,7 +576,7 @@ class AwcReportsView(BaseReportView):
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
-
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
                 order_dir = request.GET.get('order[0][dir]', 'asc')
@@ -581,9 +585,9 @@ class AwcReportsView(BaseReportView):
                 elif order_by_name_column == 'current_month_nutrition_status':
                     order_by_name_column = 'current_month_nutrition_status_sort'
                 elif order_by_name_column == 'current_month_stunting':
-                    order_by_name_column = 'current_month_stunting_sort'
+                    order_by_name_column = '{}_sort'.format(current_month_stunting_column(icds_features_flag))
                 elif order_by_name_column == 'current_month_wasting':
-                    order_by_name_column = 'current_month_wasting_sort'
+                    order_by_name_column = '{}_sort'.format(current_month_wasting_column(icds_features_flag))
                 order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
 
                 data = get_awc_report_beneficiary(
@@ -593,7 +597,8 @@ class AwcReportsView(BaseReportView):
                     order,
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
-                    tuple(two_before.timetuple())[:3]
+                    tuple(two_before.timetuple())[:3],
+                    icds_features_flag
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
@@ -647,7 +652,8 @@ class ExportIndicatorView(View):
             return ChildrenExport(
                 config=config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(self.request.couch_user)
             ).to_export(export_format, location)
         elif indicator == PREGNANT_WOMEN_EXPORT:
             return PregnantWomenExport(
@@ -680,7 +686,8 @@ class ExportIndicatorView(View):
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(self.request.couch_user)
             ).to_export('csv', location)
         elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
@@ -757,18 +764,23 @@ class PrevalenceOfSevereView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_severe_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_severe_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
 
         return JsonResponse(data={
             'report_data': data,
@@ -798,18 +810,26 @@ class PrevalenceOfStuntingView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(
+                domain, config, loc_level, include_test, icds_futures_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,

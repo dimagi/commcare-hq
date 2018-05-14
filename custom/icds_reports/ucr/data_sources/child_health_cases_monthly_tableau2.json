@@ -105,7 +105,7 @@
         },
         "is_nullable": false,
         "is_primary_key": false,
-        "create_index": true,
+        "create_index": false,
         "transform": {},
         "type": "expression"
       },
@@ -230,7 +230,7 @@
       },
       {
         "column_id": "supervisor_id",
-        "create_index": true,
+        "create_index": false,
         "datatype": "string",
         "display_name": null,
         "expression": {

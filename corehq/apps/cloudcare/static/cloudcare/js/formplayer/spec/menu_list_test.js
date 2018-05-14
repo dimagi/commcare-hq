@@ -40,6 +40,10 @@ describe('Render a case list', function () {
             user,
             requests;
 
+        before(function() {
+            hqImport("hqwebapp/js/initial_page_data").register("apps", [{"_id": "my-app-id"}]);
+        });
+
         beforeEach(function() {
             window.gettext = sinon.spy();
 

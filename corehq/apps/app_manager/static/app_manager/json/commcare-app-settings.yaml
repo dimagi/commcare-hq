@@ -173,6 +173,7 @@
   values: ['none', 'commcare', 'commcare_lts']
   value_names: ['None', 'CommCare', 'CommCare LTS']
   default: 'none'
+  since: '2.43'
 
 - id: mobile_ucr_restore_version
   name: Mobile UCR Restore Version
