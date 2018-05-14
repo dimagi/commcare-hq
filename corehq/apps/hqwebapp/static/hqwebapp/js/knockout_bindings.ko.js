@@ -202,6 +202,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             });
 
+            $(element).on('click', '.send-to-top', function (e) {
+                // update UI
+                console.log($(this).parent().parent()[0]);
+
+                // update KO
+                var current_index = $(this).parent().parent()[0].attributes['data-order'].value;
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                list.unshift(list.splice(current_index, 1)[0]);
+//                ko.bindingHandlers.multi_sortable.updateSortableList(list);
+            });
+
             $(element).sortable({
                 connectWith: "ul",
                 delay: 150, //Needed to prevent accidental drag when trying to select
