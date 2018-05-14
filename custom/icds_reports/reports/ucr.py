@@ -16,6 +16,9 @@ class MPR2APersonCases(ConfigurableReportCustomQueryProvider):
     FROM ucr_table
     WHERE (location_id = A & date_death > B)
     GROUP BY owner_id
+
+    Reasons this is needed:
+      - UCR does not support FILTER WHERE clause in select
     """
     def __init__(self, report_data_source):
         self.report_data_source = report_data_source
