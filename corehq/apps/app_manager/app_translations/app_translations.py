@@ -61,6 +61,7 @@ def process_bulk_app_translation_upload(app, f):
     :return: Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
+    update_sql_translations = toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain)
     msgs = []
 
     headers = expected_bulk_app_sheet_headers(app)
@@ -168,15 +169,15 @@ def process_bulk_app_translation_upload(app, f):
 
         if sheet.worksheet.title == MODULES_AND_FORMS_SHEET_NAME:
             # It's the first sheet
-            ms = _process_modules_and_forms_sheet(rows, app)
+            ms = _process_modules_and_forms_sheet(rows, app, update_sql_translations)
             msgs.extend(ms)
         elif sheet.headers[0] == "case_property":
             # It's a module sheet
-            ms = _update_case_list_translations(sheet, rows, app)
+            ms = _update_case_list_translations(sheet, rows, app, update_sql_translations)
             msgs.extend(ms)
         else:
             # It's a form sheet
-            ms = update_form_translations(sheet, rows, missing_cols, app)
+            ms = update_form_translations(sheet, rows, missing_cols, app, update_sql_translations)
             msgs.extend(ms)
 
     msgs.append(
@@ -427,7 +428,7 @@ def expected_bulk_app_sheet_rows(app):
     return rows
 
 
-def _process_modules_and_forms_sheet(rows, app):
+def _process_modules_and_forms_sheet(rows, app, update_sql_translations):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
@@ -475,7 +476,7 @@ def _process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
-        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+        if update_sql_translations:
             sql_translation = document.sql_translation
             sql_translation.parser.update_name(app.langs, row)
             sql_translation.save()
@@ -507,7 +508,7 @@ def _update_translation_dict(prefix, language_dict, row, langs):
             language_dict.pop(lang, None)
 
 
-def update_form_translations(sheet, rows, missing_cols, app):
+def update_form_translations(sheet, rows, missing_cols, app, update_sql_translations):
     """
     Modify the translations of a form given a sheet of translation data.
     This does not save the changes to the DB.
@@ -525,6 +526,10 @@ def update_form_translations(sheet, rows, missing_cols, app):
     module_index = int(mod_text.replace("module", "")) - 1
     form_index = int(form_text.replace("form", "")) - 1
     form = app.get_module(module_index).get_form(form_index)
+    if update_sql_translations:
+        sql_translation = form.sql_translation
+    else:
+        sql_translation = None
     if isinstance(form, ShadowForm):
         msgs.append((
             messages.warning,
@@ -709,35 +714,30 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             # the plaintext node
                             delete_node=(not keep_value_node)
                         )
-                        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                            sql_translation = form.sql_translation
+                        if sql_translation:
                             sql_translation.parser.update(label_id, "markdown", lang, new_translation,
                                                           not keep_value_node)
-                            sql_translation.save()
-                            form.sql_translation_id = sql_translation.id
                     _update_translation_node(
                         new_translation,
                         get_value_node(text_node),
                         {'form': trans_type},
                         delete_node=(not keep_value_node)
                     )
-                    if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                        sql_translation = form.sql_translation
+                    if sql_translation:
                         sql_translation.parser.update(label_id, trans_type, lang, new_translation,
                                                       not keep_value_node)
-                        sql_translation.save()
-                        form.sql_translation_id = sql_translation.id
                 else:
                     # audio/video/image
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
-                    if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                        sql_translation = form.sql_translation
+                    if sql_translation:
                         sql_translation.parser.update(label_id, trans_type, lang, new_translation,
                                                       not new_translation)
-                        sql_translation.save()
-                        form.sql_translation_id = sql_translation.id
+
+    if sql_translation:
+        sql_translation.save()
+        form.sql_translation_id = sql_translation.id
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
@@ -755,7 +755,7 @@ def escape_output_value(value):
         return element
 
 
-def _update_case_list_translations(sheet, rows, app):
+def _update_case_list_translations(sheet, rows, app, update_sql_translations):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -776,6 +776,10 @@ def _update_case_list_translations(sheet, rows, app):
 
     module_index = int(sheet.worksheet.title.replace("module", "")) - 1
     module = app.get_module(module_index)
+    if update_sql_translations:
+        sql_translation = module.sql_translation
+    else:
+        sql_translation = None
 
     if isinstance(module, ReportModule):
         return msgs
@@ -920,29 +924,21 @@ def _update_case_list_translations(sheet, rows, app):
 
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
-        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-            sql_translation = module.sql_translation
+        if sql_translation:
             sql_translation.parser.update(app.langs, row, detail_type, index, "header")
-            sql_translation.save()
-            module.sql_translation_id = sql_translation.id
         for i, enum_value_row in enumerate(row.get('mappings', [])):
             _update_translation(enum_value_row, detail['enum'][i].value)
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                sql_translation = module.sql_translation
+            if sql_translation:
                 sql_translation.parser.update(app.langs, enum_value_row, detail_type, index, "enum", i)
-                sql_translation.save()
-                module.sql_translation_id = sql_translation.id
         for i, graph_annotation_row in enumerate(row.get('annotations', [])):
             _update_translation(
                 graph_annotation_row,
                 detail['graph_configuration']['annotations'][i].display_text,
                 False
             )
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                sql_translation = module.sql_translation
-                sql_translation.parser.update(app.langs, graph_annotation_row, detail_type, index, "graph_annotations", i)
-                sql_translation.save()
-                module.sql_translation_id = sql_translation.id
+            if sql_translation:
+                sql_translation.parser.update(app.langs, graph_annotation_row, detail_type, index,
+                                              "graph_annotations", i)
         for graph_config_row in row.get('configs', []):
             config_key = graph_config_row['id']
             _update_translation(
@@ -950,11 +946,9 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['locale_specific_config'][config_key],
                 False
             )
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                sql_translation = module.sql_translation
-                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, "graph_configuration_config", column_attr_key=config_key)
-                sql_translation.save()
-                module.sql_translation_id = sql_translation.id
+            if sql_translation:
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index,
+                                              "graph_configuration_config", column_attr_key=config_key)
         for graph_config_row in row.get('series_configs', []):
             config_key = graph_config_row['id']
             series_index = int(graph_config_row['series_index'])
@@ -963,11 +957,12 @@ def _update_case_list_translations(sheet, rows, app):
                 detail['graph_configuration']['series'][series_index]['locale_specific_config'][config_key],
                 False
             )
-            if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
-                sql_translation = module.sql_translation
-                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, "graph_configuration_series", series_index, config_key)
-                sql_translation.save()
-                module.sql_translation_id = sql_translation.id
+            if sql_translation:
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index,
+                                              "graph_configuration_series", series_index, config_key)
+    if sql_translation:
+        sql_translation.save()
+        module.sql_translation_id = sql_translation.id
     for index, tab in enumerate(detail_tab_headers):
         if tab:
             _update_translation(tab, module.case_details.long.tabs[index].header)
