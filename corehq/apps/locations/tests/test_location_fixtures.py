@@ -92,12 +92,6 @@ class FixtureHasLocationsMixin(TestXmlMixin):
     def assert_fixture_queryset_equals_locations(self, desired_locations):
         actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
         self.assertItemsEqual(actual, desired_locations)
-        self.assert_mptt_fixture_queryset_equals_locations(desired_locations)
-
-    @override_settings(IS_LOCATION_CTE_ONLY=False, IS_LOCATION_CTE_ENABLED=False)
-    def assert_mptt_fixture_queryset_equals_locations(self, desired_locations):
-        actual = get_location_fixture_queryset(self.user).values_list('name', flat=True)
-        self.assertItemsEqual(actual, desired_locations)
 
 
 @mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
@@ -747,6 +741,12 @@ class ShouldSyncLocationFixturesTest(TestCase):
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+@override_settings(IS_LOCATION_CTE_ONLY=False, IS_LOCATION_CTE_ENABLED=False)
+class MPTTLocationFixturesTest(LocationFixturesTest):
+    pass
 
 
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
