@@ -427,7 +427,7 @@ class Command(BaseCommand):
             migrator.migrate_schedule_instances()
             migrator.print_status()
 
-    def confirm(message):
+    def confirm(self, message):
         while True:
             answer = moves.input(message).lower()
             if answer == 'y':
