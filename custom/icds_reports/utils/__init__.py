@@ -35,6 +35,7 @@ from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
 
 OPERATORS = {
     "==": operator.eq,
@@ -547,6 +548,56 @@ def person_has_aadhaar_column(beta):
 
 def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
+
+
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2' if beta else 'wasting_severe'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2' if beta else 'wasting_normal'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
+
+
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+
+
+def default_age_interval(beta):
+    return '0 - 5 years' if beta else '6 - 60 months'
+
+
+def get_age_filters(beta):
+    if beta:
+        return [
+            NOT(EQ('age_tranche', 'age_72'))
+        ]
+    return [
+        AND([
+            NOT(EQ('age_tranche', 'age_0')),
+            NOT(EQ('age_tranche', 'age_6')),
+            NOT(EQ('age_tranche', 'age_72'))
+        ])
+    ]
 
 
 def track_time(func):

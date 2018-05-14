@@ -1028,9 +1028,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][0][0],
             {
@@ -1040,7 +1037,12 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Underweight (Weight-for-Age)"
+                "label": "Underweight (Weight-for-Age)",
+                "help_text": (
+                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
+                    "weight-for-age less than -2 standard deviations of the WHO Child Growth Standards median. "
+                    "Children who are moderately or severely underweight have a higher risk of mortality. "
+                )
             }
         )
 
@@ -1057,9 +1059,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][0][1],
             {
@@ -1069,7 +1068,15 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Wasting (Weight-for-Height)"
+                "label": "Wasting (Weight-for-Height)",
+                "help_text": (
+                    "Percentage of children between 6 - 60 months enrolled for Anganwadi Services with "
+                    "weight-for-height below -3 standard deviations of the WHO Child Growth Standards median. "
+                    "<br/><br/>"
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                    "undernutrition usually as a consequence of insufficient food intake or a high "
+                    "incidence of infectious diseases."
+                )
             }
         )
 
@@ -1086,9 +1093,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][1][0],
             {
@@ -1098,7 +1102,83 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Stunting (Height-for-Age)"
+                "label": "Stunting (Height-for-Age)",
+                "help_text": (
+                    "Percentage of children between 6 - 60 months with height-for-age below -2Z "
+                    "standard deviations of the WHO Child Growth Standards median. "
+                    "<br/><br/>"
+                    "Stunting is a sign of chronic undernutrition "
+                    "and has long lasting harmful consequences on the growth of a child"
+                )
+            }
+        )
+
+    def test_awc_reports_maternal_child_wasting_weight_for_height_icds_features_flag(self):
+        data = get_awc_reports_maternal_child(
+            'icds-cas',
+            {
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'awc_id': 'a1',
+                'aggregation_level': 5
+            },
+            (2017, 5, 1),
+            (2017, 4, 1),
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['kpi'][0][1],
+            {
+                "color": "red",
+                "all": 0,
+                "frequency": "month",
+                "format": "percent_and_div",
+                "percent": "Data in the previous reporting period was 0",
+                "value": 0,
+                "label": "Wasting (Weight-for-Height)",
+                "help_text": (
+                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
+                    "weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. "
+                    "<br/><br/>"
+                    "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+                    "undernutrition usually as a consequence of insufficient food intake or a high "
+                    "incidence of infectious diseases."
+                )
+            }
+        )
+
+    def test_awc_reports_maternal_child_stunting_height_for_age_icds_features_flag(self):
+        data = get_awc_reports_maternal_child(
+            'icds-cas',
+            {
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'awc_id': 'a1',
+                'aggregation_level': 5
+            },
+            (2017, 5, 1),
+            (2017, 4, 1),
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['kpi'][1][0],
+            {
+                "color": "red",
+                "all": 0,
+                "frequency": "month",
+                "format": "percent_and_div",
+                "percent": "Data in the previous reporting period was 0",
+                "value": 0,
+                "label": "Stunting (Height-for-Age)",
+                "help_text": (
+                    "Percentage of children between 0 - 5 years enrolled for Anganwadi Services  with "
+                    "height-for-age below -2Z standard deviations of the WHO Child Growth Standards median. "
+                    "<br/><br/>"
+                    "Stunting is a sign of chronic undernutrition and has long lasting harmful consequences "
+                    "on the growth of a child"
+                )
             }
         )
 
@@ -1115,9 +1195,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][1][1],
             {
@@ -1127,7 +1204,9 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Weighing Efficiency"
+                "label": "Weighing Efficiency",
+                'help_text': "Percentage of children (0 - 5 years) who have been "
+                             "weighed of total children enrolled for Anganwadi Services",
             }
         )
 
@@ -1144,9 +1223,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][2][0],
             {
@@ -1156,7 +1232,13 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Newborns with Low Birth Weight"
+                "label": "Newborns with Low Birth Weight",
+                'help_text': (
+                    "Percentage of newborns born with birth weight less than 2500 grams. "
+                    "Newborns with Low Birth Weight are closely associated with foetal and "
+                    "neonatal mortality and morbidity, inhibited growth and cognitive development, "
+                    "and chronic diseases later in life"
+                ),
             }
         )
 
@@ -1173,9 +1255,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][2][1],
             {
@@ -1185,7 +1264,12 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Early Initiation of Breastfeeding"
+                "label": "Early Initiation of Breastfeeding",
+                'help_text': (
+                    "Percentage of children who were put to the breast within one hour of birth. "
+                    "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' "
+                    "rich in nutrients and encourages exclusive breastfeeding practice"
+                ),
             }
         )
 
@@ -1202,9 +1286,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][3][0],
             {
@@ -1214,7 +1295,13 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Exclusive breastfeeding"
+                "label": "Exclusive breastfeeding",
+                'help_text': (
+                    "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
+                    "An infant is exclusively breastfed if they recieve only breastmilk "
+                    "with no additional food, liquids (even water) ensuring "
+                    "optimal nutrition and growth between 0 - 6 months"
+                ),
             }
         )
 
@@ -1231,9 +1318,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][3][1],
             {
@@ -1243,7 +1327,13 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Children initiated appropriate Complementary Feeding"
+                "label": "Children initiated appropriate Complementary Feeding",
+                'help_text': (
+                    "Percentage of children between 6 - 8 months given timely introduction to solid, "
+                    "semi-solid or soft food. "
+                    "Timely intiation of complementary feeding in addition to breastmilk "
+                    "at 6 months of age is a key feeding practice to reduce malnutrition"
+                ),
             }
         )
 
@@ -1260,9 +1350,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][4][0],
             {
@@ -1272,7 +1359,15 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Immunization Coverage (at age 1 year)"
+                "label": "Immunization Coverage (at age 1 year)",
+                'help_text': (
+                    "Percentage of children 1 year+ who have received complete immunization as per "
+                    "National Immunization Schedule of India required by age 1. "
+                    "<br/><br/> "
+                    "This includes the following immunizations:<br/> "
+                    "If Pentavalent path: Penta1/2/3, OPV1/2/3, BCG, Measles, VitA1<br/> "
+                    "If DPT/HepB path: DPT1/2/3, HepB1/2/3, OPV1/2/3, BCG, Measles, VitA1"
+                ),
             }
         )
 
@@ -1289,9 +1384,6 @@ class TestAWCReport(TestCase):
             (2017, 5, 1),
             (2017, 4, 1),
         )
-        for kpi in data['kpi']:
-            for el in kpi:
-                del el['help_text']
         self.assertDictEqual(
             data['kpi'][4][1],
             {
@@ -1301,7 +1393,12 @@ class TestAWCReport(TestCase):
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
                 "value": 0,
-                "label": "Institutional Deliveries"
+                "label": "Institutional Deliveries",
+                'help_text': (
+                    "Percentage of pregant women who delivered in a public or private medical "
+                    "facility in the last month. "
+                    "Delivery in medical instituitions is associated with a decrease maternal mortality rate"
+                ),
             }
         )
 
@@ -2126,7 +2223,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][0]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2160,7 +2257,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][1]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2194,7 +2291,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][2]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2228,7 +2325,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][3]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2262,7 +2359,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2296,7 +2393,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][5]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2330,7 +2427,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][6]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2364,7 +2461,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][7]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2398,7 +2495,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][8]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2432,7 +2529,7 @@ class TestAWCReport(TestCase):
 
     def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
         data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1)
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][9]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2465,14 +2562,14 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_data_length(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         self.assertEqual(
             len(data['data']),
             10
         )
 
     def test_awc_report_beneficiary_data_without_data(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         del data['data']
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
@@ -2490,7 +2587,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_keys(self):
-        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1))
+        data = get_awc_report_beneficiary(0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)
         self.assertJSONEqual(
             json.dumps(list(data.keys()), cls=DjangoJSONEncoder),
             json.dumps(

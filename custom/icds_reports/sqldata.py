@@ -21,7 +21,10 @@ from corehq.apps.reports.util import get_INFilter_bindparams
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils import ICDSMixin, get_status, calculate_date_for_age, \
-    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column
+    DATA_NOT_ENTERED, person_has_aadhaar_column, person_is_beneficiary_column, default_age_interval, \
+    get_age_filters, wasting_severe_column, wasting_moderate_column, wasting_normal_column, \
+    stunting_severe_column, stunting_moderate_column, stunting_normal_column, current_month_stunting_column, \
+    current_month_wasting_column
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
 
@@ -246,9 +249,25 @@ class ExportableMixin(object):
 
 class NationalAggregationDataSource(SqlData):
 
-    def __init__(self, config, data_source=None):
+    def __init__(self, config, data_source=None, show_test=False, beta=False):
         super(NationalAggregationDataSource, self).__init__(config)
         self.data_source = data_source
+        self.excluded_states = get_test_state_locations_id(self.config['domain'])
+        self.beta = beta
+        self.config.update({
+            'aggregation_level': 1,
+            'age_0': '0',
+            'age_6': '6',
+            'age_12': '12',
+            'age_24': '24',
+            'age_36': '36',
+            'age_48': '48',
+            'age_60': '60',
+            'age_72': '72',
+            'excluded_states': self.excluded_states
+        })
+        clean_IN_filter_value(self.config, 'excluded_states')
+        self.show_test = show_test
 
     @property
     def table_name(self):
@@ -260,10 +279,13 @@ class NationalAggregationDataSource(SqlData):
 
     @property
     def filters(self):
-        return [
-            RawFilter('aggregation_level = 1'),
+        filters = [
+            EQFilter('aggregation_level', 'aggregation_level'),
             EQFilter('month', 'previous_month')
         ]
+        if not self.show_test:
+            filters.append(NOT(IN('state_id', get_INFilter_bindparams('excluded_states', self.excluded_states))))
+        return filters
 
     @property
     def group_by(self):
@@ -295,10 +317,11 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
     table_name = 'agg_child_health_monthly'
     engine_id = 'icds-test-ucr'
 
-    def __init__(self, config=None, loc_level='state', show_test=False):
+    def __init__(self, config=None, loc_level='state', show_test=False, beta=False):
         super(AggChildHealthMonthlyDataSource, self).__init__(config)
         self.excluded_states = get_test_state_locations_id(self.domain)
         self.loc_key = '%s_id' % loc_level
+        self.beta = beta
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -421,23 +444,14 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with severe acute malnutrition (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn('wasting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_severe_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'weighed_and_height_measured_in_month',
                         alias='weighed_and_height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='wasting_severe'
@@ -446,13 +460,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with moderate acute malnutrition (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn('wasting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_moderate_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_moderate'
@@ -461,13 +472,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children normal (weight-for-height)',
                 percent_num,
                 [
-                    SumColumn('wasting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_normal_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='wasting_normal'
@@ -476,23 +484,14 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with severe stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_severe_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='stunting_severe'
@@ -501,13 +500,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with moderate stunting (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_moderate_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_moderate'
@@ -516,13 +512,10 @@ class AggChildHealthMonthlyDataSource(ProgressReportSqlData):
                 'Percent children with normal (height for age)',
                 percent_num,
                 [
-                    SumColumn('stunting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_normal_column(self.beta),
+                        filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='stunting_normal'
@@ -1006,8 +999,8 @@ class ChildrenExport(ExportableMixin, SqlData):
     title = 'Children'
     table_name = 'agg_child_health_monthly'
 
-    def __init__(self, config=None, loc_level=1, show_test=False):
-        super(ChildrenExport, self).__init__(config, loc_level, show_test)
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
+        super(ChildrenExport, self).__init__(config, loc_level, show_test, beta)
         self.config.update({
             'age_0': '0',
             'age_6': '6',
@@ -1116,23 +1109,11 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with severe wasting',
                 percent,
                 [
-                    SumColumn('wasting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(wasting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)),
                     SumColumn(
                         'weighed_and_height_measured_in_month',
                         alias='weighed_and_height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='percent_severe_wasting'
@@ -1141,13 +1122,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate wasting',
                 percent,
                 [
-                    SumColumn('wasting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_moderate_wasting'
@@ -1156,13 +1133,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal weight-for-height',
                 percent,
                 [
-                    SumColumn('wasting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        wasting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('weighed_and_height_measured_in_month')
                 ],
                 slug='percent_normal_wasting'
@@ -1171,23 +1144,13 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with severe stunting',
                 percent,
                 [
-                    SumColumn('stunting_severe', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_severe_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     SumColumn(
                         'height_measured_in_month',
                         alias='height_measured_in_month',
-                        filters=self.filters + [
-                            AND([
-                                NOT(EQ('age_tranche', 'age_0')),
-                                NOT(EQ('age_tranche', 'age_6')),
-                                NOT(EQ('age_tranche', 'age_72'))
-                            ])
-                        ]
+                        filters=self.filters + get_age_filters(self.beta)
                     )
                 ],
                 slug='percent_severe_stunting'
@@ -1196,13 +1159,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with moderate stunting',
                 percent,
                 [
-                    SumColumn('stunting_moderate', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_moderate_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_moderate_stunting'
@@ -1211,13 +1170,9 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Percentage of children with normal height-for-age',
                 percent,
                 [
-                    SumColumn('stunting_normal', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
-                    ]),
+                    SumColumn(
+                        stunting_normal_column(self.beta), filters=self.filters + get_age_filters(self.beta)
+                    ),
                     AliasColumn('height_measured_in_month')
                 ],
                 slug='percent_normal_stunting'
@@ -1957,13 +1912,14 @@ class BeneficiaryExport(ExportableMixin, SqlData):
     title = 'Child Beneficiary'
     table_name = 'child_health_monthly_view'
 
-    def __init__(self, config=None, loc_level=1, show_test=False):
+    def __init__(self, config=None, loc_level=1, show_test=False, beta=False):
         config.update({
             '5_years': 60,
         })
         self.config = config
         self.loc_level = loc_level
         self.show_test = show_test
+        self.beta = beta
 
     @property
     def group_by(self):
@@ -1981,12 +1937,12 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             'severely_underweight': RawFilter("current_month_nutrition_status = 'severely_underweight'"),
             'moderately_underweight': RawFilter("current_month_nutrition_status = 'moderately_underweight'"),
             'normal_wfa': RawFilter("current_month_nutrition_status = 'normal'"),
-            'severely_stunted': RawFilter("current_month_stunting = 'severe'"),
-            'moderately_stunted': RawFilter("current_month_stunting = 'moderate'"),
-            'normal_hfa': RawFilter("current_month_stunting = 'normal'"),
-            'severely_wasted': RawFilter("current_month_wasting = 'severe'"),
-            'moderately_wasted': RawFilter("current_month_wasting = 'moderate'"),
-            'normal_wfh': RawFilter("current_month_wasting = 'normal'"),
+            'severely_stunted': RawFilter("{} = 'severe'".format(current_month_stunting_column(self.beta))),
+            'moderately_stunted': RawFilter("{} = 'moderate'".format(current_month_stunting_column(self.beta))),
+            'normal_hfa': RawFilter("{} = 'normal'".format(current_month_stunting_column(self.beta))),
+            'severely_wasted': RawFilter("{} = 'severe'".format(current_month_wasting_column(self.beta))),
+            'moderately_wasted': RawFilter("{} = 'moderate'".format(current_month_wasting_column(self.beta))),
+            'normal_wfh': RawFilter("{} = 'normal'".format(current_month_wasting_column(self.beta))),
         }[filter_name]
 
     def _build_additional_filters(self, filters):
@@ -2077,7 +2033,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Weight-for-Height Status (in Month)',
-                SimpleColumn('current_month_wasting'),
+                SimpleColumn(current_month_wasting_column(self.beta)),
                 format_fn=lambda x: get_status(
                     x,
                     'wasted',
@@ -2088,7 +2044,7 @@ class BeneficiaryExport(ExportableMixin, SqlData):
             ),
             DatabaseColumn(
                 'Height-for-Age status (in Month)',
-                SimpleColumn('current_month_stunting'),
+                SimpleColumn(current_month_stunting_column(self.beta)),
                 format_fn=lambda x: get_status(
                     x,
                     'stunted',
@@ -2181,8 +2137,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with severe acute '
-                                          'malnutrition (weight-for-height)',
+                                'header': (
+                                    'Children from {} with severe acute '
+                                    'malnutrition (weight-for-height)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'wasting_severe',
                                 'average': [],
                                 'format': 'percent',
@@ -2191,8 +2149,8 @@ class FactSheetsReport(object):
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
                                 'header': (
-                                    'Children from 6 - 60 months with moderate '
-                                    'acute malnutrition (weight-for-height)'
+                                    'Children from {} with moderate acute '
+                                    'malnutrition (weight-for-height)'.format(default_age_interval(self.beta))
                                 ),
                                 'slug': 'wasting_moderate',
                                 'average': [],
@@ -2201,14 +2159,20 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with normal weight-for-height',
+                                'header': (
+                                    'Children from {} with normal '
+                                    'weight-for-height'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'wasting_normal',
                                 'average': [],
                                 'format': 'percent'
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with severe stunting (height-for-age)',
+                                'header': (
+                                    'Children from {} with severe stunting '
+                                    '(height-for-age)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_severe',
                                 'average': [],
                                 'format': 'percent',
@@ -2216,7 +2180,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with moderate stunting (height-for-age)',
+                                'header': (
+                                    'Children from {} with moderate stunting '
+                                    '(height-for-age)'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_moderate',
                                 'average': [],
                                 'format': 'percent',
@@ -2224,7 +2191,10 @@ class FactSheetsReport(object):
                             },
                             {
                                 'data_source': 'AggChildHealthMonthlyDataSource',
-                                'header': 'Children from 6 - 60 months with normal height-for-age',
+                                'header': (
+                                    'Children from {} with normal '
+                                    'height-for-age'.format(default_age_interval(self.beta))
+                                ),
                                 'slug': 'stunting_normal',
                                 'average': [],
                                 'format': 'percent'
@@ -2620,17 +2590,18 @@ class FactSheetsReport(object):
     def data_sources(self):
         return {
             'AggChildHealthMonthlyDataSource': AggChildHealthMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
+                beta=self.beta
             ),
             'AggCCSRecordMonthlyDataSource': AggCCSRecordMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
             ),
             'AggAWCMonthlyDataSource': AggAWCMonthlyDataSource(
-                config=self.config,
+                config=self.config.copy(),
                 loc_level=self.loc_level,
                 show_test=self.show_test,
                 beta=self.beta
@@ -2639,7 +2610,12 @@ class FactSheetsReport(object):
 
     @memoized
     def get_data_for_national_aggregatation(self, data_source_name):
-        return NationalAggregationDataSource(self.config, self.data_sources[data_source_name]).get_data()
+        return NationalAggregationDataSource(
+            self.config.copy(),
+            self.data_sources[data_source_name],
+            show_test=self.show_test,
+            beta=self.beta
+        ).get_data()
 
     def _get_collected_sections(self, config_list):
         sections_by_slug = OrderedDict()
