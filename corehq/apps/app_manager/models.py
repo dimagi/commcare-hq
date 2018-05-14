@@ -6708,7 +6708,16 @@ class Translation(models.Model):
     }
     3. others: enum, graph_annotations, graph configurations
     for form ->
-    1. just map label but keep both markdown and default
+    'text': {
+        id/label: {
+            “type”: {  # type can image, default, markdown
+                “value”: {
+                    “en”: “”,
+                    “hi”: “”,
+                }
+            }
+        }
+    }
     """
     RESOURCE_TYPE_CHOICES = (
         ('module', 'module'),
@@ -6757,6 +6766,8 @@ class ModuleTranslationParser(BaseTranslationParser):
         :param detail_type: short/long
         :param column_index: index of column
         """
+        if 'case_details' not in self.resource_translation.translation:
+            self.resource_translation.translation['case_details'] = {}
         if detail_type not in self.resource_translation.translation['case_details']:
             self.resource_translation.translation['case_details'][detail_type] = {'columns': []}
         if len(self.resource_translation.translation['case_details'][detail_type]['columns']) == column_index:
@@ -6872,11 +6883,23 @@ class ModuleTranslationParser(BaseTranslationParser):
 
 
 class FormTranslationParser(BaseTranslationParser):
-    def update_translation(self, label, translated_text, markdown=False):
-        self.resource_translation[label]['default'] = translated_text
-        if markdown:
-            self.resource_translation[label]['markdown'] = translated_text
+    def ensure_base_dict(self, label_id, trans_type):
+        if 'text' not in self.resource_translation.translation:
+            self.resource_translation.translation['text'] = {}
+        if label_id not in self.resource_translation.translation['text']:
+            self.resource_translation.translation['text'][label_id] = {}
+        if trans_type not in self.resource_translation.translation['text'][label_id]:
+            self.resource_translation.translation['text'][label_id][trans_type] = {'value': {}}
 
+    def update(self, label_id, trans_type, lang, translation, delete_value_node):
+        if delete_value_node:
+            try:
+                self.resource_translation.translation['text'][label_id].pop(trans_type, None)
+            except (KeyError, IndexError):
+                pass
+        else:
+            self.ensure_base_dict(label_id, trans_type)
+            self.resource_translation.translation['text'][label_id][trans_type]['value'][lang] = translation
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

@@ -709,17 +709,35 @@ def update_form_translations(sheet, rows, missing_cols, app):
                             # the plaintext node
                             delete_node=(not keep_value_node)
                         )
+                        if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                            sql_translation = form.sql_translation
+                            sql_translation.parser.update(label_id, "markdown", lang, new_translation,
+                                                          not keep_value_node)
+                            sql_translation.save()
+                            form.sql_translation_id = sql_translation.id
                     _update_translation_node(
                         new_translation,
                         get_value_node(text_node),
-                        {'form': 'default'},
+                        {'form': trans_type},
                         delete_node=(not keep_value_node)
                     )
+                    if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                        sql_translation = form.sql_translation
+                        sql_translation.parser.update(label_id, trans_type, lang, new_translation,
+                                                      not keep_value_node)
+                        sql_translation.save()
+                        form.sql_translation_id = sql_translation.id
                 else:
                     # audio/video/image
                     _update_translation_node(new_translation,
                                              text_node.find("./{f}value[@form='%s']" % trans_type),
                                              {'form': trans_type})
+                    if toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.enabled(app.domain):
+                        sql_translation = form.sql_translation
+                        sql_translation.parser.update(label_id, trans_type, lang, new_translation,
+                                                      not new_translation)
+                        sql_translation.save()
+                        form.sql_translation_id = sql_translation.id
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
     return msgs
