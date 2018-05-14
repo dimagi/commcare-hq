@@ -45,10 +45,13 @@ from corehq.messaging.scheduling.models import (
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
     CaseAlertScheduleInstance,
+    CaseTimedScheduleInstance,
 )
+from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time
 from django.db import transaction
+from django.db.models import Q
 from django.core.management.base import BaseCommand
 from six import moves
 
@@ -68,6 +71,7 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         self.handler = handler
         self.rule_migration_function = rule_migration_function
         self.schedule_migration_function = schedule_migration_function
+        self.source_duplicate_count = 0
 
     def migrate(self):
         with transaction.atomic():
@@ -81,13 +85,9 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         seen_case_ids = set()
         recipient = self.rule.memoized_actions[0].definition.recipients[0]
 
-        for reminder in CaseReminder.view(
-            'reminders/by_domain_handler_case',
-            startkey=[self.handler.domain, self.handler._id],
-            endkey=[self.handler.domain, self.handler._id, {}],
-            include_docs=True
-        ).all():
+        for reminder in self.get_source_instances():
             if reminder.case_id in seen_case_ids:
+                self.source_duplicate_count += 1
                 continue
 
             seen_case_ids.add(reminder.case_id)
@@ -109,6 +109,45 @@ class CaseReminderHandlerMigrator(BaseMigrator):
                 self.schedule.move_to_next_event_not_in_the_past(instance)
 
             instance.save(force_insert=True)
+
+    def get_source_instances(self):
+        return list(CaseReminder.view(
+            'reminders/by_domain_handler_case',
+            startkey=[self.handler.domain, self.handler._id],
+            endkey=[self.handler.domain, self.handler._id, {}],
+            include_docs=True
+        ).all())
+
+    def get_target_instances(self):
+        if isinstance(self.schedule, AlertSchedule):
+            return list(run_query_across_partitioned_databases(
+                CaseAlertScheduleInstance,
+                Q(alert_schedule_id=self.schedule.schedule_id),
+            ))
+        elif isinstance(self.schedule, TimedSchedule):
+            return list(run_query_across_partitioned_databases(
+                CaseTimedScheduleInstance,
+                Q(timed_schedule_id=self.schedule.schedule_id),
+            ))
+        else:
+            raise TypeError("Expected AlertSchedule or TimedSchedule")
+
+    def print_status(self):
+        source_instances = self.get_source_instances()
+        target_instances = self.get_target_instances()
+
+        source_instance_count = len(source_instances)
+        active_source_instance_count = len([i for i in source_instances if i.active])
+        target_instance_count = len(target_instances)
+        active_target_instance_count = len([i for i in target_instances if i.active])
+
+        print("\n")
+        print("--- CaseReminderHandler %s to AutomaticUpdateRule %s ---" % (self.handler._id, self.rule.pk))
+        print("Duplicates:          %s" % self.source_duplicate_count)
+        print("Source Count:        %s" % source_instance_count)
+        print("Target Count:        %s" % target_instance_count)
+        print("Source Active Count: %s" % active_source_instance_count)
+        print("Target Active Count: %s" % active_target_instance_count)
 
 
 class BroadcastMigrator(BaseMigrator):
@@ -369,6 +408,7 @@ class Command(BaseCommand):
         for migrator in migrators:
             migrator.migrate()
             migrator.migrate_schedule_instances()
+            migrator.print_status()
 
     def confirm_migration_begin(self):
         while True:
