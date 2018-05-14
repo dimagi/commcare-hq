@@ -36,6 +36,7 @@ from corehq.pillows.mappings.case_search_mapping import (
     CASE_SEARCH_INDEX_INFO,
     CASE_SEARCH_MAPPING,
 )
+from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
 from dimagi.utils.parsing import json_format_datetime
@@ -54,6 +55,14 @@ from pillowtop.reindexer.reindexer import (
     ReindexerFactory,
     ResumableBulkElasticPillowReindexer,
 )
+
+
+def domains_needing_search_index():
+    return set(list(case_search_enabled_domains()) + CASE_LIST_EXPLORER.get_enabled_domains())
+
+
+def domain_needs_search_index(domain):
+    return domain in domains_needing_search_index()
 
 
 def transform_case_for_elasticsearch(doc_dict):
@@ -95,7 +104,8 @@ class CaseSearchPillowProcessor(ElasticProcessor):
         else:
             # comes from ChangeProvider (i.e reindexing)
             domain = change.get_document()['domain']
-        if domain and case_search_enabled_for_domain(domain):
+
+        if domain and domain_needs_search_index(domain):
             super(CaseSearchPillowProcessor, self).process_change(pillow_instance, change)
 
 
@@ -162,12 +172,12 @@ class CaseSearchReindexerFactory(ReindexerFactory):
         initialize_index_and_mapping(get_es_new(), CASE_SEARCH_INDEX_INFO)
         try:
             if domain is not None:
-                if not case_search_enabled_for_domain(domain):
+                if not domain_needs_search_index(domain):
                     raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
                 domains = [domain]
             else:
                 # return changes for all enabled domains
-                domains = case_search_enabled_domains()
+                domains = domains_needing_search_index()
 
             change_provider = get_domain_case_change_provider(domains=domains, limit_db_aliases=limit_db_aliases)
         except ProgrammingError:
@@ -204,7 +214,7 @@ class ResumableCaseSearchReindexerFactory(ReindexerFactory):
     def build(self):
         limit_to_db = self.options.pop('limit_to_db', None)
         domain = self.options.pop('domain')
-        if not case_search_enabled_for_domain(domain):
+        if not domain_needs_search_index(domain):
             raise CaseSearchNotEnabledException("{} does not have case search enabled".format(domain))
 
         assert should_use_sql_backend(domain), '{} can only be used with SQL domains'.format(self.slug)
