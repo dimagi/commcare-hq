@@ -143,6 +143,8 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         target_instance_count = len(target_instances)
         active_target_instance_count = len([i for i in target_instances if i.active])
 
+        self.target_instance_ids = set([i.schedule_instance_id for i in target_instances])
+
         print("\n")
         print("--- CaseReminderHandler %s to AutomaticUpdateRule %s ---" % (self.handler._id, self.rule.pk))
         print("Duplicates:          %s" % self.source_duplicate_count)
@@ -448,7 +450,18 @@ class Command(BaseCommand):
         print("Refresh completed.")
 
         for migrator in migrators:
+            current_target_instance_ids = migrator.target_instance_ids
             migrator.print_status()
+            new_target_instance_ids = migrator.target_instance_ids
+
+            created_instance_ids = new_target_instance_ids - current_target_instance_ids
+            deleted_instance_ids = current_target_instance_ids - new_target_instance_ids
+
+            if created_instance_ids or deleted_instance_ids:
+                print("Created instance ids: %s" % created_instance_ids)
+                print("Deleted instance ids: %s" % deleted_instance_ids)
+            else:
+                print("No instances created or deleted during refresh.")
 
     def switch_on_new_reminders(self, domain, migrators):
         domain_obj = Domain.get_by_name(domain)
