@@ -1,8 +1,8 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
-from sqlagg.filters import EQ, OR, BETWEEN, IN, NOT, AND
+from sqlagg.filters import BETWEEN, IN, NOT
 from sqlagg.sorting import OrderBy
 
 from corehq.apps.reports.sqlreport import SqlData, DatabaseColumn, AggregateColumn

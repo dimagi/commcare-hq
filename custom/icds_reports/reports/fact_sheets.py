@@ -10,13 +10,11 @@ from django.http.response import Http404
 from memoized import memoized
 from six.moves import range
 
-from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.sqldata.agg_awc_monthly import AggAWCMonthlyDataSource
 from custom.icds_reports.sqldata.agg_ccs_record_monthly import AggCCSRecordMonthlyDataSource
 from custom.icds_reports.sqldata.agg_child_health_monthly import AggChildHealthMonthlyDataSource
 from custom.icds_reports.sqldata.national_aggregation import NationalAggregationDataSource
 from custom.icds_reports.utils import person_is_beneficiary_column, default_age_interval
-from custom.utils.utils import clean_IN_filter_value
 
 
 class FactSheetsReport(object):
