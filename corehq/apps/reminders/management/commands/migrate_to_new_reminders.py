@@ -58,6 +58,12 @@ from six import moves
 from time import sleep
 
 
+def log(message):
+    print(message)
+    with open('new_reminders_migration.log', 'r+') as f:
+        f.write(message)
+
+
 class BaseMigrator(object):
 
     def migrate(self):
@@ -145,13 +151,13 @@ class CaseReminderHandlerMigrator(BaseMigrator):
 
         self.target_instance_ids = set([i.schedule_instance_id for i in target_instances])
 
-        print("\n")
-        print("--- CaseReminderHandler %s to AutomaticUpdateRule %s ---" % (self.handler._id, self.rule.pk))
-        print("Duplicates:          %s" % self.source_duplicate_count)
-        print("Source Count:        %s" % source_instance_count)
-        print("Target Count:        %s" % target_instance_count)
-        print("Source Active Count: %s" % active_source_instance_count)
-        print("Target Active Count: %s" % active_target_instance_count)
+        log("\n")
+        log("--- CaseReminderHandler %s to AutomaticUpdateRule %s ---" % (self.handler._id, self.rule.pk))
+        log("Duplicates:          %s" % self.source_duplicate_count)
+        log("Source Count:        %s" % source_instance_count)
+        log("Target Count:        %s" % target_instance_count)
+        log("Source Active Count: %s" % active_source_instance_count)
+        log("Target Active Count: %s" % active_target_instance_count)
 
 
 class BroadcastMigrator(BaseMigrator):
@@ -370,7 +376,7 @@ class Command(BaseCommand):
 
     def migration_already_done(self, domain_obj):
         if domain_obj.uses_new_reminders:
-            print("'%s' already uses new reminders, nothing to do" % domain_obj.name)
+            log("'%s' already uses new reminders, nothing to do" % domain_obj.name)
             return True
 
         return False
@@ -379,13 +385,13 @@ class Command(BaseCommand):
         while not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
             moves.input("Please enable REMINDERS_MIGRATION_IN_PROGRESS for '%s' and hit enter..." % domain)
 
-        print("REMINDERS_MIGRATION_IN_PROGRESS enabled for %s" % domain)
+        log("REMINDERS_MIGRATION_IN_PROGRESS enabled for %s" % domain)
 
     def ensure_migration_flag_disabled(self, domain):
         while REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
             moves.input("Please disable REMINDERS_MIGRATION_IN_PROGRESS for '%s' and hit enter..." % domain)
 
-        print("REMINDERS_MIGRATION_IN_PROGRESS disabled for %s" % domain)
+        log("REMINDERS_MIGRATION_IN_PROGRESS disabled for %s" % domain)
 
     def get_handlers_to_migrate(self, domain):
         handlers = CaseReminderHandler.view(
@@ -408,9 +414,9 @@ class Command(BaseCommand):
                 cannot_be_migrated.append(handler)
 
         if cannot_be_migrated:
-            print("The following configurations can't be migrated:")
+            log("The following configurations can't be migrated:")
             for handler in cannot_be_migrated:
-                print("%s %s" % (handler._id, handler.reminder_type))
+                log("%s %s" % (handler._id, handler.reminder_type))
 
         return migrators, cannot_be_migrated
 
@@ -437,9 +443,9 @@ class Command(BaseCommand):
         ).count()
 
     def refresh_instances(self, domain, migrators):
-        print("\n")
+        log("\n")
         moves.input("Hit enter when ready to refresh instances...")
-        print("Refreshing instances...")
+        log("Refreshing instances...")
 
         for migrator in migrators:
             initiate_messaging_rule_run(migrator.rule.domain, migrator.rule.pk)
@@ -447,7 +453,7 @@ class Command(BaseCommand):
         while self.get_locked_count(domain) > 0:
             sleep(5)
 
-        print("Refresh completed.")
+        log("Refresh completed.")
 
         for migrator in migrators:
             current_target_instance_ids = migrator.target_instance_ids
@@ -458,10 +464,10 @@ class Command(BaseCommand):
             deleted_instance_ids = current_target_instance_ids - new_target_instance_ids
 
             if created_instance_ids or deleted_instance_ids:
-                print("Created instance ids: %s" % created_instance_ids)
-                print("Deleted instance ids: %s" % deleted_instance_ids)
+                log("Created instance ids: %s" % created_instance_ids)
+                log("Deleted instance ids: %s" % deleted_instance_ids)
             else:
-                print("No instances created or deleted during refresh.")
+                log("No instances created or deleted during refresh.")
 
     def switch_on_new_reminders(self, domain, migrators):
         domain_obj = Domain.get_by_name(domain)
@@ -470,11 +476,11 @@ class Command(BaseCommand):
 
         for migrator in migrators:
             if migrator.handler.active:
-                print("%s is active, deactivating..." % migrator.handler._id)
+                log("%s is active, deactivating..." % migrator.handler._id)
                 migrator.handler.active = False
                 migrator.handler.save()
             else:
-                print("%s is already inactive" % migrator.handler._id)
+                log("%s is already inactive" % migrator.handler._id)
 
         while any([handler.locked for handler in self.get_handlers_to_migrate(domain)]):
             sleep(5)
@@ -494,22 +500,22 @@ class Command(BaseCommand):
         if cannot_be_migrated:
             return
 
-        print("Migration can proceed")
+        log("Migration can proceed")
 
         if check_only:
             return
 
         if not self.confirm("Are you sure you want to start the migration? y/n "):
-            print("Migrated halted")
+            log("Migrated halted")
             return
 
         self.migrate_handlers(migrators)
         self.refresh_instances(domain, migrators)
 
         if not self.confirm("Ok to switch on new reminders? y/n "):
-            print("Migrated halted")
+            log("Migrated halted")
             return
 
         self.switch_on_new_reminders(domain, migrators)
         self.ensure_migration_flag_disabled()
-        print("Migration completed.")
+        log("Migration completed.")
