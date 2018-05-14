@@ -246,25 +246,37 @@ def update_hubspot_properties(webuser, properties):
 
 
 @analytics_task()
-def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path, tracked_fields):
+def track_web_user_registration_hubspot(web_user, properties):
+    if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
+        return
+
+    tracking_info = {
+        'created_account_in_hq': True,
+        'is_a_commcare_user': True,
+        'lifecyclestage': 'lead',
+    }
+
+    if (hasattr(web_user, 'phone_numbers') and len(web_user.phone_numbers) > 0):
+        tracking_info.update({
+            'phone': web_user.phone_numbers[0],
+        })
+
+    if web_user.atypical_user:
+        tracking_info.update({
+            'atypical_user': True
+        })
+
+    tracking_info.update(get_ab_test_properties(web_user))
+    tracking_info.update(properties)
+    _track_on_hubspot(web_user, tracking_info)
+
+
+@analytics_task()
+def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
     from corehq.apps.registration.views import ProcessRegistrationView
     if path.startswith(reverse(ProcessRegistrationView.urlname)):
-        tracking_dict = {
-            'created_account_in_hq': True,
-            'is_a_commcare_user': True,
-            'lifecyclestage': 'lead'
-        }
-        if (hasattr(webuser, 'phone_numbers') and len(webuser.phone_numbers) > 0):
-            tracking_dict.update({
-                'phone': webuser.phone_numbers[0],
-            })
-        if webuser.atypical_user:
-            tracking_dict.update({
-                'atypical_user': True
-            })
-        tracking_dict.update(get_ab_test_properties(webuser))
-        tracking_dict.update(tracked_fields)
-        _track_on_hubspot(webuser, tracking_dict)
+        # registration view - only track the form itself here.
+        # use track_web_user_registration_hubspot to track properties on signup
         _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
@@ -598,21 +610,3 @@ def get_ab_test_properties(user):
             'A' if deterministic_random(user.username + 'a_b_test_variable_first_submission') > 0.5 else 'B',
     }
 
-
-def get_hubspot_fields_tracked_on_registration(request, username):
-    body_unicode = request.body.decode('utf-8')
-    data = json.loads(body_unicode)['data']
-
-    appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(username,
-                                                      toggles.NAMESPACE_USER)
-
-    hubspot_fields = {
-        "appcues_test": "On" if appcues_ab_test else "Off",
-    }
-
-    if data['persona']:
-        hubspot_fields['buyer_persona'] = data['persona']
-        if data['persona_other']:
-            hubspot_fields['buyer_persona_other'] = data['persona_other']
-
-    return hubspot_fields
