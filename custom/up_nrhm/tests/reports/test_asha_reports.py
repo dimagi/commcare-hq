@@ -50,16 +50,20 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
             rows,
             [
                 ['', 'Date when cheklist was filled', 'Total no. of ASHAs functional on each tasks'],
-                [1, 'Newborn visits within first day of birth in case of home deliveries', 0], [2,
-                                                                                                 'Set of home visits for newborn care as specified in the HBNC guidelines (six visits in case of Institutional delivery and seven in case of a home delivery)',
-                                                                                                 0],
+                [1, 'Newborn visits within first day of birth in case of home deliveries', 0],
+                [2,
+                 'Set of home visits for newborn care as specified in the HBNC guidelines (six visits in case '
+                 'of Institutional delivery and seven in case of a home delivery)',
+                 0],
                 [3, 'Attending VHNDs/Promoting immunization', 0], [4, 'Supporting institutional delivery', 0],
                 [5, 'Management of childhood illness - especially diarrhea and pneumonia', 0],
                 [6, 'Household visits with nutrition counseling', 0],
                 [7, 'Fever cases seen/malaria slides made in malaria endemic area', 0],
-                [8, 'Acting as DOTS provider', 0], [9, 'Holding or attending village/VHSNC meeting', 0], [10,
-                                                                                                            'Successful referral of the IUD, female sterilization or male sterilization cases and/or providing OCPs/Condoms',
-                                                                                                            0],
+                [8, 'Acting as DOTS provider', 0], [9, 'Holding or attending village/VHSNC meeting', 0],
+                [10,
+                 'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
+                 'providing OCPs/Condoms',
+                 0],
                 ['', 'Total of number of tasks on which ASHA reported being functional', ''],
                 ['', 'Total number of ASHAs who are functional on at least 60% of the tasks', 0],
                 ['', 'Remark', '']
