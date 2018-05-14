@@ -730,7 +730,7 @@ class PartiallyLockingQueue(object):
 
         Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
         """
-        for lock_id, queue in self.queue_by_lock_id.iteritems():
+        for lock_id, queue in six.iteritems(self.queue_by_lock_id):
 
             if len(queue) == 0:
                 continue
@@ -757,7 +757,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for _, queue in self.queue_by_lock_id.iteritems():
+        for _, queue in six.iteritems(self.queue_by_lock_id):
             if len(queue) > 0:
                 return True
         return False

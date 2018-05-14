@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
+import six
 from corehq.apps.reminders.models import CaseReminderHandler, REMINDER_TYPE_KEYWORD_INITIATED
 from django.core.management.base import BaseCommand
 
@@ -34,7 +35,7 @@ class Command(BaseCommand):
 
         # Sort by num_active and then domain
         sorted_result = sorted(
-            result.items(),
+            six.iteritems(result),
             key=lambda two_tuple: (two_tuple[1].num_active, two_tuple[0])
         )
 
