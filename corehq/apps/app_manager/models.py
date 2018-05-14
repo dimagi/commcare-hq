@@ -6735,7 +6735,7 @@ class Translation(models.Model):
                                      max_length=255,
                                      help_text="type corresponding to the id")
     identifier = models.CharField(max_length=255)
-    translation = JSONField(default=defaultdict(dict))
+    translation = JSONField(default=dict)
 
     @property
     def parser(self):
@@ -6750,6 +6750,8 @@ class BaseTranslationParser:
         self.resource_translation = resource_translation
 
     def update_name(self, langs, translated_names, prefix="default_"):
+        if 'name' not in self.resource_translation.translation:
+            self.resource_translation.translation['name'] = {}
         _update_translation_dict(
             prefix,
             self.resource_translation.translation['name'],
@@ -6778,7 +6780,7 @@ class ModuleTranslationParser(BaseTranslationParser):
                     'graph_configuration': {
                         'annotations': [],  # 'display_text' key to contain translations dict
                         'series': [],  # 'locale_specific_config' to contain translations dict
-                        'locale_specific_config': defaultdict(dict),  # each key maps to a set of translations dict
+                        'locale_specific_config': defaultdict(dict),  # each key maps to a translations dict
                     }
                 }
             )
