@@ -47,6 +47,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
 )
+from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
 from datetime import time
@@ -54,6 +55,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.core.management.base import BaseCommand
 from six import moves
+from time import sleep
 
 
 class BaseMigrator(object):
@@ -418,6 +420,30 @@ class Command(BaseCommand):
             elif answer == 'n':
                 return False
 
+    def get_locked_count(self, domain):
+        return AutomaticUpdateRule.objects.filter(
+            domain=domain,
+            workflow=AutomaticUpdateRule.WORKFLOW_SCHEDULING,
+            deleted=False,
+            locked_for_editing=True,
+        ).count()
+
+    def refresh_instances(self, domain, migrators):
+        print("\n")
+        moves.input("Hit enter when ready to refresh instances...")
+        print("Refreshing instances...")
+
+        for migrator in migrators:
+            initiate_messaging_rule_run(migrator.rule.domain, migrator.rule.pk)
+
+        while self.get_locked_count(domain) > 0:
+            sleep(5)
+
+        print("Refresh completed.")
+
+        for migrator in migrators:
+            migrator.print_status()
+
     def handle(self, domain, **options):
         check_only = options['check']
         domain_obj = Domain.get_by_name(domain)
@@ -443,3 +469,4 @@ class Command(BaseCommand):
             return
 
         self.migrate_handlers(migrators)
+        self.refresh_instances(domain, migrators)
