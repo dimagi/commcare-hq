@@ -379,6 +379,12 @@ class Command(BaseCommand):
 
         print("REMINDERS_MIGRATION_IN_PROGRESS enabled for %s" % domain)
 
+    def ensure_migration_flag_disabled(self, domain):
+        while REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain):
+            moves.input("Please disable REMINDERS_MIGRATION_IN_PROGRESS for '%s' and hit enter..." % domain)
+
+        print("REMINDERS_MIGRATION_IN_PROGRESS disabled for %s" % domain)
+
     def get_handlers_to_migrate(self, domain):
         handlers = CaseReminderHandler.view(
             'reminders/handlers_by_domain_case_type',
@@ -412,9 +418,9 @@ class Command(BaseCommand):
             migrator.migrate_schedule_instances()
             migrator.print_status()
 
-    def confirm_migration_begin(self):
+    def confirm(message):
         while True:
-            answer = moves.input("Are you sure you want to start the migration? y/n ").lower()
+            answer = moves.input(message).lower()
             if answer == 'y':
                 return True
             elif answer == 'n':
@@ -444,6 +450,19 @@ class Command(BaseCommand):
         for migrator in migrators:
             migrator.print_status()
 
+    def switch_on_new_reminders(self, domain, migrators):
+        domain_obj = Domain.get_by_name(domain)
+        domain_obj.uses_new_reminders = True
+        domain_obj.save()
+
+        for migrator in migrators:
+            if migrator.handler.active:
+                print("%s is active, deactivating..." % migrator.handler._id)
+                migrator.handler.active = False
+                migrator.handler.save()
+            else:
+                print("%s is already inactive" % migrator.handler._id)
+
     def handle(self, domain, **options):
         check_only = options['check']
         domain_obj = Domain.get_by_name(domain)
@@ -464,9 +483,17 @@ class Command(BaseCommand):
         if check_only:
             return
 
-        if not self.confirm_migration_begin():
+        if not self.confirm("Are you sure you want to start the migration? y/n "):
             print("Migrated halted")
             return
 
         self.migrate_handlers(migrators)
         self.refresh_instances(domain, migrators)
+
+        if not self.confirm("Ok to switch on new reminders? y/n "):
+            print("Migrated halted")
+            return
+
+        self.switch_on_new_reminders(domain, migrators)
+        self.ensure_migration_flag_disabled()
+        print("Migration completed.")
