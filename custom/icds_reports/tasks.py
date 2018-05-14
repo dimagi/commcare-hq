@@ -499,8 +499,8 @@ def _update_ucr_table_mapping():
             table_name = get_table_name(DASHBOARD_DOMAIN, table['name'])
         else:
             table_name = table['name']
-        UcrTableNameMapping.objects.get_or_create(
+        UcrTableNameMapping.objects.update_or_create(
             table_type=table['type'],
-            table_name=table_name
+            defaults={'table_name': table_name}
         )
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
