@@ -65,6 +65,7 @@ from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_m
     get_enrolled_women_sector_data, get_enrolled_women_data_chart
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
+from custom.icds_reports.reports.fact_sheets import FactSheetsReport
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
     get_functional_toilet_data_map, get_functional_toilet_sector_data
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
@@ -88,9 +89,12 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-
-from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
+from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
+from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
