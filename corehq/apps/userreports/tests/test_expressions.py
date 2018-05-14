@@ -77,7 +77,7 @@ class ConstantExpressionTest(SimpleTestCase):
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
     def test_type_casting(self):
-        # We would expect to be cast as string, since we
+        # We would expect this to be cast as string, since we
         #   have set the datatype to string, but
         #   the datatype casting doesn't work in the 'constant' expression.
         #   It's easy to fix it, but it would be breaking older use cases
