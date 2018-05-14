@@ -463,6 +463,9 @@ class Command(BaseCommand):
             else:
                 print("%s is already inactive" % migrator.handler._id)
 
+        while any([handler.locked for handler in self.get_handlers_to_migrate(domain)]):
+            sleep(5)
+
     def handle(self, domain, **options):
         check_only = options['check']
         domain_obj = Domain.get_by_name(domain)
