@@ -60,8 +60,9 @@ from time import sleep
 
 def log(message):
     print(message)
-    with open('new_reminders_migration.log', 'r+') as f:
+    with open('new_reminders_migration.log', 'a') as f:
         f.write(message)
+        f.write('\n')
 
 
 class BaseMigrator(object):
@@ -487,6 +488,8 @@ class Command(BaseCommand):
 
     def handle(self, domain, **options):
         check_only = options['check']
+        log("Handling new reminders migration for %s, --check option is %s" % (domain, check_only))
+
         domain_obj = Domain.get_by_name(domain)
 
         if self.migration_already_done(domain_obj):
