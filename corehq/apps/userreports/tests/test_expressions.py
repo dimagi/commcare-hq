@@ -76,6 +76,20 @@ class ConstantExpressionTest(SimpleTestCase):
     def test_constant_datetime_conversion(self):
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
+    def test_type_casting(self):
+        # We would expect to be cast as string, since we
+        #   have set the datatype to string, but
+        #   the datatype casting doesn't work in the 'constant' expression.
+        #   It's easy to fix it, but it would be breaking older use cases
+        self.assertEqual(
+            ExpressionFactory.from_spec({
+                'constant': '2018-01-03',
+                'datatype': 'string',
+                'type': 'constant'
+            }),
+            date(2018, 1, 3)
+        )
+
     def test_constant_auto_detection_invalid_types(self):
         for invalid_constant in ({}):
             with self.assertRaises(BadSpecError):
@@ -116,6 +130,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
+            ('2015-09-30', "string", date(2015, 9, 30)),
             (datetime(2015, 9, 30, 0, 0, 0), "datetime", "2015-09-30"),
             ([None], "array", None),
             ([3], "array", 3),
