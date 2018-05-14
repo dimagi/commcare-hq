@@ -25,6 +25,7 @@ from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 import signal
+from io import open
 
 
 class Command(BaseCommand):
