@@ -111,4 +111,5 @@ xhtml2pdf==0.0.6
 qrcode==5.3
 django-user-agents==0.3.2
 csv342==1.0.0
+Faker==0.8.13
 polib==1.1.0
