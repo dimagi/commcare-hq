@@ -520,5 +520,5 @@ class Command(BaseCommand):
             return
 
         self.switch_on_new_reminders(domain, migrators)
-        self.ensure_migration_flag_disabled()
+        self.ensure_migration_flag_disabled(domain)
         log("Migration completed.")
