@@ -387,6 +387,41 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         array = ['first', 'second', 'third']
         self.assertEqual('second', expression({'my_array': array}))
 
+    def test_nested_date(self):
+        spec = {
+            'type': 'array_index',
+            'array_expression': {
+                'type': 'iterator',
+                'expressions': [
+                    {'constant': '2018-01-01',
+                    'datatype': 'date',
+                    'type': 'constant'},
+                    '2018-01-02',
+                    {'constant': '2018-01-03',
+                    'datatype': 'string',
+                    'type': 'constant'},
+                    'not-date'
+                ]
+            },
+            'index_expression': 0
+        }
+        # date expression should be capturred as date
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 1))
+        # literal date should be capturred as date
+        spec['index_expression'] = 1
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 2))
+        # date expression cast to string is also capturred as date.
+        #   see note on ConstantExpressionTest.test_type_casting
+        spec['index_expression'] = 2
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 3))
+        # string is capturred as string
+        spec['index_expression'] = 3
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), 'not-date')
+
 
 class DictExpressionTest(SimpleTestCase):
 
