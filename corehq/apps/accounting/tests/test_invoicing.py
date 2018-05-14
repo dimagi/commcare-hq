@@ -607,6 +607,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self.assertListEqual(sent_email.cc, [])
 
     def test_product_subscription(self):
+        self._setup_product_subscription()
         invoice_date = utils.months_from_date(self.subscription.date_start, 1)
         tasks.generate_invoices(invoice_date)
 
