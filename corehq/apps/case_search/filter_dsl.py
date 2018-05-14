@@ -43,24 +43,25 @@ def print_ast(node):
     visit(node, 0)
 
 
+OPERATOR_MAPPING = {
+    'and': filters.AND,
+    'not': filters.NOT,
+    'or': filters.OR,
+}
+COMPARISON_MAPPING = {
+    '>': 'gt',
+    '>=': 'gte',
+    '<': 'lt',
+    '<=': 'lte',
+}
+
+EQ = "="
+NEQ = "!="
+
+
 def build_filter_from_ast(domain, node):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
     """
-
-    OPERATOR_MAPPING = {
-        'and': filters.AND,
-        'not': filters.NOT,
-        'or': filters.OR,
-    }
-    COMPARISON_MAPPING = {
-        '>': 'gt',
-        '>=': 'gte',
-        '<': 'lt',
-        '<=': 'lte',
-    }
-
-    EQ = "="
-    NEQ = "!="
 
     def _walk_related_cases(node):
         """Return a query that will fulfill the filter on the related case.
@@ -169,7 +170,6 @@ def build_filter_from_ast(domain, node):
                 serialize(node),
             )
 
-
     def visit(node):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
@@ -199,3 +199,25 @@ def build_filter_from_ast(domain, node):
         )
 
     return visit(node)
+
+
+def get_properties_from_ast(node):
+    """Returns a list of case properties referenced in the XPath expression
+
+    Skips malformed parts of the XPath expression
+    """
+    columns = set()
+
+    def visit(node):
+        if not hasattr(node, 'op'):
+            return
+
+        if node.op in ([EQ, NEQ] + list(COMPARISON_MAPPING.keys())):
+            columns.add(serialize(node.left))
+
+        if node.op in list(OPERATOR_MAPPING.keys()):
+            visit(node.left)
+            visit(node.right)
+
+    visit(node)
+    return list(columns)
