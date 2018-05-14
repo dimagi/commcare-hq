@@ -185,7 +185,10 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                     "_source": {
                         'name': 'blah',
                         'case_properties': [
-                            {'key': '@case_id', 'value': '123'},
+                            {'key': '@case_id', 'value': 'should be removed'},
+                            {'key': 'name', 'value': 'should be removed'},
+                            {'key': 'case_name', 'value': 'should be removed'},
+                            {'key': 'last_modified', 'value': 'should be removed'},
                             {'key': 'foo', 'value': 'bar'},
                             {'key': 'baz', 'value': 'buzz'}]
                     }
