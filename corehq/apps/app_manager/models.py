@@ -6735,22 +6735,16 @@ class Translation(models.Model):
         elif self.resource_type == "form":
             return FormTranslationParser(self)
 
-    def cleanup_removed_translations(self, for_field, langs):
-        # delete anything in language_dict that isn't in langs (anymore)
-        for lang in self.translation[for_field].keys():
-            if lang not in langs:
-                self.translation[for_field].pop(lang, None)
-
 
 class BaseTranslationParser:
     def __init__(self, resource_translation):
         self.resource_translation = resource_translation
 
-    def update_name(self, lang, translated_name=None):
-        if translated_name:
-            self.resource_translation.translation['name'][lang] = translated_name
-        else:
-            self.resource_translation.translation['name'].pop(lang, None)
+    def update_name(self, langs, translated_names, prefix="default_"):
+        _update_translation_dict(
+            prefix,
+            self.resource_translation.translation['name'],
+            translated_names, langs)
 
     def update(self, *args, **kwargs):
         raise NotImplementedError
