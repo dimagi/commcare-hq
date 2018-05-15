@@ -5,7 +5,6 @@ from django.conf.urls import url, include
 from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
 
-from corehq.apps.app_manager.views import download_test_jar
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.appstore.views import rewrite_url
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -127,7 +126,6 @@ urlpatterns = [
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
-    url(r'^test/CommCare.jar', download_test_jar, name='download_test_jar'),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
     url(r'^500/$', TemplateView.as_view(template_name='500.html')),
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),

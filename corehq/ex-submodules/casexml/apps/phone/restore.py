@@ -719,6 +719,15 @@ class RestoreConfig(object):
                         'commcare.restores.{}'.format(segment),
                         tags=tags + ['duration:%s' % bucket],
                     )
+                elif timer.name.startswith('fixture:'):
+                    bucket = bucket_value(timer.duration, timer_buckets, 's')
+                    datadog_counter(
+                        'commcare.restores.fixture',
+                        tags=tags + [
+                            'duration:%s' % bucket,
+                            timer.name,
+                        ],
+                    )
             tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
         datadog_counter('commcare.restores.count', tags=tags)
 

@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
