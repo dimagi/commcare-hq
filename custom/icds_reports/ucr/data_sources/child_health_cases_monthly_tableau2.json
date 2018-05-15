@@ -1451,13 +1451,8 @@
         "column_id": "cf_in_month",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1474,13 +1469,8 @@
         "column_id": "cf_initiated",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1488,13 +1478,8 @@
         "column_id": "cf_diet_diversity",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1502,13 +1487,8 @@
         "column_id": "cf_diet_quantity",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1516,13 +1496,8 @@
         "column_id": "cf_handwashing",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1530,13 +1505,8 @@
         "column_id": "cf_demo",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1731,13 +1701,8 @@
         "column_id": "counsel_pediatric_ifa",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1745,13 +1710,8 @@
         "column_id": "counsel_comp_feeding_vid",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 0,
-          "expression": {
-            "type": "constant",
-            "constant": 1
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
