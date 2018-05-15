@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import datetime
 from collections import defaultdict
 
@@ -13,6 +13,7 @@ from corehq.motech.repeaters.const import RECORD_CANCELLED_STATE, RECORD_SUCCESS
 from corehq.motech.repeaters.models import RepeatRecord, Repeater
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain
 from six.moves import input
+from io import open
 
 
 class Command(BaseCommand):

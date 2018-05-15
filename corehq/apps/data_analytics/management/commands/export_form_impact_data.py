@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 from collections import defaultdict
 
 import dateutil
@@ -15,6 +15,7 @@ from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
 import six
+from io import open
 
 class Command(BaseCommand):
     """

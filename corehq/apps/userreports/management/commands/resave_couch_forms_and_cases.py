@@ -2,7 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import csv
+import csv342 as csv
 import datetime
 
 from django.core.management.base import BaseCommand
@@ -11,6 +11,7 @@ from corehq.util.couch import IterDB
 from corehq.util.log import with_progress_bar
 from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
+from io import open
 
 
 class Command(BaseCommand):
