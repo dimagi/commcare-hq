@@ -71,6 +71,6 @@ class Command(BaseCommand):
         self.overwrite_resources(resources, sha=current_sha)
 
     def get_hash(self, filename):
-        with open(filename) as f:
+        with open(filename, 'rb') as f:
             hash = hashlib.sha1(f.read()).hexdigest()[:7]
         return hash
