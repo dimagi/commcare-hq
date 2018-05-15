@@ -1063,10 +1063,14 @@ class ScheduleForm(Form):
             (self.LANGUAGE_PROJECT_DEFAULT, _("Project Default")),
         ]
 
-        choices.extend([
-            (language_code, _(get_language_name(language_code)))
-            for language_code in self.language_list
-        ])
+        for language_code in self.language_list:
+            language_name = get_language_name(language_code)
+            if language_name:
+                language_name = _(language_name)
+            else:
+                language_name = language_code
+
+            choices.append((language_code, language_name))
 
         self.fields['default_language_code'].choices = choices
 
