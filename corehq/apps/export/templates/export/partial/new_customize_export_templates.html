@@ -168,6 +168,14 @@
                                 <i class="fa fa-arrows-v"></i>
                             </span>
                             &nbsp;&nbsp;&nbsp;
+                            {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+                            <span class="send-to-bottom">
+                                <i class="fa fa-arrow-down"></i>
+                            </span>
+                            <span class="send-to-top">
+                                <i class="fa fa-arrow-up"></i>
+                            </span>
+                            {% endif %}
                             <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
                             <input type="checkbox"
                                    class="field-include"
