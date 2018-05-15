@@ -174,7 +174,7 @@ class SMSSurveyContent(Content):
         # very different if the contact is a user or is a case. So here if recipient
         # is a user we only allow them to fill out the survey as the user contact, and
         # not the user case contact.
-        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient, try_use_case=False)
+        phone_entry_or_number = self.get_two_way_entry_or_phone_number(recipient, try_user_case=False)
 
         if phone_entry_or_number is None:
             logged_subevent.error(MessagingEvent.ERROR_NO_PHONE_NUMBER)
