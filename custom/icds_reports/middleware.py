@@ -29,7 +29,7 @@ def is_login_page(request):
 
 
 def is_icds_domain(request):
-    return getattr(request, 'domain', None) == 'icds-test'
+    return getattr(request, 'domain', None) == DASHBOARD_DOMAIN
 
 
 def is_icds_dashboard_view(request):
@@ -54,4 +54,3 @@ class ICDSAuditMiddleware(MiddlewareMixin):
             couch_user = CouchUser.get_by_username(request.user.username)
             ICDSAuditEntryRecord.create_entry(request, couch_user)
         return response
-
