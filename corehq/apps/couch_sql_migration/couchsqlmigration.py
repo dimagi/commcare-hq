@@ -277,11 +277,11 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        pool = Pool(10)
+        pool = Pool(5)
         changes = _get_case_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
-            if len(cases) == 1000:
+            if len(cases) == 500:
                 pool.spawn(self._diff_cases, deepcopy(cases))
                 cases = {}
 
