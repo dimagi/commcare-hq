@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
+from io import open
 
 
 class AbtSupervisorExpressionSpec(JsonObject):
