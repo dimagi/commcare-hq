@@ -73,8 +73,19 @@ UCR_TABLE_NAME_MAPPING = [
 ]
 
 SQL_FUNCTION_PATHS = [
-    ('migrations', 'sql_templates', 'create_functions.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
+    ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_aggregate_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
 ]
 
 
