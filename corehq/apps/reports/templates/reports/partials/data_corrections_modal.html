@@ -19,7 +19,7 @@
                     <!-- ko if: displayProperties.length > 1 -->
                         <ul class="nav nav-pills">
                             <!-- ko foreach: displayProperties -->
-                            <li data-bind="click: function() { $root.updateDisplayProperty(property) }, css: { active: $root.displayProperty() === property }">
+                                <li data-bind="click: function() { $root.updateDisplayProperty(property) }, css: { active: $root.displayProperty() === property }">
                                     <a data-bind="text: name"></a>
                                 </li>
                             <!--/ko-->
