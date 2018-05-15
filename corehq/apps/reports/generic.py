@@ -663,6 +663,7 @@ class GenericReportView(object):
         )
         if 'report_table' in self.report_context:
             report_table = self.report_context['report_table']
+            pagination_on = report_table['pagination']['is_on']
             context.update({
                 'report_table_js_options': {
                     'datatables': report_table['datatables'],
@@ -678,9 +679,9 @@ class GenericReportView(object):
                     'bad_request_error_text': report_table['bad_request_error_text'],
                     'pagination': {
                         'hide': getattr(report_table['pagination'], 'hide', False),
-                        'is_on': report_table['pagination']['is_on'],
-                        'source': report_table['pagination']['source'] if report_table['pagination']['is_on'] else None,
-                        'params': report_table['pagination']['params'] if report_table['pagination']['is_on'] else None,
+                        'is_on': pagination_on,
+                        'source': report_table['pagination']['source'] if pagination_on else None,
+                        'params': report_table['pagination']['params'] if pagination_on else None,
                     },
                     'left_col': {
                         'is_fixed': report_table['left_col']['is_fixed'],

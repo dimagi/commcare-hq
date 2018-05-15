@@ -3,13 +3,13 @@ hqDefine("reports/js/async_tabular", function() {
         if (data.report_table_js_options && data.report_table_js_options.datatables) {
             var tableConfig = data.report_table_js_options,
                 options = {
-                dataTableElem: '#report_table_' + data.slug,
-                defaultRows: tableConfig.default_rows,
-                startAtRowNum: tableConfig.start_at_row,
-                showAllRowsOption: tableConfig.show_all_rows,
-                loadingTemplateSelector: '#js-template-loading-report',
-                autoWidth: tableConfig.headers.auto_width,
-            };
+                    dataTableElem: '#report_table_' + data.slug,
+                    defaultRows: tableConfig.default_rows,
+                    startAtRowNum: tableConfig.start_at_row,
+                    showAllRowsOption: tableConfig.show_all_rows,
+                    loadingTemplateSelector: '#js-template-loading-report',
+                    autoWidth: tableConfig.headers.auto_width,
+                };
             if (!tableConfig.sortable) {
                 options.defaultSort = false;
             }
@@ -49,7 +49,7 @@ hqDefine("reports/js/async_tabular", function() {
         $('.header-popover').popover({
             trigger: 'hover',
             placement: 'bottom',
-            container: 'body'
+            container: 'body',
         });
     }
 
