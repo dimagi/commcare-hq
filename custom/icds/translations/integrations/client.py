@@ -45,7 +45,7 @@ class TransifexApiClient():
         )
 
     def project_details(self):
-        url = "https://www.transifex.com/api/2/project/{}/".format(self.project)
+        url = "https://www.transifex.com/api/2/project/{}/?details".format(self.project)
         return requests.get(
             url, auth=self._auth,
         )
