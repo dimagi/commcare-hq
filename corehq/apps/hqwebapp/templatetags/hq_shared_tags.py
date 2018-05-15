@@ -498,7 +498,9 @@ def maintenance_alert():
         return ''
     else:
         return format_html(
-            '<div class="alert alert-warning alert-maintenance" style="text-align: center; margin-bottom: 0;">{}</div>',
+            '<div class="alert alert-warning alert-maintenance" data-id="{}">{}{}</div>',
+            alert.id,
+            mark_safe('<a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>'),
             mark_safe(alert.html),
         )
 
