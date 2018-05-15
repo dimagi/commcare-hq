@@ -10,6 +10,7 @@ from django.conf import settings
 from subprocess import call
 
 from corehq.apps.hqwebapp.management.commands.resource_static import Command as ResourceStaticCommand
+from io import open
 
 
 class Command(ResourceStaticCommand):
