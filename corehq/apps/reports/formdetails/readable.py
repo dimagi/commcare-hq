@@ -45,7 +45,7 @@ class FormQuestion(JsonObject):
     @property
     def icon(self):
         try:
-            return "{} {}".format(VELLUM_TYPES[self.type]['icon'], VELLUM_TYPES[self.type]['icon_bs3'])
+            return VELLUM_TYPES[self.type]['icon']
         except KeyError:
             return 'fa fa-question-circle'
 

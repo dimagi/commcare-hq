@@ -22,7 +22,7 @@
             self.getIcon = function(type) {
                 var vtype = config.vellumTypes[type];
                 if (vtype) {
-                    return vtype.icon_bs3;
+                    return vtype.icon;
                 }
                 return '';
             };
