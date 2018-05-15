@@ -640,7 +640,7 @@ class TestLockingQueues(TestCase):
         """
         for lock_id in lock_ids:
             if location:
-                self.assertEqual(queue_obj_id, self.queues.queue_by_lock_id[lock_id][location].id)
+                self.assertEqual(queue_obj_id, self.queues.queue_by_lock_id[lock_id][location])
             else:
                 self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
 
