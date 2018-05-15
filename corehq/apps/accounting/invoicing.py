@@ -5,6 +5,7 @@ import calendar
 import datetime
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
@@ -161,9 +162,17 @@ class DomainInvoiceFactory(object):
         if record.should_send_email:
             try:
                 if invoice.subscription.service_type == SubscriptionType.IMPLEMENTATION:
-                    record.send_email(contact_email=invoice.account.dimagi_contact, cc_emails=self.recipients)
+                    if self.recipients:
+                        for email in self.recipients:
+                            record.send_email(contact_email=email)
+                    elif invoice.account.dimagi_contact:
+                        record.send_email(contact_email=invoice.account.dimagi_contact,
+                                          cc_emails=[settings.ACCOUNTS_EMAIL])
+                    else:
+                        record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
                 else:
-                    for email in self.recipients:
+                    for email in self.recipients or \
+                                 record.invoice.subscription.account.billingcontactinfo.email_list or []:
                         record.send_email(contact_email=email)
             except InvoiceEmailThrottledError as e:
                 if not self.logged_throttle_error:

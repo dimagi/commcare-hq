@@ -6,9 +6,12 @@ import random
 import datetime
 from django.test import override_settings
 
+from django.conf import settings
+from django.core import mail
 from dimagi.utils.dates import add_months_to_date
 
 from corehq.apps.accounting import tasks, utils
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory
 from corehq.apps.accounting.models import (
     SMALL_INVOICE_THRESHOLD,
     BillingAccount,
@@ -576,3 +579,86 @@ class TestSmsLineItem(BaseInvoiceTestCase):
         SmsGatewayFeeCriteria.objects.all().delete()
         SmsUsageFee.objects.all().delete()
         SmsUsageFeeCriteria.objects.all().delete()
+
+
+class TestInvoiceRecipients(BaseInvoiceTestCase):
+
+    def test_implementation_subscription_with_dimagi_contact(self):
+        self._setup_implementation_subscription_with_dimagi_contact()
+
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(len(mail.outbox), 1)
+        sent_email = mail.outbox[0]
+        self.assertListEqual(sent_email.to, ['dimagi_contact@test.com'])
+        self.assertListEqual(sent_email.cc, [settings.ACCOUNTS_EMAIL])
+
+    def test_implementation_subscription_without_dimagi_contact(self):
+        self._setup_implementation_subscription_without_dimagi_contact()
+
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(len(mail.outbox), 1)
+        sent_email = mail.outbox[0]
+        self.assertListEqual(sent_email.to, [settings.ACCOUNTS_EMAIL])
+        self.assertListEqual(sent_email.cc, [])
+
+    def test_product_subscription(self):
+        self._setup_product_subscription()
+
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertListEqual(mail.outbox[0].to, ['client1@test.com'])
+        self.assertListEqual(mail.outbox[0].cc, [])
+        self.assertListEqual(mail.outbox[1].to, ['client2@test.com'])
+        self.assertListEqual(mail.outbox[1].cc, [])
+
+    def test_specified_recipients_implementation_with_dimagi_contact(self):
+        self._setup_implementation_subscription_with_dimagi_contact()
+        self._test_specified_recipients()
+
+    def test_specified_recipients_implementation_without_dimagi_contact(self):
+        self._setup_implementation_subscription_without_dimagi_contact()
+        self._test_specified_recipients()
+
+    def test_specified_recipients_product(self):
+        self._setup_product_subscription()
+        self._test_specified_recipients()
+
+    def _setup_implementation_subscription_with_dimagi_contact(self):
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PRO)
+        self.subscription.save()
+        self.subscription.account.dimagi_contact = 'dimagi_contact@test.com'
+        self.subscription.account.save()
+
+    def _setup_implementation_subscription_without_dimagi_contact(self):
+        self.subscription.service_type = SubscriptionType.IMPLEMENTATION
+        self.subscription.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PRO)
+        self.subscription.save()
+        self.subscription.account.dimagi_contact = ''
+        self.subscription.account.save()
+
+    def _setup_product_subscription(self):
+        self.subscription.service_type = SubscriptionType.PRODUCT
+        self.subscription.save()
+        self.subscription.account.billingcontactinfo.email_list = ['client1@test.com', 'client2@test.com']
+        self.subscription.account.billingcontactinfo.save()
+
+    def _test_specified_recipients(self):
+        DomainInvoiceFactory(
+            self.subscription.date_start,
+            utils.months_from_date(self.subscription.date_start, 1),
+            self.subscription.subscriber.domain,
+            recipients=['recipient1@test.com', 'recipient2@test.com']
+        ).create_invoices()
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertListEqual(mail.outbox[0].to, ['recipient1@test.com'])
+        self.assertListEqual(mail.outbox[0].cc, [])
+        self.assertListEqual(mail.outbox[1].to, ['recipient2@test.com'])
+        self.assertListEqual(mail.outbox[1].cc, [])
