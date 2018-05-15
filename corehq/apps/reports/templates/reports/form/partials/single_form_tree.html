@@ -53,9 +53,15 @@
         <td class="span6" title="{{ question.get_formatted_response }}">
             {% if question.options %}
                 <div class="form-data-readable">
-                {% for option in question.options %}
-                    {% if option.value in question.response.split %}
-                        {{ option.label|linebreaksbr }}
+                {% for response in question.response.split %}
+                    {% if response in question.option_values %}
+                        {% for option in question.options %}
+                            {% if option.value == response %}
+                                {{ option.label|linebreaksbr }}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {{ response }}
                     {% endif %}
                 {% endfor %}
                 </div>
