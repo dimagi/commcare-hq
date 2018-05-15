@@ -361,8 +361,6 @@ HQ_APPS = (
     'custom.succeed',
     'custom.ucla',
 
-    'custom.uth',
-
     'custom.intrahealth',
     'custom.world_vision',
     'custom.up_nrhm',
@@ -1428,7 +1426,6 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
-    'uth',
     'openclinica',
 
     # custom reports
@@ -2100,7 +2097,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
-    'uth-rhd-test',
     'crs-remind',
     'succeed',
 ]
@@ -2112,7 +2108,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
-    'uth-rhd-test',
     'succeed'
 ]
 
