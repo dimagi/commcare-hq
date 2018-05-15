@@ -52,7 +52,7 @@ class MPR2APersonCases(ConfigurableReportCustomQueryProvider):
         }[x]
         column &= {
             "resident": columns.resident == "yes",
-            "migrant": columns.resident != "yes",
+            "migrant": columns.resident.is_distinct_from("yes"),
         }[y]
 
         if z is None:
