@@ -2056,7 +2056,7 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'xsd:time',
         'icon': 'icon-time',
-        'icon_bs3': 'a fa-clock-o',
+        'icon_bs3': 'fa fa-clock-o',
         'editable': True,
     },
     "Trigger": {
