@@ -1328,7 +1328,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         if isinstance(content, (SMSContent, CustomContent)):
             return cls.CONTENT_SMS, None, None
         elif isinstance(content, SMSSurveyContent):
-            app, module, form = content.get_memoized_app_module_form(domain)
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
             return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
