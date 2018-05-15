@@ -196,7 +196,7 @@ BEGIN
     'counsel_manage_breast_problems = temp.counsel_manage_breast_problems, ' ||
     'counsel_ebf = temp.counsel_ebf, ' ||
     'counsel_adequate_bf = temp.counsel_adequate_bf, ' ||
-    'ebf_no_info_recorded = temp.ebf_no_info_recorded ' ||
+    'ebf_no_info_recorded = temp.ebf_no_info_recorded, ' ||
     'thr_eligible = temp.thr_eligible, ' ||
     'rations_21_plus_distributed = temp.rations_21_plus_distributed '
     'FROM (SELECT ' ||
@@ -235,7 +235,7 @@ BEGIN
       'sum(counsel_manage_breast_problems) as counsel_manage_breast_problems, ' ||
       'sum(counsel_ebf) as counsel_ebf, ' ||
       'sum(counsel_adequate_bf) as counsel_adequate_bf, ' ||
-      'sum(ebf_no_info_recorded) as ebf_no_info_recorded ' ||
+      'sum(ebf_no_info_recorded) as ebf_no_info_recorded, ' ||
       'sum(thr_eligible) as thr_eligible, '
       'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed '
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
@@ -398,4 +398,3 @@ BEGIN
 END;
 $BODY$
 LANGUAGE plpgsql;
-ANGUAGE plpgsql;
