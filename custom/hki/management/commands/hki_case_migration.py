@@ -14,6 +14,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.util.log import with_progress_bar
 
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 class Command(BaseCommand):
