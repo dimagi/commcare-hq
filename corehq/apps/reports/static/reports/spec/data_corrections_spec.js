@@ -166,9 +166,11 @@ describe('Data Corrections', function () {
             search("yellow");
             assertVisibleProperties(["yellow"]);
 
-            // Display spanish values
+            // Display and search spanish values
             model.updateDisplayProperty("spanish");
             assertVisibleText(["anaranjado", "rojo", "amarillo"]);
+            search("rojo");
+            assertVisibleProperties(["red"]);
         });
     });
 });
