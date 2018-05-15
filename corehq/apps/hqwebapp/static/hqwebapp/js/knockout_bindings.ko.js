@@ -213,6 +213,31 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 list.unshift(list.splice(current_index, 1)[0]);
             });
 
+            $(element).on('click', '.send-to-bottom', function (e) {
+                var row = $(this).parent().parent();
+                var current_index = row[0].attributes['data-order'].value;
+
+                var lastSelectedRowIndex = null;
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].selected()) {
+                        lastSelectedRowIndex = i;
+                    }
+                }
+
+                if (current_index < lastSelectedRowIndex) {
+                    // Update UI
+                    $('.isSelectedForExport').addClass('fix');
+                    row.removeClass('fix');
+                    $('.fix:nth-child(' + ($('.fix').length + 1) + ')').after(row);
+                    $('.fix').removeClass('fix');
+
+                    // Update KO
+                    var current_list_item = list.splice(current_index, 1)[0];
+                    list.splice(lastSelectedRowIndex, 0, current_list_item);
+                }
+            });
+
             $(element).sortable({
                 connectWith: "ul",
                 delay: 150, //Needed to prevent accidental drag when trying to select
