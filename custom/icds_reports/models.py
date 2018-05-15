@@ -1,10 +1,15 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+import architect
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models
+from jsonfield import JSONField
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
+from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
@@ -20,6 +25,7 @@ from custom.icds_reports.utils.aggregation import (
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
 )
+from dimagi.utils.web import get_ip
 
 
 class AggregateSQLProfile(models.Model):
@@ -1060,3 +1066,51 @@ class UcrTableNameMapping(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'ucr_table_name_mapping'
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='time_of_use_start',
+    db=get_icds_ucr_db_alias()
+)
+class ICDSAuditEntryRecord(models.Model):
+    username = models.EmailField(db_index=True)
+    assigned_location = models.CharField(max_length=256, null=True)
+    ip_address = models.CharField(max_length=15, null=True)
+    url = models.TextField()
+    post_data = JSONField(default=dict)
+    get_data = JSONField(default=dict)
+    session_key = models.CharField(max_length=32)
+    time_of_use_start = models.DateTimeField(auto_now_add=True)
+    time_of_use_end = models.DateTimeField(null=True)
+
+    class Meta(object):
+        app_label = 'icds_model'
+        db_table = 'icds_audit_entry_record'
+        indexes = [
+            models.Index(fields=['username', ])
+        ]
+
+    @classmethod
+    def create_entry(cls, request, couch_user=None):
+        couch_user = request.couch_user if couch_user is None else couch_user
+        record = cls(
+            username=couch_user.username,
+            assigned_location=couch_user.get_location_ids(getattr(request, 'domain', None)),
+            ip_address=get_ip(request),
+            url=request.path,
+            get_data=request.GET,
+            post_data=request.POST,
+            session_key=request.session.session_key,
+        )
+        record.save()
+        return record.id
+
+    @classmethod
+    def update_entry(cls, id):
+        record = cls.objects.get(id=id)
+        record.time_of_use_end = datetime.utcnow()
+        record.save()
