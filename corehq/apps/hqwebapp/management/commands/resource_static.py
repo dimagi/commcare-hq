@@ -9,6 +9,7 @@ from django.contrib.staticfiles import finders
 from django.conf import settings
 from dimagi.utils import gitinfo
 from django.core import cache
+from io import open
 
 rcache = cache.caches['redis']
 RESOURCE_PREFIX = '#resource_%s'
