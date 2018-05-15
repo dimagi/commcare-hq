@@ -4,9 +4,9 @@ var url = hqImport('hqwebapp/js/initial_page_data').reverse;
 
 function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $filter, maternalChildService,
     locationsService, userLocationId, storageService,  genders, ages, haveAccessToAllLocations,
-    baseControllersService) {
+    baseControllersService, haveAccessToFeatures) {
     baseControllersService.BaseController.call(this, $scope, $routeParams, $location, locationsService,
-        userLocationId, storageService, haveAccessToAllLocations);
+        userLocationId, storageService, haveAccessToAllLocations, haveAccessToFeatures);
     var vm = this;
 
     var ageIndex = _.findIndex(ages, function (x) {
@@ -33,15 +33,16 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
     vm.filters = [];
 
-    vm.rightLegend = {
-        info: 'Percentage of children (6-60 months) enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
-    };
-
     vm.chosenFilters = function() {
+        var defaultAge = vm.haveAccessToFeatures ? '0 - 5 years' : '6 - 60 months';
         var gender = genderIndex > 0 ? genders[genderIndex].name : '';
-        var age = ageIndex > 0 ? ages[ageIndex].name : '6 - 60 months';
+        var age = ageIndex > 0 ? ages[ageIndex].name : defaultAge;
         var delimiter = gender && age ? ', ' : '';
         return gender || age ? '(' + gender + delimiter + age + ')' : '';
+    };
+
+    vm.rightLegend = {
+        info: 'Percentage of children' + vm.chosenFilters() + 'enrolled for Anganwadi Services with height-for-age below -2Z standard deviations of the WHO Child Growth Standards median.',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -162,7 +163,7 @@ function PrevalenceOfStuntingReportController($scope, $routeParams, $location, $
     };
 }
 
-PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService'];
+PrevalenceOfStuntingReportController.$inject = ['$scope', '$routeParams', '$location', '$filter', 'maternalChildService', 'locationsService', 'userLocationId', 'storageService', 'genders', 'ages', 'haveAccessToAllLocations', 'baseControllersService', 'haveAccessToFeatures'];
 
 window.angular.module('icdsApp').directive('prevalenceOfStunting', function() {
     return {

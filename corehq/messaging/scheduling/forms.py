@@ -65,6 +65,7 @@ from couchdbkit.resource import ResourceNotFound
 from langcodes import get_name as get_language_name
 import six
 from six.moves import range
+from six.moves import filter
 
 
 def validate_time(value):
@@ -1055,17 +1056,21 @@ class ScheduleForm(Form):
 
             return True
 
-        self.fields['send_frequency'].choices = filter(filter_function, self.fields['send_frequency'].choices)
+        self.fields['send_frequency'].choices = list(filter(filter_function, self.fields['send_frequency'].choices))
 
     def set_default_language_code_choices(self):
         choices = [
             (self.LANGUAGE_PROJECT_DEFAULT, _("Project Default")),
         ]
 
-        choices.extend([
-            (language_code, _(get_language_name(language_code)))
-            for language_code in self.language_list
-        ])
+        for language_code in self.language_list:
+            language_name = get_language_name(language_code)
+            if language_name:
+                language_name = _(language_name)
+            else:
+                language_name = language_code
+
+            choices.append((language_code, language_name))
 
         self.fields['default_language_code'].choices = choices
 

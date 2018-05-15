@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -1227,7 +1228,8 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None,
+                    auto_generate_credits=False, is_trial=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1256,6 +1258,8 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            auto_generate_credits=auto_generate_credits,
+            is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
@@ -1753,7 +1757,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.recipients
+            return original_record.emailed_to_list
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1951,7 +1955,7 @@ class BillingRecordBase(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    emailed_to = models.CharField(max_length=254, db_index=True)
+    emailed_to_list = ArrayField(models.EmailField(), default=list)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
@@ -1963,14 +1967,6 @@ class BillingRecordBase(models.Model):
         abstract = True
 
     _pdf = None
-
-    @property
-    def recipients(self):
-        return self.emailed_to.split(',') if self.emailed_to else []
-
-    @recipients.setter
-    def recipients(self, emails):
-        self.emailed_to = ','.join(emails)
 
     @property
     def pdf(self):
@@ -2075,7 +2071,9 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.recipients = contact_email
+        self.emailed_to_list.extend([contact_email])
+        if cc_emails:
+            self.emailed_to_list.extend(cc_emails)
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
