@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import csv
+import csv342 as csv
 import copy
 
 from django.core.management import BaseCommand
@@ -11,6 +11,7 @@ from corehq.form_processor.models import CommCareCaseSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 
 from dimagi.utils.chunked import chunked
+from io import open
 
 
 class Command(BaseCommand):

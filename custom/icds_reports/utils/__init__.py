@@ -38,6 +38,7 @@ import six
 import uuid
 from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
