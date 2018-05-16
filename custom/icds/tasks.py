@@ -49,8 +49,16 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
 @task
 def send_translation_files_to_transifex(domain, data):
-    Transifex(domain,
-              data.get('app_id'),
-              data.get('source_lang'),
-              data.get('transifex_project_slug'),
-              data.get('version')).send_translation_files()
+    if data.get('target_lang'):
+        Transifex(domain,
+                  data.get('app_id'),
+                  data.get('source_lang'),
+                  data.get('transifex_project_slug'),
+                  data.get('version')).send_translation_files()
+    if data.get('target_lang'):
+        Transifex(domain,
+                  data.get('app_id'),
+                  data.get('target_lang'),
+                  data.get('transifex_project_slug'),
+                  data.get('version'),
+                  is_source_file=False).send_translation_files()

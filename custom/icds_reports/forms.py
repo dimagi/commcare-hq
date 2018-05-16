@@ -23,7 +23,16 @@ class AppTranslationsForm(forms.Form):
                                     choices=[('en', ugettext_lazy('English')),
                                              ('hin', ugettext_lazy('Hindi')),
                                              ('mr', ugettext_lazy('Marathi')),
-                                             ('te', ugettext_lazy('telugu'))]
+                                             ('te', ugettext_lazy('Telugu'))]
+                                    )
+    # Unfortunately transifex api does not provide a way to pull all possible target languages and
+    # allow us to just add a checkbox instead of selecting a single/multiple target languages at once
+    target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
+                                    choices=[(None, ugettext_lazy('Select Target Language')),
+                                             ('hin', ugettext_lazy('Hindi')),
+                                             ('mr', ugettext_lazy('Marathi')),
+                                             ('te', ugettext_lazy('Telugu'))],
+                                    help_text=ugettext_lazy("Leave blank to skip")
                                     )
 
     def __init__(self, domain, *args, **kwargs):
@@ -45,6 +54,7 @@ class AppTranslationsForm(forms.Form):
             'version',
             'transifex_project_slug',
             'source_lang',
+            'target_lang',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     ugettext_lazy("Submit files for translation to Transifex"),

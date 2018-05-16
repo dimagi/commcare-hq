@@ -96,7 +96,7 @@ class POFileGenerator:
             if source not in translations_for_sheet:
                 translations_for_sheet[source] = Translation(
                     source,
-                    translation or source,  # to avoid blank msgstr in po file
+                    translation,
                     [].extend(occurrences))
         return translations_for_sheet
 
