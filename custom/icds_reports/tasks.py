@@ -42,6 +42,7 @@ from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 import six
 from six.moves import range
+from io import open
 
 celery_task_logger = logging.getLogger('celery.task')
 
