@@ -73,6 +73,8 @@ UCR_TABLE_NAME_MAPPING = [
 
 SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'create_functions.sql'),
+    ('migrations', 'sql_templates', 'insert_into_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'aggregate_child_health.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
 ]
 
@@ -132,13 +134,13 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
 
 def _create_aggregate_functions(cursor):
     try:
-        celery_task_logger.info("Starting icds reports create_functions")
         for sql_function_path in SQL_FUNCTION_PATHS:
+            celery_task_logger.info("Starting icds reports create_functions %s", sql_function_path[-1])
             path = os.path.join(os.path.dirname(__file__), *sql_function_path)
             with open(path, "r") as sql_file:
                 sql_to_execute = sql_file.read()
                 cursor.execute(sql_to_execute)
-        celery_task_logger.info("Ended icds reports create_functions")
+        celery_task_logger.info("Ended icds reports create_functions %s", sql_function_path[-1])
     except Exception:
         # This is likely due to a change in the UCR models or aggregation script which should be rare
         # First step would be to look through this error to find what function is causing the error
