@@ -35,7 +35,11 @@
                     </div>
                 </div>
                 <h4 class="modal-title">
-                    {% trans "Data Corrections" %}
+                    {% if instance %}{# This is a form, not a case #}
+                        {% trans "Clean Form Submission" %}
+                    {% else %}
+                        {% trans "Data Corrections" %}
+                    {% endif %}
                 </h4>
             </div>
             <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
