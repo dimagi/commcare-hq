@@ -224,11 +224,29 @@ class ScheduleInstance(PartitionedModel):
         recipient_count = 0
         for recipient in self.expand_recipients():
             recipient_count += 1
+
+            #   The framework will retry sending a non-processed schedule instance
+            # once every hour.
+
+            #   If we are processing a long list of recipients here and an error
+            # occurs half-way through, we don't want to reprocess the entire list
+            # of recipients again when the framework retries it an hour later.
+
+            #   So we use a non-blocking lock tied to the event due time and recipient
+            # to make sure that we don't try resending the same content to the same
+            # recipient more than once in the event of a retry.
+
+            #   If we succeed in sending the content, we don't release the lock so
+            # that it won't retry later. If we fail in sending the content, we release
+            # the lock so that it will retry later.
+
             lock = self.get_content_send_lock(client, recipient)
             if lock.acquire(blocking=False):
                 try:
                     content.send(recipient, logged_event)
                 except:
+                    # Release the lock if an error happened so that we can try sending
+                    # to this recipient again later.
                     lock.release()
                     raise
 
