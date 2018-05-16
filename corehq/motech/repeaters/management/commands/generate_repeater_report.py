@@ -3,7 +3,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 from datetime import datetime
 from openpyxl import Workbook
-import csv
+import csv342 as csv
 from couchdbkit import ResourceNotFound
 
 from django.core.management.base import BaseCommand, CommandError
@@ -11,6 +11,7 @@ from corehq.util.log import with_progress_bar
 from corehq.motech.repeaters.models import RepeatRecord
 from corehq.motech.repeaters.dbaccessors import iter_repeat_records_by_domain, get_repeat_record_count
 from six.moves import range
+from io import open
 
 
 class Command(BaseCommand):
