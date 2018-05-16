@@ -163,17 +163,10 @@ class AdjListManager(models.Manager):
                 ))
             ).filter(_exclude_dups=True).with_cte(xdups)
 
-        if settings.IS_LOCATION_CTE_ONLY:
-            query = query.order_by(cte.col._cte_ordering)
-        else:
-            query = query.order_by(self.tree_id_attr, self.left_attr)
-        return query
+        return query.order_by(cte.col._cte_ordering)
 
     def _cte_get_queryset_ancestors(self, node, include_self=False):
-        query = self._cte_get_ancestors(node, include_self=include_self)
-        if not settings.IS_LOCATION_CTE_ONLY:
-            query = query.order_by(self.tree_id_attr, self.left_attr)
-        return query
+        return self._cte_get_ancestors(node, include_self=include_self)
 
     def _cte_get_queryset_descendants(self, *args, **kw):
         return self._cte_get_descendants(*args, **kw)
