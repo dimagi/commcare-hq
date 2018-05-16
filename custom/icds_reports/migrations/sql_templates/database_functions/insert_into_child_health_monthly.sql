@@ -12,6 +12,7 @@ DECLARE
   _agg_pnc_form_table text;
   _start_date date;
   _end_date date;
+  _ucr_child_health_cases_table text;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
@@ -22,6 +23,7 @@ BEGIN
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('complementary_feeding') INTO _agg_complementary_feeding_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_tasks') INTO _ucr_child_tasks_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('thr_form') INTO _agg_thr_form_table;
+  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('child_list') INTO _ucr_child_health_cases_table;
 
   EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename) ||
@@ -252,6 +254,12 @@ BEGIN
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.ebf_eligible = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+        'person_name = ucr_case.person_name, ' ||
+        'mother_name = ucr_case.mother_name  ' ||
+    'FROM ' || quote_ident(_ucr_child_health_cases_table) || ' ucr_case ' ||
+    'WHERE chm_monthly.case_id = ucr_case.case_id AND chm_monthly.month = ' || quote_literal(_start_date);
 END;
 $BODY$
 LANGUAGE plpgsql;

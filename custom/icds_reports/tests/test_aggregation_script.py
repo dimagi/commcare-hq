@@ -24,7 +24,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 class AggregationScriptTest(TestCase):
 
     def _load_csv(self, path):
-        with open(path, mode='rb') as f:
+        with open(path, encoding='utf-8') as f:
             csv_data = list(csv.reader(f))
             headers = csv_data[0]
             for row_count, row in enumerate(csv_data):
@@ -93,7 +93,7 @@ class AggregationScriptTest(TestCase):
             differences = []
 
             for key in dict1.keys():
-                value1 = dict1[key].replace('\r\n', '\n')
+                value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
                 value2 = dict2[key].replace('\r\n', '\n')
                 if value1 != value2:
                     differences.append(key)
@@ -105,8 +105,12 @@ class AggregationScriptTest(TestCase):
                     Expected: {}
                 """.format(
                     idx + 1,
-                    ', '.join(['{}: {}'.format(difference, dict1[difference]) for difference in differences]),
-                    ', '.join(['{}: {}'.format(difference, dict2[difference]) for difference in differences])
+                    ', '.join(['{}: {}'.format(
+                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                    ),
+                    ', '.join(['{}: {}'.format(
+                        difference, dict2[difference]) for difference in differences]
+                    )
                 ))
 
         if messages:
