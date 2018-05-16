@@ -1,10 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from contextlib import contextmanager
-
 from django.db import models
-from django.conf import settings
 from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
