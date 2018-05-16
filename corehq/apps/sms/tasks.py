@@ -15,7 +15,8 @@ from corehq import privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import (create_billable_for_sms, get_utcnow,
-    log_sms_exception, process_incoming, send_message_via_backend)
+    log_sms_exception, process_incoming, send_message_via_backend,
+    DelayProcessing)
 from corehq.apps.sms.change_publishers import publish_sms_saved
 from corehq.apps.sms.mixin import (InvalidFormatException,
     PhoneNumberInUseException, apply_leniency)
@@ -218,6 +219,8 @@ def handle_incoming(msg):
     try:
         process_incoming(msg)
         handle_successful_processing_attempt(msg)
+    except DelayProcessing:
+        raise
     except:
         log_sms_exception(msg)
         handle_unsuccessful_processing_attempt(msg)
@@ -355,7 +358,13 @@ def process_sms(queued_sms_pk):
                 else:
                     requeue = handle_outgoing(msg)
             elif msg.direction == INCOMING:
-                handle_incoming(msg)
+                try:
+                    handle_incoming(msg)
+                except DelayProcessing:
+                    process_sms.apply_async([queued_sms_pk], countdown=60)
+                    if recipient_block:
+                        release_lock(recipient_lock, True)
+                    release_lock(message_lock, True)
             else:
                 msg.set_system_error(SMS.ERROR_INVALID_DIRECTION)
                 remove_from_queue(msg)
