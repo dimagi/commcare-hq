@@ -195,7 +195,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if (e.ctrlKey || e.metaKey) {
+                if ($(this).hasClass('moving')) {
+                    $(this).removeClass('moving');
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
                 } else {
                     $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
@@ -203,6 +207,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
 
             $(element).on('click', '.send-to-top', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
                 // update UI
                 var row = $(this).parent().parent();
                 var current_index = row[0].attributes['data-order'].value;
@@ -211,9 +217,15 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 // update KO
                 var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
                 list.unshift(list.splice(current_index, 1)[0]);
+
+                for (var cur = 0; cur < element.children.length; cur++) {
+                    element.children[cur].attributes['data-order'].value = cur;
+                }
             });
 
             $(element).on('click', '.send-to-bottom', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
                 var row = $(this).parent().parent();
                 var current_index = row[0].attributes['data-order'].value;
 
@@ -235,6 +247,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     // Update KO
                     var current_list_item = list.splice(current_index, 1)[0];
                     list.splice(lastSelectedRowIndex, 0, current_list_item);
+
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
+                    }
                 }
             });
 
@@ -285,6 +301,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     list.splice(0, list.length);
                     for (var i = 0; i < new_list.length; i++) {
                         list.push(new_list[i]);
+                    }
+
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
                     }
                 }
 
