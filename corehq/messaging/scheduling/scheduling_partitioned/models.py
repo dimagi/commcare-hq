@@ -186,7 +186,7 @@ class ScheduleInstance(PartitionedModel):
             for contact in self._expand_recipient(member):
                 yield contact
 
-    def handle_current_event(self):
+    def send_current_event_content_to_recipients(self):
         content = self.memoized_schedule.get_current_event_content(self)
 
         if isinstance(self, CaseScheduleInstanceMixin):
@@ -201,16 +201,19 @@ class ScheduleInstance(PartitionedModel):
             recipient_count += 1
             content.send(recipient, logged_event)
 
-        # As a precaution, always explicitly move to the next event after processing the current
-        # event to prevent ever getting stuck on the current event.
-        self.memoized_schedule.move_to_next_event(self)
-        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
-
         # Update the MessagingEvent for reporting
         if recipient_count == 0:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
         else:
             logged_event.completed()
+
+    def handle_current_event(self):
+        self.send_current_event_content_to_recipients()
+
+        # As a precaution, always explicitly move to the next event after processing the current
+        # event to prevent ever getting stuck on the current event.
+        self.memoized_schedule.move_to_next_event(self)
+        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
 
     @property
     def schedule(self):
