@@ -28,6 +28,12 @@ from django.core.exceptions import ValidationError
 import six
 
 
+# The number of minutes after which a schedule instance is considered stale.
+# Stale instances are just fast-forwarded according to their schedule and
+# no content is sent.
+STALE_SCHEDULE_INSTANCE_INTERVAL = 2 * 24 * 60
+
+
 class ScheduleInstance(PartitionedModel):
     schedule_instance_id = models.UUIDField(primary_key=True, default=uuid.uuid4)
     domain = models.CharField(max_length=126)
@@ -207,8 +213,13 @@ class ScheduleInstance(PartitionedModel):
         else:
             logged_event.completed()
 
+    @property
+    def is_stale(self):
+        return (util.utcnow() - self.next_event_due) > timedelta(minutes=STALE_SCHEDULE_INSTANCE_INTERVAL)
+
     def handle_current_event(self):
-        self.send_current_event_content_to_recipients()
+        if not self.is_stale:
+            self.send_current_event_content_to_recipients()
 
         # As a precaution, always explicitly move to the next event after processing the current
         # event to prevent ever getting stuck on the current event.
