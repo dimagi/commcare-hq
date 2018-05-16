@@ -38,8 +38,8 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
                 self.assertEqual('Custom Title', config.title)
 
     def test_production_config(self):
-        for data_source in StaticReportConfiguration.all(ignore_server_environment=True):
-            data_source.validate()
+        for report_config in StaticReportConfiguration.all(ignore_server_environment=True):
+            report_config.validate()
 
     def test_for_report_id_conflicts(self):
         counts = Counter(rc.get_id for rc in
