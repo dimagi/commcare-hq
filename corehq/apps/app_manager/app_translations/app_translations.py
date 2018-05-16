@@ -925,11 +925,12 @@ def _update_case_list_translations(sheet, rows, app, update_sql_translations):
         # Update the translations for the row and all its child rows
         _update_translation(row, detail.header)
         if sql_translation:
-            sql_translation.parser.update(app.langs, row, detail_type, index, "header")
+            sql_translation.parser.update(app.langs, row, detail_type, index, detail, "header")
         for i, enum_value_row in enumerate(row.get('mappings', [])):
             _update_translation(enum_value_row, detail['enum'][i].value)
             if sql_translation:
-                sql_translation.parser.update(app.langs, enum_value_row, detail_type, index, "enum", i)
+                sql_translation.parser.update(app.langs, enum_value_row, detail_type, index, detail,
+                                              "enum", i, column_attr_key=detail['enum'][i].key_as_variable)
         for i, graph_annotation_row in enumerate(row.get('annotations', [])):
             _update_translation(
                 graph_annotation_row,
@@ -937,7 +938,7 @@ def _update_case_list_translations(sheet, rows, app, update_sql_translations):
                 False
             )
             if sql_translation:
-                sql_translation.parser.update(app.langs, graph_annotation_row, detail_type, index,
+                sql_translation.parser.update(app.langs, graph_annotation_row, detail_type, index, detail,
                                               "graph_annotations", i)
         for graph_config_row in row.get('configs', []):
             config_key = graph_config_row['id']
@@ -947,7 +948,7 @@ def _update_case_list_translations(sheet, rows, app, update_sql_translations):
                 False
             )
             if sql_translation:
-                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index,
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, detail,
                                               "graph_configuration_config", column_attr_key=config_key)
         for graph_config_row in row.get('series_configs', []):
             config_key = graph_config_row['id']
@@ -958,7 +959,7 @@ def _update_case_list_translations(sheet, rows, app, update_sql_translations):
                 False
             )
             if sql_translation:
-                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index,
+                sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, detail,
                                               "graph_configuration_series", series_index, config_key)
     if sql_translation:
         sql_translation.save()
