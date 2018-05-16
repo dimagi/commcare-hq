@@ -58,6 +58,10 @@ class FormQuestion(JsonObject):
         return '/'.join(self.value.split('/')[2:])
 
     @property
+    def option_values(self):
+        return [o.value for o in self.options]
+
+    @property
     def editable(self):
         if not self.type:
             return False
