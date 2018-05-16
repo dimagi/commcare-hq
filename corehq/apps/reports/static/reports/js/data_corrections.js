@@ -67,6 +67,7 @@ hqDefine("reports/js/data_corrections", function() {
             self.columnClass("col-sm-" + (12 / self.columnsPerPage()));
             self.isLargeModal(self.columnsPerPage() === 2);
             self.isFullScreenModal(self.columnsPerPage() === 3);
+            self.generateSearchableNames();
         });
 
         // Support for displaying different property attributes (e.g., name and id)
@@ -75,6 +76,7 @@ hqDefine("reports/js/data_corrections", function() {
         self.updateDisplayProperty = function(newValue) {
             self.displayProperty(newValue);
             self.initQuery();
+            self.generateSearchableNames();
         };
         self.breakWord = function(str) {
             return str.replace(/([\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
@@ -101,7 +103,7 @@ hqDefine("reports/js/data_corrections", function() {
 
             // Cycle over all items on previous pages
             while (added < self.itemsPerPage() * (self.currentPage() - 1) && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
+                if (self.matchesQuery(self.searchableNames[index])) {
                     added++;
                 }
                 index++;
@@ -110,7 +112,7 @@ hqDefine("reports/js/data_corrections", function() {
             // Add as many items as fit on a page
             added = 0;
             while (added < self.itemsPerPage() && index < self.propertyNames().length) {
-                if (self.matchesQuery(self.propertyNames()[index])) {
+                if (self.matchesQuery(self.searchableNames[index])) {
                     var name = self.propertyNames()[index];
                     if (!self.properties[name]) {
                         self.properties[name] = new PropertyModel({ name: name });
@@ -158,9 +160,28 @@ hqDefine("reports/js/data_corrections", function() {
         };
         self.query.subscribe(function() {
             self.currentPage(1);
-            self.totalPages(Math.ceil(_.filter(self.propertyNames(), self.matchesQuery).length / self.itemsPerPage()) || 1);
+            self.totalPages(Math.ceil(_.filter(self.searchableNames, self.matchesQuery).length / self.itemsPerPage()) || 1);
             self.render();
         });
+
+        // Because of how search is implemented, it's useful to store a list of the values that we're going to
+        // search against, ordered the same way properties are displayed. Regenerate this list each time
+        // the current display property changes.
+        self.searchableNames = [];
+        self.generateSearchableNames = function() {
+            if (self.displayProperty() === 'name') {
+                self.searchableNames = self.propertyNames();
+            } else {
+                var displayPropertyObj = _.findWhere(self.displayProperties, { property: self.displayProperty() }),
+                    search = displayPropertyObj.search || displayPropertyObj.property;
+                self.searchableNames = [];
+                _.each(self.propertyNames(), function(name) {
+                    if (self.properties[name]) {
+                        self.searchableNames.push(self.properties[name][search]);
+                    }
+                });
+            }
+        };
 
         // Saving
         self.submitForm = function(model, e) {
@@ -208,6 +229,7 @@ hqDefine("reports/js/data_corrections", function() {
                     display: _.without(data, 'name', 'value'),
                 }));
             }));
+            self.generateSearchableNames();
             self.initQuery();
             self.currentPage(1);
             self.showError(false);
