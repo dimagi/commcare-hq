@@ -19,7 +19,7 @@ from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import tzinfo
+from datetime import tzinfo, timedelta
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from memoized import memoized
 from dimagi.utils.modules import to_function
