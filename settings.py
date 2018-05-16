@@ -426,10 +426,6 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
 
-# may be overridden in localsettings
-IS_LOCATION_CTE_ENABLED = True
-IS_LOCATION_CTE_ONLY = True
-
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
 # When set to False, HQ will not cache any reports using is_cacheable
@@ -2281,6 +2277,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
-
-# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
-IS_LOCATION_CTE_ONLY = bool(IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY)

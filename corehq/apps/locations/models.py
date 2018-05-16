@@ -314,10 +314,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
             return None
 
     def get_queryset(self):
-        query = LocationQuerySet(self.model, using=self._db)
-        if not settings.IS_LOCATION_CTE_ONLY:
-            query = query.order_by(self.tree_id_attr, self.left_attr)  # mptt default
-        return query
+        return LocationQuerySet(self.model, using=self._db)
 
     def get_from_user_input(self, domain, user_input):
         """
