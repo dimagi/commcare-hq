@@ -178,6 +178,10 @@ class AdjListManager(models.Manager):
     def _cte_get_queryset_descendants(self, *args, **kw):
         return self._cte_get_descendants(*args, **kw)
 
+    def root_nodes(self):
+        parent_col = self.model.parent_id_attr
+        return self.all().filter(**{parent_col + "__isnull": True})
+
     def _mptt_get_queryset_ancestors(self, node, *args, **kw):
         if isinstance(node, Q):
             node = self.filter(node)
