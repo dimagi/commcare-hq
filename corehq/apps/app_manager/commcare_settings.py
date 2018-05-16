@@ -5,10 +5,10 @@ import re
 
 from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext
-from corehq.apps.app_manager import static_strings
 import os
 import yaml
 import six
+from io import open
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [

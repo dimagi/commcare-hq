@@ -64,6 +64,7 @@ from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
+from io import open
 
 
 class ElasticSearchIndexSettings(DocumentSchema):
