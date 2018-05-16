@@ -14,6 +14,7 @@ from corehq.apps.export import models as exports
 from corehq.blobs import get_blob_db
 from corehq.blobs.migratingdb import MigratingBlobDB
 from corehq.util.decorators import change_log_level
+from io import open
 
 
 USAGE = "Usage: ./manage.py check_blob_logs [options] FILE [FILE [FILE]]"
