@@ -318,7 +318,10 @@
     <div id="case-actions" class="clearfix form-actions">
         <div class="col-sm-12">
         {% if show_properties_edit %}
-            {% include 'reports/partials/data_corrections_trigger.html' %}
+            <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                <i class="fa fa-edit"></i>
+                {% trans 'Data Corrections' %}
+            </button>
         {% endif %}
         {% if show_case_rebuild %}
             <form action="{% url 'resave_case' domain case_id %}" method="post" class="pull-left">{% csrf_token %}

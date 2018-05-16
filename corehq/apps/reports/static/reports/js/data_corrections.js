@@ -4,7 +4,7 @@
  *  to toggle between different display properties (useful with forms, for toggling between question id and label).
  *  The modal will be sized depending on the number of properties: small, large, or full-screen.
  *
- *  Used with reports/partials/data_corrections_trigger.html and reports/partials/data_corrections_modal.html
+ *  Used with reports/partials/data_corrections_modal.html and a button to trigger the modal.
  *  Usage: hqImport("reports/js/data_corrections").init($triggerElement, $modalElement, options);
  *  Options:
  *      Required:
