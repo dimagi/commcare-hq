@@ -202,12 +202,16 @@ class WorkbookJSONReader(object):
         try:
             self.wb = openpyxl.load_workbook(filename, use_iterators=True, data_only=True)
         except (BadZipfile, InvalidFileException) as e:
-            raise InvalidExcelFileException(e.message)
+            raise InvalidExcelFileException(six.text_type(e))
         self.worksheets_by_title = {}
         self.worksheets = []
 
         for worksheet in self.wb.worksheets:
-            ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            try:
+                ws = WorksheetJSONReader(worksheet, title=worksheet.title)
+            except IndexError:
+                raise JSONReaderError('This Excel file has unrecognised formatting. Please try downloading '
+                                      'the lookup table first, and then add data to it.')
             self.worksheets_by_title[worksheet.title] = ws
             self.worksheets.append(ws)
 

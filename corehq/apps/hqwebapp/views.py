@@ -152,10 +152,7 @@ def redirect_to_default(req, domain=None):
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
-            if settings.SERVER_ENVIRONMENT == 'production':
-                url = "https://www.dimagi.com/"
-            else:
-                url = reverse('login')
+            url = reverse('login')
     elif domain and _two_factor_needed(domain, req):
         return TemplateResponse(
             request=req,
@@ -690,10 +687,6 @@ def render_static(request, template, page_name):
                   {'tmpl': template, 'page_name': page_name})
 
 
-def eula(request):
-    return render_static(request, "eula.html", _("End User License Agreement"))
-
-
 def cda(request):
     return render_static(request, "cda.html", _("Content Distribution Agreement"))
 
@@ -704,10 +697,6 @@ def apache_license(request):
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
-
-
-def product_agreement(request):
-    return render_static(request, "product_agreement.html", _("Product Subscription Agreement"))
 
 
 def unsubscribe(request, user_id):

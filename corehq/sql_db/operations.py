@@ -10,6 +10,7 @@ from django.db.migrations.operations.special import RunSQL
 from django.template import engines
 
 from corehq.sql_db.routers import allow_migrate
+from io import open
 
 
 class IndexRenameOperationException(Exception):

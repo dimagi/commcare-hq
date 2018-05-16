@@ -27,6 +27,7 @@ from dateutil.parser import parse
 import uuid
 from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
+from io import open
 
 
 def time_parser(value):

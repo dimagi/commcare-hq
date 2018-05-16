@@ -477,6 +477,12 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
+DATA_CORRECTIONS_FORMS = StaticToggle(
+    'data_corrections_forms',
+    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
@@ -1113,13 +1119,6 @@ CALL_CENTER_LOCATION_OWNERS = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-OLD_EXPORTS = StaticToggle(
-    'old_exports',
-    'Use old backend export infrastructure',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 TF_DOES_NOT_USE_SQLITE_BACKEND = StaticToggle(
     'not_tf_sql_backend',
     'Domains that do not use a SQLite backend for Touchforms',
@@ -1148,7 +1147,8 @@ REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
     'reminders_migration_in_progress',
     "Disables editing of reminders so that the migration to the new framework can happen.",
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 

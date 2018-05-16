@@ -64,7 +64,22 @@ from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    FloatProperty,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
@@ -1452,7 +1467,7 @@ class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
         if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
+            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
         return value
 
 
@@ -1473,9 +1488,15 @@ class NavMenuItemMediaMixin(DocumentSchema):
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
     """
-    media_image = SchemaDictProperty(JRResourceProperty)
-    media_audio = SchemaDictProperty(JRResourceProperty)
-    custom_icons = SchemaListProperty(CustomIcon)
+
+    # These were originally DictProperty(JRResourceProperty),
+    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
+    # so it was actually wrapping as a StringPropery
+    # too late to retroactively apply that validation,
+    # so now these are DictProperty(StringProperty)
+    media_image = DictProperty(StringProperty)
+    media_audio = DictProperty(StringProperty)
+    custom_icons = ListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -1878,7 +1899,7 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
     def get_all_contributed_subcase_properties(self):
         case_properties = defaultdict(set)
         for subcase in self.actions.subcases:
-            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
         return case_properties
 
     @memoized
@@ -3147,7 +3168,7 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
     def get_all_contributed_subcase_properties(self):
         case_properties = defaultdict(set)
         for subcase in self.actions.get_subcase_actions():
-            case_properties[subcase.case_type].update(subcase.case_properties.keys())
+            case_properties[subcase.case_type].update(list(subcase.case_properties.keys()))
         return case_properties
 
     @memoized
@@ -4109,6 +4130,7 @@ class ReportAppConfig(DocumentSchema):
     """
     Class for configuring how a user configurable report shows up in an app
     """
+    # ID of the ReportConfiguration
     report_id = StringProperty(required=True)
     header = DictProperty()
     localized_description = DictProperty()
@@ -4118,7 +4140,9 @@ class ReportAppConfig(DocumentSchema):
     complete_graph_configs = DictProperty(GraphConfiguration)
 
     filters = SchemaDictProperty(ReportAppFilter)
+    # Unique ID of this mobile report config
     uuid = StringProperty(required=True)
+    report_slug = StringProperty(required=False)  # optional, user-provided
     sync_delay = DecimalProperty(default=0.0)  # in hours
 
     _report = None
@@ -4147,6 +4171,10 @@ class ReportAppConfig(DocumentSchema):
             from corehq.apps.userreports.models import get_report_config
             self._report = get_report_config(self.report_id, domain)[0]
         return self._report
+
+    @property
+    def instance_id(self):
+        return self.report_slug or self.uuid
 
 
 class ReportModule(ModuleBase):
@@ -4225,6 +4253,16 @@ class ReportModule(ModuleBase):
             valid_report_configs=valid_report_configs
         )
 
+    def has_duplicate_instance_ids(self):
+        from corehq.apps.app_manager.suite_xml.features.mobile_ucr import get_uuids_by_instance_id
+        duplicate_instance_ids = {
+            instance_id
+            for instance_id, uuids in get_uuids_by_instance_id(self.get_app().domain).items()
+            if len(uuids) > 1
+        }
+        return any(report_config.instance_id in duplicate_instance_ids
+                   for report_config in self.report_configs)
+
     def validate_for_build(self):
         errors = super(ReportModule, self).validate_for_build()
         if not self.check_report_validity().is_valid:
@@ -4235,6 +4273,11 @@ class ReportModule(ModuleBase):
         elif not self.reports:
             errors.append({
                 'type': 'no reports',
+                'module': self.get_module_info(),
+            })
+        if self.has_duplicate_instance_ids():
+            errors.append({
+                'type': 'report config id duplicated',
                 'module': self.get_module_info(),
             })
         return errors
@@ -6112,7 +6155,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             except ModuleNotFoundException as ex:
                 errors.append({
                     "type": "missing module",
-                    "message": ex.message
+                    "message": six.text_type(ex)
                 })
 
         for form in self.get_forms():

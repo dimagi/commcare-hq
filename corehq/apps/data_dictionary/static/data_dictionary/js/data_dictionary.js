@@ -1,4 +1,4 @@
-define([
+hqDefine("data_dictionary/js/data_dictionary", [
     "jquery",
     "knockout",
     "underscore",

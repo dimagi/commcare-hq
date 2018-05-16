@@ -159,7 +159,8 @@
                                 <div class="h5">
                                     <span ng-if="export.emailedExport.hasFile">
                                         <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
-                                        <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}
+                                        <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}&nbsp;&nbsp;&nbsp;
+                                        <strong>{% trans "Last Downloaded:" %}</strong> {{ export.emailedExport.fileData.lastAccessed }}
                                     </span>
                                     &nbsp;&nbsp;
                                     {% angularjs %}

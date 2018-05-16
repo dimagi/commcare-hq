@@ -69,8 +69,12 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
 class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
-        self.id = id
+        self._id = id
         self.serializer = serializer
+
+    @property
+    def id(self):
+        return self._id
 
     def __call__(self, restore_state):
         """

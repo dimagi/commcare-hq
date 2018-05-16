@@ -3,9 +3,13 @@ from __future__ import unicode_literals
 from contextlib import contextmanager
 from zipfile import BadZipfile
 from datetime import datetime, time
+from io import open
+
 import openpyxl
+import six
 from openpyxl.utils.datetime import from_excel
 from openpyxl.utils.exceptions import InvalidFileException
+
 from corehq.util.workbook_reading import Worksheet, Cell, Workbook, \
     SpreadsheetFileNotFound, SpreadsheetFileInvalidError, SpreadsheetFileEncrypted
 
@@ -21,7 +25,7 @@ XLSX_ENCRYPTED_MARKER = b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
 @contextmanager
 def open_xlsx_workbook(filename):
     try:
-        f = open(filename)
+        f = open(filename, 'rb')
     except IOError as e:
         raise SpreadsheetFileNotFound(e.message)
 
@@ -35,7 +39,7 @@ def open_xlsx_workbook(filename):
             if f.read(8) == XLSX_ENCRYPTED_MARKER:
                 raise SpreadsheetFileEncrypted('Workbook is encrypted')
             else:
-                raise SpreadsheetFileInvalidError(e.message)
+                raise SpreadsheetFileInvalidError(six.text_type(e))
         yield _XLSXWorkbookAdaptor(openpyxl_workbook).to_workbook()
 
 

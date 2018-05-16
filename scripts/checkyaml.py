@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import sys
 import yaml
 from six.moves import range
+from io import open
 
 
 def checkyaml(filename):

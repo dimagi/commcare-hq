@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import sys
 import os
 from six.moves import zip
+from io import open
 
 
 def get_stats(path, build_slug):

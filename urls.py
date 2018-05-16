@@ -5,7 +5,6 @@ from django.conf.urls import url, include
 from django.shortcuts import render
 from django.views.generic import TemplateView, RedirectView
 
-from corehq.apps.app_manager.views import download_test_jar
 from corehq.apps.app_manager.views.formdesigner import ping
 from corehq.apps.appstore.views import rewrite_url
 from corehq.apps.domain.decorators import login_and_domain_required
@@ -14,7 +13,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views import ProBonoStaticView, logo
-from corehq.apps.hqwebapp.views import eula, apache_license, bsd_license, product_agreement, cda, unsubscribe
+from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, unsubscribe, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
@@ -72,7 +71,6 @@ domain_specific = [
     url(r'^ewsghana/', include('custom.ewsghana.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
     url(r'^', include('custom.m4change.urls')),
-    url(r'^', include('custom.uth.urls')),
     url(r'^dashboard/', include('corehq.apps.dashboard.urls')),
     url(r'^configurable_reports/', include('corehq.apps.userreports.urls')),
     url(r'^', include('custom.icds_reports.urls')),
@@ -127,19 +125,17 @@ urlpatterns = [
     url(r'^langcodes/', include('langcodes.urls')),
     url(r'^builds/', include('corehq.apps.builds.urls')),
     url(r'^downloads/temp/', include('soil.urls')),
-    url(r'^test/CommCare.jar', download_test_jar, name='download_test_jar'),
     url(r'^styleguide/', include('corehq.apps.styleguide.urls')),
     url(r'^500/$', TemplateView.as_view(template_name='500.html')),
     url(r'^404/$', TemplateView.as_view(template_name='404.html')),
     url(r'^403/$', TemplateView.as_view(template_name='403.html')),
     url(r'^captcha/', include('captcha.urls')),
-    url(r'^eula_basic/$', TemplateView.as_view(template_name='eula.html'), name='eula_basic'),
-    url(r'^eula/$', eula, name='eula'),
+    url(r'^eula/$', redirect_to_dimagi('terms/')),
+    url(r'^product_agreement/$', redirect_to_dimagi('terms/')),
     url(r'^apache_license_basic/$', TemplateView.as_view(template_name='apache_license.html'), name='apache_license_basic'),
     url(r'^apache_license/$', apache_license, name='apache_license'),
     url(r'^bsd_license_basic/$', TemplateView.as_view(template_name='bsd_license.html'), name='bsd_license_basic'),
     url(r'^bsd_license/$', bsd_license, name='bsd_license'),
-    url(r'^product_agreement/$', product_agreement, name='product_agreement'),
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', cda, name='cda'),
     url(r'^sms_in/$', sms_in, name='sms_in'),

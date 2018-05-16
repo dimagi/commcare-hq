@@ -4,6 +4,7 @@ import datetime
 
 from corehq.apps.es import FormES
 from corehq.apps.es.aggregations import TermsAggregation
+from corehq.elastic import ES_EXPORT_INSTANCE
 from corehq.util.quickcache import quickcache
 
 from dimagi.utils.parsing import json_format_datetime
@@ -183,7 +184,7 @@ def get_exports_by_form(domain):
 
 
 def get_form_count_breakdown_for_domain(domain):
-    query = (FormES()
+    query = (FormES(es_instance_alias=ES_EXPORT_INSTANCE)
              .domain(domain)
              .aggregation(
                  TermsAggregation("app_id", "app_id").aggregation(

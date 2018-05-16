@@ -5,6 +5,8 @@ import csv
 import io
 import json
 import uuid
+
+import six
 from couchdbkit import ResourceNotFound
 from django.contrib import messages
 from django.core.cache import cache
@@ -268,7 +270,7 @@ class ArchiveFormView(DataInterfaceSection):
             messages.success(self.request, _("We received your file and are processing it. "
                                              "You will receive an email when it has finished."))
         except BulkUploadCasesException as e:
-            messages.error(self.request, e.message)
+            messages.error(self.request, six.text_type(e))
         return None
 
     def post(self, request, *args, **kwargs):

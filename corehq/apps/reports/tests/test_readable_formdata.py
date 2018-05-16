@@ -17,6 +17,7 @@ from corehq.apps.reports.formdetails.readable import (
     get_readable_data_for_submission)
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.utils.xform import FormSubmissionBuilder
+from io import open
 
 
 class ReadableFormdataTest(SimpleTestCase):
