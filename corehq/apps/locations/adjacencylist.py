@@ -182,55 +182,25 @@ class AdjListManager(models.Manager):
         parent_col = self.model.parent_id_attr
         return self.all().filter(**{parent_col + "__isnull": True})
 
-    def _mptt_get_queryset_ancestors(self, node, *args, **kw):
-        if isinstance(node, Q):
-            node = self.filter(node)
-        return super(AdjListManager, self).get_queryset_ancestors(node, *args, **kw)
-
-    def _mptt_get_queryset_descendants(self, node, *args, **kw):
-        if isinstance(node, Q):
-            node = self.filter(node)
-        return super(AdjListManager, self).get_queryset_descendants(node, *args, **kw)
-
     def get_queryset_ancestors(self, queryset, include_self=False):
         timing = TimingContext("get_queryset_ancestors")
-        mptt_qs = cte_qs = queryset
+        cte_qs = queryset
         if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
             cte_qs = queryset._cte_set
-        if settings.IS_LOCATION_CTE_ONLY:
-            mptt_set = None
-        else:
-            with timing("mptt"):
-                mptt_set = self._mptt_get_queryset_ancestors(mptt_qs, include_self)
-        if settings.IS_LOCATION_CTE_ENABLED:
-            with timing("cte"):
-                cte_set = self._cte_get_queryset_ancestors(cte_qs, include_self)
-        else:
-            cte_set = None
+        mptt_set = None
+        with timing("cte"):
+            cte_set = self._cte_get_queryset_ancestors(cte_qs, include_self)
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_queryset_descendants(self, queryset, include_self=False):
         timing = TimingContext("get_queryset_descendants")
-        mptt_qs = cte_qs = queryset
+        cte_qs = queryset
         if isinstance(queryset, ComparedQuerySet):
-            mptt_qs = queryset._mptt_set
             cte_qs = queryset._cte_set
-        if settings.IS_LOCATION_CTE_ONLY:
-            mptt_set = None
-        else:
-            with timing("mptt"):
-                mptt_set = self._mptt_get_queryset_descendants(mptt_qs, include_self)
-        if settings.IS_LOCATION_CTE_ENABLED:
-            with timing("cte"):
-                cte_set = self._cte_get_queryset_descendants(cte_qs, include_self)
-        else:
-            cte_set = None
+        mptt_set = None
+        with timing("cte"):
+            cte_set = self._cte_get_queryset_descendants(cte_qs, include_self)
         return ComparedQuerySet(mptt_set, cte_set, timing)
-
-    @contextmanager
-    def delay_mptt_updates(self):
-        yield
 
 
 class FakeMPTTModel(models.Model):
@@ -260,29 +230,14 @@ class AdjListModel(FakeMPTTModel):
     class Meta:
         abstract = True
 
-    def _mptt_get_ancestors(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_ancestors
-        return super(AdjListModel, self).get_ancestors(**kw)
-
-    def _mptt_get_descendants(self, **kw):
-        # VERIFIED does not call self.objects.get_queryset_descendants
-        return super(AdjListModel, self).get_descendants(**kw)
-
     def get_ancestors(self, **kw):
         """
         Returns a Queryset of all ancestor locations of this location
         """
         timing = TimingContext("get_ancestors")
-        if settings.IS_LOCATION_CTE_ONLY:
-            mptt_set = None
-        else:
-            with timing("mptt"):
-                mptt_set = self._mptt_get_ancestors(**kw)
-        if settings.IS_LOCATION_CTE_ENABLED:
-            with timing("cte"):
-                cte_set = type(self).objects._cte_get_ancestors(self, **kw)
-        else:
-            cte_set = None
+        mptt_set = None
+        with timing("cte"):
+            cte_set = type(self).objects._cte_get_ancestors(self, **kw)
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_descendants(self, **kw):
@@ -290,16 +245,9 @@ class AdjListModel(FakeMPTTModel):
         Returns a Queryset of all descendant locations of this location
         """
         timing = TimingContext("get_descendants")
-        if settings.IS_LOCATION_CTE_ONLY:
-            mptt_set = None
-        else:
-            with timing("mptt"):
-                mptt_set = self._mptt_get_descendants(**kw)
-        if settings.IS_LOCATION_CTE_ENABLED:
-            with timing("cte"):
-                cte_set = type(self).objects._cte_get_descendants(self, **kw)
-        else:
-            cte_set = None
+        mptt_set = None
+        with timing("cte"):
+            cte_set = type(self).objects._cte_get_descendants(self, **kw)
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
     def get_children(self):
