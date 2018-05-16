@@ -20,6 +20,7 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
 from datetime import tzinfo
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from memoized import memoized
 from dimagi.utils.modules import to_function
 from django.db import models
@@ -192,7 +193,25 @@ class ScheduleInstance(PartitionedModel):
             for contact in self._expand_recipient(member):
                 yield contact
 
+    def get_content_send_lock(self, client, recipient):
+        if is_commcarecase(recipient):
+            doc_type = 'CommCareCase'
+            doc_id = recipient.case_id
+        else:
+            doc_type = recipient.doc_type
+            doc_id = recipient.get_id
+
+        key = "send-content-for-%s-%s-%s-%s-%s" % (
+            self.__class__.__name__,
+            self.schedule_instance_id.hex,
+            self.next_event_due.strftime('%Y-%m-%d %H:%M:%S'),
+            doc_type,
+            doc_id,
+        )
+        return client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60)
+
     def send_current_event_content_to_recipients(self):
+        client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
 
         if isinstance(self, CaseScheduleInstanceMixin):
@@ -205,7 +224,13 @@ class ScheduleInstance(PartitionedModel):
         recipient_count = 0
         for recipient in self.expand_recipients():
             recipient_count += 1
-            content.send(recipient, logged_event)
+            lock = self.get_content_send_lock(client, recipient)
+            if lock.acquire(blocking=False):
+                try:
+                    content.send(recipient, logged_event)
+                except:
+                    lock.release()
+                    raise
 
         # Update the MessagingEvent for reporting
         if recipient_count == 0:
