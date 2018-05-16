@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+from collections import Counter
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from corehq.util.test_utils import TestFileMixin
@@ -39,3 +40,12 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     def test_production_config(self):
         for data_source in StaticReportConfiguration.all(ignore_server_environment=True):
             data_source.validate()
+
+    def test_for_report_id_conflicts(self):
+        counts = Counter(rc.get_id for rc in
+                         StaticReportConfiguration.all(ignore_server_environment=True))
+        duplicates = [k for k, v in counts.items() if v > 1]
+        msg = "The following report configs have duplicate generated report_ids:\n{}".format(
+            "\n".join("report_id: {}".format(report_id) for report_id in duplicates)
+        )
+        self.assertEqual(0, len(duplicates), msg)
