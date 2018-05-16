@@ -1,6 +1,7 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from django.utils.translation import ugettext as _
+from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import Step, serialize
 from six import integer_types, string_types
 
@@ -221,3 +222,7 @@ def get_properties_from_ast(node):
 
     visit(node)
     return list(columns)
+
+
+def get_properties_from_xpath(xpath):
+    return get_properties_from_ast(parse_xpath(xpath))

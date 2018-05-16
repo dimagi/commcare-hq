@@ -29,3 +29,9 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
         })
 
         return context
+
+
+class CaseListExplorerColumns(BaseSimpleFilter):
+    slug = 'explorer_columns'
+    label = ugettext_lazy("Columns")
+    template = "reports/filters/case_properties.html"

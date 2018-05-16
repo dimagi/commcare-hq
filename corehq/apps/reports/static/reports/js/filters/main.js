@@ -7,6 +7,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
+    'reports/js/filters/case_properties',
     'locations/js/location_drilldown',
     'reports_core/js/choice_list_utils',
     'select2-3.5.2-legacy/select2',
@@ -19,6 +20,7 @@ hqDefine("reports/js/filters/main", [
     phoneNumberFilter,
     buttonGroup,
     scheduleInstanceFilter,
+    casePropertiesFilter,
     locationDrilldown,
     choiceListUtils
 ) {
@@ -140,6 +142,12 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el),
                 data = $el.data();
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
+            $el.koApplyBindings(model);
+        });
+        $(".report-filter-case-properties").each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = casePropertiesFilter.model();
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {
