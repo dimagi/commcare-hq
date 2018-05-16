@@ -76,11 +76,13 @@ class ConstantExpressionTest(SimpleTestCase):
     def test_constant_datetime_conversion(self):
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
-    def test_type_casting(self):
-        # We would expect this to be cast as string, since we
-        #   have set the datatype to string, but
-        #   the datatype casting doesn't work in the 'constant' expression.
-        #   It's easy to fix it, but it would be breaking older use cases
+    def test_legacy_constant_no_type_casting(self):
+        """
+        This test is used to document an unexpected legacy behavior of
+            ucr constant expression not honoring type casting. While changing that
+            behavior would be easy, it might break any existing reports that relied
+            on the broken implementation as a feature, and so is left as-is.
+        """
         self.assertEqual(
             ExpressionFactory.from_spec({
                 'constant': '2018-01-03',
@@ -428,7 +430,7 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         expression = ExpressionFactory.from_spec(spec)
         self.assertEqual(expression({}), date(2018, 1, 2))
         # date expression cast to string is also capturred as date.
-        #   see note on ConstantExpressionTest.test_type_casting
+        #   see note on ConstantExpressionTest.test_legacy_constant_no_type_casting
         spec['index_expression'] = 2
         expression = ExpressionFactory.from_spec(spec)
         self.assertEqual(expression({}), date(2018, 1, 3))
