@@ -6,6 +6,7 @@ from corehq.apps.data_interfaces.models import (
     MatchPropertyDefinition,
     CreateScheduleInstanceActionDefinition,
 )
+from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import (
     CaseReminder,
@@ -497,6 +498,11 @@ class Command(BaseCommand):
 
         if not check_only:
             self.ensure_migration_flag_enabled(domain)
+
+        if not check_only and couch_sql_migration_in_progress(domain):
+            log("The Couch to SQL migration is in progress for this project, halting.")
+            self.ensure_migration_flag_disabled(domain)
+            return
 
         handlers = self.get_handlers_to_migrate(domain)
         migrators, cannot_be_migrated = self.get_migrators(handlers)
