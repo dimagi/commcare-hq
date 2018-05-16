@@ -155,7 +155,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                             // Knockout 2.3 fix: refresh all of the `data-order`s
                             // this is an O(n) operation, so if experiencing slowness
                             // start here
-                            parent.children().each(function(i) {
+                            parent.children().each(function(i) { //
                                 $(this).data('order', i);
                             });
                         }
@@ -173,6 +173,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
     ko.bindingHandlers.multi_sortable = {
         updateSortableList: function(itemList) {
+            console.log('updateSortableList func');
             _(itemList()).each(function(item, index) {
                 if (item._sortableOrder === undefined) {
                     item._sortableOrder = ko.observable(index);
@@ -180,6 +181,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     item._sortableOrder(index);
                 }
             });
+
+            console.log('after update:');
+
+            console.log(itemList().map(function(elem){
+                        return elem._sortableOrder();
+                    }).join(','));
         },
         getList: function(valueAccessor) {
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
@@ -195,7 +202,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if (e.ctrlKey || e.metaKey) {
+                if ($(this).hasClass('moving')) {
+                    $(this).removeClass('moving');
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
                 } else {
                     $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
@@ -203,6 +214,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
 
             $(element).on('click', '.send-to-top', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
                 // update UI
                 var row = $(this).parent().parent();
                 var current_index = row[0].attributes['data-order'].value;
@@ -214,6 +227,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
 
             $(element).on('click', '.send-to-bottom', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
                 var row = $(this).parent().parent();
                 var current_index = row[0].attributes['data-order'].value;
 
@@ -277,21 +292,71 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     // Reorder the data in knockout
                     var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                    console.log('orig observable')
+                    console.log(list.map(function(elem){
+                        return elem._sortableOrder();
+                    }).join(','));
                     var new_list = [];
+
+
+
+                    var orig_values = []
                     for (var cur = 0; cur < element.children.length; cur++) {
                         var i = parseInt(element.children[cur].attributes['data-order'].value);
+                        orig_values.push(i);
                         new_list.push(list[i]);
                     }
+
+                    console.log('orig dom:')
+                    console.log(orig_values.join(','));
+
+//                    list(new_list)
+
                     list.splice(0, list.length);
                     for (var i = 0; i < new_list.length; i++) {
                         list.push(new_list[i]);
                     }
+//                    for(var i = 0; i< list.length; i++) {
+//                        console.log(list[i]._sortableOrder());
+//                    }
+                    console.log(list.map(function(elem){
+                        return elem._sortableOrder();
+                    }).join(','));
+
+                    var orig_values = []
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        var i = parseInt(element.children[cur].attributes['data-order'].value);
+                        orig_values.push(i);
+//                        new_list.push(list[i]);
+                    }
+
+                    console.log('later dom1:')
+                    console.log(orig_values.join(','));
+
+
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+                    console.log('here');
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+//
+//                    console.log(list().map(function(elem){
+//                        return elem._sortableOrder();
+//                    }).join(','));
+                    var orig_values = []
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        var i = parseInt(element.children[cur].attributes['data-order'].value);
+                        orig_values.push(i);
+//                        new_list.push(list[i]);
+                    }
+
+                    console.log('later dom2:')
+                    console.log(orig_values.join(','));
                 }
 
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            console.log('update func');
             var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
             ko.bindingHandlers.multi_sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
