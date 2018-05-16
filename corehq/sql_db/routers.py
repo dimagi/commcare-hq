@@ -96,10 +96,10 @@ def db_for_read_write(model, write=True):
     elif app_label in (ICDS_MODEL, ICDS_REPORTS_APP):
         engine_id = ICDS_UCR_ENGINE_ID
         if not write:
-            engine_id = connection_manager.get_load_balanced_read_db_alais(ICDS_UCR_ENGINE_ID)
+            engine_id = connection_manager.get_load_balanced_read_engine_id(ICDS_UCR_ENGINE_ID)
         return connection_manager.get_django_db_alias(engine_id)
     else:
         default_db = partition_config.get_main_db()
         if not write:
-            return connection_manager.get_load_balanced_read_db_alais(app_label, default_db)
+            return connection_manager.get_load_balanced_db_alias(app_label, default_db)
         return default_db
