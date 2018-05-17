@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
 from django.urls import reverse
+
+import csv
+import os.path
 import re
 
 from dimagi.utils.dates import DateSpan
@@ -21,7 +24,10 @@ from six.moves import map
 
 
 class Command(BaseCommand):
-    help = 'Print out a CSV containing a table of project space plan and number of mobile workers'
+    help = '''
+        Generate three CSVs containing details on an enterprise project's domains, web users, and recent
+        form submissions, respectively.
+    '''
 
     def add_arguments(self, parser):
         parser.add_argument(
@@ -34,43 +40,58 @@ class Command(BaseCommand):
             '--username',
             action='store',
             dest='username',
-            help='Username',
+            help='Username (required)',
         )
 
+    def _domain_url(self, domain):
+        return reverse('domain_login', kwargs={'domain': domain})     # TODO: make full URL
+
+    def _write_file(self, slug, headers, process_domain=None):
+        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        filename = 'enterprise_{}_{}.csv'.format(slug, timestamp)
+        with open(filename, 'wb') as csvfile:
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(headers)
+            for domain in [domain.name for domain in map(Domain.get_by_name, self.domain_names) if domain]:
+                csvwriter.writerow(process_domain(domain))
+            print('Wrote {}'.format(filename))
+
+    def _domain_row(self, domain):
+        subscription = Subscription.get_active_subscription_by_domain(domain)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        return [
+            domain,
+            self._domain_url(domain),
+            plan_version.plan.name,
+            str(get_mobile_user_count(domain, include_inactive=False)),
+        ]
+
+    def _web_users_row(self, domain):
+        for user in get_all_user_rows(domain, include_web_users=True, include_mobile_users=False, include_inactive=False, include_docs=True):
+            user = WebUser.wrap(user['doc'])
+            return [
+                user.full_name,
+                user.username,
+                user.role_label(domain),
+                user.last_login.strftime(self.date_fmt),
+                domain,
+                self._domain_url(domain),
+            ]
+
     def handle(self, domain_names, **kwargs):
-        date_fmt = '%Y/%m/%d %H:%M:%S'
+        self.domain_names = domain_names
+        self.date_fmt = '%Y/%m/%d %H:%M:%S'
         couch_user = CouchUser.get_by_username(kwargs.get('username'))
         if not couch_user:
             raise CommandError("Option: '--username' must be specified")
 
-        # Report 1: Project Spaces
+        print('Processing {} domains'.format(len(self.domain_names)))
+
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
-        print(','.join(headers))
-        for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
-            subscription = Subscription.get_active_subscription_by_domain(domain)
-            plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        self._write_file('domains', headers, self._domain_row)
 
-            print(','.join([
-                domain.name,
-                reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
-                plan_version.plan.name,
-                str(get_mobile_user_count(domain.name, include_inactive=False)),
-            ]))
-
-        # Report 2: Web Users
-        headers = ['Name', 'Email Address', 'Role', 'Last login', 'Project Space Name', 'Project Space URL']
-        print(','.join(headers))
-        for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
-            for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False, include_inactive=False, include_docs=True):
-                user = WebUser.wrap(user['doc'])
-                print(','.join([
-                    user.full_name,
-                    user.username,
-                    user.role_label(domain.name),
-                    user.last_login.strftime(date_fmt),
-                    domain.name,
-                    reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
-                ]))
+        headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
+        self._write_file('domains', headers, self._web_users_row)
 
         # Report 3: Form Submissions
         headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL',
@@ -100,7 +121,7 @@ class Command(BaseCommand):
                      .filter(users_filter))
             for hit in query.run().hits:
                 username = hit['form']['meta']['username']
-                submitted = datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S').strftime(date_fmt)
+                submitted = datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S').strftime(self.date_fmt)
                 print(','.join([
                     hit['form']['@name'],
                     submitted,
