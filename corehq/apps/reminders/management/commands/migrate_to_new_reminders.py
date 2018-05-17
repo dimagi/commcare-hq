@@ -344,6 +344,13 @@ class Command(BaseCommand):
         if handler.method not in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_SURVEY):
             return None
 
+        if (
+            handler.method == METHOD_SMS_SURVEY and
+            handler.submit_partial_forms and
+            any([len(event.callback_timeout_intervals) == 0 for event in handler.events])
+        ):
+            return None
+
         if handler.include_child_locations:
             return None
 
