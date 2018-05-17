@@ -27,7 +27,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.UUIDField(primary_key=True, serialize=False, unique=True)),
                 ('username', models.EmailField(db_index=True, max_length=254)),
-                ('assigned_location_ids', django.contrib.postgres.fields.ArrayField(base_field=models.CharField(max_length=255), null=True, size=None)),
+                ('assigned_location_ids', django.contrib.postgres.fields.ArrayField(
+                    base_field=models.CharField(max_length=255), null=True, size=None)
+                 ),
                 ('ip_address', models.GenericIPAddressField(null=True)),
                 ('url', models.TextField()),
                 ('post_data', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
