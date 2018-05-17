@@ -1865,7 +1865,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
         for index, question in enumerate(data):
             if question.children:
                 _add_to_question_response_map(question.children, repeat_index=index)
-            elif question.editable:
+            elif question.editable and question.value is not None:  # ignore complex and skipped questions
                 value = question.value
                 if question.repeat:
                     value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
