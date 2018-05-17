@@ -653,7 +653,7 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
     def _test_specified_recipients(self):
         DomainInvoiceFactory(
             self.subscription.date_start,
-            utils.months_from_date(self.subscription.date_start, 1),
+            utils.months_from_date(self.subscription.date_start, 1) - datetime.timedelta(days=1),
             self.subscription.subscriber.domain,
             recipients=['recipient1@test.com', 'recipient2@test.com']
         ).create_invoices()
