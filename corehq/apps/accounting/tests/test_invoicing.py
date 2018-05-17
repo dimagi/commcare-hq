@@ -630,6 +630,18 @@ class TestInvoiceRecipients(BaseInvoiceTestCase):
         self._setup_product_subscription()
         self._test_specified_recipients()
 
+    def test_unspecified_recipients_product(self):
+        self._setup_product_subscription()
+
+        invoice_date = utils.months_from_date(self.subscription.date_start, 1)
+        tasks.generate_invoices(invoice_date)
+
+        self.assertEqual(len(mail.outbox), 2)
+        self.assertListEqual(mail.outbox[0].to, ['client1@test.com'])
+        self.assertListEqual(mail.outbox[0].cc, [])
+        self.assertListEqual(mail.outbox[1].to, ['client2@test.com'])
+        self.assertListEqual(mail.outbox[1].cc, [])
+
     def _setup_implementation_subscription_with_dimagi_contact(self):
         self.subscription.service_type = SubscriptionType.IMPLEMENTATION
         self.subscription.plan_version = DefaultProductPlan.get_default_plan_version(SoftwarePlanEdition.PRO)
