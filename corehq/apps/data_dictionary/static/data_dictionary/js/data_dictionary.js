@@ -14,7 +14,6 @@ hqDefine("data_dictionary/js/data_dictionary", [
     hqMain,
     googleAnalytics
 ) {
-    var thing = new Thing();
     var caseType = function (name) {
         var self = {};
         self.name = name;
