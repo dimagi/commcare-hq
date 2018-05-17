@@ -6,7 +6,8 @@ from django.urls import reverse
 
 from corehq.apps.accounting.models import DefaultProductPlan, Subscription
 from corehq.apps.domain.models import Domain
-from corehq.apps.users.dbaccessors.all_commcare_users import get_mobile_user_count
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows, get_mobile_user_count
+from corehq.apps.users.models import WebUser
 from six.moves import map
 
 
@@ -21,6 +22,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain_names, **kwargs):
+        # Report 1: Project Spaces
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
         print(','.join(headers))
         for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
@@ -29,7 +31,22 @@ class Command(BaseCommand):
 
             print(','.join([
                 domain.name,
-                reverse('domain_login', kwargs={'domain': domain}),     # TODO: make full URL
+                reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
                 plan_version.plan.name,
                 str(get_mobile_user_count(domain.name, include_inactive=False)),
             ]))
+
+        # Report 2: Web Users
+        headers = ['Name', 'Email Address', 'Role', 'Last login', 'Project Space Name', 'Project Space URL']
+        print(','.join(headers))
+        for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
+            for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False, include_inactive=False, include_docs=True):
+                user = WebUser.wrap(user['doc'])
+                print(','.join([
+                    user.full_name,
+                    user.username,
+                    user.role_label(domain.name),
+                    user.last_login.strftime('%Y/%m/%d %H:%M:%S'),
+                    domain.name,
+                    reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
+                ]))
