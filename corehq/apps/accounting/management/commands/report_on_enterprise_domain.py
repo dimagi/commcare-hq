@@ -44,7 +44,7 @@ class Command(BaseCommand):
         )
 
     def _domain_url(self, domain):
-        return reverse('domain_login', kwargs={'domain': domain})     # TODO: make full URL
+        return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain})
 
     def _write_file(self, slug, headers, process_domain=None):
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
