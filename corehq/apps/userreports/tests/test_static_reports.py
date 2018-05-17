@@ -66,7 +66,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
             return report_config.config_id not in available_data_sources
 
         all_configs = StaticReportConfiguration.all(ignore_server_environment=True)
-        configs_missing_data_source = filter(has_no_data_source, all_configs)
+        configs_missing_data_source = list(filter(has_no_data_source, all_configs))
 
         msg = ("There are {} report configs which reference data sources that "
                "don't exist (or which don't exist on that domain):\n{}".format(
