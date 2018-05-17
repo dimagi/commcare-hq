@@ -8,7 +8,6 @@ from django.core.management.base import CommandError
 from django.urls import reverse
 
 import csv
-import os.path
 import re
 
 from dimagi.utils.dates import DateSpan
@@ -72,7 +71,8 @@ class Command(BaseCommand):
         ]
 
     def _web_users_row(self, domain):
-        for user in get_all_user_rows(domain, include_web_users=True, include_mobile_users=False, include_inactive=False, include_docs=True):
+        for user in get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
+                                      include_inactive=False, include_docs=True):
             user = WebUser.wrap(user['doc'])
             return [
                 user.full_name,
