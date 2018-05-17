@@ -522,6 +522,9 @@ class LocationTreeValidator(object):
         # `self.locations` by `_check_model_validation()`, the
         # final step in `_get_errors()`; it is not called for
         # to-be-deleted locations
+        locs_by_code = self.locations_by_code
+        for loc in self.locations_to_be_deleted:
+            loc.lookup_old_collection_data(old_collection, locs_by_code)
 
     def _get_warnings(self):
         return [
@@ -881,18 +884,27 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
-    delete_location_ids = []
+    delete_locations = []
     with transaction.atomic():
         for loc in order_by_location_type():
+            if loc.do_delete:
+                delete_locations.append(loc)
+                continue
             if excel_importer:
                 excel_importer.add_progress()
-            if loc.do_delete:
-                if not loc.is_new:
-                    delete_location_ids.append(loc.location_id)
-            elif loc.needs_save:
+            if loc.needs_save:
                 loc_object = loc.db_object
                 loc_object.location_type = types_by_code.get(loc.location_type)
                 loc_object.parent = loc.new_parent
                 loc_object.save()
 
-        SQLLocation.objects.filter(location_id__in=delete_location_ids).delete()
+        # reverse -> delete from bottom to top
+        # WARNING the databases may be left in an inconsistent state if
+        # an exception is thrown during deletion because SQLLocation.delete()
+        # deletes resources that are stored in other databases that will
+        # not be reverted on transaction rollback.
+        for loc in reversed(delete_locations):
+            if excel_importer:
+                excel_importer.add_progress()
+            if not loc.is_new:
+                loc.db_object.delete()
