@@ -1049,8 +1049,10 @@ class ScheduleForm(Form):
                 return False
 
             if initial_value:
-                if initial_value in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE):
-                    return two_tuple[0] in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE)
+                if initial_value == self.SEND_IMMEDIATELY:
+                    return two_tuple[0] == self.SEND_IMMEDIATELY
+                elif initial_value == self.SEND_CUSTOM_IMMEDIATE:
+                    return two_tuple[0] == self.SEND_CUSTOM_IMMEDIATE
                 else:
                     return two_tuple[0] not in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE)
 
