@@ -1,8 +1,6 @@
 {
     "domains": [
-        "enikshay",
-        "enikshay-reports-qa",
-        "enikshay-test"
+        "enikshay"
     ],
     "server_environment": [
         "enikshay",
