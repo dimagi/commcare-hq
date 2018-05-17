@@ -10,7 +10,6 @@ from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
 from corehq.sql_db.connections import get_icds_ucr_db_alias
-from custom.icds_reports.tasks import _create_aggregate_functions
 
 
 @transaction.atomic
@@ -20,7 +19,6 @@ def _run_custom_sql_script(command, day=None):
         return
 
     with connections[db_alias].cursor() as cursor:
-        _create_aggregate_functions(cursor)
         cursor.execute(command, [day])
 
 
