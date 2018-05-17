@@ -12,6 +12,7 @@ from corehq.util.test_utils import flag_enabled
 
 from datetime import datetime, timedelta
 from django.test import TestCase
+from django.test.utils import override_settings
 from casexml.apps.phone.models import SyncLog
 from casexml.apps.phone.tests.utils import create_restore_user, call_fixture_generator
 from corehq.apps.domain.shortcuts import create_domain
@@ -740,6 +741,12 @@ class ShouldSyncLocationFixturesTest(TestCase):
         self.assertFalse(
             should_sync_locations(SyncLog(date=after_archive), locations_queryset, self.user.to_ota_restore_user())
         )
+
+
+@mock.patch.object(Domain, 'uses_locations', lambda: True)  # removes dependency on accounting
+@override_settings(IS_LOCATION_CTE_ONLY=False, IS_LOCATION_CTE_ENABLED=False)
+class MPTTLocationFixturesTest(LocationFixturesTest):
+    pass
 
 
 @mock.patch('corehq.apps.domain.models.Domain.uses_locations', lambda: True)
