@@ -25,6 +25,7 @@ from couchforms.models import XFormInstance
 from dimagi.utils.couch.database import iter_docs
 from django.core.management.base import BaseCommand
 import six
+from io import open
 
 
 ONE_HOUR = 60 * 60

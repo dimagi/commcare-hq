@@ -56,6 +56,7 @@ from django.db.models import Q
 from django.core.management.base import BaseCommand
 from six import moves
 from time import sleep
+from io import open
 
 
 def log(message):

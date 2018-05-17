@@ -4,6 +4,7 @@ from collections import defaultdict
 import six
 from corehq.apps.reminders.models import CaseReminderHandler, REMINDER_TYPE_KEYWORD_INITIATED
 from django.core.management.base import BaseCommand
+from io import open
 
 
 class DomainResult(object):

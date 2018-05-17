@@ -3,10 +3,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
-import errno
 import os
 import shutil
-import sys
 from collections import namedtuple
 from hashlib import md5
 from os.path import commonprefix, exists, isabs, isdir, dirname, join, realpath, sep
@@ -16,6 +14,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter
+from io import open
 
 CHUNK_SIZE = 4096
 
