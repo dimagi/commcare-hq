@@ -308,7 +308,7 @@ class AggCcsRecord(models.Model):
     awc_id = models.TextField()
     month = models.DateField()
     ccs_status = models.TextField()
-    trimester = models.Text,Field()
+    trimester = models.TextField()
     caste = models.TextField(null=True)
     disabled = models.TextField(null=True)
     minority = models.TextField(null=True)
@@ -485,9 +485,9 @@ class AggAwcDaily(models.Model):
     num_launched_blocks = models.IntegerField(null=True)
     num_launched_supervisors = models.IntegerField(null=True)
     num_launched_awcs = models.IntegerField(null=True)
-    cases_person_beneficiary = IntegerField(null=True)
-    cases_person_has_aadhaar_v2 = IntegerField(null=True)
-    cases_person_beneficiary_v2 = IntegerField(null=True)
+    cases_person_beneficiary = models.IntegerField(null=True)
+    cases_person_has_aadhaar_v2 = models.IntegerField(null=True)
+    cases_person_beneficiary_v2 = models.IntegerField(null=True)
 
     class Meta:
         app_label = 'icds_model'
