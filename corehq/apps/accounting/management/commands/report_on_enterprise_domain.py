@@ -5,10 +5,12 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.core.management import BaseCommand
 from django.urls import reverse
+import re
 
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.models import DefaultProductPlan, Subscription
+from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -28,6 +30,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, domain_names, **kwargs):
+        date_fmt = '%Y/%m/%d %H:%M:%S'
+
         # Report 1: Project Spaces
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
         print(','.join(headers))
@@ -52,18 +56,28 @@ class Command(BaseCommand):
                     user.full_name,
                     user.username,
                     user.role_label(domain.name),
-                    user.last_login.strftime('%Y/%m/%d %H:%M:%S'),
+                    user.last_login.strftime(date_fmt),
                     domain.name,
                     reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
                 ]))
 
         # Report 3: Form Submissions
         headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL',
-                   'Mobile User', 'Mobile User First Name', 'Mobile User Last Name']
+                   'Mobile User', 'First Name', 'Last Name']
         print(','.join(headers))
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=7), datetime.utcnow())
+        datespan = DateSpan(datetime.now() - timedelta(days=700), datetime.utcnow())    # TODO: 700 => 7
         for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
+            apps = get_brief_apps_in_domain(domain.name)
+            apps = {a.id: a.name for a in apps}
+            users = get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
+                                      include_inactive=False, include_docs=True)
+            names = {}
+            for user in users:
+                user = user['doc']
+                username = user['username']
+                username = re.sub(r'@.*', '', username)
+                names[username] = (user['first_name'], user['last_name'])
             users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
                                            ['t__0'],  # All mobile workers
                                            CouchUser.get_by_username('jschweers@dimagi.com')) # TODO: take as param
@@ -73,15 +87,16 @@ class Command(BaseCommand):
                      .filter(time_filter(gte=datespan.startdate,
                                          lt=datespan.enddate_adjusted))
                      .filter(users_filter))
-            hits = query.run().hits
-            for hit in hits:
+            for hit in query.run().hits:
+                username = hit['form']['meta']['username']
+                submitted = datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S').strftime(date_fmt)
                 print(','.join([
-                    'TODO',
-                    'TODO',
-                    'TODO',
+                    hit['form']['@name'],
+                    submitted,
+                    apps[hit['app_id']] if hit['app_id'] in apps else 'App not found',
                     domain.name,
                     reverse('domain_login', kwargs={'domain': domain.name}),     # TODO: make full URL
-                    'TODO',
-                    'TODO',
-                    'TODO',
+                    username,
+                    names[username][0] if username in names else 'User not found',
+                    names[username][1] if username in names else 'User not found',
                 ]))
