@@ -2,14 +2,15 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 
+import uuid
+
 import architect
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connections, models
-from jsonfield import JSONField
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
-from corehq.sql_db.connections import get_icds_ucr_db_alias
 from corehq.sql_db.routers import db_for_read_write
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
@@ -1073,13 +1074,13 @@ class UcrTableNameMapping(models.Model):
     type='range',
     subtype='date',
     constraint='month',
-    column='time_of_use_start',
-    db=get_icds_ucr_db_alias()
+    column='time_of_use_start'
 )
 class ICDSAuditEntryRecord(models.Model):
+    id = models.UUIDField(unique=True, default=uuid.uuid4, primary_key=True)
     username = models.EmailField(db_index=True)
-    assigned_location = models.CharField(max_length=256, null=True)
-    ip_address = models.CharField(max_length=15, null=True)
+    assigned_location_ids = ArrayField(models.CharField(max_length=255), null=True)
+    ip_address = models.GenericIPAddressField(max_length=15, null=True)
     url = models.TextField()
     post_data = JSONField(default=dict)
     get_data = JSONField(default=dict)
@@ -1090,20 +1091,17 @@ class ICDSAuditEntryRecord(models.Model):
     class Meta(object):
         app_label = 'icds_model'
         db_table = 'icds_audit_entry_record'
-        indexes = [
-            models.Index(fields=['username', ])
-        ]
 
     @classmethod
-    def create_entry(cls, request, couch_user=None):
+    def create_entry(cls, request, couch_user=None, is_login_page=False):
         couch_user = request.couch_user if couch_user is None else couch_user
         record = cls(
             username=couch_user.username,
-            assigned_location=couch_user.get_location_ids(getattr(request, 'domain', None)),
+            assigned_location_ids=couch_user.get_location_ids(getattr(request, 'domain', None)),
             ip_address=get_ip(request),
             url=request.path,
             get_data=request.GET,
-            post_data=request.POST,
+            post_data=request.POST if not is_login_page else {},
             session_key=request.session.session_key,
         )
         record.save()
