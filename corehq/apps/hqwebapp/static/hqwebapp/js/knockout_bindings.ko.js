@@ -219,15 +219,30 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                            .removeClass("selected-for-sort")
                            .siblings().removeClass('selected-for-sort');
                     if ($('.shift-selected').length == 2) {
-                        $('.shift-selected').eq(0).next();
-
-//                        $('.shift-selected').addClass("selected-for-sort");
-//                        $('.shift-selected').for
-                        // TODO - run prev recursively until reaching - else run next
-                        $('.shift-selected').addClass('selected-for-sort').removeClass('shift-selected')
-
+                        var shift_selected_index_0 = $('.shift-selected').eq(0)[0].attributes['data-order'].value,
+                            shift_selected_index_1 = $('.shift-selected').eq(1)[0].attributes['data-order'].value;
+                        var first_row = null,
+                            second_row = null,
+                            start = null,
+                            end = null;
+                        if (shift_selected_index_0 < shift_selected_index_1) {
+                            start = shift_selected_index_0;
+                            end = shift_selected_index_1;
+                            first_row = $('.shift-selected').eq(0);
+                            second_row = $('.shift-selected').eq(1);
+                        } else {
+                            start = shift_selected_index_1;
+                            end = shift_selected_index_0;
+                            first_row = $('.shift-selected').eq(1);
+                            second_row = $('.shift-selected').eq(0);
+                        }
+                        var next = first_row;
+                        for(var i = start; i <= end; i++) {
+                            next.addClass('selected-for-sort');
+                            next = next.next();
+                        }
+                        $('.shift-selected').removeClass('shift-selected')
                     }
-
                 } else {
                     $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
                     $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
