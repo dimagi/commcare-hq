@@ -95,6 +95,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -5188,8 +5189,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
             # this is much less useful/actionable without a URL
             # so make sure to include the request
-            logging.error('Unexpected error building app', exc_info=True,
-                          extra={'request': view_utils.get_request()})
+            notify_exception(view_utils.get_request(), "Unexpected error building app")
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
