@@ -86,14 +86,9 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
             # TODO - don't append columns that are not part of filters or group bys
             qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session(self.engine_id)
-        try:
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
             return qc.count(session.connection(), self.filter_values)
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.remove()
 
     @method_decorator(catch_and_raise_exceptions)
     def get_total_row(self):
@@ -113,8 +108,8 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
         for c in self.columns:
             qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session(self.engine_id)
-        try:
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
             totals = qc.totals(
                 session.connection(),
                 [
@@ -125,11 +120,6 @@ class ConfigurableReportSqlDataSource(ConfigurableReportDataSourceMixin, SqlData
                 ],
                 self.filter_values
             )
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.remove()
 
         total_row = [
             _clean_total_row(totals.get(column_id), col)
