@@ -13,7 +13,19 @@
     "airszambia",
     "airszimbabwe",
     "vectorlink-benin",
-    "vectorlink-uganda"
+    "vectorlink-burkina-faso",
+    "vectorlink-ethiopia",
+    "vectorlink-ghana",
+    "vectorlink-kenya",
+    "vectorlink-madagascar",
+    "vectorlink-malawi",
+    "vectorlink-mali",
+    "vectorlink-mozambique",
+    "vectorlink-rwanda",
+    "vectorlink-tanzania",
+    "vectorlink-uganda",
+    "vectorlink-zambia",
+    "vectorlink-zimbabwe"
   ],
   "config": {
     "engine_id": "default",
