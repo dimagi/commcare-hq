@@ -964,7 +964,7 @@ def get_report_config(config_id, domain):
 
 
 def _read_file(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         if path.endswith('.json'):
             return json.load(f)
         else:

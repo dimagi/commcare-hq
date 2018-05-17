@@ -86,7 +86,7 @@ class Command(BaseCommand):
             for filename in filenames:
                 log_name = os.path.basename(filename)
                 log_names.append(log_name)
-                with open(filename) as f:
+                with open(filename, encoding='utf-8') as f:
                     wrapped_log = properly_wrap_sync_log(json.loads(f.read()))
                     logs.append(wrapped_log)
                     if isinstance(wrapped_log, SyncLog):

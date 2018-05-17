@@ -36,7 +36,7 @@ def record_performance_stats(filepath, slug):
         end = time.clock()
         after = hp.heap()
         leftover = after - before
-        with open(filepath, 'a') as f:
+        with open(filepath, 'a', encoding='utf-8') as f:
             f.write('{},{},{}\n'.format(slug, leftover.size, end - start))
 
 
@@ -68,7 +68,7 @@ class Command(BaseCommand):
         for slug in app_slugs:
             print('Fetching %s...' % slug)
             source_path = os.path.join(path, 'src', '%s.json' % slug)
-            with open(source_path) as f:
+            with open(source_path, encoding='utf-8') as f:
                 j = json.load(f)
                 if j['doc_type'] == 'Application':
                     app = Application.wrap(j)
@@ -97,7 +97,7 @@ class Command(BaseCommand):
             except OSError:
                 # file exists
                 pass
-            with open(filepath, 'w') as f:
+            with open(filepath, 'w', encoding='utf-8') as f:
                 if filepath.endswith('.xml'):
                     payload = normalize_xml(payload)
                 f.write(payload)

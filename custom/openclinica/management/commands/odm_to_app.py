@@ -515,7 +515,7 @@ class Command(BaseCommand):
 
     @staticmethod
     def get_study(odm_filename):
-        with open(odm_filename) as odm_file:
+        with open(odm_filename, encoding='utf-8') as odm_file:
             odm = etree.parse(odm_file)
         meta = odm.xpath('./odm:Study/odm:MetaDataVersion', namespaces=odm_nsmap)[0]
         study_def = odm.xpath('./odm:Study', namespaces=odm_nsmap)[0]

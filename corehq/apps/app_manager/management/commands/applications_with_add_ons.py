@@ -50,7 +50,7 @@ class Command(BaseCommand):
             add_to_toggle = find_static_toggle(add_to_toggle)
             if not add_to_toggle:
                 raise CommandError('Toggle %s not found.' % add_to_toggle)
-        with open("apps_with_feature_%s.csv" % add_on_name, "w") as csvfile:
+        with open("apps_with_feature_%s.csv" % add_on_name, "w", encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile,
                                     fieldnames=[
                                         'domain', 'application_id', 'app_name',

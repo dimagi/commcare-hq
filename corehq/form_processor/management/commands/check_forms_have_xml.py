@@ -21,7 +21,7 @@ class Command(BaseCommand):
     def handle(self, domains, file_name, **options):
         blob_db = get_blob_db()
 
-        with open(file_name, 'w') as csv_file:
+        with open(file_name, 'w', encoding='utf-8') as csv_file:
             field_names = ['domain', 'archived', 'form_id', 'received_on']
             csv_writer = csv.DictWriter(csv_file, field_names)
             csv_writer.writeheader()

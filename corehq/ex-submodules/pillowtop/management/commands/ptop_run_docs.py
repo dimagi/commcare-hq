@@ -53,7 +53,7 @@ class Command(BaseCommand):
                 return
 
         def doc_ids():
-            with open(docs_filename) as f:
+            with open(docs_filename, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if line:
@@ -67,7 +67,7 @@ class Command(BaseCommand):
 
     def check_file(self, docs_filename):
         ok = True
-        with open(docs_filename) as f:
+        with open(docs_filename, encoding='utf-8') as f:
             for line in f:
                 line = line.strip()
                 if line and not self.check_id(line):

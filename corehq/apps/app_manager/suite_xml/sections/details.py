@@ -587,7 +587,8 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
-        )) as f:
+        with open(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
+            encoding='utf-8'
+        ) as f:
             return f.read()

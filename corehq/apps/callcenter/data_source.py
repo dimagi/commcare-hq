@@ -68,5 +68,5 @@ def _make_data_source_for_domain(data_source_json, domain_name):
 
 
 def _get_json(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         return json.load(f)

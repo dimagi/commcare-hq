@@ -27,7 +27,7 @@ class Command(BaseCommand):
     def handle(self, domain, infile, logfile, *args, **options):
         self.domain = domain
         self.case_accessor = CaseAccessors(self.domain)
-        with open(infile, 'r') as f, open(logfile, 'w') as log:
+        with open(infile, 'r', encoding='utf-8') as f, open(logfile, 'w', encoding='utf-8') as log:
             reader = csv.reader(f)
             _, case_prop_name = next(reader)
             log.write('--------Successful Form Ids----------\n')

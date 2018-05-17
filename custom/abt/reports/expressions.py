@@ -21,7 +21,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
         Return a dict where keys are form xmlns and values are lists of FlagSpecs
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             return yaml.load(f)
 
     @classmethod
