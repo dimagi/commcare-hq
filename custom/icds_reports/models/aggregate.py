@@ -434,7 +434,7 @@ class AggChildHealth(models.Model):
         managed = False
 
 
-class AggThrData(models.Model)
+class AggThrData(models.Model):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -456,7 +456,7 @@ class AggThrData(models.Model)
         managed = False
 
 
-class AggAwcDaily(models.Model)
+class AggAwcDaily(models.Model):
     state_id = models.TextField()
     district_id = models.TextField()
     block_id = models.TextField()
@@ -495,7 +495,7 @@ class AggAwcDaily(models.Model)
         managed = False
 
 
-class DailyAttendance(models.Model)
+class DailyAttendance(models.Model):
     doc_id = models.TextField()
     awc_id = models.TextField(null=True)
     month = models.DateField(null=True)
