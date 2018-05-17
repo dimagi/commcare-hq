@@ -31,7 +31,7 @@ class Command(BaseCommand):
     def handle(self, csv_file, **options):
         self.domain = 'icds-cas'
         self.case_accessor = CaseAccessors(self.domain)
-        with open(csv_file, "w") as csv_file:
+        with open(csv_file, "w", encoding='utf-8') as csv_file:
             field_names = [
                 'case_id', 'owner_id', 'modified_on', 'server_modified_on',
                 'add', 'edd', 'ccs_phase', 'num_pnc_visits', 'current_schedule_phase'

@@ -65,7 +65,7 @@ class dotsOrderingTests(TestCase):
 
         self.form_a = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
-                               '05_uncheck_a.xml')) as fin:
+                               '05_uncheck_a.xml'), encoding='utf-8') as fin:
             self.form_a = fin.read() % {
                 'encounter_date': ANCHOR_DATE_A.strftime('%Y-%m-%d'),
                 'anchor_date': ANCHOR_DATE_A.strftime("%d %b %Y")
@@ -73,7 +73,7 @@ class dotsOrderingTests(TestCase):
 
         self.form_b = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
-                               '06_uncheck_b.xml')) as fin:
+                               '06_uncheck_b.xml'), encoding='utf-8') as fin:
             self.form_b = fin.read() % {
                 'encounter_date': ANCHOR_DATE_B.strftime('%Y-%m-%d'),
                 'anchor_date': ANCHOR_DATE_B.strftime("%d %b %Y")

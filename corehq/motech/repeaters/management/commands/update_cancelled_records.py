@@ -118,7 +118,7 @@ class Command(BaseCommand):
             action,
             repeater.__class__.__name__,
             datetime.datetime.utcnow().strftime('%Y-%m-%d_%H.%M.%S'))
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(('record_id', 'payload_id', 'state', 'message'))
 

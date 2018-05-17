@@ -84,7 +84,7 @@ class RunSqlLazy(RunSQL):
             super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
 
     def _render_template(self, path):
-        with open(self.sql) as f:
+        with open(self.sql, encoding='utf-8') as f:
             template_string = f.read()
 
         template = engines['django'].from_string(template_string)

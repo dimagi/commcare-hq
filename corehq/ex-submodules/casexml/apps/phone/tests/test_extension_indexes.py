@@ -21,7 +21,7 @@ def get_test_file_json(filename):
     base = os.path.dirname(__file__)
     file_path = 'data'
     path = os.path.join(base, file_path, '%s.json' % filename)
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         file_contents = f.read()
 
     return json.loads(file_contents)

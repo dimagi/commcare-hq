@@ -104,7 +104,7 @@ def setUpModule():
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
-            with open(os.path.join(path, file_name)) as f:
+            with open(os.path.join(path, file_name), encoding='utf-8') as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
                 if not table_name.startswith('icds_dashboard_'):

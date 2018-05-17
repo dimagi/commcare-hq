@@ -102,7 +102,7 @@ class BulkArchiveForms(TestCase):
         self.assertIn('No files uploaded', response.content)
 
     def test_bulk_archive_wrong_filetype(self):
-        with open(join(BASE_PATH, WRONG_FILETYPE)) as fp:
+        with open(join(BASE_PATH, WRONG_FILETYPE), encoding='utf-8') as fp:
             response = self.client.post(self.url, {'bulk_upload_file': fp}, follow=True)
             self.assertIn('CommCare HQ does not support that file type.', response.content)
 

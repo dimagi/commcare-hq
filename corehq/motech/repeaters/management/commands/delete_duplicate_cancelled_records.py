@@ -81,7 +81,7 @@ class Command(BaseCommand):
             repeater.__class__.__name__,
             datetime.datetime.utcnow().isoformat())
         print("Writing log of changes to {}".format(filename))
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(('RepeatRecord ID', 'Payload ID', 'Failure Reason', 'Deleted?', 'Reason'))
             writer.writerows(redundant_log)

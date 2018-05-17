@@ -35,7 +35,10 @@ class Command(BaseCommand):
         awc_location_table_name = get_table_name(domain, AWC_LOCATION_TABLE_ID)
         session = session_helper.Session
 
-        with open(os.path.join(os.path.dirname(__file__), 'sql_scripts', 'select_non_aadhar.sql')) as f:
+        with open(
+            os.path.join(os.path.dirname(__file__), 'sql_scripts', 'select_non_aadhar.sql'),
+            encoding='utf-8'
+        ) as f:
             sql_script = f.read()
             rows = session.execute(
                 sql_script % {
