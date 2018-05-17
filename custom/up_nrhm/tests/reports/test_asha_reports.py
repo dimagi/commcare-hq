@@ -366,132 +366,135 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
         }
         district_functionality_report = DistrictFunctionalityReport(request=mock, domain='up-nrhm')
         rows = district_functionality_report.rows
-        self.assertEqual(
-            rows,
-            (
+        expected = (
+            [
                 [
-                    [
-                        'Newborn visits within first day of birth in case of home deliveries',
-                        {'sort_key': '1.4%', 'html': '1.4%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '1.6%', 'html': '1.6%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '3.2%', 'html': '3.2%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '2.1%', 'html': '2.1%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '3.0%', 'html': '3.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '3.2%', 'html': '3.2%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '4.7%', 'html': '4.7%'}, {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits'
-                        ' in case of Institutional delivery and seven in case of a home delivery)',
-                        {'sort_key': '18.3%', 'html': '18.3%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '16.3%', 'html': '16.3%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '14.1%', 'html': '14.1%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '18.5%', 'html': '18.5%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '16.4%', 'html': '16.4%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '20.1%', 'html': '20.1%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '17.5%', 'html': '17.5%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '17.1%', 'html': '17.1%'}, {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Attending VHNDs/Promoting immunization', {'sort_key': '26.8%', 'html': '26.8%'},
-                        {'sort_key': 'C', 'html': 'C'}, {'sort_key': '22.5%', 'html': '22.5%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.2%', 'html': '20.2%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '26.6%', 'html': '26.6%'},
-                        {'sort_key': 'C', 'html': 'C'}, {'sort_key': '25.4%', 'html': '25.4%'},
-                        {'sort_key': 'C', 'html': 'C'}, {'sort_key': '27.6%', 'html': '27.6%'},
-                        {'sort_key': 'C', 'html': 'C'}, {'sort_key': '25.4%', 'html': '25.4%'},
-                        {'sort_key': 'C', 'html': 'C'}, {'sort_key': '24.8%', 'html': '24.8%'},
-                        {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Supporting institutional delivery', {'sort_key': '20.4%', 'html': '20.4%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.9%', 'html': '20.9%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.2%', 'html': '18.2%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.5%', 'html': '18.5%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.6%', 'html': '20.6%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '21.6%', 'html': '21.6%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.3%', 'html': '18.3%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '16.3%', 'html': '16.3%'},
-                        {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Management of childhood illness - especially diarrhea and pneumonia',
-                        {'sort_key': '21.1%', 'html': '21.1%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '15.5%', 'html': '15.5%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '20.2%', 'html': '20.2%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '16.9%', 'html': '16.9%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '14.3%', 'html': '14.3%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '10.4%', 'html': '10.4%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '21.4%', 'html': '21.4%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '18.6%', 'html': '18.6%'}, {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Household visits with nutrition counseling', {'sort_key': '16.9%', 'html': '16.9%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.0%', 'html': '7.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '9.1%', 'html': '9.1%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.9%', 'html': '7.9%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.7%', 'html': '0.7%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '12.4%', 'html': '12.4%'},
-                        {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Fever cases seen/malaria slides made in malaria endemic area',
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '1.0%', 'html': '1.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Acting as DOTS provider', {'sort_key': '0.0%', 'html': '0.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '5.4%', 'html': '5.4%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '3.7%', 'html': '3.7%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '2.2%', 'html': '2.2%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '6.2%', 'html': '6.2%'},
-                        {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Holding or attending village/VHSNC meeting', {'sort_key': '7.7%', 'html': '7.7%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '1.6%', 'html': '1.6%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '5.1%', 'html': '5.1%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.3%', 'html': '7.3%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '6.7%', 'html': '6.7%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
-                        {'sort_key': 'D', 'html': 'D'}, {'sort_key': '10.9%', 'html': '10.9%'},
-                        {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
-                        'providing OCPs/Condoms',
-                        {'sort_key': '26.1%', 'html': '26.1%'}, {'sort_key': 'C', 'html': 'C'},
-                        {'sort_key': '23.3%', 'html': '23.3%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '24.2%', 'html': '24.2%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '24.2%', 'html': '24.2%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '21.7%', 'html': '21.7%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '25.4%', 'html': '25.4%'}, {'sort_key': 'C', 'html': 'C'},
-                        {'sort_key': '23.8%', 'html': '23.8%'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': '24.0%', 'html': '24.0%'}, {'sort_key': 'D', 'html': 'D'}
-                    ],
-                    [
-                        '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                        {'sort_key': 21, 'html': '30/142 (21%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 18, 'html': '24/129 (18%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 18, 'html': '18/100 (18%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 20, 'html': '26/124 (20%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 19, 'html': '37/189 (19%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 23, 'html': '31/134 (23%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 21, 'html': '27/126 (21%)'}, {'sort_key': 'D', 'html': 'D'},
-                        {'sort_key': 21, 'html': '28/129 (21%)'}, {'sort_key': 'D', 'html': 'D'}
-                    ]
-                ], 0)
-        )
+                    'Newborn visits within first day of birth in case of home deliveries',
+                    {'sort_key': '1.4%', 'html': '1.4%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '1.6%', 'html': '1.6%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '3.2%', 'html': '3.2%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '2.1%', 'html': '2.1%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '3.0%', 'html': '3.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '3.2%', 'html': '3.2%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '4.7%', 'html': '4.7%'}, {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits'
+                    ' in case of Institutional delivery and seven in case of a home delivery)',
+                    {'sort_key': '18.3%', 'html': '18.3%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '16.3%', 'html': '16.3%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '14.1%', 'html': '14.1%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '18.5%', 'html': '18.5%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '16.4%', 'html': '16.4%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '20.1%', 'html': '20.1%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '17.5%', 'html': '17.5%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '17.1%', 'html': '17.1%'}, {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Attending VHNDs/Promoting immunization', {'sort_key': '26.8%', 'html': '26.8%'},
+                    {'sort_key': 'C', 'html': 'C'}, {'sort_key': '22.5%', 'html': '22.5%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.2%', 'html': '20.2%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '26.6%', 'html': '26.6%'},
+                    {'sort_key': 'C', 'html': 'C'}, {'sort_key': '25.4%', 'html': '25.4%'},
+                    {'sort_key': 'C', 'html': 'C'}, {'sort_key': '27.6%', 'html': '27.6%'},
+                    {'sort_key': 'C', 'html': 'C'}, {'sort_key': '25.4%', 'html': '25.4%'},
+                    {'sort_key': 'C', 'html': 'C'}, {'sort_key': '24.8%', 'html': '24.8%'},
+                    {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Supporting institutional delivery', {'sort_key': '20.4%', 'html': '20.4%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.9%', 'html': '20.9%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.2%', 'html': '18.2%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.5%', 'html': '18.5%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '20.6%', 'html': '20.6%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '21.6%', 'html': '21.6%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '18.3%', 'html': '18.3%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '16.3%', 'html': '16.3%'},
+                    {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Management of childhood illness - especially diarrhea and pneumonia',
+                    {'sort_key': '21.1%', 'html': '21.1%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '15.5%', 'html': '15.5%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '20.2%', 'html': '20.2%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '16.9%', 'html': '16.9%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '14.3%', 'html': '14.3%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '10.4%', 'html': '10.4%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '21.4%', 'html': '21.4%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '18.6%', 'html': '18.6%'}, {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Household visits with nutrition counseling', {'sort_key': '16.9%', 'html': '16.9%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.0%', 'html': '7.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '9.1%', 'html': '9.1%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.9%', 'html': '7.9%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.7%', 'html': '0.7%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '12.4%', 'html': '12.4%'},
+                    {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Fever cases seen/malaria slides made in malaria endemic area',
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '1.0%', 'html': '1.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '0.0%', 'html': '0.0%'}, {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Acting as DOTS provider', {'sort_key': '0.0%', 'html': '0.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '5.4%', 'html': '5.4%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '3.7%', 'html': '3.7%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '2.2%', 'html': '2.2%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '6.2%', 'html': '6.2%'},
+                    {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Holding or attending village/VHSNC meeting', {'sort_key': '7.7%', 'html': '7.7%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '1.6%', 'html': '1.6%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '5.1%', 'html': '5.1%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '7.3%', 'html': '7.3%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '0.0%', 'html': '0.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '6.7%', 'html': '6.7%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '4.0%', 'html': '4.0%'},
+                    {'sort_key': 'D', 'html': 'D'}, {'sort_key': '10.9%', 'html': '10.9%'},
+                    {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
+                    'providing OCPs/Condoms',
+                    {'sort_key': '26.1%', 'html': '26.1%'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': '23.3%', 'html': '23.3%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '24.2%', 'html': '24.2%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '24.2%', 'html': '24.2%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '21.7%', 'html': '21.7%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '25.4%', 'html': '25.4%'}, {'sort_key': 'C', 'html': 'C'},
+                    {'sort_key': '23.8%', 'html': '23.8%'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': '24.0%', 'html': '24.0%'}, {'sort_key': 'D', 'html': 'D'}
+                ],
+                [
+                    '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
+                    {'sort_key': 21, 'html': '30/142 (21%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 18, 'html': '24/129 (18%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 18, 'html': '18/100 (18%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 20, 'html': '26/124 (20%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 19, 'html': '37/189 (19%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 23, 'html': '31/134 (23%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 21, 'html': '27/126 (21%)'}, {'sort_key': 'D', 'html': 'D'},
+                    {'sort_key': 21, 'html': '28/129 (21%)'}, {'sort_key': 'D', 'html': 'D'}
+                ]
+            ], 0)
+        self.assertEqual(len(rows), len(expected))
+        self.assertEqual(len(rows[0]), len(expected[0]))
+        for i in range(len(rows[0])):
+            self.assertEqual(len(rows[0][i]), len(expected[0][i]))
+            for record in expected[0][i]:
+                self.assertIn(record, rows[0][i])
