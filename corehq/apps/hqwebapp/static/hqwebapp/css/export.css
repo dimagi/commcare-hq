@@ -1,0 +1,7 @@
+tr.selected-for-sort {
+    background-color: #0000FF !important;
+}
+
+tr.shift-selected {
+    background-color: #00FFFF !important;
+}
