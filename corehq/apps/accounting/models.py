@@ -1810,16 +1810,17 @@ class Invoice(InvoiceBase):
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            _soft_assert_contact_emails_missing(
-                False,
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: %s."
-                " Add client contact emails here: %s" % (
-                    self.get_domain(),
-                    ', '.join(contact_emails),
-                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+            if not settings.UNIT_TESTING:
+                _soft_assert_contact_emails_missing(
+                    False,
+                    "Could not find an email to send the invoice "
+                    "email to for the domain %s. Sending to domain admins instead: %s."
+                    " Add client contact emails here: %s" % (
+                        self.get_domain(),
+                        ', '.join(contact_emails),
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                    )
                 )
-            )
         return contact_emails
 
     @property
