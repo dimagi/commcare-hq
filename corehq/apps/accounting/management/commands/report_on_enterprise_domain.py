@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 
 from datetime import datetime, timedelta
 from django.core.management import BaseCommand
+from django.core.management.base import CommandError
 from django.urls import reverse
 import re
 
@@ -28,9 +29,19 @@ class Command(BaseCommand):
             metavar='domain',
             nargs='+',
         )
+        parser.add_argument(
+            '-u',
+            '--username',
+            action='store',
+            dest='username',
+            help='Username',
+        )
 
     def handle(self, domain_names, **kwargs):
         date_fmt = '%Y/%m/%d %H:%M:%S'
+        couch_user = CouchUser.get_by_username(kwargs.get('username'))
+        if not couch_user:
+            raise CommandError("Option: '--username' must be specified")
 
         # Report 1: Project Spaces
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
@@ -66,7 +77,7 @@ class Command(BaseCommand):
                    'Mobile User', 'First Name', 'Last Name']
         print(','.join(headers))
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=700), datetime.utcnow())    # TODO: 700 => 7
+        datespan = DateSpan(datetime.now() - timedelta(days=7), datetime.utcnow())
         for domain in [domain for domain in map(Domain.get_by_name, domain_names) if domain]:
             apps = get_brief_apps_in_domain(domain.name)
             apps = {a.id: a.name for a in apps}
@@ -80,7 +91,7 @@ class Command(BaseCommand):
                 names[username] = (user['first_name'], user['last_name'])
             users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
                                            ['t__0'],  # All mobile workers
-                                           CouchUser.get_by_username('jschweers@dimagi.com')) # TODO: take as param
+                                           couch_user)
                             .values_list('_id', flat=True))
             query = (form_es.FormES()
                      .domain(domain.name)
