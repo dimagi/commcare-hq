@@ -85,7 +85,7 @@ class Command(BaseCommand):
 
     def _form_submissions_row(self, domain):
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=700), datetime.utcnow())
+        datespan = DateSpan(datetime.now() - timedelta(days=7), datetime.utcnow())
         apps = get_brief_apps_in_domain(domain)
         apps = {a.id: a.name for a in apps}
         users = get_all_user_rows(domain, include_web_users=False, include_mobile_users=True,
