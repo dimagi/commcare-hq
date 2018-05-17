@@ -195,6 +195,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
+                if(e.ctrlKey) {
+                    console.log('ctrlKey');
+                } else if(e.metaKey) {
+                    console.log('metaKey');
+                } else if(e.shiftKey) {
+                    console.log('shiftKey');
+                }
+
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
 
@@ -205,8 +213,24 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
+                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                } else if (e.shiftKey) {
+                    $(this).toggleClass("shift-selected")
+                           .removeClass("selected-for-sort")
+                           .siblings().removeClass('selected-for-sort');
+                    if ($('.shift-selected').length == 2) {
+                        $('.shift-selected').eq(0).next();
+
+//                        $('.shift-selected').addClass("selected-for-sort");
+//                        $('.shift-selected').for
+                        // TODO - run prev recursively until reaching - else run next
+                        $('.shift-selected').addClass('selected-for-sort').removeClass('shift-selected')
+
+                    }
+
                 } else {
                     $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
+                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
                 }
             });
 
