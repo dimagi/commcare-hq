@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 import uuid
 
 import architect
-from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connections, models
@@ -1074,7 +1073,7 @@ class UcrTableNameMapping(models.Model):
     type='range',
     subtype='date',
     constraint='month',
-    column='time_of_use_start'
+    column='time_of_use'
 )
 class ICDSAuditEntryRecord(models.Model):
     id = models.UUIDField(unique=True, default=uuid.uuid4, primary_key=True)
@@ -1085,8 +1084,7 @@ class ICDSAuditEntryRecord(models.Model):
     post_data = JSONField(default=dict)
     get_data = JSONField(default=dict)
     session_key = models.CharField(max_length=32)
-    time_of_use_start = models.DateTimeField(auto_now_add=True)
-    time_of_use_end = models.DateTimeField(null=True)
+    time_of_use = models.DateTimeField(auto_now_add=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -1106,9 +1104,3 @@ class ICDSAuditEntryRecord(models.Model):
         )
         record.save()
         return record.id
-
-    @classmethod
-    def update_entry(cls, id):
-        record = cls.objects.get(id=id)
-        record.time_of_use_end = datetime.utcnow()
-        record.save()

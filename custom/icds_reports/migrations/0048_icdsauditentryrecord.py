@@ -35,8 +35,7 @@ class Migration(migrations.Migration):
                 ('post_data', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
                 ('get_data', django.contrib.postgres.fields.jsonb.JSONField(default=dict)),
                 ('session_key', models.CharField(max_length=32)),
-                ('time_of_use_start', models.DateTimeField(auto_now_add=True)),
-                ('time_of_use_end', models.DateTimeField(null=True)),
+                ('time_of_use', models.DateTimeField(auto_now_add=True)),
             ],
             options={
                 'db_table': 'icds_audit_entry_record',
