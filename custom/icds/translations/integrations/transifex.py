@@ -57,28 +57,28 @@ class Transifex:
     def _send_files_to_transifex(self):
         file_uploads = {}
         client = self.client()
-        for filename in self.po_file_generator.generated_files:
+        for resource_name, path_to_file in self.po_file_generator.generated_files:
             if self.is_source_file:
                 response = client.upload_resource(
-                    filename,
-                    filename,
-                    filename
+                    path_to_file,
+                    resource_name,
+                    resource_name
                 )
             else:
                 lang_code = SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)
                 response = client.upload_translation(
-                    filename,
-                    filename,
-                    filename,
+                    path_to_file,
+                    resource_name,
+                    resource_name,
                     lang_code
                 )
             if response.status_code in [200, 201]:
-                file_uploads[filename] = _("Successfully Uploaded")
+                file_uploads[resource_name] = _("Successfully Uploaded")
             else:
-                file_uploads[filename] = "{}: {}".format(response.status_code, response.content)
+                file_uploads[resource_name] = "{}: {}".format(response.status_code, response.content)
         return file_uploads
 
     def _cleanup(self):
-        for filename in self.po_file_generator.generated_files:
-            if os.path.exists(filename):
-                os.remove(filename)
+        for _, filepath in self.po_file_generator.generated_files:
+            if os.path.exists(filepath):
+                os.remove(filepath)

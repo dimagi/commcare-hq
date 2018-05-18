@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import polib
 import datetime
+import tempfile
 
 from django.conf import settings
 from memoized import memoized
@@ -24,7 +25,7 @@ class POFileGenerator:
         self.translations = OrderedDict()
         self.version = version
         self.headers = dict()  # headers for each sheet name
-        self.generated_files = list()
+        self.generated_files = list()  # list of tuples (filename, filepath)
         self.sheet_name_to_module_or_form_type_and_id = dict()
 
     @property
@@ -155,5 +156,6 @@ class POFileGenerator:
                         occurrences=translation.occurrences
                     )
                     po.append(entry)
-            po.save(file_name)
-            self.generated_files.append(file_name)
+            temp_file = tempfile.NamedTemporaryFile(delete=False)
+            po.save(temp_file.name)
+            self.generated_files.append((file_name, temp_file.name))
