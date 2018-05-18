@@ -461,7 +461,7 @@ def get_uuids_by_instance_id(domain):
     apps = get_apps_in_domain(domain)
     config_ids = defaultdict(list)
     for app in apps:
-        if app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_2:
+        if app.mobile_ucr_restore_version in (MOBILE_UCR_MIGRATING_TO_2, MOBILE_UCR_VERSION_2):
             for module in app.modules:
                 if module.module_type == 'report':
                     for report_config in module.report_configs:
