@@ -157,7 +157,7 @@ def accumulate_put_requests(files):
         if filepath == "-":
             load_puts(sys.stdin, data)
         else:
-            with open(filepath, "r") as fileobj:
+            with open(filepath, "r", encoding='utf-8') as fileobj:
                 load_puts(fileobj, data)
     return data
 
@@ -291,7 +291,7 @@ def make_row_writer(output_file, write_csv):
         return write
 
     if output_file != sys.stdout:
-        output_file = open(output_file, "w")
+        output_file = open(output_file, "w", encoding='utf-8')
     if write_csv:
         writer = csv.writer(output_file, dialect="excel")
         write = writer.writerow

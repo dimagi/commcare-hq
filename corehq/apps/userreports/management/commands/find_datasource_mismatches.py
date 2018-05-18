@@ -75,7 +75,7 @@ class Command(BaseCommand):
             data_source_id[-8:],
             datetime.utcnow().strftime("%Y-%m-%d-%H-%M-%S")
         )
-        with open(filename, 'w') as f:
+        with open(filename, 'w', encoding='utf-8') as f:
             headers = ['doc_id', 'column_name', 'inserted_at', 'server_modified_on',
                        'stored_value', 'desired_value', 'message']
             writer = csv.DictWriter(f, headers)

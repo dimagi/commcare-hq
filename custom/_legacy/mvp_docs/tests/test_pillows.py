@@ -195,7 +195,7 @@ def _save_form_and_case(test):
 
 
 def _fake_indicators(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
+    with open(os.path.join(os.path.dirname(__file__), 'data', filename), encoding='utf-8') as f:
         indicators = json.loads(f.read())
         return [_wrap(i) for i in indicators]
 

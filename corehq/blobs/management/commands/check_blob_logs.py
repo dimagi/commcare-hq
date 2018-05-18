@@ -60,7 +60,7 @@ class Command(BaseCommand):
         old_db = blob_db.old_db
         new_db = blob_db.new_db
         for filepath in files:
-            with open(filepath) as fh:
+            with open(filepath, encoding='utf-8') as fh:
                 for line in fh:
                     if not line:
                         continue

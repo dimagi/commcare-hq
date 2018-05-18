@@ -31,7 +31,7 @@ class Command(BaseCommand):
         self.db = shard
         self.case_accessor = CaseAccessors(self.domain)
         failed_updates = []
-        with open(log_file, "w") as fh:
+        with open(log_file, "w", encoding='utf-8') as fh:
             fh.write('--------Successful Form Ids----------\n')
             chunk_num = 1
             for orphan_case_chunk in self._get_cases():

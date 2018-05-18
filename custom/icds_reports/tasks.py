@@ -136,7 +136,7 @@ def _create_aggregate_functions(cursor):
         celery_task_logger.info("Starting icds reports create_functions")
         for sql_function_path in SQL_FUNCTION_PATHS:
             path = os.path.join(os.path.dirname(__file__), *sql_function_path)
-            with open(path, "r") as sql_file:
+            with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports create_functions")
@@ -152,7 +152,7 @@ def _update_aggregate_locations_tables(cursor):
     try:
         path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with open(path, "r") as sql_file:
+        with open(path, "r", encoding='utf-8') as sql_file:
             sql_to_execute = sql_file.read()
             cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports update_location_tables_sql")

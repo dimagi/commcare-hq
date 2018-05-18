@@ -89,7 +89,7 @@ class Command(BaseCommand):
         return file_name
 
     def _load_record_ids_from_file(self, file_path):
-        with open(file_path, 'rU') as csvfile:
+        with open(file_path, 'rU', encoding='utf-8') as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
                 self.record_ids.append(row['record_id'])

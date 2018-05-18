@@ -69,16 +69,16 @@ class dotsSubmissionTests(TestCase):
 
         self.pillbox_form = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
-                               '01_pillbox.xml')) as fin:
+                               '01_pillbox.xml'), encoding='utf-8') as fin:
             self.pillbox_form = fin.read()
 
         self.no_pillbox_form = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
-                               '02_no_pillbox.xml')) as fin:
+                               '02_no_pillbox.xml'), encoding='utf-8') as fin:
             self.no_pillbox_form = fin.read()
         self.no_pillbox_form2 = ""
         with open(os.path.join(os.path.abspath(os.path.dirname(__file__)), 'dots_data',
-                               '03_no_pillbox.xml')) as fin:
+                               '03_no_pillbox.xml'), encoding='utf-8') as fin:
             self.no_pillbox_form2 = fin.read()
 
     def tearDown(self):

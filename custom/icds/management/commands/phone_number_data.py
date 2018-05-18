@@ -19,7 +19,7 @@ class Command(BaseCommand):
 
     def handle(self, infile, outfile, *args, **options):
         self.case_accessor = CaseAccessors('icds-cas')
-        with open(infile, 'r') as old, open(outfile, 'w') as new:
+        with open(infile, 'r', encoding='utf-8') as old, open(outfile, 'w', encoding='utf-8') as new:
             reader = csv.reader(old)
             writer = csv.writer(new)
             headers = next(reader)
