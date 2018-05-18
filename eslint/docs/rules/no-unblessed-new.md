@@ -1,4 +1,4 @@
-# Disallow new expect for specified objects. (no-unblessed-new)
+# Disallow new except for specified objects. (no-unblessed-new)
 
 Created to help make inheritance style more consistent.
 
@@ -25,7 +25,7 @@ var thing = new Thing();
 
 ### Options
 
-Accepts an array of names. These names are allowed to be created with `new`.
+Accepts an array of identifiers. These are classes that may be created with `new`.
 
 ## When Not To Use It
 

@@ -1,6 +1,7 @@
 # eslint-plugin-eslint-dimagi
 
-Dimagi-specific ESLint rules
+Dimagi-specific ESLint rules.
+Intended for developers of [CommCareHQ](https://github.com/dimagi/commcare-hq).
 
 ## Installation
 
@@ -43,7 +44,7 @@ Then configure the rules you want to use under the rules section.
 
 ## Supported Rules
 
-* Fill in provided rules here
+* no-unblessed-new: Disallows use of the `new` keyword except with specified object types.
 
 
 
