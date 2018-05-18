@@ -36,12 +36,14 @@ from corehq.apps.reminders.models import (
     MATCH_ANY_VALUE,
     DAY_ANY,
 )
+from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.messaging.scheduling.models import (
     AlertSchedule,
     AlertEvent,
     TimedSchedule,
     SMSContent,
     EmailContent,
+    SMSSurveyContent,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
     CaseScheduleInstanceMixin,
@@ -196,6 +198,30 @@ def get_content(handler, event):
         check_days_until(event.subject)
         check_days_until(event.message)
         return EmailContent(subject=event.subject, message=event.message)
+    elif handler.method == METHOD_SMS_SURVEY:
+        if event.callback_timeout_intervals:
+            if handler.submit_partial_forms:
+                expire_after = sum(event.callback_timeout_intervals)
+                reminder_intervals = event.callback_timeout_intervals[:-1]
+            else:
+                expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
+                reminder_intervals = event.callback_timeout_intervals
+
+            submit_partially_completed_forms = handler.submit_partial_forms
+            include_case_updates_in_partial_submissions = handler.include_case_side_effects
+        else:
+            expire_after = SQLXFormsSession.MAX_SESSION_LENGTH
+            reminder_intervals = []
+            submit_partially_completed_forms = False
+            include_case_updates_in_partial_submissions = False
+
+        return SMSSurveyContent(
+            form_unique_id=event.form_unique_id,
+            expire_after=expire_after,
+            reminder_intervals=reminder_intervals,
+            submit_partially_completed_forms=submit_partially_completed_forms,
+            include_case_updates_in_partial_submissions=include_case_updates_in_partial_submissions,
+        )
     else:
         raise ValueError("Unexpected method '%s'" % handler.method)
 
@@ -317,7 +343,14 @@ class Command(BaseCommand):
         if handler.start_condition_type != CASE_CRITERIA:
             return None
 
-        if handler.method not in (METHOD_SMS, METHOD_EMAIL):
+        if handler.method not in (METHOD_SMS, METHOD_EMAIL, METHOD_SMS_SURVEY):
+            return None
+
+        if (
+            handler.method == METHOD_SMS_SURVEY and
+            handler.submit_partial_forms and
+            any([len(event.callback_timeout_intervals) == 0 for event in handler.events])
+        ):
             return None
 
         if handler.include_child_locations:
