@@ -33,6 +33,7 @@ monkey.patch_all()
 
 import contextlib
 import os
+import re
 import sh
 import sys
 
@@ -41,6 +42,7 @@ import gevent
 from gitutils import (
     OriginalBranch,
     get_git,
+    git_recent_tags,
     has_merge_conflict,
     print_merge_details,
 )
@@ -66,6 +68,13 @@ class BranchConfig(jsonobject.JsonObject):
             for item in subconfig.span_configs(path + (submodule,)):
                 yield item
         yield os.path.join(*path), self
+
+    def check_trunk_is_recent(self):
+        # if it doesn't match our tag format
+        if re.match('[\d-]+_[\d\.]+-\w+-deploy', self.trunk) is None:
+            return True
+
+        return self.trunk in git_recent_tags()
 
 
 def fetch_remote(base_config, name="origin"):
@@ -344,6 +353,11 @@ def main():
     config = yaml.load(stdin)
     config = BranchConfig.wrap(config)
     config.normalize()
+    if not config.check_trunk_is_recent():
+        print("The trunk is not based on a very recent commit")
+        print("Consider using one of the following:")
+        print(git_recent_tags())
+        exit(1)
     args = set(sys.argv[2:])
     verbose = '-v' in args
     do_push = '--no-push' not in args
