@@ -80,6 +80,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
 import six
+from io import open
 
 
 @no_conflict_require_POST
@@ -393,7 +394,7 @@ def export_gzip(req, domain, app_id):
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr('application.json', app_json.export_json())
 
-    wrapper = FileWrapper(open(fpath))
+    wrapper = FileWrapper(open(fpath, 'rb'))
     response = HttpResponse(wrapper, content_type='application/zip')
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
