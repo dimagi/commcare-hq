@@ -18,6 +18,7 @@ from celery.exceptions import TimeoutError
 from celery.result import AsyncResult
 from django.http import HttpResponse, StreamingHttpResponse
 from django.conf import settings
+from django.utils.text import slugify
 
 from casexml.apps.phone.data_providers import get_element_providers, get_async_providers
 from casexml.apps.phone.exceptions import (
@@ -729,6 +730,11 @@ class RestoreConfig(object):
                         ],
                     )
             tags.append('duration:%s' % bucket_value(timing.duration, timer_buckets, 's'))
+
+        if settings.ENTERPRISE_MODE and self.params.app and self.params.app.copy_of:
+            app_name = slugify(self.params.app.name)
+            tags.append('app:{}-{}'.format(app_name, self.params.app.version))
+
         datadog_counter('commcare.restores.count', tags=tags)
 
 
