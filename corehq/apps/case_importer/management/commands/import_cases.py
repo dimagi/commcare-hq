@@ -30,7 +30,7 @@ class Command(BaseCommand):
         if not user.is_member_of(domain):
             raise CommandError("%s can't access %s" % (user, domain))
 
-        with open(config_file, 'r') as f:
+        with open(config_file, 'r', encoding='utf-8') as f:
             config = ImporterConfig.from_json(f.read())
 
         config.couch_user_id = user._id

@@ -46,7 +46,7 @@ class Command(BaseCommand):
             .run().hits
         )
 
-        with open(options['filename'], 'w') as csvfile:
+        with open(options['filename'], 'w', encoding='utf-8') as csvfile:
             writer = csv.writer(csvfile)
             headers = [
                 'case id',

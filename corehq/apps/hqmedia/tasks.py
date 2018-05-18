@@ -160,7 +160,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
     else:
         expose_cached_download(
-            FileWrapper(open(fpath)),
+            FileWrapper(open(fpath, encoding='utf-8')),
             expiry=(1 * 60 * 60),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs

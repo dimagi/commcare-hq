@@ -25,7 +25,7 @@ class Command(BaseCommand):
     def handle(self, file_path, **options):
         db = get_db()
         checkpoints = []
-        with open(file_path) as f:
+        with open(file_path, encoding='utf-8') as f:
             config = PillowResetConfig.wrap(json.loads(f.read()))
             for pillow in config.pillows:
                 checkpoint_doc_name = pillow.checkpoint.checkpoint_id

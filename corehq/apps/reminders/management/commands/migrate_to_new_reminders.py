@@ -61,7 +61,7 @@ from io import open
 
 def log(message):
     print(message)
-    with open('new_reminders_migration.log', 'a') as f:
+    with open('new_reminders_migration.log', 'a', encoding='utf-8') as f:
         f.write(message)
         f.write('\n')
 

@@ -209,7 +209,7 @@ class Command(BaseCommand):
                         check_and_process_forms(chunk, self, debug)
 
     def __enter__(self):
-        self._log_file = open(self.log_filename, 'w')
+        self._log_file = open(self.log_filename, 'w', encoding='utf-8')
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._log_file.close()
