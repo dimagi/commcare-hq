@@ -18,7 +18,6 @@ from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
 
-from couchexport.export import export_from_tables
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
