@@ -85,54 +85,57 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
         }
         asha_facilitators_report = ASHAFacilitatorsReport(request=mock, domain='up-nrhm')
         rows = asha_facilitators_report.rows
-        self.assertEqual(
-            rows,
-            (
+        expected = (
+            [
                 [
-                    [
-                        'Newborn visits within first day of birth in case of home deliveries', '--',
-                        {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
-                        'in case of Institutional delivery and seven in case of a home delivery)',
-                        '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Attending VHNDs/Promoting immunization', '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Supporting institutional delivery', '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Management of childhood illness - especially diarrhea and pneumonia', '--',
-                        {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Household visits with nutrition counseling', '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Fever cases seen/malaria slides made in malaria endemic area', '--',
-                        {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Acting as DOTS provider', '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Holding or attending village/VHSNC meeting', '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
-                        'providing OCPs/Condoms',
-                        '--', {'sort_key': 17, 'html': 17}, ''
-                    ],
-                    [
-                        '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                        {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 17, 'html': 17}, ''
-                    ]
-                ], 17, 0
-            )
+                    'Newborn visits within first day of birth in case of home deliveries', '--',
+                    {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
+                    'in case of Institutional delivery and seven in case of a home delivery)',
+                    '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Attending VHNDs/Promoting immunization', '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Supporting institutional delivery', '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Management of childhood illness - especially diarrhea and pneumonia', '--',
+                    {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Household visits with nutrition counseling', '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Fever cases seen/malaria slides made in malaria endemic area', '--',
+                    {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Acting as DOTS provider', '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Holding or attending village/VHSNC meeting', '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
+                    'providing OCPs/Condoms',
+                    '--', {'sort_key': 17, 'html': 17}, ''
+                ],
+                [
+                    '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
+                    {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 17, 'html': 17}, ''
+                ]
+            ], 17, 0
         )
+        self.assertEqual(len(rows), len(expected))
+        self.assertEqual(len(rows[0]), len(expected[0]))
+        for i in range(len(rows[0])):
+            self.assertEqual(len(rows[0][i]), len(expected[0][i]))
+            for record in expected[0][i]:
+                self.assertIn(record, rows[0][i])
 
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_month_report(self, mock_run_query):
@@ -149,68 +152,71 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
         }
         block_level_month_report = BlockLevelMonthReport(request=mock, domain='up-nrhm')
         rows = block_level_month_report.rows
-        self.assertEqual(
-            rows,
-            (
+        expected = (
+            [
+                ['Newborn visits within first day of birth in case of home deliveries',
+                 {'sort_key': 1, 'html': 1}, '--', '--', {'sort_key': '0', 'html': '0'}
+                 ],
                 [
-                    ['Newborn visits within first day of birth in case of home deliveries',
-                     {'sort_key': 1, 'html': 1}, '--', '--', {'sort_key': '0', 'html': '0'}
-                     ],
-                    [
-                        'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
-                        'in case of Institutional delivery and seven in case of a home delivery)',
-                        {'sort_key': 8, 'html': 8}, '--', '--', {'sort_key': '3', 'html': '3'}
-                    ],
-                    [
-                        'Attending VHNDs/Promoting immunization', {'sort_key': 12, 'html': 12}, '--', '--',
-                        {'sort_key': '4', 'html': '4'}
-                    ],
-                    [
-                        'Supporting institutional delivery', {'sort_key': 12, 'html': 12}, '--', '--',
-                        {'sort_key': '4', 'html': '4'}
-                    ],
-                    [
-                        'Management of childhood illness - especially diarrhea and pneumonia',
-                        {'sort_key': 9, 'html': 9}, '--', '--', {'sort_key': '3', 'html': '3'}
-                    ],
-                    [
-                        'Household visits with nutrition counseling', {'sort_key': 4, 'html': 4}, '--',
-                        '--',
-                        {'sort_key': '1', 'html': '1'}
-                    ],
-                    [
-                        'Fever cases seen/malaria slides made in malaria endemic area',
-                        {'sort_key': 0, 'html': 0},
-                        '--', '--', {'sort_key': '0', 'html': '0'}
-                    ],
-                    [
-                        'Acting as DOTS provider', {'sort_key': 0, 'html': 0}, '--', '--',
-                        {'sort_key': '0', 'html': '0'}
-                    ],
-                    [
-                        'Holding or attending village/VHSNC meeting', {'sort_key': 0, 'html': 0}, '--',
-                        '--',
-                        {'sort_key': '0', 'html': '0'}
-                    ],
-                    [
-                        'Successful referral of the IUD, female sterilization or male sterilization cases '
-                        'and/or providing OCPs/Condoms',
-                        {'sort_key': 12, 'html': 12}, '--', '--', {'sort_key': '4', 'html': '4'}
-                    ],
-                    [
-                        '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                        {'sort_key': 64.70588235294117, 'html': '11/17 (64%)'},
-                        {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 0.0, 'html': '0/17 (0%)'},
-                        {'sort_key': 21.56862745098039, 'html': '3/17 (21%)'}
-                    ],
-                    [
-                        '<b>Total number of ASHAs who did not report/not known</b>',
-                        {'sort_key': 17, 'html': 17},
-                        {'sort_key': 17, 'html': 17}, {'sort_key': 4, 'html': 4},
-                        {'sort_key': '13', 'html': '13'}
-                    ]
-                ], 17)
-        )
+                    'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
+                    'in case of Institutional delivery and seven in case of a home delivery)',
+                    {'sort_key': 8, 'html': 8}, '--', '--', {'sort_key': '3', 'html': '3'}
+                ],
+                [
+                    'Attending VHNDs/Promoting immunization', {'sort_key': 12, 'html': 12}, '--', '--',
+                    {'sort_key': '4', 'html': '4'}
+                ],
+                [
+                    'Supporting institutional delivery', {'sort_key': 12, 'html': 12}, '--', '--',
+                    {'sort_key': '4', 'html': '4'}
+                ],
+                [
+                    'Management of childhood illness - especially diarrhea and pneumonia',
+                    {'sort_key': 9, 'html': 9}, '--', '--', {'sort_key': '3', 'html': '3'}
+                ],
+                [
+                    'Household visits with nutrition counseling', {'sort_key': 4, 'html': 4}, '--',
+                    '--',
+                    {'sort_key': '1', 'html': '1'}
+                ],
+                [
+                    'Fever cases seen/malaria slides made in malaria endemic area',
+                    {'sort_key': 0, 'html': 0},
+                    '--', '--', {'sort_key': '0', 'html': '0'}
+                ],
+                [
+                    'Acting as DOTS provider', {'sort_key': 0, 'html': 0}, '--', '--',
+                    {'sort_key': '0', 'html': '0'}
+                ],
+                [
+                    'Holding or attending village/VHSNC meeting', {'sort_key': 0, 'html': 0}, '--',
+                    '--',
+                    {'sort_key': '0', 'html': '0'}
+                ],
+                [
+                    'Successful referral of the IUD, female sterilization or male sterilization cases '
+                    'and/or providing OCPs/Condoms',
+                    {'sort_key': 12, 'html': 12}, '--', '--', {'sort_key': '4', 'html': '4'}
+                ],
+                [
+                    '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
+                    {'sort_key': 64.70588235294117, 'html': '11/17 (64%)'},
+                    {'sort_key': 0.0, 'html': '0/17 (0%)'}, {'sort_key': 0.0, 'html': '0/17 (0%)'},
+                    {'sort_key': 21.56862745098039, 'html': '3/17 (21%)'}
+                ],
+                [
+                    '<b>Total number of ASHAs who did not report/not known</b>',
+                    {'sort_key': 17, 'html': 17},
+                    {'sort_key': 17, 'html': 17}, {'sort_key': 4, 'html': 4},
+                    {'sort_key': '13', 'html': '13'}
+                ]
+            ], 17)
+        self.assertEqual(len(rows), len(expected))
+        self.assertEqual(len(rows[0]), len(expected[0]))
+        for i in range(len(rows[0])):
+            self.assertEqual(len(rows[0][i]), len(expected[0][i]))
+            for record in expected[0][i]:
+                self.assertIn(record, rows[0][i])
 
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_block_level_af_report(self, mock_run_query):
@@ -229,125 +235,128 @@ class TestASHAFunctionalityChecklistReport(UpNrhmTestCase):
         }
         block_level_af_report = BlockLevelAFReport(request=mock, domain='up-nrhm')
         rows = block_level_af_report.rows
-        self.assertEqual(
-            rows,
-            (
+        expected = (
+            [
                 [
-                    [
-                        'Newborn visits within first day of birth in case of home deliveries',
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '2', 'html': '2'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': 2.0, 'html': 2.0}
-                    ],
-                    [
-                        'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
-                        'in case of Institutional delivery and seven in case of a home delivery)',
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '2', 'html': '2'}, {'sort_key': 26.0, 'html': 26.0}
-                    ],
-                    [
-                        'Attending VHNDs/Promoting immunization', {'sort_key': '5', 'html': '5'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '5', 'html': '5'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '5', 'html': '5'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': 38.0, 'html': 38.0}
-                    ],
-                    [
-                        'Supporting institutional delivery', {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '1', 'html': '1'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': 29.0, 'html': 29.0}
-                    ],
-                    [
-                        'Management of childhood illness - especially diarrhea and pneumonia',
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '2', 'html': '2'}, {'sort_key': 30.0, 'html': 30.0}
-                    ],
-                    [
-                        'Household visits with nutrition counseling', {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
-                        {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': 24.0, 'html': 24.0}
-                    ],
-                    [
-                        'Fever cases seen/malaria slides made in malaria endemic area',
-                        {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': 0.0, 'html': 0.0}
-                    ],
-                    [
-                        'Acting as DOTS provider', {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': 0.0, 'html': 0.0}],
-                    [
-                        'Holding or attending village/VHSNC meeting', {'sort_key': '1', 'html': '1'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '0', 'html': '0'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '0', 'html': '0'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': 11.0, 'html': 11.0}
-                    ],
-                    [
-                        'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
-                        'providing OCPs/Condoms',
-                        {'sort_key': '5', 'html': '5'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '5', 'html': '5'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
-                        {'sort_key': '4', 'html': '4'}, {'sort_key': 37.0, 'html': 37.0}
-                    ],
-                    [
-                        '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
-                        {'sort_key': 25.925925925925927, 'html': '4/18 (25%)'},
-                        {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                        {'sort_key': 25.0, 'html': '4/16 (25%)'},
-                        {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                        {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                        {'sort_key': 25.49019607843137, 'html': '4/17 (25%)'},
-                        {'sort_key': 19.607843137254903, 'html': '3/17 (19%)'},
-                        {'sort_key': 23.809523809523814, 'html': '3/14 (23%)'},
-                        {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
-                        {'sort_key': 21, 'html': '30/142 (21%)'}
-                    ],
-                    [
-                        '<b>Total number of ASHAs who did not report/not known</b>',
-                        {'sort_key': '13', 'html': '13'},
-                        {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
-                        {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
-                        {'sort_key': '12', 'html': '12'}, {'sort_key': '13', 'html': '13'},
-                        {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
-                        {'sort_key': 104.0, 'html': 104.0}
-                    ],
-                    [
-                        '<b>Total Number of ASHAs under each Facilitator</b>', {'sort_key': 18, 'html': 18},
-                        {'sort_key': 15, 'html': 15}, {'sort_key': 16, 'html': 16},
-                        {'sort_key': 15, 'html': 15}, {'sort_key': 15, 'html': 15},
-                        {'sort_key': 17, 'html': 17}, {'sort_key': 17, 'html': 17},
-                        {'sort_key': 14, 'html': 14}, {'sort_key': 15, 'html': 15},
-                        {'sort_key': 142, 'html': 142}
-                    ]
-                ], 142
-            )
+                    'Newborn visits within first day of birth in case of home deliveries',
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '2', 'html': '2'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': 2.0, 'html': 2.0}
+                ],
+                [
+                    'Set of home visits for newborn care as specified in the HBNC guidelines<br/>(six visits '
+                    'in case of Institutional delivery and seven in case of a home delivery)',
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '2', 'html': '2'}, {'sort_key': 26.0, 'html': 26.0}
+                ],
+                [
+                    'Attending VHNDs/Promoting immunization', {'sort_key': '5', 'html': '5'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '5', 'html': '5'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '5', 'html': '5'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': 38.0, 'html': 38.0}
+                ],
+                [
+                    'Supporting institutional delivery', {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '1', 'html': '1'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': 29.0, 'html': 29.0}
+                ],
+                [
+                    'Management of childhood illness - especially diarrhea and pneumonia',
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '2', 'html': '2'}, {'sort_key': 30.0, 'html': 30.0}
+                ],
+                [
+                    'Household visits with nutrition counseling', {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '2', 'html': '2'},
+                    {'sort_key': '3', 'html': '3'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': 24.0, 'html': 24.0}
+                ],
+                [
+                    'Fever cases seen/malaria slides made in malaria endemic area',
+                    {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': 0.0, 'html': 0.0}
+                ],
+                [
+                    'Acting as DOTS provider', {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': 0.0, 'html': 0.0}],
+                [
+                    'Holding or attending village/VHSNC meeting', {'sort_key': '1', 'html': '1'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '0', 'html': '0'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '0', 'html': '0'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': 11.0, 'html': 11.0}
+                ],
+                [
+                    'Successful referral of the IUD, female sterilization or male sterilization cases and/or '
+                    'providing OCPs/Condoms',
+                    {'sort_key': '5', 'html': '5'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '4', 'html': '4'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '5', 'html': '5'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': '3', 'html': '3'},
+                    {'sort_key': '4', 'html': '4'}, {'sort_key': 37.0, 'html': 37.0}
+                ],
+                [
+                    '<b>Total number of ASHAs who are functional on at least 60% of the tasks</b>',
+                    {'sort_key': 25.925925925925927, 'html': '4/18 (25%)'},
+                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
+                    {'sort_key': 25.0, 'html': '4/16 (25%)'},
+                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
+                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
+                    {'sort_key': 25.49019607843137, 'html': '4/17 (25%)'},
+                    {'sort_key': 19.607843137254903, 'html': '3/17 (19%)'},
+                    {'sort_key': 23.809523809523814, 'html': '3/14 (23%)'},
+                    {'sort_key': 24.444444444444443, 'html': '3/15 (24%)'},
+                    {'sort_key': 21, 'html': '30/142 (21%)'}
+                ],
+                [
+                    '<b>Total number of ASHAs who did not report/not known</b>',
+                    {'sort_key': '13', 'html': '13'},
+                    {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
+                    {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
+                    {'sort_key': '12', 'html': '12'}, {'sort_key': '13', 'html': '13'},
+                    {'sort_key': '11', 'html': '11'}, {'sort_key': '11', 'html': '11'},
+                    {'sort_key': 104.0, 'html': 104.0}
+                ],
+                [
+                    '<b>Total Number of ASHAs under each Facilitator</b>', {'sort_key': 18, 'html': 18},
+                    {'sort_key': 15, 'html': 15}, {'sort_key': 16, 'html': 16},
+                    {'sort_key': 15, 'html': 15}, {'sort_key': 15, 'html': 15},
+                    {'sort_key': 17, 'html': 17}, {'sort_key': 17, 'html': 17},
+                    {'sort_key': 14, 'html': 14}, {'sort_key': 15, 'html': 15},
+                    {'sort_key': 142, 'html': 142}
+                ]
+            ], 142
         )
+        self.assertEqual(len(rows), len(expected))
+        self.assertEqual(len(rows[0]), len(expected[0]))
+        for i in range(len(rows[0])):
+            self.assertEqual(len(rows[0][i]), len(expected[0][i]))
+            for record in expected[0][i]:
+                self.assertIn(record, rows[0][i])
 
     @mock.patch('corehq.apps.es.es_query.run_query', return_value=RUN_QUERY_VALUE)
     def test_district_functionality_report(self, mock_run_query):
