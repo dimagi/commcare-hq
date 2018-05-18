@@ -9,7 +9,7 @@ from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES,
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES
 from corehq.apps.userreports.datatypes import DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
-from corehq.apps.userreports.models import get_datasource_config
+from corehq.apps.userreports.models import get_datasource_config, SQLSettings
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
@@ -46,6 +46,12 @@ class AggregateTableDefinition(models.Model):
     @memoized
     def data_source(self):
         return get_datasource_config(self.primary_data_source_id.hex, self.domain)[0]
+
+    @property
+    def sql_settings(self):
+        # this is necessary for compatibility with IndicatorSqlAdapter
+        # todo: will probably need to make this configurable at some point
+        return SQLSettings()
 
     def get_columns(self):
         """
