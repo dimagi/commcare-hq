@@ -13,7 +13,7 @@ import re
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import DateSpan
 
-from corehq.apps.accounting.models import DefaultProductPlan, Subscription
+from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
@@ -28,21 +28,14 @@ class Command(BaseCommand):
     help = '''
         Generate three CSVs containing details on an enterprise project's domains, web users, and recent
         form submissions, respectively.
+
+        Usage:
+           report_on_enterprise_domain ACCOUNT_ID USERNAME
     '''
 
     def add_arguments(self, parser):
-        parser.add_argument(
-            'domain_names',
-            metavar='domain',
-            nargs='+',
-        )
-        parser.add_argument(
-            '-u',
-            '--username',
-            action='store',
-            dest='username',
-            help='Username (required)',
-        )
+        parser.add_argument('account_id')
+        parser.add_argument('username')
 
     def _domain_url(self, domain):
         return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain})
@@ -128,15 +121,17 @@ class Command(BaseCommand):
             ])
         return rows
 
-    def handle(self, domain_names, **kwargs):
-        self.domain_names = domain_names
+    def handle(self, account_id, username, **kwargs):
         self.date_fmt = '%Y/%m/%d %H:%M:%S'
-        self.couch_user = CouchUser.get_by_username(kwargs.get('username'))
+        self.couch_user = CouchUser.get_by_username(username)
         if not self.couch_user:
             raise CommandError("Option: '--username' must be specified")
 
-        print('Processing {} domains'.format(len(self.domain_names)))
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        account = BillingAccount.objects.get(id=account_id)
+        subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
+        self.domain_names = set(s.subscriber.domain for s in subscriptions)
+        print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
         (domain_file, domain_count) = self._write_file('domains', timestamp, headers, self._domain_row)
@@ -164,3 +159,4 @@ class Command(BaseCommand):
                 form_file,
             ]
         )
+        print('Emailed {}'.format(self.couch_user.username))
