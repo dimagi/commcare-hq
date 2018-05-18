@@ -16,6 +16,7 @@ from corehq.apps.accounting.models import DefaultProductPlan, Subscription
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows, get_mobile_user_count
 from corehq.apps.users.models import CouchUser, WebUser
@@ -48,10 +49,10 @@ class Command(BaseCommand):
     def _write_file(self, slug, headers, process_domain, multiple=False):
         timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
         filename = 'enterprise_{}_{}.csv'.format(slug, timestamp)
+        row_count = 0
         with open(filename, 'wb') as csvfile:
             csvwriter = csv.writer(csvfile)
             csvwriter.writerow(headers)
-            row_count = 0
             for domain in [domain.name for domain in map(Domain.get_by_name, self.domain_names) if domain]:
                 result = process_domain(domain)
                 rows = result if multiple else [result]
@@ -59,6 +60,7 @@ class Command(BaseCommand):
                 for row in rows:
                     csvwriter.writerow(row)
             print('Wrote {} rows of data to {}'.format(row_count, filename))
+        return (None, row_count)
 
     def _domain_row(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain)
@@ -70,7 +72,7 @@ class Command(BaseCommand):
             str(get_mobile_user_count(domain, include_inactive=False)),
         ]
 
-    def _web_users_row(self, domain):
+    def _web_user_row(self, domain):
         for user in get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = WebUser.wrap(user['doc'])
@@ -83,7 +85,7 @@ class Command(BaseCommand):
                 self._domain_url(domain),
             ]
 
-    def _form_submissions_row(self, domain):
+    def _form_row(self, domain):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=7), datetime.utcnow())
         apps = get_brief_apps_in_domain(domain)
@@ -131,11 +133,24 @@ class Command(BaseCommand):
         print('Processing {} domains'.format(len(self.domain_names)))
 
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
-        self._write_file('domains', headers, self._domain_row)
+        (domain_file, domain_count) = self._write_file('domains', headers, self._domain_row)
 
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
-        self._write_file('web_users', headers, self._web_users_row)
+        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row)
 
         headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL',
                    'Mobile User', 'First Name', 'Last Name']
-        self._write_file('form_submissions', headers, self._form_submissions_row, multiple=True)
+        (form_file, form_count) = self._write_file('forms', headers, self._form_row, multiple=True)
+
+        message = (
+            '''
+                Domains: {}\n
+                Web Users: {}\n
+                Forms: {}\n
+            '''.format(domain_count, web_user_count, form_count)
+        )
+
+        send_html_email_async(
+            "Report on enterprise domain", self.couch_user.username, message,
+            text_content=message, file_attachments=[]
+        )
