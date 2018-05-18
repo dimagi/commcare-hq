@@ -9,8 +9,6 @@ from corehq.apps.userreports.columns import UCRExpandDatabaseSubcolumn
 
 
 def column_to_sql(column):
-    # we have to explicitly truncate the column IDs otherwise postgres will do it
-    # and will choke on them if there are duplicates: http://manage.dimagi.com/default.asp?175495
     return sqlalchemy.Column(
         column.database_column_name,
         _get_column_type(column.datatype),
