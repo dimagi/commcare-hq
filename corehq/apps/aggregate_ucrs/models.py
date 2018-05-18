@@ -5,7 +5,8 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from memoized import memoized
 
-from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter
+from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
+    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES
 from corehq.apps.userreports.datatypes import DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.models import get_datasource_config
@@ -57,8 +58,7 @@ class AggregateTableDefinition(models.Model):
         for secondary_table in self.secondary_tables.all():
             for secondary_column in secondary_table.columns.all():
                 # todo: secondary column support
-                # yield secondary_column.to_column_spec()
-                pass
+                yield secondary_column.to_column_spec()
 
     def _get_id_column_spec(self):
         return Column('doc_id', datatype=DATA_TYPE_STRING, is_nullable=False,
@@ -105,17 +105,11 @@ class SecondaryColumn(models.Model):
     """
     An aggregate column in an aggregate data source.
     """
-    AGGREGATE_COLUMN_TYPE_SUM = 'sum'
-    AGGREGATE_COLUMN_TYPE_CHOICES = (
-        (AGGREGATE_COLUMN_TYPE_SUM, _('Sum')),
-    )
     table_definition = models.ForeignKey(SecondaryTableDefinition, on_delete=models.CASCADE,
                                          related_name='columns')
     column_id = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
-    aggregation_type = models.CharField(max_length=10, choices=AGGREGATE_COLUMN_TYPE_CHOICES)
+    aggregation_type = models.CharField(max_length=10, choices=SECONDARY_COLUMN_TYPE_CHOICES)
     config_params = JSONField()
 
     def to_column_spec(self):
-        # todo
-        # return SecondaryColumnAdapter.from_db_column(self).to_ucr_column_spec()
-        pass
+        return SecondaryColumnAdapter.from_db_column(self).to_ucr_column_spec()

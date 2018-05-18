@@ -18,6 +18,19 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
         self.db_column = db_column
         self.properties = self.config_spec.wrap(db_column.config_params)
 
+    def to_ucr_column_spec(self):
+        """
+        :return: a UCR-compatible `Column` object that can be used to be converted to sqlalchemy tables
+        """
+        return Column(
+            id=self.db_column.column_id,
+            datatype=self.get_datatype(),
+            # todo: these might need to be configurable some day
+            is_nullable=True,
+            is_primary_key=False,
+            create_index=False,
+        )
+
     @abstractmethod
     def get_datatype(self):
         pass
@@ -43,17 +56,6 @@ class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
             PRIMARY_COLUMN_TYPE_SQL: SqlColumnAdapter,
         }
         return type_to_class_mapping[db_column.column_type](db_column)
-
-    def to_ucr_column_spec(self):
-        return Column(
-            id=self.db_column.column_id,
-            datatype=self.get_datatype(),
-            # todo: these might need to be configurable some day
-            is_nullable=True,
-            is_primary_key=False,
-            create_index=False,
-        )
-
 
 class ConstantColumnAdapter(PrimaryColumnAdapter):
     def get_datatype(self):
@@ -87,9 +89,29 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
         return self.properties.datatype
 
 
-class SecondaryColumn(ColumnAdapater):
+SECONDARY_COLUMN_TYPE_SUM = 'sum'
+SECONDARY_COLUMN_TYPE_CHOICES = (
+    (SECONDARY_COLUMN_TYPE_SUM, _('Sum')),
+    # todo: add other aggregations, count, min, max, (first? last?)
+)
+
+
+class SecondaryColumnAdapter(ColumnAdapater):
 
     @staticmethod
     def from_db_column(db_column):
-        # todo
-        pass
+        type_to_class_mapping = {
+            SECONDARY_COLUMN_TYPE_SUM: SumColumnAdapter,
+        }
+        return type_to_class_mapping[db_column.aggregation_type](db_column)
+
+
+class SingleFieldColumnProperties(jsonobject.JsonObject):
+    referenced_column = jsonobject.StringProperty(required=True)
+
+
+class SumColumnAdapter(SecondaryColumnAdapter):
+    config_spec = SingleFieldColumnProperties
+
+    def get_datatype(self):
+        return DATA_TYPE_INTEGER

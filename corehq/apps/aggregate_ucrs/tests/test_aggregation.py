@@ -150,7 +150,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
         table = adapter.get_table()
         id_column = table.columns['doc_id']
-        # basic check on primary columns
+
+        # basic checks on primary columns
         self.assertEqual(UnicodeText, type(id_column.type))
         self.assertEqual(True, id_column.primary_key)
         self.assertEqual(Date, type(table.columns['month'].type))
@@ -160,6 +161,9 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(UnicodeText, type(table.columns['pregnancy_start_date'].type))
         self.assertEqual(Integer, type(table.columns['open_in_month'].type))
         self.assertEqual(SmallInteger, type(table.columns['pregnant_in_month'].type))
+
+        # basic check on secondary column
+        self.assertEqual(Integer, type(table.columns['fu_forms_in_month'].type))
 
     def test_basic_aggregation(self):
         # first check our setup function properly did its job
