@@ -52,7 +52,7 @@ New UCRs should have the following data:
 ### Aggregating the data
 
 The work flow shown in the following picture is the eventual ideal,
-and there is ongoing work to make all of the aggregation follow [this pattern](docs/ideal_aggregation_workflow.png)
+and there is ongoing work to make all of the aggregation follow [this pattern](docs/goal_state_aggregation.png)
 
 Currently Complementary Feeding Forms follows this work flow if you want an example.
 
