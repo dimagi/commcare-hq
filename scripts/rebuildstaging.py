@@ -53,7 +53,7 @@ class BranchConfig(jsonobject.JsonObject):
     name = jsonobject.StringProperty()
     branches = jsonobject.ListProperty(six.text_type)
     submodules = jsonobject.DictProperty(lambda: BranchConfig)
-    pull_request = jsonobject.ListProperty(six.text_type)
+    pull_requests = jsonobject.ListProperty(six.text_type)
 
     def normalize(self):
         for submodule, subconfig in self.submodules.items():
