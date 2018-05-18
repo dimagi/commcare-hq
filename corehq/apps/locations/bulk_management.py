@@ -486,6 +486,10 @@ class LocationTreeValidator(object):
     All types and stubs are linked with a corresponding db_object and
     parent object (new_parent) by the time validation is complete if/
     when there are no errors.
+
+    :param type_rows: List of `LocationTypeStub` objects.
+    :param location_rows: List of `LocationStub` objects.
+    :param old_collection: `LocationCollection`.
     """
 
     def __init__(self, type_rows, location_rows, old_collection):
