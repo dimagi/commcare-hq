@@ -14,6 +14,7 @@ left to right direction
 [UCR - Infrastructure Forms]
 [UCR - Complementary Feeding Forms]
 [UCR - Growth Monitoring Forms]
+[UCR - Postnatal Care Forms]
 
 [Child Health Monthly]
 [CCS Record Monthly]
@@ -23,6 +24,7 @@ left to right direction
 [Agg AWC]
 [Agg AWC Daily]
 
+[UCR - Postnatal Care Forms] --> [Child Health Monthly]
 [UCR - Complementary Feeding Forms] --> [Child Health Monthly]
 [UCR - Growth Monitoring Forms] --> [Child Health Monthly]
 [UCR - Child Health Monthly Tableau] --> [Child Health Monthly]

@@ -11,6 +11,8 @@ from corehq.apps.data_analytics.const import AMPLIFY_COUCH_TO_SQL_MAP, NOT_SET
 from corehq.apps.domain.models import Domain
 from corehq.const import MISSING_APP_ID
 from corehq.apps.users.util import DEMO_USER_ID, JAVA_ADMIN_USERNAME
+from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows
+from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 
 from django.db import IntegrityError
@@ -40,8 +42,9 @@ class MALTTableGenerator(object):
             logger.info("Building MALT for {}".format(domain.name))
 
             for monthspan in self.monthspan_list:
-                for users in chunked(domain.all_users(), 10000):
-                    users_by_id = {user._id: user for user in users}
+                all_users = get_all_user_rows(domain.name, include_inactive=False, include_docs=True)
+                for users in chunked(all_users, 1000):
+                    users_by_id = {user['id']: CouchUser.wrap_correctly(user['doc']) for user in users}
                     try:
                         malt_rows_to_save = self._get_malt_row_dicts(domain.name, monthspan, users_by_id)
                     except Exception as ex:

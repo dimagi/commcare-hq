@@ -66,7 +66,7 @@ class TestDataSourceExpressions(SimpleTestCase):
             cls.data_source_name
         )
 
-        with open(data_source_file) as f:
+        with open(data_source_file, encoding='utf-8') as f:
             cls.data_source = DataSourceConfiguration.wrap(json.loads(f.read())['config'])
             cls.named_expressions = cls.data_source.named_expression_objects
 

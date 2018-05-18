@@ -7,6 +7,7 @@ from datetime import datetime
 import pytz
 from django.test import TestCase
 
+from casexml.apps.case.cleanup import rebuild_case_from_forms
 from casexml.apps.case.mock import CaseFactory, CaseStructure
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import (
@@ -14,6 +15,7 @@ from casexml.apps.case.util import (
     get_paged_changes_to_case_property,
 )
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.models import RebuildWithReason
 from corehq.form_processor.tests.utils import run_with_all_backends
 
 
@@ -152,6 +154,26 @@ class TestCasePropertyChanged(TestCase):
                     },
                 }),
         )
+        case = CaseAccessors(self.domain).get_case(self.case.case_id)
+        changes, _ = get_paged_changes_to_case_property(case, 'sword')
+        self.assertEqual(len(changes), 2)
+        self.assertEqual(changes[0].new_value, '')
+        self.assertEqual(changes[1].new_value, 'Narsil')
+
+    @run_with_all_backends
+    def test_case_rebuild(self):
+        # Cases with rebuild actions were failing because rebuild actions have no form
+        # https://manage.dimagi.com/default.asp?276216#1494409
+        self.factory.create_or_update_case(
+            CaseStructure(
+                self.case.case_id,
+                attrs={
+                    "update": {
+                        'sword': ''
+                    },
+                }),
+        )
+        rebuild_case_from_forms(self.domain, self.case.case_id, RebuildWithReason())
         case = CaseAccessors(self.domain).get_case(self.case.case_id)
         changes, _ = get_paged_changes_to_case_property(case, 'sword')
         self.assertEqual(len(changes), 2)

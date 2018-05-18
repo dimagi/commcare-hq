@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management.base import BaseCommand, CommandError
 from corehq import toggles
@@ -10,6 +10,7 @@ from corehq.apps.toggle_ui.utils import find_static_toggle
 from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.apps.app_manager.dbaccessors import get_app_ids_in_domain
 from corehq.apps.app_manager.models import Application
+from io import open
 
 
 class Command(BaseCommand):
@@ -49,7 +50,7 @@ class Command(BaseCommand):
             add_to_toggle = find_static_toggle(add_to_toggle)
             if not add_to_toggle:
                 raise CommandError('Toggle %s not found.' % add_to_toggle)
-        with open("apps_with_feature_%s.csv" % add_on_name, "w") as csvfile:
+        with open("apps_with_feature_%s.csv" % add_on_name, "w", encoding='utf-8') as csvfile:
             writer = csv.DictWriter(csvfile,
                                     fieldnames=[
                                         'domain', 'application_id', 'app_name',

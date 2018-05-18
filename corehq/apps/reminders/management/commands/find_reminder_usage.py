@@ -1,8 +1,10 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
+import six
 from corehq.apps.reminders.models import CaseReminderHandler, REMINDER_TYPE_KEYWORD_INITIATED
 from django.core.management.base import BaseCommand
+from io import open
 
 
 class DomainResult(object):
@@ -34,11 +36,11 @@ class Command(BaseCommand):
 
         # Sort by num_active and then domain
         sorted_result = sorted(
-            result.items(),
+            six.iteritems(result),
             key=lambda two_tuple: (two_tuple[1].num_active, two_tuple[0])
         )
 
-        with open('reminder_status.log', 'w') as f:
+        with open('reminder_status.log', 'w', encoding='utf-8') as f:
             for domain, result in sorted_result:
                 f.write('{}\t{}\t{}\n'.format(domain, result.num_active, result.num_inactive))
                 for reminder_type, count in result.types_and_counts.items():

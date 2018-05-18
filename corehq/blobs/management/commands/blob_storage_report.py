@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import logging
 import re
 import sys
@@ -21,6 +21,7 @@ from corehq.blobs import get_blob_db
 from corehq.blobs.exceptions import NotFound
 from corehq.util.decorators import change_log_level
 from corehq.util.log import with_progress_bar
+from io import open
 
 
 USAGE = "Usage: ./manage.py blob_storage_report [options] FILE [FILE ...]"
@@ -156,7 +157,7 @@ def accumulate_put_requests(files):
         if filepath == "-":
             load_puts(sys.stdin, data)
         else:
-            with open(filepath, "r") as fileobj:
+            with open(filepath, "r", encoding='utf-8') as fileobj:
                 load_puts(fileobj, data)
     return data
 
@@ -290,7 +291,7 @@ def make_row_writer(output_file, write_csv):
         return write
 
     if output_file != sys.stdout:
-        output_file = open(output_file, "w")
+        output_file = open(output_file, "w", encoding='utf-8')
     if write_csv:
         writer = csv.writer(output_file, dialect="excel")
         write = writer.writerow

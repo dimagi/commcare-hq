@@ -268,7 +268,7 @@ hqDefine('export/js/models', function () {
      * Reports to analytics what type of configurations people are saving
      * exports as.
      *
-     * @param {function} callback - A funtion to be called after recording analytics.
+     * @param {function} callback - A function to be called after recording analytics.
      */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',

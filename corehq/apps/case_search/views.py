@@ -53,7 +53,7 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         include_closed = query.get("includeClosed", False)
         xpath = query.get("xpath")
         search = CaseSearchES()
-        search = search.domain(self.domain).size(CASE_SEARCH_MAX_RESULTS)
+        search = search.domain(self.domain).size(10)
         if not include_closed:
             search = search.is_closed(False)
         if case_type:
@@ -76,4 +76,9 @@ class CaseSearchView(DomainViewMixin, TemplateView):
         if xpath:
             search = search.xpath_query(self.domain, xpath)
         search_results = search.run()
-        return json_response({'values': search_results.raw_hits, 'count': search_results.total})
+        return json_response({
+            'values': search_results.raw_hits,
+            'count': search_results.total,
+            'took': search_results.raw['took'],
+            'query': search_results.query.dumps(pretty=True),
+        })

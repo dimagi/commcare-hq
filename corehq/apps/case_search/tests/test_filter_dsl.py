@@ -62,7 +62,7 @@ class TestFilterDsl(SimpleTestCase):
                         },
                         "query": {
                             "range": {
-                                "case_properties.value_date": {
+                                "case_properties.value.date": {
                                     "gte": "2017-02-12",
                                 }
                             }
@@ -87,7 +87,7 @@ class TestFilterDsl(SimpleTestCase):
                         },
                         "query": {
                             "range": {
-                                "case_properties.value_numeric": {
+                                "case_properties.value.numeric": {
                                     "lte": 100.32,
                                 }
                             }
@@ -97,6 +97,65 @@ class TestFilterDsl(SimpleTestCase):
             }
         }
         self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
+
+    def test_case_property_existence(self):
+        parsed = parse_xpath("property != ''")
+        expected_filter = {
+            "not": {
+                "or": (
+                    {
+                        "not": {
+                            "nested": {
+                                "path": "case_properties",
+                                "query": {
+                                    "filtered": {
+                                        "query": {
+                                            "match_all": {
+                                            }
+                                        },
+                                        "filter": {
+                                            "term": {
+                                                "case_properties.key.exact": "property"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "nested": {
+                            "path": "case_properties",
+                            "query": {
+                                "filtered": {
+                                    "query": {
+                                        "match_all": {
+                                        }
+                                    },
+                                    "filter": {
+                                        "and": (
+                                            {
+                                                "term": {
+                                                    "case_properties.key.exact": "property"
+                                                }
+                                            },
+                                            {
+                                                "term": {
+                                                    "case_properties.value.exact": ""
+                                                }
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                )
+            }
+        }
+
+        self.assertEqual(expected_filter, build_filter_from_ast("domain", parsed))
+
 
     def test_nested_filter(self):
         parsed = parse_xpath("(name = 'farid' or name = 'leila') and dob <= '2017-02-11'")
@@ -172,7 +231,7 @@ class TestFilterDsl(SimpleTestCase):
                                 },
                                 "query": {
                                     "range": {
-                                        "case_properties.value_date": {
+                                        "case_properties.value.date": {
                                             "lte": "2017-02-11"
                                         }
                                     }
