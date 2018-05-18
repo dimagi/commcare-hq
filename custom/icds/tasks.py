@@ -49,7 +49,7 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
 @task
 def send_translation_files_to_transifex(domain, data):
-    if data.get('target_lang'):
+    if data.get('source_lang'):
         Transifex(domain,
                   data.get('app_id'),
                   data.get('source_lang'),
