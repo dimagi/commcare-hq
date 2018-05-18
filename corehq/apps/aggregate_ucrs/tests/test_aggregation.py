@@ -14,6 +14,7 @@ from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
+from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -172,22 +173,23 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # next generate our table
         aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
+        aggregate_table_adapter.rebuild_table()
+
+        populate_aggregate_table_data(aggregate_table_adapter)
+
+        aggregate_table = aggregate_table_adapter.get_table()
+        aggregate_query = aggregate_table_adapter.get_query_object()
+
+        print('found {} total rows'.format(aggregate_query.count()))
+        doc_id_column = aggregate_table.c['doc_id']
+        results = aggregate_query.filter(doc_id_column == self.case_id)
+        print('found {} rows for case'.format(results.count()))
 
         # todo:
-        # create the table
         # aggregate the data
         # test the results
-        """
+
         # everything below here is garbage/test code
-        aggregate_table = self.form_adapter.get_table()
-        aggregate_query = self.form_adapter.get_query_object()
-
-        # next run checks against the data
-        # todo: replace with the aggregate table's version
-        case_id_column = aggregate_table.c['form.case.@case_id']
-
-        results = aggregate_query.filter(case_id_column == self.case_id)
-        print('found {} rows for case'.format(results.count()))
         # check pregnancy
         run_date_tests = True
         if run_date_tests:
@@ -202,4 +204,3 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
                 # q.filter_by('form.case.@case_id'=self.case_id)
                 # q = q.filter_by(case_id=self.case_id)
                 # print(list(q))
-        """

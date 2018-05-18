@@ -1,4 +1,5 @@
 import sqlalchemy
+from memoized import memoized
 
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.sql.columns import column_to_sql
@@ -7,6 +8,7 @@ from corehq.apps.userreports.util import get_table_name
 
 class AggregateIndicatorSqlAdapter(IndicatorSqlAdapter):
 
+    @memoized
     def get_table(self):
         return get_aggregate_table(self.config)
 
