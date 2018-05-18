@@ -64,7 +64,22 @@ from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    FloatProperty,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
@@ -159,6 +174,7 @@ import six
 from six.moves import filter
 from six.moves import range
 from six.moves import map
+from io import open
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -237,14 +253,11 @@ def _rename_key(dct, old, new):
 
 @memoized
 def load_case_reserved_words():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
+        encoding='utf-8'
+    ) as f:
         return json.load(f)
-
-
-@memoized
-def load_form_template(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
-        return f.read()
 
 
 class IndexedSchema(DocumentSchema):
@@ -1452,7 +1465,7 @@ class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
         if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
+            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
         return value
 
 
@@ -1473,9 +1486,15 @@ class NavMenuItemMediaMixin(DocumentSchema):
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
     """
-    media_image = SchemaDictProperty(JRResourceProperty)
-    media_audio = SchemaDictProperty(JRResourceProperty)
-    custom_icons = SchemaListProperty(CustomIcon)
+
+    # These were originally DictProperty(JRResourceProperty),
+    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
+    # so it was actually wrapping as a StringPropery
+    # too late to retroactively apply that validation,
+    # so now these are DictProperty(StringProperty)
+    media_image = DictProperty(StringProperty)
+    media_audio = DictProperty(StringProperty)
+    custom_icons = ListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):

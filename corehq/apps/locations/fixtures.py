@@ -69,8 +69,12 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
 class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
-        self.id = id
+        self._id = id
         self.serializer = serializer
+
+    @property
+    def id(self):
+        return self._id
 
     def __call__(self, restore_state):
         """
@@ -277,7 +281,7 @@ def _mptt_get_location_fixture_queryset(user):
 
         locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
         locs_at_or_above_expand_from = (SQLLocation.active_objects
-                                        ._mptt_get_queryset_ancestors(expand_from_locations, include_self=True).prefetch_related('parent', 'location_type__code'))
+                                        ._mptt_get_queryset_ancestors(expand_from_locations, include_self=True))
         locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
         if location_type.include_only.exists():
             locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
@@ -316,7 +320,7 @@ def _get_children(expand_from_locations, expand_to_level):
     """
     children = (SQLLocation.active_objects
                 ._mptt_get_queryset_descendants(expand_from_locations)
-                .prefetch_related('location_type__code', 'parent'))
+                .prefetch_related('location_type'))
     if expand_to_level is not None:
         children = children.filter(level__lte=expand_to_level)
     return children

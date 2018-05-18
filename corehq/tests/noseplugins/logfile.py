@@ -17,12 +17,15 @@ from __future__ import unicode_literals
 import datetime
 import os
 import sys
+from io import open
 try:
     from shlex import quote  # py3
 except ImportError:
     from pipes import quote  # py2
 from unittest.runner import TextTestResult, _WritelnDecorator
 from nose.plugins import Plugin
+
+import six
 
 
 class LogFilePlugin(Plugin):
@@ -46,7 +49,8 @@ class LogFilePlugin(Plugin):
             self.start = datetime.datetime.now()
 
     def setup_log(self):
-        self.log_file = _WritelnDecorator(open(self.log_path, "w"))
+        mode = "w" if six.PY3 else "wb"
+        self.log_file = _WritelnDecorator(open(self.log_path, mode))
         self.log_file.writeln(" ".join(quote(a) for a in self.argv))
         self.log_file.writeln(str(self.start))
         self.result = TextTestResult(self.log_file, True, 0)

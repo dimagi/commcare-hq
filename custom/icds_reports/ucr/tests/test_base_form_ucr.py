@@ -10,7 +10,8 @@ from corehq.apps.userreports.models import get_datasource_config
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.test_utils import TestFileMixin
 
-BLACKLISTED_COLUMNS = ['received_on', 'inserted_at']
+BLACKLISTED_COLUMNS = ('received_on', 'inserted_at')
+LOCATION_COLUMNS = ('state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id')
 
 
 class BaseFormsTest(SimpleTestCase, TestFileMixin):
@@ -24,7 +25,7 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
     def _get_config(self):
         config, _ = get_datasource_config(self.ucr_name, self.domain)
         config.configured_indicators = [
-            ind for ind in config.configured_indicators if ind['column_id'] != 'state_id'
+            ind for ind in config.configured_indicators if ind['column_id'] not in LOCATION_COLUMNS
         ]
         return config
 

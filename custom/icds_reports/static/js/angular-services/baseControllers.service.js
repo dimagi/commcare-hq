@@ -3,7 +3,7 @@
 window.angular.module('icdsApp').factory('baseControllersService', function() {
     return {
         BaseController: function($scope, $routeParams, $location, locationsService, userLocationId,
-            storageService, haveAccessToAllLocations) {
+            storageService, haveAccessToAllLocations, haveAccessToFeatures) {
             var vm = this;
             if (Object.keys($location.search()).length === 0) {
                 $location.search(storageService.getKey('search'));
@@ -20,6 +20,8 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
             vm.all_locations = [];
             vm.location_type = null;
             vm.loaded = false;
+
+            vm.haveAccessToFeatures = haveAccessToFeatures;
             vm.message = storageService.getKey('message') || false;
 
             $scope.$watch(function() {

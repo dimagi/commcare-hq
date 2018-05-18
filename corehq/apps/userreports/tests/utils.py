@@ -18,12 +18,13 @@ from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
 from corehq.util.test_utils import run_with_multiple_configs, RunConfig
+from io import open
 
 
 def get_sample_report_config():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'sample_report_config.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return ReportConfiguration.wrap(structure)
 
@@ -31,7 +32,7 @@ def get_sample_report_config():
 def get_sample_data_source():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'sample_data_source.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)
 
@@ -39,7 +40,7 @@ def get_sample_data_source():
 def get_data_source_with_related_doc_type():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'parent_child_data_source.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)
 

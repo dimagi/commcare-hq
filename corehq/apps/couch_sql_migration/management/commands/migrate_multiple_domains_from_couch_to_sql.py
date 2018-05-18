@@ -25,6 +25,7 @@ from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 import signal
+from io import open
 
 
 class Command(BaseCommand):
@@ -43,8 +44,8 @@ class Command(BaseCommand):
 
         self.stdout.ending = "\n"
         self.stderr.ending = "\n"
-        with open(path, 'r') as f:
-            domains = [name.strip() for name in f.readlines()]
+        with open(path, 'r', encoding='utf-8') as f:
+            domains = [name.strip() for name in f.readlines() if name.strip()]
 
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):

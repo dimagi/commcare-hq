@@ -15,6 +15,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.models import DataSourceConfiguration, \
     ReportConfiguration, ReportMeta, get_datasource_config
+from io import open
 
 
 class TestSubscriptionPermissionsChanges(BaseAccountingTest):

@@ -7,6 +7,7 @@ from django.test import SimpleTestCase, TestCase
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.tests.utils import run_with_all_ucr_backends
 from corehq.apps.userreports.util import get_indicator_adapter
+from io import open
 
 
 DOC_ID = 'repeat-id'
@@ -18,7 +19,7 @@ class RepeatDataSourceTestMixin(object):
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
         sample_file = os.path.join(folder, 'data_source_with_repeat.json')
-        with open(sample_file) as f:
+        with open(sample_file, encoding='utf-8') as f:
             self.config = DataSourceConfiguration.wrap(json.loads(f.read()))
 
 

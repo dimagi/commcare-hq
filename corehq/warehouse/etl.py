@@ -14,6 +14,7 @@ from django.template import engines
 from corehq.sql_db.routers import db_for_read_write
 from corehq.warehouse.utils import django_batch_records
 from corehq.warehouse.models.meta import Batch
+from io import open
 
 
 class BaseETLMixin(object):
@@ -116,7 +117,7 @@ class CouchToDjangoETLMixin(BaseETLMixin):
 
 
 def _render_template(path, context):
-    with open(path) as f:
+    with open(path, 'rb') as f:
         template_string = f.read()
 
     template = engines['django'].from_string(template_string)

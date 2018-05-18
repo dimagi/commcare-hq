@@ -546,3 +546,467 @@ class TestPrevalenceOfStunting(TestCase):
                 }
             ]
         )
+
+
+@override_settings(SERVER_ENVIRONMENT='icds-new')
+class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
+    maxDiff = None
+
+    def test_map_data_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['data'],
+            {
+                "st1": {
+                    "severe": 0,
+                    "moderate": 0,
+                    "normal": 0,
+                    "total_measured": 7,
+                    "total": 454,
+                    'original_name': ["st1"],
+                    "fillKey": "0%-25%"
+                },
+                "st2": {
+                    "severe": 0,
+                    "moderate": 0,
+                    "normal": 0,
+                    "total_measured": 25,
+                    "total": 497,
+                    'original_name': ["st2"],
+                    "fillKey": "0%-25%"
+                }
+            }
+        )
+
+    def test_map_data_right_legend_info_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        expected = (
+            "Percentage of children (0 - 5 years) enrolled for Anganwadi Services with "
+            "height-for-age below -2Z standard deviations of "
+            "the WHO Child Growth Standards median.<br/><br/>Stunting "
+            "is a sign of chronic undernutrition and has long "
+            "lasting harmful consequences on the growth of a child"
+        )
+        self.assertEquals(data['rightLegend']['info'], expected)
+
+    def test_map_data_right_legend_average_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(data['rightLegend']['average'], "0.00")
+
+    def test_map_data_right_legend_extended_info_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertListEqual(
+            data['rightLegend']['extended_info'],
+            [
+                {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
+                {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
+                 'value': '32'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
+                {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '0.00%'},
+                {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '0.00%'},
+                {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '0.00%'}
+            ]
+        )
+
+    def test_map_data_label_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(data['label'], 'Percent of Children Stunted (0 - 5 years)')
+
+    def test_map_name_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['data'],
+            {
+                'block_map': {
+                    'moderate': 0,
+                    'total_measured': 7,
+                    'normal': 0,
+                    'original_name': ['b1', 'b2'],
+                    'severe': 0,
+                    'total': 454,
+                    'fillKey': '0%-25%'
+                }
+            }
+        )
+
+    def test_average_with_two_locations_represent_by_one_topojson_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_map(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'aggregation_level': 3
+            },
+            loc_level='block',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(data['rightLegend']['average'], "0.00")
+
+    def test_chart_data_bottom_five_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertListEqual(
+            data['bottom_five'],
+            [
+                {
+                    "loc_name": "st1",
+                    "percent": 0
+                },
+                {
+                    "loc_name": "st2",
+                    "percent": 0
+                },
+            ]
+        )
+
+    def test_chart_data_top_five_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertListEqual(
+            data['top_five'],
+            [
+                {
+                    "loc_name": "st1",
+                    "percent": 0
+                },
+                {
+                    "loc_name": "st2",
+                    "percent": 0
+                },
+            ]
+        )
+
+    def test_chart_data_pink_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['chart_data'][0],
+            {
+                "color": ChartColors.PINK,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
+                    {
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.09090909090909091,
+                        "x": 1491004800000,
+                        "all": 981,
+                        "measured": 11
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1493596800000,
+                        "all": 951,
+                        "measured": 32
+                    }
+                ],
+                "key": "% normal"
+            }
+        )
+
+    def test_chart_data_orange_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['chart_data'][1],
+            {
+                "color": ChartColors.ORANGE,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
+                    {
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1491004800000,
+                        "all": 981,
+                        "measured": 11
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1493596800000,
+                        "all": 951,
+                        "measured": 32
+                    }
+                ],
+                "key": "% moderately stunted"
+            }
+        )
+
+    def test_chart_data_red_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['chart_data'][2],
+            {
+                "color": ChartColors.RED,
+                "classed": "dashed",
+                "strokeWidth": 2,
+                "values": [
+                    {
+                        "y": 0.0,
+                        "x": 1485907200000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1488326400000,
+                        "all": 0,
+                        "measured": 0
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1491004800000,
+                        "all": 981,
+                        "measured": 11
+                    },
+                    {
+                        "y": 0.0,
+                        "x": 1493596800000,
+                        "all": 951,
+                        "measured": 32
+                    }
+                ],
+                "key": "% severely stunted"
+            }
+        )
+
+    def test_chart_data_all_locations_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_data_chart(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'aggregation_level': 1
+            },
+            loc_level='state',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertListEqual(
+            data['all_locations'],
+            [
+                {
+                    "loc_name": "st1",
+                    "percent": 0.0
+                },
+                {
+                    "loc_name": "st2",
+                    "percent": 0.0
+                },
+            ]
+        )
+
+    def test_sector_data_info_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children (0 - 5 years) enrolled for Anganwadi Services with height-for-age below"
+            " -2Z standard deviations of the WHO Child Growth Standards median."
+            "<br/><br/>Stunting is a sign of chronic undernutrition "
+            "and has long lasting harmful consequences on the growth of a child"
+        )
+
+    def test_sector_data_tooltips_data_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertDictEqual(
+            data['tooltips_data'],
+            {
+                "s2": {
+                    "total": 153,
+                    "severe": 0,
+                    "moderate": 0,
+                    "total_measured": 4,
+                    "normal": 0
+                },
+                "s1": {
+                    "total": 71,
+                    "severe": 0,
+                    "moderate": 0,
+                    "total_measured": 0,
+                    "normal": 0
+                }
+            }
+        )
+
+    def test_sector_data_chart_data_icds_feature_flag_enabled(self):
+        data = get_prevalence_of_stunting_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertListEqual(
+            data['chart_data'],
+            [
+                {
+                    "color": MapColors.BLUE,
+                    "classed": "dashed",
+                    "strokeWidth": 2,
+                    "values": [
+                        [
+                            "s1",
+                            0.0
+                        ],
+                        [
+                            "s2",
+                            0.0
+                        ]
+                    ],
+                    "key": ""
+                }
+            ]
+        )

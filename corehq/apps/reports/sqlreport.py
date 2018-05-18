@@ -277,14 +277,9 @@ class SqlData(ReportDataSource):
         for c in self.columns:
             qc.append_column(c.view)
 
-        session = connection_manager.get_scoped_session(self.engine_id)
-        try:
+        session_helper = connection_manager.get_session_helper(self.engine_id)
+        with session_helper.session_context() as session:
             return qc.resolve(session.connection(), self.filter_values)
-        except Exception:
-            session.rollback()
-            raise
-        finally:
-            session.remove()
 
     @property
     def data(self):

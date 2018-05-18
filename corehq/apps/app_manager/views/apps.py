@@ -186,7 +186,7 @@ def get_app_view_context(request, app):
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and not toggles.IS_DEVELOPER.enabled(request.user.username):
         options = [option for option in options if not option.superuser_only]
     options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:
@@ -310,7 +310,7 @@ def get_apps_base_context(request, domain, app):
             'show_report_modules': toggles.MOBILE_UCR.enabled(domain),
             'show_shadow_modules': toggles.APP_BUILDER_SHADOW_MODULES.enabled(domain),
             'show_shadow_forms': show_advanced,
-            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain),
+            'show_training_modules': toggles.TRAINING_MODULE.enabled(domain) and app.enable_training_modules,
             'practice_users': [
                 {"id": u['_id'], "text": u["username"]} for u in get_practice_mode_mobile_workers(domain)],
         })
