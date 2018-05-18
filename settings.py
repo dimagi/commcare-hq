@@ -936,6 +936,7 @@ MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 #     'token': 'api-token'
 #
 # }
+# ToDO: make it support for multiple domains
 TRANSIFEX_DETAILS = None
 from env_settings import *
 
