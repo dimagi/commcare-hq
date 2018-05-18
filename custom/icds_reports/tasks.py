@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from collections import namedtuple
-import csv
+import csv342 as csv
 from datetime import date, datetime, timedelta
 import io
 import logging
@@ -483,7 +483,7 @@ def _send_data_validation_email(csv_columns, month, bad_data):
     bad_underweight_awcs = bad_data.get('bad_underweight_awcs', [])
     bad_lbw_awcs = bad_data.get('bad_lbw_awcs', [])
 
-    csv_file = io.BytesIO()
+    csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(('type',) + csv_columns)
     _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)
