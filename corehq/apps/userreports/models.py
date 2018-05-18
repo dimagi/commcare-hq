@@ -281,7 +281,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def indicators(self):
-
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [
@@ -300,6 +299,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def get_columns(self):
         return self.indicators.get_columns()
+
+    @property
+    @memoized
+    def columns_by_id(self):
+        return {c.id: c for c in self.get_columns()}
+
+    def get_column_by_id(self, column_id):
+        return self.columns_by_id.get(column_id)
 
     def get_items(self, document, eval_context=None):
         if self.filter(document):
