@@ -79,6 +79,6 @@ class Transifex:
         return file_uploads
 
     def _cleanup(self):
-        for _, filepath in self.po_file_generator.generated_files:
+        for resource_name, filepath in self.po_file_generator.generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
