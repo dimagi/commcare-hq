@@ -62,7 +62,6 @@ BEGIN
     'counsel_increase_food_bf, ' ||
     'counsel_manage_breast_problems, ' ||
     'counsel_skin_to_skin, ' ||
-    'counsel_immediate_breastfeeding, ' ||
     'recorded_weight, ' ||
     'recorded_height, ' ||
     'has_aadhar_id, ' ||
@@ -127,7 +126,6 @@ BEGIN
     '0, ' ||
     '0, ' ||
     '0, ' ||
-    'counsel_immediate_breastfeeding, ' ||
     'weight_recorded_in_month, ' ||
     'height_recorded_in_month, ' ||
     'has_aadhar_id, ' ||

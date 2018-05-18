@@ -2169,90 +2169,13 @@
         "column_id": "counsel_immediate_breastfeeding",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/2864010F-B1B1-4711-8C59-D5B2B81D65DB"
-                  ],
-                  "form_filter": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "datatype": "string",
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "bp2",
-                        "immediate_breastfeeding"
-                      ]
-                    },
-                    "property_value": "yes"
-                  },
-                  "case_id_expression": {
-                    "type": "related_doc",
-                    "related_doc_type": "CommCareCase",
-                    "doc_id_expression": {
-                      "type": "icds_parent_id"
-                    },
-                    "value_expression": {
-                      "value_expression": {
-                        "datatype": null,
-                        "type": "property_name",
-                        "property_name": "referenced_id"
-                      },
-                      "type": "nested",
-                      "argument_expression": {
-                        "type": "array_index",
-                        "array_expression": {
-                          "type": "filter_items",
-                          "items_expression": {
-                            "datatype": "array",
-                            "type": "property_name",
-                            "property_name": "indices"
-                          },
-                          "filter_expression": {
-                            "type": "boolean_expression",
-                            "operator": "eq",
-                            "property_value": "mother",
-                            "expression": {
-                              "type": "property_name",
-                              "property_name": "identifier"
-                            }
-                          }
-                        },
-                        "index_expression": {
-                          "type": "constant",
-                          "constant": 0
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              "property_value": 0
-            },
-            {
-              "name": "born_in_month",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "property_value": "yes",
-              "expression": {
-                "type": "named",
-                "name": "valid_in_month"
-              }
-            }
-          ]
+          "type": "boolean_expression",
+          "operator": "eq",
+          "expression": {
+            "type": "constant",
+            "constant": 1
+          },
+          "property_value": 0
         },
         "type": "boolean"
       },
