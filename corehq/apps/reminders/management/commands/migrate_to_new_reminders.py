@@ -75,6 +75,12 @@ class BaseMigrator(object):
     def migrate_schedule_instances(self):
         raise NotImplementedError
 
+    def print_status(self):
+        raise NotImplementedError
+
+    def refresh_schedule_instances(self):
+        raise NotImplementedError
+
 
 class CaseReminderHandlerMigrator(BaseMigrator):
 
@@ -120,6 +126,9 @@ class CaseReminderHandlerMigrator(BaseMigrator):
                 self.schedule.move_to_next_event_not_in_the_past(instance)
 
             instance.save(force_insert=True)
+
+    def refresh_schedule_instances(self):
+        initiate_messaging_rule_run(self.rule.domain, self.rule.pk)
 
     def get_source_instances(self):
         return list(CaseReminder.view(
@@ -482,7 +491,7 @@ class Command(BaseCommand):
         log("Refreshing instances...")
 
         for migrator in migrators:
-            initiate_messaging_rule_run(migrator.rule.domain, migrator.rule.pk)
+            migrator.refresh_schedule_instances()
 
         while self.get_locked_count(domain) > 0:
             sleep(5)
