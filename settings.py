@@ -116,7 +116,6 @@ ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
-PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
@@ -1173,14 +1172,6 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
-        'private_sector_datamigration': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': PRIVATE_SECTOR_DATAMIGRATION,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -1296,11 +1287,6 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True
-        },
-        'private_sector_datamigration': {
-            'handlers': ['private_sector_datamigration', 'console'],
-            'level': 'INFO',
-            'propagate': False,
         },
         'sentry.errors.uncaught': {
             'handlers': ['console'],
