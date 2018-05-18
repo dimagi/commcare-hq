@@ -31,21 +31,21 @@ from gevent import monkey
 import six
 monkey.patch_all()
 
+import contextlib
 import os
-import jsonobject
 import sh
 import sys
-import contextlib
-import gevent
 
 from fabric.colors import red
-from sh_verbose import ShVerbose
+import gevent
 from gitutils import (
     OriginalBranch,
     get_git,
     has_merge_conflict,
     print_merge_details,
 )
+import jsonobject
+from sh_verbose import ShVerbose
 
 
 class BranchConfig(jsonobject.JsonObject):
