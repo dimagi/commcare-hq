@@ -79,26 +79,40 @@ class POFileGenerator:
         raise Exception("Column not found with name {}".format(column_name))
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
-        translations_for_sheet = OrderedDict()
+        def occurrence(*args):
+            raise NotImplementedError
+
+        translations_for_sheet = []
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
-        occurrences = []
-        if sheet_name != MODULES_AND_FORMS_SHEET_NAME:
+        if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
+            type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
+            sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
+            unique_id_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'unique_id')
+
+            def occurrence(_row):
+                return ':'.join([_row[type_index], _row[sheet_name_index], _row[unique_id_index]])
+        else:
             type_and_id = self.sheet_name_to_module_or_form_type_and_id[sheet_name]
             if type_and_id.type == "Module":
-                ref_module = app.get_module_by_unique_id(type_and_id.id)
-                occurrences = [(id_strings.module_locale(ref_module), '')]
+                case_property_index = self._get_header_index(sheet_name, 'case_property')
+                list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
+
+                def occurrence(_row):
+                    return ':'.join([_row[case_property_index], _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
-                ref_form = app.get_form(type_and_id.id)
-                occurrences = [(id_strings.form_locale(ref_form), '')]
+                label_index = self._get_header_index(sheet_name, 'label')
+
+                def occurrence(_row):
+                    return _row[label_index]
         for row in rows:
             source = row[key_lang_index]
             translation = row[source_lang_index]
-            if source not in translations_for_sheet:
-                translations_for_sheet[source] = Translation(
-                    source,
-                    translation,
-                    [].extend(occurrences))
+            translations_for_sheet.append(Translation(
+                source,
+                translation,
+                [(occurrence(row), '')])
+            )
         return translations_for_sheet
 
     def _build_translations(self):
@@ -133,7 +147,7 @@ class POFileGenerator:
         for file_name in self.translations:
             sheet_translations = self.translations[file_name]
             po = polib.POFile()
-            po.check_for_duplicates = True
+            po.check_for_duplicates = False
             po.metadata = {
                 'App-Id': self.app_id_to_build,
                 'PO-Creation-Date': now,
@@ -147,9 +161,9 @@ class POFileGenerator:
                 'Version': self.version
             }
 
-            for source in sheet_translations:
+            for translation in sheet_translations:
+                source = translation.key
                 if source:
-                    translation = sheet_translations[source]
                     entry = polib.POEntry(
                         msgid=translation.key,
                         msgstr=translation.translation,
