@@ -479,6 +479,7 @@ def _process_modules_and_forms_sheet(rows, app, update_sql_translations):
         if update_sql_translations:
             sql_translation = document.sql_translation
             sql_translation.parser.update_name(app.langs, row)
+            sql_translation.parser.save()
             document.sql_translation_id = sql_translation.id
         _update_translation_dict('default_', document.name, row, app.langs)
 
