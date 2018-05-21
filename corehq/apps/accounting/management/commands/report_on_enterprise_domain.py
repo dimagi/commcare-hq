@@ -111,7 +111,7 @@ class Command(BaseCommand):
                 user.full_name,
                 self._format_date(user.last_login),
                 self._format_date(user.reporting_metadata.last_submission_for_user.submission_date),
-                self._format_date(user.reporting_metadata.last_submission_for_user.commcare_version),
+                user.reporting_metadata.last_submission_for_user.commcare_version or '',
                 domain.name,
                 self._domain_url(domain),
             ])
