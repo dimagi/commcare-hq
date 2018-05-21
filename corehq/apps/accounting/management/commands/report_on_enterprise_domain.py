@@ -53,7 +53,7 @@ class Command(BaseCommand):
         )
 
     def _domain_url(self, domain):
-        return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain})
+        return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
 
     def _write_file(self, slug, headers, process_domain, multiple=False):
         row_count = 0
@@ -61,7 +61,7 @@ class Command(BaseCommand):
         writer = UnicodeWriter(csv_file)
         writer.writerow(headers)
 
-        for domain in [domain.name for domain in map(Domain.get_by_name, self.domain_names) if domain]:
+        for domain in [domain for domain in map(Domain.get_by_name, self.domain_names) if domain]:
             result = process_domain(domain)
             rows = result if multiple else [result]
             row_count = row_count + len(rows)
@@ -76,34 +76,35 @@ class Command(BaseCommand):
         return (attachment, row_count)
 
     def _domain_row(self, domain):
-        subscription = Subscription.get_active_subscription_by_domain(domain)
+        subscription = Subscription.get_active_subscription_by_domain(domain.name)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         return [
-            domain,
+            domain.name,
+            domain.hr_name,
             self._domain_url(domain),
             plan_version.plan.name,
-            str(get_mobile_user_count(domain, include_inactive=False)),
+            str(get_mobile_user_count(domain.name, include_inactive=False)),
         ]
 
     def _web_user_row(self, domain):
-        for user in get_all_user_rows(domain, include_web_users=True, include_mobile_users=False,
+        for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = WebUser.wrap(user['doc'])
             return [
                 user.full_name,
                 user.username,
-                user.role_label(domain),
+                user.role_label(domain.name),
                 user.last_login.strftime(self.date_fmt),
-                domain,
+                domain.name,
                 self._domain_url(domain),
             ]
 
     def _form_row(self, domain):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
-        apps = get_brief_apps_in_domain(domain)
+        apps = get_brief_apps_in_domain(domain.name)
         apps = {a.id: a.name for a in apps}
-        users = get_all_user_rows(domain, include_web_users=False, include_mobile_users=True,
+        users = get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
                                   include_inactive=False, include_docs=True)
         names = {}
         for user in users:
@@ -111,12 +112,12 @@ class Command(BaseCommand):
             username = user['username']
             username = re.sub(r'@.*', '', username)
             names[username] = (user['first_name'], user['last_name'])
-        users_filter = form_es.user_id(EMWF.user_es_query(domain,
+        users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
                                        ['t__0'],  # All mobile workers
                                        self.couch_user)
                         .values_list('_id', flat=True))
         query = (form_es.FormES()
-                 .domain(domain)
+                 .domain(domain.name)
                  .filter(time_filter(gte=datespan.startdate,
                                      lt=datespan.enddate_adjusted))
                  .filter(users_filter))
@@ -128,7 +129,7 @@ class Command(BaseCommand):
                 hit['form']['@name'],
                 submitted,
                 apps[hit['app_id']] if hit['app_id'] in apps else 'App not found',
-                domain,
+                domain.name,
                 self._domain_url(domain),
                 username,
                 names[username][0] if username in names else 'User not found',
@@ -150,7 +151,7 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
+        headers = ['Project Space Name', 'Project Name', 'URL', 'Plan', '# of mobile workers']
         (domain_file, domain_count) = self._write_file('domains', headers, self._domain_row)
 
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
