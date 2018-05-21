@@ -18,7 +18,7 @@ def add_partitions(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0047_added_new_wasting_and_stunting_columns_to_views'),
+        ('icds_reports', '0048_added_person_name_and_mother_name_to_chm'),
     ]
 
     operations = [
