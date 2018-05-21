@@ -95,7 +95,7 @@ class Command(BaseCommand):
                 user.full_name,
                 user.username,
                 user.role_label(domain.name),
-                user.last_login.strftime(self.date_fmt),
+                self._format_date(user.last_login),
                 domain.name,
                 self._domain_url(domain),
             ])
@@ -109,8 +109,9 @@ class Command(BaseCommand):
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
-                #user.last_login.strftime(self.date_fmt),
-                # TODO: CommCare Version
+                self._format_date(user.last_login),
+                self._format_date(user.reporting_metadata.last_submission_for_user.submission_date),
+                self._format_date(user.reporting_metadata.last_submission_for_user.commcare_version),
                 domain.name,
                 self._domain_url(domain),
             ])
@@ -134,7 +135,7 @@ class Command(BaseCommand):
         rows = []
         for hit in query.run().hits:
             username = hit['form']['meta']['username']
-            submitted = datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S').strftime(self.date_fmt)
+            submitted = self._format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
             rows.append([
                 hit['form']['@name'],
                 submitted,
@@ -145,8 +146,10 @@ class Command(BaseCommand):
             ])
         return rows
 
+    def _format_date(self, date):
+        return date.strftime('%Y/%m/%d %H:%M:%S') if date else ''
+
     def handle(self, account_id, username, **kwargs):
-        self.date_fmt = '%Y/%m/%d %H:%M:%S'
         self.couch_user = CouchUser.get_by_username(username)
         self.window = 7
 
@@ -165,7 +168,8 @@ class Command(BaseCommand):
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
         (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row, multiple=True)
 
-        headers = ['Username', 'Name', 'Last Login', 'CommCare Version', 'Project Space Name', 'Project Space URL']
+        headers = ['Username', 'Name', 'Last Login', 'Last Submission', 'CommCare Version',
+                   'Project Space Name', 'Project Space URL']
         (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers,
                                                                  self._mobile_user_row, multiple=True)
 
