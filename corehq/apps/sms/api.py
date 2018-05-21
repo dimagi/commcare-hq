@@ -614,7 +614,7 @@ def process_incoming(msg):
     else:
         if is_opt_message(msg.text, pass_through_opt_in_keywords):
             # Opt the phone number in, and then process the message normally
-            PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
+            PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain)
 
         handled = False
         is_two_way = v is not None and v.is_two_way
