@@ -6663,7 +6663,7 @@ class Translation(models.Model):
     """
     resource_id = Id of the module/form
     resource_type = type corresponding to the id
-    identifier = possibly a way to identify the purpose of translation like
+    identifier = possibly a way to identify the purpose of translation (not in use yet)
     for module ->
     1. name
     2. details/DetailColumn
@@ -6768,28 +6768,36 @@ class Translation(models.Model):
         return self.resource_type == "form"
 
 
+# causing import issues at top of file
+from corehq.apps.app_manager.app_translations.structures import (
+    LabelTranslation, ModuleTranslation, FormTranslation,
+    ColumnTranslation, ValueContainer, AnnotationTranslation,
+    SeriesTranslation
+)
+
+
 class BaseTranslationParser:
     def __init__(self, resource_translation):
         self.resource_translation = resource_translation
+        if self.resource_translation.module_resource:
+            self.translation = ModuleTranslation.wrap(self.resource_translation.translation)
+        elif self.resource_translation.form_resource:
+            self.translation = FormTranslation.wrap(self.resource_translation.translation)
 
     def update_id_string(self, id_string, translations, prefix, langs):
-        if id_string not in self.resource_translation.translation['id_strings']:
-            self.resource_translation.translation['id_strings'][id_string] = {}
+        if id_string not in self.translation.id_strings:
+            self.translation.id_strings[id_string] = {}
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['id_strings'][id_string],
+            self.translation.id_strings[id_string],
             translations, langs
         )
 
     def update_name(self, langs, translated_names, prefix="default_"):
         from corehq.apps.app_manager import id_strings
-        if 'id_strings' not in self.resource_translation.translation:
-            self.resource_translation.translation['id_strings'] = {}
-        if 'name' not in self.resource_translation.translation:
-            self.resource_translation.translation['name'] = {}
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['name'],
+            self.translation.name,
             translated_names, langs)
         id_string = None
         if self.resource_translation.module_resource:
@@ -6803,6 +6811,10 @@ class BaseTranslationParser:
     def update(self, *args, **kwargs):
         raise NotImplementedError
 
+    def save(self):
+        self.resource_translation.translation = self.translation.to_json()
+        self.resource_translation.save()
+
 
 class ModuleTranslationParser(BaseTranslationParser):
     def ensure_base_dict(self, detail_type, column_index):
@@ -6811,23 +6823,9 @@ class ModuleTranslationParser(BaseTranslationParser):
         :param detail_type: short/long
         :param column_index: index of column
         """
-        if 'case_details' not in self.resource_translation.translation:
-            self.resource_translation.translation['case_details'] = {}
-        if detail_type not in self.resource_translation.translation['case_details']:
-            self.resource_translation.translation['case_details'][detail_type] = {'columns': []}
-        if len(self.resource_translation.translation['case_details'][detail_type]['columns']) == column_index:
-            self.resource_translation.translation['case_details'][detail_type]['columns'].append(
-                {
-                    'header': {},  # simple translations dict
-                    'enum': [],  # 'value' key to contain translations dict
-                    'graph_configuration': {
-                        'annotations': [],  # 'display_text' key to contain translations dict
-                        'series': [],  # 'locale_specific_config' to contain translations dict
-                        'locale_specific_config': defaultdict(dict),  # each key maps to a translations dict
-                    }
-                }
-            )
-        elif len(self.resource_translation.translation['case_details'][detail_type]['columns']) < column_index:
+        if len(self.translation.case_details[detail_type]['columns']) == column_index:
+            self.translation.case_details[detail_type].columns.append(ColumnTranslation())
+        elif len(self.translation.case_details[detail_type].columns) < column_index:
             # trying to add a column out of order
             raise Exception("adding column out of order")
 
@@ -6856,7 +6854,7 @@ class ModuleTranslationParser(BaseTranslationParser):
         self.ensure_base_dict(detail_type, column_index)
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index]['header'],
+            self.translation.case_details[detail_type].columns[column_index].header,
             translated_headers, langs)
         id_string = id_strings.detail_column_header_locale(
             self.resource_translation.resource, '_'.join(['case', detail_type]), column)
@@ -6866,14 +6864,11 @@ class ModuleTranslationParser(BaseTranslationParser):
                     column_attr_key):
         self.ensure_base_dict(detail_type, column_index)
         # if there is no entry for this enum index just add an empty placeholder for it
-        if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                   'enum']) == column_attr_index:
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'enum'].append({'value': {}})
+        if len(self.translation.case_details[detail_type].columns[column_index].enum) == column_attr_index:
+            self.translation.case_details[detail_type].columns[column_index].enum.append(ValueContainer())
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'enum'][column_attr_index]['value'],
+            self.translation.case_details[detail_type].columns[column_index].enum[column_attr_index].value,
             translated_enums, langs
         )
         id_string = id_strings.detail_column_enum_variable(
@@ -6884,18 +6879,21 @@ class ModuleTranslationParser(BaseTranslationParser):
                                  column_attr_index, **kwargs):
         self.ensure_base_dict(detail_type, column_index)
         # if there is no entry for this annotation index just add an empty placeholder for it
-        if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                   'graph_configuration']['annotations']) == column_attr_index:
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']['annotations'].append(
-                {'display_text': {}}
-            )
+        if len(self.translation.case_details[detail_type].columns[column_index].graph_configuration.annotations) == column_attr_index:
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.annotations.append(AnnotationTranslation())
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']["annotations"][column_attr_index]['display_text'],
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.annotations[column_attr_index].display_text,
             translated_annotations, langs
         )
+
+        _update_translation_dict(
+            prefix,
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.annotations[
+                column_attr_index].values,
+            translated_annotations, langs
+        )
+
         id_string = id_strings.graph_annotation(
             self.resource_translation.resource, '_'.join(['case', detail_type]), column, column_attr_index)
         self.update_id_string(id_string, translated_annotations, prefix, langs)
@@ -6905,14 +6903,12 @@ class ModuleTranslationParser(BaseTranslationParser):
         self.ensure_base_dict(detail_type, column_index)
         key = kwargs['column_attr_key']
         # if there is no entry for the key just add an empty placeholder for it
-        if key not in self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']['locale_specific_config']:
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']['locale_specific_config'][key] = {}
+        if key not in self.translation.case_details[detail_type].columns[column_index].graph_configuration.locale_specific_config:
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.locale_specific_config[key] = {}
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']['locale_specific_config'][key],
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.locale_specific_config[
+                key],
             translated_configs, langs
         )
         id_string = id_strings.graph_configuration(
@@ -6922,20 +6918,16 @@ class ModuleTranslationParser(BaseTranslationParser):
     def update_graph_configuration_series(self, prefix, langs, translated_series_configs, detail_type, column_index,
                                           column, column_attr_index, column_attr_key):
         # if there is no entry for this series index just add an empty placeholder for it
-        if len(self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                   'graph_configuration']['series']) == column_attr_index:
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']['series'].append({'locale_specific_config': {}})
+        if len(self.translation.case_details[detail_type].columns[column_index].graph_configuration.series) == column_attr_index:
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.series.append(
+                SeriesTranslation())
 
         # if there is no entry for the key in this series index just add an empty placeholder for it
-        if column_attr_key not in self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']["series"][column_attr_index]['locale_specific_config']:
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']["series"][column_attr_index]['locale_specific_config'][column_attr_key] = {}
+        if column_attr_key not in self.translation.case_details[detail_type].columns[column_index].graph_configuration.series[column_attr_index].locale_specific_config:
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.series[column_attr_index].locale_specific_config[column_attr_key] = {}
         _update_translation_dict(
             prefix,
-            self.resource_translation.translation['case_details'][detail_type]['columns'][column_index][
-                'graph_configuration']["series"][column_attr_index]['locale_specific_config'][column_attr_key],
+            self.translation.case_details[detail_type].columns[column_index].graph_configuration.series[column_attr_index].locale_specific_config[column_attr_key],
             translated_series_configs, langs
         )
         id_string = id_strings.graph_series_configuration(
@@ -6945,22 +6937,12 @@ class ModuleTranslationParser(BaseTranslationParser):
 
 class FormTranslationParser(BaseTranslationParser):
     def ensure_base_dict(self, label_id, trans_type):
-        if 'text' not in self.resource_translation.translation:
-            self.resource_translation.translation['text'] = {}
-        if label_id not in self.resource_translation.translation['text']:
-            self.resource_translation.translation['text'][label_id] = {}
-        if trans_type not in self.resource_translation.translation['text'][label_id]:
-            self.resource_translation.translation['text'][label_id][trans_type] = {'value': {}}
+        if label_id not in self.translation.text:
+            self.translation.text[label_id] = LabelTranslation()
 
     def update(self, label_id, trans_type, lang, translation, delete_value_node):
-        if delete_value_node:
-            try:
-                self.resource_translation.translation['text'][label_id].pop(trans_type, None)
-            except (KeyError, IndexError):
-                pass
-        else:
-            self.ensure_base_dict(label_id, trans_type)
-            self.resource_translation.translation['text'][label_id][trans_type]['value'][lang] = translation
+        self.ensure_base_dict(label_id, trans_type)
+        self.translation.text[label_id][trans_type].value[lang] = translation
 
 # backwards compatibility with suite-1.0.xml
 FormBase.get_command_id = lambda self: id_strings.form_command(self)

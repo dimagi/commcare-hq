@@ -479,7 +479,6 @@ def _process_modules_and_forms_sheet(rows, app, update_sql_translations):
         if update_sql_translations:
             sql_translation = document.sql_translation
             sql_translation.parser.update_name(app.langs, row)
-            sql_translation.save()
             document.sql_translation_id = sql_translation.id
         _update_translation_dict('default_', document.name, row, app.langs)
 
@@ -736,7 +735,7 @@ def update_form_translations(sheet, rows, missing_cols, app, update_sql_translat
                                                       not new_translation)
 
     if sql_translation:
-        sql_translation.save()
+        sql_translation.parser.save()
         form.sql_translation_id = sql_translation.id
 
     save_xform(app, form, etree.tostring(xform.xml, encoding="unicode"))
@@ -962,7 +961,7 @@ def _update_case_list_translations(sheet, rows, app, update_sql_translations):
                 sql_translation.parser.update(app.langs, graph_config_row, detail_type, index, detail,
                                               "graph_configuration_series", series_index, config_key)
     if sql_translation:
-        sql_translation.save()
+        sql_translation.parser.save()
         module.sql_translation_id = sql_translation.id
     for index, tab in enumerate(detail_tab_headers):
         if tab:
