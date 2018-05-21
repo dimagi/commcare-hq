@@ -231,8 +231,8 @@ class TestLocationCollection(LocationCollection):
 
     domain_name = 'location-bulk-management'
 
-    types = attr.ib(default=attr.Factory(list))
-    locations = attr.ib(default=attr.Factory(list))
+    types = attr.ib(factory=list)
+    locations = attr.ib(factory=list)
 
     def custom_data_validator(self):
         return lambda data: False
