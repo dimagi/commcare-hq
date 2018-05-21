@@ -9,6 +9,7 @@ from django.test.utils import override_settings
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.userreports.tests.utils import domain_lite
 from corehq.apps.userreports.models import StaticReportConfiguration, StaticDataSourceConfiguration
+from six.moves import filter
 
 
 class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
