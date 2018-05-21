@@ -14,11 +14,9 @@ import six
 from memoized import memoized
 
 from corehq.sql_db.config import partition_config
-from corehq.util.quickcache import quickcache
 
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
-LOAD_BALANCE_FREQUENCY_SECONDS = 30
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -221,7 +219,6 @@ def filter_out_stale_standbys(dbs):
     ]
 
 
-@quickcache(['weighted_dbs'], timeout=LOAD_BALANCE_FREQUENCY_SECONDS, skip_arg=lambda *args: settings.UNIT_TESTING)
 def select_db_for_read(weighted_dbs):
     """
     Returns a randomly selected database per the weights assigned from
