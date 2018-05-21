@@ -258,7 +258,6 @@ def _get_vellum_core_context(request, domain, app, module, form):
                                           kwargs={'domain': domain}),
         },
         'invalidCaseProperties': ['name'],
-        'showOnlyCurrentLang': toggles.HIDE_TRANSLATIONS_FROM_FORMS.enabled_for_request(request),
     }
     core.update(_get_core_context_help_text_context(form))
     return core
