@@ -171,6 +171,188 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    ko.bindingHandlers.multi_sortable = {
+        updateSortableList: function(itemList) {
+            _(itemList()).each(function(item, index) {
+                if (item._sortableOrder === undefined) {
+                    item._sortableOrder = ko.observable(index);
+                } else {
+                    item._sortableOrder(index);
+                }
+            });
+        },
+        getList: function(valueAccessor) {
+            /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
+            var modelValue = valueAccessor(),
+                unwrappedValue = ko.utils.peekObservable(modelValue);
+            if ((!unwrappedValue) || typeof unwrappedValue.length === "number") {
+                return modelValue;
+            } else {
+                return unwrappedValue['data'];
+            }
+        },
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            // based on https://jsfiddle.net/hQnWG/614/
+
+            $(element).on('click', 'tr', function (e) {
+                if(e.ctrlKey) {
+                    console.log('ctrlKey');
+                } else if(e.metaKey) {
+                    console.log('metaKey');
+                } else if(e.shiftKey) {
+                    console.log('shiftKey');
+                }
+
+                if ($(this).hasClass('moving')) {
+                    $(this).removeClass('moving');
+
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
+                    }
+                } else if (e.ctrlKey || e.metaKey) {
+                    $(this).toggleClass("selected-for-sort");
+                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                } else if (e.shiftKey) {
+                    $(this).toggleClass("shift-selected")
+                           .removeClass("selected-for-sort")
+                           .siblings().removeClass('selected-for-sort');
+                    if ($('.shift-selected').length == 2) {
+                        var shift_selected_index_0 = $('.shift-selected').eq(0)[0].attributes['data-order'].value,
+                            shift_selected_index_1 = $('.shift-selected').eq(1)[0].attributes['data-order'].value;
+                        var first_row = null,
+                            second_row = null,
+                            start = null,
+                            end = null;
+                        if (shift_selected_index_0 < shift_selected_index_1) {
+                            start = shift_selected_index_0;
+                            end = shift_selected_index_1;
+                            first_row = $('.shift-selected').eq(0);
+                            second_row = $('.shift-selected').eq(1);
+                        } else {
+                            start = shift_selected_index_1;
+                            end = shift_selected_index_0;
+                            first_row = $('.shift-selected').eq(1);
+                            second_row = $('.shift-selected').eq(0);
+                        }
+                        var next = first_row;
+                        for(var i = start; i <= end; i++) {
+                            next.addClass('selected-for-sort');
+                            next = next.next();
+                        }
+                        $('.shift-selected').removeClass('shift-selected')
+                    }
+                } else {
+                    $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
+                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                }
+            });
+
+            $(element).on('click', '.send-to-top', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                // update UI
+                var row = $(this).parent().parent();
+                var current_index = row[0].attributes['data-order'].value;
+                row.parent().prepend(row);
+
+                // update KO
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                list.unshift(list.splice(current_index, 1)[0]);
+            });
+
+            $(element).on('click', '.send-to-bottom', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                var row = $(this).parent().parent();
+                var current_index = row[0].attributes['data-order'].value;
+
+                var lastSelectedRowIndex = null;
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].selected()) {
+                        lastSelectedRowIndex = i;
+                    }
+                }
+
+                if (current_index < lastSelectedRowIndex) {
+                    // Update UI
+                    $('.isSelectedForExport').addClass('fix');
+                    row.removeClass('fix');
+                    $('.fix:nth-child(' + ($('.fix').length + 1) + ')').after(row);
+                    $('.fix').removeClass('fix');
+
+                    // Update KO
+                    var current_list_item = list.splice(current_index, 1)[0];
+                    list.splice(lastSelectedRowIndex, 0, current_list_item);
+                }
+            });
+
+            $(element).sortable({
+                connectWith: "ul",
+                delay: 150, //Needed to prevent accidental drag when trying to select
+                revert: 0,
+                helper: function (e, item) {
+                    //Basically, if you grab an unhighlighted item to drag, it will deselect (unhighlight) everything else
+                    if (!item.hasClass('selected-for-sort')) {
+                        item.addClass('selected-for-sort').siblings().removeClass('selected-for-sort');
+                    }
+
+                    //////////////////////////////////////////////////////////////////////
+                    //HERE'S HOW TO PASS THE SELECTED ITEMS TO THE `stop()` FUNCTION:
+
+                    //Clone the selected items into an array
+                    var elements = item.parent().children('.selected-for-sort').clone();
+
+                    //Add a property to `item` called 'multidrag` that contains the
+                    //  selected items, then remove the selected items from the source list
+                    item.data('multidrag', elements).siblings('.selected-for-sort').remove();
+
+                    //Now the selected items exist in memory, attached to the `item`,
+                    //  so we can access them later when we get to the `stop()` callback
+
+                    //Create the helper
+                    var helper = $('<li/>');
+                    return helper.append(elements);
+                },
+                stop: function (e, ui) {
+                    //Now we access those items that we stored in `item`s data!
+                    var elements = ui.item.data('multidrag');
+
+                    //`elements` now contains the originally selected items from the source list (the dragged items)!!
+
+                    //Finally I insert the selected items after the `item`, then remove the `item`, since
+                    //  item is a duplicate of one of the selected items.
+                    ui.item.after(elements).remove();
+
+                    // Reorder the data in knockout
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                    var new_list = [];
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        var i = parseInt(element.children[cur].attributes['data-order'].value);
+                        new_list.push(list[i]);
+                    }
+                    list.splice(0, list.length);
+                    for (var i = 0; i < new_list.length; i++) {
+                        list.push(new_list[i]);
+                    }
+
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
+                    }
+                }
+
+            });
+            return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        },
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            ko.bindingHandlers.multi_sortable.updateSortableList(list);
+            return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        },
+    };
+
     ko.bindingHandlers.saveButton = {
         init: function(element, getSaveButton) {
             getSaveButton().ui.appendTo(element);
