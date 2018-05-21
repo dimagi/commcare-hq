@@ -21,7 +21,7 @@ from corehq.apps.es import forms as form_es
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows, get_mobile_user_count
-from corehq.apps.users.models import CouchUser, WebUser
+from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from six.moves import map
 
 
@@ -87,31 +87,41 @@ class Command(BaseCommand):
         ]
 
     def _web_user_row(self, domain):
+        rows = []
         for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
             user = WebUser.wrap(user['doc'])
-            return [
+            rows.append([
                 user.full_name,
                 user.username,
                 user.role_label(domain.name),
                 user.last_login.strftime(self.date_fmt),
                 domain.name,
                 self._domain_url(domain),
-            ]
+            ])
+        return rows
+
+    def _mobile_user_row(self, domain):
+        rows = []
+        for user in get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
+                                      include_inactive=False, include_docs=True):
+            user = CommCareUser.wrap(user['doc'])
+            rows.append([
+                re.sub(r'@.*', '', user.username),
+                user.full_name,
+                #user.last_login.strftime(self.date_fmt),
+                # TODO: CommCare Version
+                domain.name,
+                self._domain_url(domain),
+            ])
+        return rows
 
     def _form_row(self, domain):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
         apps = get_brief_apps_in_domain(domain.name)
         apps = {a.id: a.name for a in apps}
-        users = get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
-                                  include_inactive=False, include_docs=True)
-        names = {}
-        for user in users:
-            user = user['doc']
-            username = user['username']
-            username = re.sub(r'@.*', '', username)
-            names[username] = (user['first_name'], user['last_name'])
+
         users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
                                        ['t__0'],  # All mobile workers
                                        self.couch_user)
@@ -132,8 +142,6 @@ class Command(BaseCommand):
                 domain.name,
                 self._domain_url(domain),
                 username,
-                names[username][0] if username in names else 'User not found',
-                names[username][1] if username in names else 'User not found',
             ])
         return rows
 
@@ -155,10 +163,13 @@ class Command(BaseCommand):
         (domain_file, domain_count) = self._write_file('domains', headers, self._domain_row)
 
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
-        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row)
+        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row, multiple=True)
 
-        headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL',
-                   'Mobile User', 'First Name', 'Last Name']
+        headers = ['Username', 'Name', 'Last Login', 'CommCare Version', 'Project Space Name', 'Project Space URL']
+        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers,
+                                                                 self._mobile_user_row, multiple=True)
+
+        headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL', 'Mobile User']
         (form_file, form_count) = self._write_file('forms', headers, self._form_row, multiple=True)
 
         message = (
@@ -167,11 +178,13 @@ Report run {timestamp}
 
 Domains: {domain_count}
 Web Users: {web_user_count}
+Mobile Users: {mobile_user_count}
 Forms from past {window} days: {form_count}
             '''.format(**{
                 'message': kwargs.get('message') or '',
                 'domain_count': domain_count,
                 'web_user_count': web_user_count,
+                'mobile_user_count': mobile_user_count,
                 'window': self.window,
                 'form_count': form_count,
                 'timestamp': self.now.strftime('%Y-%m-%d %H:%M:%S'),
@@ -186,6 +199,7 @@ Forms from past {window} days: {form_count}
             linebreaksbr(message), cc=cc, text_content=message, file_attachments=[
                 domain_file,
                 web_user_file,
+                mobile_user_file,
                 form_file,
             ]
         )
