@@ -14,9 +14,11 @@ import six
 from memoized import memoized
 
 from corehq.sql_db.config import partition_config
+from corehq.util.quickcache import quickcache
 
 
 ACCEPTABLE_STANDBY_DELAY_SECONDS = 3
+STALE_CHECK_FREQUENCY = 30
 
 
 def run_query_across_partitioned_databases(model_class, q_expression, values=None, annotate=None):
@@ -208,6 +210,7 @@ def get_standby_delays_by_db():
     return ret
 
 
+@quickcache(['dbs'], timeout=STALE_CHECK_FREQUENCY, skip_arg=lambda *args: settings.UNIT_TESTING)
 def filter_out_stale_standbys(dbs):
     # from given list of databases filters out those with more than
     #   acceptable standby delay, if that database is a standby
