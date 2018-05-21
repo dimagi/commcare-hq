@@ -528,7 +528,8 @@ def get_opt_keywords(msg):
     backend_class = get_sms_backend_classes().get(msg.backend_api, SQLSMSBackend)
     return (
         backend_class.get_opt_in_keywords(),
-        backend_class.get_opt_out_keywords()
+        backend_class.get_opt_out_keywords(),
+        backend_class.get_pass_through_opt_in_keywords(),
     )
 
 
@@ -588,7 +589,7 @@ def process_incoming(msg):
         msg.domain = msg.domain_scope
         msg.save()
 
-    opt_in_keywords, opt_out_keywords = get_opt_keywords(msg)
+    opt_in_keywords, opt_out_keywords, pass_through_opt_in_keywords = get_opt_keywords(msg)
     domain = v.domain if v else None
 
     if is_opt_message(msg.text, opt_out_keywords):
@@ -611,6 +612,10 @@ def process_incoming(msg):
             else:
                 send_sms(msg.domain, None, msg.phone_number, text)
     else:
+        if is_opt_message(msg.text, pass_through_opt_in_keywords):
+            # Opt the phone number in, and then process the message normally
+            PhoneBlacklist.opt_in_sms(msg.phone_number, domain=domain):
+
         handled = False
         is_two_way = v is not None and v.is_two_way
 
