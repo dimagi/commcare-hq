@@ -735,6 +735,7 @@ class Command(BaseCommand):
         self.migrate_handlers(migrators)
         self.refresh_instances(domain, migrators)
 
+        log("\n")
         if not self.confirm("Ok to switch on new reminders? y/n "):
             log("Migrated halted")
             return
