@@ -261,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.motech.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
@@ -330,8 +329,10 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.motech',
     'corehq.motech.dhis2',
     'corehq.motech.openmrs',
+    'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -371,7 +372,6 @@ HQ_APPS = (
     'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
-    'corehq.motech.openmrs',
     'custom.champ',
 )
 

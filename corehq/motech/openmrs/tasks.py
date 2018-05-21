@@ -28,7 +28,7 @@ from corehq.motech.openmrs.const import IMPORT_FREQUENCY_WEEKLY, IMPORT_FREQUENC
 from corehq.motech.openmrs.dbaccessors import get_openmrs_importers_by_domain
 from corehq.motech.openmrs.logger import logger
 from corehq.motech.openmrs.models import POSIX_MILLISECONDS
-from corehq.motech.openmrs.repeater_helpers import Requests
+from corehq.motech.requests import Requests
 from corehq.motech.utils import b64_aes_decrypt
 from toggle.shortcuts import find_domains_with_toggle_enabled
 import six
@@ -193,7 +193,7 @@ def import_patients_to_domain(domain_name, force=False):
         # TODO: ^^^ Make those configurable
 
         password = b64_aes_decrypt(importer.password)
-        requests = Requests(importer.server_url, importer.username, password)
+        requests = Requests(domain_name, importer.server_url, importer.username, password)
         if importer.location_type_name:
             try:
                 location_type = LocationType.objects.get(domain=domain_name, name=importer.location_type_name)
