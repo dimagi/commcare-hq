@@ -858,10 +858,10 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 # Example format:
 # {
 # "users":
-#     {
-#      ["pgmain", 5],
-#      ["pgmainstandby", 5]
-#     }
+#     [
+#      ("pgmain", 5),
+#      ("pgmainstandby", 5)
+#     ]
 # }
 LOAD_BALANCED_APPS = {}
 
