@@ -405,6 +405,7 @@ def migrate_custom_alert_schedule(handler):
         extra_options=get_extra_scheduling_options(handler),
     )
 
+
 def migrate_past_immediate_broadcast(handler):
     schedule = AlertSchedule.create_simple_alert(
         handler.domain,
