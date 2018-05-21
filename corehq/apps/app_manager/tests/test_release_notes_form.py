@@ -118,9 +118,6 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
 
     def setUp(self):
         self.set_up_app()
-        # Todo: if there is the training module has only one releases_form and it is disabled
-        #   should menus related to that module be included? and should we treat as if that module
-        #   exists or not, what happens to m0, m1 etc?
         self.releases_form.enable_release_notes = False
         super(ReleaseFormsDisabledTest, self).setUp()
 
@@ -162,7 +159,6 @@ class ReleaseFormsDisabledTest(SimpleTestCase, ReleaseFormsSetupMixin, TestXmlMi
     def test_command(self):
         # check command in suite/menu exists
         suite = self.factory.app.create_suite()
-        # todo: get the correct spec in case there is only one disabled release form
         expected = """
         <partial>
             <menu id="m1">
