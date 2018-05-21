@@ -209,46 +209,32 @@ def icds_aggregation_task(self, date, func):
 
 @track_time
 def _aggregate_cf_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateComplementaryFeedingForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateComplementaryFeedingForms, day)
 
 
 @track_time
 def _aggregate_gm_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateGrowthMonitoringForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateGrowthMonitoringForms, day)
 
 
 @track_time
 def _aggregate_child_health_pnc_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateChildHealthPostnatalCareForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateChildHealthPostnatalCareForms, day)
 
 
 @track_time
 def _aggregate_thr_forms(day):
+    _state_based_aggregation(AggregateChildHealthTHRForms, day)
+
+
+def _state_based_aggregation(model, day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateChildHealthTHRForms.aggregate(state_id, agg_date)
+        model.aggregate(state_id, agg_date)
 
 
 @transaction.atomic
@@ -262,10 +248,12 @@ def _run_custom_sql_script(commands, day=None):
             cursor.execute(command, [day])
 
 
+@track_time
 def _create_child_health_monthly_view():
     _run_custom_sql_script(["SELECT create_child_health_monthly_view()"])
 
 
+@track_time
 def aggregate_awc_daily(day):
     _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
 
