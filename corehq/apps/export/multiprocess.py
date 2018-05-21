@@ -35,7 +35,7 @@ from datetime import timedelta
 
 from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 from corehq.apps.export.export import (
-    ExportFile, get_export_writer, save_export_payload, get_export_size, get_export_documents)
+    get_export_writer, save_export_payload, get_export_size, get_export_documents)
 from corehq.apps.export.export import write_export_instance
 from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
@@ -170,8 +170,8 @@ def run_export_with_logging(export_instance, page_number, dump_path, doc_count, 
 
 def run_export(export_instance, page_number, dump_path, doc_count, progress_tracker=None):
     docs = _get_export_documents_from_file(dump_path, doc_count)
-    export_file = get_export_file(export_instance, docs, progress_tracker)
-    return SuccessResult(page_number, export_file.path, doc_count)
+    export_file_path = _get_export_file_path(export_instance, docs, progress_tracker)
+    return SuccessResult(page_number, export_file_path, doc_count)
 
 
 def _get_export_documents_from_file(dump_path, doc_count):
@@ -185,12 +185,12 @@ def _get_export_documents_from_file(dump_path, doc_count):
     return ScanResult(doc_count, _doc_iter())
 
 
-def get_export_file(export_instance, docs, progress_tracker=None):
+def _get_export_file_path(export_instance, docs, progress_tracker=None):
     export_instances = [export_instance]
     writer = get_export_writer(export_instances, allow_pagination=False)
     with writer.open(export_instances):
         write_export_instance(writer, export_instance, docs, progress_tracker)
-        return ExportFile(writer.path, writer.format)
+        return writer.path
 
 
 class LoggingProgressTracker(object):
