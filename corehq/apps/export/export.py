@@ -19,7 +19,7 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.elastic import iter_es_docs, ScanResult
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.files import safe_filename
+from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
@@ -326,7 +326,6 @@ def get_export_file(export_instances, filters, progress_tracker=None):
     writer = get_export_writer(export_instances)
     with writer.open(export_instances):
         for export_instance in export_instances:
-            # TODO: Don't get the docs multiple times if you don't have to
             docs = get_export_documents(export_instance, filters)
             write_export_instance(writer, export_instance, docs, progress_tracker)
 
@@ -336,19 +335,19 @@ def get_export_file(export_instances, filters, progress_tracker=None):
 def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
     query = _get_export_query(export_instance, filters)
-    _, temp_path = tempfile.mkstemp()
-    with open(temp_path, 'w') as f:
-        scroll_result = query.scroll_ids()
-        for doc_id in scroll_result:
-            f.write(doc_id + '\n')
+    scroll_result = query.scroll_ids()
 
     def iter_export_docs():
-        # Stream doc ids from disk and fetch documents from ES in chunks
-        with open(temp_path) as f:
-            doc_ids = (doc_id.strip() for doc_id in f)
-            for doc in iter_es_docs(query.index, doc_ids):
-                yield doc
-        os.remove(temp_path)
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'w') as f:
+                for doc_id in scroll_result:
+                    f.write(doc_id + '\n')
+
+            # Stream doc ids from disk and fetch documents from ES in chunks
+            with open(temp_path) as f:
+                doc_ids = (doc_id.strip() for doc_id in f)
+                for doc in iter_es_docs(query.index, doc_ids):
+                    yield doc
 
     return ScanResult(scroll_result.count, iter_export_docs())
 
