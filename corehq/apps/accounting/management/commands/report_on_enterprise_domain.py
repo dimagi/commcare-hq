@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.core.management import BaseCommand
 from django.core.management.base import CommandError
+from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 
 import io
@@ -36,11 +37,25 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('account_id')
         parser.add_argument('username')
+        parser.add_argument(
+            '-m',
+            '--message',
+            action='store',
+            dest='message',
+            help='Message to add to email (optional)',
+        )
+        parser.add_argument(
+            '-c',
+            '--cc',
+            action='store',
+            dest='cc',
+            help='Comma-separated emails to CC (optional)',
+        )
 
     def _domain_url(self, domain):
         return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain})
 
-    def _write_file(self, slug, timestamp, headers, process_domain, multiple=False):
+    def _write_file(self, slug, headers, process_domain, multiple=False):
         row_count = 0
         csv_file = io.BytesIO()
         writer = UnicodeWriter(csv_file)
@@ -54,7 +69,7 @@ class Command(BaseCommand):
 
         print('Wrote {} lines of {}'.format(row_count, slug))
         attachment = {
-            'title': 'enterprise_{}_{}.csv'.format(slug, timestamp),
+            'title': 'enterprise_{}_{}.csv'.format(slug, self.now.strftime('%Y%m%d_%H%M%S')),
             'mimetype': 'text/csv',
             'file_obj': csv_file,
         }
@@ -85,7 +100,7 @@ class Command(BaseCommand):
 
     def _form_row(self, domain):
         time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=7), datetime.utcnow())
+        datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
         apps = get_brief_apps_in_domain(domain)
         apps = {a.id: a.name for a in apps}
         users = get_all_user_rows(domain, include_web_users=False, include_mobile_users=True,
@@ -124,39 +139,53 @@ class Command(BaseCommand):
     def handle(self, account_id, username, **kwargs):
         self.date_fmt = '%Y/%m/%d %H:%M:%S'
         self.couch_user = CouchUser.get_by_username(username)
+        self.window = 7
+
         if not self.couch_user:
             raise CommandError("Option: '--username' must be specified")
 
-        timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+        self.now = datetime.utcnow()
         account = BillingAccount.objects.get(id=account_id)
         subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
         headers = ['Project Space Name', 'Project Space URL', 'Project Space Plan', '# of mobile workers']
-        (domain_file, domain_count) = self._write_file('domains', timestamp, headers, self._domain_row)
+        (domain_file, domain_count) = self._write_file('domains', headers, self._domain_row)
 
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
-        (web_user_file, web_user_count) = self._write_file('web_users', timestamp, headers, self._web_user_row)
+        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row)
 
         headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL',
                    'Mobile User', 'First Name', 'Last Name']
-        (form_file, form_count) = self._write_file('forms', timestamp, headers, self._form_row, multiple=True)
+        (form_file, form_count) = self._write_file('forms', headers, self._form_row, multiple=True)
 
         message = (
-            '''
-                Domains: {}\n
-                Web Users: {}\n
-                Forms: {}\n
-            '''.format(domain_count, web_user_count, form_count)
+            '''{message}
+Report run {timestamp}
+
+Domains: {domain_count}
+Web Users: {web_user_count}
+Forms from past {window} days: {form_count}
+            '''.format(**{
+                'message': kwargs.get('message') or '',
+                'domain_count': domain_count,
+                'web_user_count': web_user_count,
+                'window': self.window,
+                'form_count': form_count,
+                'timestamp': self.now.strftime('%Y-%m-%d %H:%M:%S'),
+            })
         )
 
+        cc = []
+        if kwargs.get('cc'):
+            cc = kwargs.get('cc').split(",")
         send_html_email_async(
-            "Report on enterprise domain", self.couch_user.username, message,
-            text_content=message, file_attachments=[
+            "Report on enterprise account {}".format(account.name), self.couch_user.username,
+            linebreaksbr(message), cc=cc, text_content=message, file_attachments=[
                 domain_file,
                 web_user_file,
                 form_file,
             ]
         )
-        print('Emailed {}'.format(self.couch_user.username))
+        print('Emailed {}{}{}'.format(self.couch_user.username, " and " if cc else "", ", ".join(cc)))
