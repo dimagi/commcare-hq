@@ -64,7 +64,11 @@ BEGIN
     'lactating, ' ||
     'lactating_all, ' ||
     'institutional_delivery_in_month, ' ||
-    'add ' ||
+    'add, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident ' ||
     'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || '(case_id)';
