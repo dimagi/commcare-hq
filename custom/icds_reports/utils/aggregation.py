@@ -701,6 +701,66 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
+    def data_from_ucr_query(self):
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        # anemia calculation is wrong here because it doesn't ignore nulls.
+        return """
+        SELECT DISTINCT ccs_record_case_id AS case_id,
+        LAST_VALUE(timeend) OVER w AS latest_time_end,
+        MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
+        LAST_VALUE(anemia) OVER w as anemia,
+        LAST_VALUE(eating_extra) OVER w as eating_extra,
+        LAST_VALUE(resting) OVER w as resting
+        FROM "{ucr_tablename}"
+        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WINDOW w AS (
+            PARTITION BY ccs_record_case_id
+            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+        )
+        """.format(ucr_tablename=self.ucr_tablename), {
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+            "state_id": self.state_id
+        }
+
+    def aggregation_query(self):
+        month = self.month.replace(day=1)
+        tablename = self.generate_child_tablename(month)
+        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
+
+        ucr_query, ucr_query_params = self.data_from_ucr_query()
+        query_params = {
+            "month": month_formatter(month),
+            "state_id": self.state_id
+        }
+        query_params.update(ucr_query_params)
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed,
+          immediate_breastfeeding, anemia, eating_extra, resting
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
+            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
+            GREATEST(ucr.immediate_breastfeeding, prev_month.immediate_breastfeeding) AS immediate_breastfeeding,
+            COALESCE(ucr.anemia, prev_month.anemia) AS anemia,
+            COALESCE(ucr.eating_extra, prev_month.eating_extra) AS eating_extra,
+            COALESCE(ucr.resting, prev_month.resting) AS resting
+          FROM ({ucr_table_query}) ucr
+          FULL OUTER JOIN "{previous_month_tablename}" prev_month
+          ON ucr.case_id = prev_month.case_id
+        )
+        """.format(
+            ucr_table_query=ucr_query,
+            previous_month_tablename=previous_month_tablename,
+            tablename=tablename
+        ), query_params
+
     def compare_with_old_data_query(self):
         pass
 
