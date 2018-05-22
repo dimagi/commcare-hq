@@ -55,6 +55,15 @@ from pillowtop.es_utils import initialize_index_and_mapping
 from six.moves import range
 
 
+def assert_instance_gives_results(docs, export_instance, expected_result):
+    writer = get_export_writer([export_instance])
+    with writer.open([export_instance]):
+        write_export_instance(writer, export_instance, docs)
+
+    with ExportFile(writer.path, writer.format) as export:
+        assert json.loads(export.read()) == expected_result
+
+
 class WriterTest(SimpleTestCase):
 
     docs = [
@@ -117,21 +126,12 @@ class WriterTest(SimpleTestCase):
             ]
         )
 
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            }
+        })
 
     @patch('corehq.apps.export.export.MAX_EXPORTABLE_ROWS', 2)
     @flag_enabled('PAGINATED_EXPORTS')
@@ -161,24 +161,17 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs + self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table_000': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-                    },
-                    'My table_001': {
-                        'headers': ['Q3', 'Q1'],
-                        'rows': [['baz', 'foo'], ['bop', 'bip']],
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs + self.docs, export_instance, {
+            'My table_000': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            },
+            'My table_001': {
+                'headers': ['Q3', 'Q1'],
+                'rows': [['baz', 'foo'], ['bop', 'bip']],
+            }
+        })
 
     def test_split_questions(self):
         """Ensure columns are split when `split_multiselects` is set to True"""
@@ -206,21 +199,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['MC | one', 'MC | two', 'MC | extra'],
-                        'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['MC | one', 'MC | two', 'MC | extra'],
+                'rows': [[EMPTY_VALUE, 1, 'extra'], [1, 1, '']],
+            }
+        })
 
     def test_array_data_in_scalar_question(self):
         '''
@@ -253,21 +238,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, [doc])
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Scalar Array'],
-                        'rows': [['one two']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results([doc], export_instance, {
+            'My table': {
+                'headers': ['Scalar Array'],
+                'rows': [['one two']],
+            }
+        })
 
     def test_form_stock_columns(self):
         """Ensure that we can export stock properties in a form export"""
@@ -349,26 +326,18 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
 
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['StockItem @type', 'StockItem @quantity'],
-                        'rows': [
-                            ['question-id', '2'],
-                            ['question-id', '2'],
-                            [MISSING_VALUE, MISSING_VALUE],
-                            [MISSING_VALUE, MISSING_VALUE],
-                        ],
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['StockItem @type', 'StockItem @quantity'],
+                'rows': [
+                    ['question-id', '2'],
+                    ['question-id', '2'],
+                    [MISSING_VALUE, MISSING_VALUE],
+                    [MISSING_VALUE, MISSING_VALUE],
+                ],
+            }
+        })
 
     def test_transform_dates(self):
         """Ensure dates are transformed for excel when `transform_dates` is set to True"""
@@ -392,21 +361,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Date'],
-                        'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Date'],
+                'rows': [[MISSING_VALUE], [couch_to_excel_datetime('2015-07-22T14:16:49.584880Z', None)]],
+            }
+        })
 
     def test_split_questions_false(self):
         """Ensure multiselects are not split when `split_multiselects` is set to False"""
@@ -434,21 +395,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['MC'],
-                        'rows': [['two extra'], ['one two']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['MC'],
+                'rows': [['two extra'], ['one two']],
+            }
+        })
 
     def test_multi_table(self):
         export_instance = FormExportInstance(
@@ -484,24 +437,17 @@ class WriterTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3'],
-                        'rows': [['baz'], ['bop']],
 
-                    },
-                    'My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'My table': {
+                'headers': ['Q3'],
+                'rows': [['baz'], ['bop']],
+            },
+            'My other table': {
+                'headers': ['Q4'],
+                'rows': [['bar'], ['boop']],
+            }
+        })
 
     def test_multi_table_order(self):
         tables = [
@@ -662,21 +608,12 @@ class WriterTest(SimpleTestCase):
             }
         ]
 
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['location'],
-                        'rows': [[EMPTY_VALUE]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['location'],
+                'rows': [[EMPTY_VALUE]],
+            }
+        })
 
     def test_empty_table_label(self):
         export_instance = FormExportInstance(
@@ -699,21 +636,13 @@ class WriterTest(SimpleTestCase):
                 ]
             )]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'Sheet1': {
-                        'headers': ['Q1'],
-                        'rows': [['foo'], ['bip']],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(self.docs, export_instance, {
+            'Sheet1': {
+                'headers': ['Q1'],
+                'rows': [['foo'], ['bip']],
+            }
+        })
 
 
 class ExportTest(SimpleTestCase):
@@ -831,21 +760,13 @@ class ExportTest(SimpleTestCase):
                 )
             ]
         )
-        writer = get_export_writer([export_instance])
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['case_name'],
-                        'rows': [['batman'], [MISSING_VALUE]],
-
-                    }
-                }
-            )
+        assert_instance_gives_results(docs, export_instance, {
+            'My table': {
+                'headers': ['case_name'],
+                'rows': [['batman'], [MISSING_VALUE]],
+            }
+        })
 
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
     def test_export_transforms(self, _):
