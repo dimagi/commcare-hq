@@ -311,17 +311,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         item.addClass('selected-for-sort').siblings().removeClass('selected-for-sort');
                     }
 
-                    //////////////////////////////////////////////////////////////////////
-                    //HERE'S HOW TO PASS THE SELECTED ITEMS TO THE `stop()` FUNCTION:
-
-                    //Clone the selected items into an array
                     var elements = item.parent().children('.selected-for-sort').detach();
                     $('body').append(elements);
 
-                    //Now the selected items exist in memory, attached to the `item`,
-                    //  so we can access them later when we get to the `stop()` callback
-
-                    //Create the helper
                     var helper = $('<li/>');
                     // TODO - show a helpful message here
                     return helper.append(elements.clone().detach());
