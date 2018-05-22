@@ -434,28 +434,6 @@ class AggChildHealth(models.Model):
         managed = False
 
 
-class AggThrData(models.Model):
-    state_id = models.TextField()
-    district_id = models.TextField()
-    block_id = models.TextField()
-    supervisor_id = models.TextField()
-    awc_id = models.TextField()
-    month = models.DateField()
-    beneficiary_type = models.TextField()
-    caste = models.TextField(null=True)
-    disabled = models.TextField(null=True)
-    minority = models.TextField(null=True)
-    resident = models.TextField(null=True)
-    thr_eligible = models.IntegerField()
-    rations_21_plus_distributed = models.IntegerField()
-    aggregation_level = models.IntegerField(null=True)
-
-    class Meta:
-        app_label = 'icds_model'
-        db_table = 'agg_thr_data'
-        managed = False
-
-
 class AggAwcDaily(models.Model):
     state_id = models.TextField()
     district_id = models.TextField()
