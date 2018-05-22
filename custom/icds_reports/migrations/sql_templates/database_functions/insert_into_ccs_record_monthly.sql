@@ -6,12 +6,14 @@ DECLARE
   _tablename text;
   _ucr_ccs_record_table text;
   _ucr_pregnant_tasks_table text;
+  _agg_thr_form_table text;
   _start_date date;
   _end_date date;
 BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 SECOND')::DATE;
   _tablename := 'ccs_record_monthly' || '_' || _start_date;
+  _agg_thr_form_table := 'icds_dashboard_ccs_record_thr_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('pregnant_tasks') INTO _ucr_pregnant_tasks_table;
 
@@ -25,7 +27,7 @@ BEGIN
     'open_in_month, ' ||
     'alive_in_month, ' ||
     'trimester, ' ||
-    'num_rations_distributed, ' ||
+    '0, ' ||
     'thr_eligible, ' ||
     'tetanus_complete, ' ||
     'delivered_in_month, ' ||
@@ -83,7 +85,13 @@ BEGIN
     'FROM ' || quote_ident(_ucr_pregnant_tasks_table) || ' ut ' ||
     'WHERE ccs_monthly.case_id = ut.ccs_record_case_id';
 
+    EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' ccs_monthly SET ' ||
+      'num_rations_distributed = CASE WHEN ccs_monthly.thr_eligible = 1 THEN COALESCE(agg.days_ration_given_mother, 0) ELSE NULL END ' ||
+    'FROM ' || quote_ident(_agg_thr_form_table) || ' agg ' ||
+    'WHERE ccs_monthly.case_id = agg.case_id AND ccs_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
+
     EXECUTE 'CREATE INDEX ' || quote_ident(_tablename || '_indx1') || ' ON ' || quote_ident(_tablename) || '(awc_id, case_id)';
+
 END;
 $BODY$
 LANGUAGE plpgsql;
