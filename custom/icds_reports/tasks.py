@@ -34,6 +34,7 @@ from custom.icds_reports.models import (
     AggregateGrowthMonitoringForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
+    AggregateCcsRecordTHRForms,
     UcrTableNameMapping)
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
@@ -249,6 +250,7 @@ def _aggregate_thr_forms(day):
     agg_date = force_to_date(day)
     for state_id in state_ids:
         AggregateChildHealthTHRForms.aggregate(state_id, agg_date)
+        AggregateCcsRecordTHRForms.aggregate(state_id, agg_date)
 
 
 @transaction.atomic
