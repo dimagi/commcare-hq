@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
 import uuid
+from collections import Counter
 from django.test import SimpleTestCase
 from django.test.utils import override_settings
 from mock import patch, MagicMock
@@ -58,3 +59,12 @@ class TestStaticDataSource(SimpleTestCase, TestFileMixin):
     def test_production_config(self):
         for data_source in StaticDataSourceConfiguration.all(use_server_filter=False):
             data_source.validate()
+
+    def test_for_table_id_conflicts(self):
+        counts = Counter((ds.table_id, ds.domain) for ds in
+                         StaticDataSourceConfiguration.all(use_server_filter=False))
+        duplicates = [k for k, v in counts.items() if v > 1]
+        msg = "The following data source configs have duplicate table_ids on the same domains:\n{}".format(
+            "\n".join("table_id: {}, domain: {}".format(table_id, domain) for table_id, domain in duplicates)
+        )
+        self.assertEqual(0, len(duplicates), msg)

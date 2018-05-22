@@ -17,7 +17,10 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from custom.icds_reports.tasks import (
+    move_ucr_data_into_aggregation_tables,
+    _aggregate_child_health_pnc_forms
+)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -30,7 +33,6 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'infrastructure': 'config_report_icds-cas_static-infrastructure_form_05fe0f1a',
     'location_ucr': 'config_report_icds-cas_static-awc_location_88b3f9c3',
     'person_cases': 'config_report_icds-cas_static-person_cases_v2_b4b5d57a',
-    'ucr_table_name_mapping': 'ucr_table_name_mapping',
     'usage': 'config_report_icds-cas_static-usage_forms_92fbe2aa',
     'vhnd': 'config_report_icds-cas_static-vhnd_form_28e7fd58',
     'complementary_feeding': 'config_report_icds-cas_static-complementary_feeding_fo_4676987e',
@@ -39,6 +41,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
+    'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
 }
 
 
@@ -101,11 +104,13 @@ def setUpModule():
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
-            with open(os.path.join(path, file_name)) as f:
+            with open(os.path.join(path, file_name), encoding='utf-8') as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
                 if not table_name.startswith('icds_dashboard_'):
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+
+        _aggregate_child_health_pnc_forms(datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

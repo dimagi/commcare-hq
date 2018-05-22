@@ -147,21 +147,16 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                         "query": {
                                             "filtered": {
                                                 "filter": {
-                                                    "and": (
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "parrot_name"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "polly"
-                                                            }
-                                                        }
-                                                    )
+                                                    "term": {
+                                                        "case_properties.key.exact": "parrot_name"
+                                                    }
                                                 },
                                                 "query": {
-                                                    "match_all": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "0"
+                                                        }
                                                     }
                                                 }
                                             }

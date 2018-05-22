@@ -19,7 +19,7 @@ class RepeatDataSourceTestMixin(object):
     def setUp(self):
         folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
         sample_file = os.path.join(folder, 'data_source_with_repeat.json')
-        with open(sample_file) as f:
+        with open(sample_file, encoding='utf-8') as f:
             self.config = DataSourceConfiguration.wrap(json.loads(f.read()))
 
 

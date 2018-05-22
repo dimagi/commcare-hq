@@ -70,8 +70,8 @@ class CaseSearchES(CaseES):
             return (
                 # fuzzy match
                 self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # exact match. added to improve the score of exact matches
-                ._add_query(exact_case_property_text_query(case_property_name, value),
+                # non-fuzzy match. added to improve the score of exact matches
+                ._add_query(case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
             return self._add_query(exact_case_property_text_query(case_property_name, value), clause)
@@ -252,16 +252,21 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
-def case_property_exists(case_property_name):
-    """Returns cases where case_property_name is set
+def case_property_missing(case_property_name):
+    """case_property_name isn't set or is the empty string
 
     """
-    return queries.nested(
-        CASE_PROPERTIES_PATH,
-        queries.filtered(
-            queries.match_all(),
-            filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-        )
+    return filters.OR(
+        filters.NOT(
+            queries.nested(
+                CASE_PROPERTIES_PATH,
+                queries.filtered(
+                    queries.match_all(),
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                )
+            )
+        ),
+        exact_case_property_text_query(case_property_name, '')
     )
 
 

@@ -24,7 +24,7 @@ def test_get_blobdb(self, msg, root=True, blob_dir=None):
     with tempdir() as tmp:
         if root == b"file":
             tmp = join(tmp, b"file")
-            with open(tmp, "w") as fh:
+            with open(tmp, "w", encoding='utf-8') as fh:
                 fh.write("x")
         conf = SharedDriveConfiguration(
             shared_drive_path=tmp if root else root,

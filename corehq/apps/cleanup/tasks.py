@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.tasks import mail_admins_async
 from corehq.apps.cleanup.management.commands.fix_xforms_with_undefined_xmlns import \
     parse_log_message, ERROR_SAVING, SET_XMLNS, MULTI_MATCH, \
     CANT_MATCH, FORM_HAS_UNDEFINED_XMLNS
+from io import open
 
 
 UNDEFINED_XMLNS_LOG_DIR = settings.LOG_HOME

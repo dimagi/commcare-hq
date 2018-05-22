@@ -477,6 +477,12 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
+DATA_CORRECTIONS_FORMS = StaticToggle(
+    'data_corrections_forms',
+    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
@@ -1536,4 +1542,16 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'Translate Application Content With Transifex',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER]
+)
+
+
+HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
+    'hide_translations_from_forms',
+    'Hide translations for languages from forms',
+    TAG_CUSTOM,
+    description=(
+        "Do not show translations in forms. Comes in handy when your app support multiple "
+        "languages but you want to focus just on app building."
+    ),
+    namespaces=[NAMESPACE_DOMAIN]
 )

@@ -44,6 +44,7 @@ from two_factor.views import (
     BackupTokensView, DisableView, PhoneSetupView, PhoneDeleteView
 )
 import six
+from io import open
 
 
 @login_and_domain_required

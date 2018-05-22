@@ -73,6 +73,8 @@ class Command(BaseCommand):
                 if skip_domain(domain):
                     continue
 
+                # We use a non-blocking lock here with a timeout of one hour to make sure
+                # that we only retry non-processed schedule instances once an hour.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
                     self.get_task(cls).delay(schedule_instance_id)
@@ -83,6 +85,7 @@ class Command(BaseCommand):
                 if skip_domain(domain):
                     continue
 
+                # See comment above about why we use a non-blocking lock here.
                 enqueue_lock = self.get_enqueue_lock(cls, schedule_instance_id, next_event_due)
                 if enqueue_lock.acquire(blocking=False):
                     self.get_task(cls).delay(case_id, schedule_instance_id)

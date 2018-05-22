@@ -606,10 +606,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
-            if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
+            if active_flag and not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
                 return HttpResponseBadRequest(
                     "Cannot create or edit survey reminders because subscription "
                     "does not have access to inbound SMS"
+                )
+
+            if active_flag and (rule.references_parent_case or schedule.references_parent_case):
+                return HttpResponseBadRequest(
+                    "Cannot reactivate alerts that reference parent case properties"
                 )
 
             schedule.active = active_flag
@@ -835,5 +840,27 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                     request,
                     _("This alert is not editable because it uses an SMS survey and "
                       "your current subscription does not allow use of inbound SMS.")
+                )
+            if self.rule.references_parent_case or self.schedule.references_parent_case:
+                """
+                There are no active reminders which reference parent case properties anymore.
+                Keeping reminder rules that have parent case references up-to-date with case
+                changes is tough on performance because you have to run the rules against
+                all applicable subcases when a parent case changes, so while the framework does
+                use .resolve_case_property() to handle these lookups properly, it no longer runs
+                the rules against all subcases when a parent case changes, and therefore doesn't
+                support this use case.
+
+                The form validation doesn't allow creating parent case references so trying
+                to save will cause validation to fail, but in case one of the older, inactive,
+                reminders is being edited we display this warning.
+                """
+                messages.warning(
+                    request,
+                    _("This conditional alert references parent case properties. Note that changes "
+                      "to parent cases will not be immediately reflected by the alert and will "
+                      "only be reflected once the child case is subsequently updated. For best "
+                      "results, please update your workflow to avoid referencing parent case "
+                      "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)

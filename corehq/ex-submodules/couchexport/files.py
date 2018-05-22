@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 import os
 import tempfile
 import six
+from io import open
 
 
 def Temp(tmp):

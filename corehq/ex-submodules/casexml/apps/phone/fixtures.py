@@ -1,6 +1,6 @@
 from __future__ import absolute_import  # this package has a module named 'xml'
 from __future__ import unicode_literals
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 
@@ -13,6 +13,10 @@ import itertools
 
 
 class FixtureProvider(six.with_metaclass(ABCMeta)):
+    @abstractproperty
+    def id(self):
+        """ID of the fixture"""
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, restore_state):

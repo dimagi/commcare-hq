@@ -14,6 +14,7 @@ from corehq.apps.case_importer.tracking.permissions import user_may_view_file_up
 from corehq.apps.case_importer.views import require_can_edit_data
 from corehq.util.view_utils import set_file_download
 from dimagi.utils.web import json_response
+from io import open
 
 
 @require_can_edit_data

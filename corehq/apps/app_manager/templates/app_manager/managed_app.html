@@ -7,16 +7,6 @@
 
 {% block title %}{{ module.name|clean_trans:langs }}{% endblock %}
 
-{% block stylesheets %}{{ block.super }}
-    {% if request|toggle_enabled:"APPCUES_AB_TEST" %}
-        <style type="text/css">
-            .helpbubble {
-                display: none !important;
-            }
-        </style>
-    {% endif %}
-{% endblock stylesheets %}
-
 {% block js %}
     {{ block.super }}
     {% compress js %}
