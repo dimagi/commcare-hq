@@ -11,7 +11,7 @@ from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
-    location_safe, LOCATION_ACCESS_DENIED)
+    location_safe, LOCATION_ACCESS_DENIED, user_can_view_location)
 from corehq.apps.users.models import WebUser
 from corehq.util.quickcache import quickcache
 from memoized import memoized
@@ -40,18 +40,22 @@ def _user_locations_ids(user, project, only_editable):
     if user.is_domain_admin(project.name):
         return all_ids()
 
-    user_loc = (user.get_location(project.name) if isinstance(user, WebUser)
-                else user.location)
-    if not user_loc:
+    user_locs = user.get_sql_locations(project.name)
+
+    if not user_locs:
         return all_ids()
 
-    editable = list(user_loc.sql_location.get_descendants(include_self=True)
-                    .values_list('location_id', flat=True))
+    editable = []
+    for user_loc in user_locs:
+        editable.extend(
+            list(user_loc.sql_location.get_descendants(include_self=True).values_list('location_id', flat=True))
+        )
     if only_editable:
         return editable
     else:
-        viewable = list(user_loc.sql_location.get_ancestors()
-                        .values_list('location_id', flat=True))
+        viewable = []
+        for user_loc in user_locs:
+            viewable.extend(list(user_loc.sql_location.get_ancestors().values_list('location_id', flat=True)))
         return viewable + editable
 
 
@@ -63,6 +67,7 @@ class LocationResource(HqBaseResource):
     is_archived = fields.BooleanField(attribute='is_archived', readonly=True)
     can_edit = fields.BooleanField(readonly=True)
     name = fields.CharField(attribute='name', readonly=True, unique=True)
+    have_access_to_parent = fields.BooleanField(readonly=True)
 
     def obj_get(self, bundle, **kwargs):
         domain = kwargs['domain']
@@ -101,6 +106,12 @@ class LocationResource(HqBaseResource):
         project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
         editable_ids = _user_locations_ids(bundle.request.couch_user, project, only_editable=True)
         return bundle.obj.location_id in editable_ids
+
+    def dehydrate_have_access_to_parent(self, bundle):
+        project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
+        return bundle.obj.location_id in _user_locations_ids(
+            bundle.request.couch_user, project, only_editable=False
+        )
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()

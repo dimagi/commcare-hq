@@ -178,7 +178,7 @@ def user_can_view_location(user, sql_location, project):
             not project.location_restriction_for_users):
         return True
 
-    user_loc = get_user_location(user, sql_location.domain)
+    user_loc = user.get_location_ids(sql_location.domain)
 
     if not user_loc:
         return True
@@ -186,7 +186,7 @@ def user_can_view_location(user, sql_location, project):
     if user_can_edit_location(user, sql_location, project):
         return True
 
-    return sql_location.location_id in user_loc.lineage
+    return sql_location.location_id in user_loc
 
 
 def user_can_edit_location_types(user, project):
