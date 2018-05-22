@@ -796,6 +796,8 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     A row exists for every case that has ever had a Complementary Feeding Form
     submitted against it.
+
+    Note this is not actually used in the dashboard, so the aggreagtion is not run
     """
 
     # partitioned based on these fields
@@ -831,13 +833,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
-        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
-        query, params = helper.compare_with_old_data_query()
-
-        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
-            cursor.execute(query, params)
-            rows = fetchall_as_namedtuple(cursor)
-            return [row.child_health_case_id for row in rows]
+        pass
 
 
 class AggregateChildHealthTHRForms(models.Model):
