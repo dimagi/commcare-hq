@@ -64,12 +64,12 @@ hqDefine('locations/js/location_drilldown', [
                 model.selected_path.indexOf(loc) === -1 &&
                 model.selected_path().length < model.max_drill_depth) {
 
-                var level_already_in_path = false;
+                var levelAlreadyInPath = false;
                 model.selected_path().forEach(function(selected) {
-                    if (!level_already_in_path) level_already_in_path = loc.depth === selected.depth;
+                    if (!levelAlreadyInPath) levelAlreadyInPath = loc.depth === selected.depth;
                 });
 
-                if (!level_already_in_path) model.selected_path.push(loc);
+                if (!levelAlreadyInPath) model.selected_path.push(loc);
                 if (model.auto_drill && loc.num_children() === 1) {
                     loc.selected_child(loc.get_child(0));
                 }
@@ -196,14 +196,14 @@ hqDefine('locations/js/location_drilldown', [
             var children = [];
             if (data) {
                 children = _.sortBy(data, function(e) { return e.name; });
-                var access_to_parent;
+                var accessToParent;
                 data.forEach(function(child) {
-                    access_to_parent = child.have_access_to_parent
-                })
+                    accessToParent = child.have_access_to_parent;
+                });
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                if(access_to_parent && (loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED)))
+                if(accessToParent && (loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED)))
                     children.splice(0, 0, {name: '_all', auto_drill: loc.auto_drill});
             }
             loc.children($.map(children, function(e) {
