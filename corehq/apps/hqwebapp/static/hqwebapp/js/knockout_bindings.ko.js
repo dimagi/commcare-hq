@@ -221,39 +221,43 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
-                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                    $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    $(this).toggleClass("shift-selected")
-                           .removeClass("selected-for-sort")
-                           .siblings().removeClass('selected-for-sort');
-                    if ($('.shift-selected').length == 2) {
-                        var shift_selected_index_0 = $('.shift-selected').eq(0)[0].attributes['data-order'].value,
-                            shift_selected_index_1 = $('.shift-selected').eq(1)[0].attributes['data-order'].value;
-                        var first_row = null,
-                            second_row = null,
-                            start = null,
-                            end = null;
-                        if (shift_selected_index_0 < shift_selected_index_1) {
-                            start = shift_selected_index_0;
-                            end = shift_selected_index_1;
-                            first_row = $('.shift-selected').eq(0);
-                            second_row = $('.shift-selected').eq(1);
-                        } else {
-                            start = shift_selected_index_1;
-                            end = shift_selected_index_0;
-                            first_row = $('.shift-selected').eq(1);
-                            second_row = $('.shift-selected').eq(0);
-                        }
-                        var next = first_row;
-                        for(var i = start; i <= end; i++) {
-                            next.addClass('selected-for-sort');
-                            next = next.next();
-                        }
-                        $('.shift-selected').removeClass('shift-selected')
+                    var shift_selected_index = parseInt($(this)[0].attributes['data-order'].value),
+                        shift_clicked_row = $(this),
+                        last_clicked_index = 0,
+                        last_clicked_row = null;
+                    if ($('.last-clicked').length > 0) {
+                        last_clicked_row = $('.last-clicked').eq(0);
+                        last_clicked_index = parseInt(last_clicked_row[0].attributes['data-order'].value);
+                    } else {
+                        last_clicked_row = $(this).parent().children().eq(0);
+                    }
+
+                    var first_row = null,
+                        second_row = null,
+                        start = null,
+                        end = null;
+                    if (shift_selected_index < last_clicked_index) {
+                        start = shift_selected_index;
+                        end = last_clicked_index;
+                        first_row = shift_clicked_row;
+                        second_row = last_clicked_row;
+                    } else {
+                        start = last_clicked_index;
+                        end = shift_selected_index;
+                        first_row = last_clicked_row;
+                        second_row = shift_clicked_row;
+                    }
+
+                    var next = first_row;
+                    for(var i = start; i <= end; i++) {
+                        next.addClass('selected-for-sort');
+                        next = next.next();
                     }
                 } else {
-                    $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
-                    $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                    $(this).addClass("selected-for-sort").addClass('last-clicked')
+                           .siblings().removeClass('selected-for-sort').removeClass('last-clicked');
                 }
             });
 
