@@ -1542,7 +1542,7 @@ HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
     'Hide translations for languages from forms',
     TAG_CUSTOM,
     description=(
-        "Do not show translations in forms. Comes in handy when your app support multiple"
+        "Do not show translations in forms. Comes in handy when your app support multiple "
         "languages but you want to focus just on app building."
     ),
     namespaces=[NAMESPACE_DOMAIN]
