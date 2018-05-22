@@ -192,6 +192,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             }
         },
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            var forceUpdate = function() {
+                ko.bindingHandlers.multi_sortable.update(
+                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
+                );
+            };
+            list.subscribe(forceUpdate);
+
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
@@ -255,39 +263,30 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     //HERE'S HOW TO PASS THE SELECTED ITEMS TO THE `stop()` FUNCTION:
 
                     //Clone the selected items into an array
-                    var elements = item.parent().children('.selected-for-sort').clone();
-
-                    //Add a property to `item` called 'multidrag` that contains the
-                    //  selected items, then remove the selected items from the source list
-                    item.data('multidrag', elements).siblings('.selected-for-sort').remove();
+                    var elements = item.parent().children('.selected-for-sort').detach();
+                    $('body').append(elements);
 
                     //Now the selected items exist in memory, attached to the `item`,
                     //  so we can access them later when we get to the `stop()` callback
 
                     //Create the helper
                     var helper = $('<li/>');
-                    return helper.append(elements);
+                    // TODO - show a helpful message here
+                    return helper.append(elements.clone().detach());
                 },
                 stop: function (e, ui) {
-                    //Now we access those items that we stored in `item`s data!
-                    var elements = ui.item.data('multidrag');
-
-                    //`elements` now contains the originally selected items from the source list (the dragged items)!!
-
-                    //Finally I insert the selected items after the `item`, then remove the `item`, since
-                    //  item is a duplicate of one of the selected items.
-                    ui.item.after(elements).remove();
+                    ui.item.after($('.selected-for-sort'));
+                    // TODO - sort by data-order
 
                     // Reorder the data in knockout
-                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
                     var new_list = [];
                     for (var cur = 0; cur < element.children.length; cur++) {
                         var i = parseInt(element.children[cur].attributes['data-order'].value);
-                        new_list.push(list[i]);
+                        new_list.push(list()[i]);
                     }
-                    list.splice(0, list.length);
+                    list().splice(0, list().length);
                     for (var i = 0; i < new_list.length; i++) {
-                        list.push(new_list[i]);
+                        list().push(new_list[i]);
                     }
 
                     for (var cur = 0; cur < element.children.length; cur++) {
