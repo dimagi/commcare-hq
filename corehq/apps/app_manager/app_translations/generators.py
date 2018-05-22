@@ -78,9 +78,7 @@ class POFileGenerator:
         raise Exception("Column not found with name {}".format(column_name))
 
     def _get_translation_for_sheet(self, app, sheet_name, rows):
-        def occurrence(*args):
-            raise NotImplementedError
-
+        occurrence = None
         translations_for_sheet = []
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
