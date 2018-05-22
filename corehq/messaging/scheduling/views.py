@@ -30,6 +30,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jqu
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.messaging.decorators import reminders_framework_permission
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
@@ -286,8 +287,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -402,8 +402,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -545,8 +544,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_DELETE = 'delete'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
@@ -651,8 +649,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -670,15 +667,23 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
 
     @property
     def page_context(self):
-        return {
+        context = {
             'basic_info_form': self.basic_info_form,
             'criteria_form': self.criteria_form,
             'schedule_form': self.schedule_form,
             'read_only_mode': self.read_only_mode,
-            'criteria_form_active': self.criteria_form.errors or not self.schedule_form.errors,
-            'schedule_form_active': self.schedule_form.errors and not self.criteria_form.errors,
             'is_system_admin': self.is_system_admin,
+            'criteria_form_active': True,
+            'schedule_form_active': False,
         }
+
+        if self.request.method == 'POST':
+            context.update({
+                'criteria_form_active': not self.criteria_form.is_valid() or self.schedule_form.is_valid(),
+                'schedule_form_active': not self.schedule_form.is_valid() and self.criteria_form.is_valid(),
+            })
+
+        return context
 
     @cached_property
     def schedule_form(self):

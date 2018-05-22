@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import datetime
 import io
 import json
@@ -378,7 +378,8 @@ def create_wire_credits_invoice(domain_name,
     record = WirePrepaymentBillingRecord.generate_record(wire_invoice)
     if record.should_send_email:
         try:
-            record.send_email(contact_emails=contact_emails)
+            for email in contact_emails:
+                record.send_email(contact_email=email)
         except Exception as e:
             log_accounting_error(
                 "Error sending email for WirePrepaymentBillingRecord %d: %s" % (record.id, e.message),
@@ -626,53 +627,74 @@ def assign_explicit_community_subscription(domain_name, start_date, account=None
 
 
 @periodic_task(run_every=crontab(minute=0, hour=9), queue='background_queue', acks_late=True)
-def send_overdue_reminders(today=None):
+def run_downgrade_process(today=None):
+    today = today or datetime.date.today()
+
+    for domain, oldest_unpaid_invoice, total in _get_domains_with_invoices_over_threshold(today):
+        current_subscription = Subscription.get_active_subscription_by_domain(domain)
+        if _is_subscription_eligible_for_downgrade_process(current_subscription):
+            _apply_downgrade_process(current_subscription, oldest_unpaid_invoice, total, today)
+
+
+def _get_domains_with_invoices_over_threshold(today):
+    unpaid_saas_invoices = Invoice.objects.filter(
+        is_hidden=False,
+        subscription__service_type=SubscriptionType.PRODUCT,
+        date_paid__isnull=True,
+    )
+
+    overdue_saas_invoices_in_downgrade_daterange = unpaid_saas_invoices.filter(
+        date_due__lte=today - datetime.timedelta(days=1),
+        date_due__gte=today - datetime.timedelta(days=61),
+    ).order_by('date_due').select_related('subscription__subscriber')
+
+    domains = set()
+
+    for overdue_invoice in overdue_saas_invoices_in_downgrade_daterange:
+        domain = overdue_invoice.get_domain()
+        if domain not in domains:
+            total_overdue_to_date = unpaid_saas_invoices.filter(
+                Q(date_due__lte=overdue_invoice.date_due)
+                | (Q(date_due__isnull=True) & Q(date_end__lte=overdue_invoice.date_end)),
+                subscription__subscriber__domain=domain,
+            ).aggregate(Sum('balance'))['balance__sum']
+            if total_overdue_to_date >= 100:
+                domains.add(domain)
+                yield domain, overdue_invoice, total_overdue_to_date
+
+
+def _is_subscription_eligible_for_downgrade_process(subscription):
+    return (
+        subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
+        and not subscription.skip_auto_downgrade
+    )
+
+
+def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
     from corehq.apps.domain.views import DomainSubscriptionView
     from corehq.apps.domain.views import DomainBillingStatementsView
 
-    today = today or datetime.date.today()
-    invoices = Invoice.objects.filter(is_hidden=False,
-                                      subscription__service_type=SubscriptionType.PRODUCT,
-                                      date_paid__isnull=True,
-                                      date_due__lt=today)\
-        .exclude(subscription__plan_version__plan__edition=SoftwarePlanEdition.ENTERPRISE)\
-        .order_by('date_due')\
-        .select_related('subscription__subscriber')
-
-    domains = set()
-    for invoice in invoices:
-        if invoice.get_domain() not in domains:
-            domains.add(invoice.get_domain())
-            total = Invoice.objects.filter(is_hidden=False,
-                                           subscription__subscriber__domain=invoice.get_domain())\
-                .aggregate(Sum('balance'))['balance__sum']
-            if total >= 100:
-                domain = Domain.get_by_name(invoice.get_domain())
-                current_subscription = Subscription.get_active_subscription_by_domain(domain.name)
-                if (
-                    current_subscription.plan_version.plan.edition != SoftwarePlanEdition.COMMUNITY
-                    and not current_subscription.skip_auto_downgrade
-                ):
-                    days_ago = (today - invoice.date_due).days
-                    context = {
-                        'domain': invoice.get_domain(),
-                        'total': total,
-                        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
-                                                             args=[invoice.get_domain()]),
-                        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
-                                                           args=[invoice.get_domain()]),
-                        'date_60': invoice.date_due + datetime.timedelta(days=60),
-                        'contact_email': settings.INVOICING_CONTACT_EMAIL
-                    }
-                    if days_ago == 61:
-                        _downgrade_domain(current_subscription)
-                        _send_downgrade_notice(invoice, context)
-                    elif days_ago == 58:
-                        _send_downgrade_warning(invoice, context)
-                    elif days_ago == 30:
-                        _send_overdue_notice(invoice, context)
-                    elif days_ago == 1:
-                        _create_overdue_notification(invoice, context)
+    days_ago = (today - oldest_unpaid_invoice.date_due).days
+    domain = subscription.subscriber.domain
+    context = {
+        'domain': domain,
+        'total': total,
+        'subscription_url': absolute_reverse(DomainSubscriptionView.urlname,
+                                             args=[domain]),
+        'statements_url': absolute_reverse(DomainBillingStatementsView.urlname,
+                                           args=[domain]),
+        'date_60': oldest_unpaid_invoice.date_due + datetime.timedelta(days=60),
+        'contact_email': settings.INVOICING_CONTACT_EMAIL
+    }
+    if days_ago == 61:
+        _downgrade_domain(subscription)
+        _send_downgrade_notice(oldest_unpaid_invoice, context)
+    elif days_ago == 58:
+        _send_downgrade_warning(oldest_unpaid_invoice, context)
+    elif days_ago == 30:
+        _send_overdue_notice(oldest_unpaid_invoice, context)
+    elif days_ago == 1:
+        _create_overdue_notification(oldest_unpaid_invoice, context)
 
 
 def _send_downgrade_notice(invoice, context):
@@ -824,12 +846,12 @@ def send_prepaid_credits_export():
             if all_credit_lines else 'N/A',
         ])
 
-    file_obj = io.BytesIO()
+    file_obj = io.StringIO()
     writer = csv.writer(file_obj)
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val.encode('utf-8') if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else six.binary_type(val)
             for val in row
         ])
 

@@ -1,4 +1,4 @@
-hqDefine("domain/js/add_form_repeater", function() {
+hqDefine("repeaters/js/add_form_repeater", function() {
     $(function() {
         var $testLinkButton = $('#test-forward-link'),
             $testResult = $('#test-forward-result');

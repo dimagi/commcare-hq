@@ -5,6 +5,7 @@ import json
 import os
 from django.test import TestCase
 from custom.bihar.models import BiharCase, CareBiharFluff
+from io import open
 
 
 class TestHomeVisits(TestCase):
@@ -160,7 +161,7 @@ class TestHomeVisits(TestCase):
     def _load_case(self, filename, format_dict=None):
         format_dict = format_dict or {}
         fullpath = os.path.join(os.path.dirname(__file__), 'data', 'cases', filename)
-        with open(fullpath, 'r') as f:
+        with open(fullpath, 'r', encoding='utf-8') as f:
             raw = f.read()
             formatted = raw % format_dict
             return BiharCase.from_dump(json.loads(formatted))

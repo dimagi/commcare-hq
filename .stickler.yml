@@ -9,3 +9,4 @@ linters:
   py3k: {}
   eslint:
     config: ./.eslintrc.js
+    install_plugins: true

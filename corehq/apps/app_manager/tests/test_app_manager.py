@@ -21,6 +21,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.util.test_utils import flag_enabled
 from six.moves import zip
 from six.moves import range
+from io import open
 
 
 class AppManagerTest(TestCase):
@@ -172,7 +173,7 @@ class AppManagerTest(TestCase):
     def _yesno_source(self):
         # this app fixture uses both the (new) '_attachment'
         # and the (old) 'contents' conventions, to test that both work
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json'), encoding='utf-8') as f:
             return json.load(f)
 
     def _check_has_build_files(self, build, paths):

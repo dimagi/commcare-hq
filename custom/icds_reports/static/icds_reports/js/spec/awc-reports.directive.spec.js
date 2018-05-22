@@ -113,8 +113,8 @@ describe('AWC Reports Directive', function () {
         });
         assert.equal(chart.showValues, true);
         assert.equal(chart.showControls, false);
+        assert.equal(chart.showLegend, false);
         assert.equal(chart.duration, 500);
-        assert.equal(chart.clipVoronoi, false);
         assert.equal(chart.useInteractiveGuideline, true);
         assert.equal(chart.xAxis.axisLabel, '');
         assert.equal(chart.yAxis.axisLabel, '');

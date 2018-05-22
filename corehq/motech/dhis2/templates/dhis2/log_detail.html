@@ -24,18 +24,18 @@
                 </tr>
                 <tr>
                     <th>{% trans "Request headers" %}:</th>
-                    <td><pre>{{ log.pp_request_headers }}</pre></td>
+                    <td><pre>{{ log.request_headers|pp_json }}</pre></td>
                 </tr>
                 <tr>
                     <th>{% trans "Request params" %}:</th>
                     <td>{% if log.request_params %}
-                        <pre>{{ log.pp_request_params }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.request_params|pp_json }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
                 <tr>
                     <th>{% trans "Request body" %}:</th>
                     <td>{% if log.request_body %}
-                        <pre>{{ log.pp_request_body }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.request_body|pp_json }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
                 <tr>
@@ -47,7 +47,7 @@
                 <tr>
                     <th>{% trans "Response body" %}:</th>
                     <td>{% if log.response_body %}
-                        <pre>{{ log.pp_response_body }}</pre>{% else %}&nbsp;
+                        <pre>{{ log.response_body|pp_json }}</pre>{% else %}&nbsp;
                     {% endif %}</td>
                 </tr>
             </table>

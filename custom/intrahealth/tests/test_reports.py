@@ -13,6 +13,7 @@ import xml.etree.ElementTree as ElementTree
 
 from dimagi.utils.parsing import json_format_date
 from testapps.test_pillowtop.utils import real_pillow_settings
+from io import open
 
 
 class TestReports(IntraHealthTestCase):
@@ -20,7 +21,7 @@ class TestReports(IntraHealthTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestReports, cls).setUpClass()
-        with open(os.path.join(DATAPATH, 'taux.xml')) as f:
+        with open(os.path.join(DATAPATH, 'taux.xml'), encoding='utf-8') as f:
             xml = f.read()
             xml_obj = ElementTree.fromstring(xml)
             xml_obj[2][4].text = cls.mobile_worker.get_id

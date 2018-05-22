@@ -6,8 +6,8 @@ import traceback
 from django.core.management.base import BaseCommand
 
 from corehq.apps.export.utils import migrate_domain
+from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.domain.models import Domain
-from corehq.form_processor.utils.general import use_new_exports
 from corehq.util.log import send_HTML_email
 
 
@@ -52,7 +52,8 @@ class Command(BaseCommand):
         for doc in Domain.get_all(include_docs=False):
             domain = doc['key']
 
-            if not use_new_exports(domain):
+            if stale_get_export_count(domain):
+                print("Inspecting '{}'".format(domain))
                 if not force_convert_columns:
                     try:
                         metas = migrate_domain(domain, dryrun=True, force_convert_columns=force_convert_columns)
@@ -62,10 +63,11 @@ class Command(BaseCommand):
                         skipped_domains.append(domain)
                         continue
 
-                    has_skipped_tables = any([bool(meta.skipped_tables) for meta in metas])
-                    has_skipped_columns = any([bool(meta.skipped_columns) for meta in metas])
-                    is_remote_app_migration = any([bool(meta.is_remote_app_migration) for meta in metas])
-                    if has_skipped_tables or has_skipped_columns:
+                    has_skipped_tables = any(meta.skipped_tables for meta in metas)
+                    has_skipped_columns = any(meta.skipped_columns for meta in metas)
+                    has_case_history = any(meta.has_case_history for meta in metas)
+                    is_remote_app_migration = any(meta.is_remote_app_migration for meta in metas)
+                    if has_skipped_tables or has_skipped_columns or has_case_history:
                         print('Skipping {} because we would have skipped columns'.format(domain))
                         skipped_domains.append(domain)
                         continue

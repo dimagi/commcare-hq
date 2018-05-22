@@ -5,7 +5,7 @@ import random
 import string
 from django.conf import settings
 from django.core.exceptions import ValidationError
-
+from corehq.apps.domain_migration_flags.api import any_migrations_in_progress
 from corehq.apps.smsbillables.utils import log_smsbillables_error
 from corehq.apps.users.models import CommCareUser, WebUser
 
@@ -39,6 +39,10 @@ REGISTRATION_MOBILE_WORKER_KEYWORDS = ["WORKER"]
 
 
 class BackendAuthorizationException(Exception):
+    pass
+
+
+class DelayProcessing(Exception):
     pass
 
 
@@ -341,6 +345,9 @@ def process_pre_registration(msg):
     if not invitation:
         return False
 
+    if any_migrations_in_progress(invitation.domain):
+        raise DelayProcessing()
+
     domain = Domain.get_by_name(invitation.domain, strict=True)
     if not domain.sms_mobile_worker_registration_enabled:
         return False
@@ -409,7 +416,13 @@ def process_sms_registration(msg):
     keyword4 = text_words[3] if len(text_words) > 3 else ""
     cleaned_phone_number = strip_plus(msg.phone_number)
     if is_registration_text(msg.text) and keyword2 != "":
-        domain = Domain.get_by_name(keyword2, strict=True)
+        domain_name = keyword2
+
+        if any_migrations_in_progress(domain_name):
+            raise DelayProcessing()
+
+        domain = Domain.get_by_name(domain_name, strict=True)
+
         if domain is not None:
             if domain_has_privilege(domain, privileges.INBOUND_SMS):
                 if keyword3 in REGISTRATION_MOBILE_WORKER_KEYWORDS and domain.sms_mobile_worker_registration_enabled:
@@ -560,12 +573,18 @@ def process_incoming(msg):
     v, has_domain_two_way_scope = get_inbound_phone_entry(msg)
 
     if v:
+        if any_migrations_in_progress(v.domain):
+            raise DelayProcessing()
+
         msg.couch_recipient_doc_type = v.owner_doc_type
         msg.couch_recipient = v.owner_id
         msg.domain = v.domain
         msg.location_id = get_location_id_by_verified_number(v)
         msg.save()
     elif msg.domain_scope:
+        if any_migrations_in_progress(msg.domain_scope):
+            raise DelayProcessing()
+
         msg.domain = msg.domain_scope
         msg.save()
 
