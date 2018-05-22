@@ -8,7 +8,6 @@ from django.conf import settings
 from memoized import memoized
 
 from collections import namedtuple, OrderedDict
-from corehq.apps.app_manager import id_strings
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 Translation = namedtuple('Translation', 'key translation occurrences')
