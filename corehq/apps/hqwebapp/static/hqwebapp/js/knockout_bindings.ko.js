@@ -302,21 +302,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
 
             $(element).sortable({
-                connectWith: "ul",
-                delay: 150, //Needed to prevent accidental drag when trying to select
-                revert: 0,
+                delay: 150,
                 helper: function (e, item) {
-                    //Basically, if you grab an unhighlighted item to drag, it will deselect (unhighlight) everything else
                     if (!item.hasClass('selected-for-sort')) {
                         item.addClass('selected-for-sort').siblings().removeClass('selected-for-sort');
                     }
-
-                    var elements = item.parent().children('.selected-for-sort').detach();
-                    $('body').append(elements);
-
-                    var helper = $('<li/>');
-                    // TODO - show a helpful message here
-                    return helper.append(elements.clone().detach());
+                    return item;
                 },
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
