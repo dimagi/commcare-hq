@@ -67,5 +67,5 @@ hqDefine("reports/js/async_tabular", function() {
         if (initialPageData("report_table_js_options")) {
             renderPage(initialPageData("js_options").slug, initialPageData("report_table_js_options"));
         }
-    })
+    });
 });
