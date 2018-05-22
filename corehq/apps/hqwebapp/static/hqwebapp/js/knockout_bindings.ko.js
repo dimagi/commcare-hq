@@ -307,6 +307,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     if (!item.hasClass('selected-for-sort')) {
                         item.addClass('selected-for-sort').siblings().removeClass('selected-for-sort');
                     }
+
+                    var elements = item.siblings('.selected-for-sort').detach();
+                    $('body').append(elements);
+
                     return item;
                 },
                 stop: function (e, ui) {
