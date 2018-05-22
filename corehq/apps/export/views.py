@@ -1746,6 +1746,7 @@ class BaseNewExportView(BaseExportView):
         }
 
     def commit(self, request):
+        print json.loads(request.body)
         export = self.export_instance_cls.wrap(json.loads(request.body))
         if (self.domain != export.domain
                 or (export.export_format == "html" and not domain_has_privilege(self.domain, EXCEL_DASHBOARD))
