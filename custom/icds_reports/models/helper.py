@@ -10,6 +10,4 @@ class IcdsMonths(models.Model):
     end_date = models.DateField()
 
     class Meta:
-        app_label = 'icds_model'
         db_table = 'icds_months'
-        managed = False

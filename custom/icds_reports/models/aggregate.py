@@ -74,8 +74,6 @@ class CcsRecordMonthly(models.Model):
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
-        managed = False
         db_table = 'ccs_record_monthly'
 
 
@@ -103,8 +101,6 @@ class AwcLocation(models.Model):
     contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
-        app_label = 'icds_model'
-        managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
 
@@ -190,8 +186,6 @@ class ChildHealthMonthly(models.Model):
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
-        app_label = 'icds_model'
-        managed = False
         db_table = 'child_health_monthly'
 
 
@@ -206,7 +200,7 @@ class AggAwc(models.Model):
     awc_days_open = models.SmallIntegerField(null=True)
     total_eligible_children = models.SmallIntegerField(null=True)
     total_attended_children = models.SmallIntegerField(null=True)
-    pse_avg_attendance_percent = models.DecimalField(null=True)
+    pse_avg_attendance_percent = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
     usage_num_bp_tri3 = models.IntegerField(null=True)
     usage_num_pnc = models.IntegerField(null=True)
     usage_num_ebf = models.IntegerField(null=True)
@@ -215,12 +209,12 @@ class AggAwc(models.Model):
     usage_num_due_list_ccs = models.IntegerField(null=True)
     usage_num_due_list_child_health = models.IntegerField(null=True)
     usage_awc_num_active = models.IntegerField(null=True)
-    usage_time_pse = models.DecimalField(null=True)
-    usage_time_gmp = models.DecimalField(null=True)
-    usage_time_bp = models.DecimalField(null=True)
-    usage_time_pnc = models.DecimalField(null=True)
-    usage_time_ebf = models.DecimalField(null=True)
-    usage_time_cf = models.DecimalField(null=True)
+    usage_time_pse = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    usage_time_gmp = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    usage_time_bp = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    usage_time_pnc = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    usage_time_ebf = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    usage_time_cf = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
     usage_time_of_day_pse = models.TimeField(null=True)
     usage_time_of_day_home_visit = models.TimeField(null=True)
     vhnd_immunization = models.IntegerField(null=True)
@@ -233,8 +227,8 @@ class AggAwc(models.Model):
     vhnd_num_fathers = models.IntegerField(null=True)
     ls_supervision_visit = models.IntegerField(null=True)
     ls_num_supervised = models.IntegerField(null=True)
-    ls_awc_location_long = models.DecimalField(null=True)
-    ls_awc_location_lat = models.DecimalField(null=True)
+    ls_awc_location_long = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    ls_awc_location_lat = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
     ls_awc_present = models.IntegerField(null=True)
     ls_awc_open = models.IntegerField(null=True)
     ls_awc_not_open_aww_not_available = models.IntegerField(null=True)
@@ -296,8 +290,6 @@ class AggAwc(models.Model):
     infra_infant_weighing_scale = models.IntegerField(null=True)
 
     class Meta:
-        app_label = 'icds_model'
-        managed = False
         db_table = 'agg_awc'
 
 
@@ -325,7 +317,7 @@ class AggCcsRecord(models.Model):
     anc2_received_at_delivery = models.IntegerField()
     anc3_received_at_delivery = models.IntegerField()
     anc4_received_at_delivery = models.IntegerField()
-    registration_trimester_at_delivery = models.DecimalField(null=True)
+    registration_trimester_at_delivery = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
     using_ifa = models.IntegerField()
     ifa_consumed_last_seven_days = models.IntegerField()
     anemic_normal = models.IntegerField()
@@ -355,9 +347,7 @@ class AggCcsRecord(models.Model):
     pregnant_all = models.IntegerField(null=True)
 
     class Meta:
-        app_label = 'icds_model'
         db_table = 'agg_ccs_record'
-        managed = False
 
 
 class AggChildHealth(models.Model):
@@ -430,9 +420,7 @@ class AggChildHealth(models.Model):
     ebf_no_info_recorded = models.IntegerField(null=True)
 
     class Meta:
-        app_label = 'icds_model'
         db_table = 'agg_child_health'
-        managed = False
 
 
 class AggAwcDaily(models.Model):
@@ -469,9 +457,7 @@ class AggAwcDaily(models.Model):
     cases_person_beneficiary_v2 = models.IntegerField(null=True)
 
     class Meta:
-        app_label = 'icds_model'
         db_table = 'agg_awc_daily'
-        managed = False
 
 
 class DailyAttendance(models.Model):
@@ -483,15 +469,13 @@ class DailyAttendance(models.Model):
     count = models.IntegerField(null=True)
     eligible_children = models.IntegerField(null=True)
     attended_children = models.IntegerField(null=True)
-    attended_children_percent = models.DecimalField(null=True)
+    attended_children_percent = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
     form_location = models.TextField(null=True)
-    form_location_lat = models.DecimalField(null=True)
-    form_location_long = models.DecimalField(null=True)
+    form_location_lat = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
+    form_location_long = models.DecimalField(max_digits=65535, decimal_places=65535, null=True)
 
     class Meta:
-        app_label = 'icds_model'
         db_table = 'daily_attendance'
-        managed = False
 
 
 def get_cursor(model):

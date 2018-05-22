@@ -16,5 +16,4 @@ class UcrTableNameMapping(models.Model):
 
     class Meta:
         app_label = 'icds_model'
-        managed = False
         db_table = 'ucr_table_name_mapping'
