@@ -12,7 +12,8 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
-from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period
+from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
+    get_aggregation_end_period
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
@@ -171,6 +172,10 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     def test_get_aggregation_start_period(self):
         self.assertEqual(self.case_date_opened,
                          get_aggregation_start_period(self.aggregate_table_definition))
+
+    def test_get_aggregation_end_period(self):
+        self.assertEqual(datetime.utcnow().date(),
+                         get_aggregation_end_period(self.aggregate_table_definition).date())
 
     def test_basic_aggregation(self):
         # first check our setup function properly did its job
