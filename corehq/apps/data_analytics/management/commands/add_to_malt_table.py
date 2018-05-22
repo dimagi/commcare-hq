@@ -24,7 +24,7 @@ class Command(BaseCommand):
 
     def handle(self, file_paths, **options):
         for arg in file_paths:
-            with open(arg, 'r') as file:
+            with open(arg, 'r', encoding='utf-8') as file:
                 rows = []
                 reader = csv.reader(file)
                 header_row = True

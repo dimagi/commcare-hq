@@ -45,7 +45,7 @@ class FormQuestion(JsonObject):
     @property
     def icon(self):
         try:
-            return "{} {}".format(VELLUM_TYPES[self.type]['icon'], VELLUM_TYPES[self.type]['icon_bs3'])
+            return VELLUM_TYPES[self.type]['icon']
         except KeyError:
             return 'fa fa-question-circle'
 
@@ -56,6 +56,10 @@ class FormQuestion(JsonObject):
             if self.value.startswith(prefix):
                 return self.value[len(prefix):]
         return '/'.join(self.value.split('/')[2:])
+
+    @property
+    def option_values(self):
+        return [o.value for o in self.options]
 
     @property
     def editable(self):

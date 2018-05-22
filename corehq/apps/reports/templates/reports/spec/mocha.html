@@ -11,7 +11,9 @@
 
 {% block fixtures %}
     <div id="data-corrections-fixture">
-        {% include "reports/partials/data_corrections_trigger.html" %}
+        <button type="button" class="btn btn-primary data-corrections-trigger">
+            Data Corrections
+        </button>
         {% include "reports/partials/data_corrections_modal.html" %}
     </div>
 {% endblock %}

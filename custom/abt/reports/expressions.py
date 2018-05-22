@@ -8,6 +8,7 @@ from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
 from memoized import memoized
 import six
+from io import open
 
 
 class AbtSupervisorExpressionSpec(JsonObject):
@@ -20,7 +21,7 @@ class AbtSupervisorExpressionSpec(JsonObject):
         Return a dict where keys are form xmlns and values are lists of FlagSpecs
         """
         path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             return yaml.load(f)
 
     @classmethod

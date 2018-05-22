@@ -64,6 +64,7 @@ from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
+from io import open
 
 
 class ElasticSearchIndexSettings(DocumentSchema):
@@ -963,7 +964,7 @@ def get_report_config(config_id, domain):
 
 
 def _read_file(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         if path.endswith('.json'):
             return json.load(f)
         else:

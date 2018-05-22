@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import datetime
 import io
 import json
@@ -846,12 +846,12 @@ def send_prepaid_credits_export():
             if all_credit_lines else 'N/A',
         ])
 
-    file_obj = io.BytesIO()
+    file_obj = io.StringIO()
     writer = csv.writer(file_obj)
     writer.writerow(headers)
     for row in body:
         writer.writerow([
-            val.encode('utf-8') if isinstance(val, six.text_type) else six.binary_type(val)
+            val if isinstance(val, six.text_type) else six.binary_type(val)
             for val in row
         ])
 

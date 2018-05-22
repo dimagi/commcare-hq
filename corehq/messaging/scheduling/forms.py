@@ -638,6 +638,9 @@ class CustomEventForm(ContentForm):
 
     def __init__(self, *args, **kwargs):
         super(CustomEventForm, self).__init__(*args, **kwargs)
+        if self.schedule_form.editing_custom_immediate_schedule:
+            self.fields['minutes_to_wait'].disabled = True
+
         self.helper = ScheduleForm.create_form_helper()
         self.helper.layout = crispy.Layout(
             crispy.Div(
@@ -1049,8 +1052,10 @@ class ScheduleForm(Form):
                 return False
 
             if initial_value:
-                if initial_value in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE):
-                    return two_tuple[0] in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE)
+                if initial_value == self.SEND_IMMEDIATELY:
+                    return two_tuple[0] == self.SEND_IMMEDIATELY
+                elif initial_value == self.SEND_CUSTOM_IMMEDIATE:
+                    return two_tuple[0] == self.SEND_CUSTOM_IMMEDIATE
                 else:
                     return two_tuple[0] not in (self.SEND_IMMEDIATELY, self.SEND_CUSTOM_IMMEDIATE)
 
@@ -1236,6 +1241,24 @@ class ScheduleForm(Form):
 
         return result
 
+    @property
+    def editing_custom_immediate_schedule(self):
+        """
+        The custom immediate schedule is provided for backwards-compatibility with
+        the old framework which allowed that use case. It's not as useful of a
+        feature as the custom daily schedule, and the framework isn't currently
+        responsive to changes in the custom immediate schedule's events (and neither
+        was the old framework), so we restrict certain parts of the UI when editing
+        a custom immediate schedule.
+
+        If these edit options are deemed to be useful, then the framework should
+        be updated to be responsive to changes in an AlertSchedule's AlertEvents.
+        This would include capturing a start_timestamp and schedule_revision on
+        the AbstractAlertScheduleInstance, similar to what is done for the
+        AbstractTimedScheduleInstance.
+        """
+        return self.initial_schedule and self.initial_schedule.ui_type == Schedule.UI_TYPE_CUSTOM_IMMEDIATE
+
     @memoized
     def get_form_and_app(self, form_unique_id):
         """
@@ -1391,7 +1414,7 @@ class ScheduleForm(Form):
                         '<i class="fa fa-plus"></i> %s</span>'
                         % _("Add Event")
                     ),
-                    data_bind="visible: usesCustomEventDefinitions()"
+                    data_bind="visible: usesCustomEventDefinitions() && !editing_custom_immediate_schedule()"
                 ),
             ),
         ]
@@ -1668,6 +1691,7 @@ class ScheduleForm(Form):
             values[field_name] = self[field_name].value()
         values['standalone_content_form'] = self.standalone_content_form.current_values
         values['custom_event_formset'] = [form.current_values for form in self.custom_event_formset]
+        values['editing_custom_immediate_schedule'] = self.editing_custom_immediate_schedule
         return values
 
     @property

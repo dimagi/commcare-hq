@@ -12,6 +12,7 @@ from redis.exceptions import RedisError
 from casexml.apps.case.exceptions import IllegalCaseId
 from memoized import memoized
 from ..utils import should_use_sql_backend
+import six
 
 CaseUpdateMetadata = namedtuple('CaseUpdateMetadata', ['case', 'is_creation', 'previous_owner_id'])
 ProcessedForms = namedtuple('ProcessedForms', ['submitted', 'deprecated'])
@@ -145,7 +146,7 @@ class FormProcessorInterface(object):
 
         xml = xform.get_xml_element()
         dirty = False
-        for question, response in value_responses_map.iteritems():
+        for question, response in six.iteritems(value_responses_map):
             if update_response(xml, question, response, xmlns=xform.xmlns):
                 dirty = True
 

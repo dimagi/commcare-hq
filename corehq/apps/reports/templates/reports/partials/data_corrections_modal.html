@@ -2,7 +2,6 @@
 
 {% comment %}
     Modal-based UI for data corrections.
-    Button to open the modal is in reports/partials/data_corrections_trigger.html
     Depends on reports/js/data_corrections.js
 {% endcomment %}
 
@@ -19,7 +18,7 @@
                     <!-- ko if: displayProperties.length > 1 -->
                         <ul class="nav nav-pills">
                             <!-- ko foreach: displayProperties -->
-                                <li data-bind="click: $root.updateDisplayProperty(property), css: { active: $root.displayProperty() === property }">
+                                <li data-bind="click: function() { $root.updateDisplayProperty(property) }, css: { active: $root.displayProperty() === property }">
                                     <a data-bind="text: name"></a>
                                 </li>
                             <!--/ko-->
@@ -36,7 +35,11 @@
                     </div>
                 </div>
                 <h4 class="modal-title">
-                    {% trans "Data Corrections" %}
+                    {% if instance %}{# This is a form, not a case #}
+                        {% trans "Clean Form Submission" %}
+                    {% else %}
+                        {% trans "Data Corrections" %}
+                    {% endif %}
                 </h4>
             </div>
             <div class="modal-body" data-bind="css: { 'text-center': showSpinner }">
@@ -44,7 +47,7 @@
                     <div class='alert alert-warning'>
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
-                            Data Corrections is replacing the old "Edit this form" functionality, which will be removed in June 2018.
+                            This feature is replacing the old "Edit this form" functionality, which will be removed in August 2018.
                         {% endblocktrans %}
                         <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" id="edit-form">
                             {% trans 'Click here to access the old "edit this form" page.' %}
@@ -54,8 +57,8 @@
 
                         <i class="fa fa-exclamation-triangle"></i>
                         {% blocktrans %}
-                            Data Corrections will only update individual question responses.
-                            It will <strong>not</strong> run any logic or make any changes to cases.
+                            This feature will only update individual question responses.
+                            It will <strong>not</strong> affect cases.
                         {% endblocktrans %}
                     </div>
                 {% endif %}

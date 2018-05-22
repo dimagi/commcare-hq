@@ -62,15 +62,25 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+def _start_export_task(export_instance_id, last_access_cutoff=None, filter=None):
     keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
     with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
         if locked_section.success():
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+            export_instance = get_properly_wrapped_export_instance(
+                export_instance_id)
             if should_rebuild_export(export_instance, last_access_cutoff):
                 rebuild_export(export_instance, filter)
+
+
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+    _start_export_task(export_instance_id, last_access_cutoff, filter)
+
+
+@task(queue='export_download_queue', ignore_result=True)
+def manually_rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+    _start_export_task(export_instance_id, last_access_cutoff, filter)
 
 
 @serial_task('{domain}-{case_type}', queue='background_queue')

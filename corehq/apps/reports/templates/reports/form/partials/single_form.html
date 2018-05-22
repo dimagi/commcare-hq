@@ -174,7 +174,10 @@
             {% if show_edit_options %}
                 {% if show_edit_submission %}
                     {% if request|toggle_enabled:"DATA_CORRECTIONS_FORMS" %}
-                        {% include 'reports/partials/data_corrections_trigger.html' %}
+                        <button type="button" class="btn btn-default pull-left data-corrections-trigger">
+                            <i class="fa fa-shower"></i>
+                            {% trans 'Clean Form Submission' %}
+                        </button>
                     {% else %}
                         <a href="{% url 'edit_form_instance' domain instance.form_id %}" target="_blank" class="btn
                             btn-default" id="edit-form">

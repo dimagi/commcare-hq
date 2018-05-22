@@ -281,29 +281,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
         ElementTree.dump(form)
         self._submit_form(form)
 
-    def _submit_bp_form(
-            self, form_date, case_id, counsel_immediate_bf='no'):
-
-        form = ElementTree.Element('data')
-        form.attrib['xmlns'] = XMNLS_BP_FORM
-        form.attrib['xmlns:jrm'] = 'http://openrosa.org/jr/xforms'
-
-        meta = ElementTree.Element('meta')
-        add_element(meta, 'timeEnd', form_date.isoformat())
-        form.append(meta)
-
-        case = ElementTree.Element('case')
-        case.attrib['date_modified'] = form_date.isoformat()
-        case.attrib['case_id'] = case_id
-        case.attrib['xmlns'] = 'http://commcarehq.org/case/transaction/v2'
-        form.append(case)
-
-        bp2 = ElementTree.Element('bp2')
-        add_element(bp2, 'immediate_breastfeeding', counsel_immediate_bf)
-        form.append(bp2)
-
-        self._submit_form(form)
-
     def test_demographic_data(self):
         case_id = uuid.uuid4().hex
         self._create_case(
@@ -988,44 +965,4 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
                  ('fully_immunized_late', 1), ]
              ),
         ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_no_immediate_breastfeeding(self):
-        case_id = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2016, 3, 12),
-            date_opened=datetime(2016, 3, 12),
-            date_modified=datetime(2016, 3, 12),
-        )
-        self._submit_bp_form(
-            form_date=datetime(2015, 10, 10),
-            case_id='m-' + case_id,
-            counsel_immediate_bf='no',
-        )
-
-        cases = [(0, [('counsel_immediate_breastfeeding', 0)]),
-                 (1, [('counsel_immediate_breastfeeding', 0)]),
-                 (2, [('counsel_immediate_breastfeeding', 0)]),
-                 ]
-        self._run_iterative_monthly_test(case_id=case_id, cases=cases)
-
-    def test_yes_immediate_breastfeeding(self):
-        case_id = uuid.uuid4().hex
-        self._create_case(
-            case_id=case_id,
-            dob=date(2016, 3, 12),
-            date_opened=datetime(2016, 3, 12),
-            date_modified=datetime(2016, 3, 12),
-        )
-        self._submit_bp_form(
-            form_date=datetime(2015, 10, 10),
-            case_id='m-' + case_id,
-            counsel_immediate_bf='yes',
-        )
-
-        cases = [(0, [('counsel_immediate_breastfeeding', 0)]),
-                 (1, [('counsel_immediate_breastfeeding', 1)]),
-                 (2, [('counsel_immediate_breastfeeding', 0)]),
-                 ]
         self._run_iterative_monthly_test(case_id=case_id, cases=cases)

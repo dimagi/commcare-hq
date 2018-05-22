@@ -25,7 +25,7 @@ def bootstrap_tropo_gateway(apps):
     )
 
     rates_csv = open('corehq/apps/smsbillables/management/'
-                     'pricing_data/tropo_international_rates_2013-12-19.csv', 'r')
+                     'pricing_data/tropo_international_rates_2013-12-19.csv', 'r', encoding='utf-8')
     for line in rates_csv.readlines():
         data = line.split(',')
         if data[1] == 'Fixed Line' and data[4] != '\n':
