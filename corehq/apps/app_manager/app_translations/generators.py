@@ -10,7 +10,7 @@ from memoized import memoized
 from collections import namedtuple, OrderedDict
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
-Translation = namedtuple('Translation', 'key translation occurrences')
+Translation = namedtuple('Translation', 'key translation occurrences msgctxt')
 Unique_ID = namedtuple('UniqueID', 'type id')
 
 
@@ -102,13 +102,15 @@ class POFileGenerator:
 
                 def occurrence(_row):
                     return _row[label_index]
-        for row in rows:
+        for i, row in enumerate(rows):
             source = row[key_lang_index]
             translation = row[source_lang_index]
+            occurrence_row = occurrence(row)
             translations_for_sheet.append(Translation(
                 source,
                 translation,
-                [(occurrence(row), '')])
+                [(occurrence_row, '')],
+                ':'.join([str(i), occurrence_row]))
             )
         return translations_for_sheet
 
@@ -165,7 +167,7 @@ class POFileGenerator:
                         msgid=translation.key,
                         msgstr=translation.translation,
                         occurrences=translation.occurrences,
-                        msgctxt=translation.occurrences[0][0]
+                        msgctxt=translation.msgctxt
                     )
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
