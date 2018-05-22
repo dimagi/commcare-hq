@@ -10,6 +10,7 @@ from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_da
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
     AGG_COMP_FEEDING_TABLE,
+    AGG_CCS_RECORD_BP_TABLE,
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CCS_RECORD_THR_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
@@ -687,6 +688,21 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
             "state_id": self.state_id
         }
+
+
+class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-dashboard_birth_preparedness_forms'
+    aggregate_parent_table = AGG_CCS_RECORD_BP_TABLE
+    aggregate_child_table_prefix = 'icds_db_bp_form_'
+
+    @property
+    def _old_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.ccs_record_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    def compare_with_old_data_query(self):
+        pass
 
 
 def recalculate_aggregate_table(model_class):
