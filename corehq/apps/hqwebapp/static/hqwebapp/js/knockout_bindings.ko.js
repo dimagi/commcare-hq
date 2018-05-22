@@ -211,7 +211,15 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     console.log('shiftKey');
                 }
 
-                if (e.ctrlKey || e.metaKey) {
+                if ($(this).hasClass('moving')) {
+                    $(this).removeClass('moving');
+
+                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                    for (var cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
+                    }
+                } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
                     $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
                 } else if (e.shiftKey) {
@@ -246,6 +254,46 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 } else {
                     $(this).addClass("selected-for-sort").siblings().removeClass('selected-for-sort');
                     $(this).removeClass("shift-selected").siblings().removeClass('shift-selected');
+                }
+            });
+
+            $(element).on('click', '.send-to-top', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                // update UI
+                var row = $(this).parent().parent();
+                var current_index = row[0].attributes['data-order'].value;
+                row.parent().prepend(row);
+
+                // update KO
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                list.unshift(list.splice(current_index, 1)[0]);
+            });
+
+            $(element).on('click', '.send-to-bottom', function (e) {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                var row = $(this).parent().parent();
+                var current_index = row[0].attributes['data-order'].value;
+
+                var lastSelectedRowIndex = null;
+                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].selected()) {
+                        lastSelectedRowIndex = i;
+                    }
+                }
+
+                if (current_index < lastSelectedRowIndex) {
+                    // Update UI
+                    $('.isSelectedForExport').addClass('fix');
+                    row.removeClass('fix');
+                    $('.fix:nth-child(' + ($('.fix').length + 1) + ')').after(row);
+                    $('.fix').removeClass('fix');
+
+                    // Update KO
+                    var current_list_item = list.splice(current_index, 1)[0];
+                    list.splice(lastSelectedRowIndex, 0, current_list_item);
                 }
             });
 
