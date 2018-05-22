@@ -699,19 +699,6 @@ def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
 
 
-def unsubscribe(request, user_id):
-    # todo in the future we should not require a user to be logged in to unsubscribe.
-    from django.contrib import messages
-    from corehq.apps.settings.views import MyAccountSettingsView
-    messages.info(request,
-                  _('Check "Opt out of emails about new features '
-                    'and other CommCare updates" in your account '
-                    'settings and then click "Update Information" '
-                    'if you do not want to receive future emails '
-                    'from us.'))
-    return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
-
-
 class BasePageView(TemplateView):
     urlname = None  # name of the view used in urls
     page_title = None  # what shows up in the <title>
