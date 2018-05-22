@@ -131,10 +131,9 @@ class _ExportWriter(object):
 
 class _PaginatedExportWriter(object):
 
-    def __init__(self, writer, page_length=None):
+    def __init__(self, writer):
         self.format = writer.format
         self._path = None
-        self.page_length = page_length or MAX_EXPORTABLE_ROWS
         self.pages = Counter()
         self.rows_written = Counter()
         # An instance of a couchexport.ExportWriter
@@ -270,7 +269,7 @@ class _PaginatedExportWriter(object):
         :param table: A TableConfiguration
         :param row: An ExportRow
         """
-        if self.rows_written[table] >= self.page_length * (self.pages[table] + 1):
+        if self.rows_written[table] >= MAX_EXPORTABLE_ROWS * (self.pages[table] + 1):
             self.pages[table] += 1
             self.writer.add_table(
                 self._paged_table_index(table),
