@@ -166,7 +166,8 @@ class POFileGenerator:
                     entry = polib.POEntry(
                         msgid=translation.key,
                         msgstr=translation.translation,
-                        occurrences=translation.occurrences
+                        occurrences=translation.occurrences,
+                        msgctxt=translation.occurrences[0][0]
                     )
                     po.append(entry)
             temp_file = tempfile.NamedTemporaryFile(delete=False)
