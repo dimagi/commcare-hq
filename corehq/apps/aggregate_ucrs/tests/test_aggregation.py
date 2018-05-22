@@ -12,7 +12,7 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
-from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data
+from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
@@ -28,6 +28,7 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     domain = 'ucr-aggregation-domain'
     case_type = 'ucr-aggregation-case-type'
+    case_date_opened = datetime(2018, 2, 19)
     case_properties = (
         ('first_name', 'First Name', 'string', 'Mary'),
         ('last_name', 'Last Name', 'string', 'Mom'),
@@ -107,7 +108,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         caseblock = CaseBlock(
             case_id=case_id,
             case_type=cls.case_type,
-            date_opened=datetime(2018, 2, 19),
+            date_opened=cls.case_date_opened,
             update=properties,
         )
         form_builder = FormSubmissionBuilder(
@@ -148,7 +149,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
         return import_aggregation_models_from_spec(spec)
 
-    def test_table(self):
+    def test_aggregate_table(self):
         adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
         table = adapter.get_table()
         id_column = table.columns['doc_id']
@@ -166,6 +167,10 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # basic check on secondary column
         self.assertEqual(Integer, type(table.columns['fu_forms_in_month'].type))
+
+    def test_get_aggregation_start_period(self):
+        self.assertEqual(self.case_date_opened,
+                         get_aggregation_start_period(self.aggregate_table_definition))
 
     def test_basic_aggregation(self):
         # first check our setup function properly did its job
