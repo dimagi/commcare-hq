@@ -12,9 +12,9 @@ from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
+from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
-from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.xform_builder import XFormBuilder
@@ -107,6 +107,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         caseblock = CaseBlock(
             case_id=case_id,
             case_type=cls.case_type,
+            date_opened=datetime(2018, 2, 19),
             update=properties,
         )
         form_builder = FormSubmissionBuilder(
@@ -198,7 +199,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
                 this_month = Month(2018, month)
                 print(this_month)
                 # self.assertEqual()
-                self.assertEqual(3, aggregate_query.filter(case_id_column == self.case_id).count())
+                self.assertEqual(3, aggregate_query.filter(doc_id_column == self.case_id).count())
                 # self.
                 # todo something like this
                 # q.filter_by('form.case.@case_id'=self.case_id)
