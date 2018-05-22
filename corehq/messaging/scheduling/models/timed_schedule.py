@@ -6,6 +6,7 @@ import hashlib
 import json
 import random
 import re
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
@@ -501,6 +502,17 @@ class TimedSchedule(Schedule):
                 event.content = content
                 event.save()
                 order += 1
+
+    @property
+    def references_parent_case(self):
+        if super(TimedSchedule, self).references_parent_case:
+            return True
+
+        for event in self.memoized_events:
+            if isinstance(event, CasePropertyTimedEvent) and property_references_parent(event.case_property_name):
+                return True
+
+        return False
 
 
 class AbstractTimedEvent(Event):

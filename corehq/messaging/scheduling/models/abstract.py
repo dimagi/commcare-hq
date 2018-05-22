@@ -133,6 +133,10 @@ class Schedule(models.Model):
 
         return False
 
+    @property
+    def references_parent_case(self):
+        return False
+
     def delete_related_events(self):
         """
         Deletes all Event and Content objects related to this Schedule.
