@@ -448,7 +448,10 @@ class Command(BaseCommand):
         if handler.start_match_type not in (MATCH_EXACT, MATCH_ANY_VALUE):
             return None
 
-        if not handler.start_property or '/' in handler.start_property:
+        if not handler.start_property:
+            return None
+
+        if handler.active and handler.uses_parent_case_property:
             return None
 
         if handler.start_date:
