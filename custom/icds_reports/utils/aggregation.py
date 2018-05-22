@@ -701,6 +701,18 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
+    def _anemic_query(self):
+        """
+        UPDATE agg_table SET
+            anemia = anemia
+        FROM (
+            SELECT ccs_record_case_id, LAST_VALUE(anemia) OVER w AS anemia
+            FROM ucr_table
+            WHERE state_id = state_id AND month = month AND anemia != 0
+        ) ut
+        WHERE agg_table.state_id = state_id AND agg_table.month = month AND case_id = ut.ccs_record_case_id
+        """
+
     def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
@@ -710,7 +722,6 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         SELECT DISTINCT ccs_record_case_id AS case_id,
         LAST_VALUE(timeend) OVER w AS latest_time_end,
         MAX(immediate_breastfeeding) OVER w AS immediate_breastfeeding,
-        LAST_VALUE(anemia) OVER w as anemia,
         LAST_VALUE(eating_extra) OVER w as eating_extra,
         LAST_VALUE(resting) OVER w as resting
         FROM "{ucr_tablename}"
@@ -748,7 +759,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
             GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed,
             GREATEST(ucr.immediate_breastfeeding, prev_month.immediate_breastfeeding) AS immediate_breastfeeding,
-            COALESCE(ucr.anemia, prev_month.anemia) AS anemia,
+            prev_month.anemia AS anemia,
             COALESCE(ucr.eating_extra, prev_month.eating_extra) AS eating_extra,
             COALESCE(ucr.resting, prev_month.resting) AS resting
           FROM ({ucr_table_query}) ucr
