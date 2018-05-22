@@ -337,7 +337,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         element.children[cur].attributes['data-order'].value = cur;
                     }
                 }
-
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
