@@ -1114,41 +1114,13 @@ class AggregateBirthPreparednesForms(models.Model):
         help_text="The latest form.meta.timeEnd that has been processed for this case"
     )
 
-    using_ifa = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Last value of /data/bp1/using_ifa = 'yes'"
-    )
     immediate_breastfeeding = models.PositiveSmallIntegerField(
         null=True,
         help_text="Has ever had /data/bp2/immediate_breastfeeding = 'yes'"
     )
-    play_birth_preparedness_vid = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Has ever had /data/bp2/play_birth_preparedness_vid = 'yes'"
-    )
-    counsel_preparation = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Has ever had /data/bp2/counsel_preparation = 'yes'"
-    )
-    play_family_planning_vid = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Has ever had /data/bp2/play_family_planning_vid = 'yes'"
-    )
-    conceive = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Has ever had /data/conceive = 'yes'"
-    )
-    counsel_accessible_ppfp = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Has ever had /data/family_planning_group/counsel_accessible_ppfp = 'yes'"
-    )
     anemia = models.PositiveSmallIntegerField(
         null=True,
         help_text="Last value of /data/bp1/anemia. severe=1, moderate=2, normal=3"
-    )
-    ifa_last_seven_days = models.PositiveSmallIntegerField(
-        null=True,
-        help_text="Last value of /data/bp1/ifa_last_seven_days."
     )
     eating_extra = models.PositiveSmallIntegerField(
         null=True,
@@ -1165,16 +1137,13 @@ class AggregateBirthPreparednesForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = BirthPreparednessFormsAggregationHelper(state_id, month)
-        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
         curr_month_query, curr_month_params = helper.create_table_query()
-        aggregate_queries = helper.aggregation_queries()
+        agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
-            cursor.execute(prev_month_query, prev_month_params)
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
-            for query, params in aggregate_queries:
-                cursor.execute(query, params)
+            cursor.execute(agg_query, agg_params)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):

@@ -988,6 +988,7 @@
         "type": "expression"
       },
       {
+        "comment": "currently unused",
         "column_id": "using_ifa",
         "display_name": null,
         "filter": {
@@ -1032,6 +1033,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently unused",
         "column_id": "ifa_consumed_last_seven_days",
         "display_name": null,
         "filter": {
@@ -1182,6 +1184,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently unused",
         "column_id": "bp_visited_in_month",
         "display_name": null,
         "filter": {
@@ -1301,6 +1304,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_bp_vid",
         "display_name": null,
         "filter": {
@@ -1356,6 +1360,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_preparation",
         "display_name": null,
         "filter": {
@@ -1411,6 +1416,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_fp_vid",
         "display_name": null,
         "filter": {
@@ -1465,6 +1471,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_immediate_conception",
         "display_name": null,
         "filter": {
@@ -1519,6 +1526,7 @@
         "type": "boolean"
       },
       {
+        "comment": "currently_unused",
         "column_id": "counsel_accessible_postpartum_fp",
         "display_name": null,
         "filter": {
