@@ -29,6 +29,7 @@ class AppTranslationsForm(forms.Form):
     # allow us to just add a checkbox instead of selecting a single/multiple target languages at once
     target_lang = forms.ChoiceField(label=ugettext_lazy("Target Language"),
                                     choices=[(None, ugettext_lazy('Select Target Language')),
+                                             ('ori', ugettext_lazy('Oriya')),
                                              ('hin', ugettext_lazy('Hindi')),
                                              ('mr', ugettext_lazy('Marathi')),
                                              ('te', ugettext_lazy('Telugu'))],
