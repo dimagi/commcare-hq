@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from collections import namedtuple
-import csv
+import csv342 as csv
 from datetime import date, datetime, timedelta
 import io
 import logging
@@ -73,8 +73,19 @@ UCR_TABLE_NAME_MAPPING = [
 ]
 
 SQL_FUNCTION_PATHS = [
-    ('migrations', 'sql_templates', 'create_functions.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
+    ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
 ]
 
 
@@ -472,7 +483,7 @@ def _send_data_validation_email(csv_columns, month, bad_data):
     bad_underweight_awcs = bad_data.get('bad_underweight_awcs', [])
     bad_lbw_awcs = bad_data.get('bad_lbw_awcs', [])
 
-    csv_file = io.BytesIO()
+    csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(('type',) + csv_columns)
     _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)

@@ -481,8 +481,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {u'html': 9.090909090909092, u'sort_key': 9.090909090909092},
-                    {u'html': 0.0, u'sort_key': 0.0},
+                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
