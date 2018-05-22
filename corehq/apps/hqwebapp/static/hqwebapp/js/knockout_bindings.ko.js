@@ -315,7 +315,21 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 },
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
-                    // TODO - sort by data-order
+
+                    // TODO - get working
+                    $('.selected-for-sort').sort(function(a, b) {
+                        var a_data_order = parseInt(a.attributes['data-order'].value),
+                            b_data_order = parseInt(b.attributes['data-order'].value);
+                        console.log(a_data_order);
+                        console.log(b_data_order);
+                        if (a_data_order < b_data_order) {
+                            return -1;
+                        } else if (b_data_order < a_data_order) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    });
 
                     // Reorder the data in knockout
                     var new_list = [];
