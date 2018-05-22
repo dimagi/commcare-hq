@@ -1,9 +1,9 @@
 hqDefine("reports/js/async_tabular", function() {
-    function renderPage(data) {
-        if (data.report_table_js_options && data.report_table_js_options.datatables) {
-            var tableConfig = data.report_table_js_options,
+    function renderPage(slug, tableOptions) {
+        if (tableOptions && tableOptions.datatables) {
+            var tableConfig = tableOptions,
                 options = {
-                    dataTableElem: '#report_table_' + data.slug,
+                    dataTableElem: '#report_table_' + slug,
                     defaultRows: tableConfig.default_rows,
                     startAtRowNum: tableConfig.start_at_row,
                     showAllRowsOption: tableConfig.show_all_rows,
@@ -53,11 +53,19 @@ hqDefine("reports/js/async_tabular", function() {
         });
     }
 
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
     $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
-        var jsOptions = hqImport("hqwebapp/js/initial_page_data").get("js_options");
+        var jsOptions = initialPageData("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
         }
-        renderPage(data);
+        renderPage(data.slug, data.report_table_js_options);
     });
+
+    // Contrary to its name, this module is sometimes used by non-async reports, such as some of the admin reports
+    $(function() {
+        if (initialPageData("report_table_js_options")) {
+            renderPage(initialPageData("js_options").slug, initialPageData("report_table_js_options"));
+        }
+    })
 });

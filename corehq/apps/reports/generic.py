@@ -654,45 +654,13 @@ class GenericReportView(object):
             self.template_report, self.context, request=self.request
         )
 
-        context = dict(
+        return dict(
             filters=rendered_filters,
             report=rendered_report,
             title=self.rendered_report_title,
             slug=self.slug,
             url_root=self.url_root,
         )
-        if 'report_table' in self.report_context:
-            report_table = self.report_context['report_table']
-            pagination_on = report_table['pagination']['is_on']
-            context.update({
-                'report_table_js_options': {
-                    'datatables': report_table['datatables'],
-                    'default_rows': report_table['default_rows'] or 10,
-                    'start_at_row': report_table['start_at_row'] or 0,
-                    'show_all_rows': report_table['show_all_rows'],
-                    'sortable': report_table['sortable'],
-                    'headers': {
-                        'render_aoColumns': report_table['headers'].render_aoColumns,
-                        'auto_width': report_table['headers'].auto_width,
-                        'custom_sort': report_table['headers'].custom_sort,
-                    },
-                    'bad_request_error_text': report_table['bad_request_error_text'],
-                    'pagination': {
-                        'hide': getattr(report_table['pagination'], 'hide', False),
-                        'is_on': pagination_on,
-                        'source': report_table['pagination']['source'] if pagination_on else None,
-                        'params': report_table['pagination']['params'] if pagination_on else None,
-                    },
-                    'left_col': {
-                        'is_fixed': report_table['left_col']['is_fixed'],
-                        'fixed': {
-                            'num': report_table['left_col']['fixed']['num'],
-                            'width': report_table['left_col']['fixed']['width'],
-                        } if report_table['left_col']['is_fixed'] else {},
-                    },
-                },
-            })
-        return context
 
     @property
     def excel_response(self):
@@ -1136,6 +1104,36 @@ class GenericTabularReport(GenericReportView):
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
+        report_table = context['report_table']
+        pagination_on = report_table['pagination']['is_on']
+        context.update({
+            'report_table_js_options': {
+                'datatables': report_table['datatables'],
+                'default_rows': report_table['default_rows'] or 10,
+                'start_at_row': report_table['start_at_row'] or 0,
+                'show_all_rows': report_table['show_all_rows'],
+                'sortable': report_table['sortable'],
+                'headers': {
+                    'render_aoColumns': report_table['headers'].render_aoColumns,
+                    'auto_width': report_table['headers'].auto_width,
+                    'custom_sort': report_table['headers'].custom_sort,
+                },
+                'bad_request_error_text': report_table['bad_request_error_text'],
+                'pagination': {
+                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'is_on': pagination_on,
+                    'source': report_table['pagination']['source'] if pagination_on else None,
+                    'params': report_table['pagination']['params'] if pagination_on else None,
+                },
+                'left_col': {
+                    'is_fixed': report_table['left_col']['is_fixed'],
+                    'fixed': {
+                        'num': report_table['left_col']['fixed']['num'],
+                        'width': report_table['left_col']['fixed']['width'],
+                    } if report_table['left_col']['is_fixed'] else {},
+                },
+            },
+        })
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))
         return context
