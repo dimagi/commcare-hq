@@ -1328,7 +1328,7 @@ class MessagingEvent(models.Model, MessagingStatusMixin):
         if isinstance(content, (SMSContent, CustomContent)):
             return cls.CONTENT_SMS, None, None
         elif isinstance(content, SMSSurveyContent):
-            app, module, form = content.get_memoized_app_module_form(domain)
+            app, module, form, requires_input = content.get_memoized_app_module_form(domain)
             form_name = form.full_path_name if form else None
             return cls.CONTENT_SMS_SURVEY, content.form_unique_id, form_name
         elif isinstance(content, EmailContent):
@@ -2483,6 +2483,24 @@ class SQLSMSBackend(SQLMobileBackend):
         """
         Override to specify a set of opt-in keywords to use for this
         backend type.
+        """
+        return []
+
+    @classmethod
+    def get_pass_through_opt_in_keywords(cls):
+        """
+        Use this to define opt-in keywords that the gateway counts as opt-in
+        keywords but that we don't want to have block normal processing in HQ.
+
+        This is useful when the gateway defines an opt-in keyword like
+        YES that is a common reply to SMS survey questions, and we don't
+        want users to continuously be getting opt-in replies when
+        sending YES.
+
+        When receiving these keywords, HQ will still mark the phone as having
+        opted-in in the PhoneBlacklist entry because it's important that the
+        opt-in status between the gateway and HQ remain in sync, but after doing
+        that, HQ will then process the inbound SMS just as a normal inbound message.
         """
         return []
 

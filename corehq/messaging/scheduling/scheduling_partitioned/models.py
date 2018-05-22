@@ -19,13 +19,20 @@ from corehq.sql_db.models import PartitionedModel
 from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_domain, coerce_timezone_value
 from couchdbkit.exceptions import ResourceNotFound
-from datetime import tzinfo
+from datetime import tzinfo, timedelta
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from memoized import memoized
 from dimagi.utils.modules import to_function
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
 import six
+
+
+# The number of minutes after which a schedule instance is considered stale.
+# Stale instances are just fast-forwarded according to their schedule and
+# no content is sent.
+STALE_SCHEDULE_INSTANCE_INTERVAL = 2 * 24 * 60
 
 
 class ScheduleInstance(PartitionedModel):
@@ -186,7 +193,25 @@ class ScheduleInstance(PartitionedModel):
             for contact in self._expand_recipient(member):
                 yield contact
 
-    def handle_current_event(self):
+    def get_content_send_lock(self, client, recipient):
+        if is_commcarecase(recipient):
+            doc_type = 'CommCareCase'
+            doc_id = recipient.case_id
+        else:
+            doc_type = recipient.doc_type
+            doc_id = recipient.get_id
+
+        key = "send-content-for-%s-%s-%s-%s-%s" % (
+            self.__class__.__name__,
+            self.schedule_instance_id.hex,
+            self.next_event_due.strftime('%Y-%m-%d %H:%M:%S'),
+            doc_type,
+            doc_id,
+        )
+        return client.lock(key, timeout=STALE_SCHEDULE_INSTANCE_INTERVAL * 60)
+
+    def send_current_event_content_to_recipients(self):
+        client = get_redis_client()
         content = self.memoized_schedule.get_current_event_content(self)
 
         if isinstance(self, CaseScheduleInstanceMixin):
@@ -199,18 +224,50 @@ class ScheduleInstance(PartitionedModel):
         recipient_count = 0
         for recipient in self.expand_recipients():
             recipient_count += 1
-            content.send(recipient, logged_event)
 
-        # As a precaution, always explicitly move to the next event after processing the current
-        # event to prevent ever getting stuck on the current event.
-        self.memoized_schedule.move_to_next_event(self)
-        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
+            #   The framework will retry sending a non-processed schedule instance
+            # once every hour.
+
+            #   If we are processing a long list of recipients here and an error
+            # occurs half-way through, we don't want to reprocess the entire list
+            # of recipients again when the framework retries it an hour later.
+
+            #   So we use a non-blocking lock tied to the event due time and recipient
+            # to make sure that we don't try resending the same content to the same
+            # recipient more than once in the event of a retry.
+
+            #   If we succeed in sending the content, we don't release the lock so
+            # that it won't retry later. If we fail in sending the content, we release
+            # the lock so that it will retry later.
+
+            lock = self.get_content_send_lock(client, recipient)
+            if lock.acquire(blocking=False):
+                try:
+                    content.send(recipient, logged_event)
+                except:
+                    # Release the lock if an error happened so that we can try sending
+                    # to this recipient again later.
+                    lock.release()
+                    raise
 
         # Update the MessagingEvent for reporting
         if recipient_count == 0:
             logged_event.error(MessagingEvent.ERROR_NO_RECIPIENT)
         else:
             logged_event.completed()
+
+    @property
+    def is_stale(self):
+        return (util.utcnow() - self.next_event_due) > timedelta(minutes=STALE_SCHEDULE_INSTANCE_INTERVAL)
+
+    def handle_current_event(self):
+        if not self.is_stale:
+            self.send_current_event_content_to_recipients()
+
+        # As a precaution, always explicitly move to the next event after processing the current
+        # event to prevent ever getting stuck on the current event.
+        self.memoized_schedule.move_to_next_event(self)
+        self.memoized_schedule.move_to_next_event_not_in_the_past(self)
 
     @property
     def schedule(self):

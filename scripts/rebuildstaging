@@ -11,6 +11,7 @@ rebuild staging from yaml configuration (scripts/staging.yaml)
     --deploy        deploy after rebuild is complete
     --no-push       do not push changes (cannot be used with --deploy)
     --skip-fetch    assume local copy is already update date with remote
+    --enterprise    rebuild the enterprise branch
 EOF
 }
 
@@ -38,6 +39,10 @@ do
         no_push=y
         echo no-push
         ;;
+      --enterprise)
+        enterprise=y
+        echo enterprise
+        ;;
       *)
         usage
         exit 1
@@ -48,6 +53,11 @@ done
 function rebuildstaging() {
     echo "rebuilding staging branch, this might take a while..."
     python scripts/rebuildstaging.py < scripts/staging.yaml "$@"
+}
+
+function rebuildenterprise() {
+    echo "rebuilding enterprise branch"
+    python scripts/rebuildstaging.py < scripts/enterprise.yaml "$@"
 }
 
 args=''
@@ -66,13 +76,16 @@ then
     exit 1
 fi
 
-if [[ $deploy = 'y' && $no_push != 'y' ]]
+if [[ $deploy = 'y' && $no_push != 'y' && $enterprise != 'y' ]]
 then
     rebuildstaging $args && {
         which commcare-cloud \
         && commcare-cloud staging fab deploy:confirm=no \
         || echo 'Could not auto-deploy for you. Run `commcare-cloud staging fab deploy` to deploy.'
     }
+elif [[ $enterprise == 'y' ]]
+then
+    rebuildenterprise $args
 else
     rebuildstaging $args
 fi

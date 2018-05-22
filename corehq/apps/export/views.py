@@ -49,7 +49,10 @@ from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
-from corehq.apps.export.tasks import generate_schema_for_all_builds
+from corehq.apps.export.tasks import (
+    generate_schema_for_all_builds,
+    manually_rebuild_export_task,
+)
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
@@ -95,7 +98,6 @@ from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
     HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -1088,9 +1090,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         raise NotImplementedError("Must implement generate_create_form_url")
 
     def update_emailed_es_export_data(self, in_data):
-        from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
-        rebuild_export_task.delay(export_instance_id)
+        manually_rebuild_export_task.delay(export_instance_id)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1115,7 +1116,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
         indexes = [x[0].index for x in relevant_group.all_exports]
         place_index = indexes.index(in_data['component']['index'])
-        rebuild_export_task.delay(group_id, place_index)
+        manually_rebuild_export_task.delay(group_id, place_index)
         return format_angular_success({})
 
     @allow_remote_invocation

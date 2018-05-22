@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 
+from __future__ import unicode_literals
 from sqlagg.base import AliasColumn
 from sqlagg.columns import SumColumn, SimpleColumn
 from sqlagg.filters import EQ, OR, BETWEEN, IN, NOT, AND

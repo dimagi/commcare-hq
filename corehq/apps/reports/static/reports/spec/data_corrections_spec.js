@@ -160,15 +160,19 @@ describe('Data Corrections', function () {
                 assert.sameMembers(expected, _.map($(".data-corrections-modal .test-property:visible"), function(p) { return p.innerText; }));
             };
 
+            assert($(".data-corrections-modal .nav > :first-child").hasClass("active"), "Should display first property by default");
+
             // Display and search english values
             model.updateDisplayProperty("name");
             assertVisibleText(["orange", "red", "yellow"]);
             search("yellow");
             assertVisibleProperties(["yellow"]);
 
-            // Display spanish values
+            // Display and search spanish values
             model.updateDisplayProperty("spanish");
             assertVisibleText(["anaranjado", "rojo", "amarillo"]);
+            search("rojo");
+            assertVisibleProperties(["red"]);
         });
     });
 });

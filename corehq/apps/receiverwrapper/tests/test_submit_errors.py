@@ -82,7 +82,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn("Form is a duplicate", log.problem)
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     def _test_submission_error_post_save(self, openrosa_version):
@@ -117,7 +117,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
         f, path = tmpfile()
         with f:
             f.write("this isn't even close to xml")
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             res = self.client.post(self.url, {
                     "xml_submission_file": f
             })
@@ -143,7 +143,7 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
 
         self.assertIsNotNone(log)
         self.assertIn(message, log.problem)
-        with open(file) as f:
+        with open(file, encoding='utf-8') as f:
             self.assertEqual(f.read(), log.get_xml())
 
     @flag_enabled('DATA_MIGRATION')

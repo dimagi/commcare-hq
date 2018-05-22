@@ -1,12 +1,11 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import os
 from celery.schedules import crontab
 from celery.task import periodic_task
 import tinys3
-from corehq import toggles
 from corehq.apps.domain.utils import get_domains_created_by_user
 from corehq.apps.es.forms import FormES
 from corehq.apps.es.users import UserES
@@ -40,6 +39,7 @@ from dimagi.utils.logging import notify_exception
 from memoized import memoized
 
 from corehq.apps.analytics.utils import analytics_enabled_for_email
+from io import open
 
 _hubspot_failure_soft_assert = soft_assert(to=['{}@{}'.format('cellowitz', 'dimagi.com'),
                                                '{}@{}'.format('biyeun', 'dimagi.com'),

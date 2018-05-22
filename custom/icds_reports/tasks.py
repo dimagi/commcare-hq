@@ -2,7 +2,7 @@ from __future__ import absolute_import
 
 from __future__ import unicode_literals
 from collections import namedtuple
-import csv
+import csv342 as csv
 from datetime import date, datetime, timedelta
 import io
 import logging
@@ -42,6 +42,7 @@ from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
 import six
 from six.moves import range
+from io import open
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -72,8 +73,19 @@ UCR_TABLE_NAME_MAPPING = [
 ]
 
 SQL_FUNCTION_PATHS = [
-    ('migrations', 'sql_templates', 'create_functions.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql')
+    ('migrations', 'sql_templates', 'database_functions', 'update_months_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_ccs_record.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
+    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
 ]
 
 
@@ -135,7 +147,7 @@ def _create_aggregate_functions(cursor):
         celery_task_logger.info("Starting icds reports create_functions")
         for sql_function_path in SQL_FUNCTION_PATHS:
             path = os.path.join(os.path.dirname(__file__), *sql_function_path)
-            with open(path, "r") as sql_file:
+            with open(path, "r", encoding='utf-8') as sql_file:
                 sql_to_execute = sql_file.read()
                 cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports create_functions")
@@ -151,7 +163,7 @@ def _update_aggregate_locations_tables(cursor):
     try:
         path = os.path.join(os.path.dirname(__file__), 'sql_templates', 'update_locations_table.sql')
         celery_task_logger.info("Starting icds reports update_location_tables")
-        with open(path, "r") as sql_file:
+        with open(path, "r", encoding='utf-8') as sql_file:
             sql_to_execute = sql_file.read()
             cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports update_location_tables_sql")
@@ -471,7 +483,7 @@ def _send_data_validation_email(csv_columns, month, bad_data):
     bad_underweight_awcs = bad_data.get('bad_underweight_awcs', [])
     bad_lbw_awcs = bad_data.get('bad_lbw_awcs', [])
 
-    csv_file = io.BytesIO()
+    csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(('type',) + csv_columns)
     _icds_add_awcs_to_file(writer, 'wasting', bad_wasting_awcs)

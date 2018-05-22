@@ -44,7 +44,7 @@ class Command(BaseCommand):
 
         self.stdout.ending = "\n"
         self.stderr.ending = "\n"
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             domains = [name.strip() for name in f.readlines() if name.strip()]
 
         self.stdout.write("Processing {} domains".format(len(domains)))

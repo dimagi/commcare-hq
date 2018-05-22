@@ -38,6 +38,7 @@ import six
 import uuid
 from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
@@ -112,7 +113,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property

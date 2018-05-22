@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
     @log_exception()
     def handle(self, filename, **options):
-        with open(filename) as f:
+        with open(filename, encoding='utf-8') as f:
             body = json.loads(f.read())
 
             # intentionally fails hard if bad or missing doc_type

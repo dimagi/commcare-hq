@@ -193,7 +193,7 @@ window.angular.module('icdsApp').factory('baseControllersService', function() {
                                 var day = _.find(vm.chartData[0].values, function(num) {
                                     return num['x'] === d.value;
                                 });
-                                return vm.getTooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
+                                return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), day);
                             });
                             return chart;
                         },

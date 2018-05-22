@@ -14,6 +14,7 @@ from corehq.apps.data_interfaces.models import (
     CustomMatchDefinition,
     UpdateCaseDefinition,
     CustomActionDefinition,
+    CreateScheduleInstanceActionDefinition,
     CaseRuleCriteria,
     CaseRuleAction,
     CaseRuleSubmission,
@@ -1555,3 +1556,99 @@ class CaseRuleEndToEndTests(BaseCaseRuleTest):
                 run_case_update_rules_for_domain(self.domain)
                 self.assertRuleRunCount(3)
                 self.assertLastRuleRun(1)
+
+
+class TestParentCaseReferences(BaseCaseRuleTest):
+
+    def test_closed_parent_criteria(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(ClosedParentDefinition)
+        self.assertTrue(rule.references_parent_case)
+
+    def test_match_property_criteria(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='status',
+            property_value='green',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        self.assertFalse(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='parent/status',
+            property_value='green',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        self.assertTrue(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name='host/status',
+            property_value='green',
+            match_type=MatchPropertyDefinition.MATCH_EQUAL,
+        )
+        self.assertTrue(rule.references_parent_case)
+
+    def test_update_case_action(self):
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='abc',
+            ),
+        ])
+        definition.save()
+        self.assertFalse(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='parent/result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_EXACT,
+                value='abc',
+            ),
+        ])
+        definition.save()
+        self.assertTrue(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        _, definition = rule.add_action(UpdateCaseDefinition, close_case=False)
+        definition.set_properties_to_update([
+            UpdateCaseDefinition.PropertyDefinition(
+                name='result',
+                value_type=UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY,
+                value='parent/abc',
+            ),
+        ])
+        definition.save()
+        self.assertTrue(rule.references_parent_case)
+
+    def test_create_schedule_instance_action(self):
+        rule = _create_empty_rule(self.domain)
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            reset_case_property_name='abc',
+            start_date_case_property='def',
+        )
+        self.assertFalse(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            reset_case_property_name='parent/abc',
+        )
+        self.assertTrue(rule.references_parent_case)
+
+        rule = _create_empty_rule(self.domain)
+        rule.add_action(
+            CreateScheduleInstanceActionDefinition,
+            start_date_case_property='parent/abc',
+        )
+        self.assertTrue(rule.references_parent_case)

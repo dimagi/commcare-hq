@@ -24,7 +24,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 class AggregationScriptTest(TestCase):
 
     def _load_csv(self, path):
-        with open(path, mode='rb') as f:
+        with open(path, encoding='utf-8') as f:
             csv_data = list(csv.reader(f))
             headers = csv_data[0]
             for row_count, row in enumerate(csv_data):
@@ -93,7 +93,7 @@ class AggregationScriptTest(TestCase):
             differences = []
 
             for key in dict1.keys():
-                value1 = dict1[key].replace('\r\n', '\n')
+                value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
                 value2 = dict2[key].replace('\r\n', '\n')
                 if value1 != value2:
                     differences.append(key)
@@ -105,8 +105,12 @@ class AggregationScriptTest(TestCase):
                     Expected: {}
                 """.format(
                     idx + 1,
-                    ', '.join(['{}: {}'.format(difference, dict1[difference]) for difference in differences]),
-                    ', '.join(['{}: {}'.format(difference, dict2[difference]) for difference in differences])
+                    ', '.join(['{}: {}'.format(
+                        difference, dict1[difference].decode('utf-8')) for difference in differences]
+                    ),
+                    ', '.join(['{}: {}'.format(
+                        difference, dict2[difference]) for difference in differences]
+                    )
                 ))
 
         if messages:
@@ -252,61 +256,101 @@ class AggregationScriptTest(TestCase):
     def test_agg_child_health_2017_04_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_child_health_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5.csv')
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5.csv'),
+            lambda x: (
+                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
+                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
+            )
         )
 
     def test_agg_ccs_record_2017_04_01_1(self):

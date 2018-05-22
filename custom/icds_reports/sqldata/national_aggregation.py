@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from sqlagg.filters import EQ, IN, NOT
 
 from corehq.apps.reports.sqlreport import SqlData
