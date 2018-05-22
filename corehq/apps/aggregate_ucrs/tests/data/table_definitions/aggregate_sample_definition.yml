@@ -39,8 +39,8 @@ aggregation_config:
   unit: month  # unit additionally determines the datatype and the column name used
   # conditions for inclusion of a particular row on a particular month
   # start and end conditions must (currently) be based off the primary data source table
-  start_column: date_opened  # if value is not set, defaults to excluding the row entirely
-  end_column: date_closed  # if value is not set, defaults to excluding the row beyond the current date
+  start_column: opened_date  # if value is not set, defaults to excluding the row entirely
+  end_column: closed_date  # if value is not set, defaults to excluding the row beyond the current date
 secondary_tables:
   # this is a list, though in this example there is only one.
   - data_source_id: d824a4864ecb421fb3be8bf8173a05d7
