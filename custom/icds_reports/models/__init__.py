@@ -28,9 +28,5 @@ from custom.icds_reports.models.util import (
     AggregateSQLProfile
 )
 from custom.icds_reports.models.helper import (
-    ChildHealthCategories,
-    CcsRecordCategories,
-    ThrCategories,
-    IcdsMonths,
-    IndiaGeoData
+    IcdsMonths
 )

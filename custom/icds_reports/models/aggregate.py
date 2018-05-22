@@ -300,6 +300,7 @@ class AggAwc(models.Model):
         managed = False
         db_table = 'agg_awc'
 
+
 class AggCcsRecord(models.Model):
     state_id = models.TextField()
     district_id = models.TextField()
