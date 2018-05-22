@@ -16,7 +16,7 @@ class ChildHealthCategories(models.Model):
         app_label = 'icds_model'
         db_table = 'child_health_categories'
         managed = False
-
+        unique_together = (('gender', 'age_tranche', 'caste', 'disabled', 'minority', 'resident'),)
 
 class CcsRecordCategories(models.Model):
     ccs_status = models.TextField()
@@ -46,7 +46,7 @@ class ThrCategories(models.Model):
 
 
 class IcdsMonths(models.Model):
-    month_name = models.TextField()
+    month_name = models.TextField(primary_key=True)
     start_date = models.DateField()
     end_date = models.DateField()
 
