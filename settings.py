@@ -927,7 +927,10 @@ MAX_RULE_UPDATES_IN_ONE_RUN = 10000
 #        'icds-test': ['test-1236', 'test-hindi-marathi'],
 #     },
 #     'teams': {
-#         'en': 'https://www.transifex.com/selfproject/teams/'
+#         'icds-test': {
+#              source lang code at HQ : link to team on transifex
+#             'en': 'https://www.transifex.com/selfproject/teams/'
+#         }
 #     },
 #     'token': 'api-token'
 #

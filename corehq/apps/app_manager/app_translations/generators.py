@@ -139,7 +139,7 @@ class POFileGenerator:
     def generate_translation_files(self):
         self._build_translations()
         if settings.TRANSIFEX_DETAILS:
-            team = settings.TRANSIFEX_DETAILS['teams'].get(self.key_lang)
+            team = settings.TRANSIFEX_DETAILS['teams'][self.domain].get(self.source_lang)
         else:
             team = ""
         now = str(datetime.datetime.now())
