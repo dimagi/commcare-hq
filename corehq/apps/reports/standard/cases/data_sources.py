@@ -27,6 +27,9 @@ class CaseInfo(object):
         self.case = case
         self.report = report
 
+    def __getattr__(self, name):
+        return self.case.get(name)
+
     @property
     def case_type(self):
         return self.case['type']
@@ -159,14 +162,14 @@ class CaseInfo(object):
     def parse_date(self, date_string):
         try:
             return iso_string_to_datetime(date_string)
-        except:
+        except Exception:
             try:
                 date_obj = dateutil.parser.parse(date_string)
                 if isinstance(date_obj, datetime.datetime):
                     return date_obj.replace(tzinfo=None)
                 else:
                     return date_obj
-            except:
+            except Exception:
                 return date_string
 
 
@@ -175,6 +178,7 @@ class CaseDisplay(CaseInfo):
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
+    status = closed_display
 
     @property
     def case_link(self):
@@ -186,12 +190,18 @@ class CaseDisplay(CaseInfo):
             return "%s (bad ID format)" % self.case_name
 
     @property
+    def name(self):
+        return self.case_link
+
+    @property
     def opened_on(self):
         return self._dateprop('opened_on', False)
+    date_opened = opened_on
 
     @property
     def modified_on(self):
         return self._dateprop('modified_on', False)
+    last_modified = modified_on
 
     @property
     def owner_display(self):
