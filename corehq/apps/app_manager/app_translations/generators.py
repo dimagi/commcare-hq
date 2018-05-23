@@ -96,7 +96,10 @@ class POFileGenerator:
                 list_or_detail_index = self._get_header_index(sheet_name, 'list_or_detail')
 
                 def occurrence(_row):
-                    return ':'.join([_row[case_property_index], _row[list_or_detail_index]])
+                    case_property = _row[case_property_index]
+                    # limit case property length to avoid errors at Transifex where there is a limit of 1000
+                    case_property = case_property[:950]
+                    return ':'.join([case_property, _row[list_or_detail_index]])
             elif type_and_id.type == "Form":
                 label_index = self._get_header_index(sheet_name, 'label')
 
