@@ -1,0 +1,36 @@
+{% extends 'reports/filters/base.html' %}
+{% load hq_shared_tags %}
+{% load i18n %}
+{% block filter_content %}
+    <div class="report-filter-case-properties" data-initialvalue="{{ initial_value }}">
+        <table class="table table-condensed">
+            <thead>
+                <th></th>
+                <th>{% trans "Property" %}</th>
+                <th>{% trans "Display Text" %}</th>
+                <th>&nbsp;</th>
+            </thead>
+            <tbody data-bind="foreach: properties, sortableList: properties">
+                <tr>
+                    <td>
+                        <i class="grip fa fa-arrows-v icon-blue"></i>
+                    </td>
+                    <td><input type="text" class="form-control" data-bind="value: name, enable: !is_default()"  /></td>
+                    <td><input type="text" class="form-control" data-bind="value: label" /></td>
+                    <td>
+                        <i style="cursor: pointer;"
+                           data-bind="visible: !is_default(),
+                                      click: $parent.removeProperty,
+                                      css: hqImport('hqwebapp/js/main').icons.DELETE"
+                           class="icon-remove icon-blue fa fa-remove"></i>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <button class="btn btn-default" data-bind="click: addProperty">
+            <i class="fa fa-plus"></i>
+            {% trans "Add Property" %}
+        </button>
+        <input type="hidden" data-bind="value: allProperties" name="{{ slug }}" />
+    </div>
+{% endblock %}

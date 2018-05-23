@@ -1,11 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
-from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.case_search.filter_dsl import get_properties_from_xpath
+from django.utils.translation import ugettext_lazy as _
+from memoized import memoized
+
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.standard.cases.basic import CaseListReport
+from corehq.apps.reports.standard.cases.filters import (
+    CaseListExplorerColumns,
+    XpathCaseSearchFilter,
+)
 
 
 class CaseListExplorer(CaseListReport):
@@ -17,8 +23,8 @@ class CaseListExplorer(CaseListReport):
         'corehq.apps.reports.filters.case_list.CaseListFilter',
         'corehq.apps.reports.filters.select.CaseTypeFilter',
         'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
-        'corehq.apps.reports.standard.cases.filters.XpathCaseSearchFilter',
-        'corehq.apps.reports.standard.cases.filters.CaseListExplorerColumns',
+        XpathCaseSearchFilter,
+        CaseListExplorerColumns,
     ]
 
     def get_data(self):
@@ -27,22 +33,23 @@ class CaseListExplorer(CaseListReport):
 
     def _build_query(self):
         query = super(CaseListExplorer, self)._build_query()
-        xpath = self.request.GET.get('search_xpath')
+        xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             query = query.xpath_query(self.domain, xpath)
         return query
 
     @property
+    @memoized
     def columns(self):
-        default_columns = [
-            DataTablesColumn("name", prop_name="name.exact"),
-        ]
-        filter_columns = []
-        xpath = self.request.GET.get('search_xpath')
-        if xpath:
-            filter_columns = [DataTablesColumn(c, prop_name=c) for c in get_properties_from_xpath(xpath)]
+        user_columns = []
+        for column in CaseListExplorerColumns.get_value(self.request, self.domain):
+            try:
+                special_property = SPECIAL_CASE_PROPERTIES_MAP[column['name']]
+                user_columns.append(DataTablesColumn(column['label'], prop_name=special_property.sort_property))
+            except KeyError:
+                user_columns.append(DataTablesColumn(column['label'], prop_name=column['name']))
 
-        return default_columns + filter_columns
+        return user_columns
 
     @property
     def headers(self):
@@ -50,8 +57,13 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def rows(self):
+        columns = CaseListExplorerColumns.get_value(self.request, self.domain)
         for case in self.get_data():
-            yield [
-                case.get(column.prop_name.split('.')[0], '')
-                for column in self.columns
-            ]
+            data = []
+            for column in columns:
+                try:
+                    special_property = SPECIAL_CASE_PROPERTIES_MAP[column['name']]
+                    data.append(special_property.value_getter(case))
+                except KeyError:
+                    data.append(case.get(column['name']))
+            yield data

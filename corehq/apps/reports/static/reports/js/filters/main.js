@@ -147,7 +147,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-case-properties").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = casePropertiesFilter.model();
+            var model = casePropertiesFilter.model(data.initialvalue);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {
