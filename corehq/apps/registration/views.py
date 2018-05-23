@@ -107,7 +107,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
         pass
 
 
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Enabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):

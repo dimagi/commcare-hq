@@ -38,11 +38,15 @@ hqDefine('registration/js/new_user.ko', function () {
 
     // Can't set up analytics until the values for the A/B tests are ready
     _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPhoneNumber = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+        _private.isAbPhoneNumberShown = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
+        _kissmetrics.identifyTraits({
+            "Phone number field": _private.isAbPhoneNumberShown ? "Shown" : "Not shown",
+        });
+        _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (_private.isAbPhoneNumber) {
+            if (_private.isAbPhoneNumberShown) {
                 _kissmetrics.track.event("Phone Number Field Filled Out");
             }
 
@@ -233,6 +237,12 @@ hqDefine('registration/js/new_user.ko', function () {
         self.steps = ko.observableArray(steps);
         self.currentStep = ko.observable(0);
 
+        self.currentStep.subscribe(function(newValue) {
+            if (newValue === 1) {
+                _kissmetrics.track.event("Clicked Next button on Step 1 of CommCare signup");
+            }
+        });
+
         var _getDataForSubmission = function () {
             var password = self.password();
             if (typeof(hex_parser) !== 'undefined') {
@@ -297,7 +307,6 @@ hqDefine('registration/js/new_user.ko', function () {
                     _getFormStepUi(_nextStep).fadeIn(500);
                     self.currentStep(_nextStep);
                 });
-
         };
 
         self.previousStep = function () {
