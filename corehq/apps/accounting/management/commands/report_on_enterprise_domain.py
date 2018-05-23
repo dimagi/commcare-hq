@@ -55,15 +55,14 @@ class Command(BaseCommand):
     def _domain_url(self, domain):
         return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
 
-    def _write_file(self, slug, headers, process_domain, multiple=False):
+    def _write_file(self, slug, headers, process_domain):
         row_count = 0
         csv_file = io.BytesIO()
         writer = UnicodeWriter(csv_file)
         writer.writerow(headers)
 
         for domain in [domain for domain in map(Domain.get_by_name, self.domain_names) if domain]:
-            result = process_domain(domain)
-            rows = result if multiple else [result]
+            rows = process_domain(domain)
             row_count = row_count + len(rows)
             writer.writerows(rows)
 
@@ -75,18 +74,18 @@ class Command(BaseCommand):
         }
         return (attachment, row_count)
 
-    def _domain_row(self, domain):
+    def _domain_rows(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain.name)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
-        return [
+        return [[
             domain.name,
             domain.hr_name,
             self._domain_url(domain),
             plan_version.plan.name,
             str(get_mobile_user_count(domain.name, include_inactive=False)),
-        ]
+        ]]
 
-    def _web_user_row(self, domain):
+    def _web_user_rows(self, domain):
         rows = []
         for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
@@ -101,7 +100,7 @@ class Command(BaseCommand):
             ])
         return rows
 
-    def _mobile_user_row(self, domain):
+    def _mobile_user_rows(self, domain):
         rows = []
         for user in get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
                                       include_inactive=False, include_docs=True):
@@ -117,7 +116,7 @@ class Command(BaseCommand):
             ])
         return rows
 
-    def _form_row(self, domain):
+    def _form_rows(self, domain):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
         apps = get_brief_apps_in_domain(domain.name)
@@ -163,18 +162,17 @@ class Command(BaseCommand):
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
         headers = ['Project Space Name', 'Project Name', 'URL', 'Plan', '# of mobile workers']
-        (domain_file, domain_count) = self._write_file('domains', headers, self._domain_row)
+        (domain_file, domain_count) = self._write_file('domains', headers, self._domain_rows)
 
         headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
-        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_row, multiple=True)
+        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_rows)
 
         headers = ['Username', 'Name', 'Last Login', 'Last Submission', 'CommCare Version',
                    'Project Space Name', 'Project Space URL']
-        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers,
-                                                                 self._mobile_user_row, multiple=True)
+        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers, self._mobile_user_rows)
 
         headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL', 'Mobile User']
-        (form_file, form_count) = self._write_file('forms', headers, self._form_row, multiple=True)
+        (form_file, form_count) = self._write_file('forms', headers, self._form_rows)
 
         message = (
             '''{message}
