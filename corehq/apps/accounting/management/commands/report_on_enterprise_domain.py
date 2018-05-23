@@ -112,7 +112,7 @@ class Command(BaseCommand):
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
-                self._format_date(user.last_login),
+                self._format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self._format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
             ] + self._domain_properties(domain))
@@ -169,7 +169,7 @@ class Command(BaseCommand):
         headers = ['Name', 'Email Address', 'Role', 'Last Login'] + domain_headers
         (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_rows)
 
-        headers = ['Username', 'Name', 'Last Login', 'Last Submission', 'CommCare Version'] + domain_headers
+        headers = ['Username', 'Name', 'Last Sync', 'Last Submission', 'CommCare Version'] + domain_headers
         (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers, self._mobile_user_rows)
 
         headers = ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + domain_headers
