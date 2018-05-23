@@ -6,6 +6,7 @@ import uuid
 from casexml.apps.case.models import CommCareCase
 from couchforms.models import XFormInstance
 from corehq.apps.export.export import get_export_file
+from corehq.util.files import TransientTempfile
 
 import six
 from six.moves import map
@@ -63,7 +64,8 @@ def assertContainsExportItems(item_tuples, export_group_schema):
 
 
 def get_export_json(export_instance):
-    export_file = get_export_file([export_instance], [])
+    with TransientTempfile() as temp_path:
+        export_file = get_export_file([export_instance], [], temp_path)
 
-    with export_file as export:
-        return json.loads(export.read())
+        with export_file as export:
+            return json.loads(export.read())

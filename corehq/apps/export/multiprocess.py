@@ -187,7 +187,10 @@ def _get_export_documents_from_file(dump_path, doc_count):
 
 def _get_export_file_path(export_instance, docs, progress_tracker=None):
     export_instances = [export_instance]
-    writer = get_export_writer(export_instances, allow_pagination=False)
+    # Multiprocess exports sometimes intentionally keep the tempfile,
+    # so TransientTempfile isn't appropriate here
+    _, temp_path = tempfile.mkstemp()
+    writer = get_export_writer(export_instances, temp_path, allow_pagination=False)
     with writer.open(export_instances):
         write_export_instance(writer, export_instance, docs, progress_tracker)
         return writer.path

@@ -48,6 +48,7 @@ from corehq.apps.export.tests.util import (
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
+from corehq.util.files import TransientTempfile
 from corehq.util.test_utils import trap_extra_setup, flag_enabled
 from couchexport.export import get_writer
 from couchexport.models import Format
@@ -57,12 +58,13 @@ from six.moves import range
 
 
 def assert_instance_gives_results(docs, export_instance, expected_result):
-    writer = get_export_writer([export_instance])
-    with writer.open([export_instance]):
-        write_export_instance(writer, export_instance, docs)
+    with TransientTempfile() as temp_path:
+        writer = get_export_writer([export_instance], temp_path)
+        with writer.open([export_instance]):
+            write_export_instance(writer, export_instance, docs)
 
-    with ExportFile(writer.path, writer.format) as export:
-        assert json.loads(export.read()) == expected_result
+        with ExportFile(writer.path, writer.format) as export:
+            assert json.loads(export.read()) == expected_result
 
 
 class WriterTest(SimpleTestCase):
@@ -472,7 +474,7 @@ class WriterTest(SimpleTestCase):
             export_format=Format.HTML,
             tables=tables
         )
-        writer = get_export_writer([export_instance])
+
         docs = [
             {
                 'domain': 'my-domain',
@@ -480,10 +482,13 @@ class WriterTest(SimpleTestCase):
                 "form": {'q{}'.format(i): 'value {}'.format(i) for i in range(10)}
             }
         ]
-        with writer.open([export_instance]):
-            write_export_instance(writer, export_instance, docs)
-        with ExportFile(writer.path, writer.format) as export:
-            exported_tables = [table for table in re.findall('<table>', export.read())]
+
+        with TransientTempfile() as temp_path:
+            writer = get_export_writer([export_instance], temp_path)
+            with writer.open([export_instance]):
+                write_export_instance(writer, export_instance, docs)
+            with ExportFile(writer.path, writer.format) as export:
+                exported_tables = [table for table in re.findall('<table>', export.read())]
 
         expected_tables = [t.label for t in tables]
         self.assertEqual(len(expected_tables), len(exported_tables))
@@ -551,31 +556,32 @@ class WriterTest(SimpleTestCase):
 
         ]
 
-        writer = _ExportWriter(get_writer(Format.JSON))
-        with writer.open(export_instances):
-            write_export_instance(writer, export_instances[0], self.docs)
-            write_export_instance(writer, export_instances[1], self.docs)
-            write_export_instance(writer, export_instances[2], self.docs)
+        with TransientTempfile() as temp_path:
+            writer = _ExportWriter(get_writer(Format.JSON), temp_path)
+            with writer.open(export_instances):
+                write_export_instance(writer, export_instances[0], self.docs)
+                write_export_instance(writer, export_instances[1], self.docs)
+                write_export_instance(writer, export_instances[2], self.docs)
 
-        with ExportFile(writer.path, writer.format) as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': ['Q3'],
-                        'rows': [['baz'], ['bop']],
+            with ExportFile(writer.path, writer.format) as export:
+                self.assertEqual(
+                    json.loads(export.read()),
+                    {
+                        'My table': {
+                            'headers': ['Q3'],
+                            'rows': [['baz'], ['bop']],
 
-                    },
-                    'Export2-My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    },
-                    'Export3-My other table': {
-                        'headers': ['Q4'],
-                        'rows': [['bar'], ['boop']],
-                    },
-                }
-            )
+                        },
+                        'Export2-My other table': {
+                            'headers': ['Q4'],
+                            'rows': [['bar'], ['boop']],
+                        },
+                        'Export3-My other table': {
+                            'headers': ['Q4'],
+                            'rows': [['bar'], ['boop']],
+                        },
+                    }
+                )
 
     def test_empty_location(self):
         export_instance = FormExportInstance(
@@ -826,78 +832,80 @@ class ExportTest(SimpleTestCase):
 
     def test_simple_bulk_export(self):
 
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        selected=True,
-                        label="My table",
-                        path=MAIN_TABLE,
-                        columns=[
-                            ExportColumn(
-                                label="Foo column",
-                                item=ExportItem(
-                                    path=[PathNode(name="foo")]
+        with TransientTempfile() as temp_path:
+            export_file = get_export_file(
+                [
+                    CaseExportInstance(
+                        export_format=Format.JSON,
+                        domain=DOMAIN,
+                        case_type=DEFAULT_CASE_TYPE,
+                        tables=[TableConfiguration(
+                            selected=True,
+                            label="My table",
+                            path=MAIN_TABLE,
+                            columns=[
+                                ExportColumn(
+                                    label="Foo column",
+                                    item=ExportItem(
+                                        path=[PathNode(name="foo")]
+                                    ),
+                                    selected=True,
                                 ),
-                                selected=True,
-                            ),
-                        ]
-                    )]
-                ),
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=MAIN_TABLE,
-                        columns=[
-                            ExportColumn(
-                                label="Bar column",
-                                item=ExportItem(
-                                    path=[PathNode(name="bar")]
-                                ),
-                                selected=True,
+                            ]
+                        )]
+                    ),
+                    CaseExportInstance(
+                        export_format=Format.JSON,
+                        domain=DOMAIN,
+                        case_type=DEFAULT_CASE_TYPE,
+                        tables=[TableConfiguration(
+                            label="My table",
+                            selected=True,
+                            path=MAIN_TABLE,
+                            columns=[
+                                ExportColumn(
+                                    label="Bar column",
+                                    item=ExportItem(
+                                        path=[PathNode(name="bar")]
+                                    ),
+                                    selected=True,
+                                )
+                            ]
+                        )]
+                    ),
+                ],
+                [],  # No filters
+                temp_path,
+            )
+
+            expected = {
+                'Export1-My table': {
+                    "A1": "Foo column",
+                    "A2": "apple",
+                    "A3": "apple",
+                    "A4": "apple",
+                },
+                "Export2-My table": {
+                    "A1": "Bar column",
+                    "A2": "banana",
+                    "A3": "banana",
+                    "A4": "banana",
+                },
+            }
+
+            with export_file as export:
+                wb = load_workbook(export)
+                self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
+
+                for sheet in expected.keys():
+                    for cell in expected[sheet].keys():
+                        self.assertEqual(
+                            wb[sheet][cell].value,
+                            expected[sheet][cell],
+                            'AssertionError: Sheet "{}", cell "{}" expected: "{}", got "{}"'.format(
+                                sheet, cell, expected[sheet][cell], wb[sheet][cell].value
                             )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
-        )
-
-        expected = {
-            'Export1-My table': {
-                "A1": "Foo column",
-                "A2": "apple",
-                "A3": "apple",
-                "A4": "apple",
-            },
-            "Export2-My table": {
-                "A1": "Bar column",
-                "A2": "banana",
-                "A3": "banana",
-                "A4": "banana",
-            },
-        }
-
-        with export_file as export:
-            wb = load_workbook(export)
-            self.assertEqual(wb.get_sheet_names(), ["Export1-My table", "Export2-My table"])
-
-            for sheet in expected.keys():
-                for cell in expected[sheet].keys():
-                    self.assertEqual(
-                        wb[sheet][cell].value,
-                        expected[sheet][cell],
-                        'AssertionError: Sheet "{}", cell "{}" expected: "{}", got "{}"'.format(
-                            sheet, cell, expected[sheet][cell], wb[sheet][cell].value
                         )
-                    )
 
 
 class TableHeaderTest(SimpleTestCase):
