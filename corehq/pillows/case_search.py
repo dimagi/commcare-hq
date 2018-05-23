@@ -11,7 +11,7 @@ from django.utils.dateparse import parse_date
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
-    BASE_CASE_PROPERTIES_MAP,
+    SPECIAL_CASE_PROPERTIES_MAP,
     INDEXED_ON,
     SYSTEM_PROPERTIES,
     VALUE,
@@ -82,7 +82,7 @@ def _get_case_properties(doc_dict):
     assert domain
     base_case_properties = [
         {'key': base_case_property.key, 'value': base_case_property.value_getter(doc_dict)}
-        for base_case_property in BASE_CASE_PROPERTIES_MAP
+        for base_case_property in list(SPECIAL_CASE_PROPERTIES_MAP.values())
     ]
     if should_use_sql_backend(domain):
         dynamic_case_properties = OrderedDict(doc_dict['case_json'])

@@ -20,7 +20,7 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
-    BASE_CASE_PROPERTIES,
+    SPECIAL_CASE_PROPERTIES,
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
@@ -301,7 +301,7 @@ def flatten_result(hit, include_score=False):
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')
-        if key is not None and key not in BASE_CASE_PROPERTIES and value:
+        if key is not None and key not in SPECIAL_CASE_PROPERTIES and value:
             result[key] = value
 
     for key in SYSTEM_PROPERTIES:
