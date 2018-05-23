@@ -4,14 +4,14 @@ import json
 from corehq import toggles
 from corehq.apps.commtrack.models import CommtrackConfig
 from corehq.apps.commtrack.views import BaseCommTrackManageView
-from corehq.apps.domain.decorators import cls_require_superuser_or_developer
+from corehq.apps.domain.decorators import cls_require_superuser_or_contractor
 from corehq.apps.hqwebapp.decorators import use_jquery_ui
 from custom.ilsgateway.models import ReportRun
 
 
 class BaseConfigView(BaseCommTrackManageView):
 
-    @cls_require_superuser_or_developer
+    @cls_require_superuser_or_contractor
     @use_jquery_ui
     def dispatch(self, request, *args, **kwargs):
         return super(BaseConfigView, self).dispatch(request, *args, **kwargs)
@@ -30,7 +30,7 @@ class BaseConfigView(BaseCommTrackManageView):
             'sync_url': self.sync_urlname,
             'sync_stock_url': self.sync_stock_url,
             'clear_stock_url': self.clear_stock_url,
-            'is_developer': toggles.IS_DEVELOPER.enabled(self.request.couch_user.username),
+            'is_developer': toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username),
             'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
 

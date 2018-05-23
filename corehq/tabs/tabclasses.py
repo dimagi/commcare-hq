@@ -1735,7 +1735,7 @@ class AdminTab(UITab):
     @property
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
-                and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 dropdown_dict(_("System Info"), url=reverse("system_info")),
                 dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
@@ -1770,7 +1770,7 @@ class AdminTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
                 (not self.couch_user.is_superuser and
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('Administrative Reports'), [
                     {'title': _('System Info'),
@@ -1852,4 +1852,4 @@ class AdminTab(UITab):
     def _is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))

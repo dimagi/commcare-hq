@@ -507,7 +507,7 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
+IS_CONTRACTOR = StaticToggle(
     'is_developer',
     'Is developer',
     TAG_INTERNAL,
