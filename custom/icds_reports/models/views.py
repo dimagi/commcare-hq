@@ -480,3 +480,4 @@ class AwcLocationMonths(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'awc_location_months'
+
