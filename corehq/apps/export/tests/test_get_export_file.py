@@ -43,6 +43,7 @@ from corehq.apps.export.tests.util import (
     new_case,
     DOMAIN,
     DEFAULT_CASE_TYPE,
+    get_export_json,
 )
 from corehq.elastic import send_to_elasticsearch, get_es_new
 from corehq.pillows.mappings.case_mapping import CASE_INDEX_INFO
@@ -676,53 +677,50 @@ class ExportTest(SimpleTestCase):
         super(ExportTest, cls).tearDownClass()
 
     def test_get_export_file(self):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=[],
-                        columns=[
-                            ExportColumn(
-                                label="Foo column",
-                                item=ExportItem(
-                                    path=[PathNode(name="foo")]
-                                ),
-                                selected=True,
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="Foo column",
+                            item=ExportItem(
+                                path=[PathNode(name="foo")]
                             ),
-                            ExportColumn(
-                                label="Bar column",
-                                item=ExportItem(
-                                    path=[PathNode(name="bar")]
-                                ),
-                                selected=True,
-                            )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
+                            selected=True,
+                        ),
+                        ExportColumn(
+                            label="Bar column",
+                            item=ExportItem(
+                                path=[PathNode(name="bar")]
+                            ),
+                            selected=True,
+                        )
+                    ]
+                )]
+            ),
         )
-        with export_file as export:
-            self.assertEqual(
-                json.loads(export.read()),
-                {
-                    'My table': {
-                        'headers': [
-                            'Foo column',
-                            'Bar column'],
-                        'rows': [
-                            ['apple', 'banana'],
-                            ['apple', 'banana'],
-                            ['apple', 'banana'],
-                        ],
-                    }
+
+        self.assertEqual(
+            export_json,
+            {
+                'My table': {
+                    'headers': [
+                        'Foo column',
+                        'Bar column'],
+                    'rows': [
+                        ['apple', 'banana'],
+                        ['apple', 'banana'],
+                        ['apple', 'banana'],
+                    ],
                 }
-            )
+            }
+        )
 
     def test_case_name_transform(self):
         docs = [
@@ -770,69 +768,61 @@ class ExportTest(SimpleTestCase):
 
     @patch('couchexport.deid.DeidGenerator.random_number', return_value=3)
     def test_export_transforms(self, _):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=True,
-                        path=[],
-                        columns=[
-                            ExportColumn(
-                                label="DEID Date Transform column",
-                                item=ExportItem(
-                                    path=[PathNode(name="date")]
-                                ),
-                                selected=True,
-                                deid_transform=DEID_DATE_TRANSFORM,
-                            )
-                        ]
-                    )]
-                ),
-            ],
-            []  # No filters
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=True,
+                    path=[],
+                    columns=[
+                        ExportColumn(
+                            label="DEID Date Transform column",
+                            item=ExportItem(
+                                path=[PathNode(name="date")]
+                            ),
+                            selected=True,
+                            deid_transform=DEID_DATE_TRANSFORM,
+                        )
+                    ]
+                )]
+            ),
         )
-        with export_file as export:
-            export_dict = json.loads(export.read())
-            export_dict['My table']['rows'].sort()
-            self.assertEqual(
-                export_dict,
-                {
-                    'My table': {
-                        'headers': [
-                            'DEID Date Transform column [sensitive]',
-                        ],
-                        'rows': [
-                            [MISSING_VALUE],
-                            ['2016-04-07'],
-                            ['2016-04-27'],  # offset by 3 since that's the mocked random offset
-                        ],
-                    }
+
+        export_json['My table']['rows'].sort()
+        self.assertEqual(
+            export_json,
+            {
+                'My table': {
+                    'headers': [
+                        'DEID Date Transform column [sensitive]',
+                    ],
+                    'rows': [
+                        [MISSING_VALUE],
+                        ['2016-04-07'],
+                        ['2016-04-27'],  # offset by 3 since that's the mocked random offset
+                    ],
                 }
-            )
+            }
+        )
 
     def test_selected_false(self):
-        export_file = get_export_file(
-            [
-                CaseExportInstance(
-                    export_format=Format.JSON,
-                    domain=DOMAIN,
-                    case_type=DEFAULT_CASE_TYPE,
-                    tables=[TableConfiguration(
-                        label="My table",
-                        selected=False,
-                        path=[],
-                        columns=[]
-                    )]
-                ),
-            ],
-            []  # No filters
+        export_json = get_export_json(
+            CaseExportInstance(
+                export_format=Format.JSON,
+                domain=DOMAIN,
+                case_type=DEFAULT_CASE_TYPE,
+                tables=[TableConfiguration(
+                    label="My table",
+                    selected=False,
+                    path=[],
+                    columns=[]
+                )]
+            )
         )
-        with export_file as export:
-            self.assertEqual(json.loads(export.read()), {})
+        self.assertEqual(export_json, {})
 
     def test_simple_bulk_export(self):
 
