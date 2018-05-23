@@ -59,7 +59,8 @@ class TransientTempfile(object):
     """
 
     def __enter__(self):
-        _, self.path = tempfile.mkstemp()
+        fd, self.path = tempfile.mkstemp()
+        os.close(fd)
         return self.path
 
     def __exit__(self, exc_type, exc_val, exc_tb):
