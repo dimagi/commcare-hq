@@ -20,7 +20,11 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
-from corehq.apps.users.dbaccessors.all_commcare_users import get_all_user_rows, get_mobile_user_count
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_rows,
+    get_mobile_user_count,
+    get_web_user_count,
+)
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
 from six.moves import map
 
@@ -52,8 +56,12 @@ class Command(BaseCommand):
             help='Comma-separated emails to CC (optional)',
         )
 
-    def _domain_url(self, domain):
-        return "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
+    def _domain_properties(self, domain):
+        return [
+            domain.name,
+            domain.hr_name,
+            "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
+        ]
 
     def _write_file(self, slug, headers, process_domain):
         row_count = 0
@@ -77,12 +85,10 @@ class Command(BaseCommand):
     def _domain_rows(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain.name)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
-        return [[
-            domain.name,
-            domain.hr_name,
-            self._domain_url(domain),
+        return [self._domain_properties(domain) + [
             plan_version.plan.name,
             str(get_mobile_user_count(domain.name, include_inactive=False)),
+            str(get_web_user_count(domain.name, include_inactive=False)),
         ]]
 
     def _web_user_rows(self, domain):
@@ -95,9 +101,7 @@ class Command(BaseCommand):
                 user.username,
                 user.role_label(domain.name),
                 self._format_date(user.last_login),
-                domain.name,
-                self._domain_url(domain),
-            ])
+            ] + self._domain_properties(domain))
         return rows
 
     def _mobile_user_rows(self, domain):
@@ -111,9 +115,7 @@ class Command(BaseCommand):
                 self._format_date(user.last_login),
                 self._format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
-                domain.name,
-                self._domain_url(domain),
-            ])
+            ] + self._domain_properties(domain))
         return rows
 
     def _form_rows(self, domain):
@@ -139,10 +141,8 @@ class Command(BaseCommand):
                 hit['form']['@name'],
                 submitted,
                 apps[hit['app_id']] if hit['app_id'] in apps else 'App not found',
-                domain.name,
-                self._domain_url(domain),
                 username,
-            ])
+            ] + self._domain_properties(domain))
         return rows
 
     def _format_date(self, date):
@@ -161,17 +161,18 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        headers = ['Project Space Name', 'Project Name', 'URL', 'Plan', '# of mobile workers']
+        domain_headers = ['Project Space Name', 'Project Name', 'Project URL']
+
+        headers = domain_headers + ['Plan', '# of Mobile Users', '# of Web Users']
         (domain_file, domain_count) = self._write_file('domains', headers, self._domain_rows)
 
-        headers = ['Name', 'Email Address', 'Role', 'Last Login', 'Project Space Name', 'Project Space URL']
+        headers = ['Name', 'Email Address', 'Role', 'Last Login'] + domain_headers
         (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_rows)
 
-        headers = ['Username', 'Name', 'Last Login', 'Last Submission', 'CommCare Version',
-                   'Project Space Name', 'Project Space URL']
+        headers = ['Username', 'Name', 'Last Login', 'Last Submission', 'CommCare Version'] + domain_headers
         (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers, self._mobile_user_rows)
 
-        headers = ['Form Name', 'Submitted', 'App Name', 'Project Space Name', 'Project Space URL', 'Mobile User']
+        headers = ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + domain_headers
         (form_file, form_count) = self._write_file('forms', headers, self._form_rows)
 
         message = (
