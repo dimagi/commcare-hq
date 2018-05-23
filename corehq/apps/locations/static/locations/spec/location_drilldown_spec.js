@@ -13,13 +13,73 @@ describe('Location Drilldown', function() {
 
     it('should select given location when auto drill is enabled', function() {
         var viewModel = new locationSelectViewModel({hierarchy: hierarchy});
-        viewModel.load([{"can_edit": true, "uuid": "9e0e9e654660c8721ec07928971fa688", "name": "test", "is_archived": false, "location_type": "state"}], null);
-        assert.equal(viewModel.selected_locid(), '9e0e9e654660c8721ec07928971fa688');
+        var locations = [
+            {
+                "can_edit": true,
+                "uuid": "state_1",
+                "name": "test",
+                "is_archived": false,
+                "location_type": "state",
+                "have_access_to_parent": true,
+                "children": [
+                    {
+                        "can_edit": true,
+                        "uuid": "district_1",
+                        "name": "test",
+                        "is_archived": false,
+                        "location_type": "district",
+                        "have_access_to_parent": true,
+                        "children": [
+                            {
+                                "can_edit": true,
+                                "uuid": "block_1",
+                                "name": "test",
+                                "is_archived": false,
+                                "have_access_to_parent": true,
+                                "location_type": "block",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        viewModel.load(locations, 'state_1');
+        assert.equal(viewModel.selected_locid(), 'block_1');
     });
 
     it('should not select given location when auto drill is disabled', function() {
         var viewModel = new locationSelectViewModel({hierarchy: hierarchy, auto_drill: false});
-        viewModel.load([{"can_edit": true, "uuid": "9e0e9e654660c8721ec07928971fa688", "name": "test", "is_archived": false, "location_type": "state"}], null);
-        assert.isNull(viewModel.selected_locid());
+        var locations = [
+            {
+                "can_edit": true,
+                "uuid": "state_1",
+                "name": "test",
+                "is_archived": false,
+                "location_type": "state",
+                "have_access_to_parent": true,
+                "children": [
+                    {
+                        "can_edit": true,
+                        "uuid": "district_1",
+                        "name": "test",
+                        "is_archived": false,
+                        "location_type": "district",
+                        "have_access_to_parent": true,
+                        "children": [
+                            {
+                                "can_edit": true,
+                                "uuid": "block_1",
+                                "name": "test",
+                                "is_archived": false,
+                                "have_access_to_parent": true,
+                                "location_type": "block",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ];
+        viewModel.load(locations, 'state_1');
+        assert.equal(viewModel.selected_locid(), 'state_1');
     });
 });
