@@ -245,6 +245,7 @@ hqDefine('export/js/models', function () {
         var self = this,
             serialized;
 
+        console.log(self.toJS().tables[0].columns);
         self.saveState(constants.SAVE_STATES.SAVING);
         serialized = self.toJS();
         $.post({
