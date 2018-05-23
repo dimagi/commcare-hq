@@ -25,7 +25,8 @@ from custom.icds_reports.models.views import (
 )
 from custom.icds_reports.models.util import (
     UcrTableNameMapping,
-    AggregateSQLProfile
+    AggregateSQLProfile,
+    ICDSAuditEntryRecord
 )
 from custom.icds_reports.models.helper import (
     IcdsMonths
