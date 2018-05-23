@@ -10,7 +10,7 @@ from six.moves.urllib.parse import urlencode
 
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext
@@ -90,16 +90,13 @@ def _activate_subscription(subscription):
 
 def activate_subscriptions(based_on_date=None):
     starting_subscriptions = Subscription.visible_objects.filter(
+        Q(date_end__isnull=True) | Q(date_end__gt=F('date_start')),
         is_active=False,
     )
     if based_on_date:
         starting_subscriptions = starting_subscriptions.filter(date_start=based_on_date)
     else:
-        today = datetime.date.today()
-        starting_subscriptions = starting_subscriptions.filter(
-            Q(date_end__isnull=True) | Q(date_end__gt=today),
-            date_start__lte=today,
-        )
+        starting_subscriptions = starting_subscriptions.filter(date_start__lte=datetime.datetime.today())
 
     for subscription in starting_subscriptions:
         try:
