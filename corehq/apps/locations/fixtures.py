@@ -260,7 +260,7 @@ def _cte_get_location_fixture_queryset(user):
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type')
+    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
     return result
 
