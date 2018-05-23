@@ -50,7 +50,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         initial_values = self.get_value(self.request, self.domain) or []
 
         user_value_names = [v['name'] for v in initial_values]
-        for default_column in self.DEFAULT_COLUMNS:
+        for default_column in reversed(self.DEFAULT_COLUMNS):
             if default_column['name'] not in user_value_names:
                 initial_values = [default_column] + initial_values
 
