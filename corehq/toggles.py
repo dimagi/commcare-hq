@@ -508,8 +508,8 @@ GRAPH_CREATION = StaticToggle(
 )
 
 IS_CONTRACTOR = StaticToggle(
-    'is_developer',
-    'Is developer',
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )

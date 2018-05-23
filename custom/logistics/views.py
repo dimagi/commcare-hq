@@ -30,7 +30,7 @@ class BaseConfigView(BaseCommTrackManageView):
             'sync_url': self.sync_urlname,
             'sync_stock_url': self.sync_stock_url,
             'clear_stock_url': self.clear_stock_url,
-            'is_developer': toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username),
+            'is_contractor': toggles.IS_CONTRACTOR.enabled(self.request.couch_user.username),
             'is_commtrack_enabled': CommtrackConfig.for_domain(self.domain)
         }
 
