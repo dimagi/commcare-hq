@@ -507,9 +507,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
