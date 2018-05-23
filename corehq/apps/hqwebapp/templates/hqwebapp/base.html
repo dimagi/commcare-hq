@@ -33,43 +33,7 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
-        {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
-        {% else %}
-        {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
-        {% endcompress %}
-        {% endif %}
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
         {% block csrf_token_block %}
@@ -269,7 +233,7 @@
                         {% else %}
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
                             {% if is_saas_environment %}
-                              <a href="http://sites.dimagi.com/commcare-demo-2" target="_blank" class="btn btn-primary-dark navbar-btn">{% trans 'Get Demo' %}</a>
+                              <a href="http://sites.dimagi.com/commcare-demo-2" target="_blank" class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
                             {% endif %}
                         {% endif %}
                         </div>

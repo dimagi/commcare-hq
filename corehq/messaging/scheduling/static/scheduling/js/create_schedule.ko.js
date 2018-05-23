@@ -190,6 +190,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.visit_scheduler_app_and_form_unique_id.init();
 
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
+        self.editing_custom_immediate_schedule = ko.observable(initial_values.editing_custom_immediate_schedule);
 
         self.create_day_of_month_choice = function(value) {
             if(value === '-1') {

@@ -64,6 +64,7 @@ from memoized import memoized
 from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
+from io import open
 
 
 class ElasticSearchIndexSettings(DocumentSchema):
@@ -450,6 +451,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     sort_expression = ListProperty()
     soft_rollout = DecimalProperty(default=0)
     report_meta = SchemaProperty(ReportMeta)
+    custom_query_provider = StringProperty(required=False)
 
     def __unicode__(self):
         return '{} - {}'.format(self.domain, self.title)
@@ -962,7 +964,7 @@ def get_report_config(config_id, domain):
 
 
 def _read_file(path):
-    with open(path) as f:
+    with open(path, encoding='utf-8') as f:
         if path.endswith('.json'):
             return json.load(f)
         else:

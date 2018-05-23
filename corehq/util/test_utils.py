@@ -103,12 +103,12 @@ class TestFileMixin(object):
 
     @classmethod
     def get_file(cls, name, ext, override_path=None):
-        with open(cls.get_path(name, ext, override_path)) as f:
+        with open(cls.get_path(name, ext, override_path), encoding='utf-8') as f:
             return f.read()
 
     @classmethod
     def write_xml(cls, name, xml, override_path=None):
-        with open(cls.get_path(name, '.xml', override_path), 'w') as f:
+        with open(cls.get_path(name, '.xml', override_path), 'w', encoding='utf-8') as f:
             return f.write(xml)
 
     @classmethod

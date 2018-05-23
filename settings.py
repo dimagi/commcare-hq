@@ -116,8 +116,6 @@ ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
-NIKSHAY_DATAMIGRATION = "%s/%s" % (FILEPATH, "nikshay_datamigration.log")
-PRIVATE_SECTOR_DATAMIGRATION = "%s/%s" % (FILEPATH, "private_sector_datamigration.log")
 FORMPLAYER_TIMING_FILE = "%s/%s" % (FILEPATH, "formplayer.timing.log")
 FORMPLAYER_DIFF_FILE = "%s/%s" % (FILEPATH, "formplayer.diff.log")
 SOFT_ASSERTS_LOG_FILE = "%s/%s" % (FILEPATH, "soft_asserts.log")
@@ -159,6 +157,7 @@ MIDDLEWARE = [
     'auditcare.middleware.AuditMiddleware',
     'no_exceptions.middleware.NoExceptionsMiddleware',
     'corehq.apps.locations.middleware.LocationAccessMiddleware',
+    'custom.icds_reports.middleware.ICDSAuditMiddleware',
 ]
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
@@ -361,8 +360,6 @@ HQ_APPS = (
     'custom.succeed',
     'custom.ucla',
 
-    'custom.uth',
-
     'custom.intrahealth',
     'custom.world_vision',
     'custom.up_nrhm',
@@ -429,10 +426,9 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
 
-# set to True or False in localsettings to override the value set way down below
-IS_LOCATION_CTE_ENABLED = None
-# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
-IS_LOCATION_CTE_ONLY = None
+# may be overridden in localsettings
+IS_LOCATION_CTE_ENABLED = True
+IS_LOCATION_CTE_ONLY = True
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -1177,22 +1173,6 @@ LOGGING = {
         'null': {
             'class': 'logging.NullHandler',
         },
-        'nikshay_datamigration': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': NIKSHAY_DATAMIGRATION,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
-        'private_sector_datamigration': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': PRIVATE_SECTOR_DATAMIGRATION,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'sentry': {
             'level': 'ERROR',
             'class': 'raven.contrib.django.raven_compat.handlers.SentryHandler',
@@ -1309,16 +1289,6 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': True
         },
-        'nikshay_datamigration': {
-            'handlers': ['nikshay_datamigration', 'console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-        'private_sector_datamigration': {
-            'handlers': ['private_sector_datamigration', 'console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
         'sentry.errors.uncaught': {
             'handlers': ['console'],
             'level': 'DEBUG',
@@ -1428,7 +1398,6 @@ COUCHDB_APPS = [
     'fri',
     'crs_reports',
     'grapevine',
-    'uth',
     'openclinica',
 
     # custom reports
@@ -1905,6 +1874,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_1_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_3_child_delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2a_person_cases.json'),
+    os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'custom_sql_mpr_2a_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bi_preg_delivery_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2bii_child_death_list.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'mpr_2ci_child_birth_list.json'),
@@ -1947,16 +1917,10 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'ls_ccs_record_cases.json'),
 
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'adherence.json'),
-
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_notification_register_private.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'tb_lab_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_register_2b.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'patient_overview_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'summary_of_treatment_outcome_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'case_finding_mobile.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'cc_outbound_call_list.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'payment_register.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'beneficiary_register.json'),
@@ -1967,16 +1931,6 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_notification_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'sputum_conversion.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'tb_lab_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_patients.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'patient_overview_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'summary_of_treatment_outcome_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'case_finding_mobile.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'cc_outbound_call_list.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'payment_register.json'),
-    os.path.join('custom', 'enikshay', 'ucr', 'reports', 'qa', 'beneficiary_register.json'),
 ]
 
 
@@ -1985,7 +1939,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'up_nrhm', 'data_sources', 'asha_facilitators.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'submissions.json'),
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
-    os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
@@ -2018,7 +1971,6 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'complementary_feeding_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'dashboard_growth_monitoring.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'postnatal_care_forms.json'),
-    os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'usage_forms_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'commcare_user_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'delivery_forms.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'data_sources', 'dashboard', 'pregnant_tasks.json'),
@@ -2099,7 +2051,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
     'hsph-dev',
     'hsph-betterbirth-pilot-2',
     'commtrack-public-demo',
-    'uth-rhd-test',
     'crs-remind',
     'succeed',
 ]
@@ -2111,7 +2062,6 @@ ES_CASE_FULL_INDEX_DOMAINS = [
 ES_XFORM_FULL_INDEX_DOMAINS = [
     'commtrack-public-demo',
     'pact',
-    'uth-rhd-test',
     'succeed'
 ]
 
@@ -2332,23 +2282,5 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
 
-if IS_LOCATION_CTE_ENABLED is None:
-    IS_LOCATION_CTE_ENABLED = UNIT_TESTING or SERVER_ENVIRONMENT in [
-        'localdev',
-        'changeme',  # default value in localsettings.example.py
-        'staging',
-        'softlayer',
-        'production',
-    ]
-
-if IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY is None:
-    # location MPTT is disabled when IS_LOCATION_CTE_ONLY == True
-    IS_LOCATION_CTE_ONLY = UNIT_TESTING or SERVER_ENVIRONMENT in [
-        'localdev',
-        'changeme',  # default value in localsettings.example.py
-        'staging',
-        'softlayer',
-        'production',
-    ]
-else:
-    IS_LOCATION_CTE_ONLY = False
+# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
+IS_LOCATION_CTE_ONLY = bool(IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY)

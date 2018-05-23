@@ -11,6 +11,7 @@ from functools import wraps
 
 import operator
 
+import pytz
 import qrcode
 from base64 import b64encode
 from six.moves import cStringIO
@@ -22,6 +23,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
@@ -36,6 +38,7 @@ import six
 import uuid
 from six.moves import range
 from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
@@ -56,6 +59,8 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
@@ -108,7 +113,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
@@ -616,3 +621,16 @@ def track_time(func):
         return result
 
     return wrapper
+
+
+def percent_num(x, y):
+    return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
+
+
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''

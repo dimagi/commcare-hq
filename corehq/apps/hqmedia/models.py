@@ -24,6 +24,7 @@ from corehq.apps.app_manager.xform import XFormValidationError
 from corehq.apps.domain.models import LICENSES, LICENSE_LINKS
 from corehq.blobs.mixin import BlobMixin
 import six
+from io import open
 
 MULTIMEDIA_PREFIX = "jr://file/"
 LOGO_ARCHIVE_KEY = 'logos'
@@ -369,7 +370,7 @@ class CommCareImage(CommCareMultimedia):
     def get_invalid_image_data(cls):
         import os
         invalid_image_path = os.path.join(os.path.dirname(__file__), 'static/hqmedia/images/invalid_image.png')
-        return Image.open(open(invalid_image_path))
+        return Image.open(open(invalid_image_path, 'rb'))
 
     @classmethod
     def get_thumbnail_data(cls, data, size):

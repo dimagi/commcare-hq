@@ -9,6 +9,7 @@ import faker
 from django.core.management.base import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
+from six.moves import range
 
 
 class Command(BaseCommand):

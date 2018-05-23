@@ -133,7 +133,7 @@ class CouchSqlDomainMigrator(object):
                 new_wrapped_form = self.queues.get_next()
                 if not new_wrapped_form:
                     break
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+                pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
 
         # finish up the queues once all changes have been iterated through
         while self.queues.has_next():
@@ -141,7 +141,11 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                sleep(0)  # swap greenlets
+                sleep(0.1)  # swap greenlets
+
+            remaining_items = self.queues.remaining_items() + len(pool)
+            if remaining_items % 10 == 0:
+                self.log_info('Waiting on {} docs'.format(remaining_items))
 
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
@@ -730,7 +734,7 @@ class PartiallyLockingQueue(object):
 
         Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
         """
-        for lock_id, queue in self.queue_by_lock_id.iteritems():
+        for lock_id, queue in six.iteritems(self.queue_by_lock_id):
 
             if len(queue) == 0:
                 continue
@@ -757,7 +761,7 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if there are objs left, False if not
         """
-        for _, queue in self.queue_by_lock_id.iteritems():
+        for _, queue in six.iteritems(self.queue_by_lock_id):
             if len(queue) > 0:
                 return True
         return False
@@ -818,6 +822,9 @@ class PartiallyLockingQueue(object):
 
     def release_lock(self, lock_ids):
         self.currently_locked.difference_update(lock_ids)
+
+    def remaining_items(self):
+        return sum(len(queue) for _, queue in six.iteritems(self.queue_by_lock_id))
 
 
 class UnexpectedObjectException(Exception):

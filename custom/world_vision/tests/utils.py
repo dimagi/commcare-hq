@@ -13,6 +13,6 @@ class WVTest(TestCase):
 
     def setUp(self):
         fullpath = os.path.join(os.path.dirname(__file__), 'data', self.file_name)
-        with open(fullpath, 'r') as f:
+        with open(fullpath, 'r', encoding='utf-8') as f:
             raw = f.read()
             self.case = CommCareCase.wrap(json.loads(raw))

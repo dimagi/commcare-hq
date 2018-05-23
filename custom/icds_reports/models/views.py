@@ -1,8 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from django.db import models
-
 
 class AggAwcDailyView(models.Model):
     awc_id = models.TextField(primary_key=True)
@@ -482,4 +480,3 @@ class AwcLocationMonths(models.Model):
         app_label = 'icds_model'
         managed = False
         db_table = 'awc_location_months'
-

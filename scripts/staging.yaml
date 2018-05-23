@@ -50,7 +50,6 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - jls/data-corrections-forms  # Jenny 3/27
   - je/report-builder-button # J$ 4/3
   - ce/auto-batches # Cal April 6
   - ce/app-status-staging # Cal April 9
@@ -60,6 +59,8 @@ branches:
   - sr-training # Sravan: May 7
   - jls/enforce-privacy-policy  # Jenny May 9
   - np/draggable  # NP 5/10
+  - jls/ejs-async-reports-tabular # Jenny May 15
+  - jls/fix-cc-version  # Jenny May 21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

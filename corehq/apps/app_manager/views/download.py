@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
-import os
 
 from couchdbkit import ResourceConflict, ResourceNotFound
 from django.contrib import messages
@@ -179,17 +178,6 @@ def download_jar(request, domain, app_id):
     except Exception:
         messages.error(request, BAD_BUILD_MESSAGE)
         return back_to_main(request, domain, app_id=app_id)
-    return response
-
-
-def download_test_jar(request):
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'CommCare.jar')) as f:
-        jar = f.read()
-
-    response = HttpResponse(content_type="application/java-archive")
-    set_file_download(response, "CommCare.jar")
-    response['Content-Length'] = len(jar)
-    response.write(jar)
     return response
 
 

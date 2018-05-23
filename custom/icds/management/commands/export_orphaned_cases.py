@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 
 from django.core.management import BaseCommand
 
@@ -10,6 +10,7 @@ from corehq.apps.locations.models import SQLLocation
 from dimagi.utils.chunked import chunked
 
 from corehq.util.log import with_progress_bar
+from io import open
 
 CHILD_PROPERTIES = ['case_id', 'owner_id', 'opened_on', 'modified_on',
                     'name', 'aadhar_number', 'dob', 'died']
@@ -34,7 +35,7 @@ class Command(BaseCommand):
         owners = SQLLocation.objects.get_queryset_descendants(relevant_districts, include_self=True)
         owner_name_mapping = {loc.location_id: loc.name for loc in owners}
         hh_cases = self._get_closed_hh_cases(list(owner_name_mapping))
-        with open(child_file, 'w') as child_csv:
+        with open(child_file, 'w', encoding='utf-8') as child_csv:
             child_writer = csv.writer(child_csv)
             child_writer.writerow(CSV_HEADERS)
             for cases in chunked(with_progress_bar(hh_cases, hh_cases.count), 500):
