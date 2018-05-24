@@ -205,8 +205,9 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': '0.00%'}, {'html': '0.00%'},
-             {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'}, {'html': '80.43%'}]
+            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': 'pas de donn\xe9es'},
+             {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'},
+             {'html': '80.43%'}]
         )
 
     def test_recovery_rate_by_pps_report_country_level(self):
@@ -296,7 +297,8 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': '0.00%'}, {'html': '0.00%'},
-                {'html': '0.00%'}, {'html': '0.00%'}, {'html': '0.00%'}, {'html': '37.38%'}
+                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
+                {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}
             ]
         )

@@ -1393,16 +1393,26 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1543,18 +1553,28 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-            'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1699,16 +1719,26 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1849,16 +1879,26 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1994,18 +2034,28 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-                'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-            'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -2234,7 +2284,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
         total_row.append('Total (CFA)')
         for month_index in range(len(self.months)):
-            if data[month_index]:
+            if data.get(month_index):
                 total_row.append(
                     '{:.2f}'.format(data[month_index])
                 )
