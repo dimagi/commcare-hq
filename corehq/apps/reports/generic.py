@@ -8,7 +8,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -638,7 +638,7 @@ class GenericReportView(object):
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
-        return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
+        return JsonResponse(self._async_context())
 
     def _async_context(self):
         self.update_template_context()
@@ -657,9 +657,10 @@ class GenericReportView(object):
         return dict(
             filters=rendered_filters,
             report=rendered_report,
+            report_table_js_options=self.context['report_table_js_options'],
             title=self.rendered_report_title,
             slug=self.slug,
-            url_root=self.url_root
+            url_root=self.url_root,
         )
 
     @property
@@ -1104,6 +1105,36 @@ class GenericTabularReport(GenericReportView):
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
+        report_table = context['report_table']
+        pagination_on = report_table['pagination']['is_on']
+        context.update({
+            'report_table_js_options': {
+                'datatables': report_table['datatables'],
+                'default_rows': report_table['default_rows'] or 10,
+                'start_at_row': report_table['start_at_row'] or 0,
+                'show_all_rows': report_table['show_all_rows'],
+                'sortable': report_table['sortable'],
+                'headers': {
+                    'render_aoColumns': report_table['headers'].render_aoColumns,
+                    'auto_width': report_table['headers'].auto_width,
+                    'custom_sort': report_table['headers'].custom_sort,
+                },
+                'bad_request_error_text': report_table['bad_request_error_text'],
+                'pagination': {
+                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'is_on': pagination_on,
+                    'source': report_table['pagination']['source'] if pagination_on else None,
+                    'params': report_table['pagination']['params'] if pagination_on else None,
+                },
+                'left_col': {
+                    'is_fixed': report_table['left_col']['is_fixed'],
+                    'fixed': {
+                        'num': report_table['left_col']['fixed']['num'],
+                        'width': report_table['left_col']['fixed']['width'],
+                    } if report_table['left_col']['is_fixed'] else {},
+                },
+            },
+        })
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))
         return context
