@@ -65,6 +65,26 @@
         "is_nullable": true,
         "type": "expression",
         "column_id": "program_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "program_selected_label",
+            "products_fra",
+            "@ids"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": false,
+        "type": "expression",
+        "column_id": "product_ids"
       }
     ],
     "named_expressions": {},
