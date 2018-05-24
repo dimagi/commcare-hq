@@ -19,7 +19,7 @@ from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, bindparam, OR
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
