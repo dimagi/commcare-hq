@@ -232,7 +232,7 @@
                             {% include 'hqwebapp/includes/global_navigation_bar.html' %}
                         {% else %}
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                            {% if is_saas_environment %}
+                            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_KEY %}
                               <a href="#cta-form-get-demo"
                                  target="_blank"
                                  data-toggle="modal"
@@ -550,7 +550,7 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
-        {% if not request.user.is_authenticated and is_saas_environment %}
+        {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_KEY %}
 
           <div class="modal fade" id="cta-form-get-demo">
             <div class="modal-dialog">
@@ -573,7 +573,7 @@
           <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2.js"></script>
           <script>
             hbspt.forms.create({
-              portalId: "503070",
+              portalId: "{{ ANALYTICS_IDS.HUBSPOT_API_KEY }}",
               formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
               target: "#get-demo-cta-form-body",
               css: ""
