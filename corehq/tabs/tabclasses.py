@@ -22,6 +22,21 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.reminders.views import (
+    BroadcastListView as OldBroadcastListView,
+    CreateBroadcastView,
+    EditBroadcastView,
+    CopyBroadcastView,
+    EditScheduledReminderView,
+    CreateScheduledReminderView,
+    CreateComplexScheduledReminderView,
+    RemindersListView,
+    KeywordsListView,
+    AddNormalKeywordView,
+    AddStructuredKeywordView,
+    EditNormalKeywordView,
+    EditStructuredKeywordView,
+)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -34,6 +49,16 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
+from corehq.messaging.scheduling.views import (
+    MessagingDashboardView,
+    BroadcastListView as NewBroadcastListView,
+    CreateScheduleView,
+    EditScheduleView,
+    ConditionalAlertListView,
+    CreateConditionalAlertView,
+    EditConditionalAlertView,
+)
+from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -898,12 +923,6 @@ class MessagingTab(UITab):
         reminders_urls = []
 
         if self.can_access_reminders and self.show_old_reminders_pages:
-            from corehq.apps.reminders.views import (
-                EditScheduledReminderView,
-                CreateScheduledReminderView,
-                CreateComplexScheduledReminderView,
-                RemindersListView,
-            )
             reminders_urls.extend([
                 {
                     'title': _("Reminders"),
@@ -922,21 +941,14 @@ class MessagingTab(UITab):
                             'urlname': CreateComplexScheduledReminderView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
                 },
                 {
                     'title': _("Reminder Calendar"),
                     'url': reverse('scheduled_reminders', args=[self.domain]),
-                    'show_in_dropdown': True,
                 },
             ])
 
         if self.can_use_inbound_sms:
-            from corehq.apps.reminders.views import (
-                KeywordsListView, AddNormalKeywordView,
-                AddStructuredKeywordView, EditNormalKeywordView,
-                EditStructuredKeywordView,
-            )
             reminders_urls.append({
                 'title': _("Keywords"),
                 'url': reverse(KeywordsListView.urlname, args=[self.domain]),
@@ -980,6 +992,11 @@ class MessagingTab(UITab):
 
     @property
     @memoized
+    def show_dashboard(self):
+        return show_messaging_dashboard(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def messages_urls(self):
         messages_urls = []
 
@@ -993,14 +1010,6 @@ class MessagingTab(UITab):
 
         if self.can_access_reminders:
             if self.show_new_reminders_pages:
-                from corehq.messaging.scheduling.views import (
-                    BroadcastListView as NewBroadcastListView,
-                    CreateScheduleView,
-                    EditScheduleView,
-                    ConditionalAlertListView,
-                    CreateConditionalAlertView,
-                    EditConditionalAlertView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcasts"),
@@ -1015,7 +1024,6 @@ class MessagingTab(UITab):
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                     {
                         'title': _("Conditional Alerts"),
@@ -1030,16 +1038,9 @@ class MessagingTab(UITab):
                                 'urlname': EditConditionalAlertView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
             if self.show_old_reminders_pages:
-                from corehq.apps.reminders.views import (
-                    BroadcastListView as OldBroadcastListView,
-                    CreateBroadcastView,
-                    EditBroadcastView,
-                    CopyBroadcastView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcast Messages"),
@@ -1058,7 +1059,6 @@ class MessagingTab(UITab):
                                 'urlname': CopyBroadcastView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
 
@@ -1147,8 +1147,67 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    def dropdown_items(self):
+        result = []
+
+        if self.show_dashboard:
+            result.append(dropdown_dict(_("Dashboard"), is_header=True))
+            result.append(dropdown_dict(
+                _("Dashboard (beta)"),
+                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_old_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcast Messages"),
+                url=reverse(OldBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Reminders"),
+                url=reverse(RemindersListView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_new_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcasts"),
+                url=reverse(NewBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Conditional Alerts"),
+                url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+            ))
+
+        if not self.show_dashboard:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(
+                _("View All"),
+                url=reverse('sms_compose_message', args=[self.domain]),
+            ))
+
+        return result
+
+    @property
     def sidebar_items(self):
         items = []
+
+        if self.show_dashboard:
+            items.append((
+                _("Dashboard"),
+                [{
+                    'title': _("Dashboard"),
+                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+                }]
+            ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
