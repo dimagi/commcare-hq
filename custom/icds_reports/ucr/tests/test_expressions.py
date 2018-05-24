@@ -220,7 +220,7 @@ class TestFormsExpressionSpecWithFilter(TestCase):
                 "type": "constant",
                 "constant": min_date,
                 "datatype": "date"
-            }
+            },
             "to_date_expression": {
                 "type": "constant",
                 "constant": max_date,
