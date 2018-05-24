@@ -555,7 +555,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': _(
                         "Percentage of children who were put to the breast within one hour of birth. "
-                        "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' "
+                        "Early initiation of breastfeeding ensure the newborn receives the 'first milk' "
                         "rich in nutrients and encourages exclusive breastfeeding practice"
                     ),
                     'percent': percent_diff(
@@ -581,7 +581,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'label': _('Exclusive breastfeeding'),
                     'help_text': _(
                         "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                        "An infant is exclusively breastfed if they recieve only breastmilk "
+                        "An infant is exclusively breastfed if they receive only breastmilk "
                         "with no additional food, liquids (even water) ensuring "
                         "optimal nutrition and growth between 0 - 6 months"
                     ),
@@ -607,7 +607,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                     'help_text': _(
                         "Percentage of children between 6 - 8 months given timely introduction to solid, "
                         "semi-solid or soft food. "
-                        "Timely intiation of complementary feeding in addition to breastmilk "
+                        "Timely initiation of complementary feeding in addition to breastmilk "
                         "at 6 months of age is a key feeding practice to reduce malnutrition"
                     ),
                     'percent': percent_diff(
@@ -659,9 +659,9 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 {
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
-                        "Percentage of pregant women who delivered in a public or private medical "
+                        "Percentage of pregnant women who delivered in a public or private medical "
                         "facility in the last month. "
-                        "Delivery in medical instituitions is associated with a decrease maternal mortality rate"
+                        "Delivery in medical institutions is associated with a decrease maternal mortality rate"
                     )),
                     'percent': percent_diff(
                         'institutional_delivery_in_month_sum',
