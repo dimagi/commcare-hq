@@ -1,4 +1,4 @@
-hqDefine("reports/js/async_tabular", function() {
+hqDefine("reports/js/tabular", function() {
     function renderPage(slug, tableOptions) {
         if (tableOptions && tableOptions.datatables) {
             var tableConfig = tableOptions,
@@ -54,6 +54,7 @@ hqDefine("reports/js/async_tabular", function() {
     }
 
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    // Handle async reports
     $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
         var jsOptions = initialPageData("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
@@ -62,7 +63,7 @@ hqDefine("reports/js/async_tabular", function() {
         renderPage(data.slug, data.report_table_js_options);
     });
 
-    // Contrary to its name, this module is sometimes used by non-async reports, such as some of the admin reports
+    // Handle sync reports
     $(function() {
         if (initialPageData("report_table_js_options")) {
             renderPage(initialPageData("js_options").slug, initialPageData("report_table_js_options"));
