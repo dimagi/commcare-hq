@@ -88,6 +88,15 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
 ]
 
+SQL_VIEWS_PATHS = [
+    ('migrations', 'sql_templates', 'database_views', 'awc_location_months.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_awc_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_ccs_record_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'daily_attendance.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
+]
+
 
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
@@ -116,6 +125,7 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
             _create_child_health_monthly_view()
 
@@ -140,6 +150,23 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily))
         tasks.append(email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')))
         chain(*tasks).delay()
+
+
+def _create_views(cursor):
+    try:
+        celery_task_logger.info("Starting icds reports create_sql_views")
+        for sql_view_path in SQL_VIEWS_PATHS:
+            path = os.path.join(os.path.dirname(__file__), *sql_view_path)
+            with open(path, "r", encoding='utf-8') as sql_file:
+                sql_to_execute = sql_file.read()
+                cursor.execute(sql_to_execute)
+        celery_task_logger.info("Ended icds reports create_views")
+    except Exception:
+        # This is likely due to a change in the UCR models or aggregation script which should be rare
+        # First step would be to look through this error to find what function is causing the error
+        # and look for recent changes in this folder.
+        _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
+        raise
 
 
 def _create_aggregate_functions(cursor):
