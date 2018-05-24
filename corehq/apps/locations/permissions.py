@@ -134,8 +134,9 @@ def is_locations_admin(view_fn):
 
 
 def user_can_edit_any_location(user, project):
-    print(user.has_permission(project.name, 'access_all_locations'))
-    return user.is_domain_admin(project.name) or not project.location_restriction_for_users or user.has_permission(project.name, 'access_all_locations')
+    return user.is_domain_admin(project.name) or \
+        not project.location_restriction_for_users or \
+        user.has_permission(project.name, 'access_all_locations')
 
 
 def can_edit_any_location(view_fn):
