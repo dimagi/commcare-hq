@@ -1,4 +1,4 @@
-hqDefine('hqwebapp/js/atwho', function () {
+hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
     var _init = function($input, options, afterInsert) {
         $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
             $input.val($input.data("selected-value")).change();
@@ -38,6 +38,7 @@ hqDefine('hqwebapp/js/atwho', function () {
                 },
             },
         };
+        atwhoOptions = _.defaults(options.atwhoOptions || {}, atwhoOptions);
 
         if (options.ajax && options.ajax.url) {
             $input.one('focus', function () {
