@@ -21,10 +21,10 @@ from corehq.motech.openmrs.openmrs_config import OpenmrsCaseConfig, OpenmrsFormC
 from corehq.motech.openmrs.forms import OpenmrsConfigForm, OpenmrsImporterForm
 from corehq.motech.openmrs.models import ColumnMapping
 from corehq.motech.openmrs.repeater_helpers import (
-    Requests,
     get_patient_identifier_types,
     get_person_attribute_types,
 )
+from corehq.motech.requests import Requests
 from corehq.motech.openmrs.repeaters import OpenmrsRepeater
 from corehq.motech.utils import b64_aes_encrypt
 from memoized import memoized
@@ -83,7 +83,7 @@ class OpenmrsModelListViewHelper(object):
     @property
     @memoized
     def requests(self):
-        return Requests(self.repeater.url, self.repeater.username, self.repeater.password)
+        return Requests(self.domain, self.repeater.url, self.repeater.username, self.repeater.password)
 
 
 def _filter_out_links(json):
@@ -115,7 +115,7 @@ def openmrs_raw_api(request, domain, repeater_id, rest_uri):
     no_links = get_params.pop('links', None) is None
     repeater = OpenmrsRepeater.get(repeater_id)
     assert repeater.domain == domain
-    requests = Requests(repeater.url, repeater.username, repeater.password)
+    requests = Requests(repeater.domain, repeater.url, repeater.username, repeater.password)
     raw_json = requests.get('/ws/rest/v1' + rest_uri, get_params).json()
     if no_links:
         return JsonResponse(_filter_out_links(raw_json))
