@@ -22,6 +22,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateSchedu
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reminders.views import ScheduledRemindersCalendarView
+from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
@@ -56,6 +57,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
 import six
 from six.moves import range
+from six.moves.urllib.parse import quote_plus
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -93,6 +95,21 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def dispatch(self, *args, **kwargs):
         return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
 
+    def get_messaging_history_errors_url(self, messaging_history_url):
+        url_param_tuples = [
+            ('startdate', self.domain_now.date().strftime('%Y-%m-%d')),
+            ('enddate', (self.domain_now.date() - timedelta(days=6)).strftime('%Y-%m-%d')),
+            (EventStatusFilter.slug, MessagingEvent.STATUS_ERROR),
+        ]
+
+        for event_type, description in EventTypeFilter.options:
+            url_param_tuples.append((EventTypeFilter.slug, event_type))
+
+        url_param_list = ['%s=%s' % (quote_plus(name), quote_plus(value)) for name, value in url_param_tuples]
+        url_param_str = '&'.join(url_param_list)
+
+        return '%s?%s' % (messaging_history_url, url_param_str)
+
     @property
     def page_context(self):
         from corehq.apps.reports.standard.sms import (
@@ -107,7 +124,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         else:
             scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
 
-        return {
+        context = {
             'scheduled_events_url': scheduled_events_url,
             'message_log_url': reverse(
                 MessageLogReport.dispatcher.name(), args=[],
@@ -118,6 +135,12 @@ class MessagingDashboardView(BaseMessagingSectionView):
                 kwargs={'domain': self.domain, 'report_slug': MessagingEventsReport.slug}
             ),
         }
+
+        context['messaging_history_errors_url'] = self.get_messaging_history_errors_url(
+            context['messaging_history_url']
+        )
+
+        return context
 
     @cached_property
     def timezone(self):
