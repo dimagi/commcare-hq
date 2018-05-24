@@ -60,6 +60,7 @@ branches:
   - jls/enforce-privacy-policy  # Jenny May 9
   - np/draggable  # NP 5/10
   - jls/ejs-async-reports-tabular # Jenny May 15
+  - jls/ejs-dl-status # Jenny May 24
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
