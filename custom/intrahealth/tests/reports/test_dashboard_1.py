@@ -63,8 +63,8 @@ class TestDashboard1(YeksiTestCase):
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': 'color: red', 'html': '50.00%'},
-                    {'style': 'color: red', 'html': '50.00%'}
+                    {'style': '', 'html': '100.00%'},
+                    {'style': '', 'html': '100.00%'}
                 ],
                 [
                     {'html': 'Region Test'},
@@ -107,8 +107,8 @@ class TestDashboard1(YeksiTestCase):
                 {'style': '', 'html': '100.00%'},
                 {'style': 'color: red', 'html': '80.00%'},
                 {'style': '', 'html': '100.00%'},
-                {'style': 'color: red', 'html': '88.24%'},
-                {'style': 'color: red', 'html': '83.67%'}
+                {'style': 'color: red', 'html': '94.12%'},
+                {'style': 'color: red', 'html': '85.71%'}
             ]
         )
 
@@ -281,7 +281,7 @@ class TestDashboard1(YeksiTestCase):
             [{'html': 'P1'}, {'style': 'color: red', 'html': '33.33%'},
              {'style': 'color: red', 'html': '50.00%'}, {'html': 'pas de donn\xe9es'},
              {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-             {'style': 'color: red', 'html': '40.00%'}],
+             {'style': 'color: red', 'html': '37.50%'}],
             [{'html': 'P2'}, {'style': '', 'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
              {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '0.00%'},
              {'html': 'pas de donn\xe9es'}, {'style': '', 'html': '0.00%'}],
@@ -296,8 +296,8 @@ class TestDashboard1(YeksiTestCase):
              {'style': '', 'html': '0.00%'}, {'style': '', 'html': '0.00%'}],
             [{'html': 'PPS 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
              {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-             {'style': 'color: red', 'html': '30.00%'}, {'html': 'pas de donn\xe9es'},
-             {'style': 'color: red', 'html': '30.00%'}],
+             {'style': 'color: red', 'html': '46.15%'}, {'html': 'pas de donn\xe9es'},
+             {'style': 'color: red', 'html': '46.15%'}],
             [{'html': 'PPS 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
              {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
              {'style': '', 'html': '0.00%'}, {'style': '', 'html': '0.00%'}],
@@ -376,9 +376,9 @@ class TestDashboard1(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                {'html': 'Taux par Pays'}, {'style': 'color: red', 'html': '7.14%'},
+                {'html': 'Taux par Pays'}, {'style': 'color: red', 'html': '8.33%'},
                 {'style': 'color: red', 'html': '35.71%'}, {'style': '', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '9.09%'}, {'style': 'color: red', 'html': '13.64%'},
-                {'style': 'color: red', 'html': '4.65%'}, {'style': 'color: red', 'html': '10.81%'}
+                {'style': 'color: red', 'html': '5.00%'}, {'style': 'color: red', 'html': '21.43%'},
+                {'style': 'color: red', 'html': '4.17%'}, {'style': 'color: red', 'html': '11.35%'}
             ]
         )

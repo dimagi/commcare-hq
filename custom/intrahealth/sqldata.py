@@ -1228,7 +1228,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        group_by = ['real_date', 'pps_id', self.loc_name]
+        group_by = ['doc_id', 'real_date', 'pps_id', self.loc_name]
         if self.loc_id != 'pps_id':
             group_by.append(self.loc_id)
         return group_by
@@ -1236,6 +1236,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Number of PPS with stockout", MaxColumn('pps_is_outstock')),
@@ -1712,7 +1713,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        group_by = ['real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
+        group_by = ['doc_id', 'real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
         if self.loc_id != 'pps_id':
             group_by.append(self.loc_id)
         return group_by
@@ -1720,6 +1721,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Total amount paid by PPS", SimpleColumn('pps_total_amt_paid')),
@@ -2008,11 +2010,12 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        return ['real_date', 'pps_id', 'pps_name', 'nb_products_stockout', 'count_products_select']
+        return ['doc_id', 'real_date', 'pps_id', 'pps_name', 'nb_products_stockout', 'count_products_select']
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
