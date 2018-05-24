@@ -8,7 +8,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -638,7 +638,7 @@ class GenericReportView(object):
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
-        return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
+        return JsonResponse(self._async_context())
 
     def _async_context(self):
         self.update_template_context()
@@ -657,6 +657,7 @@ class GenericReportView(object):
         return dict(
             filters=rendered_filters,
             report=rendered_report,
+            report_table_js_options=self.context['report_table_js_options'],
             title=self.rendered_report_title,
             slug=self.slug,
             url_root=self.url_root,
