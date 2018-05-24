@@ -95,4 +95,5 @@ REPORT_BUILDER_V2 = StaticUINotify(
 MESSAGING_DASHBOARD = StaticUINotify(
     'messaging_dashboard_may2018',
     ends_on=datetime(2018, 7, 1),
+    only_visible_for_users_created_before=datetime(2018, 5, 25),
 )
