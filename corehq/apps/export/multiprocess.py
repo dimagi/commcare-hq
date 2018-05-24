@@ -189,7 +189,8 @@ def _get_export_file_path(export_instance, docs, progress_tracker=None):
     export_instances = [export_instance]
     # Multiprocess exports sometimes intentionally keep the tempfile,
     # so TransientTempfile isn't appropriate here
-    _, temp_path = tempfile.mkstemp()
+    fd, temp_path = tempfile.mkstemp()
+    os.close(fd)
     writer = get_export_writer(export_instances, temp_path, allow_pagination=False)
     with writer.open(export_instances):
         write_export_instance(writer, export_instance, docs, progress_tracker)
