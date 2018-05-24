@@ -85,7 +85,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
 ]
 
 SQL_VIEWS_PATHS = [
@@ -95,6 +94,7 @@ SQL_VIEWS_PATHS = [
     ('migrations', 'sql_templates', 'database_views', 'agg_child_health_monthly.sql'),
     ('migrations', 'sql_templates', 'database_views', 'daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'child_health_monthly.sql'),
 ]
 
 
@@ -127,7 +127,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_aggregate_functions(cursor)
             _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
-            _create_child_health_monthly_view()
 
         tasks = []
 
@@ -287,10 +286,6 @@ def _run_custom_sql_script(commands, day=None):
     with connections[db_alias].cursor() as cursor:
         for command in commands:
             cursor.execute(command, [day])
-
-
-def _create_child_health_monthly_view():
-    _run_custom_sql_script(["SELECT create_child_health_monthly_view()"])
 
 
 def aggregate_awc_daily(day):
