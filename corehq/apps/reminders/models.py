@@ -164,7 +164,10 @@ def looks_like_timestamp(value):
 
 
 def property_references_parent(case_property):
-    return isinstance(case_property, six.string_types) and case_property.startswith("parent/")
+    return isinstance(case_property, six.string_types) and (
+        case_property.startswith("parent/") or
+        case_property.startswith("host/")
+    )
 
 
 def case_matches_criteria(case, match_type, case_property, value_to_match):

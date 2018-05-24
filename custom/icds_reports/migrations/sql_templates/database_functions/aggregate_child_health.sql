@@ -120,8 +120,8 @@ BEGIN
     'sum(CASE WHEN nutrition_status_moderately_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
     'sum(CASE WHEN nutrition_status_severely_underweight = 1 AND nutrition_status_weighed = 1 THEN 1 ELSE 0 END), ' ||
     'sum(wer_eligible), ' ||
-    'sum(thr_eligible), ' ||
-    'sum(rations_21_plus_distributed), ' ||
+    '0, ' ||
+    '0, ' ||
     'sum(pse_eligible), ' ||
     'sum(pse_attended_16_days), ' ||
     'sum(born_in_month), ' ||
@@ -197,7 +197,9 @@ BEGIN
     'counsel_manage_breast_problems = temp.counsel_manage_breast_problems, ' ||
     'counsel_ebf = temp.counsel_ebf, ' ||
     'counsel_adequate_bf = temp.counsel_adequate_bf, ' ||
-    'ebf_no_info_recorded = temp.ebf_no_info_recorded ' ||
+    'ebf_no_info_recorded = temp.ebf_no_info_recorded, ' ||
+    'thr_eligible = temp.thr_eligible, ' ||
+    'rations_21_plus_distributed = temp.rations_21_plus_distributed ' ||
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, ' ||
       'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
@@ -234,7 +236,9 @@ BEGIN
       'sum(counsel_manage_breast_problems) as counsel_manage_breast_problems, ' ||
       'sum(counsel_ebf) as counsel_ebf, ' ||
       'sum(counsel_adequate_bf) as counsel_adequate_bf, ' ||
-      'sum(ebf_no_info_recorded) as ebf_no_info_recorded ' ||
+      'sum(ebf_no_info_recorded) as ebf_no_info_recorded, ' ||
+      'sum(thr_eligible) as thr_eligible, ' ||
+      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||

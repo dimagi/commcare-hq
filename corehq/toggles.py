@@ -507,9 +507,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
@@ -1534,4 +1534,16 @@ TRAINING_MODULE = StaticToggle(
     'Training Modules',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+
+HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
+    'hide_translations_from_forms',
+    'Hide translations for languages from forms',
+    TAG_CUSTOM,
+    description=(
+        "Do not show translations in forms. Comes in handy when your app support multiple "
+        "languages but you want to focus just on app building."
+    ),
+    namespaces=[NAMESPACE_DOMAIN]
 )

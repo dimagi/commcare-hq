@@ -13,7 +13,7 @@ from corehq.apps.domain.utils import legacy_domain_re
 from django.contrib import admin
 from corehq.apps.app_manager.views.phone import list_apps
 from corehq.apps.domain.views import ProBonoStaticView, logo
-from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, unsubscribe, redirect_to_dimagi
+from corehq.apps.hqwebapp.views import apache_license, bsd_license, cda, redirect_to_dimagi
 from corehq.apps.reports.views import ReportNotificationUnsubscribeView
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.reports.urls import report_urls
@@ -139,8 +139,6 @@ urlpatterns = [
     url(r'^exchange/cda_basic/$', TemplateView.as_view(template_name='cda.html'), name='cda_basic'),
     url(r'^exchange/cda/$', cda, name='cda'),
     url(r'^sms_in/$', sms_in, name='sms_in'),
-    url(r'^unsubscribe/(?P<user_id>[\w-]+)/',
-        unsubscribe, name='unsubscribe'),
     url(r'^wisepill/', include('custom.apps.wisepill.urls')),
     url(r'^pro_bono/$', ProBonoStaticView.as_view(),
         name=ProBonoStaticView.urlname),

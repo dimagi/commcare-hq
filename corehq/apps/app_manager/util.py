@@ -338,7 +338,7 @@ def get_commcare_versions(request_user):
 
 def get_commcare_builds(request_user):
     can_view_superuser_builds = (request_user.is_superuser
-                                 or toggles.IS_DEVELOPER.enabled(request_user.username))
+                                 or toggles.IS_CONTRACTOR.enabled(request_user.username))
     return [
         i.build
         for i in CommCareBuildConfig.fetch().menu
