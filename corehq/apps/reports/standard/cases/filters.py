@@ -6,6 +6,9 @@ import json
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 
+from corehq.apps.app_manager.app_schemas.case_properties import (
+    all_case_properties_by_domain,
+)
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 
@@ -56,6 +59,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 
         context.update({
             'initial_value': json.dumps(initial_values),
+            'all_case_properties': json.dumps(all_case_properties_by_domain(self.domain)),
         })
         return context
 

@@ -20,7 +20,7 @@ hqDefine("reports/js/filters/main", [
     phoneNumberFilter,
     buttonGroup,
     scheduleInstanceFilter,
-    casePropertiesFilter,
+    casePropertyColumns,
     locationDrilldown,
     choiceListUtils
 ) {
@@ -144,10 +144,10 @@ hqDefine("reports/js/filters/main", [
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
-        $(".report-filter-case-properties").each(function (i, el) {
+        $(".report-filter-case-property-columns").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = casePropertiesFilter.model(data.initialvalue);
+            var model = casePropertyColumns.model(data.initialvalue, data.allcaseproperties);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {

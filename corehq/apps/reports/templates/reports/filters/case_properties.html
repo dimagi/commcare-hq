@@ -2,7 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 {% block filter_content %}
-    <div class="report-filter-case-properties" data-initialvalue="{{ initial_value }}">
+    <div class="report-filter-case-property-columns" data-initialvalue="{{ initial_value }}" data-allcaseproperties="{{ all_case_properties }}">
         <table class="table table-condensed">
             <thead>
                 <th></th>
@@ -15,7 +15,11 @@
                     <td>
                         <i class="grip fa fa-arrows-v icon-blue"></i>
                     </td>
-                    <td><input type="text" class="form-control" data-bind="value: name, enable: !is_default()"  /></td>
+                    <td><input type="text" class="form-control" data-bind="
+                                     value: name,
+                                     enable: !is_default(),
+                                     casePropertyAutocomplete: $parent.suggestedProperties()
+                                     "  /></td>
                     <td><input type="text" class="form-control" data-bind="value: label" /></td>
                     <td>
                         <i style="cursor: pointer;"
