@@ -59,9 +59,9 @@ class BaseSqlData(SqlData):
 
     def percent_fn(self, x, y):
         return "%(p).2f%%" % \
-            {
-                "p": (100 * float(y or 0) / float(x or 1))
-            }
+               {
+                   "p": (100 * float(y or 0) / float(x or 1))
+               }
 
     def format_data_and_cast_to_float(self, value):
         return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
@@ -94,7 +94,8 @@ class BaseSqlData(SqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                columns = [r.get('sort_key') for r in colrows if
+                           isinstance(r.get('sort_key'), six.integer_types + (float,))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -115,8 +116,8 @@ class ConventureData(BaseSqlData):
 
     @property
     def filters(self):
-        #We have to filter data by real_date_repeat not date(first position in filters list).
-        #Filtering is done directly in columns method(CountUniqueColumn).
+        # We have to filter data by real_date_repeat not date(first position in filters list).
+        # Filtering is done directly in columns method(CountUniqueColumn).
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
@@ -166,7 +167,7 @@ class ConventureData(BaseSqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
-        #Months are displayed in chronological order
+        # Months are displayed in chronological order
         if 'month' in self.group_by:
             from custom.intrahealth.reports import get_localized_months
             return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
@@ -176,7 +177,7 @@ class ConventureData(BaseSqlData):
     def calculate_total_row(self, rows):
         total_row = super(ConventureData, self).calculate_total_row(rows)
         if len(total_row) != 0:
-            #two cell's are recalculated because the summation of percentage gives us bad values
+            # two cell's are recalculated because the summation of percentage gives us bad values
             total_row[4] = "%.0f%%" % (total_row[3] * 100 / float(total_row[1]))
             total_row[-1] = "%.0f%%" % (total_row[5] * 100 / float(total_row[3]))
         return total_row
@@ -388,7 +389,7 @@ class PPSAvecDonnees(BaseSqlData):
         columns.append(DatabaseColumn(_("PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
                                       format_fn=lambda x: {'sort_key': int(x), 'html': int(x)})
-        )
+                       )
         return columns
 
     @property
@@ -419,7 +420,7 @@ class DateSource(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['date',]
+        return ['date', ]
 
     @property
     def columns(self):
@@ -466,6 +467,7 @@ class RecapPassageData(BaseSqlData):
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
+
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_id'),
                            format_fn=lambda id: get_prd_name(id)),
@@ -653,7 +655,8 @@ class NombreData(BaseSqlData):
                     total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                    columns = [r.get('sort_key') for r in colrows if
+                               isinstance(r.get('sort_key'), six.integer_types + (float,))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
@@ -835,6 +838,7 @@ class CustomEQFilter(SqlFilter):
     """
     EQ Filter without binding parameter
     """
+
     def __init__(self, column_name, parameter):
         self.column_name = column_name
         self.parameter = parameter
@@ -2109,7 +2113,7 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
     def calculate_total_row(self, products):
         total_row = ['Total (CFA)']
         for i in range(len(self.months)):
-            total_row.append(self.percent_fn(
+            month_value = self.percent_fn(
                 sum(
                     products[product_id][i]['amt_delivered_convenience'] for product_id in products if
                     products[product_id][i]['ideal_topup']
@@ -2118,7 +2122,17 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
                     products[product_id][i]['ideal_topup'] for product_id in products if
                     products[product_id][i]['ideal_topup']
                 )
-            ))
+            )
+            if self.cell_value_less_than(month_value, 90):
+                style = 'color: red'
+            elif self.cell_value_bigger_than(month_value, 100):
+                style = 'color: orange'
+            else:
+                style = ''
+            total_row.append({
+                'html': month_value,
+                'style': style,
+            })
         return total_row
 
     @property
@@ -2160,12 +2174,25 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
             row = [product_names[product_id]]
             for i in range(len(self.months)):
                 if data[product_id][i]['ideal_topup']:
-                    row.append(
-                        self.percent_fn(data[product_id][i]['amt_delivered_convenience'],
-                                        data[product_id][i]['ideal_topup'])
+                    month_value = self.percent_fn(
+                        data[product_id][i]['amt_delivered_convenience'],
+                        data[product_id][i]['ideal_topup']
                     )
+                    if self.cell_value_less_than(month_value, 90):
+                        style = 'color: red'
+                    elif self.cell_value_bigger_than(month_value, 100):
+                        style = 'color: orange'
+                    else:
+                        style = ''
+                    row.append({
+                        'html': month_value,
+                        'style': style,
+                    })
                 else:
-                    row.append('pas de données')
+                    row.append({
+                        'html': 'pas de données',
+                        'style': '',
+                    })
             rows.append(row)
         return rows
 
