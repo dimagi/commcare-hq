@@ -188,8 +188,8 @@ class TestDashboard3(YeksiTestCase):
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'}]
-                ,
+                    {'style': '', 'html': '100.00%'}
+                ],
                 [
                     'Produit A',
                     {'style': '', 'html': '97.63%'},
