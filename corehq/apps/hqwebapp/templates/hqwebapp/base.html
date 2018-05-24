@@ -550,7 +550,7 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
-        {% if not equest.user.is_authenticated and is_saas_environment %}
+        {% if not request.user.is_authenticated and is_saas_environment %}
 
           <div class="modal fade" id="cta-form-get-demo">
             <div class="modal-dialog">
