@@ -18,8 +18,10 @@
                     <td><input type="text" class="form-control" data-bind="
                                      value: name,
                                      enable: !is_default(),
-                                     casePropertyAutocomplete: $parent.suggestedProperties()
-                                     "  /></td>
+                                     autocompleteAtwho: $parent.suggestedProperties()
+                                     "
+                               data-atwhooptions='{"displayTpl": "<li><span class=\"badge\">${caseType}</span> ${name}</li>"}'
+                        /></td>
                     <td><input type="text" class="form-control" data-bind="value: label" /></td>
                     <td>
                         <i style="cursor: pointer;"

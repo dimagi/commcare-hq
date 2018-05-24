@@ -11,7 +11,14 @@ hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
     var CasePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
         var self = this;
 
-        self.suggestedProperties = ko.observableArray(allCaseProperties['child']);
+        var suggestedProperties = _.flatten(_.map(allCaseProperties, function(caseProperties, caseType){
+            var values = [];
+            for (var i = 0; i < caseProperties.length; i++){
+                values.push({"caseType": caseType, "name": caseProperties[i]});
+            }
+            return values;
+        }));
+        self.suggestedProperties = ko.observableArray(suggestedProperties);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
