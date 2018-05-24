@@ -2231,16 +2231,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '9.9000000000000000',
                     'age_in_months': 17,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'645fd452-3732-44fb-a2d3-46162304807e',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '645fd452-3732-44fb-a2d3-46162304807e',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 1237'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 1237'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2256,16 +2256,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '6.2000000000000000',
                     'age_in_months': 5,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'9ca36787-bed9-4af0-a13e-fca1c9cad360',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '9ca36787-bed9-4af0-a13e-fca1c9cad360',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 1303'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 1303',
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2281,17 +2281,17 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '11.0000000000000000',
                     'age_in_months': 14,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'7673a69c-29af-478c-85c6-9c3b22f6b2e4',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '7673a69c-29af-478c-85c6-9c3b22f6b2e4',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 1305'
-                 },
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 1305'
+                },
                 cls=DjangoJSONEncoder
             )
         )
@@ -2306,16 +2306,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '7.0000000000000000',
                     'age_in_months': 7,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'd5d3fbeb-8b6a-486b-a853-30be35589200',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': 'd5d3fbeb-8b6a-486b-a853-30be35589200',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 1341'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 1341'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2330,16 +2330,18 @@ class TestAWCReport(TestCase):
             json.dumps(
                 {
                     'recorded_weight': '19.0000000000000000',
-                    'age_in_months': 59, 'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'age_in_months': 59,
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 1,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'b954eb28-75de-43c8-9ec0-d38b7d246ead',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': 'b954eb28-75de-43c8-9ec0-d38b7d246ead',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 2617'},
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 2617'
+                },
                 cls=DjangoJSONEncoder
             )
         )
@@ -2354,16 +2356,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '4.0000000000000000',
                     'age_in_months': 2,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 2917'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 2917'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2379,16 +2381,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '14.3000000000000000',
                     'age_in_months': 45,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 13,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 4398'},
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 4398'},
                 cls=DjangoJSONEncoder
             )
         )
@@ -2403,17 +2405,17 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '14.5000000000000000',
                     'age_in_months': 57,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 9,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'4cd07ebf-abce-4345-a930-f6db7ede8996',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '4cd07ebf-abce-4345-a930-f6db7ede8996',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 4399'
-                 },
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 4399'
+                },
                 cls=DjangoJSONEncoder
             )
         )
@@ -2428,16 +2430,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '13.3000000000000000',
                     'age_in_months': 49,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': 11,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'0198ec4a-f5ed-4452-863c-a400f43d238a',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': '0198ec4a-f5ed-4452-863c-a400f43d238a',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 4400'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 4400'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2453,16 +2455,16 @@ class TestAWCReport(TestCase):
                 {
                     'recorded_weight': '6.8000000000000000',
                     'age_in_months': 6,
-                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_stunting': {'color': 'black', 'value': 'Data Not Entered'},
                     'pse_days_attended': None,
                     'dob': None,
-                    'age': u'0 days',
-                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
-                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
-                    'case_id': u'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
+                    'age': '0 days',
+                    'current_month_wasting': {'color': 'black', 'value': 'Data Not Entered'},
+                    'current_month_nutrition_status': {'color': 'black', 'value': 'Normal weight for age'},
+                    'case_id': 'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
                     'recorded_height': 0,
-                    'fully_immunized': u'No',
-                    'person_name': u'Name 1191'
+                    'fully_immunized': 'No',
+                    'person_name': 'Name 1191'
                 },
                 cls=DjangoJSONEncoder
             )
