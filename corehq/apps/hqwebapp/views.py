@@ -434,7 +434,7 @@ def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file
 
 
 def dropbox_next_url(request, download_id):
-    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
+    return request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
