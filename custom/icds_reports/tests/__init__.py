@@ -94,9 +94,6 @@ def setUpModule():
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
-            if adapter.config.table_id == 'static-child_health_cases':
-                # hack because this is in a migration
-                continue
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)

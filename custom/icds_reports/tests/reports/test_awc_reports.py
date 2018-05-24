@@ -2221,7 +2221,7 @@ class TestAWCReport(TestCase):
             ['kpi', 'chart']
         )
 
-    def test_awc_report_beneficiary_ca040875_2e42_4ce4_acf7_f96695b370f1(self):
+    def test_awc_report_beneficiary_645fd452_3732_44fb_a2d3_46162304807e(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][0]
@@ -2229,33 +2229,24 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "12.8000000000000000",
-                    "age_in_months": 59,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Moderately stunted"
-                    },
-                    "pse_days_attended": 14,
-                    "dob": "2012-06-03",
-                    "age": "4 years 11 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Normal weight for height"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Moderately underweight"
-                    },
-                    "case_id": "ca040875-2e42-4ce4-acf7-f96695b370f1",
-                    "recorded_height": "95.0000000000000000",
-                    "fully_immunized": "No",
-                    "person_name": "Name 4416"
+                    'recorded_weight': '9.9000000000000000',
+                    'age_in_months': 17,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'645fd452-3732-44fb-a2d3-46162304807e',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 1237'
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
-    def test_awc_report_beneficiary_82f33fa1_2aec_45ba_8d6c_d3ca9f50ab73(self):
+    def test_awc_report_beneficiary_9ca36787_bed9_4af0_a13e_fca1c9cad360(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][1]
@@ -2263,27 +2254,68 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "14.3000000000000000",
-                    "age_in_months": 59,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 14,
-                    "dob": "2012-06-23",
-                    "age": "4 years 11 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "82f33fa1-2aec-45ba-8d6c-d3ca9f50ab73",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4445",
+                    'recorded_weight': '6.2000000000000000',
+                    'age_in_months': 5,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'9ca36787-bed9-4af0-a13e-fca1c9cad360',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 1303'
+                },
+                cls=DjangoJSONEncoder
+            )
+        )
+
+    def test_awc_report_beneficiary_7673a69c_29af_478c_85c6_9c3b22f6b2e4(self):
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
+        )['data'][2]
+        self.assertJSONEqual(
+            json.dumps(data, cls=DjangoJSONEncoder),
+            json.dumps(
+                {
+                    'recorded_weight': '11.0000000000000000',
+                    'age_in_months': 14,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'7673a69c-29af-478c-85c6-9c3b22f6b2e4',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 1305'
+                 },
+                cls=DjangoJSONEncoder
+            )
+        )
+
+    def test_awc_report_beneficiary_d5d3fbeb_8b6a_486b_a853_30be35589200(self):
+        data = get_awc_report_beneficiary(
+            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
+        )['data'][3]
+        self.assertJSONEqual(
+            json.dumps(data, cls=DjangoJSONEncoder),
+            json.dumps(
+                {
+                    'recorded_weight': '7.0000000000000000',
+                    'age_in_months': 7,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'd5d3fbeb-8b6a-486b-a853-30be35589200',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 1341'
                 },
                 cls=DjangoJSONEncoder
             )
@@ -2292,101 +2324,22 @@ class TestAWCReport(TestCase):
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][2]
-        self.assertJSONEqual(
-            json.dumps(data, cls=DjangoJSONEncoder),
-            json.dumps(
-                {
-                    "recorded_weight": "19.0000000000000000",
-                    "age_in_months": 59,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 1,
-                    "dob": "2012-06-26",
-                    "age": "4 years 11 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "b954eb28-75de-43c8-9ec0-d38b7d246ead",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 2617",
-                },
-                cls=DjangoJSONEncoder
-            )
-        )
-
-    def test_awc_report_beneficiary_519720be_4343_41e7_a9f6_cdfad6ecf8d8(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][3]
-        self.assertJSONEqual(
-            json.dumps(data, cls=DjangoJSONEncoder),
-            json.dumps(
-                {
-                    "recorded_weight": "14.6000000000000000",
-                    "age_in_months": 58,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 14,
-                    "dob": "2012-07-05",
-                    "age": "4 years 10 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "519720be-4343-41e7-a9f6-cdfad6ecf8d8",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4412",
-                },
-                cls=DjangoJSONEncoder
-            )
-        )
-
-    def test_awc_report_beneficiary_80099a73_b7ec_4de9_a402_459ed15f6641(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][4]
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "14.8000000000000000",
-                    "age_in_months": 58,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 16,
-                    "dob": "2012-07-18",
-                    "age": "4 years 10 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "80099a73-b7ec-4de9-a402-459ed15f6641",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4411",
-                },
+                    'recorded_weight': '19.0000000000000000',
+                    'age_in_months': 59, 'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': 1,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'b954eb28-75de-43c8-9ec0-d38b7d246ead',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 2617'},
                 cls=DjangoJSONEncoder
             )
         )
@@ -2399,33 +2352,24 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "13.5000000000000000",
-                    "age_in_months": 58,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 10,
-                    "dob": "2012-07-19",
-                    "age": "4 years 10 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Moderately underweight"
-                    },
-                    "case_id": "532f3754-e231-40ec-a861-abbb2a06dff5",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4408",
+                    'recorded_weight': '4.0000000000000000',
+                    'age_in_months': 2,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 2917'
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
-    def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
+    def test_awc_report_beneficiary_3b242a3b_693e_44dd_ad4a_b713efdb0fdb(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][6]
@@ -2433,33 +2377,23 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "14.5000000000000000",
-                    "age_in_months": 57,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 9,
-                    "dob": "2012-08-24",
-                    "age": "4 years 9 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "4cd07ebf-abce-4345-a930-f6db7ede8996",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4399",
-                },
+                    'recorded_weight': '14.3000000000000000',
+                    'age_in_months': 45,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': 13,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'3b242a3b-693e-44dd-ad4a-b713efdb0fdb',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 4398'},
                 cls=DjangoJSONEncoder
             )
         )
 
-    def test_awc_report_beneficiary_c9ee2435_d7fc_4307_9c18_9d5d83d2a691(self):
+    def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][7]
@@ -2467,33 +2401,24 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "11.0000000000000000",
-                    "age_in_months": 52,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Moderately stunted"
-                    },
-                    "pse_days_attended": 17,
-                    "dob": "2013-01-02",
-                    "age": "4 years 4 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Moderately wasted"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "red",
-                        "value": "Severely underweight"
-                    },
-                    "case_id": "c9ee2435-d7fc-4307-9c18-9d5d83d2a691",
-                    "recorded_height": "94.0000000000000000",
-                    "fully_immunized": "No",
-                    "person_name": "Name 4402",
-                },
+                    'recorded_weight': '14.5000000000000000',
+                    'age_in_months': 57,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': 9,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'4cd07ebf-abce-4345-a930-f6db7ede8996',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 4399'
+                 },
                 cls=DjangoJSONEncoder
             )
         )
 
-    def test_awc_report_beneficiary_d44f7902_83d4_4f1d_a913_4176cf41094e(self):
+    def test_awc_report_beneficiary_0198ec4a_f5ed_4452_863c_a400f43d238a(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][8]
@@ -2501,33 +2426,24 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "14.8000000000000000",
-                    "age_in_months": 51,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 13,
-                    "dob": "2013-02-07",
-                    "age": "4 years 3 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "d44f7902-83d4-4f1d-a913-4176cf41094e",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4414",
+                    'recorded_weight': '13.3000000000000000',
+                    'age_in_months': 49,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': 11,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'0198ec4a-f5ed-4452-863c-a400f43d238a',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 4400'
                 },
                 cls=DjangoJSONEncoder
             )
         )
 
-    def test_awc_report_beneficiary_71230690_c828_4863_b2c1_f61a75aed9d7(self):
+    def test_awc_report_beneficiary_a9dc5cac_6820_45cf_b8c9_16f2cfb0ae02(self):
         data = get_awc_report_beneficiary(
             0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
         )['data'][9]
@@ -2535,27 +2451,18 @@ class TestAWCReport(TestCase):
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
                 {
-                    "recorded_weight": "12.6000000000000000",
-                    "age_in_months": 51,
-                    "current_month_stunting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "pse_days_attended": 9,
-                    "dob": "2013-02-11",
-                    "age": "4 years 3 months ",
-                    "current_month_wasting": {
-                        "color": "black",
-                        "value": "Data Not Entered"
-                    },
-                    "current_month_nutrition_status": {
-                        "color": "black",
-                        "value": "Normal weight for age"
-                    },
-                    "case_id": "71230690-c828-4863-b2c1-f61a75aed9d7",
-                    "recorded_height": 0,
-                    "fully_immunized": "No",
-                    "person_name": "Name 4407",
+                    'recorded_weight': '6.8000000000000000',
+                    'age_in_months': 6,
+                    'current_month_stunting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'pse_days_attended': None,
+                    'dob': None,
+                    'age': u'0 days',
+                    'current_month_wasting': {u'color': u'black', u'value': u'Data Not Entered'},
+                    'current_month_nutrition_status': {u'color': u'black', u'value': u'Normal weight for age'},
+                    'case_id': u'a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02',
+                    'recorded_height': 0,
+                    'fully_immunized': u'No',
+                    'person_name': u'Name 1191'
                 },
                 cls=DjangoJSONEncoder
             )
