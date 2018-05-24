@@ -28,9 +28,9 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "SMS Status:" %}</strong>
-                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "All Caught Up" %}</strong>
-                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Working" %}</strong>
-                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Paused" %}</strong>
+                        <strong class="text-success" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: is_sms_currently_allowed() && queued_sms_count() > 0">{% trans "Processing In Progress" %}</strong>
+                        <strong class="text-danger" data-bind="visible: !is_sms_currently_allowed()">{% trans "Processing Paused" %}</strong>
                         <span data-bind="visible: queued_sms_count() > 0 || !is_sms_currently_allowed()">
                             (<span data-bind="text: queued_sms_count"></span>
                             {% trans "SMS queued" %})
@@ -118,8 +118,8 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <strong>{% trans "All Messaging Events Status:" %}</strong>
-                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "All Caught Up" %}</strong>
-                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Working" %},</strong>
+                        <strong class="text-success" data-bind="visible: events_pending() === 0">{% trans "Processing Complete" %}</strong>
+                        <strong class="text-warning" data-bind="visible: events_pending() > 0">{% trans "Processing In Progress" %},</strong>
                         <span data-bind="visible: events_pending() > 0">
                             <span data-bind="text: events_pending"></span>
                             {% trans "event(s) queued" %}
