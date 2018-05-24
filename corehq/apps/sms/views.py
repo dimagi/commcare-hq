@@ -73,6 +73,7 @@ from corehq.messaging.decorators import require_privilege_but_override_for_migra
 from corehq.messaging.scheduling.async_handlers import SMSSettingsAsyncHandler
 from corehq.messaging.smsbackends.test.models import SQLTestSMSBackend
 from corehq.messaging.smsbackends.telerivet.models import SQLTelerivetBackend
+from corehq.messaging.util import show_messaging_dashboard
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.soft_assert import soft_assert
@@ -114,7 +115,11 @@ SMS_CHAT_HISTORY_CHOICES = (
 
 @login_and_domain_required
 def default(request, domain):
-    return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
+    if show_messaging_dashboard(domain, request.couch_user):
+        from corehq.messaging.scheduling.views import MessagingDashboardView
+        return HttpResponseRedirect(reverse(MessagingDashboardView.urlname, args=[domain]))
+    else:
+        return HttpResponseRedirect(reverse(ComposeMessageView.urlname, args=[domain]))
 
 
 class BaseMessagingSectionView(BaseDomainView):

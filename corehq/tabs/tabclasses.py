@@ -58,6 +58,7 @@ from corehq.messaging.scheduling.views import (
     CreateConditionalAlertView,
     EditConditionalAlertView,
 )
+from corehq.messaging.util import show_messaging_dashboard
 from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
@@ -992,10 +993,7 @@ class MessagingTab(UITab):
     @property
     @memoized
     def show_dashboard(self):
-        return (
-            not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(self.domain) or
-            self.couch_user.is_superuser
-        )
+        return show_messaging_dashboard(self.domain, self.couch_user)
 
     @property
     @memoized
