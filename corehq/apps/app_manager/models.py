@@ -44,6 +44,7 @@ from copy import deepcopy
 from mimetypes import guess_type
 from six.moves.urllib.request import urlopen
 from six.moves.urllib.parse import urljoin
+from jsonfield.fields import JSONField
 
 from couchdbkit import MultipleResultsFound
 import itertools
@@ -84,6 +85,8 @@ from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
 from django.template.loader import render_to_string
+from django.db import models
+
 from restkit.errors import ResourceError
 from couchdbkit.resource import ResourceNotFound
 from corehq import toggles, privileges
@@ -950,6 +953,23 @@ class FormBase(DocumentSchema):
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    sql_translation_id = IntegerProperty()
+
+    @property
+    def sql_translation(self):
+        if not hasattr(self, '_sql_translation'):
+            if self.sql_translation_id:
+                self._sql_translation = Translation.objects.get(id=self.sql_translation_id)
+            else:
+                app = self.get_app()
+                self._sql_translation = Translation(
+                    resource_id=self.unique_id,
+                    resource_type="form",
+                    app_id=app.get_id,
+                    domain=app.domain,
+                    version=app.version
+                )
+        return self._sql_translation
 
     @classmethod
     def wrap(cls, data):
@@ -971,7 +991,6 @@ class FormBase(DocumentSchema):
     @property
     def case_references(self):
         return self.case_references_data or CaseReferences()
-
 
     def requires_case(self):
         return False
@@ -2408,6 +2427,23 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     fixture_select = SchemaProperty(FixtureSelect)
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
+    sql_translation_id = IntegerProperty()
+
+    @property
+    def sql_translation(self):
+        if not hasattr(self, '_sql_translation'):
+            if self.sql_translation_id:
+                self._sql_translation = Translation.objects.get(id=self.sql_translation_id)
+            else:
+                app = self.get_app()
+                self._sql_translation = Translation(
+                    resource_id=self.unique_id,
+                    resource_type="module",
+                    app_id=app.get_id,
+                    domain=app.domain,
+                    version=app.version
+                )
+        return self._sql_translation
 
     @property
     def is_surveys(self):
@@ -6615,6 +6651,116 @@ class GlobalAppConfig(Document):
     def save(self, *args, **kwargs):
         LatestAppInfo(self.app_id, self.domain).clear_caches()
         super(GlobalAppConfig, self).save(*args, **kwargs)
+
+
+class Translation(models.Model):
+    """
+    resource_id = Id of the module/form
+    resource_type = type corresponding to the id
+    identifier = possibly a way to identify the purpose of translation (not in use yet)
+    for module ->
+    1. name
+    2. details/DetailColumn
+     case_details: {
+        'short or long': {
+            'columns': [{
+                'header': {
+                    "en": "Name",
+                    "hin": "\u0928\u093e\u092e"
+                },
+                'enum': [{
+                    "value": {
+                        "en": "Man",
+                        "hin": "\u091a\u093e\u091a\u093e"
+                    }
+                }],
+                'graph_configuration': {
+                  "annotations": [{
+                    "display_text": {"en": "translation"},
+                    "values": {"en": "translation"} # are these two always the same?,
+                    "x": "x_display", # not supported in bulk translation
+                    "x": "x_display", # not supported in bulk translation
+                    "lang": "en" # which language is this one for
+                  }],
+                  "locale_specific_config": {
+                    "secondary-y-title": {"en": "translation"},
+                    "x-title": {"en": "translation"},
+                    "y-title": {"en": "translation"}
+                  },
+                  "series": [{
+                    "locale_specific_config": {
+                        "name": {"en": "translation"},
+                        "x-name": {"en": "translation"}
+                    },
+                    "x_function": "some string", # not supported in bulk translation
+                    "y_function": "some string", # not supported in bulk translation
+                  }]
+                }
+                ]
+            }
+        }
+    }
+    3. others: enum, graph_annotations, graph configurations
+    for form ->
+    'text': {
+        id/label: {
+            “type”: {  # type can image, default, markdown
+                “value”: {
+                    “en”: “”,
+                    “hi”: “”,
+                }
+            }
+        }
+    }
+    """
+    RESOURCE_TYPE_CHOICES = (
+        ('module', 'module'),
+        ('form', 'form')
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    domain = models.CharField(db_index=True, max_length=255)
+    app_id = models.CharField(db_index=True, max_length=255)
+    version = models.CharField(max_length=255)
+    resource_id = models.CharField(db_index=True,
+                                   max_length=255,
+                                   help_text="Id of the module/form")
+    resource_type = models.CharField(choices=RESOURCE_TYPE_CHOICES,
+                                     max_length=255,
+                                     help_text="type corresponding to the id")
+    identifier = models.CharField(max_length=255)
+    translation = JSONField(default=dict)
+
+    @property
+    def parser(self):
+        from corehq.apps.app_manager.app_translations.parsers import ModuleTranslationParser, FormTranslationParser
+        if self.module_resource:
+            return ModuleTranslationParser(self)
+        elif self.form_resource:
+            return FormTranslationParser(self)
+
+    @property
+    def resource(self):
+        if not hasattr(self, '_resource') or not self._resource:
+            from corehq.apps.app_manager.dbaccessors import get_current_app
+            app = get_current_app(self.domain, self.app_id)
+            if self.module_resource:
+                self.resource = app.get_module_by_unique_id(self.resource_id)
+            elif self.form_resource:
+                self.resource = app.get_form(self.resource_id)
+        return self._resource
+
+    @resource.setter
+    def resource(self, resource):
+        self._resource = resource
+
+    @property
+    def module_resource(self):
+        return self.resource_type == "module"
+
+    @property
+    def form_resource(self):
+        return self.resource_type == "form"
 
 
 # backwards compatibility with suite-1.0.xml
