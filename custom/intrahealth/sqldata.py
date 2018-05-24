@@ -19,7 +19,7 @@ from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, bindparam
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, bindparam, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -828,7 +828,20 @@ class ContainsFilter(SqlFilter):
 
     def build_expression(self, table):
         column = get_column(table, self.column_name)
-        return column.like(bindparam(self.contains))
+        return column.like("%{0}%".format(self.contains))
+
+
+class CustomEQFilter(SqlFilter):
+    """
+    EQ Filter without binding parameter
+    """
+    def __init__(self, column_name, parameter):
+        self.column_name = column_name
+        self.parameter = parameter
+
+    def build_expression(self, table):
+        column = get_column(table, self.column_name)
+        return column.match(self.parameter)
 
 
 class YeksiSqlData(SqlData):
@@ -895,8 +908,9 @@ class VisiteDeLOperateurDataSource(YeksiSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
-        if self.config.get('program'):
-            filters.append(ContainsFilter("select_programs", "program"))
+        program_id = self.config.get('program')
+        if program_id:
+            filters.append(ContainsFilter("select_programs", program_id))
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -947,8 +961,15 @@ class VisiteDeLOperateurPerProductDataSource(YeksiSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
-        if self.config.get('program'):
-            filters.append(ContainsFilter("select_programs", "program"))
+        program_id = self.config.get('program')
+        if program_id:
+            programs = ProductsInProgramData(config={'domain': self.config['domain']}).rows
+            for program in programs:
+                if program_id == program[0]:
+                    filters.append(OR(
+                        [CustomEQFilter("product_id", product) for product in program[1].split(" ")]
+                    ))
+                    break
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -1057,8 +1078,7 @@ class ProgramData(ProgramsDataSource):
     slug = 'program'
     comment = 'Program names'
     title = 'Program'
-    show_total = True
-    custom_total_calculate = True
+    show_total = False
 
     @property
     def group_by(self):
@@ -1079,7 +1099,43 @@ class ProgramData(ProgramsDataSource):
         rows = []
         for record in records:
             rows.append([record['program_id'], record['program_name']])
-        self.total_row = []
+        return sorted(rows, key=lambda x: x[0])
+
+
+class ProductsInProgramData(ProgramsDataSource):
+    """
+    Returns list of all product ids used in program as string joined by spaces
+    """
+    slug = 'products_in_program'
+    comment = 'Products selected per program'
+    title = 'Products selected per program'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['program_id', 'product_ids']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Product IDs", SimpleColumn('product_ids')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        programs = defaultdict(set)
+        for record in records:
+            products = record['product_ids'].split(' ')
+            for product in products:
+                programs[record['program_id']].add(product)
+
+        rows = []
+        for program_id, products in programs.items():
+            rows.append([program_id, " ".join(products)])
         return sorted(rows, key=lambda x: x[0])
 
 

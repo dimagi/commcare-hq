@@ -14,7 +14,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -67,7 +67,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -125,7 +125,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -214,7 +214,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -267,7 +267,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
