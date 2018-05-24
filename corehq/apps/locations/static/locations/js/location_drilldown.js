@@ -64,9 +64,8 @@ hqDefine('locations/js/location_drilldown', [
                 model.selected_path.indexOf(loc) === -1 &&
                 model.selected_path().length < model.max_drill_depth) {
 
-                var levelAlreadyInPath = false;
-                model.selected_path().forEach(function(selected) {
-                    if (!levelAlreadyInPath) levelAlreadyInPath = loc.depth === selected.depth;
+                var levelAlreadyInPath = model.selected_path().some(function(selected) {
+                    return loc.depth === selected.depth;
                 });
 
                 if (!levelAlreadyInPath) model.selected_path.push(loc);
@@ -196,9 +195,8 @@ hqDefine('locations/js/location_drilldown', [
             var children = [];
             if (data) {
                 children = _.sortBy(data, function(e) { return e.name; });
-                var accessToParent;
-                data.forEach(function(child) {
-                    accessToParent = child.have_access_to_parent;
+                var accessToParent = data.every(function(child) {
+                    return child.have_access_to_parent;
                 });
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
