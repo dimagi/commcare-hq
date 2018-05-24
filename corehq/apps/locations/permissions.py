@@ -134,7 +134,8 @@ def is_locations_admin(view_fn):
 
 
 def user_can_edit_any_location(user, project):
-    return user.is_domain_admin(project.name) or user.has_permission(project.name, 'access_all_locations')
+    print(user.has_permission(project.name, 'access_all_locations'))
+    return user.is_domain_admin(project.name) or not project.location_restriction_for_users or user.has_permission(project.name, 'access_all_locations')
 
 
 def can_edit_any_location(view_fn):
@@ -174,7 +175,7 @@ def user_can_edit_location(user, sql_location, project):
 
 
 def user_can_view_location(user, sql_location, project):
-    if user.is_domain_admin(project.name) or user.has_permission(project.name, 'access_all_locations'):
+    if user_can_edit_any_location(user, project):
         return True
 
     user_loc = user.get_location_ids(sql_location.domain)
