@@ -11,6 +11,7 @@ from functools import wraps
 
 import operator
 
+import pytz
 import qrcode
 from base64 import b64encode
 from six.moves import cStringIO
@@ -22,6 +23,7 @@ from corehq import toggles
 from corehq.apps.app_manager.dbaccessors import get_latest_released_build_id
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports.datatables import DataTablesColumn
+from corehq.apps.reports.sqlreport import DatabaseColumn
 from corehq.apps.reports_core.filters import Choice
 from corehq.apps.userreports.models import StaticReportConfiguration
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
@@ -35,6 +37,8 @@ from django.db.models import Case, When, Q, F, IntegerField
 import six
 import uuid
 from six.moves import range
+from sqlagg.filters import EQ, NOT, AND
+from io import open
 
 OPERATORS = {
     "==": operator.eq,
@@ -55,6 +59,8 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+
+india_timezone = pytz.timezone('Asia/Kolkata')
 
 
 class MPRData(object):
@@ -107,7 +113,7 @@ class ICDSMixin(object):
 
     @property
     def sources(self):
-        with open(os.path.join(os.path.dirname(__file__), self.resource_file)) as f:
+        with open(os.path.join(os.path.dirname(__file__), self.resource_file), encoding='utf-8') as f:
             return json.loads(f.read())[self.slug]
 
     @property
@@ -549,6 +555,56 @@ def person_is_beneficiary_column(beta):
     return 'cases_person_beneficiary_v2'
 
 
+def wasting_moderate_column(beta):
+    return 'wasting_moderate_v2' if beta else 'wasting_moderate'
+
+
+def wasting_severe_column(beta):
+    return 'wasting_severe_v2' if beta else 'wasting_severe'
+
+
+def wasting_normal_column(beta):
+    return 'wasting_normal_v2' if beta else 'wasting_normal'
+
+
+def stunting_moderate_column(beta):
+    return 'zscore_grading_hfa_moderate' if beta else 'stunting_moderate'
+
+
+def stunting_severe_column(beta):
+    return 'zscore_grading_hfa_severe' if beta else 'stunting_severe'
+
+
+def stunting_normal_column(beta):
+    return 'zscore_grading_hfa_normal' if beta else 'stunting_normal'
+
+
+def current_month_stunting_column(beta):
+    return 'current_month_stunting_v2' if beta else 'current_month_stunting'
+
+
+def current_month_wasting_column(beta):
+    return 'current_month_wasting_v2' if beta else 'current_month_wasting'
+
+
+def default_age_interval(beta):
+    return '0 - 5 years' if beta else '6 - 60 months'
+
+
+def get_age_filters(beta):
+    if beta:
+        return [
+            NOT(EQ('age_tranche', 'age_72'))
+        ]
+    return [
+        AND([
+            NOT(EQ('age_tranche', 'age_0')),
+            NOT(EQ('age_tranche', 'age_6')),
+            NOT(EQ('age_tranche', 'age_72'))
+        ])
+    ]
+
+
 def track_time(func):
     """A decorator to track the duration an aggregation script takes to execute"""
     from custom.icds_reports.models import AggregateSQLProfile
@@ -565,3 +621,16 @@ def track_time(func):
         return result
 
     return wrapper
+
+
+def percent_num(x, y):
+    return (x or 0) * 100 / float(y or 1)
+
+
+def percent(x, y):
+    return "%.2f %%" % (percent_num(x, y))
+
+
+class ICDSDatabaseColumn(DatabaseColumn):
+    def get_raw_value(self, row):
+        return (self.view.get_value(row) or '') if row else ''

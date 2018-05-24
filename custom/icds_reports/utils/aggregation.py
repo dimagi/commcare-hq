@@ -1,9 +1,11 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from datetime import date
 import hashlib
 
 from dateutil.relativedelta import relativedelta
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
@@ -14,6 +16,7 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
     DASHBOARD_DOMAIN
 )
+from six.moves import range
 
 
 def transform_day_to_month(day):
@@ -259,7 +262,10 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         MAX(counsel_adequate_bf) OVER w AS counsel_adequate_bf,
         LAST_VALUE(not_breastfeeding) OVER w AS not_breastfeeding
         FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WHERE timeend >= %(current_month_start)s AND
+              timeend < %(next_month_start)s AND
+              state_id = %(state_id)s AND
+              child_health_case_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -640,3 +646,23 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
             "state_id": self.state_id
         }
+
+
+def recalculate_aggregate_table(model_class):
+    """Expects a class (not instance) of models.Model
+
+    Not expected to last past 2018 (ideally past May) so this shouldn't break in 2019
+    """
+    state_ids = (
+        SQLLocation.objects
+        .filter(domain='icds-cas', location_type__name='state')
+        .values_list('id', flat=True)
+    )
+
+    for state_id in state_ids:
+        for year in (2015, 2016, 2017):
+            for month in range(1, 13):
+                model_class.aggregate(state_id, date(year, month, 1))
+
+        for month in range(1, date.today().month + 1):
+            model_class.aggregate(state_id, date(2018, month, 1))

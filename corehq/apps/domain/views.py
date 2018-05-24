@@ -6,7 +6,7 @@ from decimal import Decimal
 import logging
 import json
 import io
-import csv
+import csv342 as csv
 
 from couchdbkit import ResourceNotFound
 import dateutil

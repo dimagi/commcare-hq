@@ -1908,7 +1908,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showValues: true,
             showControls: false,
             useInteractiveGuideline: true,
-            clipVoronoi: false,
+            showLegend: false,
             duration: 500,
             xAxis: {
                 axisLabel: '',
@@ -1923,10 +1923,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             yAxis: {
                 axisLabel: '',
             },
-            tooltip: function (x, y, value) {
-                return '<strong>Total number of children between ' + y + ':</strong> ' + value;
+            interactiveLayer: {
+                tooltip: {
+                    contentGenerator: function (key) {
+                        return 'Total number of children between <strong>' + key.series[0].data[0] + ':</strong> ' + key.series[0].data[1];
+                    },
+                },
             },
-
         },
     };
 

@@ -46,6 +46,17 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
         return _initData[name];
     };
 
+    /*
+     * Analogous to {% initial_page_data name value %}, but accessible from JS
+     * Useful for mocha tests
+     */
+    var register = function (name, value) {
+        if (_initData[name] !== undefined) {
+            throw new Error("Duplicate key in initial page data: " + name);
+        }
+        _initData[name] = value;
+    };
+
     // http://stackoverflow.com/a/21903119/240553
     var getUrlParameter = function (param) {
         return getUrlParameterFromString(param, window.location.search);
@@ -98,6 +109,7 @@ hqDefine('hqwebapp/js/initial_page_data', ['jquery', 'underscore'], function ($,
     return {
         gather: gather,
         get: get,
+        register: register,
         getUrlParameter: getUrlParameter,
         getUrlParameterFromString: getUrlParameterFromString,
         registerUrl: registerUrl,

@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -1227,7 +1228,8 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None,
+                    auto_generate_credits=False, is_trial=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1256,6 +1258,8 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            auto_generate_credits=auto_generate_credits,
+            is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
@@ -1753,7 +1757,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.recipients
+            return original_record.emailed_to_list
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1806,16 +1810,17 @@ class Invoice(InvoiceBase):
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            _soft_assert_contact_emails_missing(
-                False,
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: %s."
-                " Add client contact emails here: %s" % (
-                    self.get_domain(),
-                    ', '.join(contact_emails),
-                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+            if not settings.UNIT_TESTING:
+                _soft_assert_contact_emails_missing(
+                    False,
+                    "Could not find an email to send the invoice "
+                    "email to for the domain %s. Sending to domain admins instead: %s."
+                    " Add client contact emails here: %s" % (
+                        self.get_domain(),
+                        ', '.join(contact_emails),
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                    )
                 )
-            )
         return contact_emails
 
     @property
@@ -1951,7 +1956,7 @@ class BillingRecordBase(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    emailed_to = models.CharField(max_length=254, db_index=True)
+    emailed_to_list = ArrayField(models.EmailField(), default=list)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
@@ -1963,14 +1968,6 @@ class BillingRecordBase(models.Model):
         abstract = True
 
     _pdf = None
-
-    @property
-    def recipients(self):
-        return self.emailed_to.split(',') if self.emailed_to else []
-
-    @recipients.setter
-    def recipients(self, emails):
-        self.emailed_to = ','.join(emails)
 
     @property
     def pdf(self):
@@ -2046,7 +2043,7 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
-    def send_email(self, contact_emails=None):
+    def send_email(self, contact_email=None, cc_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
             'file_obj': BytesIO(self.pdf.get_data(self.invoice)),
@@ -2057,34 +2054,32 @@ class BillingRecordBase(models.Model):
         context = self.email_context()
         email_from = self.email_from()
 
-        contact_emails = contact_emails or self.invoice.email_recipients
-        if self.is_email_throttled():
-            self.handle_throttled_email(contact_emails)
-
-        for email in contact_emails:
-            greeting = _("Hello,")
-            can_view_statement = False
-            web_user = WebUser.get_by_username(email)
-            if web_user is not None:
-                if web_user.first_name:
-                    greeting = _("Dear %s,") % web_user.first_name
-                can_view_statement = web_user.is_domain_admin(domain)
-            context['greeting'] = greeting
-            context['can_view_statement'] = can_view_statement
-            email_html = render_to_string(self.html_template, context)
-            email_plaintext = render_to_string(self.text_template, context)
-            send_html_email_async.delay(
-                subject, email, email_html,
-                text_content=email_plaintext,
-                email_from=email_from,
-                file_attachments=[pdf_attachment]
-            )
-        self.recipients = contact_emails
+        greeting = _("Hello,")
+        can_view_statement = False
+        web_user = WebUser.get_by_username(contact_email)
+        if web_user is not None:
+            if web_user.first_name:
+                greeting = _("Dear %s,") % web_user.first_name
+            can_view_statement = web_user.is_domain_admin(domain)
+        context['greeting'] = greeting
+        context['can_view_statement'] = can_view_statement
+        email_html = render_to_string(self.html_template, context)
+        email_plaintext = render_to_string(self.text_template, context)
+        send_html_email_async.delay(
+            subject, contact_email, email_html,
+            text_content=email_plaintext,
+            email_from=email_from,
+            file_attachments=[pdf_attachment],
+            cc=cc_emails
+        )
+        self.emailed_to_list.extend([contact_email])
+        if cc_emails:
+            self.emailed_to_list.extend(cc_emails)
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
-                'emails': ', '.join(contact_emails),
+                'emails': contact_email,
             }
         )
 
@@ -2949,7 +2944,7 @@ class PaymentRecord(models.Model):
     payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT,
                                        db_index=True)
     date_created = models.DateTimeField(auto_now_add=True)
-    transaction_id = models.CharField(max_length=255)
+    transaction_id = models.CharField(max_length=255, unique=True)
     amount = models.DecimalField(default=Decimal('0.0000'),
                                  max_digits=10, decimal_places=4)
     last_modified = models.DateTimeField(auto_now=True)

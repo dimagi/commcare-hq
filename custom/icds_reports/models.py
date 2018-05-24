@@ -1,7 +1,12 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
+import uuid
+
+import architect
 from dateutil.relativedelta import relativedelta
+from django.contrib.postgres.fields import ArrayField, JSONField
 from django.db import connections, models
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
@@ -20,6 +25,7 @@ from custom.icds_reports.utils.aggregation import (
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
 )
+from dimagi.utils.web import get_ip
 
 
 class AggregateSQLProfile(models.Model):
@@ -383,9 +389,15 @@ class AggChildHealthMonthly(models.Model):
     wasting_moderate = models.IntegerField(blank=True, null=True)
     wasting_severe = models.IntegerField(blank=True, null=True)
     wasting_normal = models.IntegerField(blank=True, null=True)
+    wasting_moderate_v2 = models.IntegerField(blank=True, null=True)
+    wasting_severe_v2 = models.IntegerField(blank=True, null=True)
+    wasting_normal_v2 = models.IntegerField(blank=True, null=True)
     stunting_moderate = models.IntegerField(blank=True, null=True)
     stunting_severe = models.IntegerField(blank=True, null=True)
     stunting_normal = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_moderate = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_severe = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_normal = models.IntegerField(blank=True, null=True)
     pnc_eligible = models.IntegerField(blank=True, null=True)
     thr_eligible = models.IntegerField(blank=True, null=True)
     rations_21_plus_distributed = models.IntegerField(blank=True, null=True)
@@ -521,6 +533,10 @@ class ChildHealthMonthlyView(models.Model):
     current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
     current_month_stunting_sort = models.IntegerField(blank=True, null=True)
     current_month_wasting_sort = models.IntegerField(blank=True, null=True)
+    current_month_stunting_v2 = models.TextField(blank=True, null=True)
+    current_month_wasting_v2 = models.TextField(blank=True, null=True)
+    current_month_stunting_v2_sort = models.IntegerField(blank=True, null=True)
+    current_month_wasting_v2_sort = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
@@ -780,6 +796,8 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     A row exists for every case that has ever had a Complementary Feeding Form
     submitted against it.
+
+    Note this is not actually used in the dashboard, so the aggreagtion is not run
     """
 
     # partitioned based on these fields
@@ -815,13 +833,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
-        helper = PostnatalCareFormsCcsRecordAggregationHelper(state_id, month)
-        query, params = helper.compare_with_old_data_query()
-
-        with get_cursor(AggregateComplementaryFeedingForms) as cursor:
-            cursor.execute(query, params)
-            rows = fetchall_as_namedtuple(cursor)
-            return [row.child_health_case_id for row in rows]
+        pass
 
 
 class AggregateChildHealthTHRForms(models.Model):
@@ -929,8 +941,20 @@ class ChildHealthMonthly(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
+    current_month_stunting_sort = models.IntegerField(blank=True, null=True)
+    current_month_wasting_sort = models.IntegerField(blank=True, null=True)
+    mother_name = models.TextField(blank=True, null=True)
+    fully_immunized = models.IntegerField(blank=True, null=True)
     immunization_in_month = models.SmallIntegerField(blank=True, null=True)
     days_ration_given_child = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_hfa = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_hfa_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_wfh = models.SmallIntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    muac_grading = models.SmallIntegerField(blank=True, null=True)
+    muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
@@ -1028,3 +1052,51 @@ class AggregateGrowthMonitoringForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class UcrTableNameMapping(models.Model):
+    table_type = models.TextField(primary_key=True)
+    table_name = models.TextField(blank=True, null=True)
+
+    class Meta:
+        app_label = 'icds_model'
+        managed = False
+        db_table = 'ucr_table_name_mapping'
+
+
+@architect.install(
+    'partition',
+    type='range',
+    subtype='date',
+    constraint='month',
+    column='time_of_use'
+)
+class ICDSAuditEntryRecord(models.Model):
+    id = models.UUIDField(unique=True, default=uuid.uuid4, primary_key=True)
+    username = models.EmailField(db_index=True)
+    assigned_location_ids = ArrayField(models.CharField(max_length=255), null=True)
+    ip_address = models.GenericIPAddressField(max_length=15, null=True)
+    url = models.TextField()
+    post_data = JSONField(default=dict)
+    get_data = JSONField(default=dict)
+    session_key = models.CharField(max_length=32)
+    time_of_use = models.DateTimeField(auto_now_add=True)
+
+    class Meta(object):
+        app_label = 'icds_model'
+        db_table = 'icds_audit_entry_record'
+
+    @classmethod
+    def create_entry(cls, request, couch_user=None, is_login_page=False):
+        couch_user = request.couch_user if couch_user is None else couch_user
+        record = cls(
+            username=couch_user.username,
+            assigned_location_ids=couch_user.get_location_ids(getattr(request, 'domain', None)),
+            ip_address=get_ip(request),
+            url=request.path,
+            get_data=request.GET,
+            post_data=request.POST if not is_login_page else {},
+            session_key=request.session.session_key,
+        )
+        record.save()
+        return record.id

@@ -56,7 +56,7 @@ class BaseTestCase(SimpleTestCase):
             return os.path.exists(self.path)
 
         def open(self):
-            return open(self.path)
+            return open(self.path, encoding='utf-8')
 
         def listdir(self):
             return os.listdir(self.path)
@@ -552,7 +552,7 @@ class TestBlobMixinWithMigratingDbBeforeCopyToNew(TestBlobMixinWithS3Backend):
             super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)
             if super_.exists():
                 return super_.open()
-            return open(self.fspath)
+            return open(self.fspath, encoding='utf-8')
 
         def listdir(self):
             super_ = super(TestBlobMixinWithMigratingDbBeforeCopyToNew.TestBlob, self)

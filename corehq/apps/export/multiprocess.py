@@ -41,6 +41,7 @@ from corehq.elastic import ScanResult
 from corehq.util.files import safe_filename
 from couchexport.export import get_writer
 from couchexport.writers import ZippedExportWriter
+from io import open
 
 TEMP_FILE_PREFIX = 'cchq_export_dump_'
 
@@ -360,7 +361,7 @@ class MultiprocessExporter(object):
 
     def upload(self, final_path):
         logger.info('Uploading final export')
-        with open(final_path, 'r') as payload:
+        with open(final_path, 'rb') as payload:
             save_export_payload(self.export_instance, payload)
         if not self.keep_file:
             os.remove(final_path)

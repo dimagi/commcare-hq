@@ -547,10 +547,6 @@ class TableConfiguration(DocumentSchema):
             if isinstance(doc, dict):
                 next_doc = doc.get(path_name, {})
             else:
-                # https://manage.dimagi.com/default.asp?264884
-                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                    document_id, doc, path_name))
                 next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:
@@ -603,15 +599,16 @@ class ExportInstanceFilters(DocumentSchema):
         """
         Return True if the couch_user of the given request has permission to export data with this filter.
         """
-        if self.can_access_all_locations and not request.can_access_all_locations:
+        if request.couch_user.has_permission(
+                request.domain, 'access_all_locations'):
+            return True
+        elif self.can_access_all_locations:
             return False
-        elif not self.can_access_all_locations:
+        else:  # It can be restricted by location
             users_accessible_locations = SQLLocation.active_objects.accessible_location_ids(
                 request.domain, request.couch_user
             )
-            if not set(self.accessible_location_ids).issubset(users_accessible_locations):
-                return False
-        return True
+            return set(self.accessible_location_ids).issubset(users_accessible_locations)
 
 
 class CaseExportInstanceFilters(ExportInstanceFilters):

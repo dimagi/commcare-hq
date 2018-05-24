@@ -157,7 +157,8 @@ class CaseSearchPillowTest(TestCase):
         self.assertItemsEqual(list(case_doc['case_properties'][0]), ['key', 'value'])
         for case_property in case_doc['case_properties']:
             key = case_property['key']
-            self.assertEqual(case.get_case_property(key), case_property['value'])
+            if not key.startswith('@'):
+                self.assertEqual(case.get_case_property(key), case_property['value'])
 
     def _assert_index_empty(self):
         self.elasticsearch.indices.refresh(CASE_SEARCH_INDEX)

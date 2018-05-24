@@ -69,8 +69,12 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
 class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
-        self.id = id
+        self._id = id
         self.serializer = serializer
+
+    @property
+    def id(self):
+        return self._id
 
     def __call__(self, restore_state):
         """
@@ -256,7 +260,7 @@ def _cte_get_location_fixture_queryset(user):
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type')
+    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
     return result
 

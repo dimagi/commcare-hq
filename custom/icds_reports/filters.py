@@ -47,32 +47,9 @@ class ICDSYearFilter(ICDSTableauFilterMixin, YearFilter):
 
 class IcdsLocationFilter(AsyncLocationFilter):
 
-    auto_drill = False
-
     @property
     def location_hierarchy_config(self):
         return location_hierarchy_config(self.domain)
-
-    @property
-    def filter_context(self):
-        api_root = self.api_root
-        user = self.request.couch_user
-        loc_id = self.request.GET.get('location_id')
-        if not loc_id:
-            domain_membership = user.get_domain_membership(self.domain)
-            if domain_membership:
-                loc_id = domain_membership.location_id
-
-        return {
-            'api_root': api_root,
-            'auto_drill': self.auto_drill,
-            'control_name': self.label,  # todo: cleanup, don't follow this structure
-            'control_slug': self.slug,  # todo: cleanup, don't follow this structure
-            'loc_id': loc_id,
-            'locations': load_locs_json(self.domain, loc_id, user=user),
-            'make_optional': self.make_optional,
-            'hierarchy': self.location_hierarchy_config
-        }
 
 
 class TableauLocationFilter(ICDSTableauFilterMixin, RestrictedAsyncLocationFilter):

@@ -54,7 +54,7 @@ def get_commcare_users_by_filters(domain, user_filters, count_only=False):
 
 def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_users=True):
     """Return generator of user IDs"""
-    return (row['id'] for row in _get_all_user_rows(
+    return (row['id'] for row in get_all_user_rows(
         domain,
         include_web_users=include_web_users,
         include_mobile_users=include_mobile_users
@@ -63,12 +63,12 @@ def get_all_user_ids_by_domain(domain, include_web_users=True, include_mobile_us
 
 def get_all_usernames_by_domain(domain):
     """Returns generator of all usernames by domain regardless of their active status"""
-    return (row['key'][3] for row in _get_all_user_rows(domain, include_web_users=True))
+    return (row['key'][3] for row in get_all_user_rows(domain, include_web_users=True))
 
 
 def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, include_mobile_users=True):
     """Return pairs of user IDs and usernames by domain."""
-    return ((row['id'], row['key'][3]) for row in _get_all_user_rows(
+    return ((row['id'], row['key'][3]) for row in get_all_user_rows(
         domain,
         include_web_users=include_web_users,
         include_mobile_users=include_mobile_users
@@ -78,7 +78,7 @@ def get_all_user_id_username_pairs_by_domain(domain, include_web_users=True, inc
 def get_web_user_count(domain, include_inactive=True):
     return sum([
         row['value']
-        for row in _get_all_user_rows(
+        for row in get_all_user_rows(
             domain,
             include_web_users=True,
             include_mobile_users=False,
@@ -91,7 +91,7 @@ def get_web_user_count(domain, include_inactive=True):
 def get_mobile_user_count(domain, include_inactive=True):
     return sum([
         row['value']
-        for row in _get_all_user_rows(
+        for row in get_all_user_rows(
             domain,
             include_web_users=False,
             include_mobile_users=True,
@@ -104,7 +104,7 @@ def get_mobile_user_count(domain, include_inactive=True):
 def get_mobile_user_ids(domain, include_inactive=True):
     return {
         row['id']
-        for row in _get_all_user_rows(
+        for row in get_all_user_rows(
             domain,
             include_web_users=False,
             include_mobile_users=True,
@@ -114,8 +114,8 @@ def get_mobile_user_ids(domain, include_inactive=True):
     }
 
 
-def _get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
-                       include_inactive=True, count_only=False):
+def get_all_user_rows(domain, include_web_users=True, include_mobile_users=True,
+                       include_inactive=True, count_only=False, include_docs=False):
     from corehq.apps.users.models import CommCareUser, WebUser
     assert include_web_users or include_mobile_users
 
@@ -137,7 +137,7 @@ def _get_all_user_rows(domain, include_web_users=True, include_mobile_users=True
                     startkey=key,
                     endkey=key + [{}],
                     reduce=count_only,
-                    include_docs=False
+                    include_docs=include_docs
             ):
                 yield row
 

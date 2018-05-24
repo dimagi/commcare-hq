@@ -6,14 +6,18 @@ from django.db.models.aggregates import Sum
 from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
+from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
-from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column
+from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
+    wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column
 
 
-@quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
-def get_maternal_child_data(domain, config, show_test=False):
+@quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
+def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 
     def get_data_for_child_health_monthly(date, filters):
+
+        age_filters = {'age_tranche': 72} if icds_feature_flag else {'age_tranche__in': [0, 6, 72]}
 
         moderately_underweight = exclude_records_by_age_for_column(
             {'age_tranche': 72},
@@ -24,31 +28,31 @@ def get_maternal_child_data(domain, config, show_test=False):
             'nutrition_status_severely_underweight'
         )
         wasting_moderate = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'wasting_moderate'
+            age_filters,
+            wasting_moderate_column(icds_feature_flag)
         )
         wasting_severe = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'wasting_severe'
+            age_filters,
+            wasting_severe_column(icds_feature_flag)
         )
         stunting_moderate = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'stunting_moderate'
+            age_filters,
+            stunting_moderate_column(icds_feature_flag)
         )
         stunting_severe = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
-            'stunting_severe'
+            age_filters,
+            stunting_severe_column(icds_feature_flag)
         )
         nutrition_status_weighed = exclude_records_by_age_for_column(
             {'age_tranche': 72},
             'nutrition_status_weighed'
         )
         height_measured_in_month = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
+            age_filters,
             'height_measured_in_month'
         )
         weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
-            {'age_tranche__in': [0, 6, 72]},
+            age_filters,
             'weighed_and_height_measured_in_month'
         )
 
@@ -133,13 +137,7 @@ def get_maternal_child_data(domain, config, show_test=False):
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
-                    'help_text': _((
-                        "Percentage of children (6-60 months) with weight-for-height below -3 standard "
-                        "deviations of the WHO Child Growth Standards median. Severe Acute Malnutrition "
-                        "(SAM) or wasting in children is a symptom of acute undernutrition usually as a "
-                        "consequence of insufficient food intake or a high incidence of infectious "
-                        "diseases.")
-                    ),
+                    'help_text': _(wasting_help_text(icds_feature_flag)),
                     'percent': percent_diff(
                         'wasting',
                         this_month_data,
@@ -162,11 +160,7 @@ def get_maternal_child_data(domain, config, show_test=False):
             [
                 {
                     'label': _('Stunting (Height-for-Age)'),
-                    'help_text': _((
-                        "Percentage of children (6-60 months) with height-for-age below -2Z standard deviations "
-                        "of the WHO Child Growth Standards median. Stunting is a sign of chronic undernutrition "
-                        "and has long lasting harmful consequences on the growth of a child")
-                    ),
+                    'help_text': _(stunting_help_text(icds_feature_flag)),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,

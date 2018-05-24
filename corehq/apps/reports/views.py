@@ -1,5 +1,5 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
+from collections import OrderedDict
 import copy
 from datetime import datetime, timedelta, date
 from functools import partial
@@ -9,20 +9,27 @@ from wsgiref.util import FileWrapper
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
+from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
 from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
+from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
+from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.form_processor.interfaces.dbaccessors import LedgerAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
+from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
 from corehq.apps.reports.view_helpers import case_hierarchy_context
 from corehq.tabs.tabclasses import ProjectReportsTab
 from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_request
 import langcodes
 import os
 import pytz
@@ -45,9 +52,11 @@ from django.http import (
 from django.http.response import (
     HttpResponse,
     HttpResponseNotFound,
+    JsonResponse,
     StreamingHttpResponse,
 )
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext as _, ugettext_lazy, ugettext_noop, get_language
@@ -108,6 +117,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
 from corehq.apps.app_manager.models import Application, ShadowForm
+from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
 from corehq.apps.cloudcare.touchforms_api import get_user_contributions_to_touchforms_session
 from corehq.apps.domain.decorators import (
@@ -169,7 +179,6 @@ from .tasks import (
     rebuild_export_task,
     send_delayed_report,
 )
-from .templatetags.xform_tags import render_form
 from .util import (
     create_export_filter,
     get_all_users_by_domain,
@@ -1835,8 +1844,252 @@ def _get_form_context(request, domain, instance):
         "user": request.couch_user,
         "request": request,
     }
-    context['form_render_options'] = context
     return context
+
+
+def _get_form_render_context(request, domain, instance, case_id=None):
+    context = _get_form_context(request, domain, instance)
+    user = context['user']
+    timezone = context['timezone']
+    support_enabled = toggle_enabled(request, toggles.SUPPORT)
+
+    form_data, question_list_not_found = get_readable_data_for_submission(instance)
+
+    # Build map of question values => responses
+    # Question values will be formatted to be processed by XFormQuestionValueIterator,
+    # for example "/data/group/repeat_group[2]/question_id"
+    question_response_map = {}
+    ordered_question_values = []
+
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
+            if question.children:
+                _add_to_question_response_map(question.children, repeat_index=index)
+            elif question.editable and question.response is not None:  # ignore complex and skipped questions
+                value = question.value
+                if question.repeat:
+                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
+                                              re.sub(r'^' + question.repeat, '', question.value))
+                question_response_map[value] = {
+                    'label': question.label,
+                    'icon': question.icon,
+                    'value': question.response,
+                    'splitName': re.sub(r'/', '/\u200B', value),
+                }
+                ordered_question_values.append(value)
+    _add_to_question_response_map(form_data)
+
+    context.update({
+        "context_case_id": case_id,
+        "instance": instance,
+        "is_archived": instance.is_archived,
+        "form_source_download_url": get_form_source_download_url(instance),
+        "edit_info": _get_edit_info(instance),
+        "domain": domain,
+        "question_list_not_found": question_list_not_found,
+        "form_data": form_data,
+        "question_response_map": question_response_map,
+        "ordered_question_values": ordered_question_values,
+        "tz_abbrev": timezone.localize(datetime.utcnow()).tzname(),
+    })
+
+    context.update(_get_cases_changed_context(domain, instance, case_id))
+    context.update(_get_form_metadata_context(domain, instance, timezone, support_enabled))
+    context.update(_get_display_options(request, domain, user, instance, support_enabled))
+    context.update(_get_edit_info(instance))
+
+    instance_history = []
+    if instance.history:
+        form_operations = {
+            'archive': ugettext_lazy('Archive'),
+            'unarchive': ugettext_lazy('Un-Archive'),
+            'edit': ugettext_lazy('Edit'),
+            'uuid_data_fix': ugettext_lazy('Duplicate ID fix')
+        }
+        for operation in instance.history:
+            user_date = ServerTime(operation.date).user_time(timezone).done()
+            instance_history.append({
+                'readable_date': user_date.strftime("%Y-%m-%d %H:%M"),
+                'readable_action': form_operations.get(operation.operation, operation.operation),
+                'user_info': get_doc_info_by_id(domain, operation.user),
+            })
+    context['instance_history'] = instance_history
+
+    return context
+
+
+def _get_cases_changed_context(domain, form, case_id=None):
+    case_blocks = extract_case_blocks(form)
+    for i, block in enumerate(list(case_blocks)):
+        if case_id and block.get(const.CASE_ATTR_ID) == case_id:
+            case_blocks.pop(i)
+            case_blocks.insert(0, block)
+    cases = []
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+
+    def _sorted_case_update_keys(keys):
+        """Put common @ attributes at the bottom"""
+        return sorted(keys, key=lambda k: (k[0] == '@', k))
+
+    for b in case_blocks:
+        this_case_id = b.get(const.CASE_ATTR_ID)
+        try:
+            this_case = CaseAccessors(domain).get_case(this_case_id) if this_case_id else None
+            valid_case = True
+        except ResourceNotFound:
+            this_case = None
+            valid_case = False
+
+        if this_case and this_case.case_id:
+            url = reverse('case_data', args=[domain, this_case.case_id])
+        else:
+            url = "#"
+
+        definition = get_default_definition(
+            _sorted_case_update_keys(list(b)),
+            assume_phonetimes=(not form.metadata or
+                               (form.metadata.deviceID != CLOUDCARE_DEVICE_ID)),
+        )
+        cases.append({
+            "is_current_case": case_id and this_case_id == case_id,
+            "name": case_inline_display(this_case),
+            "table": get_tables_as_columns(b, definition, timezone=get_timezone_for_request()),
+            "url": url,
+            "valid_case": valid_case,
+            "case_type": this_case.type if valid_case else None,
+        })
+
+    return {
+        'cases': cases
+    }
+
+
+def _get_form_metadata_context(domain, form, timezone, support_enabled=False):
+    meta = _top_level_tags(form).get('meta', None) or {}
+    meta['received_on'] = json_format_datetime(form.received_on)
+    meta['server_modified_on'] = json_format_datetime(form.server_modified_on) if form.server_modified_on else ''
+    if support_enabled:
+        meta['last_sync_token'] = form.last_sync_token
+
+    from corehq.apps.hqwebapp.templatetags.proptable_tags import get_default_definition, get_tables_as_columns
+    definition = get_default_definition(_sorted_form_metadata_keys(list(meta)))
+    form_meta_data = get_tables_as_columns(meta, definition, timezone=timezone)
+    if getattr(form, 'auth_context', None):
+        auth_context = AuthContext(form.auth_context)
+        auth_context_user_id = auth_context.user_id
+        auth_user_info = get_doc_info_by_id(domain, auth_context_user_id)
+    else:
+        auth_user_info = get_doc_info_by_id(domain, None)
+        auth_context = AuthContext(
+            user_id=None,
+            authenticated=False,
+            domain=domain,
+        )
+    meta_userID = meta.get('userID')
+    meta_username = meta.get('username')
+    if meta_userID == 'demo_user':
+        user_info = DocInfo(
+            domain=domain,
+            display='demo_user',
+        )
+    elif meta_username == 'admin':
+        user_info = DocInfo(
+            domain=domain,
+            display='admin',
+        )
+    else:
+        user_info = get_doc_info_by_id(domain, meta_userID)
+
+    return {
+        "form_meta_data": form_meta_data,
+        "auth_context": auth_context,
+        "auth_user_info": auth_user_info,
+        "user_info": user_info,
+    }
+
+
+def _top_level_tags(form):
+        """
+        Returns a OrderedDict of the top level tags found in the xml, in the
+        order they are found.
+
+        """
+        to_return = OrderedDict()
+
+        element = form.get_xml_element()
+        if element is None:
+            return OrderedDict(sorted(form.form_data.items()))
+
+        for child in element:
+            # fix {namespace}tag format forced by ElementTree in certain cases (eg, <reg> instead of <n0:reg>)
+            key = child.tag.split('}')[1] if child.tag.startswith("{") else child.tag
+            if key == "Meta":
+                key = "meta"
+            to_return[key] = form.get_data('form/' + key)
+        return to_return
+
+
+def _sorted_form_metadata_keys(keys):
+    def mycmp(x, y):
+        foo = ('timeStart', 'timeEnd')
+        bar = ('username', 'userID')
+
+        if x in foo and y in foo:
+            return -1 if foo.index(x) == 0 else 1
+        elif x in foo or y in foo:
+            return 0
+
+        if x in bar and y in bar:
+            return -1 if bar.index(x) == 0 else 1
+        elif x in bar and y in bar:
+            return 0
+
+        return cmp(x, y)
+    return sorted(keys, cmp=mycmp)
+
+
+def _get_edit_info(instance):
+    info = {
+        'was_edited': False,
+        'is_edit': False,
+    }
+    if instance.is_deprecated:
+        info.update({
+            'was_edited': True,
+            'latest_version': instance.orig_id,
+        })
+    if getattr(instance, 'edited_on', None) and getattr(instance, 'deprecated_form_id', None):
+        info.update({
+            'is_edit': True,
+            'edited_on': instance.edited_on,
+            'previous_version': instance.deprecated_form_id
+        })
+    return info
+
+
+def _get_display_options(request, domain, user, form, support_enabled):
+    user_can_edit = (
+        request and user and request.domain and user.can_edit_data()
+    )
+    show_edit_options = (
+        user_can_edit
+        and can_edit_form_location(domain, user, form)
+    )
+    show_edit_submission = (
+        user_can_edit
+        and has_privilege(request, privileges.DATA_CLEANUP)
+        and not form.is_deprecated
+    )
+
+    show_resave = (
+        user_can_edit and support_enabled
+    )
+
+    return {
+        "show_edit_options": show_edit_options,
+        "show_edit_submission": show_edit_submission,
+        "show_resave": show_resave,
+    }
 
 
 def _get_form_or_404(domain, id):
@@ -1914,24 +2167,11 @@ class FormDataView(BaseProjectReportSectionView):
 
     @property
     def page_context(self):
-        timezone = get_timezone_for_user(self.request.couch_user, self.domain)
-        display = self.request.project.get_form_display(self.xform_instance)
-        page_context = {
-            "display": display,
-            "timezone": timezone,
-            "instance": self.xform_instance,
-            "user": self.request.couch_user,
-        }
-        form_render_options = {
-            'domain': self.domain,
-            'request': self.request,
-        }
-        form_render_options.update(page_context)
+        page_context = _get_form_render_context(self.request, self.domain, self.xform_instance)
         page_context.update({
             "slug": inspect.SubmitHistory.slug,
             "form_name": self.form_name,
             "form_received_on": self.xform_instance.received_on,
-            'form_render_options': form_render_options,
         })
         return page_context
 
@@ -1941,10 +2181,13 @@ class FormDataView(BaseProjectReportSectionView):
 @require_GET
 def case_form_data(request, domain, case_id, xform_id):
     instance = _get_form_or_404(domain, xform_id)
-    context = _get_form_context(request, domain, instance)
-    context['case_id'] = case_id
-    context['side_pane'] = True
-    return HttpResponse(render_form(instance, domain, options=context))
+    context = _get_form_render_context(request, domain, instance, case_id)
+    return JsonResponse({
+        'html': render_to_string("reports/form/partials/single_form.html", context, request=request),
+        'xform_id': xform_id,
+        'question_response_map': context['question_response_map'],
+        'ordered_question_values': context['ordered_question_values'],
+    })
 
 
 @require_form_view_permission
@@ -2217,6 +2460,22 @@ def unarchive_form(request, domain, instance_id):
     if not redirect:
         redirect = reverse('render_form_data', args=[domain, instance_id])
     return HttpResponseRedirect(redirect)
+
+
+@require_form_view_permission
+@require_permission(Permissions.edit_data)
+@require_POST
+@location_safe
+def edit_form(request, domain, instance_id):
+    instance = _get_location_safe_form(domain, request.couch_user, instance_id)
+    assert instance.domain == domain
+
+    updates = {name: request.POST[name] for name in request.POST}
+    if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
+        messages.success(request, _('Question responses saved.'))
+    else:
+        messages.success(request, _('No changes made to form.'))
+    return JsonResponse({'success': 1})
 
 
 @require_form_view_permission

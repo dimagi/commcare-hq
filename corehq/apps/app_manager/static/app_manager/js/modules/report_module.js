@@ -208,6 +208,7 @@ hqDefine('app_manager/js/modules/report_module', function () {
         self.fullLocalizedDescription = localizedDescription || {};
         self.uuid = uuid;
         self.availableReportIds = availableReportIds;
+        self.showCodes = ko.observable(false);
 
         self.reportId = ko.observable(reportId);
         self.display = ko.observable(self.fullDisplay[self.lang]);
@@ -234,6 +235,10 @@ hqDefine('app_manager/js/modules/report_module', function () {
             self.graphConfig.name(newValue);
         });
         self.filterConfig = filterConfigModel(reportId, self.reportId, filterValues, reportFilters, changeSaveButton);
+
+        self.toggleCodes = function () {
+            self.showCodes(!self.showCodes());
+        };
 
         self.validateDisplay = ko.computed(function() {
             if (!self.display()) {

@@ -10,6 +10,7 @@ from django.db.migrations.operations.special import RunSQL
 from django.template import engines
 
 from corehq.sql_db.routers import allow_migrate
+from io import open
 
 
 class IndexRenameOperationException(Exception):
@@ -83,7 +84,7 @@ class RunSqlLazy(RunSQL):
             super(RunSqlLazy, self).database_backwards(app_label, schema_editor, from_state, to_state)
 
     def _render_template(self, path):
-        with open(self.sql) as f:
+        with open(self.sql, encoding='utf-8') as f:
             template_string = f.read()
 
         template = engines['django'].from_string(template_string)

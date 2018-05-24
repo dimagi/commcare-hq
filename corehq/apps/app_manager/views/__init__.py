@@ -53,7 +53,6 @@ from corehq.apps.app_manager.views.download import (
     download_profile,
     download_raw_jar,
     download_suite,
-    download_test_jar,
     download_xform,
     DownloadCCZ,
     validate_form_for_build,

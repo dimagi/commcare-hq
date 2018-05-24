@@ -59,6 +59,28 @@ hqDefine('export/js/models', function () {
             });
         }));
 
+        // Set column widths
+        self.questionColumnClass = ko.computed(function() {
+            var width = 6;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
+        self.displayColumnClass = ko.computed(function() {
+            var width = 5;
+            if (self.type && self.type() === 'case' && hqImport('hqwebapp/js/toggles').previewEnabled('SPLIT_MULTISELECT_CASE_EXPORT')) {
+                width--;
+            }
+            if (self.isDeidColumnVisible()) {
+                width--;
+            }
+            return "col-sm-" + width;
+        });
+
         self.hasHtmlFormat = ko.pureComputed(function() {
             return this.export_format() === constants.EXPORT_FORMATS.HTML;
         }, self);
@@ -246,7 +268,7 @@ hqDefine('export/js/models', function () {
      * Reports to analytics what type of configurations people are saving
      * exports as.
      *
-     * @param {function} callback - A funtion to be called after recording analytics.
+     * @param {function} callback - A function to be called after recording analytics.
      */
     ExportInstance.prototype.recordSaveAnalytics = function(callback) {
         var analyticsAction = this.is_daily_saved_export() ? 'Saved' : 'Regular',

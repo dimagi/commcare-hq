@@ -1109,7 +1109,7 @@ class GenericTabularReport(GenericReportView):
         return context
 
     def table_cell(self, value, html=None, zerostyle=False):
-        styled_value = '<span class="muted">0</span>' if zerostyle and value == 0 else value
+        styled_value = '<span class="text-muted">0</span>' if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
             html="%s" % styled_value if html is None else html
