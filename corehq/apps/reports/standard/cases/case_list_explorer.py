@@ -8,7 +8,7 @@ from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.standard.cases.basic import CaseListReport
-from corehq.apps.reports.standard.cases.data_sources import CaseDisplay
+from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XpathCaseSearchFilter,
@@ -61,6 +61,6 @@ class CaseListExplorer(CaseListReport):
         columns = CaseListExplorerColumns.get_value(self.request, self.domain)
         for case in self.get_data():
             yield [
-                getattr(CaseDisplay(self, case), column['name'])
+                getattr(SafeCaseDisplay(self, case), column['name'])
                 for column in columns
             ]

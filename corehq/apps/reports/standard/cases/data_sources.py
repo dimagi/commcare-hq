@@ -15,6 +15,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from memoized import memoized
 
 
@@ -190,10 +191,6 @@ class CaseDisplay(CaseInfo):
             return "%s (bad ID format)" % self.case_name
 
     @property
-    def name(self):
-        return self.case_link
-
-    @property
     def opened_on(self):
         return self._dateprop('opened_on', False)
     date_opened = opened_on
@@ -221,3 +218,17 @@ class CaseDisplay(CaseInfo):
             return _("No data")
         else:
             return user['name'] or self.user_not_found_display(user['id'])
+
+
+class SafeCaseDisplay(object):
+    """Show formatted properties if they are used in XML, otherwise show the property directly from the case
+    """
+    def __init__(self, report, case):
+        self.case = case
+        self.report = report
+
+    def __getattr__(self, name):
+        if name in SPECIAL_CASE_PROPERTIES:
+            return getattr(CaseDisplay(self.report, self.case), name)
+
+        return self.case.get(name)
