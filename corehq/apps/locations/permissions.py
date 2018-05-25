@@ -91,7 +91,6 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
-from corehq.apps.toggle_ui.views import toggle_app_manager_v2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from .models import SQLLocation

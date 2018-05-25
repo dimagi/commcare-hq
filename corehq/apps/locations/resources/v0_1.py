@@ -11,8 +11,7 @@ from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
-    location_safe, LOCATION_ACCESS_DENIED, user_can_view_location, user_can_edit_location,
-    user_can_access_any_location_id)
+    location_safe, LOCATION_ACCESS_DENIED, user_can_view_location, user_can_edit_location)
 from memoized import memoized
 
 from ..models import SQLLocation
