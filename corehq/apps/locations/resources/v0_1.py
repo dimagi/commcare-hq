@@ -11,7 +11,8 @@ from corehq.apps.api.util import object_does_not_exist
 from corehq.apps.api.resources import HqBaseResource
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.permissions import (
-    location_safe, LOCATION_ACCESS_DENIED, user_can_view_location, user_can_edit_location)
+    location_safe, LOCATION_ACCESS_DENIED, user_can_view_location, user_can_edit_location,
+    user_can_access_any_location_id)
 from memoized import memoized
 
 from ..models import SQLLocation
@@ -61,11 +62,14 @@ class LocationResource(HqBaseResource):
                 raise BadRequest(LOCATION_ACCESS_DENIED)
             locs = SQLLocation.root_locations(domain, include_inactive)
         else:
-            if not user_can_access_location_id(kwargs['domain'], user, parent_id):
-                raise BadRequest(LOCATION_ACCESS_DENIED)
             parent = get_location_or_not_exist(parent_id, domain)
+            if not user_can_view_location(user, parent, project):
+                raise BadRequest(LOCATION_ACCESS_DENIED)
             locs = self.child_queryset(domain, include_inactive, parent)
-        return [child for child in locs if user_can_view_location(user, child, project)]
+        return [
+            child for child in locs if user_can_view_location(user, child, project) or
+            user_can_access_location_id(project, user, child.location_id)
+        ]
 
     def dehydrate_can_edit(self, bundle):
         project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
@@ -73,7 +77,10 @@ class LocationResource(HqBaseResource):
 
     def dehydrate_have_access_to_parent(self, bundle):
         project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
-        return user_can_access_location_id(project, bundle.request.couch_user, bundle.obj.location_id)
+        parent_id = bundle.request.GET.get('parent_id', None)
+        if parent_id is None:
+            return False
+        return user_can_access_location_id(project, bundle.request.couch_user, parent_id)
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()

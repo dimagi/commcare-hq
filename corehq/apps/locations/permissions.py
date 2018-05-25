@@ -91,6 +91,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
 from corehq.apps.reports.generic import GenericReportView
+from corehq.apps.toggle_ui.views import toggle_app_manager_v2
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import CouchUser
 from .models import SQLLocation
@@ -134,9 +135,12 @@ def is_locations_admin(view_fn):
 
 
 def user_can_edit_any_location(user, project):
-    return user.is_domain_admin(project.name) or \
-        not project.location_restriction_for_users or \
-        user.has_permission(project.name, 'access_all_locations')
+    if toggles.RESTRICT_WEB_USERS_BY_LOCATION.enabled(project.name):
+        return user.is_domain_admin(project.name) or not project.location_restriction_for_users
+    else:
+        return (
+            user.is_domain_admin(project.name) or user.has_permission(project.name, 'access_all_locations')
+        )
 
 
 def can_edit_any_location(view_fn):
@@ -169,17 +173,19 @@ def user_can_edit_location(user, sql_location, project):
     if user_can_edit_any_location(user, project):
         return True
 
-    user_loc = get_user_sql_location(user, sql_location.domain)
+    user_loc = user.get_sql_locations(sql_location.domain)
     if not user_loc:
         return False
-    return user_loc.is_direct_ancestor_of(sql_location)
+    return any([
+        loc.is_direct_ancestor_of(sql_location) for loc in user_loc
+    ])
 
 
 def user_can_view_location(user, sql_location, project):
     if user_can_edit_any_location(user, project):
         return True
 
-    user_loc = user.get_location_ids(sql_location.domain)
+    user_loc = user.get_sql_locations(project)
 
     if not user_loc:
         return True
@@ -187,7 +193,11 @@ def user_can_view_location(user, sql_location, project):
     if user_can_edit_location(user, sql_location, project):
         return True
 
-    return sql_location.location_id in user_loc
+    lineage = []
+    for loc in user_loc:
+        lineage.extend(loc.lineage)
+    lineage.extend(user.get_location_ids(project))
+    return sql_location.location_id in lineage
 
 
 def user_can_edit_location_types(user, project):

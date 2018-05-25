@@ -56,7 +56,7 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             if user.has_permission(domain, 'access_all_locations'):
                 ret['can_edit'] = user_can_edit_location(user, loc, project)
             else:
-                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
+                ret['can_edit'] = user_can_view_location(user, loc, project)
             if loc.parent_id is None and not user.has_permission(domain, 'access_all_locations'):
                 ret['have_access_to_parent'] = False
             else:

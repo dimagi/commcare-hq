@@ -172,7 +172,7 @@ hqDefine('locations/js/location_drilldown', [
         // helpers to account for the 'all' meta-entry
         loc.num_children = ko.computed(function() {
             var length = loc.children().length;
-            if (loc.withAllOption && length !== 0) {
+            if (length !== 0 && loc.children()[0].name === '_all') {
                 length -= 1;
             }
             return length;
