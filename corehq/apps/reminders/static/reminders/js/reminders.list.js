@@ -92,7 +92,7 @@ hqDefine("reminders/js/reminders.list", function() {
             "oLanguage": {"emptyTable": gettext('There are no reminders to display.'), "infoEmpty" : ""},
             "sort": true,
             "sorting": [[0, "asc"]],
-            "lengthMenu": [[10, 50, -1], [10, 50, "All"]]
+            "lengthMenu": [[10, 50, -1], [10, 50, "All"]],
         });
     });
 });
