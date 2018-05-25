@@ -63,8 +63,8 @@ class TestDashboard1(YeksiTestCase):
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
                     {'style': '', 'html': 'pas de donn\xe9es'},
-                    {'style': '', 'html': '100.00%'},
-                    {'style': '', 'html': '100.00%'}
+                    {'style': 'color: red', 'html': '50.00%'},
+                    {'style': 'color: red', 'html': '50.00%'}
                 ],
                 [
                     {'html': 'Region Test'},
@@ -107,8 +107,8 @@ class TestDashboard1(YeksiTestCase):
                 {'style': '', 'html': '100.00%'},
                 {'style': 'color: red', 'html': '80.00%'},
                 {'style': '', 'html': '100.00%'},
-                {'style': 'color: red', 'html': '94.12%'},
-                {'style': 'color: red', 'html': '85.71%'}
+                {'style': 'color: red', 'html': '88.24%'},
+                {'style': 'color: red', 'html': '83.67%'}
             ]
         )
 
@@ -228,13 +228,13 @@ class TestDashboard1(YeksiTestCase):
             total_row,
             [
                 {'html': 'Disponibilit\xe9 (%)'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'},
-                {'style': 'color: red', 'html': '0.00%'}
+                {'style': '', 'html': '100.00%'},
+                {'html': 'pas de donn\xe9es'},
+                {'html': 'pas de donn\xe9es'},
+                {'html': 'pas de donn\xe9es'},
+                {'style': '', 'html': '100.00%'},
+                {'html': 'pas de donn\xe9es'},
+                {'style': '', 'html': '100.00%'}
             ]
         )
 

@@ -1161,10 +1161,10 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        1 for pps_data in rows if pps_data[i + 1] == '100%'
+                        1 for pps_data in rows if pps_data[i + 1]['html'] == '100%'
                     ),
                     'pps_count': sum(1 for pps_data in rows
-                                     if pps_data[i + 1] != 'pas de données')
+                                     if pps_data[i + 1]['html'] != 'pas de données')
                 }
                 if data[i]['pps_count']:
                     month_value = self.percent_fn(
@@ -1175,13 +1175,12 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         'html': month_value,
                         'style': 'color: red' if self.cell_value_less_than(month_value, 95) else '',
                     })
+                    total_numerator += data[i]['pps_is_available']
+                    total_denominator += data[i]['pps_count']
                 else:
                     total_row.append({
                         'html': 'pas de données',
                     })
-                total_numerator += data[i]['pps_is_available']
-                total_denominator += data[i]['pps_count']
-
             if total_denominator:
                 total_value = self.percent_fn(
                     total_numerator,
@@ -1228,7 +1227,7 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        group_by = ['doc_id', 'real_date', 'pps_id', self.loc_name]
+        group_by = ['real_date', 'pps_id', self.loc_name]
         if self.loc_id != 'pps_id':
             group_by.append(self.loc_id)
         return group_by
@@ -1236,7 +1235,6 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Number of PPS with stockout", MaxColumn('pps_is_outstock')),
@@ -1276,8 +1274,9 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            multiple_rows_per_pps_in_month = data[record[self.loc_id]][month_index].get(record['pps_id'])
-            if not multiple_rows_per_pps_in_month or \
+            no_multiple_rows_per_pps_in_month = \
+                data[record[self.loc_id]][month_index].get(record['pps_id']) is None
+            if no_multiple_rows_per_pps_in_month or \
                     data[record[self.loc_id]][month_index][record['pps_id']] == 1:
                 data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
                     record['pps_is_outstock']['html'] == 1 else 1
