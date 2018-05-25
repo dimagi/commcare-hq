@@ -14,7 +14,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -67,7 +67,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -125,7 +125,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -205,8 +205,9 @@ class TestDashboard2(YeksiTestCase):
         )
         self.assertEqual(
             total_row,
-            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': '0.00%'}, {'html': '0.00%'},
-             {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'}, {'html': '80.43%'}]
+            [{'html': 'Taux par Pays'}, {'html': '44.46%'}, {'html': 'pas de donn\xe9es'},
+             {'html': 'pas de donn\xe9es'}, {'html': '100.00%'}, {'html': '100.00%'}, {'html': '75.86%'},
+             {'html': '80.43%'}]
         )
 
     def test_recovery_rate_by_pps_report_country_level(self):
@@ -214,7 +215,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': '',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -244,8 +245,8 @@ class TestDashboard2(YeksiTestCase):
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '46.15%'}, {'html': '46.15%'}],
                 [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '28.12%'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '28.12%'}],
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '27.50%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '27.50%'}],
                 [{'html': 'Saint-Louis'}, {'html': '63.85%'}, {'html': '87.68%'}, {'html': '0.00%'},
                  {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
                  {'html': '52.57%'}],
@@ -258,7 +259,7 @@ class TestDashboard2(YeksiTestCase):
             total_row,
             [
                 {'html': 'Taux par Pays'}, {'html': '63.85%'}, {'html': '88.53%'}, {'html': '1.59%'},
-                {'html': '0.00%'}, {'html': '12.04%'}, {'html': '22.04%'}, {'html': '42.44%'}
+                {'html': '0.00%'}, {'html': '11.92%'}, {'html': '22.04%'}, {'html': '42.37%'}
             ]
         )
 
@@ -267,7 +268,7 @@ class TestDashboard2(YeksiTestCase):
         mock.couch_user = self.user
         mock.GET = {
             'location_id': 'ccf4430f5c3f493797486d6ce1c39682',
-            'program': '%%',
+            'program': '',
             'month_start': '10',
             'year_start': '2017',
             'month_end': '3',
@@ -296,7 +297,8 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': '0.00%'}, {'html': '0.00%'},
-                {'html': '0.00%'}, {'html': '0.00%'}, {'html': '0.00%'}, {'html': '37.38%'}
+                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
+                {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}
             ]
         )
