@@ -258,7 +258,7 @@ class TestDashboard3(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                'Total (CFA)',
+                'Total (%)',
                 {'style': '', 'html': '96.89%'},
                 {'style': '', 'html': '95.77%'},
                 {'style': '', 'html': '99.02%'},
@@ -297,42 +297,35 @@ class TestDashboard3(YeksiTestCase):
         self.assertItemsEqual(
             rows,
             sorted([
-                ['ACETATE DE MEDROXY PROGESTERONE 104MG/0.65ML INJ. (SAYANA PRESS)', '0.00', '0.00', '0.00',
-                 '0.00', '0.00', '0.00'],
-                ['ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', '0.00', '0.00',
-                 '0.00', '0.00', '0.00', '0.00'],
-                ['ACT ADULTE', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['ACT PETIT ENFANT', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['ALBENDAZOL 4% SB.', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', '0.00', '0.00', '0.00', '0.00', '0.00',
-                 '0.00'], ['EFAVIRENZ 600MG CP.', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', '0.00', '0.00', '0.00', '0.00', '0.00',
-                 '0.00'],
-                ['LEVONORGESTREL+ETHYNILESTRADIOL+FER (0.15+0.03+75)MG (MICROGYNON)', '0.00', '0.00', '0.00',
-                 '0.00', '0.00', '0.00'],
-                ['NEVIRAPINE 200MG CP.', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['PARACETAMOL 500MG CP.', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 1', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 10', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 12', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 14', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 15', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit 2', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['Produit A', '442500.00', '717500.00', '412500.00', '150000.00', '437500.00', '150000.00'],
-                ['Produit B', '336000.00', '558000.00', '334500.00', '157500.00', '453000.00', '127500.00'],
-                ['Produit C', '198000.00', '386400.00', '0.00', '120000.00', '0.00', '0.00'],
-                ['RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00'],
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE (60+30+150)MG CP. DISPER', '0.00', '0.00', '0.00',
-                 '0.00', '0.00', '0.00'],
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', '0.00', '0.00', '0.00',
-                 '0.00', '0.00', '0.00'],
-                ['TEST RAPIDE HIV 1/2 (SD BIOLINE)', '0.00', '0.00', '0.00', '0.00', '0.00', '0.00']
+                ['ACETATE DE MEDROXY PROGESTERONE 104MG/0.65ML INJ. (SAYANA PRESS)', '0', '0', '0', '0', '0',
+                 '0'],
+                ['ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', '0', '0', '0',
+                 '0', '0', '0'], ['ACT ADULTE', '0', '0', '0', '0', '0', '0'],
+                ['ACT PETIT ENFANT', '0', '0', '0', '0', '0', '0'],
+                ['ALBENDAZOL 4% SB.', '0', '0', '0', '0', '0', '0'],
+                ['DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', '0', '0', '0', '0', '0', '0'],
+                ['EFAVIRENZ 600MG CP.', '0', '0', '0', '0', '0', '0'],
+                ['LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', '0', '0', '0', '0', '0', '0'],
+                ['LEVONORGESTREL+ETHYNILESTRADIOL+FER (0.15+0.03+75)MG (MICROGYNON)', '0', '0', '0', '0',
+                 '0', '0'], ['NEVIRAPINE 200MG CP.', '0', '0', '0', '0', '0', '0'],
+                ['PARACETAMOL 500MG CP.', '0', '0', '0', '0', '0', '0'],
+                ['Produit 1', '0', '0', '0', '0', '0', '0'],
+                ['Produit 10', '0', '0', '0', '0', '0', '0'],
+                ['Produit 12', '0', '0', '0', '0', '0', '0'],
+                ['Produit 14', '0', '0', '0', '0', '0', '0'],
+                ['Produit 15', '0', '0', '0', '0', '0', '0'],
+                ['Produit 2', '0', '0', '0', '0', '0', '0'],
+                ['Produit A', '442.500', '717.500', '412.500', '150.000', '437.500', '150.000'],
+                ['Produit B', '336.000', '558.000', '334.500', '157.500', '453.000', '127.500'],
+                ['Produit C', '198.000', '386.400', '0', '120.000', '0', '0'],
+                ['RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', '0', '0', '0', '0', '0', '0'],
+                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE (60+30+150)MG CP. DISPER', '0', '0', '0', '0', '0',
+                 '0'],
+                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', '0', '0', '0', '0', '0',
+                 '0'], ['TEST RAPIDE HIV 1/2 (SD BIOLINE)', '0', '0', '0', '0', '0', '0']
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
-            [
-                'Total (CFA)', '976500.00', '1661900.00', '747000.00', '427500.00', '890500.00',
-                '277500.00'
-            ]
+            ['Total (CFA)', '976.500', '1.661.900', '747.000', '427.500', '890.500', '277.500']
         )
