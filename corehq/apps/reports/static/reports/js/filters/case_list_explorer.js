@@ -20,11 +20,11 @@ var SuggestedCaseTypes = function(){
 hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
-    var Property = function (name, label, is_default) {
+    var Property = function (name, label, hidden) {
         var self = this;
         self.name = ko.observable(name).trimmed();
         self.label = ko.observable(label).trimmed();
-        self.is_default = ko.observable(is_default || false);
+        self.hidden = ko.observable(hidden || false);
     };
 
     var CasePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
@@ -36,7 +36,7 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
             var initialColumn = initialColumns[i];
-            self.properties.push(new Property(initialColumn.name, initialColumn.label, initialColumn.is_default));
+            self.properties.push(new Property(initialColumn.name, initialColumn.label, initialColumn.hidden));
         }
 
         self.addProperty = function () {

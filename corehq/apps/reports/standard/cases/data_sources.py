@@ -232,3 +232,11 @@ class SafeCaseDisplay(object):
             return getattr(CaseDisplay(self.report, self.case), name)
 
         return self.case.get(name)
+
+    @property
+    def _link(self):
+        try:
+            link = absolute_reverse('case_data', args=[self.report.domain, self.case_id])
+        except NoReverseMatch:
+            return _("No link found")
+        return html.mark_safe("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("Link")))

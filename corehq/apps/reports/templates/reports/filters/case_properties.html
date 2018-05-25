@@ -11,13 +11,12 @@
                 <th>&nbsp;</th>
             </thead>
             <tbody data-bind="foreach: properties, sortableList: properties">
-                <tr>
+                <tr data-bind="visible: !hidden()">
                     <td>
                         <i class="grip fa fa-arrows-v icon-blue"></i>
                     </td>
                     <td><input type="text" class="form-control" data-bind="
                                      value: name,
-                                     enable: !is_default(),
                                      autocompleteAtwho: $parent.suggestedProperties()
                                      "
                                data-atwhooptions='{"displayTpl": "<li><span class=\"badge\">${caseType}</span> ${name}</li>"}'
@@ -25,8 +24,7 @@
                     <td><input type="text" class="form-control" data-bind="value: label" /></td>
                     <td>
                         <i style="cursor: pointer;"
-                           data-bind="visible: !is_default(),
-                                      click: $parent.removeProperty,
+                           data-bind="click: $parent.removeProperty,
                                       css: hqImport('hqwebapp/js/main').icons.DELETE"
                            class="icon-remove icon-blue fa fa-remove"></i>
                     </td>

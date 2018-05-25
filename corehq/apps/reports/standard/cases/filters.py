@@ -44,9 +44,16 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/case_properties.html"
+    PERSISTENT_COLUMNS = [
+        {'name': '_link', 'label': 'Link', 'hidden': True},
+    ]
 
     DEFAULT_COLUMNS = [
-        {'name': 'name', 'label': 'Name', 'is_default': True},
+        {'name': 'type', 'label': 'Case Type', 'hidden': False},
+        {'name': 'name', 'label': 'Case Name', 'hidden': False},
+        {'name': 'owner_id', 'label': 'Owner ID', 'hidden': False},
+        {'name': 'modified_on', 'label': 'Last Modified Date', 'hidden': False},
+
     ]
 
     @property
@@ -55,9 +62,12 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         initial_values = self.get_value(self.request, self.domain) or []
 
         user_value_names = [v['name'] for v in initial_values]
-        for default_column in reversed(self.DEFAULT_COLUMNS):
-            if default_column['name'] not in user_value_names:
-                initial_values = [default_column] + initial_values
+        if not user_value_names:
+            initial_values = self.DEFAULT_COLUMNS
+
+        for persistent_column in reversed(self.PERSISTENT_COLUMNS):
+            if persistent_column['name'] not in user_value_names:
+                initial_values = [persistent_column] + initial_values
 
         context.update({
             'initial_value': json.dumps(initial_values),

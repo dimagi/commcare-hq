@@ -54,7 +54,9 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def headers(self):
-        return DataTablesHeader(*self.columns)
+        header = DataTablesHeader(*self.columns)
+        header.custom_sort = [[4, 'desc']]
+        return header
 
     @property
     def rows(self):
