@@ -649,10 +649,13 @@ class GenericReportView(object):
             self.template_report, self.context, request=self.request
         )
 
+        report_table_js_options = {}
+        if 'report_table_js_options' in self.context:
+            report_table_js_options = self.context['report_table_js_options']
         return dict(
             filters=rendered_filters,
             report=rendered_report,
-            report_table_js_options=self.context['report_table_js_options'],
+            report_table_js_options=report_table_js_options,
             title=self.rendered_report_title,
             slug=self.slug,
             url_root=self.url_root,
