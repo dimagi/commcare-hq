@@ -248,7 +248,6 @@ def save_copy(request, domain, app_id):
             user_id = request.couch_user.get_id
             copy = app.make_build(
                 comment=comment,
-                user_id=request.couch_user.get_id,
                 user_id=user_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
