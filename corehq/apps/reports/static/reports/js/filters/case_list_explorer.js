@@ -20,10 +20,11 @@ var SuggestedCaseTypes = function(){
 hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
-    var Property = function (name, label, hidden) {
+    var Property = function (name, label, editable, hidden) {
         var self = this;
         self.name = ko.observable(name).trimmed();
         self.label = ko.observable(label).trimmed();
+        self.editable = ko.observable(editable === undefined ? true : editable);
         self.hidden = ko.observable(hidden || false);
     };
 
@@ -36,7 +37,9 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
             var initialColumn = initialColumns[i];
-            self.properties.push(new Property(initialColumn.name, initialColumn.label, initialColumn.hidden));
+            self.properties.push(new Property(
+                initialColumn.name, initialColumn.label, initialColumn.editable, initialColumn.hidden
+            ));
         }
 
         self.addProperty = function () {

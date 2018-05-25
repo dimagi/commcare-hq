@@ -46,16 +46,25 @@ class CaseListExplorer(CaseListReport):
         for column in CaseListExplorerColumns.get_value(self.request, self.domain):
             try:
                 special_property = SPECIAL_CASE_PROPERTIES_MAP[column['name']]
-                user_columns.append(DataTablesColumn(column['label'], prop_name=special_property.sort_property))
+                user_columns.append(
+                    DataTablesColumn(
+                        column['label'],
+                        prop_name=special_property.sort_property,
+                        visible=(not column.get('hidden')),
+                    ))
             except KeyError:
-                user_columns.append(DataTablesColumn(column['label'], prop_name=column['name']))
+                user_columns.append(DataTablesColumn(
+                    column['label'],
+                    prop_name=column['name'],
+                    visible=(not column.get('hidden')),
+                ))
 
         return user_columns
 
     @property
     def headers(self):
         header = DataTablesHeader(*self.columns)
-        header.custom_sort = [[4, 'desc']]
+        header.custom_sort = [[0, 'desc']]
         return header
 
     @property

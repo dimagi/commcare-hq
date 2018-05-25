@@ -45,15 +45,17 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     label = ugettext_lazy("Columns")
     template = "reports/filters/case_properties.html"
     PERSISTENT_COLUMNS = [
-        {'name': '_link', 'label': 'Link', 'hidden': True},
+        # hidden from view, but used for sorting when no sort column is provided
+        {'name': 'modified_on', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
+        # shown, but unremovable so there is always at least one column
+        {'name': '_link', 'label': 'Link', 'editable': False},
     ]
 
     DEFAULT_COLUMNS = [
-        {'name': 'type', 'label': 'Case Type', 'hidden': False},
-        {'name': 'name', 'label': 'Case Name', 'hidden': False},
-        {'name': 'owner_id', 'label': 'Owner ID', 'hidden': False},
-        {'name': 'modified_on', 'label': 'Last Modified Date', 'hidden': False},
-
+        {'name': 'type', 'label': 'Case Type'},
+        {'name': 'name', 'label': 'Case Name'},
+        {'name': 'owner_id', 'label': 'Owner ID'},
+        {'name': 'modified_on', 'label': 'Last Modified Date'},
     ]
 
     @property
