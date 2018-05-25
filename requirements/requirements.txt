@@ -1,9 +1,9 @@
-attrs==17.4.0
+attrs==18.1.0
 # needed to build gevent from source
 cython==0.27.3
 restkit==4.2.2
 iso8601==0.1.11
-jsonobject==0.9.0
+jsonobject==0.9.1
 jsonobject-couchdbkit==0.9.0.0
 celery==3.1.25
 # required by django-digest

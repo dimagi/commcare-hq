@@ -824,7 +824,7 @@ class PartiallyLockingQueue(object):
         self.currently_locked.difference_update(lock_ids)
 
     def remaining_items(self):
-        return sum(len(queue) for _, queue in self.queue_by_lock_id.iteritems())
+        return sum(len(queue) for _, queue in six.iteritems(self.queue_by_lock_id))
 
 
 class UnexpectedObjectException(Exception):

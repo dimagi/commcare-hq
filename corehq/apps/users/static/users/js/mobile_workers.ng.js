@@ -61,7 +61,7 @@
                 .addClass('has-pending');
             if ($formElements.password().hasClass('non-default')) {
                 $formElements.passwordHint()
-                    .text(gettext('Your password is almost strong enough!'));
+                    .text(gettext('Your password is almost strong enough! Try adding numbers or symbols!'));
             }
         },
         passwordError: function () {
