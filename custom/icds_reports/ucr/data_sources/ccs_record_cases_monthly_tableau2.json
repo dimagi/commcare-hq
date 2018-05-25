@@ -1195,7 +1195,7 @@
         "display_name": null,
         "filter": {
           "type": "named",
-          "name": "pnc_form_in_month"
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1577,59 +1577,8 @@
         "column_id": "counsel_fp_methods",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "named",
-                "name": "seeking_services"
-              },
-              "property_value": "yes"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "eq",
-              "expression": {
-                "type": "named",
-                "name": "not_migrated"
-              },
-              "property_value": "yes"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gt",
-              "property_value": 0,
-              "expression": {
-                "type": "reduce_items",
-                "aggregation_fn": "count",
-                "items_expression": {
-                  "type": "icds_get_case_forms_by_date",
-                  "xmlns": [
-                    "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE",
-                    "http://openrosa.org/formdesigner/89097FB1-6C08-48BA-95B2-67BCF0C5091D"
-                  ],
-                  "end_date": {
-                    "type": "named",
-                    "name": "month_end"
-                  },
-                  "form_filter": {
-                    "operator": "eq",
-                    "type": "boolean_expression",
-                    "expression": {
-                      "type": "property_path",
-                      "property_path": [
-                        "form",
-                        "counsel_methods"
-                      ]
-                    },
-                    "property_value": "yes"
-                  }
-                }
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -3039,33 +2988,6 @@
           "count": true
         }
       },
-      "pnc_form_in_month": {
-        "type": "boolean_expression",
-        "operator": "gt",
-        "property_value": 0,
-        "expression": {
-          "type": "icds_get_case_forms_in_date",
-          "case_id_expression": {
-            "expression": {
-              "type": "property_name",
-              "property_name": "_id"
-            },
-            "type": "root_doc"
-          },
-          "xmlns": [
-            "http://openrosa.org/formdesigner/D4A7ABD2-A7B8-431B-A88B-38245173B0AE"
-          ],
-          "from_date_expression": {
-            "type": "named",
-            "name": "month_start"
-          },
-          "to_date_expression": {
-            "type": "named",
-            "name": "month_end"
-          },
-          "count": true
-        }
-      },
       "postnatal": {
         "type": "and",
         "filters": [
@@ -3165,6 +3087,15 @@
             "property_value": "yes"
           }
         ]
+      },
+      "false": {
+        "type": "boolean_expression",
+        "operator": "eq",
+        "property_value": 0,
+        "expression": {
+          "type": "constant",
+          "constant": 1
+        }
       }
     },
     "asynchronous": true,

@@ -76,6 +76,22 @@ class ConstantExpressionTest(SimpleTestCase):
     def test_constant_datetime_conversion(self):
         self.assertEqual(datetime(2015, 2, 4, 11, 5, 24), ExpressionFactory.from_spec('2015-02-04T11:05:24Z')({}))
 
+    def test_legacy_constant_no_type_casting(self):
+        """
+        This test is used to document an unexpected legacy behavior of
+            ucr constant expression not honoring type casting. While changing that
+            behavior would be easy, it might break any existing reports that relied
+            on the broken implementation as a feature, and so is left as-is.
+        """
+        self.assertEqual(
+            ExpressionFactory.from_spec({
+                'constant': '2018-01-03',
+                'datatype': 'string',
+                'type': 'constant'
+            })({}),
+            date(2018, 1, 3)
+        )
+
     def test_constant_auto_detection_invalid_types(self):
         for invalid_constant in ({}):
             with self.assertRaises(BadSpecError):
@@ -116,6 +132,7 @@ class PropertyExpressionTest(SimpleTestCase):
             (None, "datetime", "2015-09-30 19:04:27Z"),
             (date(2015, 9, 30), "date", "2015-09-30T19:04:27Z"),
             (date(2015, 9, 30), "date", datetime(2015, 9, 30)),
+            ('2015-09-30', "string", date(2015, 9, 30)),
             (datetime(2015, 9, 30, 0, 0, 0), "datetime", "2015-09-30"),
             ([None], "array", None),
             ([3], "array", 3),
@@ -386,6 +403,45 @@ class ArrayIndexExpressionTest(SimpleTestCase):
         expression = ExpressionFactory.from_spec(spec)
         array = ['first', 'second', 'third']
         self.assertEqual('second', expression({'my_array': array}))
+
+    def test_nested_date(self):
+        spec = {
+            'type': 'array_index',
+            'array_expression': {
+                'type': 'iterator',
+                'expressions': [
+                    {
+                        'constant': '2018-01-01',
+                        'datatype': 'date',
+                        'type': 'constant'
+                    },
+                    '2018-01-02',
+                    {
+                        'constant': '2018-01-03',
+                        'datatype': 'string',
+                        'type': 'constant'
+                    },
+                    'not-date'
+                ]
+            },
+            'index_expression': 0
+        }
+        # date expression should be captured as date
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 1))
+        # literal date should be captured as date
+        spec['index_expression'] = 1
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 2))
+        # date expression cast to string is also captured as date.
+        #   see note on ConstantExpressionTest.test_legacy_constant_no_type_casting
+        spec['index_expression'] = 2
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), date(2018, 1, 3))
+        # string is captured as string
+        spec['index_expression'] = 3
+        expression = ExpressionFactory.from_spec(spec)
+        self.assertEqual(expression({}), 'not-date')
 
 
 class DictExpressionTest(SimpleTestCase):

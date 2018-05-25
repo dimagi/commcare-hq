@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import io
 import json
 import uuid
@@ -20,7 +20,6 @@ from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import static
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.locations.dbaccessors import user_ids_at_accessible_locations
-from corehq.apps.locations.permissions import location_safe
 from corehq.apps.users.permissions import can_view_form_exports, can_view_case_exports, can_download_data_files
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.util.workbook_json.excel import JSONReaderError, WorkbookJSONReader, \

@@ -16,6 +16,7 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
     DASHBOARD_DOMAIN
 )
+from six.moves import range
 
 
 def transform_day_to_month(day):

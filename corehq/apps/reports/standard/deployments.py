@@ -362,32 +362,6 @@ def _choose_latest_version(*app_versions):
         return sorted(usable_versions, key=lambda v: v.build_version)[-1]
 
 
-class SyncHistoryReport(DeploymentsReport):
-    # To be removed. Link deactivated on 6th Dec 2017.
-    name = ugettext_noop("User Sync History")
-    slug = "sync_history"
-    is_deprecated = True
-    deprecation_email_message = ugettext_lazy(
-        "The Sync History report has been deprecated. You can use the Application Status report to identify "
-        "the last time a user synced. This saved email will stop working within the next two months. "
-        "Please update your saved reports email settings if needed.")
-    deprecation_message = ugettext_lazy(
-        "The Sync History report has been deprecated. "
-        "You can use the Application Status report to identify the last time a user synced."
-    )
-
-    @property
-    def deprecate_response(self):
-        from django.contrib import messages
-        messages.warning(
-            self.request,
-            self.deprecation_message
-        )
-        return HttpResponseRedirect(
-            reverse(ApplicationStatusReport.dispatcher.name(), args=[],
-                    kwargs={'domain': self.domain, 'report_slug': ApplicationStatusReport.slug}))
-
-
 def _get_sort_key(date):
     if not date:
         return -1

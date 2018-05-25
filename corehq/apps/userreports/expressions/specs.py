@@ -151,7 +151,7 @@ class ConditionalExpressionSpec(JsonObject):
             false=add_tabbed_text(str(self._false_expression)))
 
 
-class ArrayIndexExpressionSpec(JsonObject):
+class ArrayIndexExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('array_index')
     array_expression = DictProperty(required=True)
     index_expression = DefaultProperty(required=True)

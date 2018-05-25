@@ -2487,6 +2487,24 @@ class SQLSMSBackend(SQLMobileBackend):
         return []
 
     @classmethod
+    def get_pass_through_opt_in_keywords(cls):
+        """
+        Use this to define opt-in keywords that the gateway counts as opt-in
+        keywords but that we don't want to have block normal processing in HQ.
+
+        This is useful when the gateway defines an opt-in keyword like
+        YES that is a common reply to SMS survey questions, and we don't
+        want users to continuously be getting opt-in replies when
+        sending YES.
+
+        When receiving these keywords, HQ will still mark the phone as having
+        opted-in in the PhoneBlacklist entry because it's important that the
+        opt-in status between the gateway and HQ remain in sync, but after doing
+        that, HQ will then process the inbound SMS just as a normal inbound message.
+        """
+        return []
+
+    @classmethod
     def get_opt_out_keywords(cls):
         """
         Override to specify a set of opt-out keywords to use for this
