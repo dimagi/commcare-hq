@@ -33,9 +33,9 @@
                 </tr>
             {% endfor %}
         </table>
-        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username }}">View User Audit Report</a>
-        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username }}">Disable/Enable User Account</a>
-        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username }}">Disable Two-Factor Authentication</a>
+        <a class="btn btn-primary" href="{{ audit_report_url }}?username={{ web_user.username|urlencode }}">View User Audit Report</a>
+        <a class="btn btn-primary" href="{% url 'disable_user' %}?username={{ web_user.username|urlencode }}">Disable/Enable User Account</a>
+        <a class="btn btn-primary {% if not has_two_factor %}disabled{% endif %}" href="{% url 'disable_two_factor' %}?q={{ web_user.username|urlencode }}">Disable Two-Factor Authentication</a>
         </div>
     {% endif %}
 {% endblock %}
