@@ -1,4 +1,23 @@
-hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
+var SuggestedCaseTypes = function(){
+    // Adds the required properties to filter the case type autocomplete dropdowns
+    var self = this;
+    self.currentCaseType = ko.observable('');
+    $('#report_filter_case_type').on('change', function(e){
+        self.currentCaseType(e.val);
+    });
+
+    self.suggestedProperties = ko.computed(function(){
+        if (self.currentCaseType() === ''){
+            return self.allCaseProperties;
+        }
+        return _.filter(self.allCaseProperties, function(prop){
+            return prop['caseType'] == self.currentCaseType();
+        });
+    });
+};
+
+
+hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
     var Property = function (name, label, is_default) {
@@ -11,7 +30,8 @@ hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
     var CasePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
         var self = this;
 
-        self.suggestedProperties = ko.observableArray(allCaseProperties);
+        self.allCaseProperties = allCaseProperties;
+        SuggestedCaseTypes.apply(self);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -40,7 +60,8 @@ hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
 hqDefine("reports/js/filters/case_search_xpath", ['knockout'], function(ko) {
     var CaseSearchXpathViewModel = function(allCaseProperties){
         var self = this;
-        self.suggestedProperties = ko.observableArray(allCaseProperties);
+        self.allCaseProperties = allCaseProperties;
+        SuggestedCaseTypes.apply(self);
         return self;
     };
 
@@ -57,8 +78,8 @@ ko.bindingHandlers.xPathAutocomplete = {
 
         hqImport('hqwebapp/js/atwho').init($element, {
             atwhoOptions: {
-                'displayTpl': '<li><span class=\"badge\">${caseType}</span> ${name}</li>',
-                'callbacks': {},
+                displayTpl: '<li><span class=\"badge\">${caseType}</span> ${name}</li>',
+                callbacks: {},
             },
             afterInsert: function() {
                 $element.trigger('textchange');
