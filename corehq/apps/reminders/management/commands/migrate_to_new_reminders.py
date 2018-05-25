@@ -331,6 +331,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None)]
     elif handler.recipient == RECIPIENT_OWNER:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None)]
+    elif handler.recipient == RECIPIENT_USER_GROUP:
+        return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -485,7 +487,11 @@ class Command(BaseCommand):
         if handler.recipient not in (
             RECIPIENT_OWNER,
             RECIPIENT_CASE,
+            RECIPIENT_USER_GROUP,
         ):
+            return None
+
+        if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
             return None
 
         if handler.user_data_filter:
