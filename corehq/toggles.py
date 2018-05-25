@@ -1550,6 +1550,12 @@ TRAINING_MODULE = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+EXPORT_MULTISORT = StaticToggle(
+    'export_multisort',
+    'Sort multiple rows in exports at once.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
 
 HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
     'hide_translations_from_forms',
