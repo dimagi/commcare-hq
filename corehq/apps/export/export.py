@@ -7,6 +7,7 @@ import tempfile
 import time
 import sys
 from collections import Counter
+from io import open
 
 import datetime
 
@@ -43,7 +44,7 @@ class ExportFile(object):
         self.format = format
 
     def __enter__(self):
-        self.file = open(self.path, 'r')
+        self.file = open(self.path, 'rb')
         return self.file
 
     def __exit__(self, exc_type, exc_val, exc_tb):
