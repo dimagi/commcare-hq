@@ -2164,7 +2164,7 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
     custom_total_calculate = True
 
     def calculate_total_row(self, products):
-        total_row = ['Total (CFA)']
+        total_row = ['Total (%)']
         for i in range(len(self.months)):
             month_value = self.percent_fn(
                 sum(
@@ -2286,7 +2286,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         for month_index in range(len(self.months)):
             if data.get(month_index):
                 total_row.append(
-                    '{:.2f}'.format(data[month_index])
+                    '{:,}'.format(data[month_index]).replace(',', '.')
                 )
             else:
                 total_row.append('pas de données')
@@ -2328,7 +2328,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         rows = []
         for product_id in data:
             row = [product_names[product_id]]
-            row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
+            row.extend(['{:,}'.format(value).replace(',', '.') for value in data[product_id]])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
         return sorted(rows, key=lambda x: x[0])
