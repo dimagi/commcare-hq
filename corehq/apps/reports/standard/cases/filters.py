@@ -5,6 +5,7 @@ import json
 
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
+import six
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
@@ -25,7 +26,7 @@ class CaseSearchFilter(BaseSimpleFilter):
 class XpathCaseSearchFilter(BaseSimpleFilter):
     slug = 'search_xpath'
     label = ugettext_lazy("Search")
-    template = "reports/filters/textarea.html"
+    template = "reports/filters/xpath_textarea.html"
 
     @property
     def filter_context(self):
@@ -33,6 +34,7 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
         context.update({
             'placeholder': "e.g. name = 'foo' and dob <= '2017-02-12'",
             'text': self.get_value(self.request, self.domain) or '',
+            'all_case_properties': json.dumps(get_flattened_case_properties(self.domain)),
         })
 
         return context
@@ -59,7 +61,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 
         context.update({
             'initial_value': json.dumps(initial_values),
-            'all_case_properties': json.dumps(all_case_properties_by_domain(self.domain)),
+            'all_case_properties': json.dumps(get_flattened_case_properties(self.domain)),
         })
         return context
 
@@ -67,3 +69,13 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     def get_value(cls, request, domain):
         value = super(CaseListExplorerColumns, cls).get_value(request, domain)
         return json.loads(value or "[]")
+
+
+def get_flattened_case_properties(domain):
+    all_properties_by_type = all_case_properties_by_domain(domain, include_parent_properties=False)
+    all_properties = [
+        {'name': value, 'caseType': case_type}
+        for case_type, values in six.iteritems(all_properties_by_type)
+        for value in values
+    ]
+    return all_properties

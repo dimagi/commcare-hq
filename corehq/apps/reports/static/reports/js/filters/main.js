@@ -8,6 +8,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
     'reports/js/filters/case_properties',
+    'reports/js/filters/case_search_xpath',
     'locations/js/location_drilldown',
     'reports_core/js/choice_list_utils',
     'select2-3.5.2-legacy/select2',
@@ -21,6 +22,7 @@ hqDefine("reports/js/filters/main", [
     buttonGroup,
     scheduleInstanceFilter,
     casePropertyColumns,
+    caseSearchXpath,
     locationDrilldown,
     choiceListUtils
 ) {
@@ -148,6 +150,12 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el),
                 data = $el.data();
             var model = casePropertyColumns.model(data.initialvalue, data.allcaseproperties);
+            $el.koApplyBindings(model);
+        });
+        $(".report-filter-xpath-textarea").each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = caseSearchXpath.model(data.allcaseproperties);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {

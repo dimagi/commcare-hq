@@ -1,7 +1,9 @@
 hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
-    var _init = function($input, options, afterInsert) {
+    var _init = function($input, options, afterInsert, replaceValue) {
         $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-            $input.val($input.data("selected-value")).change();
+            if (replaceValue){
+                $input.val($input.data("selected-value")).change();
+            }
 
             if (afterInsert) {
                 afterInsert();
@@ -34,7 +36,9 @@ hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
                 beforeInsert: function(value, $li) {
                     // This and the inserted.atwho handler below ensure that the entire
                     // input's value is replaced, regardless of where the cursor is
-                    $input.data("selected-value", value);
+                    if (options.replaceValue){
+                        $input.data("selected-value", value);
+                    }
                 },
             },
         };
@@ -45,13 +49,13 @@ hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
                 $.ajax(_.defaults(options.ajax, {
                     success: function (data) {
                         atwhoOptions.data = data;
-                        _init($input, atwhoOptions, options.afterInsert);
+                        _init($input, atwhoOptions, options.afterInsert, options.replaceValue);
                         $input.atwho('run');
                     },
                 }));
             });
         } else {
-            _init($input, atwhoOptions, options.afterInsert);
+            _init($input, atwhoOptions, options.afterInsert, options.replaceValue);
         }
     };
 

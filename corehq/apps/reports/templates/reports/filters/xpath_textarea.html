@@ -1,6 +1,7 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
+    <div class="report-filter-xpath-textarea" data-allcaseproperties="{{ all_case_properties }}">
     {% if help_title and help_content %}
         <div class="row">
             <div class="col-xs-11">
@@ -15,7 +16,9 @@
         {% if required %}required="true"{% endif %}
         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
         class="form-control {% block input_css_class %}{% endblock %}"
-        value="{{ default }}">{{ text }}</textarea>
+        value="{{ default }}"
+        data-bind="xPathAutocomplete: suggestedProperties",
+    >{{ text }}</textarea>
 
     {% if help_inline %}
         <p class="help-block">
@@ -34,4 +37,5 @@
             </div>
         </div>
     {% endif %}
+    </div>
 {% endblock %}

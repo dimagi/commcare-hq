@@ -11,14 +11,7 @@ hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
     var CasePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
         var self = this;
 
-        var suggestedProperties = _.flatten(_.map(allCaseProperties, function(caseProperties, caseType){
-            var values = [];
-            for (var i = 0; i < caseProperties.length; i++){
-                values.push({"caseType": caseType, "name": caseProperties[i]});
-            }
-            return values;
-        }));
-        self.suggestedProperties = ko.observableArray(suggestedProperties);
+        self.suggestedProperties = ko.observableArray(allCaseProperties);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -44,33 +37,43 @@ hqDefine("reports/js/filters/case_properties", ['knockout'], function(ko) {
 });
 
 
-ko.bindingHandlers.casePropertyAutocomplete = {
-    /*
-     * Strip "attachment:" prefix and show icon for attachment properties.
-     * Replace any spaces in free text with underscores.
-     */
-    init: function (element, valueAccessor) {
-        $(element).on('textchange', function() {
-            var $el = $(this);
-            if ($el.val().match(/\s/)) {
-                var pos = $el.caret('pos');
-                $el.val($el.val().replace(/\s/g, '_'));
-                $el.caret('pos', pos);
+hqDefine("reports/js/filters/case_search_xpath", ['knockout'], function(ko) {
+    var CaseSearchXpathViewModel = function(allCaseProperties){
+        var self = this;
+        self.suggestedProperties = ko.observableArray(allCaseProperties);
+        return self;
+    };
+
+    return {model: CaseSearchXpathViewModel};
+});
+
+
+ko.bindingHandlers.xPathAutocomplete = {
+    init: function(element, valueAccessor) {
+        var $element = $(element);
+        if (!$element.atwho) {
+            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+        }
+
+        hqImport('hqwebapp/js/atwho').init($element, {
+            atwhoOptions: {
+                'displayTpl': '<li><span class=\"badge\">${caseType}</span> ${name}</li>',
+                'callbacks': {},
+            },
+            afterInsert: function() {
+                $element.trigger('textchange');
+            },
+            replaceValue: false,
+        });
+
+        $element.on("textchange", function() {
+            if ($element.val()) {
+                $element.change();
             }
         });
-        ko.bindingHandlers.autocompleteAtwho.init(element, valueAccessor);
     },
-    update: function (element, valueAccessor, allBindingsAccessor) {
-        function wrappedValueAccessor() {
-            return _.map(ko.unwrap(valueAccessor()), function(value) {
-                if (value.indexOf("attachment:") === 0) {
-                    var text = value.substring(11),
-                        html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {name: text, content: html};
-                }
-                return {name: value, content: value};
-            });
-        }
-        ko.bindingHandlers.autocompleteAtwho.update(element, wrappedValueAccessor, allBindingsAccessor);
+
+    update: function(element, valueAccessor, allBindings) {
+        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
     },
 };
