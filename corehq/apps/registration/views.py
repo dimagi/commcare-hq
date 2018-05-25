@@ -139,7 +139,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
         appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
                                                           toggles.NAMESPACE_USER)
 
-        track_workflow(email, "Registered new account")
+        track_workflow(email, "Requested New Account")
         track_workflow(email, "Persona Field Filled Out", {
             'personachoice': persona,
             'personaother': persona_other,
