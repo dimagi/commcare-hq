@@ -24,6 +24,8 @@ Current workflow to get the data in these tables is shown [here](docs/current_st
 Collecting New Data
 -------------------
 
+A flowchart to help guide you can be found [here](docs/new_indicator.png)
+
 ### Gather Requirements
 
 - What pages will this be displayed?
@@ -161,11 +163,13 @@ Known areas that can be changed to improve performance
    Currently a new partition is created for every day in agg_awc_daily and every month 5 are created in agg_child_health & agg_ccs_record
    In postgres 11, this is less of an issue as the query planner can create better queries based on native partitioning
 6. Make use of inserted_at and/or received on to intelligently update the tables
+   Currently we loop over the previous month and fully delete are re-aggregate all data for the month.
 7. Change the aggregation step to insert into temporary tables before dropping real table.
+   This should reduce/eliminate any locking that is not needed and also remove any on disk inefficiency introduced by inserting then updating
 8. Sort data before inserting into the aggregate table. Use BRIN indexes on those sorted columns
-8. Include full location hierarchy in each table.
+9. Include full location hierarchy in each table.
    Currently we join with a location table to get the location's name and full hierarchy. Testing this out may be useful
-9. General postgres config updates.
-10. Experiment with Foreign Data Wrappers
+10. General postgres config updates.
+11. Experiment with Foreign Data Wrappers
     a) Try out writing different UCR data sources to different databases and aggregating them on a separate dashboard database server
     b) Try out either moving old less accessed data to an older server or separating different state's data on different dashboard servers
