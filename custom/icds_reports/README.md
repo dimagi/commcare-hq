@@ -71,7 +71,8 @@ Think through the performance of your additions to this script. Previous mistake
 
 - Don't look up other documents in a UCR
 - Only collect raw data in the UCR. Use as few expressions in the UCR as possible.
-- Keep the same names as the app as far as possible into the aggregation. It's very confusing when sex changes to gender...
+- Keep the same names as the app as far as possible into the aggregation.
+  It's very confusing when properties change between tables such as sex changing to gender.
 - Prefer small_integer when possible and always use small_boolean instead of boolean
 - When recording a property that can have multiple results, prefer an enumeration (using switch) instead of storing the raw value
 
