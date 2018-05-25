@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from mock.mock import MagicMock
+import unittest
 
 from custom.intrahealth.tests.utils import YeksiTestCase
 from custom.intrahealth.reports import Dashboard1Report
@@ -112,8 +113,8 @@ class TestDashboard1(YeksiTestCase):
             ]
         )
 
+    @unittest.skip("This fails consistently on travis")
     def test_availability_report_with_chosen_program(self):
-        return
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
