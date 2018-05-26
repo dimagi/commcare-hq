@@ -8,7 +8,7 @@ from dimagi.utils.logging import notify_exception
 import six
 
 
-@task(queue="email_queue",
+@task(queue="email_queue_punt",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def send_mail_async(self, subject, message, from_email, recipient_list,
                     fail_silently=False, auth_user=None, auth_password=None,
@@ -78,7 +78,7 @@ def send_html_email_async(self, subject, recipient, html_content,
         self.retry(exc=e)
 
 
-@task(queue="email_queue",
+@task(queue="email_queue_punt",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
 def mail_admins_async(self, subject, message, fail_silently=False, connection=None,
                       html_message=None):
