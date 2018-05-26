@@ -39,7 +39,7 @@ def send_HTML_email(subject, recipient, html_content, text_content=None,
 
 @task(queue="email_queue_punt",
       bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
-def _send_HTML_email_punt(subject, recipient, html_content, text_content=None,
+def _send_HTML_email_punt(self, subject, recipient, html_content, text_content=None,
                          cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                          file_attachments=None, bcc=None):
     _send_HTML_email_run(subject, recipient, html_content, text_content=text_content,
