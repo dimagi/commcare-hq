@@ -1,4 +1,8 @@
 from __future__ import absolute_import
+
+import tempfile
+import polib
+
 import requests
 import os
 import json
@@ -65,3 +69,15 @@ class TransifexApiClient():
         return requests.get(
             url, auth=self._auth,
         )
+
+    def get_translation(self, resource_slug, lang):
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
+            self.project, resource_slug, lang
+        )
+        response = requests.get(url, auth=self._auth, stream=True)
+        if response.status_code != 200:
+            return response
+        temp_file = tempfile.NamedTemporaryFile()
+        with open(temp_file.name, 'w') as f:
+            f.write(response.content)
+        return polib.pofile(temp_file.name)
