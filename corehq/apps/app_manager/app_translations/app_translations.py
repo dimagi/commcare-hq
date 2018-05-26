@@ -425,13 +425,15 @@ def expected_bulk_app_sheet_rows(app):
     return rows
 
 
-def _process_modules_and_forms_sheet(rows, app):
+def _process_modules_and_forms_sheet(rows, app, full=True):
     """
     Modify the translations and media references for the modules and forms in
     the given app as per the data provided in rows.
     This does not save the changes to the database.
     :param rows:
     :param app:
+    :param full: update everything and also do clean up. If False then just update
+    whats provided and dont clean up anything
     :return:  Returns a list of message tuples. The first item in each tuple is
     a function like django.contrib.messages.error, and the second is a string.
     """
@@ -473,7 +475,7 @@ def _process_modules_and_forms_sheet(rows, app):
                 ))
                 continue
 
-        _update_translation_dict('default_', document.name, row, app.langs)
+        _update_translation_dict('default_', document.name, row, app.langs, full)
 
         for lang in app.langs:
             document.set_icon(lang, row.get('icon_filepath_%s' % lang, ''))
@@ -482,7 +484,7 @@ def _process_modules_and_forms_sheet(rows, app):
     return msgs
 
 
-def _update_translation_dict(prefix, language_dict, row, langs):
+def _update_translation_dict(prefix, language_dict, row, langs, full=True):
     # update translations as requested
     for lang in langs:
         key = '%s%s' % (prefix, lang)
@@ -494,10 +496,11 @@ def _update_translation_dict(prefix, language_dict, row, langs):
         else:
             language_dict.pop(lang, None)
 
-    # delete anything in language_dict that isn't in langs (anymore)
-    for lang in language_dict.keys():
-        if lang not in langs:
-            language_dict.pop(lang, None)
+    if full:
+        # delete anything in language_dict that isn't in langs (anymore)
+        for lang in language_dict.keys():
+            if lang not in langs:
+                language_dict.pop(lang, None)
 
 
 def update_form_translations(sheet, rows, missing_cols, app):
@@ -722,7 +725,7 @@ def escape_output_value(value):
         return element
 
 
-def _update_case_list_translations(sheet, rows, app):
+def _update_case_list_translations(sheet, rows, app, full=True):
     """
     Modify the translations of a module case list and detail display properties
     given a sheet of translation data. The properties in the sheet must be in
@@ -854,7 +857,7 @@ def _update_case_list_translations(sheet, rows, app):
                     row, 'default', app.langs
             ))
         if ok_to_delete_translations:
-            _update_translation_dict('default_', language_dict, row, app.langs)
+            _update_translation_dict('default_', language_dict, row, app.langs, full)
         else:
             msgs.append((
                 messages.error,
