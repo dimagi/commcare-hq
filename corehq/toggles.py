@@ -1545,6 +1545,14 @@ TRAINING_MODULE = StaticToggle(
 )
 
 
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
 HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
     'hide_translations_from_forms',
     'Hide translations for languages from forms',
