@@ -574,7 +574,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
-    handle_media_edits(request, module, should_edit, resp, lang)
+    handle_media_edits(request, module, should_edit, resp, lang, app)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()

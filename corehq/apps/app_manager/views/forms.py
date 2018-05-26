@@ -377,7 +377,7 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
                 {'message': error_message},
                 status_code=400
             )
-    handle_media_edits(request, form, should_edit, resp, lang)
+    handle_media_edits(request, form, should_edit, resp, lang, app)
 
     app.save(resp)
     notify_form_changed(domain, request.couch_user, app_id, form_unique_id)
