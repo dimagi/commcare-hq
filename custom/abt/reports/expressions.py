@@ -276,5 +276,5 @@ def abt_supervisor_expression(spec, context):
 
 
 def abt_supervisor_v2_expression(spec, context):
-    wrapped = AbtSupervisorExpressionSpec.wrap(spec)
+    wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
     return wrapped
