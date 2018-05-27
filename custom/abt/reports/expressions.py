@@ -11,18 +11,12 @@ import six
 from io import open
 
 
-class AbtSupervisorExpressionSpec(JsonObject):
-    type = TypeProperty('abt_supervisor')
+class AbtExpressionSpec(JsonObject):
 
     @property
     @memoized
     def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
-        with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+        raise NotImplementedError()
 
     @classmethod
     def _get_val(cls, item, path):
@@ -256,7 +250,21 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return docs
 
 
-class AbtSupervisorV2ExpressionSpec(AbtSupervisorExpressionSpec):
+class AbtSupervisorExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor')
+
+    @property
+    @memoized
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
+class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
 
     @property
