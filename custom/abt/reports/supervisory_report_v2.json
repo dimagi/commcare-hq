@@ -6,7 +6,6 @@
         "airsghana",
         "airsbenin",
         "airskenya",
-        "airsghana",
         "airstanzania",
         "airsethiopia",
         "airsmadagascar",
@@ -16,7 +15,7 @@
         "airsmozambique"
     ],
     "report_id": "supervisory_report_v2",
-    "data_source_table": "supervisory-007",
+    "data_source_table": "supervisory-v2-001",
     "config": {
         "doc_type": "ReportConfiguration",
         "domain": "airs",

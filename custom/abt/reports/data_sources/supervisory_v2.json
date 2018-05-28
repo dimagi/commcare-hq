@@ -6,7 +6,6 @@
         "airsghana",
         "airsbenin",
         "airskenya",
-        "airsghana",
         "airstanzania",
         "airsethiopia",
         "airsmadagascar",
@@ -336,6 +335,6 @@
         "display_name": "Supervisory Indicators v2",
         "named_filters": {},
         "referenced_doc_type": "XFormInstance",
-        "table_id": "supervisory-007"
+        "table_id": "supervisory-v2-001"
     }
 }
