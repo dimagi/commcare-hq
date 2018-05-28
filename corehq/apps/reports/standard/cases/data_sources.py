@@ -229,7 +229,7 @@ class SafeCaseDisplay(object):
 
     def __getattr__(self, name):
         if name in SPECIAL_CASE_PROPERTIES:
-            return getattr(CaseDisplay(self.report, self.case), name)
+            return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
 
         return self.case.get(name)
 

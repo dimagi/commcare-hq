@@ -20,19 +20,30 @@ var SuggestedCaseTypes = function(){
 hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
-    var Property = function (name, label, editable, hidden) {
+    var Property = function ($parent, name, label, meta_type, editable, hidden) {
         var self = this;
         self.name = ko.observable(name).trimmed();
 
         self.label = ko.observable(label || name).trimmed();
 
         self.name.subscribe(function(newValue){
+            // Set the label value to the value of the name if it isn't otherwise set
             if (!self.label() && newValue !== 'undefined'){ // atwho sometimes sets the value to the string 'undefined'
-                var val = newValue.replace('_', ' ').replace(/\w\S*/g, function(txt){
+                var val = newValue.replace('@', '').replace('_', ' ').replace(/\w\S*/g, function(txt){
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
                 self.label(val);
             }
+        });
+
+        self.meta_type = ko.computed(function(){
+            var value = _.find($parent.allCaseProperties, function(prop){
+                return prop.name === self.name();
+            });
+            if (value){
+                return value.meta_type;
+            }
+            return null;
         });
         self.editable = ko.observable(editable === undefined ? true : editable);
         self.hidden = ko.observable(hidden || false);
@@ -48,12 +59,12 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
         for (var i = 0; i < initialColumns.length; i++){
             var initialColumn = initialColumns[i];
             self.properties.push(new Property(
-                initialColumn.name, initialColumn.label, initialColumn.editable, initialColumn.hidden
+                self, initialColumn.name, initialColumn.label, initialColumn.meta_type, initialColumn.editable, initialColumn.hidden
             ));
         }
 
         self.addProperty = function () {
-            self.properties.push(new Property('', ''));
+            self.properties.push(new Property(self, '', ''));
         };
 
         self.removeProperty = function (property) {
@@ -91,7 +102,7 @@ ko.bindingHandlers.xPathAutocomplete = {
 
         hqImport('hqwebapp/js/atwho').init($element, {
             atwhoOptions: {
-                displayTpl: '<li><span class=\"badge\">${case_type}</span> ${name}</li>',
+                displayTpl: '<li><span class="label label-default">${case_type}</span> ${name}</li>',
                 callbacks: {},
             },
             afterInsert: function() {
@@ -122,7 +133,12 @@ ko.bindingHandlers.explorerColumnsAutocomplete = {
 
         hqImport('hqwebapp/js/atwho').init($element, {
             atwhoOptions: {
-                displayTpl: '<li><span class=\"badge\">${case_type}</span> ${name}</li>',
+                displayTpl: function(item){
+                    if (item.case_type){
+                        return '<li><span class="label label-default">${case_type}</span> ${name}</li>';
+                    }
+                    return '<li><span class="label label-primary">${meta_type}</span> ${name}</li>';
+                },
             },
             afterInsert: function() {
                 $element.trigger('textchange');

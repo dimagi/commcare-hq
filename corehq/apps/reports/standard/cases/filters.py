@@ -10,6 +10,7 @@ import six
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 
@@ -46,16 +47,16 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     template = "reports/filters/explorer_columns.html"
     PERSISTENT_COLUMNS = [
         # hidden from view, but used for sorting when no sort column is provided
-        {'name': 'modified_on', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
+        {'name': 'last_modified', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
         # shown, but unremovable so there is always at least one column
-        {'name': '_link', 'label': 'Link', 'editable': False},
+        {'name': '_link', 'label': _('Link'), 'editable': False},
     ]
 
     DEFAULT_COLUMNS = [
-        {'name': 'type', 'label': _('Case Type')},
-        {'name': 'name', 'label': _('Case Name')},
-        {'name': 'owner_id', 'label': _('Owner ID')},
-        {'name': 'modified_on', 'label': _('Last Modified Date')},
+        {'name': '@case_type', 'label': _('Case Type')},
+        {'name': 'case_name', 'label': _('Case Name')},
+        {'name': '@owner_id', 'label': _('Owner ID')},
+        {'name': 'last_modified', 'label': _('Last Modified Date')},
     ]
 
     @property
@@ -73,9 +74,17 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 
         context.update({
             'initial_value': json.dumps(initial_values),
-            'all_case_properties': json.dumps(get_flattened_case_properties(self.domain)),
+            'column_suggestions': json.dumps(self.get_column_suggestions()),
         })
         return context
+
+    def get_column_suggestions(self):
+        case_properties = get_flattened_case_properties(self.domain)
+        special_properties = [
+            {'name': prop, 'case_type': None, 'meta_type': 'info'}
+            for prop in SPECIAL_CASE_PROPERTIES
+        ]
+        return case_properties + special_properties
 
     @classmethod
     def get_value(cls, request, domain):

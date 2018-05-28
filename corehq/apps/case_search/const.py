@@ -31,16 +31,11 @@ SYSTEM_PROPERTIES = [
 SpecialCaseProperty = namedtuple('SpecialCaseProperty', 'key value_getter sort_property')
 SPECIAL_CASE_PROPERTIES_MAP = {
     '@case_id': SpecialCaseProperty('@case_id', lambda doc: doc.get('_id'), '_id'),
-    'case_id': SpecialCaseProperty('@case_id', lambda doc: doc.get('_id'), '_id'),
-
     '@case_type': SpecialCaseProperty('@case_type', lambda doc: doc.get('type'), 'type.exact'),
-    'case_type': SpecialCaseProperty('@case_type', lambda doc: doc.get('type'), 'type.exact'),
 
     '@owner_id': SpecialCaseProperty('@owner_id', lambda doc: doc.get('owner_id'), 'owner_id'),
-    'owner_id': SpecialCaseProperty('@owner_id', lambda doc: doc.get('owner_id'), 'owner_id'),
 
     '@status': SpecialCaseProperty('@status', lambda doc: 'closed' if doc.get('closed') else 'open', 'closed'),
-    'status': SpecialCaseProperty('@status', lambda doc: 'closed' if doc.get('closed') else 'open', 'closed'),
 
     'name': SpecialCaseProperty('name', lambda doc: doc.get('name'), 'name'),
     'case_name': SpecialCaseProperty('case_name', lambda doc: doc.get('name'), 'name.exact'),
@@ -48,6 +43,6 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
 
     'date_opened': SpecialCaseProperty('date_opened', lambda doc: doc.get('opened_on'), 'opened_on'),
-    'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'last_modified'),
+    'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
