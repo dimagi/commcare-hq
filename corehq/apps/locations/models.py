@@ -267,8 +267,7 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
 
-        ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
-        return self.filter(id__in=ids_query)
+        return SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -294,7 +293,10 @@ class LocationQueriesMixin(object):
 
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
-    pass
+
+    def accessible_to_user(self, domain, user):
+        ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
+        return self.filter(id__in=ids_query)
 
 
 class LocationManager(LocationQueriesMixin, AdjListManager):
