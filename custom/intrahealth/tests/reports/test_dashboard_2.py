@@ -245,8 +245,8 @@ class TestDashboard2(YeksiTestCase):
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '92.31%'}, {'html': '92.31%'}],
                 [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '103.33%'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '103.33%'}],
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '191.90%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '191.90%'}],
                 [{'html': 'Saint-Louis'}, {'html': '78.36%'}, {'html': '87.68%'}, {'html': '0.00%'},
                  {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
                  {'html': '65.73%'}],
@@ -259,7 +259,7 @@ class TestDashboard2(YeksiTestCase):
             total_row,
             [
                 {'html': 'Taux par Pays'}, {'html': '78.36%'}, {'html': '88.53%'}, {'html': '1.59%'},
-                {'html': '0.00%'}, {'html': '17.49%'}, {'html': '24.23%'}, {'html': '55.71%'}
+                {'html': '0.00%'}, {'html': '18.97%'}, {'html': '22.13%'}, {'html': '56.44%'}
             ]
         )
 
