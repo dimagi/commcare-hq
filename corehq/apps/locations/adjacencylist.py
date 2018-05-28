@@ -6,8 +6,6 @@ from django.db.models.expressions import Exists, F, Func, OuterRef, Value
 from django.db.models.query import Q, QuerySet, EmptyResultSet
 from django_cte import With
 
-from .queryutil import ComparedQuerySet, TimingContext
-
 field = models.Field()  # generic output field type
 
 
@@ -32,7 +30,7 @@ class array_length(Func):
 
 class AdjListManager(models.Manager):
 
-    def _cte_get_ancestors(self, node, ascending=False, include_self=False):
+    def get_ancestors(self, node, ascending=False, include_self=False):
         """Query node ancestors
 
         :param node: A model instance or a QuerySet or Q object querying
@@ -80,7 +78,7 @@ class AdjListManager(models.Manager):
             .order_by(("" if ascending else "-") + "_depth")
         )
 
-    def _cte_get_descendants(self, node, include_self=False):
+    def get_descendants(self, node, include_self=False):
         """Query node descendants
 
         :param node: A model instance or a QuerySet or Q object querying
@@ -159,34 +157,14 @@ class AdjListManager(models.Manager):
 
         return query.order_by(cte.col._cte_ordering)
 
-    def _cte_get_queryset_ancestors(self, node, include_self=False):
-        return self._cte_get_ancestors(node, include_self=include_self)
+    def get_queryset_ancestors(self, queryset, include_self=False):
+        return self.get_ancestors(queryset, include_self=include_self)
 
-    def _cte_get_queryset_descendants(self, *args, **kw):
-        return self._cte_get_descendants(*args, **kw)
+    def get_queryset_descendants(self, queryset, include_self=False):
+        return self.get_descendants(queryset, include_self=include_self)
 
     def root_nodes(self):
         return self.all().filter(parent_id__isnull=True)
-
-    def get_queryset_ancestors(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_ancestors")
-        cte_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            cte_qs = queryset._cte_set
-        mptt_set = None
-        with timing("cte"):
-            cte_set = self._cte_get_queryset_ancestors(cte_qs, include_self)
-        return ComparedQuerySet(mptt_set, cte_set, timing)
-
-    def get_queryset_descendants(self, queryset, include_self=False):
-        timing = TimingContext("get_queryset_descendants")
-        cte_qs = queryset
-        if isinstance(queryset, ComparedQuerySet):
-            cte_qs = queryset._cte_set
-        mptt_set = None
-        with timing("cte"):
-            cte_set = self._cte_get_queryset_descendants(cte_qs, include_self)
-        return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
 class AdjListModel(models.Model):
@@ -207,21 +185,13 @@ class AdjListModel(models.Model):
         """
         Returns a Queryset of all ancestor locations of this location
         """
-        timing = TimingContext("get_ancestors")
-        mptt_set = None
-        with timing("cte"):
-            cte_set = type(self).objects._cte_get_ancestors(self, **kw)
-        return ComparedQuerySet(mptt_set, cte_set, timing)
+        return type(self).objects.get_ancestors(self, **kw)
 
     def get_descendants(self, **kw):
         """
         Returns a Queryset of all descendant locations of this location
         """
-        timing = TimingContext("get_descendants")
-        mptt_set = None
-        with timing("cte"):
-            cte_set = type(self).objects._cte_get_descendants(self, **kw)
-        return ComparedQuerySet(mptt_set, cte_set, timing)
+        return type(self).objects.get_descendants(self, **kw)
 
     def get_children(self):
         return self.children.all()
