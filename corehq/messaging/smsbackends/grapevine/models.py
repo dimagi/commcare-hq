@@ -67,7 +67,7 @@ class SQLGrapevineBackend(SQLSMSBackend):
 
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
-        text = msg.text.encode('utf-8')
+        text = msg.text
 
         config = self.config
         data = TEMPLATE.format(
@@ -78,7 +78,7 @@ class SQLGrapevineBackend(SQLSMSBackend):
         )
 
         url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-        req = six.moves.urllib.request.Request(url, data)
+        req = six.moves.urllib.request.Request(url, data.encode('utf-8'))
         response = six.moves.urllib.request.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
         resp = response.read()
 
