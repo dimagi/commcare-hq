@@ -29,7 +29,7 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
         self.name.subscribe(function(newValue){
             // Set the label value to the value of the name if it isn't otherwise set
             if (!self.label() && newValue !== 'undefined'){ // atwho sometimes sets the value to the string 'undefined'
-                var val = newValue.replace('@', '').replace('_', ' ').replace(/\w\S*/g, function(txt){
+                var val = newValue.replace('@', '').replace(/_/g, ' ').replace(/\w\S*/g, function(txt){
                     return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
                 });
                 self.label(val);

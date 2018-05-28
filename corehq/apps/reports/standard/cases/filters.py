@@ -10,7 +10,7 @@ import six
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES
+from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES, CASE_COMPUTED_METADATA
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 
@@ -82,7 +82,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         case_properties = get_flattened_case_properties(self.domain)
         special_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
-            for prop in SPECIAL_CASE_PROPERTIES
+            for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
         ]
         return case_properties + special_properties
 

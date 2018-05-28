@@ -71,7 +71,8 @@ class CaseListExplorer(CaseListReport):
     def rows(self):
         columns = CaseListExplorerColumns.get_value(self.request, self.domain)
         for case in self.get_data():
+            case_display = SafeCaseDisplay(self, case)
             yield [
-                getattr(SafeCaseDisplay(self, case), column['name'])
+                case_display.get(column)
                 for column in columns
             ]

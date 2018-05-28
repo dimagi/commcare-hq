@@ -201,12 +201,17 @@ class CaseDisplay(CaseInfo):
     last_modified = modified_on
 
     @property
+    def server_last_modified_date(self):
+        return self._dateprop('server_modified_on', False)
+
+    @property
     def owner_display(self):
         owner_type, owner = self.owner
         if owner_type == 'group':
             return '<span class="label label-default">%s</span>' % owner['name']
         else:
             return owner['name']
+    owner_name = owner_display
 
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
@@ -218,6 +223,27 @@ class CaseDisplay(CaseInfo):
             return _("No data")
         else:
             return user['name'] or self.user_not_found_display(user['id'])
+    opened_by_username = creating_user
+
+    @property
+    def opened_by_user_id(self):
+        user = super(CaseDisplay, self).creating_user
+        if user is None:
+            return _("No data")
+        else:
+            return user['id']
+
+    @property
+    def last_modified_by_user_username(self):
+        return self._get_username(self.case['user_id'])
+
+    @property
+    def closed_by_user_id(self):
+        return self.case.get('closed_by')
+
+    @property
+    def closed_by_username(self):
+        return self._get_username(self.closed_by_user_id)
 
 
 class SafeCaseDisplay(object):
@@ -227,8 +253,12 @@ class SafeCaseDisplay(object):
         self.case = case
         self.report = report
 
-    def __getattr__(self, name):
-        if name in SPECIAL_CASE_PROPERTIES:
+    def get(self, column):
+        name = column['name']
+        if name == '_link':
+            return self._link
+
+        if column.get('meta_type') == 'info':
             return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
 
         return self.case.get(name)
@@ -236,7 +266,7 @@ class SafeCaseDisplay(object):
     @property
     def _link(self):
         try:
-            link = absolute_reverse('case_data', args=[self.report.domain, self.case_id])
+            link = absolute_reverse('case_data', args=[self.report.domain, self.case.get('_id')])
         except NoReverseMatch:
             return _("No link found")
         return html.mark_safe("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("Link")))
