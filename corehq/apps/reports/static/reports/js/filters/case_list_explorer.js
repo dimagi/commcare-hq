@@ -23,7 +23,17 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
     var Property = function (name, label, editable, hidden) {
         var self = this;
         self.name = ko.observable(name).trimmed();
-        self.label = ko.observable(label).trimmed();
+
+        self.label = ko.observable(label || name).trimmed();
+
+        self.name.subscribe(function(newValue){
+            if (!self.label() && newValue !== 'undefined'){ // atwho sometimes sets the value to the string 'undefined'
+                var val = newValue.replace('_', ' ').replace(/\w\S*/g, function(txt){
+                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+                });
+                self.label(val);
+            }
+        });
         self.editable = ko.observable(editable === undefined ? true : editable);
         self.hidden = ko.observable(hidden || false);
     };
