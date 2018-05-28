@@ -23,6 +23,7 @@ import six
 
 # These example types and trees mirror the information available in the upload files
 from corehq.apps.locations.util import get_location_data_model
+from six.moves import range
 
 NOT_PROVIDED = LocationStub.NOT_PROVIDED
 

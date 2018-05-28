@@ -507,9 +507,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
@@ -629,6 +629,23 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     TAG_SOLUTIONS,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
 )
 
 LIVEQUERY_SYNC = StaticToggle(
@@ -1169,6 +1186,14 @@ INBOUND_SMS_LENIENCY = StaticToggle(
 )
 
 
+HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
+    'hide_messaging_dashboard',
+    "Hide messaging dashboard from users who are not superusers.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1534,4 +1559,24 @@ TRAINING_MODULE = StaticToggle(
     'Training Modules',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
+    'hide_translations_from_forms',
+    'Hide translations for languages from forms',
+    TAG_CUSTOM,
+    description=(
+        "Do not show translations in forms. Comes in handy when your app support multiple "
+        "languages but you want to focus just on app building."
+    ),
+    namespaces=[NAMESPACE_DOMAIN]
 )

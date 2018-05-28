@@ -84,7 +84,7 @@ def search(request, domain):
         return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 

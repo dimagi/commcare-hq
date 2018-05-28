@@ -57,10 +57,8 @@ branches:
   - jls/add-js-to-sentry # Jenny April 26
   - nh/motech/uncouple # Norman: May the fourth
   - sr-training # Sravan: May 7
-  - jls/enforce-privacy-policy  # Jenny May 9
   - np/draggable  # NP 5/10
   - jls/ejs-async-reports-tabular # Jenny May 15
-  - jls/fix-cc-version  # Jenny May 21
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

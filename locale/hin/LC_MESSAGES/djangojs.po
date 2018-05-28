@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-15 18:58+0000\n"
+"POT-Creation-Date: 2018-05-22 20:03+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Dimagi Dev <devops@dimagi.com>, 2017\n"
 "Language-Team: Hindi (https://www.transifex.com/dimagi/teams/9388/hi/)\n"
@@ -444,15 +444,15 @@ msgstr ""
 msgid "Show All"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:240
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:245
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:331
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:336
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:424
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:429
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -2234,7 +2234,7 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:602
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:620
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -3310,35 +3310,35 @@ msgstr ""
 msgid "minute(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:196
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:197
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:198
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:199
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:200
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:201
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:229
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:230
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:231
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:232
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:233
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:234
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:378
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:379
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:380
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:381
 msgid "Schedule Broadcast"
 msgstr ""
 

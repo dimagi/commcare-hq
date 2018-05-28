@@ -132,5 +132,19 @@
           {% include 'notifications/partials/report_builder_v2_oct2017.html' %}
         </div>
   {% endif %}
+    {% if is_saas_environment and request|ui_notify_enabled:"MESSAGING_DASHBOARD" %}
+        <div class="alert alert-ui-notify alert-ui-notify-relative alert-dismissible helpbubble helpbubble-purple helpbubble-top-left fade in"
+             style="position: absolute; width: 200px;"
+             data-target="#MessagingTab"
+             data-slug="{{ "MESSAGING_DASHBOARD"|ui_notify_slug }}"
+             role="alert">
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            <p class="lead">
+                {% trans "Check out the new Dashboard for Messaging!" %}
+            </p>
+        </div>
+    {% endif %}
 {% endblock %}
 

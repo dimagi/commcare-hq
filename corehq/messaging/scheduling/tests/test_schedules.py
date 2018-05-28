@@ -22,6 +22,7 @@ from corehq.messaging.scheduling.models import (
     AlertEvent,
     TimedSchedule,
     TimedEvent,
+    CasePropertyTimedEvent,
     RandomTimedEvent,
     SMSContent,
 )
@@ -1359,3 +1360,37 @@ class AlertTest(TestCase):
         self.assertNumInstancesForSchedule(1)
         self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 7, 7, 21), False, self.user2)
         self.assertEqual(send_patch.call_count, 2)
+
+
+class TestParentCaseReferences(BaseScheduleTest):
+
+    def test_alert_event(self):
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+    def test_timed_event(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+    def test_case_property_timed_event(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            CasePropertyTimedEvent(case_property_name='preferred_time'),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            CasePropertyTimedEvent(case_property_name='parent/preferred_time'),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertTrue(schedule.references_parent_case)

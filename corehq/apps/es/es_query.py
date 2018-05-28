@@ -165,7 +165,6 @@ class ESQuery(object):
         self.debug_host = debug_host
         self._default_filters = deepcopy(self.default_filters)
         self._aggregations = []
-        self._source = None
         self.es_instance_alias = es_instance_alias
         self.es_query = {"query": {
             "filtered": {

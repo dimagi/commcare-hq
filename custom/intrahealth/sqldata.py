@@ -19,7 +19,7 @@ from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
-from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, bindparam
+from sqlagg.filters import EQ, BETWEEN, AND, GTE, LTE, NOT, IN, SqlFilter, get_column, OR
 from corehq.apps.reports.sqlreport import DatabaseColumn, SqlData, AggregateColumn
 from django.utils.translation import ugettext as _
 from sqlalchemy import select
@@ -59,9 +59,9 @@ class BaseSqlData(SqlData):
 
     def percent_fn(self, x, y):
         return "%(p).2f%%" % \
-            {
-                "p": (100 * float(y or 0) / float(x or 1))
-            }
+               {
+                   "p": (100 * float(y or 0) / float(x or 1))
+               }
 
     def format_data_and_cast_to_float(self, value):
         return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
@@ -94,7 +94,8 @@ class BaseSqlData(SqlData):
             num_cols = len(rows[0])
             for i in range(num_cols):
                 colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                columns = [r.get('sort_key') for r in colrows if
+                           isinstance(r.get('sort_key'), six.integer_types + (float,))]
                 if len(columns):
                     total_row.append(reduce(lambda x, y: x + y, columns, 0))
                 else:
@@ -115,8 +116,8 @@ class ConventureData(BaseSqlData):
 
     @property
     def filters(self):
-        #We have to filter data by real_date_repeat not date(first position in filters list).
-        #Filtering is done directly in columns method(CountUniqueColumn).
+        # We have to filter data by real_date_repeat not date(first position in filters list).
+        # Filtering is done directly in columns method(CountUniqueColumn).
         filters = super(ConventureData, self).filters
         filters.append(AND([GTE('real_date_repeat', "strsd"), LTE('real_date_repeat', "stred")]))
         if 'archived_locations' in self.config:
@@ -166,7 +167,7 @@ class ConventureData(BaseSqlData):
         formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
         rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
 
-        #Months are displayed in chronological order
+        # Months are displayed in chronological order
         if 'month' in self.group_by:
             from custom.intrahealth.reports import get_localized_months
             return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
@@ -176,7 +177,7 @@ class ConventureData(BaseSqlData):
     def calculate_total_row(self, rows):
         total_row = super(ConventureData, self).calculate_total_row(rows)
         if len(total_row) != 0:
-            #two cell's are recalculated because the summation of percentage gives us bad values
+            # two cell's are recalculated because the summation of percentage gives us bad values
             total_row[4] = "%.0f%%" % (total_row[3] * 100 / float(total_row[1]))
             total_row[-1] = "%.0f%%" % (total_row[5] * 100 / float(total_row[3]))
         return total_row
@@ -388,7 +389,7 @@ class PPSAvecDonnees(BaseSqlData):
         columns.append(DatabaseColumn(_("PPS Avec Données Soumises"),
                                       CountUniqueAndSumCustomColumn('location_id'),
                                       format_fn=lambda x: {'sort_key': int(x), 'html': int(x)})
-        )
+                       )
         return columns
 
     @property
@@ -419,7 +420,7 @@ class DateSource(BaseSqlData):
 
     @property
     def group_by(self):
-        return ['date',]
+        return ['date', ]
 
     @property
     def columns(self):
@@ -466,6 +467,7 @@ class RecapPassageData(BaseSqlData):
                                               is_archived=False).name
             except SQLProduct.DoesNotExist:
                 pass
+
         return [
             DatabaseColumn(_("Designations"), SimpleColumn('product_id'),
                            format_fn=lambda id: get_prd_name(id)),
@@ -653,7 +655,8 @@ class NombreData(BaseSqlData):
                     total_row.append("%0.3f" % (float(cp[0]) / (float(cp[1]) or 1.0)))
                 else:
                     colrows = [cr[i] for cr in rows if isinstance(cr[i], dict)]
-                    columns = [r.get('sort_key') for r in colrows if isinstance(r.get('sort_key'), six.integer_types + (float,))]
+                    columns = [r.get('sort_key') for r in colrows if
+                               isinstance(r.get('sort_key'), six.integer_types + (float,))]
                     if len(columns):
                         total_row.append(reduce(lambda x, y: x + y, columns, 0))
                     else:
@@ -828,7 +831,21 @@ class ContainsFilter(SqlFilter):
 
     def build_expression(self, table):
         column = get_column(table, self.column_name)
-        return column.like(bindparam(self.contains))
+        return column.like("%{0}%".format(self.contains))
+
+
+class CustomEQFilter(SqlFilter):
+    """
+    EQ Filter without binding parameter
+    """
+
+    def __init__(self, column_name, parameter):
+        self.column_name = column_name
+        self.parameter = parameter
+
+    def build_expression(self, table):
+        column = get_column(table, self.column_name)
+        return column.match(self.parameter)
 
 
 class YeksiSqlData(SqlData):
@@ -895,8 +912,9 @@ class VisiteDeLOperateurDataSource(YeksiSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
-        if self.config.get('program'):
-            filters.append(ContainsFilter("select_programs", "program"))
+        program_id = self.config.get('program')
+        if program_id:
+            filters.append(ContainsFilter("select_programs", program_id))
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -947,8 +965,15 @@ class VisiteDeLOperateurPerProductDataSource(YeksiSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
-        if self.config.get('program'):
-            filters.append(ContainsFilter("select_programs", "program"))
+        program_id = self.config.get('program')
+        if program_id:
+            programs = ProductsInProgramData(config={'domain': self.config['domain']}).rows
+            for program in programs:
+                if program_id == program[0]:
+                    filters.append(OR(
+                        [CustomEQFilter("product_id", product) for product in program[1].split(" ")]
+                    ))
+                    break
         if 'region_id' in self.config and self.config['region_id']:
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config and self.config['district_id']:
@@ -1057,8 +1082,7 @@ class ProgramData(ProgramsDataSource):
     slug = 'program'
     comment = 'Program names'
     title = 'Program'
-    show_total = True
-    custom_total_calculate = True
+    show_total = False
 
     @property
     def group_by(self):
@@ -1079,7 +1103,43 @@ class ProgramData(ProgramsDataSource):
         rows = []
         for record in records:
             rows.append([record['program_id'], record['program_name']])
-        self.total_row = []
+        return sorted(rows, key=lambda x: x[0])
+
+
+class ProductsInProgramData(ProgramsDataSource):
+    """
+    Returns list of all product ids used in program as string joined by spaces
+    """
+    slug = 'products_in_program'
+    comment = 'Products selected per program'
+    title = 'Products selected per program'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = ['program_id', 'product_ids']
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn("Program ID", SimpleColumn('program_id')),
+            DatabaseColumn("Product IDs", SimpleColumn('product_ids')),
+        ]
+        return columns
+
+    @property
+    def rows(self):
+        records = self.get_data()
+        programs = defaultdict(set)
+        for record in records:
+            products = record['product_ids'].split(' ')
+            for product in products:
+                programs[record['program_id']].add(product)
+
+        rows = []
+        for program_id, products in programs.items():
+            rows.append([program_id, " ".join(products)])
         return sorted(rows, key=lambda x: x[0])
 
 
@@ -1101,10 +1161,10 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
             for i in range(len(self.months)):
                 data[i] = {
                     'pps_is_available': sum(
-                        1 for pps_data in rows if pps_data[i + 1] == '100%'
+                        1 for pps_data in rows if pps_data[i + 1]['html'] == '100%'
                     ),
                     'pps_count': sum(1 for pps_data in rows
-                                     if pps_data[i + 1] != 'pas de données')
+                                     if pps_data[i + 1]['html'] != 'pas de données')
                 }
                 if data[i]['pps_count']:
                     month_value = self.percent_fn(
@@ -1115,13 +1175,12 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                         'html': month_value,
                         'style': 'color: red' if self.cell_value_less_than(month_value, 95) else '',
                     })
+                    total_numerator += data[i]['pps_is_available']
+                    total_denominator += data[i]['pps_count']
                 else:
                     total_row.append({
                         'html': 'pas de données',
                     })
-                total_numerator += data[i]['pps_is_available']
-                total_denominator += data[i]['pps_count']
-
             if total_denominator:
                 total_value = self.percent_fn(
                     total_numerator,
@@ -1215,8 +1274,9 @@ class AvailabilityData(VisiteDeLOperateurDataSource):
                     data[record[self.loc_id]].append(defaultdict(int))
                 loc_names[record[self.loc_id]] = record[self.loc_name]
             month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            multiple_rows_per_pps_in_month = data[record[self.loc_id]][month_index].get(record['pps_id'])
-            if not multiple_rows_per_pps_in_month or \
+            no_multiple_rows_per_pps_in_month = \
+                data[record[self.loc_id]][month_index].get(record['pps_id']) is None
+            if no_multiple_rows_per_pps_in_month or \
                     data[record[self.loc_id]][month_index][record['pps_id']] == 1:
                 data[record[self.loc_id]][month_index][record['pps_id']] = 0 if \
                     record['pps_is_outstock']['html'] == 1 else 1
@@ -1332,16 +1392,26 @@ class LossRateData(VisiteDeLOperateurPerProductDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1482,18 +1552,28 @@ class ExpirationRateData(VisiteDeLOperateurPerProductDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-            'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 5) else '',
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1638,21 +1718,31 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
     def group_by(self):
-        group_by = ['real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
+        group_by = ['doc_id', 'real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
         if self.loc_id != 'pps_id':
             group_by.append(self.loc_id)
         return group_by
@@ -1660,6 +1750,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
             DatabaseColumn("Total amount paid by PPS", SimpleColumn('pps_total_amt_paid')),
@@ -1787,16 +1878,26 @@ class RecoveryRateByDistrictData(LogisticienDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
@@ -1932,27 +2033,38 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
                 numerator,
                 denominator
             )
-            total_row.append({
-                'html': total_value,
-                'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
-            })
+            if denominator:
+                total_row.append({
+                    'html': total_value,
+                    'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+                })
+            else:
+                total_row.append({
+                    'html': 'pas de données',
+                })
         total_value = self.percent_fn(
             total_numerator,
             total_denominator
         )
-        total_row.append({
-            'html': total_value,
-            'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
-        })
+        if total_denominator:
+            total_row.append({
+                'html': total_value,
+                'style': 'color: red' if self.cell_value_bigger_than(total_value, 2) else '',
+            })
+        else:
+            total_row.append({
+                'html': 'pas de données',
+            })
         return total_row
 
     @property
     def group_by(self):
-        return ['real_date', 'pps_id', 'pps_name', 'nb_products_stockout', 'count_products_select']
+        return ['doc_id', 'real_date', 'pps_id', 'pps_name', 'nb_products_stockout', 'count_products_select']
 
     @property
     def columns(self):
         columns = [
+            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
@@ -2051,9 +2163,9 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
     custom_total_calculate = True
 
     def calculate_total_row(self, products):
-        total_row = ['Total (CFA)']
+        total_row = ['Total (%)']
         for i in range(len(self.months)):
-            total_row.append(self.percent_fn(
+            month_value = self.percent_fn(
                 sum(
                     products[product_id][i]['amt_delivered_convenience'] for product_id in products if
                     products[product_id][i]['ideal_topup']
@@ -2062,7 +2174,17 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
                     products[product_id][i]['ideal_topup'] for product_id in products if
                     products[product_id][i]['ideal_topup']
                 )
-            ))
+            )
+            if self.cell_value_less_than(month_value, 90):
+                style = 'color: red'
+            elif self.cell_value_bigger_than(month_value, 100):
+                style = 'color: orange'
+            else:
+                style = ''
+            total_row.append({
+                'html': month_value,
+                'style': style,
+            })
         return total_row
 
     @property
@@ -2104,12 +2226,25 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
             row = [product_names[product_id]]
             for i in range(len(self.months)):
                 if data[product_id][i]['ideal_topup']:
-                    row.append(
-                        self.percent_fn(data[product_id][i]['amt_delivered_convenience'],
-                                        data[product_id][i]['ideal_topup'])
+                    month_value = self.percent_fn(
+                        data[product_id][i]['amt_delivered_convenience'],
+                        data[product_id][i]['ideal_topup']
                     )
+                    if self.cell_value_less_than(month_value, 90):
+                        style = 'color: red'
+                    elif self.cell_value_bigger_than(month_value, 100):
+                        style = 'color: orange'
+                    else:
+                        style = ''
+                    row.append({
+                        'html': month_value,
+                        'style': style,
+                    })
                 else:
-                    row.append('pas de données')
+                    row.append({
+                        'html': 'pas de données',
+                        'style': '',
+                    })
             rows.append(row)
         return rows
 
@@ -2148,9 +2283,9 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
         total_row.append('Total (CFA)')
         for month_index in range(len(self.months)):
-            if data[month_index]:
+            if data.get(month_index):
                 total_row.append(
-                    '{:.2f}'.format(data[month_index])
+                    '{:,}'.format(data[month_index]).replace(',', '.')
                 )
             else:
                 total_row.append('pas de données')
@@ -2192,7 +2327,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         rows = []
         for product_id in data:
             row = [product_names[product_id]]
-            row.extend(['{:.2f}'.format(float(value)) for value in data[product_id]])
+            row.extend(['{:,}'.format(value).replace(',', '.') for value in data[product_id]])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
         return sorted(rows, key=lambda x: x[0])
