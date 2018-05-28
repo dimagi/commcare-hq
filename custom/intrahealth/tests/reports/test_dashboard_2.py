@@ -240,16 +240,16 @@ class TestDashboard2(YeksiTestCase):
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '0.00%'}, {'html': '0.00%'}],
                 [{'html': 'Fatick'}, {'html': 'pas de donn\xe9es'}, {'html': '90.47%'}, {'html': '2.75%'},
-                 {'html': '0.00%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '23.82%'}],
+                 {'html': '0.00%'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': '29.88%'}],
                 [{'html': 'Region 1'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '46.15%'}, {'html': '46.15%'}],
+                 {'html': '92.31%'}, {'html': '92.31%'}],
                 [{'html': 'Region Test'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
-                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '27.50%'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '27.50%'}],
-                [{'html': 'Saint-Louis'}, {'html': '63.85%'}, {'html': '87.68%'}, {'html': '0.00%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '103.33%'},
+                 {'html': 'pas de donn\xe9es'}, {'html': '103.33%'}],
+                [{'html': 'Saint-Louis'}, {'html': '78.36%'}, {'html': '87.68%'}, {'html': '0.00%'},
                  {'html': 'pas de donn\xe9es'}, {'html': '0.00%'}, {'html': 'pas de donn\xe9es'},
-                 {'html': '52.57%'}],
+                 {'html': '65.73%'}],
                 [{'html': 'Thies'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'},
                  {'html': '100.00%'}, {'html': '100.00%'}]
@@ -258,8 +258,8 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             total_row,
             [
-                {'html': 'Taux par Pays'}, {'html': '63.85%'}, {'html': '88.53%'}, {'html': '1.59%'},
-                {'html': '0.00%'}, {'html': '11.92%'}, {'html': '22.04%'}, {'html': '42.37%'}
+                {'html': 'Taux par Pays'}, {'html': '78.36%'}, {'html': '88.53%'}, {'html': '1.59%'},
+                {'html': '0.00%'}, {'html': '17.49%'}, {'html': '24.23%'}, {'html': '55.71%'}
             ]
         )
 
@@ -289,16 +289,16 @@ class TestDashboard2(YeksiTestCase):
         self.assertEqual(
             rows,
             sorted([
-                [{'html': 'P2'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                [{'html': 'P2'}, {'html': '93.02%'}, {'html': 'pas de donn\xe9es'},
                  {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
-                 {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}]
+                 {'html': 'pas de donn\xe9es'}, {'html': '42.55%'}]
             ], key=lambda x: x[0])
         )
         self.assertEqual(
             total_row,
             [
-                {'html': 'Taux par PPS'}, {'html': '75.47%'}, {'html': 'pas de donn\xe9es'},
+                {'html': 'Taux par PPS'}, {'html': '93.02%'}, {'html': 'pas de donn\xe9es'},
                 {'html': 'pas de donn\xe9es'}, {'html': 'pas de donn\xe9es'}, {'html': '0.00%'},
-                {'html': 'pas de donn\xe9es'}, {'html': '37.38%'}
+                {'html': 'pas de donn\xe9es'}, {'html': '42.55%'}
             ]
         )
