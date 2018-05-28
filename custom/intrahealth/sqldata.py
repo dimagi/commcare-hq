@@ -1795,13 +1795,9 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             )
             tmp['numerator'] = numerator
             tmp['denominator'] = denominator
-            return {
-                'html': value,
-            }, tmp
+            return {'html': value}, tmp
         else:
-            return {
-                'html': 'pas de données',
-            }, tmp
+            return {'html': 'pas de données'}, tmp
 
     def parse_recovery_rate_by_pps_to_rows(self, loc_names, data):
         rows = []
@@ -1811,8 +1807,10 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 'html': loc_names[loc_id],
             }]
             for i in range(len(self.months)):
-                denominator = data[loc_id][i]['delivery_amt_owed'] + data[loc_id][i]['pps_total_amt_owed'] - \
-                              data[loc_id][i]['delivery_amt_owed_first_visit']
+                denominator = \
+                    data[loc_id][i]['delivery_amt_owed'] + \
+                    data[loc_id][i]['pps_total_amt_owed'] - \
+                    data[loc_id][i]['delivery_amt_owed_first_visit']
                 if denominator:
                     month_value = self.percent_fn(
                         data[loc_id][i]['pps_total_amt_paid'],
