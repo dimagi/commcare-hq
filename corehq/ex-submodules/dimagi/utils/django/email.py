@@ -6,6 +6,7 @@ import requests
 from smtplib import SMTPSenderRefused
 import uuid
 
+from celery.task import task
 from django.conf import settings
 from django.core.mail import get_connection
 from django.core.mail.message import EmailMultiAlternatives
@@ -26,6 +27,29 @@ in HTML, or use an email client that supports HTML emails.
 def send_HTML_email(subject, recipient, html_content, text_content=None,
                     cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
                     file_attachments=None, bcc=None):
+    if settings.SERVER_ENVIRONMENT in ['production', 'staging']:
+        _send_HTML_email_punt.delay(subject, recipient, html_content, text_content=text_content,
+            cc=cc, email_from=email_from,
+            file_attachments=file_attachments, bcc=bcc)
+    else:
+        _send_HTML_email_run(subject, recipient, html_content, text_content=text_content,
+            cc=cc, email_from=email_from,
+            file_attachments=file_attachments, bcc=bcc)
+
+
+@task(queue="email_queue_punt",
+      bind=True, default_retry_delay=15 * 60, max_retries=10, acks_late=True)
+def _send_HTML_email_punt(self, subject, recipient, html_content, text_content=None,
+                         cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
+                         file_attachments=None, bcc=None):
+    _send_HTML_email_run(subject, recipient, html_content, text_content=text_content,
+        cc=cc, email_from=email_from,
+        file_attachments=file_attachments, bcc=bcc)
+
+
+def _send_HTML_email_run(subject, recipient, html_content, text_content=None,
+                         cc=None, email_from=settings.DEFAULT_FROM_EMAIL,
+                         file_attachments=None, bcc=None):
 
     recipient = list(recipient) if not isinstance(recipient, six.string_types) else [recipient]
 
