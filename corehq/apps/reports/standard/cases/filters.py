@@ -86,7 +86,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
 def get_flattened_case_properties(domain):
     all_properties_by_type = all_case_properties_by_domain(domain, include_parent_properties=False)
     all_properties = [
-        {'name': value, 'caseType': case_type}
+        {'name': value, 'case_type': case_type}
         for case_type, values in six.iteritems(all_properties_by_type)
         for value in values
     ]

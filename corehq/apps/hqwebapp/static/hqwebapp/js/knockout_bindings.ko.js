@@ -576,7 +576,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 afterInsert: function() {
                     $element.trigger('textchange');
                 },
-                replaceValue: true,
             });
 
             $element.on("textchange", function() {

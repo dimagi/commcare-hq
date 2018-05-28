@@ -11,7 +11,7 @@ var SuggestedCaseTypes = function(){
             return self.allCaseProperties;
         }
         return _.filter(self.allCaseProperties, function(prop){
-            return prop['caseType'] == self.currentCaseType();
+            return prop['case_type'] == self.currentCaseType() || prop['case_type'] == null;
         });
     });
 };
@@ -81,13 +81,42 @@ ko.bindingHandlers.xPathAutocomplete = {
 
         hqImport('hqwebapp/js/atwho').init($element, {
             atwhoOptions: {
-                displayTpl: '<li><span class=\"badge\">${caseType}</span> ${name}</li>',
+                displayTpl: '<li><span class=\"badge\">${case_type}</span> ${name}</li>',
                 callbacks: {},
             },
             afterInsert: function() {
                 $element.trigger('textchange');
             },
             replaceValue: false,
+        });
+
+        $element.on("textchange", function() {
+            if ($element.val()) {
+                $element.change();
+            }
+        });
+    },
+
+    update: function(element, valueAccessor, allBindings) {
+        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
+    },
+};
+
+
+ko.bindingHandlers.explorerColumnsAutocomplete = {
+    init: function(element, valueAccessor) {
+        var $element = $(element);
+        if (!$element.atwho) {
+            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
+        }
+
+        hqImport('hqwebapp/js/atwho').init($element, {
+            atwhoOptions: {
+                displayTpl: '<li><span class=\"badge\">${case_type}</span> ${name}</li>',
+            },
+            afterInsert: function() {
+                $element.trigger('textchange');
+            },
         });
 
         $element.on("textchange", function() {
