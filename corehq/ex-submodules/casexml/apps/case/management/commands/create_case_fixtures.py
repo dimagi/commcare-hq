@@ -7,9 +7,10 @@ import uuid
 
 import faker
 from django.core.management.base import BaseCommand
+from six.moves import range
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from six.moves import range
+from corehq.util.log import with_progress_bar
 
 
 class Command(BaseCommand):
@@ -27,10 +28,12 @@ class Command(BaseCommand):
 
     def handle(self, domain, num_root_items, owner_ids, **kwargs):
         num_cases = 0
-        for n in range(num_root_items):
+        for n in with_progress_bar(range(num_root_items)):
             owner = random.choice(owner_ids)
             # use a random locale for every 3 cases, otherwise use english
-            locale = random.choice(list(faker.config.AVAILABLE_LOCALES)) if n % 3 == 0 else 'en_US'
+            # remove hu_HU because: https://github.com/joke2k/faker/pull/756
+            locale = (random.choice(list(faker.config.AVAILABLE_LOCALES - set(['hu_HU'])))
+                      if n % 3 == 0 else 'en_US')
             structures = self._create_case_structure(locale, owner)
             num_cases += len(CaseFactory(domain).create_or_update_cases(structures, user_id=owner))
 
@@ -56,7 +59,7 @@ class Command(BaseCommand):
         for _ in range(random.randint(1, 5)):
             profile = fake.profile(fields=['name', 'address', 'birthdate', 'blood_group', 'sex'])
             profile['age'] = fake.random_int(1, 15)
-            profile['favorite_color'] = fake.safe_color_name()
+            profile['favorite_color'] = getattr(fake, 'safe_color_name', fake.word)()
             profile['favorite_number'] = fake.random_int(1, 1000)
             profile['lang'] = locale
             child = CaseStructure(
@@ -77,6 +80,7 @@ class Command(BaseCommand):
             )
             structures.append(child)
 
+        licence_plate = fake.license_plate()
         car = CaseStructure(
             case_id=str(uuid.uuid4()),
             walk_related=False,
@@ -86,8 +90,8 @@ class Command(BaseCommand):
                 "owner_id": owner_id,
                 "update": {
                     "name": fake.word(),
-                    "licence_plate": fake.license_plate(),
-                    "color": fake.safe_color_name(),
+                    "licence_plate": licence_plate[0] if isinstance(licence_plate, tuple) else licence_plate,
+                    "color": getattr(fake, 'safe_color_name', fake.word)(),
                 },
             },
             indices=[CaseIndex(
