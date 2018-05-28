@@ -55,8 +55,11 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     DEFAULT_COLUMNS = [
         {'name': '@case_type', 'label': _('Case Type')},
         {'name': 'case_name', 'label': _('Case Name')},
-        {'name': '@owner_id', 'label': _('Owner ID')},
-        {'name': 'last_modified', 'label': _('Last Modified Date')},
+        {'name': 'owner_name', 'label': _('Owner Name')},
+        {'name': 'date_opened', 'label': _('Date Opened')},
+        {'name': 'opened_by_username', 'label': _('Opened By Username')},
+        {'name': 'last_modified', 'label': _('Last Modified')},
+        {'name': '@status', 'label': _('Status')},
     ]
 
     @property
