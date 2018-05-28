@@ -542,12 +542,13 @@ class SQLLocation(AdjListModel):
         Unarchive a location and reopen supply point case if it
         exists.
         """
-        for loc in self.get_descendants(include_self=True):
+        import itertools
+        from corehq.apps.users.models import CommCareUser
+        for loc in itertools.chain(self.get_descendants(include_self=True), self.get_ancestors()):
             loc.is_archived = False
             loc.save()
 
             if loc.user_id:
-                from corehq.apps.users.models import CommCareUser
                 user = CommCareUser.get(loc.user_id)
                 user.active = True
                 user.save()
