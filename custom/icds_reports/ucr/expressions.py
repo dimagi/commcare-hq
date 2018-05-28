@@ -10,6 +10,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
@@ -127,7 +128,7 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     xmlns = ListProperty(required=False)
 
 
-class FormsInDateExpressionSpec(JsonObject):
+class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('icds_get_case_forms_in_date')
     case_id_expression = DefaultProperty(required=True)
     xmlns = ListProperty(required=False)
