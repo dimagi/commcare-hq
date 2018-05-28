@@ -28,9 +28,6 @@ class CaseInfo(object):
         self.case = case
         self.report = report
 
-    def __getattr__(self, name):
-        return self.case.get(name)
-
     @property
     def case_type(self):
         return self.case['type']
