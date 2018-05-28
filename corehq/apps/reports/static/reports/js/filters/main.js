@@ -7,10 +7,10 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/phone_number',
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
-    'reports/js/filters/case_properties',
-    'reports/js/filters/case_search_xpath',
     'locations/js/location_drilldown',
     'reports_core/js/choice_list_utils',
+    'reports/js/filters/case_properties',
+    'reports/js/filters/case_search_xpath',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
@@ -21,10 +21,10 @@ hqDefine("reports/js/filters/main", [
     phoneNumberFilter,
     buttonGroup,
     scheduleInstanceFilter,
-    casePropertyColumns,
-    caseSearchXpath,
     locationDrilldown,
-    choiceListUtils
+    choiceListUtils,
+    casePropertyColumns,
+    caseSearchXpath
 ) {
     var init = function() {
         // Datespans
