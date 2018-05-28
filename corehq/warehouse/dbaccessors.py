@@ -71,7 +71,7 @@ def get_synclogs_by_date(start_datetime, end_datetime):
     '''
     from casexml.apps.phone.models import SyncLogSQL
 
-    return SyncLogSQL.objects.filter(date__gt=start_datetime, date__lte=end_datetime)
+    return SyncLogSQL.objects.filter(date__gt=start_datetime, date__lte=end_datetime).defer('doc')
 
 def get_forms_by_last_modified(start_datetime, end_datetime):
     '''
