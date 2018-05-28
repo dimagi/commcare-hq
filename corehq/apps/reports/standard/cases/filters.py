@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 import json
 
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy
+from django.utils.translation import ugettext_lazy, ugettext as _
 import six
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -43,7 +43,7 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
 class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
-    template = "reports/filters/case_properties.html"
+    template = "reports/filters/explorer_columns.html"
     PERSISTENT_COLUMNS = [
         # hidden from view, but used for sorting when no sort column is provided
         {'name': 'modified_on', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
@@ -52,10 +52,10 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     ]
 
     DEFAULT_COLUMNS = [
-        {'name': 'type', 'label': 'Case Type'},
-        {'name': 'name', 'label': 'Case Name'},
-        {'name': 'owner_id', 'label': 'Owner ID'},
-        {'name': 'modified_on', 'label': 'Last Modified Date'},
+        {'name': 'type', 'label': _('Case Type')},
+        {'name': 'name', 'label': _('Case Name')},
+        {'name': 'owner_id', 'label': _('Owner ID')},
+        {'name': 'modified_on', 'label': _('Last Modified Date')},
     ]
 
     @property

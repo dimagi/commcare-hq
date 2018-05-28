@@ -149,7 +149,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-case-property-columns").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = casePropertyColumns.model(data.initialvalue, data.allcaseproperties);
+            var model = casePropertyColumns.model(data.initialvalue, data.columnsuggestions);
             $el.koApplyBindings(model);
         });
         $(".report-filter-xpath-textarea").each(function (i, el) {
