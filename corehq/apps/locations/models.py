@@ -11,7 +11,6 @@ from django.conf import settings
 from django.db import models, transaction
 from django_cte import CTEQuerySet
 from memoized import memoized
-from mptt.models import TreeForeignKey
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
@@ -315,10 +314,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
             return None
 
     def get_queryset(self):
-        query = LocationQuerySet(self.model, using=self._db)
-        if not settings.IS_LOCATION_CTE_ONLY:
-            query = query.order_by(self.tree_id_attr, self.left_attr)  # mptt default
-        return query
+        return LocationQuerySet(self.model, using=self._db)
 
     def get_from_user_input(self, domain, user_input):
         """
@@ -392,7 +388,7 @@ class SQLLocation(AdjListModel):
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to

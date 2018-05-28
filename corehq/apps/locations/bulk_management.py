@@ -483,9 +483,9 @@ class NewLocationImporter(object):
 class LocationTreeValidator(object):
     """Validates the given type and location stubs
 
-    All types and stubs are linked with a corresponding db_object and
-    parent object (new_parent) by the time validation is complete if/
-    when there are no errors.
+    All types and location stubs are linked with a corresponding
+    db_object, locations also get a parent object (new_parent), by
+    the time validation is complete if/when there are no errors.
 
     :param type_rows: List of `LocationTypeStub` objects.
     :param location_rows: List of `LocationStub` objects.
@@ -519,10 +519,12 @@ class LocationTreeValidator(object):
             lt.lookup_old_collection_data(old_collection)
 
         # `lookup_old_collection_data()` is called for items in
-        # `self.locations` by `_check_model_validation()`, which
-        # is the final step in `_get_errors()`
+        # `self.locations` by `_check_model_validation()`, the
+        # final step in `_get_errors()`; it is not called for
+        # to-be-deleted locations
+        locs_by_code = self.locations_by_code
         for loc in self.locations_to_be_deleted:
-            loc.lookup_old_collection_data(old_collection, self.locations_by_code)
+            loc.lookup_old_collection_data(old_collection, locs_by_code)
 
     def _get_warnings(self):
         return [
@@ -882,35 +884,27 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
-    def _process_locations(locs_to_process, to_be_deleted):
-        for loc in locs_to_process:
+    delete_locations = []
+    with transaction.atomic():
+        for loc in order_by_location_type():
+            if loc.do_delete:
+                delete_locations.append(loc)
+                continue
             if excel_importer:
                 excel_importer.add_progress()
-            if loc.do_delete:
-                if not loc.is_new:
-                    # keep track of to be deleted items to delete them in top-to-bottom order
-                    to_be_deleted.append(loc.db_object)
-            elif loc.needs_save:
+            if loc.needs_save:
                 loc_object = loc.db_object
                 loc_object.location_type = types_by_code.get(loc.location_type)
                 loc_object.parent = loc.new_parent
-                loc.db_object.save()
+                loc_object.save()
 
-    to_be_deleted = []
-
-    top_to_bottom_locations = order_by_location_type()
-    if delay_updates:
-        for locs in chunked(top_to_bottom_locations, chunk_size):
-            with transaction.atomic():
-                with SQLLocation.objects.delay_mptt_updates():
-                    _process_locations(locs, to_be_deleted)
-    else:
-        _process_locations(top_to_bottom_locations, to_be_deleted)
-
-    for locs in chunked(reversed(to_be_deleted), chunk_size):
-        # Deletion has to happen bottom to top, otherwise mptt complains
-        #   about missing parents
-        with transaction.atomic():
-            with SQLLocation.objects.delay_mptt_updates():
-                for l in locs:
-                    l.delete()
+        # reverse -> delete from bottom to top
+        # WARNING the databases may be left in an inconsistent state if
+        # an exception is thrown during deletion because SQLLocation.delete()
+        # deletes resources that are stored in other databases that will
+        # not be reverted on transaction rollback.
+        for loc in reversed(delete_locations):
+            if excel_importer:
+                excel_importer.add_progress()
+            if not loc.is_new:
+                loc.db_object.delete()
