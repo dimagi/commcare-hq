@@ -57,7 +57,7 @@ class Command(BaseCommand):
 
         print('\nThe following databases will be migrated:\n * {}\n'.format('\n * '.join(dbs_to_migrate)))
         if dbs_to_skip:
-            print('\nThe following databases will be skilled:\n * {}\n'.format('\n * '.join(dbs_to_skip)))
+            print('\nThe following databases will be skipped:\n * {}\n'.format('\n * '.join(dbs_to_skip)))
 
         jobs = [
             gevent.spawn(migrate_db, db_alias)
