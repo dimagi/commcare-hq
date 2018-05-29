@@ -21,7 +21,7 @@ class UcrTableNameMapping(models.Model):
     table_name = models.TextField(blank=True, null=True)
 
     class Meta:
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         db_table = 'ucr_table_name_mapping'
 
 
@@ -44,7 +44,7 @@ class ICDSAuditEntryRecord(models.Model):
     time_of_use = models.DateTimeField(auto_now_add=True)
 
     class Meta(object):
-        app_label = 'icds_model'
+        app_label = 'icds_reports'
         db_table = 'icds_audit_entry_record'
 
     @classmethod

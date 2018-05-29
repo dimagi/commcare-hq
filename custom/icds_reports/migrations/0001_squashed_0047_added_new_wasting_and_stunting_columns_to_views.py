@@ -609,5 +609,15 @@ class Migration(migrations.Migration):
             name='awclocation',
             unique_together=set([('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id')]),
         ),
+        migrations.CreateModel(
+            name='UcrTableNameMapping',
+            fields=[
+                ('table_type', models.TextField(primary_key=True, serialize=False)),
+                ('table_name', models.TextField(blank=True, null=True)),
+            ],
+            options={
+                'db_table': 'ucr_table_name_mapping',
+            },
+        ),
         migrator.get_migration('create_child_health_monthly_view.sql'),
     ]
