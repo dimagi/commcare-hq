@@ -53,7 +53,6 @@ branches:
   - ce/auto-batches # Cal April 6
   - ce/app-status-staging # Cal April 9
   - jls/add-js-to-sentry # Jenny April 26
-  - nh/motech/uncouple # Norman: May the fourth
   - sr-training # Sravan: May 7
   - np/draggable  # NP 5/10
   - jls/ejs-async-reports-tabular # Jenny May 15
