@@ -1684,7 +1684,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, data, tmp):
+    def calculate_total_row(self, data, value_partials):
         if 'region_id' in self.config and self.config['region_id']:
             total_row = [{
                 'html': 'Taux par Région',
@@ -1725,7 +1725,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 })
         total_numerator = 0
         total_denominator = 0
-        for loc_id, value in tmp.items():
+        for loc_id, value in value_partials.items():
             total_numerator += value['numerator']
             total_denominator += value['denominator']
         total_value = self.percent_fn(
@@ -1775,7 +1775,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     def get_recovery_rate_by_pps_in_location(self, data_per_localization):
         numerator = 0
         denominator = 0
-        tmp = {
+        value_partials = {
             'numerator': 0,
             'denominator': 0,
         }
@@ -1793,15 +1793,15 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 numerator,
                 denominator,
             )
-            tmp['numerator'] = numerator
-            tmp['denominator'] = denominator
-            return {'html': value}, tmp
+            value_partials['numerator'] = numerator
+            value_partials['denominator'] = denominator
+            return {'html': value}, value_partials
         else:
-            return {'html': 'pas de données'}, tmp
+            return {'html': 'pas de données'}, value_partials
 
     def parse_recovery_rate_by_pps_to_rows(self, loc_names, data):
         rows = []
-        tmp = {}
+        value_partials = {}
         for loc_id in data:
             row = [{
                 'html': loc_names[loc_id],
@@ -1823,11 +1823,35 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     row.append({
                         'html': 'pas de données',
                     })
-            cell, tmp_per_loc_id = self.get_recovery_rate_by_pps_in_location(data[loc_id])
+            cell, value_partials_per_loc_id = self.get_recovery_rate_by_pps_in_location(data[loc_id])
             row.append(cell)
-            tmp[loc_id] = tmp_per_loc_id
+            value_partials[loc_id] = value_partials_per_loc_id
             rows.append(row)
-        return rows, tmp
+        return rows, value_partials
+
+    def aggregate_recovery_rate_by_pps_per_month_from_pps_to_higher_location(self, data, pps_id_per_higher_loc_id):
+        agg_data = {}
+        for pps_id, values in data.items():
+            higher_loc_id = pps_id_per_higher_loc_id[pps_id]
+            if higher_loc_id not in agg_data:
+                agg_data[higher_loc_id] = []
+                for i in range(len(self.months)):
+                    agg_data[higher_loc_id].append({
+                        'delivery_amt_owed_first_visit': 0,
+                        'pps_total_amt_owed': 0,
+                        'pps_total_amt_paid': 0,
+                        'delivery_amt_owed': 0,
+                    })
+            for month_index in range(len(self.months)):
+                agg_data[higher_loc_id][month_index]['delivery_amt_owed_first_visit'] += \
+                    values[month_index]['delivery_amt_owed_first_visit']
+                agg_data[higher_loc_id][month_index]['pps_total_amt_owed'] += \
+                    values[month_index]['pps_total_amt_owed']
+                agg_data[higher_loc_id][month_index]['pps_total_amt_paid'] += \
+                    values[month_index]['pps_total_amt_paid']
+                agg_data[higher_loc_id][month_index]['delivery_amt_owed'] += \
+                    values[month_index]['delivery_amt_owed']
+        return agg_data
 
     def get_recovery_rate_by_pps_per_month(self, records):
         data = {}
@@ -1866,27 +1890,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     data[record['pps_id']][month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']
                 data[record['pps_id']][month_index]['delivery_amt_owed'] += record['delivery_amt_owed']
         if self.loc_id != 'pps_id':
-            agg_data = {}
-            for pps_id, values in data.items():
-                higher_loc_id = pps_id_per_higher_loc_id[pps_id]
-                if higher_loc_id not in agg_data:
-                    agg_data[higher_loc_id] = []
-                    for i in range(len(self.months)):
-                        agg_data[higher_loc_id].append({
-                            'delivery_amt_owed_first_visit': 0,
-                            'pps_total_amt_owed': 0,
-                            'pps_total_amt_paid': 0,
-                            'delivery_amt_owed': 0,
-                        })
-                for month_index in range(len(self.months)):
-                    agg_data[higher_loc_id][month_index]['delivery_amt_owed_first_visit'] += \
-                        values[month_index]['delivery_amt_owed_first_visit']
-                    agg_data[higher_loc_id][month_index]['pps_total_amt_owed'] += \
-                        values[month_index]['pps_total_amt_owed']
-                    agg_data[higher_loc_id][month_index]['pps_total_amt_paid'] += \
-                        values[month_index]['pps_total_amt_paid']
-                    agg_data[higher_loc_id][month_index]['delivery_amt_owed'] += \
-                        values[month_index]['delivery_amt_owed']
+            agg_data = self.aggregate_recovery_rate_by_pps_per_month_from_pps_to_higher_location(
+                data, pps_id_per_higher_loc_id)
             return loc_names, agg_data
         return loc_names, data
 
@@ -1894,8 +1899,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     def rows(self):
         records = self.get_data()
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
-        rows, tmp = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
-        self.total_row = self.calculate_total_row(data, tmp)
+        rows, value_partials = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
+        self.total_row = self.calculate_total_row(data, value_partials)
         return sorted(rows, key=lambda x: x[0])
 
     @property
