@@ -44,7 +44,7 @@ hqDefine("reports/js/readable_form", function() {
         $('.showSkippedToggle').change(function () {
             showSkipped($(this).is(':checked'));
         }).each(function () {
-            if ($('.form-data-skipped').length == 0) {
+            if (!$('.form-data-skipped').length) {
                 $(this).parent('label').hide();
             }
         });
