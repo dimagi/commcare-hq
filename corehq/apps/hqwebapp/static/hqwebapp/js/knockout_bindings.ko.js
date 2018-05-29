@@ -572,7 +572,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             }
 
             hqImport('hqwebapp/js/atwho').init($element, {
-                atwhoOptions: $element.data('atwhooptions'),
                 afterInsert: function() {
                     $element.trigger('textchange');
                 },
