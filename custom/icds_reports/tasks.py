@@ -140,12 +140,31 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                     icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
                     icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
                 ),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                    no_op_task_for_celery_bug.si(),
+                )
             ])
 
-        tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily))
-        tasks.append(email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')))
+        tasks.append(group(
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
+            no_op_task_for_celery_bug.si(),
+        ))
+        tasks.append(group(
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            no_op_task_for_celery_bug.si(),
+        ))
         chain(*tasks).delay()
+
+
+@task(queue="icds_aggregation_queue")
+def no_op_task_for_celery_bug():
+    # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
+    # If the tasks are not grouped, then once celery gets to that task, no future tasks will be queued.
+    # Grouping one task by itself does not appear to work.
+    # If there's only one task for a group, we can add this to get around this issue.
+    # Once we upgrade celery we can experiment with getting rid of this.
+    pass
 
 
 def _create_aggregate_functions(cursor):
