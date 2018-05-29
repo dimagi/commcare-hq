@@ -11,18 +11,12 @@ import six
 from io import open
 
 
-class AbtSupervisorExpressionSpec(JsonObject):
-    type = TypeProperty('abt_supervisor')
+class AbtExpressionSpec(JsonObject):
 
     @property
     @memoized
     def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
-        with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+        raise NotImplementedError()
 
     @classmethod
     def _get_val(cls, item, path):
@@ -226,6 +220,17 @@ class AbtSupervisorExpressionSpec(JsonObject):
                             'comments': self._get_comments(partial, spec),
                             'names': names,
                         })
+                elif warning_type == "not_selected" and form_value:
+                    value = spec.get("velue", "")
+                    if form_value and value not in self._question_answered(form_value):
+                        docs.append({
+                            'flag': self._get_flag_name(item, spec),
+                            'warning': self._get_warning(spec, item).format(
+                                msg=self._get_val(partial, spec.get('warning_question', None)) or ""
+                            ),
+                            'comments': self._get_comments(partial, spec),
+                            'names': names,
+                        })
 
                 else:
                     danger_value = spec.get('answer', [])
@@ -245,6 +250,39 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return docs
 
 
+class AbtSupervisorExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor')
+
+    @property
+    @memoized
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
+class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2')
+
+    @property
+    @memoized
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
 def abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def abt_supervisor_v2_expression(spec, context):
+    wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
     return wrapped

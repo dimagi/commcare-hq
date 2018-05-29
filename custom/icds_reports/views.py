@@ -8,7 +8,7 @@ from wsgiref.util import FileWrapper
 import requests
 
 from datetime import datetime, date
-
+from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
@@ -19,7 +19,8 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.conf import settings
 
 from corehq import toggles
 from corehq.apps.cloudcare.utils import webapps_module
@@ -34,9 +35,14 @@ from corehq.apps.users.models import UserRole
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds.tasks import send_translation_files_to_transifex
+from custom.icds.translations.integrations.client import TransifexApiClient
+from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
+from custom.icds_reports.forms import AppTranslationsForm
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -1587,3 +1593,59 @@ class ICDSImagesAccessorAPI(View):
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type
         )
+
+
+@location_safe
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class ICDSAppTranslations(BaseDomainView):
+    page_title = ugettext_lazy('ICDS App Translations')
+    urlname = 'icds_app_translations'
+    template_name = 'icds_reports/icds_app/app_translations.html'
+
+    @property
+    @memoized
+    def translations_form(self):
+        if self.request.POST:
+            return AppTranslationsForm(self.domain, self.request.POST)
+        else:
+            return AppTranslationsForm(self.domain)
+
+    @property
+    def page_context(self):
+        transifex_details_available = transifex_details_available_for_domain(self.domain)
+        context = {
+            'integration_available': transifex_details_available
+        }
+        if transifex_details_available:
+            context['translations_form'] = self.translations_form
+        return context
+
+    def section_url(self):
+        return
+
+    @staticmethod
+    def ensure_source_language(form_data):
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('source_lang')
+        transifex_account_details = settings.TRANSIFEX_DETAILS
+        client = TransifexApiClient(transifex_account_details.get('token'),
+                                    transifex_account_details.get('organization'),
+                                    transifex_project_slug)
+        project_source_langugage_code = client.project_details().json().get('source_language_code')
+        return project_source_langugage_code == SOURCE_LANGUAGE_MAPPING.get(source_language_code,
+                                                                            source_language_code)
+
+    def post(self, request, *args, **kwargs):
+        if not transifex_details_available_for_domain(self.domain):
+            messages.error(request, _('Transifex account not set up for this environment'))
+        else:
+            form = self.translations_form
+            if form.is_valid():
+                form_data = form.cleaned_data
+                if not self.ensure_source_language(form_data):
+                    messages.error(request, _('Source lang selected not available for the project'))
+                else:
+                    send_translation_files_to_transifex.delay(request.domain, form_data)
+                    messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                    return redirect(self.urlname, domain=self.domain)
+        return self.get(request, *args, **kwargs)

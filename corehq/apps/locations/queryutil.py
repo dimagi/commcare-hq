@@ -20,9 +20,9 @@ class ComparedQuerySet(object):
     """Compare results and times of MPTT and CTE queries"""
 
     def __init__(self, mptt_set, cte_set, timing_context):
-        self._mptt_set = None if settings.IS_LOCATION_CTE_ONLY else mptt_set
-        self._cte_set = cte_set if settings.IS_LOCATION_CTE_ENABLED else None
-        assert self._mptt_set is not None or self._cte_set is not None
+        self._mptt_set = None
+        self._cte_set = cte_set
+        assert self._cte_set is not None
         if isinstance(timing_context, ComparedQuerySet):
             timing_context = timing_context._timing.clone()
         self._timing = timing_context

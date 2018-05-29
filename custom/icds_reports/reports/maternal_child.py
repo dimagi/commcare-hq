@@ -210,7 +210,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'label': _('Early Initiation of Breastfeeding'),
                     'help_text': _((
                         "Percentage of children breastfed within an hour of birth. Early initiation of "
-                        "breastfeeding ensure the newborn recieves the 'first milk' rich in nutrients "
+                        "breastfeeding ensure the newborn receives the 'first milk' rich in nutrients "
                         "and encourages exclusive breastfeeding practice")
                     ),
                     'percent': percent_diff(
@@ -235,7 +235,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'label': _('Exclusive Breastfeeding'),
                     'help_text': _((
                         "Percentage of children between 0 - 6 months exclusively breastfed. An infant is "
-                        "exclusively breastfed if they recieve only breastmilk with no additional food, "
+                        "exclusively breastfed if they receive only breastmilk with no additional food, "
                         "liquids (even water) ensuring optimal nutrition and growth between 0 - 6 months")
                     ),
                     'percent': percent_diff(
@@ -262,7 +262,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'label': _('Children initiated appropriate Complementary Feeding'),
                     'help_text': _((
                         "Percentage of children between 6 - 8 months given timely introduction to solid or "
-                        "semi-solid food. Timely intiation of complementary feeding in addition to "
+                        "semi-solid food. Timely initiation of complementary feeding in addition to "
                         "breastmilk at 6 months of age is a key feeding practice to reduce malnutrition")
                     ),
                     'percent': percent_diff(
@@ -287,7 +287,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                     'label': _('Institutional Deliveries'),
                     'help_text': _((
                         "Percentage of pregnant women who delivered in a public or private medical facility "
-                        "in the last month. Delivery in medical instituitions is associated with a "
+                        "in the last month. Delivery in medical institutions is associated with a "
                         "decrease in maternal mortality rate")
                     ),
                     'percent': percent_diff(
