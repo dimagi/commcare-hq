@@ -46,3 +46,14 @@ SPECIAL_CASE_PROPERTIES_MAP = {
     'last_modified': SpecialCaseProperty('last_modified', lambda doc: doc.get('modified_on'), 'modified_on'),
 }
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
+
+
+CASE_COMPUTED_METADATA = [
+    'closed_by_username',
+    'last_modified_by_user_username',
+    'opened_by_username',
+    'owner_name',
+    'closed_by_user_id',
+    'opened_by_user_id',
+    'server_last_modified_date',
+]
