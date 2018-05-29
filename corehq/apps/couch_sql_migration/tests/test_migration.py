@@ -639,8 +639,11 @@ class TestLockingQueues(TestCase):
         present determines whether it's expected to be in the queue_by_lock_id or not
         """
         for lock_id in lock_ids:
-            if location:
-                self.assertEqual(queue_obj_id, self.queues.queue_by_lock_id[lock_id][location].id)
+            if location is None:
+                self.assertEqual(
+                    present,
+                    (len(self.queues.queue_by_lock_id[lock_id]) > location - 1 and
+                        queue_obj_id == self.queues.queue_by_lock_id[lock_id][location].id))
             else:
                 self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
 
