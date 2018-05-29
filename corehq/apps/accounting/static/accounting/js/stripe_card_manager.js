@@ -21,7 +21,6 @@ hqDefine("accounting/js/stripe_card_manager", function() {
 
         self.isTestMode = ko.observable(false);
         self.isProcessing = ko.observable(false);
-        self.agreedToPrivacyPolicy = ko.observable(false);
         self.errorMsg = ko.observable('');
 
         var submit = function(){
@@ -74,7 +73,7 @@ hqDefine("accounting/js/stripe_card_manager", function() {
 
     var stripeCardModel = function(card, baseUrl, cardManager){
         'use strict';
-        var self = this;
+        var self = {};
         var mapping = {
             include: ['brand', 'last4', 'exp_month','exp_year', 'is_autopay'],
             copy: ['url', 'token'],

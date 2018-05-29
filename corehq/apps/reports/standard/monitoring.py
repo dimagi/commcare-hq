@@ -937,7 +937,7 @@ class DailyFormStatsReport(WorkerMonitoringReportTableBase, CompletionOrSubmissi
             results.get(json_format_date(date), 0)
             for date in self.dates
         ]
-        styled_date_cols = ['<span class="muted">0</span>' if c == 0 else c for c in date_cols]
+        styled_date_cols = ['<span class="text-muted">0</span>' if c == 0 else c for c in date_cols]
         first_col = self.get_raw_user_link(user) if user else _("Total")
         return [first_col] + styled_date_cols + [sum(date_cols)]
 
@@ -1404,8 +1404,9 @@ class WorkerActivityReport(WorkerMonitoringCaseReportTableBase, DatespanMixin):
         columns.append(DataTablesColumnGroup(_("Case Activity"),
             DataTablesColumn(_("# Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Number of cases owned by the user that were opened, modified or closed in date range.  This includes case sharing cases.")),
-            DataTablesColumn(_("# Total Cases"), sort_type=DTSortType.NUMERIC,
-                help_text=_("Total number of cases owned by the user.  This includes case sharing cases.")),
+            DataTablesColumn(_("# Total Cases (Owned & Shared)"), sort_type=DTSortType.NUMERIC,
+                help_text=_("Total number of cases owned by the user.  This includes cases created by the user "
+                            "and cases that were shared with this user.")),
             DataTablesColumn(_("% Active Cases"), sort_type=DTSortType.NUMERIC,
                 help_text=_("Percentage of cases owned by user that were active.  This includes case sharing cases.")),
         ))

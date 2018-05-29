@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division
 from __future__ import unicode_literals
+from corehq import toggles
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from django.conf import settings
 
@@ -74,3 +75,10 @@ def use_phone_entries():
     it helps performance to avoid keeping them up to date.
     """
     return settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS
+
+
+def show_messaging_dashboard(domain, couch_user):
+    return (
+        not toggles.HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS.enabled(domain) or
+        couch_user.is_superuser
+    )

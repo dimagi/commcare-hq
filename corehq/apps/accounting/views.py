@@ -5,6 +5,7 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.urls import reverse
@@ -62,7 +63,7 @@ from corehq.apps.accounting.async_handlers import (
 )
 from corehq.apps.accounting.models import (
     Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
 )
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
@@ -180,6 +181,10 @@ class ManageBillingAccountView(BillingAccountsSectionView, AsyncHandlerMixin):
     def page_context(self):
         return {
             'account': self.account,
+            'auto_pay_card': (
+                StripePaymentMethod.objects.get(web_user=self.account.auto_pay_user).get_autopay_card(self.account)
+                if self.account.auto_pay_enabled else None
+            ),
             'credit_form': self.credit_form,
             'credit_list': CreditLine.objects.filter(account=self.account),
             'basic_form': self.basic_account_form,
@@ -742,7 +747,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'billing_records': [
                 {
                     'date_created': billing_record.date_created,
-                    'email_recipients': ', '.join(billing_record.recipients),
+                    'email_recipients': ', '.join(billing_record.emailed_to_list),
                     'invoice': billing_record.invoice,
                     'pdf_data_id': billing_record.pdf_data_id,
                 }
@@ -896,7 +901,10 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
-        ).exclude(username=self.request.user.username)
+        )
+
+    def paginated_admins(self):
+        return Paginator(self.accounting_admin_queryset, self.limit)
 
     @property
     @memoized
@@ -912,7 +920,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for admin in self.accounting_admin_queryset:
+        for admin in self.paginated_admins().page(self.page):
             yield {
                 'itemData': self._fmt_admin_data(admin),
                 'template': 'accounting-admin-row',

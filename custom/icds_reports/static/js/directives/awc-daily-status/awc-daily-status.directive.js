@@ -53,7 +53,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
 
     var options = {
         'xAxisTickFormat': '%m/%d/%y',
-        'yAxisTickFormat': ".2%",
+        'yAxisTickFormat': ",",
         'captionContent': ' Total Number of Angwanwadi Centers that were open yesterday',
     };
     vm.chartOptions = vm.getChartOptions(options);
@@ -68,7 +68,7 @@ function AWCDailyStatusController($scope, $routeParams, $location, $filter, icds
             };
             var total = findValue(vm.chartData[0].values, d.value);
             var value = findValue(vm.chartData[1].values, d.value);
-            return vm.tooltipContent(d3.time.format('%b %Y')(new Date(d.value)), value, total);
+            return vm.tooltipContent(d3.time.format('%m/%d/%y')(new Date(d.value)), value, total);
         });
         return chart;
     };

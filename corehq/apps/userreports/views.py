@@ -68,7 +68,7 @@ from corehq.apps.userreports.const import (
     NAMED_EXPRESSION_PREFIX,
     NAMED_FILTER_PREFIX,
 )
-from corehq.apps.userreports.document_stores import get_document_store
+from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
 from corehq.apps.userreports.exceptions import (
     BadBuilderConfigError,
     BadSpecError,
@@ -465,6 +465,12 @@ class ConfigureReport(ReportBuilderView):
             self.source_type = self.request.GET['source_type']
             self.source_id = self.request.GET['source']
 
+        if not self.app_id:
+            raise BadBuilderConfigError(_(
+                "Report builder data source doesn't reference an application. "
+                "It is likely this report has been customized and it is no longer editable. "
+            ))
+
         try:
             data_source_builder = DataSourceBuilder(self.domain, self.app, self.source_type, self.source_id)
         except ResourceNotFound:
@@ -652,6 +658,14 @@ class ConfigureReport(ReportBuilderView):
         if (number_of_report_builder_reports(self.domain) >=
                 allowed_report_builder_reports(self.request)):
             raise Http404()
+
+
+def update_report_description(request, domain, report_id):
+    new_description = request.POST['value']
+    report = get_document_or_404(ReportConfiguration, domain, report_id)
+    report.description = new_description
+    report.save()
+    return json_response({})
 
 
 def _get_form_type(report_type):
@@ -844,7 +858,7 @@ def evaluate_expression(request, domain):
             'form': 'XFormInstance',
             'case': 'CommCareCase',
         }.get(doc_type, 'Unknown')
-        document_store = get_document_store(domain, usable_type)
+        document_store = get_document_store_for_doc_type(domain, usable_type)
         doc = document_store.get_document(doc_id)
         expression_text = request.POST['expression']
         expression_json = json.loads(expression_text)
@@ -892,7 +906,7 @@ def evaluate_data_source(request, domain):
     try:
         data_source = get_datasource_config(data_source_id, domain)[0]
         docs_id = [doc_id.strip() for doc_id in docs_id.split(',')]
-        document_store = get_document_store(domain, data_source.referenced_doc_type)
+        document_store = get_document_store_for_doc_type(domain, data_source.referenced_doc_type)
         rows = []
         for doc in document_store.iter_documents(docs_id):
             for row in data_source.get_all_values(doc):

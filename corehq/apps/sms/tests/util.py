@@ -27,6 +27,7 @@ from dateutil.parser import parse
 import uuid
 from corehq.apps.sms.api import process_username
 from casexml.apps.case.mock import CaseBlock
+from io import open
 
 
 def time_parser(value):
@@ -71,20 +72,33 @@ class TouchformsTestCase(LiveServerTestCase, DomainSubscriptionMixin):
     """
     For now, these test cases need to be run manually. Before running, the
     following dependencies must be met:
-        1. touchforms/backend/localsettings.py:
-            URL_ROOT = "http://localhost:8081/a/{{DOMAIN}}"
-        2. Django localsettings.py:
-            TOUCHFORMS_API_USER = "touchforms_user"
-            TOUCHFORMS_API_PASSWORD = "123"
-        3. Start touchforms
+
+        1. formplayer/config/application.properties:
+
+            - Update these entries:
+                commcarehq.host=http://localhost:8082
+                commcarehq.formplayerAuthKey=abc
+                touchforms.username=touchforms_user
+                touchforms.password=123
+
+            - Update couch.* and datasource.hq.* to point to the respective
+              test databases
+
+            - Make sure your local directory referenced by sqlite.dataDir is
+              completely empty
+
+        2. Start formplayer
+
+        3. Django localsettings.py:
+            FORMPLAYER_INTERNAL_AUTH_KEY = "abc"
     """
     users = None
     apps = None
     keywords = None
     groups = None
 
-    # Always start the test live server on port 8081
-    port = 8081
+    # Always start the test live server on port 8082
+    port = 8082
 
     def create_domain(self, domain):
         domain_obj = Domain(name=domain)

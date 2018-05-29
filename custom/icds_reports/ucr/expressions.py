@@ -10,6 +10,7 @@ from casexml.apps.case.xform import extract_case_blocks
 from corehq.apps.receiverwrapper.util import get_version_from_appversion_text
 from corehq.apps.userreports.const import XFORM_CACHE_KEY_PREFIX
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
+from corehq.apps.userreports.mixins import NoPropertyTypeCoercionMixIn
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.userreports.util import add_tabbed_text
 from corehq.apps.users.models import CommCareUser
@@ -21,8 +22,6 @@ from dimagi.ext.jsonobject import JsonObject, ListProperty, StringProperty, Dict
 
 
 CUSTOM_UCR_EXPRESSIONS = [
-    ('icds_month_start', 'custom.icds_reports.ucr.expressions.month_start'),
-    ('icds_month_end', 'custom.icds_reports.ucr.expressions.month_end'),
     ('icds_parent_id', 'custom.icds_reports.ucr.expressions.parent_id'),
     ('icds_parent_parent_id', 'custom.icds_reports.ucr.expressions.parent_parent_id'),
     ('icds_get_case_forms_by_date', 'custom.icds_reports.ucr.expressions.get_case_forms_by_date'),
@@ -129,7 +128,7 @@ class GetLastCasePropertyUpdateSpec(JsonObject):
     xmlns = ListProperty(required=False)
 
 
-class FormsInDateExpressionSpec(JsonObject):
+class FormsInDateExpressionSpec(NoPropertyTypeCoercionMixIn, JsonObject):
     type = TypeProperty('icds_get_case_forms_in_date')
     case_id_expression = DefaultProperty(required=True)
     xmlns = ListProperty(required=False)
@@ -349,60 +348,6 @@ class ICDSUserLocation(JsonObject):
 
 def _datetime_now():
     return datetime.utcnow()
-
-
-def month_start(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_start_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
-
-
-def month_end(spec, context):
-    # fix offset to 3 months in past
-    spec = {
-        'type': 'month_end_date',
-        'date_expression': {
-            'date_expression': {
-                'expression': {
-                    'type': 'property_name',
-                    'property_name': 'modified_on'
-                },
-                'type': 'root_doc'
-            },
-            'type': 'add_months',
-            'months_expression': {
-                'type': 'evaluator',
-                'context_variables': {
-                    'iteration': {
-                        'type': 'base_iteration_number'
-                    }
-                },
-                'statement': 'iteration - 3'
-            }
-        }
-    }
-    return ExpressionFactory.from_spec(spec, context)
 
 
 def parent_id(spec, context):

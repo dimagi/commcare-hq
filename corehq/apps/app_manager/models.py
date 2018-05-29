@@ -1,27 +1,4 @@
 # coding=utf-8
-"""
-Application terminology
-
-For any given application, there are a number of different documents.
-
-The primary application document is an instance of Application.  This
-document id is what you'll see in the URL on most app manager pages. Primary
-application documents should have `copy_of == None` and `is_released ==
-False`. When an application is saved, the field `version` is incremented.
-
-When a user makes a build of an application, a copy of the primary
-application document is made. These documents are the "versions" you see on
-the deploy page. Each build document will have a different id, and the
-`copy_of` field will be set to the ID of the primary application document.
-Additionally, some attachments such as `profile.xml` and `suite.xml` will be
-created and saved to the build doc (see `create_all_files`).
-
-When a build is starred, this is called "releasing" the build.  The parameter
-`is_released` will be set to True on the build document.
-
-You might also run in to remote applications and applications copied to be
-published on the exchange, but those are quite infrequent.
-"""
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
@@ -64,7 +41,22 @@ from corehq.apps.linked_domain.exceptions import ActionNotPermitted
 from corehq.apps.userreports.exceptions import ReportConfigurationNotFoundError
 from corehq.apps.users.dbaccessors.couch_users import get_display_name_for_user_id
 from corehq.util.timezones.utils import get_timezone_for_domain
-from dimagi.ext.couchdbkit import *
+from dimagi.ext.couchdbkit import (
+    BooleanProperty,
+    DateTimeProperty,
+    DecimalProperty,
+    DictProperty,
+    Document,
+    DocumentSchema,
+    FloatProperty,
+    IntegerProperty,
+    ListProperty,
+    SchemaDictProperty,
+    SchemaListProperty,
+    SchemaProperty,
+    StringListProperty,
+    StringProperty,
+)
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.urls import reverse
@@ -80,6 +72,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -159,6 +152,7 @@ import six
 from six.moves import filter
 from six.moves import range
 from six.moves import map
+from io import open
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -237,14 +231,11 @@ def _rename_key(dct, old, new):
 
 @memoized
 def load_case_reserved_words():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
+        encoding='utf-8'
+    ) as f:
         return json.load(f)
-
-
-@memoized
-def load_form_template(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
-        return f.read()
 
 
 class IndexedSchema(DocumentSchema):
@@ -937,6 +928,8 @@ class FormBase(DocumentSchema):
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    is_release_notes_form = BooleanProperty(default=False)
+    enable_release_notes = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -974,6 +967,20 @@ class FormBase(DocumentSchema):
 
     def clear_validation_cache(self):
         self.set_validation_cache(None)
+
+    def is_allowed_to_be_release_notes_form(self):
+        # checks if this form can be marked as a release_notes form
+        #   based on whether it belongs to a training_module
+        #   and if no other form is already marked as release_notes form
+        module = self.get_module()
+        if not module or not module.is_training_module:
+            return False
+
+        forms = module.get_forms()
+        for form in forms:
+            if form.is_release_notes_form and form.unique_id != self.unique_id:
+                return False
+        return True
 
     @property
     def uses_cases(self):
@@ -1050,6 +1057,9 @@ class FormBase(DocumentSchema):
                 self.clear_validation_cache()
                 return self.validate_form()
         return self
+
+    def is_a_disabled_release_form(self):
+        return self.is_release_notes_form and not self.enable_release_notes
 
     def validate_for_build(self, validate_module=True):
         errors = []
@@ -1452,7 +1462,7 @@ class JRResourceProperty(StringProperty):
     def validate(self, value, required=True):
         super(JRResourceProperty, self).validate(value, required)
         if value is not None and not value.startswith('jr://'):
-            raise BadValueError("JR Resources must start with 'jr://")
+            raise BadValueError("JR Resources must start with 'jr://': {!r}".format(value))
         return value
 
 
@@ -1473,9 +1483,15 @@ class NavMenuItemMediaMixin(DocumentSchema):
         Language-specific icon and audio.
         Properties are map of lang-code to filepath
     """
-    media_image = SchemaDictProperty(JRResourceProperty)
-    media_audio = SchemaDictProperty(JRResourceProperty)
-    custom_icons = SchemaListProperty(CustomIcon)
+
+    # These were originally DictProperty(JRResourceProperty),
+    # but jsonobject<0.9.0 didn't properly support passing in a property to a container type
+    # so it was actually wrapping as a StringPropery
+    # too late to retroactively apply that validation,
+    # so now these are DictProperty(StringProperty)
+    media_image = DictProperty(StringProperty)
+    media_audio = DictProperty(StringProperty)
+    custom_icons = ListProperty(CustomIcon)
 
     @classmethod
     def wrap(cls, data):
@@ -2427,7 +2443,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     get_forms = IndexedSchema.Getter('forms')
 
-    get_suite_forms = IndexedSchema.Getter('forms')
+    def get_suite_forms(self):
+        return [f for f in self.get_forms() if not f.is_a_disabled_release_form()]
 
     @parse_int([1])
     def get_form(self, i):
@@ -5167,8 +5184,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
             # this is much less useful/actionable without a URL
             # so make sure to include the request
-            logging.error('Unexpected error building app', exc_info=True,
-                          extra={'request': view_utils.get_request()})
+            notify_exception(view_utils.get_request(), "Unexpected error building app")
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -5837,7 +5853,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            if not isinstance(form_stuff['form'], ShadowForm):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
@@ -6020,6 +6039,9 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
+        # only one form can be a release notes form, so set them to False explicity when copying
+        copy_source['is_release_notes_form'] = False
+        copy_source['enable_release_notes'] = False
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 

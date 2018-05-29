@@ -27,6 +27,7 @@ from testil import replattr, tempdir
 
 from corehq.apps.app_manager.models import Application, RemoteApp
 from couchexport.models import SavedBasicExport, ExportConfiguration
+from io import open
 
 NOT_SET = object()
 
@@ -97,7 +98,7 @@ class BaseMigrationTest(TestCase):
             mod.BlobMigrationState.objects.get(slug=self.slug)
 
             # verify: migrated data was written to the file
-            with open(filename) as fh:
+            with open(filename, encoding='utf-8') as fh:
                 lines = list(fh)
             lines_by_id = {d["_id"]: d for d in (json.loads(x) for x in lines)}
             for doc in docs:
@@ -589,7 +590,7 @@ class TestMigrateBackend(TestCase):
             missing_log = set()
             fields = ["doc_type", "doc_id", "blob_identifier", "blob_bucket"]
             for n, ignore in enumerate(mod.MIGRATIONS[self.slug].migrators):
-                with open("{}.{}".format(filename, n)) as fh:
+                with open("{}.{}".format(filename, n), encoding='utf-8') as fh:
                     for line in fh:
                         doc = json.loads(line)
                         missing_log.add(tuple(doc[x] for x in fields))

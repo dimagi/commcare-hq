@@ -1,4 +1,15 @@
 hqDefine("scheduling/js/create_schedule.ko", function() {
+    ko.bindingHandlers.useTimePicker = {
+        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+            $(element).timepicker({
+                showMeridian: false,
+                showSeconds: false,
+                defaultTime: $(element).val() || '',
+            });
+        },
+        update: function(element, valueAccessor, allBindings, viewModel, bindingContext) {}
+    };
+
     var MessageViewModel = function(language_code, message) {
         var self = this;
 
@@ -52,6 +63,77 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
         self.loadInitialTranslatedMessages();
     };
 
+    var ContentViewModel = function(initial_values) {
+        var self = this;
+
+        self.subject = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.subject
+        );
+
+        self.message = new TranslationViewModel(
+            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
+            initial_values.message
+        );
+
+        self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
+    };
+
+    var EventAndContentViewModel = function(initial_values) {
+        var self = this;
+        ContentViewModel.call(self, initial_values);
+
+        self.day = ko.observable(initial_values.day);
+        self.time = ko.observable(initial_values.time);
+        self.case_property_name = ko.observable(initial_values.case_property_name);
+        self.minutes_to_wait = ko.observable(initial_values.minutes_to_wait);
+        self.deleted = ko.observable(initial_values.DELETE);
+        self.order = ko.observable(initial_values.ORDER);
+
+        self.waitTimeDisplay = ko.computed(function() {
+            var minutes_to_wait = parseInt(self.minutes_to_wait());
+            if(minutes_to_wait >= 0) {
+                var hours = Math.floor(minutes_to_wait / 60);
+                var minutes = minutes_to_wait % 60;
+                var hours_text = hours + ' ' + gettext('hour(s)');
+                var minutes_text = minutes + ' ' + gettext('minute(s)');
+                if(hours > 0) {
+                    return hours_text + ', ' + minutes_text;
+                } else {
+                    return minutes_text;
+                }
+            }
+            return '';
+        });
+    };
+
+    EventAndContentViewModel.prototype = Object.create(EventAndContentViewModel.prototype);
+    EventAndContentViewModel.prototype.constructor = EventAndContentViewModel;
+
+    var CustomEventContainer = function(id) {
+        var self = this;
+
+        self.event_id = id;
+
+        var custom_event_formset = hqImport("hqwebapp/js/initial_page_data").get("current_values").custom_event_formset;
+        if(id < custom_event_formset.length) {
+            self.eventAndContentViewModel = new EventAndContentViewModel(custom_event_formset[id]);
+        } else {
+            self.eventAndContentViewModel = new EventAndContentViewModel(
+                {
+                    day: 1,
+                    time: '12:00',
+                    minutes_to_wait: 0,
+                    deleted: false
+                }
+            );
+        }
+
+        self.templateId = ko.computed(function() {
+            return 'id_custom_event_template_' + id;
+        });
+    };
+
     var CreateScheduleViewModel = function (initial_values, select2_user_recipients,
         select2_user_group_recipients, select2_user_organization_recipients, select2_location_types,
         select2_case_group_recipients, current_visit_scheduler_form) {
@@ -97,24 +179,18 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.reset_case_property_enabled = ko.observable(initial_values.reset_case_property_enabled);
         self.submit_partially_completed_forms = ko.observable(initial_values.submit_partially_completed_forms);
-        self.survey_reminder_intervals_enabled = ko.observable(initial_values.survey_reminder_intervals_enabled);
 
         self.is_trial_project = initial_values.is_trial_project;
         self.displayed_email_trial_message = false;
         self.content = ko.observable(initial_values.content);
-        self.subject = new TranslationViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
-            initial_values.subject
-        );
-        self.message = new TranslationViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("language_list"),
-            initial_values.message
-        );
+        self.standalone_content_form = new ContentViewModel(initial_values.standalone_content_form);
+        self.custom_events = ko.observableArray();
         self.visit_scheduler_app_and_form_unique_id = new formSelect2Handler(current_visit_scheduler_form,
             'schedule-visit_scheduler_app_and_form_unique_id', self.timestamp);
         self.visit_scheduler_app_and_form_unique_id.init();
 
         self.capture_custom_metadata_item = ko.observable(initial_values.capture_custom_metadata_item);
+        self.editing_custom_immediate_schedule = ko.observable(initial_values.editing_custom_immediate_schedule);
 
         self.create_day_of_month_choice = function(value) {
             if(value === '-1') {
@@ -150,7 +226,7 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.setRepeatOptionText = function(newValue) {
             var option = $('option[value="repeat_every_1"]');
-            if(newValue === 'daily') {
+            if(newValue === 'daily' || newValue === 'custom_daily') {
                 option.text(gettext("every day"));
             } else if(newValue === 'weekly') {
                 option.text(gettext("every week"));
@@ -161,12 +237,12 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
 
         self.send_frequency.subscribe(self.setRepeatOptionText);
 
-        self.showTimeInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+        self.usesCustomEventDefinitions = ko.computed(function() {
+            return self.send_frequency() === 'custom_daily' || self.send_frequency() === 'custom_immediate';
         });
 
-        self.showStartDateInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+        self.showSharedTimeInput = ko.computed(function() {
+            return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly']) !== -1;
         });
 
         self.showWeekdaysInput = ko.computed(function() {
@@ -177,12 +253,8 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             return self.send_frequency() === 'monthly';
         });
 
-        self.showStopInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
-        });
-
-        self.showRepeatInput = ko.computed(function() {
-            return self.send_frequency() !== 'immediately';
+        self.usesTimedSchedule = ko.computed(function() {
+            return $.inArray(self.send_frequency(), ['daily', 'weekly', 'monthly', 'custom_daily']) !== -1;
         });
 
         self.calculateDailyEndDate = function(start_date_milliseconds, repeat_every, occurrences) {
@@ -314,18 +386,95 @@ hqDefine("scheduling/js/create_schedule.ko", function() {
             element.datepicker({dateFormat : "yy-mm-dd"});
         };
 
-        self.initTimePicker = function(element) {
-            element.timepicker({
-                showMeridian: false,
-                showSeconds: false,
-                defaultTime: element.val() || false,
+        self.getNextCustomEventIndex = function() {
+            var count = $('#id_custom-event-TOTAL_FORMS').val();
+            return parseInt(count);
+        };
+
+        self.addCustomEvent = function() {
+            var id = self.getNextCustomEventIndex();
+            $('#id_custom_event_templates').append(
+                 $('#id_custom_event_empty_form_container').html().replace(/__prefix__/g, id)
+            );
+            $('#id_custom-event-TOTAL_FORMS').val(id + 1);
+            self.custom_events.push(new CustomEventContainer(id));
+        };
+
+        self.markCustomEventDeleted = function(event_id) {
+            $.each(self.custom_events(), function(index, value) {
+                if(value.event_id === event_id) {
+                    value.eventAndContentViewModel.deleted(true);
+                };
             });
         };
 
+        self.getCustomEventIndex = function(event_id, arr) {
+            var item_index = null;
+            $.each(arr, function(index, value) {
+                if(value.event_id === event_id) {
+                    item_index = index;
+                }
+            });
+            return item_index;
+        };
+
+        self.moveCustomEventUp = function(event_id) {
+            var new_array = self.custom_events();
+            var item_index = self.getCustomEventIndex(event_id, new_array);
+            var swapped_item = null;
+
+            while(item_index > 0 && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+                swapped_item = new_array[item_index - 1];
+                new_array[item_index - 1] = new_array[item_index];
+                new_array[item_index] = swapped_item;
+                item_index -= 1;
+            }
+
+            self.custom_events(new_array);
+        };
+
+        self.moveCustomEventDown = function(event_id) {
+            var new_array = self.custom_events();
+            var item_index = self.getCustomEventIndex(event_id, new_array);
+            var swapped_item = null;
+
+            while((item_index < (new_array.length - 1)) && (swapped_item === null || swapped_item.eventAndContentViewModel.deleted())) {
+                swapped_item = new_array[item_index + 1];
+                new_array[item_index + 1] = new_array[item_index];
+                new_array[item_index] = swapped_item;
+                item_index += 1;
+            }
+
+            self.custom_events(new_array);
+        };
+
+        self.custom_events.subscribe(function(newValue) {
+            // update the order for all events when the array changes
+            $.each(newValue, function(index, value) {
+                value.eventAndContentViewModel.order(index);
+            });
+        });
+
+        self.useTimeInput = ko.computed(function() {
+            return self.send_time_type() === 'SPECIFIC_TIME' || self.send_time_type() === 'RANDOM_TIME';
+        });
+
+        self.useCasePropertyTimeInput = ko.computed(function() {
+            return self.send_time_type() === 'CASE_PROPERTY_TIME';
+        });
+
         self.init = function () {
             self.initDatePicker($("#id_schedule-start_date"));
-            self.initTimePicker($("#id_schedule-send_time"));
             self.setRepeatOptionText(self.send_frequency());
+
+            var custom_events = [];
+            for(var i = 0; i < self.getNextCustomEventIndex(); i++) {
+                custom_events.push(new CustomEventContainer(i));
+            }
+            custom_events.sort(function(item1, item2) {
+                return item1.eventAndContentViewModel.order() - item2.eventAndContentViewModel.order();
+            });
+            self.custom_events(custom_events);
         };
     };
 

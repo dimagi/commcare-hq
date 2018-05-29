@@ -391,6 +391,9 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
         """
         if isinstance(obj, six.string_types):
             return obj
+        if not obj:
+            return _('Untitled')
+
         val = obj.get(display_lang)
         if val:
             return val
@@ -552,7 +555,7 @@ class FormsByApplicationFilter(BaseDrilldownOptionFilter):
             (_('Application'),
              _("Select an Application") if cls.use_only_last
              else _("Show Forms in all Applications"), PARAM_SLUG_APP_ID),
-            (_('Module'),
+            (_('Menu'),
              _("Select a Menu") if cls.use_only_last
              else _("Show all Forms in selected Application"), PARAM_SLUG_MODULE),
             (_('Form'),

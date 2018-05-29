@@ -12,11 +12,12 @@ from corehq.apps.reports.sqlreport import DataFormatter
 import six
 from six.moves import range
 from six.moves import map
+from io import open
 
 
 @quickcache(['domain'], timeout=5 * 60)
 def get_domain_configuration(domain):
-    with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain))) as f:
+    with open(os.path.join(os.path.dirname(__file__), 'resources/%s.json' % (domain)), encoding='utf-8') as f:
         _loaded_configuration = json.loads(f.read())
         return DomainConfiguration(
             geography_hierarchy=_loaded_configuration['geography_hierarchy'],

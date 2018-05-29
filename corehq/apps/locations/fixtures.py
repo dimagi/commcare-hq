@@ -69,8 +69,12 @@ def should_sync_locations(last_sync, locations_queryset, restore_user):
 class LocationFixtureProvider(FixtureProvider):
 
     def __init__(self, id, serializer):
-        self.id = id
+        self._id = id
         self.serializer = serializer
+
+    @property
+    def id(self):
+        return self._id
 
     def __call__(self, restore_state):
         """
@@ -221,16 +225,9 @@ def get_location_fixture_queryset(user):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
 
     timing = TimingContext("get_location_fixture_queryset")
-    if settings.IS_LOCATION_CTE_ONLY:
-        mptt_set = None
-    else:
-        with timing("mptt"):
-            mptt_set = _mptt_get_location_fixture_queryset(user)
-    if settings.IS_LOCATION_CTE_ENABLED:
-        with timing("cte"):
-            cte_set = _cte_get_location_fixture_queryset(user)
-    else:
-        cte_set = None
+    mptt_set = None
+    with timing("cte"):
+        cte_set = _cte_get_location_fixture_queryset(user)
     return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
@@ -256,95 +253,9 @@ def _cte_get_location_fixture_queryset(user):
     ).annotate(
         path=fixture_ids.col.path,
         depth=fixture_ids.col.depth,
-    ).with_cte(fixture_ids).prefetch_related('location_type')
+    ).with_cte(fixture_ids).prefetch_related('location_type', 'parent')
 
     return result
-
-
-def _mptt_get_location_fixture_queryset(user):
-    user_locations = user.get_sql_locations(user.domain).prefetch_related('location_type')
-
-    all_locations = _get_include_without_expanding_locations(user.domain, user_locations)
-
-    for user_location in user_locations:
-        location_type = user_location.location_type
-        # returns either None or the level (integer) to exand to
-        expand_to_level = _get_level_to_expand_to(user.domain, location_type.expand_to)
-        expand_from_level = location_type.expand_from or location_type
-
-        # returns either all root locations or a single location (of expand_from_level type)
-        expand_from_locations = _get_locs_to_expand_from(user.domain, user_location, expand_from_level)
-
-        locs_below_expand_from = _get_children(expand_from_locations, expand_to_level)
-        locs_at_or_above_expand_from = (SQLLocation.active_objects
-                                        ._mptt_get_queryset_ancestors(expand_from_locations, include_self=True))
-        locations_to_sync = locs_at_or_above_expand_from | locs_below_expand_from
-        if location_type.include_only.exists():
-            locations_to_sync = locations_to_sync.filter(location_type__in=location_type.include_only.all())
-        all_locations |= locations_to_sync
-
-    return all_locations
-
-
-def _get_level_to_expand_to(domain, expand_to):
-    if expand_to is None:
-        return None
-    return (SQLLocation.active_objects
-            .filter(domain__exact=domain, location_type=expand_to)
-            .values_list('level', flat=True)
-            .first())
-
-
-def _get_locs_to_expand_from(domain, user_location, expand_from):
-    """From the users current location, return all locations of the highest
-    level they want to start expanding from.
-    """
-    if user_location.location_type.expand_from_root:
-        return SQLLocation.root_locations(domain=domain)
-    else:
-        ancestors = (
-            user_location
-            ._mptt_get_ancestors(include_self=True)
-            .filter(location_type=expand_from, is_archived=False)
-            .prefetch_related('location_type')
-        )
-        return ancestors
-
-
-def _get_children(expand_from_locations, expand_to_level):
-    """From the topmost location, get all the children we want to sync
-    """
-    children = (SQLLocation.active_objects
-                ._mptt_get_queryset_descendants(expand_from_locations)
-                .prefetch_related('location_type'))
-    if expand_to_level is not None:
-        children = children.filter(level__lte=expand_to_level)
-    return children
-
-
-def _get_include_without_expanding_locations(domain, assigned_locations):
-    """returns all locations set for inclusion along with their ancestors
-    """
-    # all loctypes to include, based on all assigned location types
-    location_type_ids = {
-        loc.location_type.include_without_expanding_id
-        for loc in assigned_locations
-        if loc.location_type.include_without_expanding_id is not None
-    }
-    # all levels to include, based on the above loctypes
-    forced_levels = (SQLLocation.active_objects
-                     .filter(domain__exact=domain,
-                             location_type_id__in=location_type_ids)
-                     .values_list('level', flat=True)
-                     .order_by('level')
-                     .distinct('level'))
-    if forced_levels:
-        return (SQLLocation.active_objects
-                .filter(domain__exact=domain,
-                        level__lte=max(forced_levels))
-                .prefetch_related('location_type'))
-    else:
-        return SQLLocation.objects.none()
 
 
 def _append_children(node, location_db, locations, data_fields):

@@ -8,6 +8,7 @@ from mock import patch
 
 from corehq.apps.app_manager.models import Application, CaseList, Module
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from io import open
 
 
 @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
@@ -22,7 +23,7 @@ class BuildErrorsTest(SimpleTestCase):
                 del error['module']['unique_id']
 
     def test_subcase_errors(self, mock):
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json'), encoding='utf-8') as f:
             source = json.load(f)
 
         app = Application.wrap(source)

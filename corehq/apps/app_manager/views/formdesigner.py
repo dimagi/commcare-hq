@@ -46,7 +46,7 @@ from corehq.apps.app_manager.models import (
     ModuleNotFoundException,
 )
 from corehq.apps.app_manager.decorators import require_can_edit_apps
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import translate
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_FORM_BUILDER_FORM_ID
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import cachebuster
 from corehq.util.context_processors import websockets_override
@@ -116,7 +116,7 @@ def _get_form_designer_view(request, domain, app, module, form):
     context.update(locals())
 
     vellum_options = _get_base_vellum_options(request, domain, app, context['lang'])
-    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form)
+    vellum_options['core'] = _get_vellum_core_context(request, domain, app, module, form, context['lang'])
     vellum_options['plugins'] = _get_vellum_plugins(domain, form, module)
     vellum_options['features'] = _get_vellum_features(request, domain, app)
     context['vellum_options'] = vellum_options
@@ -210,6 +210,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
+            'showOnlyCurrentLang': toggles.HIDE_TRANSLATIONS_FROM_FORMS.enabled_for_request(request),
         },
         'uploader': {
             'uploadUrls': {
@@ -224,7 +225,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
     }
 
 
-def _get_vellum_core_context(request, domain, app, module, form):
+def _get_vellum_core_context(request, domain, app, module, form, lang):
     """
     Returns the core context that will be passed into vellum when it is
     initialized.
@@ -235,7 +236,7 @@ def _get_vellum_core_context(request, domain, app, module, form):
                                                'form_unique_id': form.get_unique_id()}),
         'form': form.source,
         'formId': form.get_unique_id(),
-        'formName': trans(form.name, app.langs),
+        'formName': translate(form.name, lang, app.langs),
         'saveType': 'patch',
         'saveUrl': reverse('edit_form_attr',
                            args=[domain, app.id, form.get_unique_id(),

@@ -22,6 +22,21 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.reminders.views import (
+    BroadcastListView as OldBroadcastListView,
+    CreateBroadcastView,
+    EditBroadcastView,
+    CopyBroadcastView,
+    EditScheduledReminderView,
+    CreateScheduledReminderView,
+    CreateComplexScheduledReminderView,
+    RemindersListView,
+    KeywordsListView,
+    AddNormalKeywordView,
+    AddStructuredKeywordView,
+    EditNormalKeywordView,
+    EditStructuredKeywordView,
+)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -34,8 +49,18 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
-from corehq.form_processor.utils import use_new_exports
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.messaging.scheduling.views import (
+    MessagingDashboardView,
+    BroadcastListView as NewBroadcastListView,
+    CreateScheduleView,
+    EditScheduleView,
+    ConditionalAlertListView,
+    CreateConditionalAlertView,
+    EditConditionalAlertView,
+)
+from corehq.messaging.util import show_messaging_dashboard
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -518,24 +543,21 @@ class ProjectDataTab(UITab):
                     },
                 ]
             })
-            if use_new_exports(self.domain):
-                export_data_views.extend([
-                    {
-                        'title': _(DeIdDailySavedExportListView.page_title),
-                        'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
-                    },
-                    {
-                        'title': _(DeIdDashboardFeedListView.page_title),
-                        'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
-                    },
-                ])
+            export_data_views.extend([
+                {
+                    'title': _(DeIdDailySavedExportListView.page_title),
+                    'url': reverse(DeIdDailySavedExportListView.urlname, args=(self.domain,)),
+                },
+                {
+                    'title': _(DeIdDashboardFeedListView.page_title),
+                    'url': reverse(DeIdDashboardFeedListView.urlname, args=(self.domain,)),
+                },
+            ])
 
         elif self.can_export_data:
             from corehq.apps.export.views import (
                 FormExportListView,
                 CaseExportListView,
-                CreateCustomFormExportView,
-                CreateCustomCaseExportView,
                 CreateNewCustomFormExportView,
                 CreateNewCustomCaseExportView,
                 DownloadFormExportView,
@@ -545,8 +567,6 @@ class ProjectDataTab(UITab):
                 DownloadNewSmsExportView,
                 BulkDownloadFormExportView,
                 BulkDownloadNewFormExportView,
-                EditCustomFormExportView,
-                EditCustomCaseExportView,
                 EditNewCustomFormExportView,
                 EditNewCustomCaseExportView,
                 DashboardFeedListView,
@@ -562,16 +582,6 @@ class ProjectDataTab(UITab):
                 DashboardFeedPaywall,
                 DailySavedExportPaywall
             )
-            if use_new_exports(self.domain):
-                create_case_cls = CreateNewCustomCaseExportView
-                create_form_cls = CreateNewCustomFormExportView
-                edit_form_cls = EditNewCustomFormExportView
-                edit_case_cls = EditNewCustomCaseExportView
-            else:
-                create_case_cls = CreateCustomCaseExportView
-                create_form_cls = CreateCustomFormExportView
-                edit_form_cls = EditCustomFormExportView
-                edit_case_cls = EditCustomCaseExportView
 
             if self.can_view_form_exports:
                 export_data_views.append(
@@ -583,8 +593,8 @@ class ProjectDataTab(UITab):
                         'icon': 'icon icon-list-alt fa fa-list-alt',
                         'subpages': [_f for _f in [
                             {
-                                'title': _(create_form_cls.page_title),
-                                'urlname': create_form_cls.urlname,
+                                'title': _(CreateNewCustomFormExportView.page_title),
+                                'urlname': CreateNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
                                 'title': _(BulkDownloadFormExportView.page_title),
@@ -603,8 +613,8 @@ class ProjectDataTab(UITab):
                                 'urlname': DownloadNewFormExportView.urlname,
                             },
                             {
-                                'title': _(edit_form_cls.page_title),
-                                'urlname': edit_form_cls.urlname,
+                                'title': _(EditNewCustomFormExportView.page_title),
+                                'urlname': EditNewCustomFormExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
                     }
@@ -619,8 +629,8 @@ class ProjectDataTab(UITab):
                         'icon': 'icon icon-share fa fa-share-square-o',
                         'subpages': [_f for _f in [
                             {
-                                'title': _(create_case_cls.page_title),
-                                'urlname': create_case_cls.urlname,
+                                'title': _(CreateNewCustomCaseExportView.page_title),
+                                'urlname': CreateNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                             {
                                 'title': _(DownloadCaseExportView.page_title),
@@ -631,8 +641,8 @@ class ProjectDataTab(UITab):
                                 'urlname': DownloadNewCaseExportView.urlname,
                             },
                             {
-                                'title': _(edit_case_cls.page_title),
-                                'urlname': edit_case_cls.urlname,
+                                'title': _(EditNewCustomCaseExportView.page_title),
+                                'urlname': EditNewCustomCaseExportView.urlname,
                             } if self.can_edit_commcare_data else None,
                         ] if _f]
                     })
@@ -914,12 +924,6 @@ class MessagingTab(UITab):
         reminders_urls = []
 
         if self.can_access_reminders and self.show_old_reminders_pages:
-            from corehq.apps.reminders.views import (
-                EditScheduledReminderView,
-                CreateScheduledReminderView,
-                CreateComplexScheduledReminderView,
-                RemindersListView,
-            )
             reminders_urls.extend([
                 {
                     'title': _("Reminders"),
@@ -938,21 +942,14 @@ class MessagingTab(UITab):
                             'urlname': CreateComplexScheduledReminderView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
                 },
                 {
                     'title': _("Reminder Calendar"),
                     'url': reverse('scheduled_reminders', args=[self.domain]),
-                    'show_in_dropdown': True,
                 },
             ])
 
         if self.can_use_inbound_sms:
-            from corehq.apps.reminders.views import (
-                KeywordsListView, AddNormalKeywordView,
-                AddStructuredKeywordView, EditNormalKeywordView,
-                EditStructuredKeywordView,
-            )
             reminders_urls.append({
                 'title': _("Keywords"),
                 'url': reverse(KeywordsListView.urlname, args=[self.domain]),
@@ -996,6 +993,11 @@ class MessagingTab(UITab):
 
     @property
     @memoized
+    def show_dashboard(self):
+        return show_messaging_dashboard(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def messages_urls(self):
         messages_urls = []
 
@@ -1009,14 +1011,6 @@ class MessagingTab(UITab):
 
         if self.can_access_reminders:
             if self.show_new_reminders_pages:
-                from corehq.messaging.scheduling.views import (
-                    BroadcastListView as NewBroadcastListView,
-                    CreateScheduleView,
-                    EditScheduleView,
-                    ConditionalAlertListView,
-                    CreateConditionalAlertView,
-                    EditConditionalAlertView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcasts"),
@@ -1031,7 +1025,6 @@ class MessagingTab(UITab):
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                     {
                         'title': _("Conditional Alerts"),
@@ -1046,16 +1039,9 @@ class MessagingTab(UITab):
                                 'urlname': EditConditionalAlertView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
             if self.show_old_reminders_pages:
-                from corehq.apps.reminders.views import (
-                    BroadcastListView as OldBroadcastListView,
-                    CreateBroadcastView,
-                    EditBroadcastView,
-                    CopyBroadcastView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcast Messages"),
@@ -1074,7 +1060,6 @@ class MessagingTab(UITab):
                                 'urlname': CopyBroadcastView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
 
@@ -1163,8 +1148,67 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    def dropdown_items(self):
+        result = []
+
+        if self.show_dashboard:
+            result.append(dropdown_dict(_("Dashboard"), is_header=True))
+            result.append(dropdown_dict(
+                _("Dashboard (beta)"),
+                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_old_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcast Messages"),
+                url=reverse(OldBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Reminders"),
+                url=reverse(RemindersListView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_new_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcasts"),
+                url=reverse(NewBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Conditional Alerts"),
+                url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+            ))
+
+        if not self.show_dashboard:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(
+                _("View All"),
+                url=reverse('sms_compose_message', args=[self.domain]),
+            ))
+
+        return result
+
+    @property
     def sidebar_items(self):
         items = []
+
+        if self.show_dashboard:
+            items.append((
+                _("Dashboard"),
+                [{
+                    'title': _("Dashboard"),
+                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+                }]
+            ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
@@ -1568,8 +1612,8 @@ def _get_integration_section(domain):
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
         }, {
-            'title': _(Dhis2LogListView.page_title),
-            'url': reverse(Dhis2LogListView.urlname, args=[domain])
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
@@ -1751,7 +1795,7 @@ class AdminTab(UITab):
     @property
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
-                and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 dropdown_dict(_("System Info"), url=reverse("system_info")),
                 dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
@@ -1786,7 +1830,7 @@ class AdminTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
                 (not self.couch_user.is_superuser and
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 (_('Administrative Reports'), [
                     {'title': _('System Info'),
@@ -1820,6 +1864,8 @@ class AdminTab(UITab):
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
                 {'title': _('Manage Notifications'),
                  'url': reverse(ManageNotificationView.urlname)},
+                {'title': _('Mass Email Users'),
+                 'url': reverse('mass_email')},
             ]
         return [
             (_('Administrative Reports'), [
@@ -1866,4 +1912,4 @@ class AdminTab(UITab):
     def _is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))

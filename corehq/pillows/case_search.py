@@ -5,6 +5,7 @@ from datetime import datetime
 
 from django.db import ProgrammingError
 from django.core.mail import mail_admins
+from django.utils.dateparse import parse_date
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
@@ -12,6 +13,7 @@ from corehq.apps.case_search.models import case_search_enabled_domains, \
     case_search_enabled_for_domain
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
+from corehq.apps.case_search.const import VALUE
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new
 from corehq.form_processor.backends.sql.dbaccessors import CaseReindexAccessor
@@ -50,18 +52,21 @@ def _get_case_properties(doc_dict):
     domain = doc_dict.get('domain')
     assert domain
     base_case_properties = [
+        {'key': '@case_id', 'value': doc_dict.get('_id')},
+        {'key': '@case_type', 'value': doc_dict.get('type')},
+        {'key': '@owner_id', 'value': doc_dict.get('owner_id')},
+        {'key': '@status', 'value': 'closed' if doc_dict.get('closed') else 'open'},
         {'key': 'name', 'value': doc_dict.get('name')},
-        {'key': 'external_id', 'value': doc_dict.get('external_id')}
+        {'key': 'external_id', 'value': doc_dict.get('external_id')},
     ]
     if should_use_sql_backend(domain):
         dynamic_case_properties = OrderedDict(doc_dict['case_json'])
     else:
         dynamic_case_properties = CommCareCase.wrap(doc_dict).dynamic_case_properties()
 
-    return base_case_properties + [
-        {'key': key, 'value': value}
-        for key, value in six.iteritems(dynamic_case_properties)
-    ]
+    dynamic_mapping = [{'key': key, VALUE: value} for key, value in six.iteritems(dynamic_case_properties)]
+
+    return base_case_properties + dynamic_mapping
 
 
 class CaseSearchPillowProcessor(ElasticProcessor):

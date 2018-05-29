@@ -8,7 +8,7 @@ from wsgiref.util import FileWrapper
 import requests
 
 from datetime import datetime, date
-
+from memoized import memoized
 from celery.result import AsyncResult
 from dateutil.relativedelta import relativedelta
 from django.contrib import messages
@@ -19,10 +19,11 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.views.generic.base import View, TemplateView, RedirectView
-
+from django.utils.translation import ugettext as _, ugettext_lazy
+from django.conf import settings
 
 from corehq import toggles
-from corehq.apps.cloudcare.utils import webapps_url
+from corehq.apps.cloudcare.utils import webapps_module
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.views import BugReportView
@@ -34,9 +35,14 @@ from corehq.apps.users.models import UserRole
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
+from custom.icds.tasks import send_translation_files_to_transifex
+from custom.icds.translations.integrations.client import TransifexApiClient
+from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
+from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
+from custom.icds_reports.forms import AppTranslationsForm
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -65,6 +71,7 @@ from custom.icds_reports.reports.enrolled_women import get_enrolled_women_data_m
     get_enrolled_women_sector_data, get_enrolled_women_data_chart
 from custom.icds_reports.reports.exclusive_breastfeeding import get_exclusive_breastfeeding_data_chart, \
     get_exclusive_breastfeeding_data_map, get_exclusive_breastfeeding_sector_data
+from custom.icds_reports.reports.fact_sheets import FactSheetsReport
 from custom.icds_reports.reports.functional_toilet import get_functional_toilet_data_chart,\
     get_functional_toilet_data_map, get_functional_toilet_sector_data
 from custom.icds_reports.reports.immunization_coverage_data import get_immunization_coverage_data_chart, \
@@ -88,13 +95,17 @@ from custom.icds_reports.reports.prevalence_of_undernutrition import get_prevale
     get_prevalence_of_undernutrition_data_map, get_prevalence_of_undernutrition_sector_data
 from custom.icds_reports.reports.registered_household import get_registered_household_data_map, \
     get_registered_household_sector_data, get_registered_household_data_chart
-
-from custom.icds_reports.sqldata import ChildrenExport, FactSheetsReport, PregnantWomenExport, \
-    DemographicsExport, SystemUsageExport, AWCInfrastructureExport, BeneficiaryExport
+from custom.icds_reports.sqldata.exports.awc_infrastructure import AWCInfrastructureExport
+from custom.icds_reports.sqldata.exports.beneficiary import BeneficiaryExport
+from custom.icds_reports.sqldata.exports.children import ChildrenExport
+from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
+from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
+from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
     prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
-    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features
+    get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
+    current_month_stunting_column, current_month_wasting_column
 from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
@@ -222,7 +233,7 @@ class DashboardView(TemplateView):
             kwargs['is_web_user'] = True
         elif is_commcare_user and self._has_helpdesk_role():
             build_id = get_latest_issue_tracker_build_id()
-            kwargs['report_an_issue_url'] = webapps_url(
+            kwargs['report_an_issue_url'] = webapps_module(
                 domain=self.domain,
                 app_id=build_id,
                 module_id=0,
@@ -276,7 +287,9 @@ class ProgramSummaryView(BaseReportView):
 
         data = {}
         if step == 'maternal_child':
-            data = get_maternal_child_data(domain, config, include_test)
+            data = get_maternal_child_data(
+                domain, config, include_test, icds_pre_release_features(self.request.couch_user)
+            )
         elif step == 'icds_cas_reach':
             data = get_cas_reach_data(
                 domain,
@@ -549,7 +562,8 @@ class AwcReportsView(BaseReportView):
                 config,
                 tuple(current_month.timetuple())[:3],
                 tuple(prev_month.timetuple())[:3],
-                include_test
+                include_test,
+                icds_pre_release_features(self.request.couch_user)
             )
         elif step == 'demographics':
             data = get_awc_report_demographics(
@@ -572,13 +586,19 @@ class AwcReportsView(BaseReportView):
                 start = int(request.GET.get('start', 0))
                 length = int(request.GET.get('length', 10))
                 draw = int(request.GET.get('draw', 0))
-
+                icds_features_flag = icds_pre_release_features(self.request.couch_user)
                 order_by_number_column = request.GET.get('order[0][column]')
                 order_by_name_column = request.GET.get('columns[%s][data]' % order_by_number_column, 'person_name')
                 order_dir = request.GET.get('order[0][dir]', 'asc')
                 if order_by_name_column == 'age':  # age and date of birth is stored in database as one value
                     order_by_name_column = 'dob'
-                order = "%s %s" % (order_by_name_column, order_dir)
+                elif order_by_name_column == 'current_month_nutrition_status':
+                    order_by_name_column = 'current_month_nutrition_status_sort'
+                elif order_by_name_column == 'current_month_stunting':
+                    order_by_name_column = '{}_sort'.format(current_month_stunting_column(icds_features_flag))
+                elif order_by_name_column == 'current_month_wasting':
+                    order_by_name_column = '{}_sort'.format(current_month_wasting_column(icds_features_flag))
+                order = "%s%s" % ('-' if order_dir == 'desc' else '', order_by_name_column)
 
                 data = get_awc_report_beneficiary(
                     start,
@@ -588,11 +608,10 @@ class AwcReportsView(BaseReportView):
                     config['awc_id'],
                     tuple(current_month.timetuple())[:3],
                     tuple(two_before.timetuple())[:3],
-                    domain
+                    icds_features_flag
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                domain,
                 self.request.GET.get('case_id')
             )
         return JsonResponse(data=data)
@@ -643,7 +662,8 @@ class ExportIndicatorView(View):
             return ChildrenExport(
                 config=config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(self.request.couch_user)
             ).to_export(export_format, location)
         elif indicator == PREGNANT_WOMEN_EXPORT:
             return PregnantWomenExport(
@@ -676,7 +696,8 @@ class ExportIndicatorView(View):
             return BeneficiaryExport(
                 config=beneficiary_config,
                 loc_level=aggregation_level,
-                show_test=include_test
+                show_test=include_test,
+                beta=icds_pre_release_features(self.request.couch_user)
             ).to_export('csv', location)
         elif indicator == ISSNIP_MONTHLY_REGISTER_PDF:
             awcs = request.POST.get('selected_awcs').split(',')
@@ -753,18 +774,23 @@ class PrevalenceOfSevereView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_severe_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_severe_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_severe_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_severe_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_severe_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_severe_data_chart(domain, config, loc_level, include_test, icds_futures_flag)
 
         return JsonResponse(data={
             'report_data': data,
@@ -794,18 +820,26 @@ class PrevalenceOfStuntingView(BaseReportView):
         loc_level = get_location_level(config.get('aggregation_level'))
 
         data = {}
+
+        icds_futures_flag = icds_pre_release_features(self.request.couch_user)
         if step == "map":
             if loc_level in [LocationTypes.SUPERVISOR, LocationTypes.AWC]:
-                data = get_prevalence_of_stunting_sector_data(domain, config, loc_level, location, include_test)
+                data = get_prevalence_of_stunting_sector_data(
+                    domain, config, loc_level, location, include_test, icds_futures_flag
+                )
             else:
-                data = get_prevalence_of_stunting_data_map(domain, config.copy(), loc_level, include_test)
+                data = get_prevalence_of_stunting_data_map(
+                    domain, config.copy(), loc_level, include_test, icds_futures_flag
+                )
                 if loc_level == LocationTypes.BLOCK:
                     sector = get_prevalence_of_stunting_sector_data(
-                        domain, config, loc_level, location, include_test
+                        domain, config, loc_level, location, include_test, icds_futures_flag
                     )
                     data.update(sector)
         elif step == "chart":
-            data = get_prevalence_of_stunting_data_chart(domain, config, loc_level, include_test)
+            data = get_prevalence_of_stunting_data_chart(
+                domain, config, loc_level, include_test, icds_futures_flag
+            )
 
         return JsonResponse(data={
             'report_data': data,
@@ -1559,3 +1593,59 @@ class ICDSImagesAccessorAPI(View):
             streaming_content=FileWrapper(content.content_stream),
             content_type=content.content_type
         )
+
+
+@location_safe
+@method_decorator([toggles.APP_TRANSLATIONS_WITH_TRANSIFEX.required_decorator()], name='dispatch')
+class ICDSAppTranslations(BaseDomainView):
+    page_title = ugettext_lazy('ICDS App Translations')
+    urlname = 'icds_app_translations'
+    template_name = 'icds_reports/icds_app/app_translations.html'
+
+    @property
+    @memoized
+    def translations_form(self):
+        if self.request.POST:
+            return AppTranslationsForm(self.domain, self.request.POST)
+        else:
+            return AppTranslationsForm(self.domain)
+
+    @property
+    def page_context(self):
+        transifex_details_available = transifex_details_available_for_domain(self.domain)
+        context = {
+            'integration_available': transifex_details_available
+        }
+        if transifex_details_available:
+            context['translations_form'] = self.translations_form
+        return context
+
+    def section_url(self):
+        return
+
+    @staticmethod
+    def ensure_source_language(form_data):
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('source_lang')
+        transifex_account_details = settings.TRANSIFEX_DETAILS
+        client = TransifexApiClient(transifex_account_details.get('token'),
+                                    transifex_account_details.get('organization'),
+                                    transifex_project_slug)
+        project_source_langugage_code = client.project_details().json().get('source_language_code')
+        return project_source_langugage_code == SOURCE_LANGUAGE_MAPPING.get(source_language_code,
+                                                                            source_language_code)
+
+    def post(self, request, *args, **kwargs):
+        if not transifex_details_available_for_domain(self.domain):
+            messages.error(request, _('Transifex account not set up for this environment'))
+        else:
+            form = self.translations_form
+            if form.is_valid():
+                form_data = form.cleaned_data
+                if not self.ensure_source_language(form_data):
+                    messages.error(request, _('Source lang selected not available for the project'))
+                else:
+                    send_translation_files_to_transifex.delay(request.domain, form_data)
+                    messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                    return redirect(self.urlname, domain=self.domain)
+        return self.get(request, *args, **kwargs)

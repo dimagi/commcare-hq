@@ -33,43 +33,7 @@
               href="{% url 'osdd' %}"
               title="CommCare HQ{% if env %} - {{env}}{% endif %}" />
 
-        {% if less_debug %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.debug.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.debug.less' %}" />
-        {% else %}
-        {% compress css %}
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/bootstrap.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'font-awesome/less/font-awesome.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/font-commcare.less' %}" />
-            <link type="text/less"
-                  rel="stylesheet"
-                  media="all"
-                  href="{% static 'hqwebapp/less/style.less' %}" />
-        {% endcompress %}
-        {% endif %}
+        {% include 'hqwebapp/includes/less.html' with debug=less_debug %}
 
         {% block stylesheets %}{% endblock stylesheets %}
         {% block csrf_token_block %}
@@ -268,6 +232,12 @@
                             {% include 'hqwebapp/includes/global_navigation_bar.html' %}
                         {% else %}
                             <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                              <a href="#cta-form-get-demo"
+                                 target="_blank"
+                                 data-toggle="modal"
+                                 class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                            {% endif %}
                         {% endif %}
                         </div>
                         {% block tabs %}
@@ -348,14 +318,20 @@
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
                             {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
-                                <a href="{% trans 'http://www.commcarehq.org/home' %}">{% trans 'Learn more about CommCare HQ' %}</a>
+                                <a href="http://www.dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
                             &nbsp;|&nbsp;
-                            <a href="{% url "eula" %}">{% trans "Read CommCare HQ's End User License Agreement" %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">
+                                {% trans "Privacy" %}
+                            </a>
                             &nbsp;|&nbsp;
-                            <a href="{% trans 'http://www.dimagi.com/policy' %}">{% trans 'Privacy' %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/tos/" target="_blank">
+                                {% trans "Terms of Service" %}
+                            </a>
                             &nbsp;|&nbsp;
-                            <a href="{% url 'product_agreement' %}">{% trans 'Product Subscription Agreement' %}</a>
+                            <a href="http://www.dimagi.com/terms/latest/ba/" target="_blank">
+                                {% trans "Business Agreement" %}
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -365,6 +341,20 @@
         {% endif %}
         {# modals #}
         {% block modals %}{% endblock modals %}
+
+        {# Report Issue #}
+        {% include 'hqwebapp/includes/modal_report_issue.html' %}
+
+        {% if EULA_COMPLIANCE %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+                {% registerurl 'agree_to_eula' %}
+                {% include 'hqwebapp/includes/modal_eula.html' %}
+            {% endif %}
+        {% endif %}
+
+        {# 30 Day Trial #}
+        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
+
 
         {% block additional_initial_page_data %}
             {% comment %}
@@ -416,6 +406,7 @@
                     'jquery.cookie/jquery.cookie',
                     'hqwebapp/js/layout',
                     'hqwebapp/js/hq-bug-report',
+                    'hqwebapp/js/main',
                     'notifications/js/notifications_service_main',
                     'analytix/js/appcues',
                     'analytix/js/drift',
@@ -559,23 +550,43 @@
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
         {% endif %}
 
+        {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+
+          <div class="modal fade" id="cta-form-get-demo">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">{% trans 'Close' %}</span></button>
+                  <h4 class="modal-title">{% trans "Get a Demo of CommCare" %}</h4>
+                </div>
+                <div class="modal-body form-horizontal">
+                  <div class="form form-horizontal" id="get-demo-cta-form-body">
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!--[if lte IE 8]>
+          <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+          <![endif]-->
+          <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2.js"></script>
+          <script>
+            hbspt.forms.create({
+              portalId: "{{ ANALYTICS_IDS.HUBSPOT_API_ID }}",
+              formId: "0f5de42e-b562-4ece-85e5-cfd2db97eba8",
+              target: "#get-demo-cta-form-body",
+              css: ""
+            });
+          </script>
+        {% endif %}
+
         {# This should be loaded relatively late, because as a non-static import it takes longer to load #}
         {# If it's loaded early, then execution of all following scripts block on it #}
         {% if request.domain and request.user.username and not requirejs_main %}
             <script src="{% toggle_js_url request.domain request.user.username %}"></script>
         {% endif %}
         {% block js %}{% endblock js %}
-
-        {# Report Issue #}
-        {% include 'hqwebapp/includes/modal_report_issue.html' %}
-
-        {# EULA #}
-        {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
-            {% include 'hqwebapp/includes/modal_eula.html' with needs_agreement=True %}
-        {% endif %}
-
-        {# 30 Day Trial #}
-        {% include 'hqwebapp/includes/modal_30_day_trial.html' %}
 
         {% block js-inline %}{% endblock js-inline %}
 

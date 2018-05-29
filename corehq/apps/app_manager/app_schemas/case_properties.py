@@ -127,26 +127,39 @@ class _CaseRelationshipManager(object):
 
         """
         all_possible_equivalences = set()
-        equivalence_queue = deque(_CaseTypeEquivalence(case_type, _CaseTypeRef(case_type, ()))
-                                  for case_type in self.parent_type_map)
+
+        class TmpEquivalence(namedtuple('TmpEquivalence',
+                                        ['case_type', 'expansion', 'visited_case_types'])):
+            """same as a _CaseTypeEquivalence but with a memory of the case types visited"""
+
+        equivalence_queue = deque(
+            TmpEquivalence(case_type, _CaseTypeRef(case_type, ()), visited_case_types=frozenset())
+            for case_type in self.parent_type_map
+        )
+
         while True:
             try:
-                equivalence = equivalence_queue.popleft()
+                eq = equivalence_queue.popleft()
             except IndexError:
                 break
-            all_possible_equivalences.add(equivalence)
-            parent, (child, relationship_path) = equivalence
-            for relationship, grandparents in self.parent_type_map[parent].items():
-                for grandparent in grandparents:
-                    new_equivalence = _CaseTypeEquivalence(
-                        case_type=grandparent,
-                        expansion=_CaseTypeRef(child, relationship_path + (relationship,))
+            all_possible_equivalences.add(eq)
+            for relationship, parents in self.parent_type_map[eq.case_type].items():
+                for parent in parents:
+                    if parent in eq.visited_case_types:
+                        continue
+                    new_equivalence = TmpEquivalence(
+                        case_type=parent,
+                        expansion=_CaseTypeRef(
+                            eq.expansion.case_type,
+                            eq.expansion.relationship_path + (relationship,)
+                        ),
+                        visited_case_types=eq.visited_case_types | {parent}
                     )
-                    cycle_found = (grandparent == child)
                     already_visited = (new_equivalence in all_possible_equivalences)
-                    if not cycle_found and not already_visited:
+                    if not already_visited:
                         equivalence_queue.append(new_equivalence)
-        return all_possible_equivalences
+        return {_CaseTypeEquivalence(case_type=eq.case_type, expansion=eq.expansion)
+                for eq in all_possible_equivalences}
 
     @property
     @memoized

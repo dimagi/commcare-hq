@@ -282,6 +282,39 @@
             "constant": 0
           }
         }
+      },
+      {
+        "column_id": "muac_grading",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "root_doc",
+            "expression": {
+              "type": "property_path",
+              "property_path": ["form", "muac_grading"]
+            }
+          },
+          "cases": {
+            "red": {
+              "type": "constant",
+              "constant": 1
+            },
+            "yellow": {
+              "type": "constant",
+              "constant": 2
+            },
+            "green": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
       }
     ],
     "named_expressions": {
