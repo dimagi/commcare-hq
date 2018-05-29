@@ -141,7 +141,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                sleep(0.1)  # swap greenlets
+                sleep(0.01)  # swap greenlets
 
             remaining_items = self.queues.remaining_items() + len(pool)
             if remaining_items % 10 == 0:
