@@ -259,7 +259,7 @@ class TestDashboard2(YeksiTestCase):
             total_row,
             [
                 {'html': 'Taux par Pays'}, {'html': '78.36%'}, {'html': '88.53%'}, {'html': '1.59%'},
-                {'html': '0.00%'}, {'html': '15.90%'}, {'html': '24.23%'}, {'html': '54.80%'}
+                {'html': '0.00%'}, {'html': '15.90%'}, {'html': '22.13%'}, {'html': '54.80%'}
             ]
         )
 
