@@ -860,8 +860,8 @@ class YeksiSqlData(SqlData):
     def engine_id(self):
         return 'ucr'
 
-    def percent_fn(self, x, y):
-        return "{:.2f}%".format(100 * float(x or 0) / float(y or 1))
+    def percent_fn(self, x, y, nominal_denominator=1):
+        return "{:.2f}%".format(100 * float(x or 0) / float(y or nominal_denominator))
 
     @property
     @memoized
@@ -1713,9 +1713,10 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             )
             total_value = self.percent_fn(
                 numerator,
-                denominator
+                denominator,
+                nominal_denominator=100,
             )
-            if denominator:
+            if denominator or numerator:
                 total_row.append({
                     'html': total_value,
                 })
@@ -1730,9 +1731,10 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             total_denominator += value['denominator']
         total_value = self.percent_fn(
             total_numerator,
-            total_denominator
+            total_denominator,
+            nominal_denominator=100,
         )
-        if total_denominator:
+        if total_denominator or total_numerator:
             total_row.append({
                 'html': total_value,
             })
@@ -1788,10 +1790,11 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     first_data = False
                     denominator += data_in_month['pps_total_amt_owed']
                     denominator -= data_in_month['delivery_amt_owed_first_visit']
-        if denominator:
+        if denominator or numerator:
             value = self.percent_fn(
                 numerator,
                 denominator,
+                nominal_denominator=100,
             )
             value_partials['numerator'] = numerator
             value_partials['denominator'] = denominator
@@ -1811,10 +1814,11 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     data[loc_id][i]['delivery_amt_owed'] + \
                     data[loc_id][i]['pps_total_amt_owed'] - \
                     data[loc_id][i]['delivery_amt_owed_first_visit']
-                if denominator:
+                if denominator or data[loc_id][i]['pps_total_amt_paid']:
                     month_value = self.percent_fn(
                         data[loc_id][i]['pps_total_amt_paid'],
-                        denominator
+                        denominator,
+                        nominal_denominator=100,
                     )
                     row.append({
                         'html': month_value,
