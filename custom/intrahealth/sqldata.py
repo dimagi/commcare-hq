@@ -860,8 +860,8 @@ class YeksiSqlData(SqlData):
     def engine_id(self):
         return 'ucr'
 
-    def percent_fn(self, x, y):
-        return "{:.2f}%".format(100 * float(x or 0) / float(y or 1))
+    def percent_fn(self, x, y, nominal_denominator=1):
+        return "{:.2f}%".format(100 * float(x or 0) / float(y or nominal_denominator))
 
     @property
     @memoized
@@ -1684,7 +1684,7 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     show_total = True
     custom_total_calculate = True
 
-    def calculate_total_row(self, data):
+    def calculate_total_row(self, data, value_partials):
         if 'region_id' in self.config and self.config['region_id']:
             total_row = [{
                 'html': 'Taux par Région',
@@ -1701,24 +1701,22 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             total_row = [{
                 'html': 'Taux par Pays',
             }]
-        total_numerator = 0
-        total_denominator = 0
         for i in range(len(self.months)):
             numerator = sum(
                 data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
                 data[loc_id][i]['pps_total_amt_owed']
             )
             denominator = sum(
-                data[loc_id][i]['pps_total_amt_owed'] for loc_id in data if
+                data[loc_id][i]['delivery_amt_owed'] + data[loc_id][i]['pps_total_amt_owed'] -
+                data[loc_id][i]['delivery_amt_owed_first_visit'] for loc_id in data if
                 data[loc_id][i]['pps_total_amt_owed']
             )
-            total_numerator += numerator
-            total_denominator += denominator
             total_value = self.percent_fn(
                 numerator,
-                denominator
+                denominator,
+                nominal_denominator=100,
             )
-            if denominator:
+            if denominator or numerator:
                 total_row.append({
                     'html': total_value,
                 })
@@ -1726,11 +1724,17 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                 total_row.append({
                     'html': 'pas de données',
                 })
+        total_numerator = 0
+        total_denominator = 0
+        for loc_id, value in value_partials.items():
+            total_numerator += value['numerator']
+            total_denominator += value['denominator']
         total_value = self.percent_fn(
             total_numerator,
-            total_denominator
+            total_denominator,
+            nominal_denominator=100,
         )
-        if total_denominator:
+        if total_denominator or total_numerator:
             total_row.append({
                 'html': total_value,
             })
@@ -1742,7 +1746,10 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
 
     @property
     def group_by(self):
-        group_by = ['doc_id', 'real_date', 'pps_id', self.loc_name, 'pps_total_amt_paid', 'pps_total_amt_owed']
+        group_by = [
+            'doc_id', 'real_date_precise', 'delivery_amt_owed', 'pps_id', self.loc_name, 'pps_total_amt_paid',
+            'pps_total_amt_owed'
+        ]
         if self.loc_id != 'pps_id':
             group_by.append(self.loc_id)
         return group_by
@@ -1752,7 +1759,8 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
         columns = [
             DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
-            DatabaseColumn("Date", SimpleColumn('real_date')),
+            DatabaseColumn("Date", SimpleColumn('real_date_precise')),
+            DatabaseColumn("Delivery Amount Owed", SimpleColumn('delivery_amt_owed')),
             DatabaseColumn("Total amount paid by PPS", SimpleColumn('pps_total_amt_paid')),
             DatabaseColumn("Total amount owed by PPS", SimpleColumn('pps_total_amt_owed')),
         ]
@@ -1769,34 +1777,48 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     def get_recovery_rate_by_pps_in_location(self, data_per_localization):
         numerator = 0
         denominator = 0
+        value_partials = {
+            'numerator': 0,
+            'denominator': 0,
+        }
+        first_data = True
         for data_in_month in data_per_localization:
-            if data_in_month and data_in_month['pps_total_amt_owed']:
+            if data_in_month and data_in_month['delivery_amt_owed']:
                 numerator += data_in_month['pps_total_amt_paid']
-                denominator += data_in_month['pps_total_amt_owed']
-        if denominator:
+                denominator += data_in_month['delivery_amt_owed']
+                if first_data:
+                    first_data = False
+                    denominator += data_in_month['pps_total_amt_owed']
+                    denominator -= data_in_month['delivery_amt_owed_first_visit']
+        if denominator or numerator:
             value = self.percent_fn(
                 numerator,
                 denominator,
+                nominal_denominator=100,
             )
-            return {
-                'html': value,
-            }
+            value_partials['numerator'] = numerator
+            value_partials['denominator'] = denominator
+            return {'html': value}, value_partials
         else:
-            return {
-                'html': 'pas de données',
-            }
+            return {'html': 'pas de données'}, value_partials
 
     def parse_recovery_rate_by_pps_to_rows(self, loc_names, data):
         rows = []
+        value_partials = {}
         for loc_id in data:
             row = [{
                 'html': loc_names[loc_id],
             }]
             for i in range(len(self.months)):
-                if data[loc_id][i]['pps_total_amt_owed']:
+                denominator = \
+                    data[loc_id][i]['delivery_amt_owed'] + \
+                    data[loc_id][i]['pps_total_amt_owed'] - \
+                    data[loc_id][i]['delivery_amt_owed_first_visit']
+                if denominator or data[loc_id][i]['pps_total_amt_paid']:
                     month_value = self.percent_fn(
                         data[loc_id][i]['pps_total_amt_paid'],
-                        data[loc_id][i]['pps_total_amt_owed']
+                        denominator,
+                        nominal_denominator=100,
                     )
                     row.append({
                         'html': month_value,
@@ -1805,33 +1827,84 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
                     row.append({
                         'html': 'pas de données',
                     })
-            row.append(self.get_recovery_rate_by_pps_in_location(data[loc_id]))
+            cell, value_partials_per_loc_id = self.get_recovery_rate_by_pps_in_location(data[loc_id])
+            row.append(cell)
+            value_partials[loc_id] = value_partials_per_loc_id
             rows.append(row)
-        return rows
+        return rows, value_partials
+
+    def aggregate_recovery_rate_by_pps_per_month_from_pps_to_higher_location(self, data, pps_id_per_higher_loc_id):
+        agg_data = {}
+        for pps_id, values in data.items():
+            higher_loc_id = pps_id_per_higher_loc_id[pps_id]
+            if higher_loc_id not in agg_data:
+                agg_data[higher_loc_id] = []
+                for i in range(len(self.months)):
+                    agg_data[higher_loc_id].append({
+                        'delivery_amt_owed_first_visit': 0,
+                        'pps_total_amt_owed': 0,
+                        'pps_total_amt_paid': 0,
+                        'delivery_amt_owed': 0,
+                    })
+            for month_index in range(len(self.months)):
+                agg_data[higher_loc_id][month_index]['delivery_amt_owed_first_visit'] += \
+                    values[month_index]['delivery_amt_owed_first_visit']
+                agg_data[higher_loc_id][month_index]['pps_total_amt_owed'] += \
+                    values[month_index]['pps_total_amt_owed']
+                agg_data[higher_loc_id][month_index]['pps_total_amt_paid'] += \
+                    values[month_index]['pps_total_amt_paid']
+                agg_data[higher_loc_id][month_index]['delivery_amt_owed'] += \
+                    values[month_index]['delivery_amt_owed']
+        return agg_data
 
     def get_recovery_rate_by_pps_per_month(self, records):
-        data = defaultdict(list)
+        data = {}
         loc_names = {}
+        pps_id_per_higher_loc_id = {}
         for record in records:
-            if not self.date_in_selected_date_range(record['real_date']):
+            if not self.date_in_selected_date_range(record['real_date_precise']):
                 continue
-            if record[self.loc_id] not in data:
+            if record['pps_id'] not in data:
+                data[record['pps_id']] = []
                 for i in range(len(self.months)):
-                    data[record[self.loc_id]].append(defaultdict(int))
-                loc_names[record[self.loc_id]] = record[self.loc_name]
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date'])
-            if record['pps_total_amt_owed']:
+                    data[record['pps_id']].append({
+                        'delivery_amt_owed_first_visit': 0,
+                        'real_date_precise_first': None,
+                        'pps_total_amt_owed': 0,
+                        'pps_total_amt_paid': 0,
+                        'delivery_amt_owed': 0,
+                    })
+                if self.loc_id == 'pps_id':
+                    loc_names[record[self.loc_id]] = record[self.loc_name]
+                else:
+                    if record[self.loc_id] not in loc_names:
+                        loc_names[record[self.loc_id]] = record[self.loc_name]
+                    pps_id_per_higher_loc_id[record['pps_id']] = record[self.loc_id]
+            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_precise'])
+            if record.get('delivery_amt_owed') is not None:
+                if data[record['pps_id']][month_index]['real_date_precise_first'] is None or \
+                        record['real_date_precise'] < \
+                        data[record['pps_id']][month_index]['real_date_precise_first']:
+                    data[record['pps_id']][month_index]['pps_total_amt_owed'] = record['pps_total_amt_owed']
+                    data[record['pps_id']][month_index]['real_date_precise_first'] = \
+                        record['real_date_precise']
+                    data[record['pps_id']][month_index]['delivery_amt_owed_first_visit'] = \
+                        record['delivery_amt_owed']
                 if record['pps_total_amt_paid']:
-                    data[record[self.loc_id]][month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']
-                data[record[self.loc_id]][month_index]['pps_total_amt_owed'] += record['pps_total_amt_owed']
+                    data[record['pps_id']][month_index]['pps_total_amt_paid'] += record['pps_total_amt_paid']
+                data[record['pps_id']][month_index]['delivery_amt_owed'] += record['delivery_amt_owed']
+        if self.loc_id != 'pps_id':
+            agg_data = self.aggregate_recovery_rate_by_pps_per_month_from_pps_to_higher_location(
+                data, pps_id_per_higher_loc_id)
+            return loc_names, agg_data
         return loc_names, data
 
     @property
     def rows(self):
         records = self.get_data()
         loc_names, data = self.get_recovery_rate_by_pps_per_month(records)
-        self.total_row = self.calculate_total_row(data)
-        rows = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
+        rows, value_partials = self.parse_recovery_rate_by_pps_to_rows(loc_names, data)
+        self.total_row = self.calculate_total_row(data, value_partials)
         return sorted(rows, key=lambda x: x[0])
 
     @property
