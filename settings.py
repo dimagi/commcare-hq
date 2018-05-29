@@ -197,7 +197,6 @@ DEFAULT_APPS = (
     'crispy_forms',
     'gunicorn',
     'compressor',
-    'mptt',
     'tastypie',
     'django_otp',
     'django_otp.plugins.otp_static',
