@@ -210,7 +210,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
-            'showOnlyCurrentLang': toggles.HIDE_TRANSLATIONS_FROM_FORMS.enabled_for_request(request),
+            'showOnlyCurrentLang': app.smart_lang_display,
         },
         'uploader': {
             'uploadUrls': {

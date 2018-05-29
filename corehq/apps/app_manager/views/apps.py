@@ -253,6 +253,9 @@ def get_app_view_context(request, app):
             context_key="bulk_app_translation_upload"
         )
     })
+    context.update({
+        'smart_lang_display_enabled': app.smart_lang_display
+    })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
     try:
@@ -546,6 +549,7 @@ def edit_app_langs(request, domain, app_id):
             "en": "en",
             "es": "es"
         },
+        smart_lang_display: true,
         build: ["es", "hin"]
     }
     """
@@ -576,7 +580,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-
+    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
     app.save()
     return json_response(langs)
 
