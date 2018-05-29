@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 
 from django.db import migrations, models
 
+migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
+
 
 class Migration(migrations.Migration):
 
@@ -606,4 +608,5 @@ class Migration(migrations.Migration):
             name='awclocation',
             unique_together=set([('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id')]),
         ),
+        migrator.get_migration('create_child_health_monthly_view.sql'),
     ]
