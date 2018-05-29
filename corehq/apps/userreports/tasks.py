@@ -336,20 +336,20 @@ def save_document(doc_ids):
         with timer:
             for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
                 indicator = indicator_by_doc_id[doc['_id']]
-                successfully_processed, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
+                is_success, failed_configs, rebuild_related_docs = _save_document_helper(indicator, doc)
                 if rebuild_related_docs:
                     related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
-                if successfully_processed:
+                if is_success:
                     processed_indicators.append(indicator.pk)
                 else:
-                    failed_indicators.append((indicator, to_remove))
+                    failed_indicators.append((indicator, failed_configs))
 
         num_processed = len(processed_indicators)
         num_failed = len(failed_indicators)
         AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
         with transaction.atomic():
-            for indicator, to_remove in failed_indicators:
-                indicator.update_failure(to_remove)
+            for indicator, failed_configs in failed_indicators:
+                indicator.update_failure(failed_configs)
                 indicator.save()
 
     # remove any related docs that were just rebuilt
@@ -372,14 +372,14 @@ def save_document(doc_ids):
 def _save_document_helper(indicator, doc):
     eval_context = EvaluationContext(doc)
     something_failed = False
-    configs_to_remove = []
+    failed_configs = []
     configs = dict()
     for config_id in indicator.indicator_config_ids:
         try:
             configs[config_id] = _get_config(config_id)
         except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
             celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-            configs_to_remove.append(config_id)
+            failed_configs.append(config_id)
             continue
         except ESError:
             celery_task_logger.info("ES errored when trying to retrieve config")
@@ -412,10 +412,10 @@ def _save_document_helper(indicator, doc):
                 adapter.handle_exception(doc, e)
             something_failed = True
         else:
-            configs_to_remove.append(config_id)
+            failed_configs.append(config_id)
 
     rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
-    return (not something_failed, configs_to_remove, rebuild_related_docs)
+    return (not something_failed, failed_configs, rebuild_related_docs)
 
 
 @periodic_task(
