@@ -45,8 +45,6 @@ class AdjListManager(models.Manager):
         :param include_self:
         :returns: A `QuerySet` instance.
         """
-        parent_col = self.model.parent_id_attr
-
         if isinstance(node, Q):
             where = node
         elif include_self:
@@ -59,9 +57,9 @@ class AdjListManager(models.Manager):
         elif isinstance(node, QuerySet):
             if _is_empty(node):
                 return self.none()
-            where = Q(id__in=node.order_by().values(parent_col))
+            where = Q(id__in=node.order_by().values("parent_id"))
         else:
-            where = Q(id=getattr(node, parent_col))
+            where = Q(id=node.parent_id)
 
         def make_cte_query(cte):
             return self.filter(where).order_by().annotate(
@@ -69,7 +67,7 @@ class AdjListManager(models.Manager):
             ).union(
                 cte.join(
                     self.all().order_by(),
-                    id=getattr(cte.col, parent_col)
+                    id=cte.col.parent_id,
                 ).annotate(
                     _depth=cte.col._depth + Value(1, output_field=field),
                 ),
@@ -91,7 +89,6 @@ class AdjListManager(models.Manager):
         `include_self` argument will be ignored.
         :returns: A `QuerySet` instance.
         """
-        parent_col = self.model.parent_id_attr
         ordering_col = self.model.ordering_col_attr
 
         discard_dups = False
@@ -109,10 +106,10 @@ class AdjListManager(models.Manager):
         elif isinstance(node, QuerySet):
             if _is_empty(node):
                 return self.none()
-            where = Q(**{parent_col + "__in": node.order_by()})
+            where = Q(parent_id__in=node.order_by())
             discard_dups = True
         else:
-            where = Q(**{parent_col: node.id})
+            where = Q(parent_id=node.id)
 
         def make_cte_query(cte):
             return self.filter(where).order_by().annotate(
@@ -120,7 +117,7 @@ class AdjListManager(models.Manager):
             ).union(
                 cte.join(
                     self.all().order_by(),
-                    **{parent_col: cte.col.id}
+                    parent_id=cte.col.id,
                 ).annotate(
                     _cte_ordering=array_append(
                         cte.col._cte_ordering,
@@ -169,8 +166,7 @@ class AdjListManager(models.Manager):
         return self._cte_get_descendants(*args, **kw)
 
     def root_nodes(self):
-        parent_col = self.model.parent_id_attr
-        return self.all().filter(**{parent_col + "__isnull": True})
+        return self.all().filter(parent_id__isnull=True)
 
     def get_queryset_ancestors(self, queryset, include_self=False):
         timing = TimingContext("get_queryset_ancestors")
@@ -212,7 +208,6 @@ class AdjListModel(FakeMPTTModel):
     https://explainextended.com/2009/09/24/adjacency-list-vs-nested-sets-postgresql/
     """
 
-    parent_id_attr = 'parent_id'
     ordering_col_attr = 'name'
 
     objects = AdjListManager()
