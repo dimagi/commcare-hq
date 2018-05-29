@@ -60,9 +60,8 @@ class ScheduleInstance(PartitionedModel):
             ('domain', 'active', 'next_event_due'),
         )
 
-    @property
-    def today_for_recipient(self):
-        return ServerTime(util.utcnow()).user_time(self.timezone).done().date()
+    def get_today_for_recipient(self, schedule):
+        return ServerTime(util.utcnow()).user_time(self.get_timezone(schedule)).done().date()
 
     @property
     @memoized
@@ -91,28 +90,28 @@ class ScheduleInstance(PartitionedModel):
 
     @property
     @memoized
-    def timezone(self):
-        timezone = None
+    def domain_timezone(self):
+        try:
+            return get_timezone_for_domain(self.domain)
+        except ValidationError:
+            return pytz.UTC
 
+    def get_timezone(self, schedule):
         if self.recipient_is_an_individual_contact(self.recipient):
             try:
-                timezone = self.recipient.get_time_zone()
+                timezone_str = self.recipient.get_time_zone()
+                if timezone_str:
+                    return coerce_timezone_value(timezone_str)
             except ValidationError:
                 pass
 
-        if not timezone:
-            timezone = get_timezone_for_domain(self.domain)
-
-        if isinstance(timezone, tzinfo):
-            return timezone
-
-        if isinstance(timezone, six.string_types):
-            try:
-                return coerce_timezone_value(timezone)
-            except ValidationError:
-                pass
-
-        return pytz.UTC
+        if schedule.use_utc_as_default_timezone:
+            # See note on Schedule.use_utc_as_default_timezone.
+            # When use_utc_as_default_timezone is enabled and the contact has
+            # no time zone configured, use UTC.
+            return pytz.UTC
+        else:
+            return self.domain_timezone
 
     @classmethod
     def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
