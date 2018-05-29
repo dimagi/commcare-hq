@@ -5,14 +5,18 @@ from elasticsearch.exceptions import ConnectionError
 from eulxml.xpath import parse as parse_xpath
 
 from casexml.apps.case.mock import CaseFactory, CaseIndex, CaseStructure
-from corehq.apps.case_search.filter_dsl import build_filter_from_ast, CaseFilterError
+from corehq.apps.case_search.filter_dsl import (
+    CaseFilterError,
+    build_filter_from_ast,
+    get_properties_from_ast,
+)
 from corehq.apps.es import CaseSearchES
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import transform_case_for_elasticsearch
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
 from corehq.util.elastic import ensure_index_deleted
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.test_utils import generate_cases, trap_extra_setup
 from pillowtop.es_utils import initialize_index_and_mapping
 
 
@@ -394,3 +398,26 @@ class TestFilterDslLookups(TestCase):
         built_filter = build_filter_from_ast(self.domain, parsed)
         self.assertEqual(expected_filter, built_filter)
         self.assertEqual([self.child_case_id], CaseSearchES().filter(built_filter).values_list('_id', flat=True))
+
+
+class TestGetProperties(SimpleTestCase):
+    pass
+
+
+@generate_cases([
+    # equality
+    ("property = 'value'", ['property']),
+    # comparison
+    ("property > 100", ['property']),
+    # complex expression
+    ("first_property > 100 or second_property = 'foo' and third_property = 'bar'",
+     ['first_property', 'second_property', 'third_property']),
+    # malformed expression
+    ("foo = 'bar' or baz = buzz or ham = 'spam' and eggs", ['foo', 'baz', 'ham']),
+    # related case lookup
+    ("parent/parent/foo = 'bar' and parent/baz = 'buzz'", ['parent/parent/foo', 'parent/baz']),
+    # duplicate properties
+    ("property = 'value' or property = 'other_value'", ['property']),
+], TestGetProperties)
+def test_get_properties_from_ast(self, expression, expected_values):
+    self.assertItemsEqual(expected_values, get_properties_from_ast(parse_xpath(expression)))
