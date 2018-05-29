@@ -26,7 +26,7 @@ hqDefine("reports/js/filters/main", [
     locationDrilldown,
     advancedFormsOptions,
     drilldownOptions,
-    choiceListUtils
+    choiceListUtils,
     casePropertyColumns,
     caseSearchXpath
 ) {
