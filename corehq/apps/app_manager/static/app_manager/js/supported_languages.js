@@ -74,7 +74,7 @@ hqDefine('app_manager/js/supported_languages', function () {
                     data: ko.toJSON({
                         langs: langs,
                         rename: rename,
-                        smart_lang_display: self.smartLangDisplay
+                        smart_lang_display: self.smartLangDisplay,
                     }),
                     success: function (data) {
                         var i;
@@ -171,7 +171,7 @@ hqDefine('app_manager/js/supported_languages', function () {
 
         this.showSmartLangDisplayOption = ko.computed(function() {
             return self.languages().length > 2;
-        })
+        });
     }
     return {SupportedLanguages: SupportedLanguages};
 });
