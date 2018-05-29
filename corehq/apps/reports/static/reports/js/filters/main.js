@@ -9,6 +9,7 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/schedule_instance',
     'locations/js/location_drilldown',
     'reports_core/js/choice_list_utils',
+    'reports/js/filters/case_properties',
     'reports/js/filters/case_search_xpath',
     'select2-3.5.2-legacy/select2',
 ], function(
@@ -22,6 +23,7 @@ hqDefine("reports/js/filters/main", [
     scheduleInstanceFilter,
     locationDrilldown,
     choiceListUtils,
+    casePropertyColumns,
     caseSearchXpath
 ) {
     var init = function() {
@@ -142,6 +144,12 @@ hqDefine("reports/js/filters/main", [
             var $el = $(el),
                 data = $el.data();
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
+            $el.koApplyBindings(model);
+        });
+        $(".report-filter-case-property-columns").each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = casePropertyColumns.model(data.initialvalue, data.columnsuggestions);
             $el.koApplyBindings(model);
         });
         $(".report-filter-xpath-textarea").each(function (i, el) {
