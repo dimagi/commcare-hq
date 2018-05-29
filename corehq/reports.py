@@ -89,7 +89,7 @@ def REPORTS(project):
         ProjectHealthDashboard,
     )
     inspect_reports = (
-        inspect.SubmitHistory, CaseListReport, OdmExportReport
+        inspect.SubmitHistory, CaseListReport, OdmExportReport,
     )
     deployments_reports = (
         deployments.ApplicationStatusReport,
