@@ -17,7 +17,6 @@ class StaticUINotify(object):
                  only_visible_for_users_created_before=None,
                  only_visible_for_users_created_after=None,
                  starts_on=None,
-                 ends_on=None):
                  ends_on=None,
                  custom_checks=None):
         """
@@ -65,10 +64,21 @@ class StaticUINotify(object):
                     self.visible_to_users_after)):
                 return False
 
+            if self.custom_checks:
+                for check in self.custom_checks:
+                    if not check(request):
+                        return False
+
             return not DismissedUINotify.is_notification_dismissed(
                 request.user, self.slug
             )
         return False
+
+
+def ensure_app_with_multiple_langs(request):
+    if hasattr(request, 'app'):
+        return len(request.app.langs) > 2
+    return False
 
 
 APP_BUILDER_PUBLISH = StaticUINotify(
@@ -100,4 +110,9 @@ MESSAGING_DASHBOARD = StaticUINotify(
     'messaging_dashboard_may2018',
     ends_on=datetime(2018, 7, 1),
     only_visible_for_users_created_before=datetime(2018, 5, 25),
+)
+
+ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
+    'ability_to_hide_translations',
+    custom_checks=[ensure_app_with_multiple_langs]
 )
