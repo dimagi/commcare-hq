@@ -91,10 +91,10 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        (domain_file, domain_count) = self._write_file('domains')
-        (web_user_file, web_user_count) = self._write_file('web_users')
-        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users')
-        (form_file, form_count) = self._write_file('form_submissions')
+        (domain_file, domain_count) = self._write_file(EnterpriseReport.DOMAINS)
+        (web_user_file, web_user_count) = self._write_file(EnterpriseReport.WEB_USERS)
+        (mobile_user_file, mobile_user_count) = self._write_file(EnterpriseReport.MOBILE_USERS)
+        (form_file, form_count) = self._write_file(EnterpriseReport.FORM_SUBMISSIONS)
 
         message = (
             '''{message}

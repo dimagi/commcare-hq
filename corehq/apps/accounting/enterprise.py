@@ -22,6 +22,11 @@ from corehq.apps.users.models import CommCareUser, WebUser
 
 
 class EnterpriseReport(object):
+    DOMAINS = 'domains'
+    WEB_USERS = 'web_users'
+    MOBILE_USERS = 'mobile_users'
+    FORM_SUBMISSIONS = 'form_submissions'
+
     def __init__(self, couch_user):
         super(EnterpriseReport, self).__init__()
         self.couch_user = couch_user
@@ -32,13 +37,13 @@ class EnterpriseReport(object):
 
     @classmethod
     def create(cls, slug, couch_user):
-        if slug == 'domains':
+        if slug == cls.DOMAINS:
             return EnterpriseDomainReport(couch_user)
-        if slug == 'web_users':
+        if slug == cls.WEB_USERS:
             return EnterpriseWebUserReport(couch_user)
-        if slug == 'mobile_users':
+        if slug == cls.MOBILE_USERS:
             return EnterpriseMobileWorkerReport(couch_user)
-        if slug == 'form_submissions':
+        if slug == cls.FORM_SUBMISSIONS:
             return EnterpriseFormReport(couch_user)
         raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
 
