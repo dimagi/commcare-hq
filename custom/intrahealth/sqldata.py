@@ -2238,26 +2238,33 @@ class SatisfactionRateAfterDeliveryData(VisiteDeLOperateurPerProductDataSource):
     def calculate_total_row(self, products):
         total_row = ['Total (%)']
         for i in range(len(self.months)):
-            month_value = self.percent_fn(
-                sum(
-                    products[product_id][i]['amt_delivered_convenience'] for product_id in products if
-                    products[product_id][i]['ideal_topup']
-                ),
-                sum(
-                    products[product_id][i]['ideal_topup'] for product_id in products if
-                    products[product_id][i]['ideal_topup']
-                )
+            numerator = sum(
+                products[product_id][i]['amt_delivered_convenience'] for product_id in products if
+                products[product_id][i]['ideal_topup']
             )
-            if self.cell_value_less_than(month_value, 90):
-                style = 'color: red'
-            elif self.cell_value_bigger_than(month_value, 100):
-                style = 'color: orange'
+            denominator = sum(
+                products[product_id][i]['ideal_topup'] for product_id in products if
+                products[product_id][i]['ideal_topup']
+            )
+            if denominator:
+                month_value = self.percent_fn(
+                    numerator,
+                    denominator
+                )
+                if self.cell_value_less_than(month_value, 90):
+                    style = 'color: red'
+                elif self.cell_value_bigger_than(month_value, 100):
+                    style = 'color: orange'
+                else:
+                    style = ''
+                total_row.append({
+                    'html': month_value,
+                    'style': style,
+                })
             else:
-                style = ''
-            total_row.append({
-                'html': month_value,
-                'style': style,
-            })
+                total_row.append({
+                    'html': 'pas de données',
+                })
         return total_row
 
     @property
@@ -2356,7 +2363,7 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
 
         total_row.append('Total (CFA)')
         for month_index in range(len(self.months)):
-            if data.get(month_index):
+            if data.get(month_index) is not None:
                 total_row.append(
                     '{:,}'.format(data[month_index]).replace(',', '.')
                 )
@@ -2379,17 +2386,19 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         return columns
 
     def get_product_valuation_of_pna_stock_per_month(self, records):
-        data = {}
+        data = defaultdict(list)
         product_names = {}
         for record in records:
             if not self.date_in_selected_date_range(record['real_date_repeat']):
                 continue
-            if record['product_id'] not in data:
-                data[record['product_id']] = [0] * len(self.months)
-                product_names[record['product_id']] = record['product_name']
-            month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
             if record['final_pna_stock_valuation']:
-                data[record['product_id']][month_index] += record['final_pna_stock_valuation']['html']
+                if record['product_id'] not in data:
+                    for i in range(len(self.months)):
+                        data[record['product_id']].append(defaultdict(int))
+                    product_names[record['product_id']] = record['product_name']
+                month_index = self.get_index_of_month_in_selected_data_range(record['real_date_repeat'])
+                data[record['product_id']][month_index]['final_pna_stock_valuation'] += \
+                    record['final_pna_stock_valuation']['html']
         return product_names, data
 
     @property
@@ -2400,7 +2409,13 @@ class ValuationOfPNAStockPerProductData(VisiteDeLOperateurPerProductDataSource):
         rows = []
         for product_id in data:
             row = [product_names[product_id]]
-            row.extend(['{:,}'.format(value).replace(',', '.') for value in data[product_id]])
+            row.extend([
+                '{:,}'.format(value['final_pna_stock_valuation']).replace(',', '.')
+                if value.get('final_pna_stock_valuation') is not None
+                else
+                'pas de données'
+                for value in data[product_id]
+            ])
             rows.append(row)
         self.total_row = self.calculate_total_row(records)
         return sorted(rows, key=lambda x: x[0])
