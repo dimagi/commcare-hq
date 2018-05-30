@@ -33,6 +33,10 @@ TEMPLATE = """<?xml version="1.0" encoding="UTF-8"?>
     </gviSmsMessage>"""
 
 
+class GrapevineException(Exception):
+    pass
+
+
 class SQLGrapevineBackend(SQLSMSBackend):
 
     class Meta(object):
@@ -66,6 +70,28 @@ class SQLGrapevineBackend(SQLSMSBackend):
     def get_form_class(cls):
         return GrapevineBackendForm
 
+    def handle_response(self, response):
+        """
+        Raising an exception makes the framework retry sending the message.
+        """
+        status_code = response.status_code
+        response_text = response.text
+
+        if status_code != 200:
+            raise GrapevineException("Received status code %s" % status_code)
+
+        try:
+            root = ElementTree.fromstring(response_text)
+        except (TypeError, ElementTree.ParseError):
+            raise GrapevineException("Invalid XML returned from API")
+
+        result_code = root.find('resultCode')
+        if result_code is None:
+            raise GrapevineException("resultCode tag not found in XML response")
+
+        if result_code.text != '0':
+            raise GrapevineException("Received non-zero result code: %s" % result_code.text)
+
     def send(self, msg, *args, **kwargs):
         phone_number = clean_phone_number(msg.phone_number)
         text = msg.text
@@ -86,6 +112,8 @@ class SQLGrapevineBackend(SQLSMSBackend):
             headers={'content-type': 'text/xml'},
             timeout=settings.SMS_GATEWAY_TIMEOUT,
         )
+
+        self.handle_response(response)
 
 
 class SmsMessage(object):
