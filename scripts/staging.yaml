@@ -56,7 +56,7 @@ branches:
   - sr-training # Sravan: May 7
   - np/draggable  # NP 5/10
   - jls/ejs-async-reports-tabular # Jenny May 15
-  - jr/drilldown-filters-again+fr/case-list-explorer-report # FR May 28
+  - jr/drilldown-filters-again+fr/case-list-explorer-report-good # FR May 28
   - jr/drilldown-filters-again # jordan April 23
   - fr/case-list-explorer-report-good  # FR May 30
 submodules:
