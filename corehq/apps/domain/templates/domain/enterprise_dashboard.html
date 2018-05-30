@@ -10,11 +10,15 @@
     {% for report in reports %}
         <div class="col-sm-6 col-md-6 col-lg-3">
             <div class="well text-center">
-                <h2>{{ report.name }}</h2>
+                <p class="lead">
+                    {{ report.title }}
+                    <br>
+                    <small>{{ report.subtitle }}</small>
+                </p>
                 <h1>100</h1>
                 <a class="btn btn-success" href="{% url "enterprise_dashboard_download" domain report.slug %}">
                     <i class="fa fa-download"></i>
-                    {{ report.action_label }}
+                    {% trans "Download" %}
                 </a>
             </div>
         </div>

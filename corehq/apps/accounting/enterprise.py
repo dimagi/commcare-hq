@@ -28,8 +28,8 @@ class EnterpriseReport(object):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
 
-    name = _('Enterprise Report')
-    action_label = _('Download')
+    title = _('Enterprise Report')
+    subtitle = ''
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseReport, self).__init__()
@@ -83,7 +83,7 @@ class EnterpriseReport(object):
         return rows
 
 class EnterpriseDomainReport(EnterpriseReport):
-    name = _('Domains')
+    title = _('Domains')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseDomainReport, self).__init__(account_id, couch_user)
@@ -104,7 +104,7 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    name = _('Web Users')
+    title = _('Web Users')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseWebUserReport, self).__init__(account_id, couch_user)
@@ -129,7 +129,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    name = _('Mobile Workers')
+    title = _('Mobile Workers')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseMobileWorkerReport, self).__init__(account_id, couch_user)
@@ -155,12 +155,12 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    name = _('Form Submissions')
+    title = _('Form Submissions')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseFormReport, self).__init__(account_id, couch_user)
         self.window = 7
-        self.action_label += _(" (past {} days)").format(self.window)
+        self.subtitle = _("past {} days").format(self.window)
 
     @property
     def headers(self):

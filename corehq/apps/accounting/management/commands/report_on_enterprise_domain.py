@@ -86,41 +86,27 @@ class Command(BaseCommand):
 
         self.now = datetime.utcnow()
         account = BillingAccount.objects.get(id=account_id)
+        message = ''
+        if kwargs.get('message'):
+            message += kwargs.get('message') + "\n"
+        message += "Report run {}\n".format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
 
-        (domain_file, domain_count) = self._write_file(EnterpriseReport.DOMAINS)
-        (web_user_file, web_user_count) = self._write_file(EnterpriseReport.WEB_USERS)
-        (mobile_user_file, mobile_user_count) = self._write_file(EnterpriseReport.MOBILE_USERS)
-        (form_file, form_count) = self._write_file(EnterpriseReport.FORM_SUBMISSIONS)
-
-        message = (
-            '''{message}
-Report run {timestamp}
-
-Domains: {domain_count}
-Web Users: {web_user_count}
-Mobile Users: {mobile_user_count}
-Forms from past {window} days: {form_count}
-            '''.format(**{
-                'message': kwargs.get('message') or '',
-                'domain_count': domain_count,
-                'web_user_count': web_user_count,
-                'mobile_user_count': mobile_user_count,
-                'window': self.window,
-                'form_count': form_count,
-                'timestamp': self.now.strftime('%Y-%m-%d %H:%M:%S'),
-            })
-        )
+        attachments = []
+        for slug in (
+            EnterpriseReport.DOMAINS,
+            EnterpriseReport.WEB_USERS,
+            EnterpriseReport.MOBILE_USERS,
+            EnterpriseReport.FORM_SUBMISSIONS,
+        ):
+            (attachment, count) = self._write_file(slug)
+            attachments.append(attachment)
+            message += "{}: {}\n".format(slug, count)
 
         cc = []
         if kwargs.get('cc'):
             cc = kwargs.get('cc').split(",")
         send_html_email_async(
             "Report on enterprise account {}".format(account.name), self.couch_user.username,
-            linebreaksbr(message), cc=cc, text_content=message, file_attachments=[
-                domain_file,
-                web_user_file,
-                mobile_user_file,
-                form_file,
-            ]
+            linebreaksbr(message), cc=cc, text_content=message, file_attachments=attachments,
         )
         print('Emailed {}{}{}'.format(self.couch_user.username, " and " if cc else "", ", ".join(cc)))
