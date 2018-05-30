@@ -96,7 +96,7 @@ hqDefine('app_manager/js/supported_languages', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled")
+        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled");
         // If user has not set any preference yet for this app, default to true
         if(smartLangDisplayEnabled === null) {
             smartLangDisplayEnabled = true;
