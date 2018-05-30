@@ -4,6 +4,7 @@ import re
 
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext as _
+from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
 
@@ -20,6 +21,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.util.quickcache import quickcache
 
 
 class EnterpriseReport(object):
@@ -73,14 +75,28 @@ class EnterpriseReport(object):
     def rows_for_domain(self, domain):
         raise NotImplementedError("Subclasses should override this")
 
-    @property
-    def rows(self):
+    def total_for_domain(self, domain):
+        raise NotImplementedError("Subclasses should override this")
+
+    @memoized
+    def domains(self):
         subscriptions = Subscription.visible_objects.filter(account_id=self.account.id, is_active=True)
         domain_names = set(s.subscriber.domain for s in subscriptions)
+        return map(Domain.get_by_name, domain_names)
+
+    @property
+    def rows(self):
         rows = []
-        for domain_obj in map(Domain.get_by_name, domain_names):
+        for domain_obj in self.domains():
             rows += self.rows_for_domain(domain_obj)
         return rows
+
+    @property
+    def total(self):
+        total = 0
+        for domain_obj in self.domains():
+            total += self.total_for_domain(domain_obj)
+        return total
 
 class EnterpriseDomainReport(EnterpriseReport):
     title = _('Domains')
@@ -98,9 +114,12 @@ class EnterpriseDomainReport(EnterpriseReport):
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         return [[
             plan_version.plan.name,
-            str(get_mobile_user_count(domain.name, include_inactive=False)),
-            str(get_web_user_count(domain.name, include_inactive=False)),
+            get_mobile_user_count(domain.name, include_inactive=False),
+            get_web_user_count(domain.name, include_inactive=False),
         ] + self.domain_properties(domain)]
+
+    def total_for_domain(self, domain):
+        return 1
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
@@ -126,6 +145,9 @@ class EnterpriseWebUserReport(EnterpriseReport):
                 self.format_date(user.last_login),
             ] + self.domain_properties(domain))
         return rows
+
+    def total_for_domain(self, domain):
+        return get_web_user_count(domain.name, include_inactive=False)
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
@@ -153,6 +175,9 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
             ] + self.domain_properties(domain))
         return rows
 
+    def total_for_domain(self, domain):
+        return get_mobile_user_count(domain.name, include_inactive=False)
+
 
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Form Submissions')
@@ -167,23 +192,27 @@ class EnterpriseFormReport(EnterpriseReport):
         headers = super(EnterpriseFormReport, self).headers
         return ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + headers
 
-    def rows_for_domain(self, domain):
+    @quickcache(['self.account.id', 'domain_name'], timeout=60)
+    def hits(self, domain_name):
         time_filter = form_es.submitted
         datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
-        apps = get_brief_apps_in_domain(domain.name)
-        apps = {a.id: a.name for a in apps}
 
-        users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
+        users_filter = form_es.user_id(EMWF.user_es_query(domain_name,
                                        ['t__0'],  # All mobile workers
                                        self.couch_user)
                         .values_list('_id', flat=True))
         query = (form_es.FormES()
-                 .domain(domain.name)
+                 .domain(domain_name)
                  .filter(time_filter(gte=datespan.startdate,
                                      lt=datespan.enddate_adjusted))
                  .filter(users_filter))
+        return query.run().hits
+
+    def rows_for_domain(self, domain):
+        apps = get_brief_apps_in_domain(domain.name)
+        apps = {a.id: a.name for a in apps}
         rows = []
-        for hit in query.run().hits:
+        for hit in self.hits(domain.name):
             username = hit['form']['meta']['username']
             submitted = self.format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
             rows.append([
@@ -193,3 +222,6 @@ class EnterpriseFormReport(EnterpriseReport):
                 username,
             ] + self.domain_properties(domain))
         return rows
+
+    def total_for_domain(self, domain):
+        return len(self.hits(domain.name))

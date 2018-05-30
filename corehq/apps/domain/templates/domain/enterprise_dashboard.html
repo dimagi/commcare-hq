@@ -1,4 +1,5 @@
 {% extends "hqwebapp/base_section.html" %}
+{% load humanize %}
 {% load i18n %}
 
 {% block title %}{% trans "Enterprise Dashboard" %}{% endblock %}
@@ -15,7 +16,7 @@
                     <small>{{ report.subtitle|default:"&nbsp;" }}</small>
                 </div>
                 <div class="panel-body">
-                    <h1>100</h1>
+                    <h1>{{ report.total|intcomma }}</h1>
                     <br>
                     <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_download" domain report.slug %}">
                         <i class="fa fa-download"></i>
