@@ -33,30 +33,32 @@ hqDefine("reports/js/readable_form", function() {
     }
 
     function attachEvents() {
-        $('.showReadable').click(showReadable);
-        $('.showRaw').click(showRaw);
-        $('.formDisplayToggle a').click(function () {
+        $(document).on('click', '.showReadable', showReadable);
+        $(document).on('click', '.showRaw', showRaw);
+
+        $(document).on('click', '.formDisplayToggle a', function() {
             // activate the correct 'tab' header
             $(this).tab('show');
             return false;
         });
 
-        $('.showSkippedToggle').change(function () {
+        $(document).on('change', '.showSkippedToggle', function() {
             showSkipped($(this).is(':checked'));
-        }).each(function () {
-            if (!$('.form-data-skipped').length) {
-                $(this).parent('label').hide();
-            }
         });
     }
 
     function init() {
-        attachEvents();
+        $('.showSkippedToggle').each(function () {
+            if (!$('.form-data-skipped').length) {
+                $(this).parent('label').hide();
+            }
+        });
         showReadable();
         showSkipped(false);
     }
 
     $(function () {
+        attachEvents();
         init();
     });
 
