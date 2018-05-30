@@ -10,8 +10,8 @@ from django.db import ProgrammingError
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES_MAP,
     INDEXED_ON,
+    SPECIAL_CASE_PROPERTIES_MAP,
     SYSTEM_PROPERTIES,
     VALUE,
 )
