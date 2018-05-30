@@ -631,6 +631,23 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',

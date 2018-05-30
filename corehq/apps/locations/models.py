@@ -552,9 +552,6 @@ class SQLLocation(AdjListModel):
     class Meta(object):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
-        index_together = [
-            ('tree_id', 'lft', 'rght')
-        ]
 
     def __unicode__(self):
         return "{} ({})".format(self.name, self.domain)
