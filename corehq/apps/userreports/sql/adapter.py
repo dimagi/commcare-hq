@@ -139,6 +139,22 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
+    def bulk_save(self, docs):
+        indicator_rows = []
+        for doc in docs:
+            indicator_rows.extend(self.get_all_values(doc))
+
+        table = self.get_table()
+        delete = table.delete(
+            table.c.doc_id.in_(
+                [doc['_id'] for doc in docs]
+            )
+        )
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
+            session.bulk_insert_mappings(
+                self.get_sqlalchemy_mapping(), indicator_rows)
+
     def _save_rows(self, rows, doc):
         rows = [
             {i.column.database_column_name: i.value for i in row}

@@ -77,6 +77,13 @@ class IndicatorAdapter(object):
         indicator_rows = self.get_all_values(doc, eval_context)
         self._save_rows(indicator_rows, doc)
 
+    def bulk_save(self, docs):
+        """
+        Evalutes UCR rows for given docs and saves the result in bulk.
+        Only supported in SQL
+        """
+        raise NotImplementedError
+
     def get_all_values(self, doc, eval_context=None):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
