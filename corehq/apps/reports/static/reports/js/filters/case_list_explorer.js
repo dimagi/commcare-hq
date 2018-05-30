@@ -1,4 +1,4 @@
-var SuggestedCaseTypes = function(){
+var suggestedCaseTypes = function(){
     // Adds the required properties to filter the case type autocomplete dropdowns
     var self = this;
     self.currentCaseType = ko.observable('');
@@ -16,7 +16,7 @@ var SuggestedCaseTypes = function(){
     });
 };
 
-hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
+hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
     var Property = function ($parent, name, label, editable, hidden) {
@@ -50,11 +50,11 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
         return self;
     };
 
-    var CasePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
+    var casePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
         var self = this;
 
         self.allCaseProperties = allCaseProperties;
-        SuggestedCaseTypes.apply(self);
+        suggestedCaseTypes.apply(self);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -76,82 +76,16 @@ hqDefine("reports/js/filters/case_properties", ['jQuery', 'underscore', 'knockou
 
         return self;
     };
-    return {model: CasePropertyColumnsViewModel};
-});
 
-
-hqDefine("reports/js/filters/case_search_xpath", function() {
-    var CaseSearchXpathViewModel = function(allCaseProperties){
+    var caseSearchXpathViewModel = function(allCaseProperties){
         var self = this;
         self.allCaseProperties = allCaseProperties;
-        SuggestedCaseTypes.apply(self);
+        suggestedCaseTypes.apply(self);
         return self;
     };
 
-    return {model: CaseSearchXpathViewModel};
+    return {
+        casePropertyColumns: casePropertyColumnsViewModel,
+        caseSearchXpath: caseSearchXpathViewModel,
+    };
 });
-
-
-ko.bindingHandlers.xPathAutocomplete = {
-    init: function(element) {
-        var $element = $(element);
-        if (!$element.atwho) {
-            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
-        }
-
-        hqImport('hqwebapp/js/atwho').init($element, {
-            atwhoOptions: {
-                displayTpl: '<li><span class="label label-default">${case_type}</span> ${name}</li>',
-                callbacks: {},
-            },
-            afterInsert: function() {
-                $element.trigger('textchange');
-            },
-            replaceValue: false,
-        });
-
-        $element.on("textchange", function() {
-            if ($element.val()) {
-                $element.change();
-            }
-        });
-    },
-
-    update: function(element, valueAccessor) {
-        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
-    },
-};
-
-
-ko.bindingHandlers.explorerColumnsAutocomplete = {
-    init: function(element) {
-        var $element = $(element);
-        if (!$element.atwho) {
-            throw new Error("The typeahead binding requires Atwho.js and Caret.js");
-        }
-
-        hqImport('hqwebapp/js/atwho').init($element, {
-            atwhoOptions: {
-                displayTpl: function(item){
-                    if (item.case_type){
-                        return '<li><span class="label label-default">${case_type}</span> ${name}</li>';
-                    }
-                    return '<li><span class="label label-primary">${meta_type}</span> ${name}</li>';
-                },
-            },
-            afterInsert: function() {
-                $element.trigger('textchange');
-            },
-        });
-
-        $element.on("textchange", function() {
-            if ($element.val()) {
-                $element.change();
-            }
-        });
-    },
-
-    update: function(element, valueAccessor) {
-        $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
-    },
-};
