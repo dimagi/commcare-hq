@@ -22,6 +22,6 @@ def couch_sql_migration_stats():
         .size(0).run()
     )
 
-    datadog_gauge('commcare.couch_sql_migration.total_remaining', int(result.total))
+    datadog_gauge('commcare.couch_sql_migration.domains_remaining', int(result.total))
     datadog_gauge('commcare.couch_sql_migration.forms_remaining', int(result.aggregations.forms.value))
     datadog_gauge('commcare.couch_sql_migration.cases_remaining', int(result.aggregations.cases.value))
