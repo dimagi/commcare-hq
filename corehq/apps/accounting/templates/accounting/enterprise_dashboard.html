@@ -18,7 +18,7 @@
                 <div class="panel-body">
                     <h1>{{ report.total|intcomma }}</h1>
                     <br>
-                    <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_download" domain report.slug %}">
+                    <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_download" account.id report.slug %}">
                         <i class="fa fa-download"></i>
                         {% trans "Download" %}
                     </a>

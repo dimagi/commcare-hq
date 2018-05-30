@@ -9,7 +9,6 @@ import io
 import csv342 as csv
 
 from couchdbkit import ResourceNotFound
-from couchexport.shortcuts import export_response
 import dateutil
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
@@ -50,7 +49,6 @@ from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
-from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
@@ -73,7 +71,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege, get_account_by_domain,
+    log_accounting_error, domain_has_privilege,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -85,7 +83,6 @@ from corehq.toggles import NAMESPACE_DOMAIN, all_toggles, CAN_EDIT_EULA, TRANSFE
 from custom.openclinica.forms import OpenClinicaSettingsForm
 from custom.openclinica.models import OpenClinicaSettings
 from dimagi.utils.couch.resource_conflict import retry_resource
-from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.web import json_request
 from corehq import privileges, feature_previews
 from django_prbac.utils import has_privilege
@@ -2930,35 +2927,3 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
-
-
-@require_superuser
-def enterprise_dashboard(request, domain):
-    account = get_account_by_domain(domain)
-
-    context = {
-        'account': account,
-        'domain': domain,
-        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
-                EnterpriseReport.DOMAINS,
-                EnterpriseReport.WEB_USERS,
-                EnterpriseReport.MOBILE_USERS,
-                EnterpriseReport.FORM_SUBMISSIONS,
-            )],
-    }
-    return render(request, "domain/enterprise_dashboard.html", context)
-
-
-@require_superuser
-def enterprise_dashboard_download(request, domain, slug):
-    account = get_account_by_domain(domain)
-    report = EnterpriseReport.create(slug, account.id, request.couch_user)
-
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-    writer = UnicodeWriter(response)
-
-    writer.writerow(report.headers)
-    writer.writerows(report.rows)
-
-    return response
