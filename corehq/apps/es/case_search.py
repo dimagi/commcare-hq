@@ -70,8 +70,8 @@ class CaseSearchES(CaseES):
             return (
                 # fuzzy match
                 self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # exact match. added to improve the score of exact matches
-                ._add_query(exact_case_property_text_query(case_property_name, value),
+                # non-fuzzy match. added to improve the score of exact matches
+                ._add_query(case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
             return self._add_query(exact_case_property_text_query(case_property_name, value), clause)

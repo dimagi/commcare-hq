@@ -5,10 +5,10 @@ import re
 
 from memoized import memoized
 from django.utils.translation import ugettext_noop, ugettext
-from corehq.apps.app_manager import static_strings
 import os
 import yaml
 import six
+from io import open
 
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
@@ -35,13 +35,13 @@ def _translate_setting(setting, prop):
 def _load_custom_commcare_settings(user=None):
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
-    with open(os.path.join(path, 'commcare-profile-settings.yaml')) as f:
+    with open(os.path.join(path, 'commcare-profile-settings.yaml'), encoding='utf-8') as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'properties'
             settings.append(setting)
 
-    with open(os.path.join(path, 'commcare-app-settings.yaml')) as f:
+    with open(os.path.join(path, 'commcare-app-settings.yaml'), encoding='utf-8') as f:
         for setting in yaml.load(f):
             if not setting.get('type'):
                 setting['type'] = 'hq'
@@ -62,7 +62,7 @@ def _load_commcare_settings_layout(doc_type, user):
         for setting in _load_custom_commcare_settings(user)
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
-    with open(os.path.join(path, 'commcare-settings-layout.yaml')) as f:
+    with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
         layout = yaml.load(f)
 
     for section in layout:

@@ -33,9 +33,13 @@ from corehq.form_processor.models import (
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
+from corehq.form_processor.utils.general import (
+    set_local_domain_sql_backend_override,
+    clear_local_domain_sql_backend_override)
+from corehq.toggles import (
+    COUCH_SQL_MIGRATION_BLACKLIST,
+    REMINDERS_MIGRATION_IN_PROGRESS,
+    NAMESPACE_DOMAIN)
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -352,6 +356,7 @@ class CouchSqlDomainMigrator(object):
         assert not stale_get_export_count(domain_name)
         assert not any(custom_report_domain == domain_name
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
+        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([

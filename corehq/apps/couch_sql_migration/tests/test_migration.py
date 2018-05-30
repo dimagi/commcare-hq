@@ -215,7 +215,7 @@ class MigrationTestCase(BaseMigrationTestCase):
         self._compare_diffs([])
 
     def test_duplicate_form_migration(self):
-        with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml') as f:
+        with open('corehq/ex-submodules/couchforms/tests/data/posts/duplicate.xml', encoding='utf-8') as f:
             duplicate_form_xml = f.read()
 
         submit_form_locally(duplicate_form_xml, self.domain_name)

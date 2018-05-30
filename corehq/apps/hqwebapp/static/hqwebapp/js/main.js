@@ -289,16 +289,26 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
+        // Maintenance alerts
+        var $maintenance = $(".alert-maintenance");
+        if ($maintenance.length) {
+            var id = $maintenance.data("id"),
+                alertCookie = "alert_maintenance";
+            if ($.cookie(alertCookie) == id) {  // eslint-disable-line eqeqeq
+                $maintenance.addClass('hide');
+            } else {
+                $maintenance.on('click', '.close', function() {
+                    $.cookie(alertCookie, id, { expires: 7, path: '/' });
+                });
+            }
+        }
+
         // EULA modal
-        var cookieName = "gdpr_rollout";
-        if (!$.cookie(cookieName)) {
+        var eulaCookie = "gdpr_rollout";
+        if (!$.cookie(eulaCookie)) {
             var $modal = $("#eulaModal");
             if ($modal.length) {
                 $("body").addClass("has-eula");
-                $("#eula-snooze").click(function() {
-                    $.cookie(cookieName, true, { expires: 1, path: '/' });
-                    $("body").removeClass("has-eula");
-                });
                 $("#eula-agree").click(function() {
                     $(this).disableButton();
                     $.ajax({

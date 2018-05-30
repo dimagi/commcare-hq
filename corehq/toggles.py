@@ -477,6 +477,12 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
+DATA_CORRECTIONS_FORMS = StaticToggle(
+    'data_corrections_forms',
+    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
@@ -501,9 +507,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
@@ -1163,6 +1169,14 @@ INBOUND_SMS_LENIENCY = StaticToggle(
 )
 
 
+HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
+    'hide_messaging_dashboard',
+    "Hide messaging dashboard from users who are not superusers.",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN]
+)
+
+
 UNLIMITED_REPORT_BUILDER_REPORTS = StaticToggle(
     'unlimited_report_builder_reports',
     'Allow unlimited reports created in report builder',
@@ -1528,4 +1542,24 @@ TRAINING_MODULE = StaticToggle(
     'Training Modules',
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
+)
+
+
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
+    'hide_translations_from_forms',
+    'Hide translations for languages from forms',
+    TAG_CUSTOM,
+    description=(
+        "Do not show translations in forms. Comes in handy when your app support multiple "
+        "languages but you want to focus just on app building."
+    ),
+    namespaces=[NAMESPACE_DOMAIN]
 )

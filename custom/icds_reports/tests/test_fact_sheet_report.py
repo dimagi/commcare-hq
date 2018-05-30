@@ -34,8 +34,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 68.97066136250622,
-                    'sort_key': 68.97066136250622
+                    'html': 70.37411526794742,
+                    'sort_key': 70.37411526794742
                 },
                 'data': [
                     {'html': 'Weighing Efficiency (Children <5 weighed)'},
@@ -55,8 +55,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 2.2595901208617972,
-                    'sort_key': 2.2595901208617972
+                    'html': 3.407880724174654,
+                    'sort_key': 3.407880724174654
                 },
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
@@ -92,8 +92,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 2.523431867339582,
-                    'sort_key': 2.523431867339582
+                    'html': 2.8735632183908044,
+                    'sort_key': 2.8735632183908044
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years who are severely underweight (weight-for-age)'},
@@ -114,8 +114,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
-                    'html': 20.90843547224225,
-                    'sort_key': 20.90843547224225
+                    'html': 18.67816091954023,
+                    'sort_key': 18.67816091954023
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are moderately underweight (weight-for-age)'},
@@ -136,8 +136,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
-                    'html': 76.56813266041817,
-                    'sort_key': 76.56813266041817
+                    'html': 78.44827586206897,
+                    'sort_key': 78.44827586206897
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are at normal weight-for-age'},
@@ -157,8 +157,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
-                    'html': 2.380952380952381,
-                    'sort_key': 2.380952380952381
+                    'html': 0.0,
+                    'sort_key': 0.0
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with severe acute malnutrition (weight-for-height)'},
@@ -179,8 +179,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 21.428571428571427,
-                    'sort_key': 21.428571428571427
+                    'html': 25.806451612903224,
+                    'sort_key': 25.806451612903224
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with moderate acute malnutrition (weight-for-height)'},
@@ -201,8 +201,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][8],
             {
                 'average': {
-                    'html': 59.523809523809526,
-                    'sort_key': 59.523809523809526
+                    'html': 61.29032258064516,
+                    'sort_key': 61.29032258064516
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with normal weight-for-height'},
@@ -222,8 +222,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][9],
             {
                 'average': {
-                    'html': 37.2093023255814,
-                    'sort_key': 37.2093023255814
+                    'html': 34.375,
+                    'sort_key': 34.375
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with severe stunting (height-for-age)'},
@@ -244,8 +244,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
-                    'html': 27.906976744186046,
-                    'sort_key': 27.906976744186046
+                    'html': 25.0,
+                    'sort_key': 25.0
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with moderate stunting (height-for-age)'},
@@ -266,8 +266,8 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 34.883720930232556,
-                    'sort_key': 34.883720930232556
+                    'html': 40.625,
+                    'sort_key': 40.625
                 },
                 'data': [
                     {'html': 'Children from 6 - 60 months with normal height-for-age'},
@@ -353,8 +353,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][0],
             {
                 'average': {
-                    'html': 68.97066136250622,
-                    'sort_key': 68.97066136250622
+                    'html': 70.37411526794742,
+                    'sort_key': 70.37411526794742
                 },
                 'data': [
                     {'html': 'Weighing Efficiency (Children <5 weighed)'},
@@ -374,8 +374,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 2.2595901208617972,
-                    'sort_key': 2.2595901208617972
+                    'html': 3.407880724174654,
+                    'sort_key': 3.407880724174654
                 },
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
@@ -411,8 +411,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 2.523431867339582,
-                    'sort_key': 2.523431867339582
+                    'html': 2.8735632183908044,
+                    'sort_key': 2.8735632183908044
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years who are severely underweight (weight-for-age)'},
@@ -433,8 +433,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][4],
             {
                 'average': {
-                    'html': 20.90843547224225,
-                    'sort_key': 20.90843547224225
+                    'html': 18.67816091954023,
+                    'sort_key': 18.67816091954023
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are moderately underweight (weight-for-age)'},
@@ -455,8 +455,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][5],
             {
                 'average': {
-                    'html': 76.56813266041817,
-                    'sort_key': 76.56813266041817
+                    'html': 78.44827586206897,
+                    'sort_key': 78.44827586206897
                 },
                 'data': [
                     {'html': 'Children from 0-5 years who are at normal weight-for-age'},
@@ -476,13 +476,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][6],
             {
                 'average': {
-                    'html': 2.380952380952381,
-                    'sort_key': 2.380952380952381
+                    'html': 0.0,
+                    'sort_key': 0.0
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {u'html': 9.090909090909092, u'sort_key': 9.090909090909092},
-                    {u'html': 0.0, u'sort_key': 0.0},
+                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -498,8 +498,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 2.380952380952381,
-                    'sort_key': 2.380952380952381
+                    'html': 3.225806451612903,
+                    'sort_key': 3.225806451612903
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
@@ -585,8 +585,8 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 2.3255813953488373,
-                    'sort_key': 2.3255813953488373
+                    'html': 0.0,
+                    'sort_key': 0.0
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with normal height-for-age'},
@@ -1277,6 +1277,8 @@ class TestFactSheetReportWaterSanitationAndHygiene(TestCase):
 
 
 class TestFactSheetReportDemographics(TestCase):
+    maxDiff = None
+
     def get_data(self):
         config = {
             'aggregation_level': 1,
@@ -1502,8 +1504,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][10],
             {
                 'average': {
-                    'html': 10,
-                    'sort_key': 10
+                    'html': 5,
+                    'sort_key': 5
                 },
                 'data': [
                     {'html': 'Children (0-28 days)  enrolled for Anganwadi Services'},
@@ -1522,8 +1524,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][11],
             {
                 'average': {
-                    'html': 98,
-                    'sort_key': 98
+                    'html': 45,
+                    'sort_key': 45
                 },
                 'data': [
                     {'html': 'Children (28 days - 6 months)  enrolled for Anganwadi Services'},
@@ -1542,8 +1544,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][12],
             {
                 'average': {
-                    'html': 95,
-                    'sort_key': 95
+                    'html': 51,
+                    'sort_key': 51
                 },
                 'data': [
                     {'html': 'Children (6 months - 1 year)  enrolled for Anganwadi Services'},
@@ -1562,8 +1564,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][13],
             {
                 'average': {
-                    'html': 450,
-                    'sort_key': 450
+                    'html': 213,
+                    'sort_key': 213
                 },
                 'data': [
                     {'html': 'Children (1 year - 3 years)  enrolled for Anganwadi Services'},
@@ -1582,8 +1584,8 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][14],
             {
                 'average': {
-                    'html': 1896,
-                    'sort_key': 1896
+                    'html': 973,
+                    'sort_key': 973
                 },
                 'data': [
                     {'html': 'Children (3 years - 6 years)  enrolled for Anganwadi Services'},

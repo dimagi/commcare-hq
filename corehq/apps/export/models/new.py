@@ -547,10 +547,6 @@ class TableConfiguration(DocumentSchema):
             if isinstance(doc, dict):
                 next_doc = doc.get(path_name, {})
             else:
-                # https://manage.dimagi.com/default.asp?264884
-                _soft_assert = soft_assert(to='{}@{}'.format('jemord', 'dimagi.com'))
-                _soft_assert(False, "doc {} - is actually string {} - expected path {}".format(
-                    document_id, doc, path_name))
                 next_doc = {}
             if path[0].is_repeat:
                 if type(next_doc) != list:

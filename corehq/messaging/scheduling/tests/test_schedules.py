@@ -22,6 +22,7 @@ from corehq.messaging.scheduling.models import (
     AlertEvent,
     TimedSchedule,
     TimedEvent,
+    CasePropertyTimedEvent,
     RandomTimedEvent,
     SMSContent,
 )
@@ -1254,6 +1255,25 @@ class AlertTest(TestCase):
         self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user2)
         self.assertEqual(send_patch.call_count, 1)
 
+    def test_stale_alert(self, utcnow_patch, send_patch):
+        self.assertNumInstancesForSchedule(0)
+
+        # Schedule the alert
+        utcnow_patch.return_value = datetime(2017, 3, 16, 6, 42, 21)
+        refresh_alert_schedule_instances(self.schedule.schedule_id, (('CommCareUser', self.user1.get_id),))
+        self.assertNumInstancesForSchedule(1)
+        [instance] = get_alert_schedule_instances_for_schedule(self.schedule)
+        self.assertAlertScheduleInstance(instance, 0, 1, datetime(2017, 3, 16, 6, 42, 21), True, self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
+        # Try sending the event when it's stale and make sure the content is not sent
+        utcnow_patch.return_value = datetime(2017, 3, 18, 6, 42, 22)
+        instance.handle_current_event()
+        save_alert_schedule_instance(instance)
+        self.assertNumInstancesForSchedule(1)
+        self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 6, 42, 21), False, self.user1)
+        self.assertEqual(send_patch.call_count, 0)
+
     def test_inactive_schedule(self, utcnow_patch, send_patch):
         self.schedule.active = False
         self.schedule.save()
@@ -1340,3 +1360,37 @@ class AlertTest(TestCase):
         self.assertNumInstancesForSchedule(1)
         self.assertAlertScheduleInstance(instance, 0, 2, datetime(2017, 3, 16, 7, 7, 21), False, self.user2)
         self.assertEqual(send_patch.call_count, 2)
+
+
+class TestParentCaseReferences(BaseScheduleTest):
+
+    def test_alert_event(self):
+        schedule = AlertSchedule.create_simple_alert(self.domain, SMSContent())
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+    def test_timed_event(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            TimedEvent(time=time(12, 0)),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+    def test_case_property_timed_event(self):
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            CasePropertyTimedEvent(case_property_name='preferred_time'),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertFalse(schedule.references_parent_case)
+
+        schedule = TimedSchedule.create_simple_daily_schedule(
+            self.domain,
+            CasePropertyTimedEvent(case_property_name='parent/preferred_time'),
+            SMSContent()
+        )
+        self.addCleanup(schedule.delete)
+        self.assertTrue(schedule.references_parent_case)

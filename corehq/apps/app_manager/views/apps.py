@@ -186,7 +186,7 @@ def get_app_view_context(request, app):
 
     build_config = CommCareBuildConfig.fetch()
     options = build_config.get_menu()
-    if not request.user.is_superuser:
+    if not request.user.is_superuser and not toggles.IS_CONTRACTOR.enabled(request.user.username):
         options = [option for option in options if not option.superuser_only]
     options_map = defaultdict(lambda: {"values": [], "value_names": []})
     for option in options:

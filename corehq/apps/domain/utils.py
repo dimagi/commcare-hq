@@ -5,7 +5,7 @@ import os
 import re
 import datetime
 import json
-import csv
+import csv342 as csv
 import tempfile
 
 from django.conf import settings
@@ -17,11 +17,11 @@ from corehq.apps.domain.models import Domain
 from corehq.util.quickcache import quickcache
 from corehq.apps.es import DomainES
 
-from dimagi.utils.couch.database import get_db
 from dimagi.utils.django.email import send_HTML_email
 
 from soil.util import ExposeBlobDownload
 from couchexport.models import Format
+from io import open
 
 
 ADM_DOMAIN_KEY = 'ADM_ENABLED_DOMAINS'

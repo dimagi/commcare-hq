@@ -14,6 +14,10 @@ def get_grep():
     return sh.grep.bake(_tty_out=False)
 
 
+def get_tail():
+    return sh.tail.bake(_tty_out=False)
+
+
 class OriginalBranch(object):
     def __init__(self, git=None):
         self.git = git or get_git()
@@ -37,6 +41,12 @@ def git_current_branch(git=None):
     if branch.startswith('('):
         branch = git.log('--pretty=oneline', n=1).strip().split(' ')[0]
     return branch
+
+
+def git_recent_tags(grep_string="production-deploy"):
+    git, grep, tail = get_git(), get_grep(), get_tail()
+    last_tags = tail(grep(git.tag('--sort=committerdate'), grep_string), n=4)
+    return last_tags
 
 
 def git_submodules(git=None):

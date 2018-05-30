@@ -98,10 +98,17 @@ def format_traceback_the_way_python_does(type, exc, tb):
     NameError: name 'name' is not defined
     """
 
+    if six.PY3:
+        exc_message = six.text_type(exc)
+    else:
+        exc_message = exc.message
+        if isinstance(exc_message, six.binary_type):
+            exc_message = exc_message.decode('utf-8')
+
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        six.text_type(exc)
+        exc_message
     )
 
 
@@ -434,7 +441,7 @@ def retrieve_download(req, domain, download_id, template="hqwebapp/includes/file
 
 
 def dropbox_next_url(request, download_id):
-    return request.POST.get('dropbox-next', None) or request.META.get('HTTP_REFERER', '/')
+    return request.META.get('HTTP_REFERER', '/')
 
 
 @login_required
@@ -697,19 +704,6 @@ def apache_license(request):
 
 def bsd_license(request):
     return render_static(request, "bsd_license.html", _("BSD License"))
-
-
-def unsubscribe(request, user_id):
-    # todo in the future we should not require a user to be logged in to unsubscribe.
-    from django.contrib import messages
-    from corehq.apps.settings.views import MyAccountSettingsView
-    messages.info(request,
-                  _('Check "Opt out of emails about new features '
-                    'and other CommCare updates" in your account '
-                    'settings and then click "Update Information" '
-                    'if you do not want to receive future emails '
-                    'from us.'))
-    return HttpResponseRedirect(reverse(MyAccountSettingsView.urlname))
 
 
 class BasePageView(TemplateView):

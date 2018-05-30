@@ -149,7 +149,7 @@ class ProgramFilter(BaseReportFilter):
         for program in programs:
             program_filter.append({
                 'name': program[1],
-                'value': "%{0}%".format(program[0]),
+                'value': program[0],
             })
         return program_filter
 

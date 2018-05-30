@@ -100,7 +100,7 @@
             },
             "location_type": {
               "type": "constant",
-              "constant": "Region"
+              "constant": "R\u00e9gion"
             }
           }
         },
@@ -309,6 +309,25 @@
         "comment": null,
         "create_index": false,
         "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "delivery_amt_owed"
+          ]
+        },
+        "column_id": "delivery_amt_owed"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
         "expression": {
           "type": "property_path",
           "property_path": [
@@ -321,6 +340,25 @@
         "column_id": "select_programs",
         "is_nullable": true,
         "type": "expression"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "real_date"
+          ]
+        },
+        "column_id": "real_date_precise"
       }
     ],
     "named_expressions": {

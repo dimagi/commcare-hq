@@ -28,7 +28,8 @@ New tests need to be added to [ab_tests](https://github.com/dimagi/commcare-hq/b
 ### Debugging
 
 Useful localsettings when working with analytics:
-- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics and Kissmetrics; you can pull these from the [staging vault](https://github.com/dimagi/commcare-cloud/tree/master/ansible#managing-secrets-with-vault).
+- `ANALYTICS_IDS`: Analytics code doesn't run if the relevant API key isn't provided. For most purposes, setting the key to a dummy value is sufficient. We have test API keys for Google Analytics and Kissmetrics; you can pull these from the [staging vault](https://github.com/dimagi/commcare-cloud/tree/master/src/commcare_cloud/ansible/README.md#managing-secrets-with-vault).
+
 - `ANALYTICS_CONFIG.DEBUG`: Analytics code isn't run on every server. Set `DEBUG` to `True` to bypass these checks (you still need to set the API keys, too).
 - `ANALYTICS_CONFIG.LOG_LEVEL`: Controls the client-side logging. Turning it up to `verbose` can help debug.
 
@@ -67,8 +68,12 @@ We track various user properties as [Hubspot Contact Properties](http://knowledg
 #### Hubspot Form Submissions
 We use the hubspot form API to submit forms to hubspot via the `_send_form_to_hubspot` function in the analytics tasks file. You can look through that file for examples but the general procedure is to create a new function with the `@analytics_task()` decorator to make it asynchronous and ensure it is retried on failure. This function should then call `_send_form_to_hubspot` with the form id of the form you are trying to submit. All form ids are listed as constants at the top of the file, and new forms can be created on the hubspot site.
 
-#### Signup Related Hubspot Analytics
-Much of the analytics we use in hubspot are generated during the signup process. We send down those analytics in the `track_user_sign_in_on_hubspot` [function](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/analytics/tasks.py#L181). Both a dictionary or properties, and a special signup form are sent down then and if changes need to be made to sign up analytics, they should be made there.
+#### Sign-In and Sign-Up Hubspot Form Tracking
+A special signup form are sent down to hubspot in `track_user_sign_in_on_hubspot`. This is just for handling the specific hubspot forms during the sign in / sign up process.
+
+#### User Registration Hubspot Analytics
+Much of the analytics we use in hubspot are generated during the user registration process. We send down those analytics in the `track_web_user_registration_hubspot`.
+Any changes to user properties related to the registration forms should be made here.
 
 #### Testing
 

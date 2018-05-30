@@ -95,7 +95,6 @@ def REPORTS(project):
         deployments.AggregateUserStatusReport,
         receiverwrapper.SubmissionErrorReport,
         phonelog.DeviceLogDetailsReport,
-        deployments.SyncHistoryReport,
         deployments.ApplicationErrorReport,
     )
 

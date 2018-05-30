@@ -8,6 +8,7 @@ import sys
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.template import Context, Template
+from io import open
 
 
 class SupervisorConfCommand(BaseCommand):

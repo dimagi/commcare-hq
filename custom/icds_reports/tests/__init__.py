@@ -17,7 +17,10 @@ from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.sql_db.connections import connection_manager, ICDS_UCR_ENGINE_ID
-from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables
+from custom.icds_reports.tasks import (
+    move_ucr_data_into_aggregation_tables,
+    _aggregate_child_health_pnc_forms
+)
 from io import open
 
 FILE_NAME_TO_TABLE_MAPPING = {
@@ -38,6 +41,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'pregnant_tasks': 'config_report_icds-cas_static-pregnant-tasks_cases_6c2a698f',
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
+    'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
 }
 
 
@@ -100,11 +104,13 @@ def setUpModule():
         metadata.reflect(bind=engine, extend_existing=True)
         path = os.path.join(os.path.dirname(__file__), 'fixtures')
         for file_name in os.listdir(path):
-            with open(os.path.join(path, file_name)) as f:
+            with open(os.path.join(path, file_name), encoding='utf-8') as f:
                 table_name = FILE_NAME_TO_TABLE_MAPPING[file_name[:-4]]
                 table = metadata.tables[table_name]
                 if not table_name.startswith('icds_dashboard_'):
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
+
+        _aggregate_child_health_pnc_forms(datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

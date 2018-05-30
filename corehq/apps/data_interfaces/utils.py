@@ -7,6 +7,7 @@ from corehq.apps.hqcase.utils import get_case_by_identifier
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 
 from soil import DownloadBase
+import six
 
 
 def add_cases_to_case_group(domain, case_group_id, uploaded_data):
@@ -101,3 +102,10 @@ def archive_or_restore_forms(domain, user_id, username, form_ids, archive_or_res
         success_msg=archive_or_restore.success_text,
         count=success_count))
     return {"messages": response}
+
+
+def property_references_parent(case_property):
+    return isinstance(case_property, six.string_types) and (
+        case_property.startswith("parent/") or
+        case_property.startswith("host/")
+    )

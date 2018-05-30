@@ -196,7 +196,7 @@ class TestMaternalChildData(TestCase):
                 "format": "percent_and_div",
                 "help_text": "Percentage of children breastfed within an hour of birth. "
                              "Early initiation of breastfeeding ensure the newborn "
-                             "recieves the 'first milk' rich in nutrients "
+                             "receives the 'first milk' rich in nutrients "
                              "and encourages exclusive breastfeeding practice",
                 "percent": 128.57142857142856,
                 "value": 4,
@@ -221,7 +221,7 @@ class TestMaternalChildData(TestCase):
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Percentage of children between 0 - 6 months exclusively breastfed. "
-                             "An infant is exclusively breastfed if they recieve only breastmilk "
+                             "An infant is exclusively breastfed if they receive only breastmilk "
                              "with no additional food, liquids (even water) ensuring "
                              "optimal nutrition and growth between 0 - 6 months",
                 "percent": 149.84615384615384,
@@ -247,7 +247,7 @@ class TestMaternalChildData(TestCase):
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Percentage of children between 6 - 8 months given timely "
-                             "introduction to solid or semi-solid food. Timely intiation"
+                             "introduction to solid or semi-solid food. Timely initiation"
                              " of complementary feeding in addition to breastmilk "
                              "at 6 months of age is a key feeding practice to reduce malnutrition",
                 "percent": 147.27272727272728,
@@ -274,7 +274,7 @@ class TestMaternalChildData(TestCase):
                 "format": "percent_and_div",
                 "help_text": "Percentage of pregnant women who delivered in a public "
                              "or private medical facility in the last month. "
-                             "Delivery in medical instituitions is associated "
+                             "Delivery in medical institutions is associated "
                              "with a decrease in maternal mortality rate",
                 "percent": 156.41025641025647,
                 "value": 20,
