@@ -20,11 +20,13 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
+    SPECIAL_CASE_PROPERTIES,
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
+    SYSTEM_PROPERTIES,
     VALUE,
 )
 from corehq.apps.es.aggregations import BucketResult, TermsAggregation
@@ -284,7 +286,7 @@ def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
 
 
-def flatten_result(hit):
+def flatten_result(hit, include_score=False):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
@@ -292,13 +294,17 @@ def flatten_result(hit):
     {'name': 'blah', 'foo':'bar'}
     """
     result = hit['_source']
-    result[RELEVANCE_SCORE] = hit['_score']
-    case_properties = result.pop('case_properties', [])
+    if include_score:
+        result[RELEVANCE_SCORE] = hit['_score']
+    case_properties = result.pop(CASE_PROPERTIES_PATH, [])
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')
-        if key is not None and not key.startswith("@") and value:
+        if key is not None and key not in SPECIAL_CASE_PROPERTIES and value:
             result[key] = value
+
+    for key in SYSTEM_PROPERTIES:
+        result.pop(key, None)
     return result
 
 

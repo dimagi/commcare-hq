@@ -36,16 +36,9 @@ _ = lambda message: ugettext(message) if message is not None else None
 
 class ReportDispatcher(View):
     """
-        The ReportDispatcher is responsible for dispatching the correct reports or interfaces
-        based on a REPORT_MAP or INTERFACE_MAP specified in settings.
+        The ReportDispatcher is responsible for dispatching the correct reports or interfaces.
 
-        The mapping should be structured as follows.
-
-        REPORT_MAP = {
-            "Section Name" : [
-                'app.path.to.report.ReportClass',
-            ]
-        }
+        To get a new report to show up, add it to one of the lists in `corehq.reports`
 
         It is intended that you subclass this dispatcher and specify the map_name settings attribute
         and a unique prefix (like project in project_report_dispatcher).
