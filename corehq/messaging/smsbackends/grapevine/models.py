@@ -14,6 +14,7 @@ from xml.sax.saxutils import escape, unescape
 from django.conf import settings
 from corehq.apps.sms.api import incoming as incoming_sms
 import logging
+import requests
 import six
 
 logger = logging.getLogger(__name__)
@@ -78,9 +79,13 @@ class SQLGrapevineBackend(SQLSMSBackend):
         )
 
         url = 'http://www.gvi.bms9.vine.co.za/httpInputhandler/ApplinkUpload'
-        req = six.moves.urllib.request.Request(url, data.encode('utf-8'))
-        response = six.moves.urllib.request.urlopen(req, timeout=settings.SMS_GATEWAY_TIMEOUT)
-        resp = response.read()
+
+        response = requests.post(
+            url,
+            data=data.encode('utf-8'),
+            headers={'content-type': 'text/xml'},
+            timeout=settings.SMS_GATEWAY_TIMEOUT,
+        )
 
 
 class SmsMessage(object):
