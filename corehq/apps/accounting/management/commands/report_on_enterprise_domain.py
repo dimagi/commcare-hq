@@ -32,8 +32,8 @@ from six.moves import map
 
 class Command(BaseCommand):
     help = '''
-        Generate three CSVs containing details on an enterprise project's domains, web users, and recent
-        form submissions, respectively.
+        Generate four CSVs containing details on an enterprise project's domains, web users,
+        mobile workers, and recent form submissions.
 
         Usage:
            report_on_enterprise_domain ACCOUNT_ID USERNAME
@@ -163,16 +163,16 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        report = EnterpriseReport.create('domains')
+        report = EnterpriseReport.create('domains', self.couch_user)
         (domain_file, domain_count) = self._write_file('domains', report.headers, self._domain_rows)
 
-        report = EnterpriseReport.create('web_users')
+        report = EnterpriseReport.create('web_users', self.couch_user)
         (web_user_file, web_user_count) = self._write_file('web_users', report.headers, self._web_user_rows)
 
-        report = EnterpriseReport.create('mobile_users')
+        report = EnterpriseReport.create('mobile_users', self.couch_user)
         (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', report.headers, self._mobile_user_rows)
 
-        report = EnterpriseReport.create('form_submissions')
+        report = EnterpriseReport.create('form_submissions', self.couch_user)
         (form_file, form_count) = self._write_file('forms', report.headers, self._form_rows)
 
         message = (

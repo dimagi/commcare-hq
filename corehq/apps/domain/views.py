@@ -2942,7 +2942,7 @@ def enterprise_dashboard(request, domain):
 @require_superuser
 def enterprise_dashboard_download(request, domain, slug):
     account = get_account_by_domain(domain)
-    report = EnterpriseReport.create(slug)
+    report = EnterpriseReport.create(slug, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{} ({}).csv"'.format(
