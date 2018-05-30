@@ -3,6 +3,13 @@ from __future__ import absolute_import
 from django.utils.translation import ugettext as _
 
 from corehq.apps.accounting.exceptions import EnterpriseReportError
+from corehq.apps.accounting.models import DefaultProductPlan, Subscription
+from corehq.apps.accounting.utils import get_default_domain_url
+from corehq.apps.users.dbaccessors.all_commcare_users import (
+    get_all_user_rows,
+    get_mobile_user_count,
+    get_web_user_count,
+)
 
 
 class EnterpriseReport(object):
@@ -25,6 +32,16 @@ class EnterpriseReport(object):
             return EnterpriseFormReport()
         raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
 
+    def domain_properties(self, domain):
+        return [
+            domain.name,
+            domain.hr_name,
+            get_default_domain_url(domain.name),
+        ]
+
+    def rows_for_domain(self, domain):
+        return [self.domain_properties(domain)]
+
 
 class EnterpriseDomainReport(EnterpriseReport):
     def __init__(self):
@@ -34,6 +51,15 @@ class EnterpriseDomainReport(EnterpriseReport):
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
         return ['Plan', '# of Mobile Users', '# of Web Users'] + headers
+
+    def rows_for_domain(self, domain):
+        subscription = Subscription.get_active_subscription_by_domain(domain.name)
+        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
+        return [[
+            plan_version.plan.name,
+            str(get_mobile_user_count(domain.name, include_inactive=False)),
+            str(get_web_user_count(domain.name, include_inactive=False)),
+        ] + self.domain_properties(domain)]
 
 
 class EnterpriseWebUserReport(EnterpriseReport):

@@ -2951,7 +2951,6 @@ def enterprise_dashboard_download(request, domain, slug):
 
     writer.writerow(report.headers)
     for domain_obj in map(Domain.get_by_name, get_domains_by_account(account)):
-        rows = [('here', 'is', 'some', 'data')]
-        writer.writerows(rows)
+        writer.writerows(report.rows_for_domain(domain_obj))
 
     return response
