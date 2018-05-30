@@ -41,7 +41,7 @@ class EnterpriseReport(object):
 
     @property
     def headers(self):
-        return ['Project Space Name', 'Project Name', 'Project URL']
+        return [_('Project Space Name'), _('Project Name'), _('Project URL')]
 
     @property
     def filename(self):
@@ -107,7 +107,7 @@ class EnterpriseDomainReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
-        return ['Plan', '# of Mobile Users', '# of Web Users'] + headers
+        return [_('Plan'), _('# of Mobile Users'), _('# of Web Users')] + headers
 
     def rows_for_domain(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain.name)
@@ -131,7 +131,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return ['Name', 'Email Address', 'Role', 'Last Login'] + headers
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login')] + headers
 
     def rows_for_domain(self, domain):
         rows = []
@@ -159,7 +159,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseMobileWorkerReport, self).headers
-        return ['Username', 'Name', 'Last Sync', 'Last Submission', 'CommCare Version'] + headers
+        return [_('Username'), _('Name'), _('Last Sync'), _('Last Submission'), _('CommCare Version')] + headers
 
     def rows_for_domain(self, domain):
         rows = []
@@ -190,7 +190,7 @@ class EnterpriseFormReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseFormReport, self).headers
-        return ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + headers
+        return [_('Form Name'), _('Submitted'), _('App Name'), _('Mobile User')] + headers
 
     @quickcache(['self.account.id', 'domain_name'], timeout=60)
     def hits(self, domain_name):
