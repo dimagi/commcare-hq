@@ -17,7 +17,6 @@ from dimagi.utils.dates import DateSpan
 from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
-from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
@@ -58,21 +57,20 @@ class Command(BaseCommand):
         )
 
     def _write_file(self, slug):
-        report = EnterpriseReport.create(slug, self.couch_user)
+        report = EnterpriseReport.create(slug, self.account_id, self.couch_user)
 
         row_count = 0
         csv_file = io.BytesIO()
         writer = UnicodeWriter(csv_file)
         writer.writerow(report.headers)
 
-        for domain in [domain for domain in map(Domain.get_by_name, self.domain_names) if domain]:
-            rows = report.rows_for_domain(domain)
-            row_count = row_count + len(rows)
-            writer.writerows(rows)
+        rows = report.rows
+        row_count = len(rows)
+        writer.writerows(rows)
 
         print('Wrote {} lines of {}'.format(row_count, slug))
         attachment = {
-            'title': 'enterprise_{}_{}.csv'.format(slug, self.now.strftime('%Y%m%d_%H%M%S')),
+            'title': report.filename,
             'mimetype': 'text/csv',
             'file_obj': csv_file,
         }
@@ -81,15 +79,13 @@ class Command(BaseCommand):
     def handle(self, account_id, username, **kwargs):
         self.couch_user = CouchUser.get_by_username(username)
         self.window = 7
+        self.account_id = account_id
 
         if not self.couch_user:
             raise CommandError("Option: '--username' must be specified")
 
         self.now = datetime.utcnow()
         account = BillingAccount.objects.get(id=account_id)
-        subscriptions = Subscription.visible_objects.filter(account_id=account.id, is_active=True)
-        self.domain_names = set(s.subscriber.domain for s in subscriptions)
-        print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
         (domain_file, domain_count) = self._write_file(EnterpriseReport.DOMAINS)
         (web_user_file, web_user_count) = self._write_file(EnterpriseReport.WEB_USERS)

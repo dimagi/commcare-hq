@@ -8,9 +8,10 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.exceptions import EnterpriseReportError
-from corehq.apps.accounting.models import DefaultProductPlan, Subscription
+from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
+from corehq.apps.domain.models import Domain
 from corehq.apps.es import forms as form_es
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter as EMWF
 from corehq.apps.users.dbaccessors.all_commcare_users import (
@@ -27,24 +28,33 @@ class EnterpriseReport(object):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
 
-    def __init__(self, couch_user):
+    def __init__(self, account_id, couch_user):
         super(EnterpriseReport, self).__init__()
+        self.account = BillingAccount.objects.get(id=account_id)
         self.couch_user = couch_user
+        self.slug = None
 
     @property
     def headers(self):
         return ['Project Space Name', 'Project Name', 'Project URL']
 
+    @property
+    def filename(self):
+        return "{} ({}).csv".format(self.account.name, self.slug)
+
     @classmethod
-    def create(cls, slug, couch_user):
+    def create(cls, slug, account_id, couch_user):
         if slug == cls.DOMAINS:
-            return EnterpriseDomainReport(couch_user)
+            report = EnterpriseDomainReport(account_id, couch_user)
         if slug == cls.WEB_USERS:
-            return EnterpriseWebUserReport(couch_user)
+            report = EnterpriseWebUserReport(account_id, couch_user)
         if slug == cls.MOBILE_USERS:
-            return EnterpriseMobileWorkerReport(couch_user)
+            report = EnterpriseMobileWorkerReport(account_id, couch_user)
         if slug == cls.FORM_SUBMISSIONS:
-            return EnterpriseFormReport(couch_user)
+            report = EnterpriseFormReport(account_id, couch_user)
+        if report:
+            report.slug = slug
+            return report
         raise EnterpriseReportError(_("Unrecognized report '{}'").format(slug))
 
     def format_date(self, date):
@@ -60,10 +70,18 @@ class EnterpriseReport(object):
     def rows_for_domain(self, domain):
         raise NotImplementedError("Subclasses should override this")
 
+    @property
+    def rows(self):
+        subscriptions = Subscription.visible_objects.filter(account_id=self.account.id, is_active=True)
+        domain_names = set(s.subscriber.domain for s in subscriptions)
+        rows = []
+        for domain_obj in map(Domain.get_by_name, domain_names):
+            rows += self.rows_for_domain(domain_obj)
+        return rows
 
 class EnterpriseDomainReport(EnterpriseReport):
-    def __init__(self, couch_user):
-        super(EnterpriseDomainReport, self).__init__(couch_user)
+    def __init__(self, account_id, couch_user):
+        super(EnterpriseDomainReport, self).__init__(account_id, couch_user)
 
     @property
     def headers(self):
@@ -81,8 +99,8 @@ class EnterpriseDomainReport(EnterpriseReport):
 
 
 class EnterpriseWebUserReport(EnterpriseReport):
-    def __init__(self, couch_user):
-        super(EnterpriseWebUserReport, self).__init__(couch_user)
+    def __init__(self, account_id, couch_user):
+        super(EnterpriseWebUserReport, self).__init__(account_id, couch_user)
 
     @property
     def headers(self):
@@ -104,8 +122,8 @@ class EnterpriseWebUserReport(EnterpriseReport):
 
 
 class EnterpriseMobileWorkerReport(EnterpriseReport):
-    def __init__(self, couch_user):
-        super(EnterpriseMobileWorkerReport, self).__init__(couch_user)
+    def __init__(self, account_id, couch_user):
+        super(EnterpriseMobileWorkerReport, self).__init__(account_id, couch_user)
 
     @property
     def headers(self):
@@ -128,8 +146,8 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    def __init__(self, couch_user):
-        super(EnterpriseFormReport, self).__init__(couch_user)
+    def __init__(self, account_id, couch_user):
+        super(EnterpriseFormReport, self).__init__(account_id, couch_user)
         self.window = 7
 
     @property

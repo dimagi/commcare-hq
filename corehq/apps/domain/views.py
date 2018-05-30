@@ -74,7 +74,6 @@ from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
     log_accounting_error, domain_has_privilege,
-    get_account_by_domain, get_domains_by_account,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -2941,16 +2940,14 @@ def enterprise_dashboard(request, domain):
 
 @require_superuser
 def enterprise_dashboard_download(request, domain, slug):
-    account = get_account_by_domain(domain)
-    report = EnterpriseReport.create(slug, request.couch_user)
+    subscription = Subscription.visible_objects.get(subscriber__domain=domain, is_active=True)
+    report = EnterpriseReport.create(slug, subscription.account_id, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{} ({}).csv"'.format(
-        account.name, slug)
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
     writer = UnicodeWriter(response)
 
     writer.writerow(report.headers)
-    for domain_obj in map(Domain.get_by_name, get_domains_by_account(account)):
-        writer.writerows(report.rows_for_domain(domain_obj))
+    writer.writerows(report.rows)
 
     return response
