@@ -1002,11 +1002,11 @@ def enterprise_dashboard(request, account_id):
     context = {
         'account': account,
         'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
-                EnterpriseReport.DOMAINS,
-                EnterpriseReport.WEB_USERS,
-                EnterpriseReport.MOBILE_USERS,
-                EnterpriseReport.FORM_SUBMISSIONS,
-            )],
+            EnterpriseReport.DOMAINS,
+            EnterpriseReport.WEB_USERS,
+            EnterpriseReport.MOBILE_USERS,
+            EnterpriseReport.FORM_SUBMISSIONS,
+        )],
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 

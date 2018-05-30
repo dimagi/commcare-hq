@@ -26,7 +26,6 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_web_user_count,
 )
 from corehq.apps.users.models import CommCareUser, CouchUser, WebUser
-from six.moves import map
 
 
 class Command(BaseCommand):

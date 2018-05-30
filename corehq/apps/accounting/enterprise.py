@@ -82,7 +82,7 @@ class EnterpriseReport(object):
     def domains(self):
         subscriptions = Subscription.visible_objects.filter(account_id=self.account.id, is_active=True)
         domain_names = set(s.subscriber.domain for s in subscriptions)
-        return map(Domain.get_by_name, domain_names)
+        return [Domain.get_by_name(name) for name in domain_names]
 
     @property
     def rows(self):
@@ -97,6 +97,7 @@ class EnterpriseReport(object):
         for domain_obj in self.domains():
             total += self.total_for_domain(domain_obj)
         return total
+
 
 class EnterpriseDomainReport(EnterpriseReport):
     title = _('Domains')
