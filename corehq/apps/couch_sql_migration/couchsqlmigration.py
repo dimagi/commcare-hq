@@ -815,9 +815,7 @@ class PartiallyLockingQueue(object):
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
-        obj = self.queue_objs_by_queue_id[queued_obj_id]
-        del self.queue_objs_by_queue_id[queued_obj_id]
-        return obj
+        return self.queue_objs_by_queue_id.pop(queued_obj_id)
 
     def check_lock(self, lock_ids):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
