@@ -9,17 +9,19 @@
     <div class="row">
     {% for report in reports %}
         <div class="col-sm-6 col-md-6 col-lg-3">
-            <div class="well text-center">
-                <p class="lead">
-                    {{ report.title }}
+            <div class="panel panel-default text-center">
+                <div class="panel-heading">
+                    <h3 class="panel-title">{{ report.title }}</h3>
+                    <small>{{ report.subtitle|default:"&nbsp;" }}</small>
+                </div>
+                <div class="panel-body">
+                    <h1>100</h1>
                     <br>
-                    <small>{{ report.subtitle }}</small>
-                </p>
-                <h1>100</h1>
-                <a class="btn btn-success" href="{% url "enterprise_dashboard_download" domain report.slug %}">
-                    <i class="fa fa-download"></i>
-                    {% trans "Download" %}
-                </a>
+                    <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_download" domain report.slug %}">
+                        <i class="fa fa-download"></i>
+                        {% trans "Download" %}
+                    </a>
+                </div>
             </div>
         </div>
     {% endfor %}
