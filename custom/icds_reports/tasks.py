@@ -128,17 +128,32 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_child_health_monthly_view()
 
         tasks = []
+        state_ids = (SQLLocation.objects
+                     .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
+                     .values_list('location_id', flat=True))
 
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
+            stage_1_tasks = [
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_gm_forms)
+                for state_id in state_ids
+            ]
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_cf_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(state_id=state_id, date=monthly_date, func=_aggregate_thr_forms)
+                for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
             tasks.extend([
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_gm_forms),
-                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_child_health_pnc_forms),
-                ),
+                group(*stage_1_tasks),
                 group(
                     icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
                     icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
@@ -240,34 +255,50 @@ def icds_aggregation_task(self, date, func):
     celery_task_logger.info("Ended icds reports {} {}".format(date, func.__name__))
 
 
-@track_time
-def _aggregate_cf_forms(day):
-    _state_based_aggregation(AggregateComplementaryFeedingForms, day)
+@task(queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
+def icds_state_aggregation_task(self, state_id, date, func):
+    db_alias = get_icds_ucr_db_alias()
+    if not db_alias:
+        return
+
+    celery_task_logger.info("Starting icds reports {} {} {}".format(state_id, date, func.__name__))
+
+    try:
+        func(state_id, date)
+    except Error as exc:
+        _dashboard_team_soft_assert(
+            False,
+            "{} aggregation failed on {} for {} on {}. This task will be retried in 15 minutes".format(
+                func.__name__, settings.SERVER_ENVIRONMENT, state_id, date
+            )
+        )
+        notify_exception(
+            None, message="Error occurred during ICDS aggregation",
+            details={'func': func.__name__, 'date': date, 'state_id': state_id, 'error': exc}
+        )
+        self.retry(exc=exc)
+
+    celery_task_logger.info("Ended icds reports {} {} {}".format(state_id, date, func.__name__))
 
 
 @track_time
-def _aggregate_gm_forms(day):
-    _state_based_aggregation(AggregateGrowthMonitoringForms, day)
+def _aggregate_cf_forms(state_id, day):
+    AggregateComplementaryFeedingForms.aggregate(state_id, day)
 
 
 @track_time
-def _aggregate_child_health_pnc_forms(day):
-    _state_based_aggregation(AggregateChildHealthPostnatalCareForms, day)
+def _aggregate_gm_forms(state_id, day):
+    AggregateGrowthMonitoringForms.aggregate(state_id, day)
 
 
 @track_time
-def _aggregate_thr_forms(day):
-    _state_based_aggregation(AggregateChildHealthTHRForms, day)
+def _aggregate_child_health_pnc_forms(state_id, day):
+    AggregateChildHealthPostnatalCareForms.aggregate(state_id, day)
 
 
-def _state_based_aggregation(model, day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        model.aggregate(state_id, agg_date)
+@track_time
+def _aggregate_thr_forms(state_id, day):
+    AggregateChildHealthTHRForms.aggregate(state_id, day)
 
 
 @transaction.atomic
