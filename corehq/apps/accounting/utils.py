@@ -368,3 +368,12 @@ def cancel_future_subscriptions(domain_name, from_date, web_user):
             web_user=web_user,
             note="Cancelled due to changing subscription",
         )
+
+
+def get_account_by_domain(domain_name):
+    from corehq.apps.accounting.models import BillingAccount, Subscription
+    try:
+        subscription = Subscription.visible_objects.get(subscriber__domain=domain_name, is_active=True)
+    except Subscription.DoesNotExist:
+        return None
+    return BillingAccount.objects.get(id=subscription.account_id)

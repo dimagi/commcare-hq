@@ -73,7 +73,7 @@ from corehq.apps.accounting.forms import EnterprisePlanContactForm
 from corehq.apps.accounting.utils import (
     get_change_status, get_privileges, fmt_dollar_amount,
     quantize_accounting_decimal, get_customer_cards,
-    log_accounting_error, domain_has_privilege,
+    log_accounting_error, domain_has_privilege, get_account_by_domain,
 )
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.smsbillables.async_handlers import SMSRatesAsyncHandler, SMSRatesSelect2AsyncHandler
@@ -2934,14 +2934,25 @@ class PasswordResetView(View):
 
 @require_superuser
 def enterprise_dashboard(request, domain):
-    context = {}
+    account = get_account_by_domain(domain)
+
+    context = {
+        'account': account,
+        'domain': domain,
+        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
+                EnterpriseReport.DOMAINS,
+                EnterpriseReport.WEB_USERS,
+                EnterpriseReport.MOBILE_USERS,
+                EnterpriseReport.FORM_SUBMISSIONS,
+            )],
+    }
     return render(request, "domain/enterprise_dashboard.html", context)
 
 
 @require_superuser
 def enterprise_dashboard_download(request, domain, slug):
-    subscription = Subscription.visible_objects.get(subscriber__domain=domain, is_active=True)
-    report = EnterpriseReport.create(slug, subscription.account_id, request.couch_user)
+    account = get_account_by_domain(domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)

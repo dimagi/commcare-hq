@@ -1,1 +1,23 @@
-here is a page
+{% extends "hqwebapp/base_section.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Enterprise Dashboard" %}{% endblock %}
+
+{% block page_title %}{{ account.name }}{% endblock %}
+
+{% block page_content %}
+    <div class="row">
+    {% for report in reports %}
+        <div class="col-sm-6 col-md-6 col-lg-3">
+            <div class="well text-center">
+                <h2>{{ report.name }}</h2>
+                <h1>100</h1>
+                <a class="btn btn-success" href="{% url "enterprise_dashboard_download" domain report.slug %}">
+                    <i class="fa fa-download"></i>
+                    {{ report.action_label }}
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% endblock %}
