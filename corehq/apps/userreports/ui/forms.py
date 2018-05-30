@@ -55,6 +55,8 @@ SOFT_ROLLOUT_HELP_TEXT = "Percentage of requests to send to ES. Only useful for 
 
 class ConfigurableReportEditForm(DocumentFormBase):
 
+    _id = forms.CharField(disabled=True, label=_('Report ID'),
+                          help_text=help_text.REPORT_ID)
     config_id = forms.ChoiceField()  # gets overridden on instantiation
     title = forms.CharField()
     visible = forms.ChoiceField(label=_('Visible to:'), choices=VISIBILITY_CHOICES)
@@ -92,6 +94,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
                 'configured_charts',
                 'sort_expression',
                 'soft_rollout',
+                '_id',
             ),
         )
         # Restrict edit for static reports
@@ -143,6 +146,8 @@ BACKEND_CHOICES = (
 
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
+    _id = forms.CharField(disabled=True, label=_('Data Source ID'),
+                          help_text=help_text.DATA_SOURCE_ID)
     table_id = forms.CharField(label=_("Table ID"),
                                help_text=help_text.TABLE_ID)
     referenced_doc_type = forms.ChoiceField(
@@ -211,6 +216,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
                 'named_filters',
                 'backend_id',
                 'asynchronous',
+                '_id',
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(

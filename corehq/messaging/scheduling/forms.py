@@ -870,14 +870,6 @@ class ScheduleForm(Form):
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
-    active = ChoiceField(
-        required=True,
-        label='',
-        choices=(
-            ('Y', ugettext_lazy("Active")),
-            ('N', ugettext_lazy("Inactive")),
-        ),
-    )
     send_frequency = ChoiceField(
         required=True,
         label=ugettext_lazy('Send'),
@@ -889,6 +881,14 @@ class ScheduleForm(Form):
             (SEND_CUSTOM_DAILY, ugettext_lazy('Custom Daily Schedule')),
             (SEND_CUSTOM_IMMEDIATE, ugettext_lazy('Custom Immediate Schedule')),
         )
+    )
+    active = ChoiceField(
+        required=True,
+        label='',
+        choices=(
+            ('Y', ugettext_lazy("Active")),
+            ('N', ugettext_lazy("Inactive")),
+        ),
     )
     weekdays = MultipleChoiceField(
         required=False,
@@ -2306,6 +2306,14 @@ class BroadcastForm(ScheduleForm):
     def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
+
+    def clean_active(self):
+        active = super(BroadcastForm, self).clean_active()
+
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY and not active:
+            raise ValidationError(_("You cannot create an immediate broadcast which is inactive."))
+
+        return active
 
     def get_after_content_layout_fields(self):
         result = super(BroadcastForm, self).get_after_content_layout_fields()

@@ -16,7 +16,7 @@ from corehq.apps.domain.decorators import (
     login_or_basic,
     login_or_api_key)
 from corehq.apps.users.decorators import require_permission, require_permission_raw
-from corehq.toggles import IS_DEVELOPER
+from corehq.toggles import IS_CONTRACTOR
 
 
 def api_auth(view_func):
@@ -122,7 +122,7 @@ class AdminAuthentication(LoginAndDomainAuthentication):
     def _permission_check(couch_user, domain):
         return (
             couch_user.is_superuser or
-            IS_DEVELOPER.enabled(couch_user.username)
+            IS_CONTRACTOR.enabled(couch_user.username)
         )
 
     def is_authenticated(self, request, **kwargs):

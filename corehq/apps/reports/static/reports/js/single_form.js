@@ -29,6 +29,8 @@ hqDefine("reports/js/single_form", function() {
             analyticsUsage('Edit Form Submission');
         });
 
+        hqImport("reports/js/readable_form").init();
+
         hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: options.form_question_map,
             propertyNames: options.ordered_question_values,

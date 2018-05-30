@@ -8,7 +8,7 @@ import io
 import logging
 import os
 
-from celery import chain
+from celery import chain, group
 from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
@@ -52,12 +52,20 @@ DASHBOARD_TEAM_MEMBERS = ['jemord', 'ssrikrishnan', 'mharrison', 'vmaheshwari', 
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 
+CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
+CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
+if settings.SERVER_ENVIRONMENT == 'softlayer':
+    # Currently QA needs more monthly data, so these are different than on ICDS
+    # If this exists after July 1, ask Emord why these UCRs still exist
+    CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
+    CHILD_HEALTH_MONTHLY_UCR = 'extended_child_health_monthly_tableau'
+
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'ccs_record_monthly', 'name': 'static-ccs_record_cases_monthly_tableau_v2'},
-    {'type': 'child_health_monthly', 'name': 'static-child_cases_monthly_tableau_v2'},
+    {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
+    {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -98,12 +106,12 @@ SQL_VIEWS_PATHS = [
 ]
 
 
-@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='background_queue')
+@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def run_move_ucr_data_into_aggregation_tables_task(date=None):
     move_ucr_data_into_aggregation_tables.delay(date)
 
 
-@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='background_queue')
+@serial_task('move-ucr-data-into-aggregate-tables', timeout=30 * 60, queue='icds_aggregation_queue')
 def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     date = date or datetime.utcnow().date()
     monthly_dates = []
@@ -133,21 +141,36 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         for monthly_date in monthly_dates:
             calculation_date = monthly_date.strftime('%Y-%m-%d')
             tasks.extend([
-                icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
-                icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
-                icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
-                icds_aggregation_task.si(date=calculation_date, func=_aggregate_gm_forms),
-                icds_aggregation_task.si(date=calculation_date, func=_aggregate_child_health_pnc_forms),
-                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
-                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
-                icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_update_months_table),
+                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_cf_forms),
+                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_thr_forms),
+                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_gm_forms),
+                    icds_aggregation_task.si(date=calculation_date, func=_aggregate_child_health_pnc_forms),
+                ),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                    icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
+                    icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
+                ),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+                    icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
+                ),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                    no_op_task_for_celery_bug.si(),
+                )
             ])
 
-        tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily))
-        tasks.append(email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')))
+        tasks.append(group(
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
+            no_op_task_for_celery_bug.si(),
+        ))
+        tasks.append(group(
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            no_op_task_for_celery_bug.si(),
+        ))
         chain(*tasks).delay()
 
 
@@ -166,6 +189,16 @@ def _create_views(cursor):
         # and look for recent changes in this folder.
         _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
         raise
+
+        
+@task(queue="icds_aggregation_queue")
+def no_op_task_for_celery_bug():
+    # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
+    # If the tasks are not grouped, then once celery gets to that task, no future tasks will be queued.
+    # Grouping one task by itself does not appear to work.
+    # If there's only one task for a group, we can add this to get around this issue.
+    # Once we upgrade celery we can experiment with getting rid of this.
+    pass
 
 
 def _create_aggregate_functions(cursor):
@@ -207,7 +240,7 @@ def _update_aggregate_locations_tables(cursor):
         raise
 
 
-@task(queue='background_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
+@task(queue='icds_aggregation_queue', bind=True, default_retry_delay=15 * 60, acks_late=True)
 def icds_aggregation_task(self, date, func):
     db_alias = get_icds_ucr_db_alias()
     if not db_alias:
@@ -235,46 +268,32 @@ def icds_aggregation_task(self, date, func):
 
 @track_time
 def _aggregate_cf_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateComplementaryFeedingForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateComplementaryFeedingForms, day)
 
 
 @track_time
 def _aggregate_gm_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateGrowthMonitoringForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateGrowthMonitoringForms, day)
 
 
 @track_time
 def _aggregate_child_health_pnc_forms(day):
-    state_ids = (SQLLocation.objects
-                 .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
-                 .values_list('location_id', flat=True))
-
-    agg_date = force_to_date(day)
-    for state_id in state_ids:
-        AggregateChildHealthPostnatalCareForms.aggregate(state_id, agg_date)
+    _state_based_aggregation(AggregateChildHealthPostnatalCareForms, day)
 
 
 @track_time
 def _aggregate_thr_forms(day):
+    _state_based_aggregation(AggregateChildHealthTHRForms, day)
+
+
+def _state_based_aggregation(model, day):
     state_ids = (SQLLocation.objects
                  .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                  .values_list('location_id', flat=True))
 
     agg_date = force_to_date(day)
     for state_id in state_ids:
-        AggregateChildHealthTHRForms.aggregate(state_id, agg_date)
+        model.aggregate(state_id, agg_date)
 
 
 @transaction.atomic
@@ -345,7 +364,7 @@ def _agg_awc_table(day):
     ], day)
 
 
-@task(queue='background_queue')
+@task(queue='icds_aggregation_queue')
 def email_dashboad_team(aggregation_date):
     # temporary soft assert to verify it's completing
     _dashboard_team_soft_assert(False, "Aggregation completed on {}".format(settings.SERVER_ENVIRONMENT))

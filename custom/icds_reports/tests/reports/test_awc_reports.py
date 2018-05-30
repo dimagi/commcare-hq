@@ -1267,7 +1267,7 @@ class TestAWCReport(TestCase):
                 "label": "Early Initiation of Breastfeeding",
                 'help_text': (
                     "Percentage of children who were put to the breast within one hour of birth. "
-                    "Early initiation of breastfeeding ensure the newborn recieves the 'first milk' "
+                    "Early initiation of breastfeeding ensure the newborn receives the 'first milk' "
                     "rich in nutrients and encourages exclusive breastfeeding practice"
                 ),
             }
@@ -1298,7 +1298,7 @@ class TestAWCReport(TestCase):
                 "label": "Exclusive breastfeeding",
                 'help_text': (
                     "Percentage of infants 0-6 months of age who are fed exclusively with breast milk. "
-                    "An infant is exclusively breastfed if they recieve only breastmilk "
+                    "An infant is exclusively breastfed if they receive only breastmilk "
                     "with no additional food, liquids (even water) ensuring "
                     "optimal nutrition and growth between 0 - 6 months"
                 ),
@@ -1331,7 +1331,7 @@ class TestAWCReport(TestCase):
                 'help_text': (
                     "Percentage of children between 6 - 8 months given timely introduction to solid, "
                     "semi-solid or soft food. "
-                    "Timely intiation of complementary feeding in addition to breastmilk "
+                    "Timely initiation of complementary feeding in addition to breastmilk "
                     "at 6 months of age is a key feeding practice to reduce malnutrition"
                 ),
             }
@@ -1395,9 +1395,9 @@ class TestAWCReport(TestCase):
                 "value": 0,
                 "label": "Institutional Deliveries",
                 'help_text': (
-                    "Percentage of pregant women who delivered in a public or private medical "
+                    "Percentage of pregnant women who delivered in a public or private medical "
                     "facility in the last month. "
-                    "Delivery in medical instituitions is associated with a decrease maternal mortality rate"
+                    "Delivery in medical institutions is associated with a decrease maternal mortality rate"
                 ),
             }
         )
