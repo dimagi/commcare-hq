@@ -50,6 +50,7 @@ from corehq.apps.locations.forms import LocationFixtureForm
 from corehq.apps.locations.models import LocationFixtureConfiguration
 from corehq.const import USER_DATE_FORMAT
 from corehq.apps.accounting.async_handlers import Select2BillingInfoHandler
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.invoicing import DomainWireInvoiceFactory
 from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.hqwebapp.decorators import (
@@ -2941,25 +2942,14 @@ def enterprise_dashboard(request, domain):
 @require_superuser
 def enterprise_dashboard_download(request, domain, slug):
     account = get_account_by_domain(domain)
+    report = EnterpriseReport.create(slug)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{} ({}).csv"'.format(
         account.name, slug)
     writer = UnicodeWriter(response)
 
-    headers = ['Project Space Name', 'Project Name', 'Project URL']
-    if slug == 'domains':
-        headers = ['Plan', '# of Mobile Users', '# of Web Users'] + headers
-    elif slug == 'web_users':
-        headers = ['Name', 'Email Address', 'Role', 'Last Login'] + headers
-    elif slug == 'mobile_users':
-        headers = ['Username', 'Name', 'Last Sync', 'Last Submission', 'CommCare Version'] + headers
-    elif slug == 'forms':
-        headers = ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + headers
-    else:
-        raise Http404(_("Report '{}' not found").format(slug))
-
-    writer.writerow(headers)
+    writer.writerow(report.headers)
     for domain_obj in map(Domain.get_by_name, get_domains_by_account(account)):
         rows = [('here', 'is', 'some', 'data')]
         writer.writerows(rows)

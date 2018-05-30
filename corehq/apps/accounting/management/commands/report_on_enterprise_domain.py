@@ -14,6 +14,7 @@ import re
 from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import DateSpan
 
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.domain.models import Domain
@@ -60,6 +61,7 @@ class Command(BaseCommand):
         return [
             domain.name,
             domain.hr_name,
+            # get_default_domain_url
             "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
         ]
 
@@ -161,19 +163,17 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        domain_headers = ['Project Space Name', 'Project Name', 'Project URL']
+        report = EnterpriseReport.create('domains')
+        (domain_file, domain_count) = self._write_file('domains', report.headers, self._domain_rows)
 
-        headers = domain_headers + ['Plan', '# of Mobile Users', '# of Web Users']
-        (domain_file, domain_count) = self._write_file('domains', headers, self._domain_rows)
+        report = EnterpriseReport.create('web_users')
+        (web_user_file, web_user_count) = self._write_file('web_users', report.headers, self._web_user_rows)
 
-        headers = ['Name', 'Email Address', 'Role', 'Last Login'] + domain_headers
-        (web_user_file, web_user_count) = self._write_file('web_users', headers, self._web_user_rows)
+        report = EnterpriseReport.create('mobile_users')
+        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', report.headers, self._mobile_user_rows)
 
-        headers = ['Username', 'Name', 'Last Sync', 'Last Submission', 'CommCare Version'] + domain_headers
-        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', headers, self._mobile_user_rows)
-
-        headers = ['Form Name', 'Submitted', 'App Name', 'Mobile User'] + domain_headers
-        (form_file, form_count) = self._write_file('forms', headers, self._form_rows)
+        report = EnterpriseReport.create('form_submissions')
+        (form_file, form_count) = self._write_file('forms', report.headers, self._form_rows)
 
         message = (
             '''{message}
