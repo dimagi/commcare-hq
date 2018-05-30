@@ -96,12 +96,12 @@ hqDefine('app_manager/js/supported_languages', function () {
         var changeSaveButton = function () {
             self.saveButton.fire('change');
         };
-        var smart_lang_display_enabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled")
+        var smartLangDisplayEnabled = hqImport("hqwebapp/js/initial_page_data").get("smart_lang_display_enabled")
         // If user has not set any preference yet for this app, default to true
-        if(smart_lang_display_enabled === null) {
-            smart_lang_display_enabled = true;
+        if(smartLangDisplayEnabled === null) {
+            smartLangDisplayEnabled = true;
         }
-        this.smartLangDisplay = ko.observable(smart_lang_display_enabled);
+        this.smartLangDisplay = ko.observable(smartLangDisplayEnabled);
         this.smartLangDisplay.subscribe(changeSaveButton);
 
         this.languages = ko.observableArray([]);
