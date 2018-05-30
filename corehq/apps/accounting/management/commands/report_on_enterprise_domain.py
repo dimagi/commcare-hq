@@ -78,7 +78,6 @@ class Command(BaseCommand):
 
     def handle(self, account_id, username, **kwargs):
         self.couch_user = CouchUser.get_by_username(username)
-        self.window = 7
         self.account_id = account_id
 
         if not self.couch_user:
