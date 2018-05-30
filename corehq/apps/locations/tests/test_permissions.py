@@ -132,6 +132,9 @@ class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHier
         # check checkbox
         cls.domain_obj.location_restriction_for_users = True
         cls.domain_obj.save()
+        cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
+        cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
+        cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
 
     @classmethod
     def tearDownClass(cls):

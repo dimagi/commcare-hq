@@ -49,13 +49,18 @@ def load_locs_json(domain, selected_loc_id=None, include_archived=False,
             'location_type': loc.location_type.name,  # todo: remove when types aren't optional
             'uuid': loc.location_id,
             'is_archived': loc.is_archived,
-            'can_edit': True
+            'can_edit': True,
+            'have_access_to_parent': True
         }
         if user:
             if user.has_permission(domain, 'access_all_locations'):
                 ret['can_edit'] = user_can_edit_location(user, loc, project)
             else:
-                ret['can_edit'] = user_can_access_location_id(domain, user, loc.location_id)
+                ret['can_edit'] = user_can_view_location(user, loc, project)
+            if loc.parent_id is None and not user.has_permission(domain, 'access_all_locations'):
+                ret['have_access_to_parent'] = False
+            else:
+                ret['have_access_to_parent'] = user_can_view_location(user, loc, project)
         return ret
 
     project = Domain.get_by_name(domain)

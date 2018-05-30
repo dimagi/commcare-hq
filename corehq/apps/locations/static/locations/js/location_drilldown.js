@@ -63,7 +63,12 @@ hqDefine('locations/js/location_drilldown', [
             if (model.selected_path().length !== model.location_types.length &&
                 model.selected_path.indexOf(loc) === -1 &&
                 model.selected_path().length < model.max_drill_depth) {
-                model.selected_path.push(loc);
+
+                var levelAlreadyInPath = model.selected_path().some(function(selected) {
+                    return loc.depth === selected.depth;
+                });
+
+                if (!levelAlreadyInPath) model.selected_path.push(loc);
                 if (model.auto_drill && loc.num_children() === 1) {
                     loc.selected_child(loc.get_child(0));
                 }
@@ -167,7 +172,7 @@ hqDefine('locations/js/location_drilldown', [
         // helpers to account for the 'all' meta-entry
         loc.num_children = ko.computed(function() {
             var length = loc.children().length;
-            if (loc.withAllOption && length !== 0) {
+            if (length !== 0 && loc.children()[0].name === '_all') {
                 length -= 1;
             }
             return length;
@@ -190,11 +195,13 @@ hqDefine('locations/js/location_drilldown', [
             var children = [];
             if (data) {
                 children = _.sortBy(data, function(e) { return e.name; });
-
+                var accessToParent = data.every(function(child) {
+                    return child.have_access_to_parent;
+                });
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                if(loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED))
+                if(accessToParent && (loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED)))
                     children.splice(0, 0, {name: '_all', auto_drill: loc.auto_drill});
             }
             loc.children($.map(children, function(e) {
@@ -202,7 +209,7 @@ hqDefine('locations/js/location_drilldown', [
                 var child = new loc.func(e, root, loc.depth + 1);
                 return (child.filter() ? child : null);
             }));
-            loc.children_loaded = true;
+            loc.children_loaded = data.length > 0;
         };
 
         loc.load_children_async = function(callback) {
