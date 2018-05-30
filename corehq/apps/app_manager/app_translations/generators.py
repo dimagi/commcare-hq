@@ -17,6 +17,19 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 class POFileGenerator:
     def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
                  exclude_if_default=False):
+        """
+        Generates PO files for source/default lang files and also for translated files
+        :param domain: domain name
+        :param app_id: app UUID
+        :param version: version of the app to use, usually the built version. If none, the
+        current app state is used.
+        :param key_lang: the lang used to create msgid in PO files. Usually en.
+        :param source_lang: the lang to create the msgstr in PO files. Should be same as
+        key lang for source files and the target lang for translated files
+        :param lang_prefix: usually default_
+        :param exclude_if_default: set this to skip adding msgstr in case its same as the
+        default language. For details: https://github.com/dimagi/commcare-hq/pull/20706
+        """
         if key_lang == source_lang and exclude_if_default:
             raise Exception("Looks like you are setting up the file for default language "
                             "and doing that with exclude_if_default is not expected since "
