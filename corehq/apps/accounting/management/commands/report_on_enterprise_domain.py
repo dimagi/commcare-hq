@@ -57,22 +57,16 @@ class Command(BaseCommand):
             help='Comma-separated emails to CC (optional)',
         )
 
-    def _domain_properties(self, domain):
-        return [
-            domain.name,
-            domain.hr_name,
-            # get_default_domain_url
-            "https://www.commcarehq.org" + reverse('dashboard_domain', kwargs={'domain': domain.name})
-        ]
+    def _write_file(self, slug):
+        report = EnterpriseReport.create(slug, self.couch_user)
 
-    def _write_file(self, slug, headers, process_domain):
         row_count = 0
         csv_file = io.BytesIO()
         writer = UnicodeWriter(csv_file)
-        writer.writerow(headers)
+        writer.writerow(report.headers)
 
         for domain in [domain for domain in map(Domain.get_by_name, self.domain_names) if domain]:
-            rows = process_domain(domain)
+            rows = report.rows_for_domain(domain)
             row_count = row_count + len(rows)
             writer.writerows(rows)
 
@@ -83,72 +77,6 @@ class Command(BaseCommand):
             'file_obj': csv_file,
         }
         return (attachment, row_count)
-
-    def _domain_rows(self, domain):
-        subscription = Subscription.get_active_subscription_by_domain(domain.name)
-        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
-        return [self._domain_properties(domain) + [
-            plan_version.plan.name,
-            str(get_mobile_user_count(domain.name, include_inactive=False)),
-            str(get_web_user_count(domain.name, include_inactive=False)),
-        ]]
-
-    def _web_user_rows(self, domain):
-        rows = []
-        for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
-                                      include_inactive=False, include_docs=True):
-            user = WebUser.wrap(user['doc'])
-            rows.append([
-                user.full_name,
-                user.username,
-                user.role_label(domain.name),
-                self._format_date(user.last_login),
-            ] + self._domain_properties(domain))
-        return rows
-
-    def _mobile_user_rows(self, domain):
-        rows = []
-        for user in get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
-                                      include_inactive=False, include_docs=True):
-            user = CommCareUser.wrap(user['doc'])
-            rows.append([
-                re.sub(r'@.*', '', user.username),
-                user.full_name,
-                self._format_date(user.reporting_metadata.last_sync_for_user.sync_date),
-                self._format_date(user.reporting_metadata.last_submission_for_user.submission_date),
-                user.reporting_metadata.last_submission_for_user.commcare_version or '',
-            ] + self._domain_properties(domain))
-        return rows
-
-    def _form_rows(self, domain):
-        time_filter = form_es.submitted
-        datespan = DateSpan(datetime.now() - timedelta(days=self.window), datetime.utcnow())
-        apps = get_brief_apps_in_domain(domain.name)
-        apps = {a.id: a.name for a in apps}
-
-        users_filter = form_es.user_id(EMWF.user_es_query(domain.name,
-                                       ['t__0'],  # All mobile workers
-                                       self.couch_user)
-                        .values_list('_id', flat=True))
-        query = (form_es.FormES()
-                 .domain(domain.name)
-                 .filter(time_filter(gte=datespan.startdate,
-                                     lt=datespan.enddate_adjusted))
-                 .filter(users_filter))
-        rows = []
-        for hit in query.run().hits:
-            username = hit['form']['meta']['username']
-            submitted = self._format_date(datetime.strptime(hit['received_on'][:19], '%Y-%m-%dT%H:%M:%S'))
-            rows.append([
-                hit['form']['@name'],
-                submitted,
-                apps[hit['app_id']] if hit['app_id'] in apps else 'App not found',
-                username,
-            ] + self._domain_properties(domain))
-        return rows
-
-    def _format_date(self, date):
-        return date.strftime('%Y/%m/%d %H:%M:%S') if date else ''
 
     def handle(self, account_id, username, **kwargs):
         self.couch_user = CouchUser.get_by_username(username)
@@ -163,17 +91,10 @@ class Command(BaseCommand):
         self.domain_names = set(s.subscriber.domain for s in subscriptions)
         print('Found {} domains for {}'.format(len(self.domain_names), account.name))
 
-        report = EnterpriseReport.create('domains', self.couch_user)
-        (domain_file, domain_count) = self._write_file('domains', report.headers, self._domain_rows)
-
-        report = EnterpriseReport.create('web_users', self.couch_user)
-        (web_user_file, web_user_count) = self._write_file('web_users', report.headers, self._web_user_rows)
-
-        report = EnterpriseReport.create('mobile_users', self.couch_user)
-        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users', report.headers, self._mobile_user_rows)
-
-        report = EnterpriseReport.create('form_submissions', self.couch_user)
-        (form_file, form_count) = self._write_file('forms', report.headers, self._form_rows)
+        (domain_file, domain_count) = self._write_file('domains')
+        (web_user_file, web_user_count) = self._write_file('web_users')
+        (mobile_user_file, mobile_user_count) = self._write_file('mobile_users')
+        (form_file, form_count) = self._write_file('form_submissions')
 
         message = (
             '''{message}
