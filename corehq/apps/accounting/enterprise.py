@@ -20,7 +20,7 @@ from corehq.apps.users.dbaccessors.all_commcare_users import (
     get_mobile_user_count,
     get_web_user_count,
 )
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CouchUser
 from corehq.util.quickcache import quickcache
 
 
@@ -138,7 +138,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
         rows = []
         for user in get_all_user_rows(domain.name, include_web_users=True, include_mobile_users=False,
                                       include_inactive=False, include_docs=True):
-            user = WebUser.wrap(user['doc'])
+            user = CouchUser.wrap_correctly(user['doc'])
             rows.append([
                 user.full_name,
                 user.username,
@@ -166,7 +166,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
         rows = []
         for user in get_all_user_rows(domain.name, include_web_users=False, include_mobile_users=True,
                                       include_inactive=False, include_docs=True):
-            user = CommCareUser.wrap(user['doc'])
+            user = CouchUser.wrap_correctly(user['doc'])
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
@@ -219,7 +219,7 @@ class EnterpriseFormReport(EnterpriseReport):
             rows.append([
                 hit['form']['@name'],
                 submitted,
-                apps[hit['app_id']] if hit['app_id'] in apps else 'App not found',
+                apps[hit['app_id']] if hit['app_id'] in apps else _('App not found'),
                 username,
             ] + self.domain_properties(domain))
         return rows
