@@ -620,4 +620,5 @@ class Migration(migrations.Migration):
             },
         ),
         migrator.get_migration('create_child_health_monthly_view.sql'),
+        migrator.get_migration('create_datasource_views.sql'),
     ]
