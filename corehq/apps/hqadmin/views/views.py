@@ -99,15 +99,15 @@ from dimagi.utils.web import json_response
 from corehq.apps.hqadmin.tasks import send_mass_emails
 from pillowtop.exceptions import PillowNotFoundError
 from pillowtop.utils import get_all_pillows_json, get_pillow_json, get_pillow_config_by_name
-from . import service_checks, escheck
-from .forms import (
+from corehq.apps.hqadmin import service_checks, escheck
+from corehq.apps.hqadmin.forms import (
     AuthenticateAsForm, BrokenBuildsForm, EmailForm, SuperuserManagementForm,
     ReprocessMessagingCaseUpdatesForm,
     DisableTwoFactorForm, DisableUserForm)
-from .history import get_recent_changes, download_changes
-from .models import HqDeploy
-from .reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
-from .utils import get_celery_stats
+from corehq.apps.hqadmin.history import get_recent_changes, download_changes
+from corehq.apps.hqadmin.models import HqDeploy
+from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
+from corehq.apps.hqadmin.utils import get_celery_stats
 import six
 from six.moves import filter
 

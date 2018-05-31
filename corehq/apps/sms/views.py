@@ -13,7 +13,7 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from corehq import privileges
 from corehq import toggles
-from corehq.apps.hqadmin.views import BaseAdminSectionView
+from corehq.apps.hqadmin.views.views import BaseAdminSectionView
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form, sign
