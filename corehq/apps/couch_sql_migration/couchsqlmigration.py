@@ -281,11 +281,11 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        pool = Pool(10)
+        pool = Pool(5)
         changes = _get_case_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
-            if len(cases) == 1000:
+            if len(cases) == 500:
                 pool.spawn(self._diff_cases, deepcopy(cases))
                 cases = {}
 
@@ -702,6 +702,7 @@ class PartiallyLockingQueue(object):
         """
         self.queue_by_lock_id = defaultdict(deque)
         self.lock_ids_by_queue_id = defaultdict(list)
+        self.queue_objs_by_queue_id = dict()
         self.currently_locked = set()
 
         def get_queue_obj_id(queue_obj):
@@ -742,22 +743,20 @@ class PartiallyLockingQueue(object):
         for lock_id, queue in six.iteritems(self.queue_by_lock_id):
             if not queue:
                 continue
-            peeked_obj = queue[0]
-            peeked_id = self.get_queue_obj_id(peeked_obj)
+            peeked_obj_id = queue[0]
 
-            lock_ids = self.lock_ids_by_queue_id[peeked_id]
+            lock_ids = self.lock_ids_by_queue_id[peeked_obj_id]
             first_in_all_queues = True
             for lock_id in lock_ids:
                 first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
-                if self.get_queue_obj_id(first_in_queue) != peeked_id:
+                if not first_in_queue == peeked_obj_id:
                     first_in_all_queues = False
                     break
             if not first_in_all_queues:
                 continue
 
             if self._set_lock(lock_ids):
-                self._remove_item(peeked_obj)
-                return peeked_obj
+                return self._remove_item(peeked_obj_id)
         return None
 
     def has_next(self):
@@ -787,36 +786,38 @@ class PartiallyLockingQueue(object):
         return False
 
     def remaining_items(self):
-        return sum(len(queue) for _, queue in six.iteritems(self.queue_by_lock_id))
+        return len(self.queue_objs_by_queue_id)
 
     def _add_item(self, lock_ids, queue_obj, to_queue=True):
         """
         :to_queue boolean: adds object to queues if True, just to lock tracking if not
         """
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
         if to_queue:
             for lock_id in lock_ids:
-                self.queue_by_lock_id[lock_id].append(queue_obj)
-        self.lock_ids_by_queue_id[self.get_queue_obj_id(queue_obj)] = lock_ids
+                self.queue_by_lock_id[lock_id].append(queue_obj_id)
+            self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
+        self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
 
-    def _remove_item(self, queued_obj):
+    def _remove_item(self, queued_obj_id):
         """ Removes a queued obj from data model
 
-        :queue_obj obj: An object of the type in the queues
+        :queue_obj_id string: An id of an object of the type in the queues
 
         Assumes the obj is the first in every queue it inhabits. This seems reasonable
         for the intended use case, as this function should only be used by `.get_next`.
 
         Raises UnexpectedObjectException if this assumption doesn't hold
         """
-        queued_obj_id = self.get_queue_obj_id(queued_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queued_obj_id)
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
-            if self.get_queue_obj_id(queue[0]) != queued_obj_id:
+            if queue[0] != queued_obj_id:
                 raise UnexpectedObjectException("This object shouldn't be removed")
         for lock_id in lock_ids:
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
+        return self.queue_objs_by_queue_id.pop(queued_obj_id)
 
     def _check_lock(self, lock_ids):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
