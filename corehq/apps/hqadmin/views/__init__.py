@@ -14,6 +14,14 @@ from corehq.apps.hqadmin.views.operations import (
     mass_email,
     ReprocessMessagingCaseUpdatesView,
 )
+from corehq.apps.hqadmin.views.reports import (
+    DimagisphereView,
+    DownloadGIRView,
+    DownloadMALTView,
+    admin_reports_stats_data,
+    stats_data,
+    top_five_projects_by_country,
+)
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
     branches_on_staging,
@@ -34,16 +42,8 @@ from corehq.apps.hqadmin.views.views import (
     DomainAdminRestoreView,
     run_command,
     FlagBrokenBuilds,
-    stats_data,
-    admin_reports_stats_data,
     web_user_lookup,
     DisableUserView,
     DisableTwoFactorView,
-    DownloadMALTView,
-    _malt_csv_response,
-    DownloadGIRView,
-    _gir_csv_response,
-    DimagisphereView,
-    top_five_projects_by_country,
     WebUserDataView,
 )
