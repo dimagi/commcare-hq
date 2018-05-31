@@ -1,4 +1,4 @@
-var suggestedCaseTypes = function(){
+var suggestions = function(){
     // Adds the required properties to filter the case type autocomplete dropdowns
     var self = this;
     self.currentCaseType = ko.observable('');
@@ -8,9 +8,9 @@ var suggestedCaseTypes = function(){
 
     self.suggestedProperties = ko.computed(function(){
         if (self.currentCaseType() === ''){
-            return self.allCaseProperties;
+            return self.allSuggestions;
         }
-        return _.filter(self.allCaseProperties, function(prop){
+        return _.filter(self.allSuggestions, function(prop){
             return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
         });
     });
@@ -53,8 +53,8 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
     var casePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
         var self = this;
 
-        self.allCaseProperties = allCaseProperties;
-        suggestedCaseTypes.apply(self);
+        self.allSuggestions = allCaseProperties;
+        suggestions.apply(self);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -77,10 +77,10 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
         return self;
     };
 
-    var caseSearchXpathViewModel = function(allCaseProperties){
+    var caseSearchXpathViewModel = function(allSuggestions){
         var self = this;
-        self.allCaseProperties = allCaseProperties;
-        suggestedCaseTypes.apply(self);
+        self.allSuggestions = allSuggestions;
+        suggestions.apply(self);
         return self;
     };
 
