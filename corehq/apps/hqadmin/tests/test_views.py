@@ -18,7 +18,7 @@ class AdminRestoreViewTests(SimpleTestCase):
         request.openrosa_headers = {}
         timing_context = Mock()
         timing_context.to_list.return_value = []
-        with patch('corehq.apps.ota.views.get_restore_response',
+        with patch('corehq.apps.hqadmin.views.users.get_restore_response',
                    return_value=(HttpResponse('bad response', status=500), timing_context)):
 
             view = AdminRestoreView(user=user, app_id=app_id, request=request)
