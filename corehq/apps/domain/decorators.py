@@ -93,7 +93,11 @@ def login_and_domain_required(view_func):
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
                 # If the two factor toggle is on, require it for all users.
-                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
+                if (
+                    _two_factor_required(view_func, domain, couch_user)
+                    and not getattr(req, 'bypass_two_factor')
+                    and not user.is_verified()
+                ):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
