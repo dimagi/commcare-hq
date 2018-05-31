@@ -53,6 +53,7 @@ from corehq.messaging.scheduling.models import (
     SMSContent,
     EmailContent,
     SMSSurveyContent,
+    MigratedReminder,
 )
 from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances
 from corehq.messaging.scheduling.scheduling_partitioned.models import (
@@ -100,6 +101,9 @@ class BaseMigrator(object):
         raise NotImplementedError
 
     def print_migrator_specific_info(self):
+        raise NotImplementedError
+
+    def log_migrated_reminder(self):
         raise NotImplementedError
 
     def get_source_instances(self):
@@ -155,6 +159,12 @@ class CaseReminderHandlerMigrator(BaseMigrator):
         with transaction.atomic():
             self.schedule = self.schedule_migration_function(self.handler)
             self.rule = self.rule_migration_function(self.handler, self.schedule)
+
+    def log_migrated_reminder(self):
+        obj, _ = MigratedReminder.objects.get_or_create(handler_id=self.handler._id)
+        obj.rule = self.rule
+        obj.broadcast = None
+        obj.save()
 
     def migrate_schedule_instances(self):
         if isinstance(self.schedule, AlertSchedule):
@@ -246,6 +256,12 @@ class BroadcastMigrator(BaseMigrator):
     def migrate(self):
         with transaction.atomic():
             self.broadcast, self.schedule = self.broadcast_migration_function(self.handler)
+
+    def log_migrated_reminder(self):
+        obj, _ = MigratedReminder.objects.get_or_create(handler_id=self.handler._id)
+        obj.broadcast = self.broadcast
+        obj.rule = None
+        obj.save()
 
     def migrate_schedule_instances(self):
         recipient = self.broadcast.recipients[0]
@@ -785,6 +801,7 @@ class Command(BaseCommand):
         for migrator in migrators:
             migrator.migrate()
             migrator.migrate_schedule_instances()
+            migrator.log_migrated_reminder()
             migrator.print_status()
 
     def confirm(self, message):
