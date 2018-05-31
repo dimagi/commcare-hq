@@ -50,8 +50,6 @@ class Command(BaseCommand):
             return [id.strip() for id in ids]
 
     def is_duplicate(self, case):
-        if len(case.xform_ids) != 3:
-            return False
         last_xform_id = case.xform_ids[-1]
         last_xform = FormAccessors(domain=DOMAIN).get_form(last_xform_id)
         return last_xform.xmlns == SYSTEM_FORM_XMLNS
