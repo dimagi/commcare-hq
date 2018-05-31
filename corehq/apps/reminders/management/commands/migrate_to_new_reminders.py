@@ -17,6 +17,10 @@ from corehq.apps.reminders.models import (
     REMINDER_TYPE_SURVEY_MANAGEMENT,
     UI_SIMPLE_FIXED,
     EVENT_AS_OFFSET,
+    EVENT_AS_SCHEDULE,
+    FIRE_TIME_DEFAULT,
+    FIRE_TIME_CASE_PROPERTY,
+    FIRE_TIME_RANDOM,
     METHOD_SMS,
     METHOD_SMS_CALLBACK,
     METHOD_SMS_SURVEY,
@@ -43,6 +47,9 @@ from corehq.messaging.scheduling.models import (
     AlertEvent,
     ImmediateBroadcast,
     TimedSchedule,
+    TimedEvent,
+    RandomTimedEvent,
+    CasePropertyTimedEvent,
     SMSContent,
     EmailContent,
     SMSSurveyContent,
@@ -150,9 +157,14 @@ class CaseReminderHandlerMigrator(BaseMigrator):
             self.rule = self.rule_migration_function(self.handler, self.schedule)
 
     def migrate_schedule_instances(self):
-        if not isinstance(self.schedule, AlertSchedule):
-            raise TypeError("Expected AlertSchedule")
+        if isinstance(self.schedule, AlertSchedule):
+            self.migrate_case_alert_schedule_instances()
+        elif isinstance(self.schedule, TimedSchedule):
+            self.migrate_case_timed_schedule_instances()
+        else:
+            raise TypeError("Unknown schedule type")
 
+    def migrate_case_alert_schedule_instances(self):
         seen_case_ids = set()
         recipient = self.rule.memoized_actions[0].definition.recipients[0]
 
@@ -172,6 +184,36 @@ class CaseReminderHandlerMigrator(BaseMigrator):
                 next_event_due=reminder.next_fire,
                 active=reminder.active,
                 alert_schedule_id=self.schedule.schedule_id,
+                case_id=reminder.case_id,
+                rule_id=self.rule.pk,
+            )
+
+            if reminder.active and reminder.error:
+                self.schedule.move_to_next_event_not_in_the_past(instance)
+
+            instance.save(force_insert=True)
+
+    def migrate_case_timed_schedule_instances(self):
+        seen_case_ids = set()
+        recipient = self.rule.memoized_actions[0].definition.recipients[0]
+
+        for reminder in self.get_source_instances():
+            if reminder.case_id in seen_case_ids:
+                self.source_duplicate_count += 1
+                continue
+
+            seen_case_ids.add(reminder.case_id)
+
+            instance = CaseTimedScheduleInstance(
+                domain=self.rule.domain,
+                recipient_type=recipient[0],
+                recipient_id=recipient[1],
+                current_event_num=reminder.current_event_sequence_num,
+                schedule_iteration_num=reminder.schedule_iteration_num,
+                next_event_due=reminder.next_fire,
+                active=reminder.active,
+                timed_schedule_id=self.schedule.schedule_id,
+                start_date=reminder.start_date,
                 case_id=reminder.case_id,
                 rule_id=self.rule.pk,
             )
@@ -246,15 +288,20 @@ class BroadcastMigrator(BaseMigrator):
         refresh_alert_schedule_instances(self.schedule.schedule_id, self.broadcast.recipients)
 
 
-def get_extra_scheduling_options(handler, translated=True):
+def get_extra_scheduling_options(handler, translated=True, include_utc_option=False):
     if handler.reminder_type == REMINDER_TYPE_DEFAULT and handler.include_child_locations:
         raise ValueError("Unexpected value for include_child_locations for %s" % handler._id)
 
-    return {
+    result = {
         'active': handler.active,
         'default_language_code': handler.default_lang if translated else None,
         'include_descendant_locations': handler.include_child_locations,
     }
+
+    if include_utc_option:
+        result['use_utc_as_default_timezone'] = True
+
+    return result
 
 
 def check_days_until(message_dict):
@@ -313,6 +360,30 @@ def get_content(handler, event, translated=True):
         )
     else:
         raise ValueError("Unexpected method '%s'" % handler.method)
+
+
+def get_timed_event(handler, event):
+    if handler.event_interpretation != EVENT_AS_SCHEDULE:
+        raise ValueError("Unexpected event_interpretation: %s" % handler.event_interpretation)
+
+    if event.fire_time_type == FIRE_TIME_DEFAULT:
+        return TimedEvent(
+            day=event.day_num,
+            time=event.fire_time,
+        )
+    elif event.fire_time_type == FIRE_TIME_RANDOM:
+        return RandomTimedEvent(
+            day=event.day_num,
+            time=event.fire_time,
+            window_length=event.time_window_length,
+        )
+    elif event.fire_time_type == FIRE_TIME_CASE_PROPERTY:
+        return CasePropertyTimedEvent(
+            day=event.day_num,
+            case_property_name=event.fire_time_aux,
+        )
+    else:
+        raise ValueError("Unexpected fire_time_type: %s" % event.fire_time_type)
 
 
 def get_event(handler, event):
@@ -390,6 +461,7 @@ def migrate_rule(handler, schedule):
         alert_schedule_id=schedule.schedule_id if isinstance(schedule, AlertSchedule) else None,
         timed_schedule_id=schedule.schedule_id if isinstance(schedule, TimedSchedule) else None,
         recipients=get_rule_recipients(handler),
+        start_date_case_property=handler.start_date,
     )
     return rule
 
@@ -399,6 +471,29 @@ def migrate_simple_alert_schedule(handler):
         handler.domain,
         get_content(handler, handler.events[0]),
         extra_options=get_extra_scheduling_options(handler),
+    )
+
+
+def migrate_simple_daily_schedule(handler):
+    return TimedSchedule.create_simple_daily_schedule(
+        handler.domain,
+        get_timed_event(handler, handler.events[0]),
+        get_content(handler, handler.events[0]),
+        total_iterations=handler.max_iteration_count,
+        start_offset=handler.start_offset,
+        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        repeat_every=handler.schedule_length,
+    )
+
+
+def migrate_custom_daily_schedule(handler):
+    return TimedSchedule.create_custom_daily_schedule(
+        handler.domain,
+        [(get_timed_event(handler, event), get_content(handler, event)) for event in handler.events],
+        total_iterations=handler.max_iteration_count,
+        start_offset=handler.start_offset,
+        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        repeat_every=handler.schedule_length,
     )
 
 
@@ -456,10 +551,10 @@ class Command(BaseCommand):
         if handler.active and handler.uses_parent_case_property:
             return None
 
-        if handler.start_date:
+        if handler.until:
             return None
 
-        if handler.until:
+        if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
             return None
 
         return migrate_rule
@@ -499,7 +594,11 @@ class Command(BaseCommand):
         if handler.user_data_filter:
             return None
 
+        fire_time_types = [event.fire_time_type for event in handler.events]
+        first_fire_time_type = fire_time_types[0]
+
         if (
+            handler.start_date is None and
             handler.event_interpretation == EVENT_AS_OFFSET and
             handler.start_date is None and
             handler.start_offset == 0 and
@@ -514,6 +613,24 @@ class Command(BaseCommand):
                 return migrate_simple_alert_schedule
             else:
                 return migrate_custom_alert_schedule
+        elif (
+            handler.event_interpretation == EVENT_AS_SCHEDULE and
+            first_fire_time_type in (FIRE_TIME_DEFAULT, FIRE_TIME_CASE_PROPERTY, FIRE_TIME_RANDOM) and
+            all(f == first_fire_time_type for f in fire_time_types) and
+            not (handler.start_date is None and handler.start_offset < 0)
+        ):
+            if handler.start_day_of_week != DAY_ANY:
+                # Weekly schedule goes here
+                return None
+            elif (
+                len(handler.events) == 1 and
+                handler.events[0].day_num == 0
+            ):
+                # Simple daily schedule goes here
+                return migrate_simple_daily_schedule
+            else:
+                # Custom daily schedule goes here
+                return migrate_custom_daily_schedule
 
         return None
 
