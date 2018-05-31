@@ -2,6 +2,8 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
+from io import open
+
 from django.core.management import BaseCommand
 
 from casexml.apps.case.mock import CaseFactory, CaseStructure
@@ -12,7 +14,8 @@ from corehq.util.log import with_progress_bar
 DOMAIN = 'mukte-ii'
 
 def log(message):
-    print(message)
+    with open('cleanup_duplicate_cases.log', 'a') as f:
+        f.write(message)
 
 
 class Command(BaseCommand):
