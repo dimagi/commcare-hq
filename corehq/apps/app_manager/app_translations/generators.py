@@ -15,12 +15,31 @@ Unique_ID = namedtuple('UniqueID', 'type id')
 
 
 class POFileGenerator:
-    def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix):
+    def __init__(self, domain, app_id, version, key_lang, source_lang, lang_prefix,
+                 exclude_if_default=False):
+        """
+        Generates PO files for source/default lang files and also for translated files
+        :param domain: domain name
+        :param app_id: app UUID
+        :param version: version of the app to use, usually the built version. If none, the
+        current app state is used.
+        :param key_lang: the lang used to create msgid in PO files. Usually en.
+        :param source_lang: the lang to create the msgstr in PO files. Should be same as
+        key lang for source files and the target lang for translated files
+        :param lang_prefix: usually default_
+        :param exclude_if_default: set this to skip adding msgstr in case its same as the
+        default language. For details: https://github.com/dimagi/commcare-hq/pull/20706
+        """
+        if key_lang == source_lang and exclude_if_default:
+            raise Exception("Looks like you are setting up the file for default language "
+                            "and doing that with exclude_if_default is not expected since "
+                            "that would result in empty msgstr and no display for other lang")
         self.domain = domain
         self.app_id = app_id
         self.key_lang = key_lang
         self.source_lang = source_lang
         self.lang_prefix = lang_prefix
+        self.exclude_if_default = exclude_if_default
         self.translations = OrderedDict()
         self.version = version
         self.headers = dict()  # headers for each sheet name
@@ -82,6 +101,7 @@ class POFileGenerator:
         translations_for_sheet = []
         key_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.key_lang)
         source_lang_index = self._get_header_index(sheet_name, self.lang_prefix + self.source_lang)
+        default_lang_index = self._get_header_index(sheet_name, self.lang_prefix + app.default_language)
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
             type_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'Type')
             sheet_name_index = self._get_header_index(MODULES_AND_FORMS_SHEET_NAME, 'sheet_name')
@@ -108,6 +128,9 @@ class POFileGenerator:
         for i, row in enumerate(rows):
             source = row[key_lang_index]
             translation = row[source_lang_index]
+            if self.exclude_if_default:
+                if translation == row[default_lang_index]:
+                    translation = ''
             occurrence_row = occurrence(row)
             translations_for_sheet.append(Translation(
                 source,

@@ -189,19 +189,7 @@ class AdjListManager(models.Manager):
         return ComparedQuerySet(mptt_set, cte_set, timing)
 
 
-class FakeMPTTModel(models.Model):
-    """Add defaults for MPTT fields until they can be dropped"""
-
-    class Meta:
-        abstract = True
-
-    tree_id = models.IntegerField(default=0)
-    lft = models.IntegerField(default=0)
-    rght = models.IntegerField(default=0)
-    level = models.IntegerField(default=0)
-
-
-class AdjListModel(FakeMPTTModel):
+class AdjListModel(models.Model):
     """Base class for tree models implemented with adjacency list pattern
 
     For more on adjacency lists, see

@@ -52,12 +52,20 @@ DASHBOARD_TEAM_MEMBERS = ['jemord', 'ssrikrishnan', 'mharrison', 'vmaheshwari', 
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
 _dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
 
+CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
+CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
+if settings.SERVER_ENVIRONMENT == 'softlayer':
+    # Currently QA needs more monthly data, so these are different than on ICDS
+    # If this exists after July 1, ask Emord why these UCRs still exist
+    CCS_RECORD_MONTHLY_UCR = 'extended_ccs_record_monthly_tableau'
+    CHILD_HEALTH_MONTHLY_UCR = 'extended_child_health_monthly_tableau'
+
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
     {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
-    {'type': 'ccs_record_monthly', 'name': 'static-ccs_record_cases_monthly_tableau_v2'},
-    {'type': 'child_health_monthly', 'name': 'static-child_cases_monthly_tableau_v2'},
+    {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
+    {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
     {'type': 'household', 'name': 'static-household_cases'},
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
@@ -140,12 +148,31 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                     icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
                     icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
                 ),
-                icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                group(
+                    icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
+                    no_op_task_for_celery_bug.si(),
+                )
             ])
 
-        tasks.append(icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily))
-        tasks.append(email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')))
+        tasks.append(group(
+            icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
+            no_op_task_for_celery_bug.si(),
+        ))
+        tasks.append(group(
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
+            no_op_task_for_celery_bug.si(),
+        ))
         chain(*tasks).delay()
+
+
+@task(queue="icds_aggregation_queue")
+def no_op_task_for_celery_bug():
+    # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
+    # If the tasks are not grouped, then once celery gets to that task, no future tasks will be queued.
+    # Grouping one task by itself does not appear to work.
+    # If there's only one task for a group, we can add this to get around this issue.
+    # Once we upgrade celery we can experiment with getting rid of this.
+    pass
 
 
 def _create_aggregate_functions(cursor):
