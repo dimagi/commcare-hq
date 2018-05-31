@@ -23,7 +23,7 @@
     "backbone-1.3.2": "backbone#1.3.2",
     "backbone.marionette": "2.4.5",
     "bootstrap": "3.3.7",
-    "bootstrap-daterangepicker": "2.1.13",
+    "bootstrap-daterangepicker": "3.0.3",
     "bootstrap-switch": "3.3.2",
     "bootstrap-timepicker": "0.5.1",
     "bootstrap-tour": "0.10.2",
