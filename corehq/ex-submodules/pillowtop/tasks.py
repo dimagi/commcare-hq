@@ -5,7 +5,6 @@ from celery.task import periodic_task
 from django.conf import settings
 
 from corehq.util.datadog.gauges import datadog_gauge
-from corehq.util.decorators import serial_task
 from corehq.util.soft_assert import soft_assert
 from pillowtop.utils import get_all_pillows_json
 
@@ -14,11 +13,6 @@ _assert = soft_assert("{}@{}".format('jemord', 'dimagi.com'))
 
 
 @periodic_task(run_every=crontab(minute="*/2"), queue=settings.CELERY_PERIODIC_QUEUE)
-def run_pillow_datadog_metrics():
-    pillow_datadog_metrics.delay()
-
-
-@serial_task('pillow-datadog-metrics', timeout=30 * 60, queue=settings.CELERY_PERIODIC_QUEUE, max_retries=0)
 def pillow_datadog_metrics():
     def _is_couch(pillow):
         # text is couch, json is kafka

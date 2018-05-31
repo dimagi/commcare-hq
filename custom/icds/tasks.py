@@ -61,4 +61,5 @@ def send_translation_files_to_transifex(domain, data):
                   data.get('target_lang'),
                   data.get('transifex_project_slug'),
                   data.get('version'),
-                  is_source_file=False).send_translation_files()
+                  is_source_file=False,
+                  exclude_if_default=True).send_translation_files()
