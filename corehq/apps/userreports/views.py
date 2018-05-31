@@ -199,6 +199,7 @@ class UserConfigReportsHomeView(BaseUserConfigReportsView):
 
 class BaseEditConfigReportView(BaseUserConfigReportsView):
     template_name = 'userreports/edit_report_config.html'
+    report_exists = True
 
     @property
     def report_id(self):
@@ -234,9 +235,9 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
     def edit_form(self):
         if self.request.method == 'POST':
             return ConfigurableReportEditForm(
-                self.domain, self.config, self.read_only,
+                self.domain, self.config, self.read_only, self.report_exists,
                 data=self.request.POST)
-        return ConfigurableReportEditForm(self.domain, self.config, self.read_only)
+        return ConfigurableReportEditForm(self.domain, self.config, self.read_only, self.report_exists)
 
     def post(self, request, *args, **kwargs):
         if self.edit_form.is_valid():
@@ -256,6 +257,7 @@ class EditConfigReportView(BaseEditConfigReportView):
 class CreateConfigReportView(BaseEditConfigReportView):
     urlname = 'create_configurable_report'
     page_title = ugettext_lazy("Create Report")
+    report_exists = False
 
 
 class ReportBuilderView(BaseDomainView):
@@ -968,6 +970,7 @@ class CreateDataSourceFromAppView(BaseUserConfigReportsView):
 
 class BaseEditDataSourceView(BaseUserConfigReportsView):
     template_name = 'userreports/edit_data_source.html'
+    data_source_exists = True
 
     @property
     def page_context(self):
@@ -1006,12 +1009,13 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
         if self.request.method == 'POST':
             return ConfigurableDataSourceEditForm(
                 self.domain,
+                self.data_source_exists,
                 self.config,
                 self.read_only,
                 data=self.request.POST
             )
         return ConfigurableDataSourceEditForm(
-            self.domain, self.config, self.read_only
+            self.domain, self.data_source_exists, self.config, self.read_only
         )
 
     def post(self, request, *args, **kwargs):
@@ -1058,6 +1062,7 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 class CreateDataSourceView(BaseEditDataSourceView):
     urlname = 'create_configurable_data_source'
     page_title = ugettext_lazy("Create Data Source")
+    data_source_exists = False
 
 
 class EditDataSourceView(BaseEditDataSourceView):
