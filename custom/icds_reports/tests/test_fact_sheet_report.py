@@ -55,13 +55,13 @@ class TestFactSheetReportMaternalAndChildNutrition(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
                 'average': {
-                    'html': 3.407880724174654,
-                    'sort_key': 3.407880724174654
+                    'html': 3.3648790746582544,
+                    'sort_key': 3.3648790746582544
                 },
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.1410788381742738, 'sort_key': 1.1410788381742738},
-                    {'html': 3.407880724174654, 'sort_key': 3.407880724174654},
+                    {'html': 1.1213047910295617, 'sort_key': 1.1213047910295617},
+                    {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -373,14 +373,11 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
-                'average': {
-                    'html': 3.407880724174654,
-                    'sort_key': 3.407880724174654
-                },
+                'average': {u'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
-                    {'html': 1.1410788381742738, 'sort_key': 1.1410788381742738},
-                    {'html': 3.407880724174654, 'sort_key': 3.407880724174654},
+                    {'html': 1.1213047910295617, 'sort_key': 1.1213047910295617},
+                    {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
