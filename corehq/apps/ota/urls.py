@@ -4,7 +4,7 @@ from django.conf.urls import url
 from corehq.apps.ota.views import (
     restore, search, claim, heartbeat, get_next_id,
 )
-from corehq.apps.hqadmin.views import DomainAdminRestoreView
+from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 
 
 urlpatterns = [
