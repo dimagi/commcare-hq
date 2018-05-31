@@ -16,11 +16,12 @@ from corehq.apps.hqadmin.views.system import (
     pillow_operation_api,
     system_ajax,
 )
-
-from corehq.apps.hqadmin.views.views import (
+from corehq.apps.hqadmin.views.utils import (
     default,
     get_hqadmin_base_context,
     BaseAdminSectionView,
+)
+from corehq.apps.hqadmin.views.views import (
     AuthenticateAs,
     SuperuserManagement,
     mass_email,

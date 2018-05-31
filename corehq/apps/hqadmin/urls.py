@@ -17,6 +17,7 @@ from corehq.apps.hqadmin.views.system import (
     pillow_operation_api,
     system_ajax,
 )
+from corehq.apps.hqadmin.views.utils import default
 from corehq.apps.hqadmin.views.views import (
     AdminRestoreView,
     AuthenticateAs,
@@ -30,7 +31,6 @@ from corehq.apps.hqadmin.views.views import (
     WebUserDataView,
     admin_reports_stats_data,
     callcenter_test,
-    default,
     mass_email,
     run_command,
     stats_data,

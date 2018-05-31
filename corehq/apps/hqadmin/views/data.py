@@ -108,7 +108,7 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from corehq.apps.hqadmin.utils import get_celery_stats
-from corehq.apps.hqadmin.views.views import BaseAdminSectionView, get_hqadmin_base_context
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
 import six
 from six.moves import filter
 

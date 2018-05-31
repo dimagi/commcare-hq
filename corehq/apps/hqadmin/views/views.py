@@ -108,37 +108,16 @@ from corehq.apps.hqadmin.history import get_recent_changes, download_changes
 from corehq.apps.hqadmin.models import HqDeploy
 from corehq.apps.hqadmin.reporting.reports import get_project_spaces, get_stats_data, HISTO_TYPE_TO_FUNC
 from corehq.apps.hqadmin.utils import get_celery_stats
+from corehq.apps.hqadmin.views.utils import BaseAdminSectionView, get_hqadmin_base_context
 import six
 from six.moves import filter
 
-
-@require_superuser
-def default(request):
-    return HttpResponseRedirect(reverse('admin_report_dispatcher', args=('domains',)))
 
 datespan_default = datespan_in_request(
     from_param="startdate",
     to_param="enddate",
     default_days=30,
 )
-
-
-def get_hqadmin_base_context(request):
-    return {
-        "domain": None,
-    }
-
-
-class BaseAdminSectionView(BaseSectionPageView):
-    section_name = ugettext_lazy("Admin Reports")
-
-    @property
-    def section_url(self):
-        return reverse('default_admin_report')
-
-    @property
-    def page_url(self):
-        return reverse(self.urlname)
 
 
 class AuthenticateAs(BaseAdminSectionView):
