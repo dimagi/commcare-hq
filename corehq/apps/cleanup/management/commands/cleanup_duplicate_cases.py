@@ -53,7 +53,7 @@ class Command(BaseCommand):
     def is_duplicate(self, case):
         last_xform_id = case.xform_ids[-1]
         last_xform = FormAccessors(domain=DOMAIN).get_form(last_xform_id)
-        return last_xform.xmlns == SYSTEM_FORM_XMLNS and last_xform.received_on < datetime(2018, 4, 1, 1)
+        return last_xform.xmlns == SYSTEM_FORM_XMLNS and last_xform.received_on < datetime(2018, 4, 2)
 
     def _handle_duplicate(self, case_id, close_cases):
         if close_cases:
