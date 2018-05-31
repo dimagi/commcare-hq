@@ -1,23 +1,23 @@
-var suggestions = function(){
-    // Adds the required properties to filter the case type autocomplete dropdowns
-    var self = this;
-    self.currentCaseType = ko.observable('');
-    $('#report_filter_case_type').on('change', function(e){
-        self.currentCaseType(e.val);
-    });
-
-    self.suggestedProperties = ko.computed(function(){
-        if (self.currentCaseType() === ''){
-            return self.allSuggestions;
-        }
-        return _.filter(self.allSuggestions, function(prop){
-            return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
-        });
-    });
-};
-
 hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
+
+    var suggestions = function(){
+        // Adds the required properties to filter the case type autocomplete dropdowns
+        var self = this;
+        self.currentCaseType = ko.observable('');
+        $('#report_filter_case_type').on('change', function(e){
+            self.currentCaseType(e.val);
+        });
+
+        self.suggestedProperties = ko.computed(function(){
+            if (self.currentCaseType() === ''){
+                return self.allSuggestions;
+            }
+            return _.filter(self.allSuggestions, function(prop){
+                return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
+            });
+        });
+    };
 
     var Property = function ($parent, name, label, editable, hidden) {
         var self = {};
