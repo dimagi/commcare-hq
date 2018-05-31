@@ -41,7 +41,6 @@ from corehq.apps.hqadmin.views.users import (
     DisableUserView,
     DisableTwoFactorView,
     DomainAdminRestoreView,
-    FlagBrokenBuilds,
     SuperuserManagement,
     WebUserDataView,
     web_user_lookup,

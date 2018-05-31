@@ -339,26 +339,6 @@ class DomainAdminRestoreView(AdminRestoreView):
         return self.domain == user.domain
 
 
-class FlagBrokenBuilds(FormView):
-    template_name = "hqadmin/flag_broken_builds.html"
-    form_class = BrokenBuildsForm
-
-    @method_decorator(require_superuser)
-    def dispatch(self, *args, **kwargs):
-        return super(FlagBrokenBuilds, self).dispatch(*args, **kwargs)
-
-    def form_valid(self, form):
-        db = ApplicationBase.get_db()
-        build_jsons = db.all_docs(keys=form.build_ids, include_docs=True)
-        docs = []
-        for doc in [build_json['doc'] for build_json in build_jsons.all()]:
-            if doc.get('doc_type') in ['Application', 'RemoteApp']:
-                doc['build_broken'] = True
-                docs.append(doc)
-        db.bulk_save(docs)
-        return HttpResponse("posted!")
-
-
 @require_superuser
 def web_user_lookup(request):
     template = "hqadmin/web_user_lookup.html"
