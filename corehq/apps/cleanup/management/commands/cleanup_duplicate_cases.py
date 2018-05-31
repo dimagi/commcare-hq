@@ -13,6 +13,7 @@ from corehq.util.log import with_progress_bar
 
 DOMAIN = 'mukte-ii'
 
+
 def log(message):
     with open('cleanup_duplicate_cases.log', 'a') as f:
         f.write(message)
