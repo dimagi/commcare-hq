@@ -581,6 +581,16 @@ class Command(BaseCommand):
         if handler.custom_content_handler:
             return None
 
+        for event in handler.events:
+            try:
+                if handler.method == METHOD_EMAIL:
+                    check_days_until(event.subject)
+
+                if handler.method in (METHOD_SMS, METHOD_EMAIL):
+                    check_days_until(event.message)
+            except ValueError:
+                return None
+
         if handler.recipient not in (
             RECIPIENT_OWNER,
             RECIPIENT_CASE,
