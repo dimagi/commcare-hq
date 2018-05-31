@@ -45,7 +45,9 @@ class Command(BaseCommand):
                 log('Skipping %s' % case.case_id)
 
     def _get_case_ids(self):
-        raise NotImplementedError
+        with open('case_ids.txt') as f:
+            ids = f.readlines()
+            return [id.strip() for id in ids]
 
     def is_duplicate(self, case):
         if len(case.xform_ids) != 3:
