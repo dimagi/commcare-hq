@@ -159,7 +159,25 @@ class CaseSearchES(CaseES):
 
     def sort_by_case_property(self, case_property_name, desc=False):
         sort_filter = filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name)
-        return self.nested_sort(CASE_PROPERTIES_PATH, VALUE, sort_filter, desc)
+        self = self.nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'numeric'),
+            sort_filter,
+            desc,
+            reset_sort=True
+        )
+        self = self.nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'date'),
+            sort_filter,
+            desc,
+            reset_sort=False
+        )
+        self = self.nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'exact'),
+            sort_filter,
+            desc,
+            reset_sort=False
+        )
+        return self
 
 
 def case_property_filter(case_property_name, value):
