@@ -190,3 +190,14 @@ class MobileRecoveryMeasure(models.Model):
 
     class Meta(object):
         unique_together = ('domain', 'app_id', 'sequence_number',)
+
+    def set_sequence_number(self):
+        # It's unlikely there will ever be concurrency issues with this
+        # so it seems reasonable to let the db constraint prevent conflicts
+        current_max = (MobileRecoveryMeasure.objects
+                       .filter(domain=self.domain,
+                               app_id=self.app_id)
+                       .order_by('-sequence_number')
+                       .values_list('sequence_number', flat=True)
+                       .first()) or 0
+        self.sequence_number = current_max + 1
