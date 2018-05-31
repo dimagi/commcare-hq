@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from dimagi.utils.logging import notify_exception
 from celery.signals import task_failure
 import signal
+import collections
 
 
 @task_failure.connect
@@ -19,10 +20,11 @@ class SignalHandlerContext(object):
     """
 
     def __init__(self, signals, handler, default_handler=signal.SIG_DFL):
-        if type(signals) is not list:
+        if not isinstance(signals, collections.Iterable):
             signals = [signals]
-        if not all(type(sig) is int for sig in signals):
-            raise TypeError()
+        for sig in signals:
+            if not isinstance(sig, int):
+                raise TypeError("bad signals: {} in {}".format(sig, signals))
 
         self.signals = signals
         self.handler = handler

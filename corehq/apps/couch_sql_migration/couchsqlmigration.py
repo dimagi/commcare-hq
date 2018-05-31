@@ -145,7 +145,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                sleep(0.1)  # swap greenlets
+                sleep(0.01)  # swap greenlets
 
             remaining_items = self.queues.remaining_items() + len(pool)
             if remaining_items % 10 == 0:
@@ -719,16 +719,16 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
-        if self.check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
-            self.add_item(lock_ids, queue_obj)
+        if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
+            self._add_item(lock_ids, queue_obj)
             return False
         for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
             queue = self.queue_by_lock_id[lock_id]
             if queue:
-                self.add_item(lock_ids, queue_obj)
+                self._add_item(lock_ids, queue_obj)
                 return False
-        self.add_item(lock_ids, queue_obj, to_queue=False)
-        self.set_lock(lock_ids)
+        self._add_item(lock_ids, queue_obj, to_queue=False)
+        self._set_lock(lock_ids)
         return True
 
     def get_next(self):
@@ -740,8 +740,7 @@ class PartiallyLockingQueue(object):
         Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
         """
         for lock_id, queue in six.iteritems(self.queue_by_lock_id):
-
-            if len(queue) == 0:
+            if not queue:
                 continue
             peeked_obj = queue[0]
             peeked_id = self.get_queue_obj_id(peeked_obj)
@@ -750,14 +749,14 @@ class PartiallyLockingQueue(object):
             first_in_all_queues = True
             for lock_id in lock_ids:
                 first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
-                if not self.get_queue_obj_id(first_in_queue) == peeked_id:
+                if self.get_queue_obj_id(first_in_queue) != peeked_id:
                     first_in_all_queues = False
                     break
             if not first_in_all_queues:
                 continue
 
-            if self.set_lock(lock_ids):
-                self.remove_item(peeked_obj)
+            if self._set_lock(lock_ids):
+                self._remove_item(peeked_obj)
                 return peeked_obj
         return None
 
@@ -767,7 +766,7 @@ class PartiallyLockingQueue(object):
         Returns :boolean: True if there are objs left, False if not
         """
         for _, queue in six.iteritems(self.queue_by_lock_id):
-            if len(queue) > 0:
+            if queue:
                 return True
         return False
 
@@ -782,12 +781,15 @@ class PartiallyLockingQueue(object):
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
         if lock_ids:
-            self.release_lock(lock_ids)
+            self._release_lock(lock_ids)
             del self.lock_ids_by_queue_id[queue_obj_id]
             return True
         return False
 
-    def add_item(self, lock_ids, queue_obj, to_queue=True):
+    def remaining_items(self):
+        return sum(len(queue) for _, queue in six.iteritems(self.queue_by_lock_id))
+
+    def _add_item(self, lock_ids, queue_obj, to_queue=True):
         """
         :to_queue boolean: adds object to queues if True, just to lock tracking if not
         """
@@ -796,7 +798,7 @@ class PartiallyLockingQueue(object):
                 self.queue_by_lock_id[lock_id].append(queue_obj)
         self.lock_ids_by_queue_id[self.get_queue_obj_id(queue_obj)] = lock_ids
 
-    def remove_item(self, queued_obj):
+    def _remove_item(self, queued_obj):
         """ Removes a queued obj from data model
 
         :queue_obj obj: An object of the type in the queues
@@ -816,20 +818,21 @@ class PartiallyLockingQueue(object):
             queue = self.queue_by_lock_id[lock_id]
             queue.popleft()
 
-    def check_lock(self, lock_ids):
+    def _check_lock(self, lock_ids):
         return any(lock_id in self.currently_locked for lock_id in lock_ids)
 
-    def set_lock(self, lock_ids):
-        if self.check_lock(lock_ids):
+    def _set_lock(self, lock_ids):
+        """ Trys to set locks for given lock ids
+
+        If already locked, returns false. If acquired, returns True
+        """
+        if self._check_lock(lock_ids):
             return False
         self.currently_locked.update(lock_ids)
         return True
 
-    def release_lock(self, lock_ids):
+    def _release_lock(self, lock_ids):
         self.currently_locked.difference_update(lock_ids)
-
-    def remaining_items(self):
-        return sum(len(queue) for _, queue in six.iteritems(self.queue_by_lock_id))
 
 
 class UnexpectedObjectException(Exception):
