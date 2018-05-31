@@ -339,21 +339,6 @@ class DomainAdminRestoreView(AdminRestoreView):
         return self.domain == user.domain
 
 
-@require_POST
-@require_superuser
-def run_command(request):
-    cmd = request.POST.get('command')
-    if cmd not in ['remove_duplicate_domains']: # only expose this one command for now
-        return json_response({"success": False, "output": "Command not available"})
-
-    output_buf = StringIO()
-    management.call_command(cmd, stdout=output_buf)
-    output = output_buf.getvalue()
-    output_buf.close()
-
-    return json_response({"success": True, "output": output})
-
-
 class FlagBrokenBuilds(FormView):
     template_name = "hqadmin/flag_broken_builds.html"
     form_class = BrokenBuildsForm

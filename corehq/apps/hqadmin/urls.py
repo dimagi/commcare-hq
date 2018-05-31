@@ -40,7 +40,6 @@ from corehq.apps.hqadmin.views.users import (
     FlagBrokenBuilds,
     SuperuserManagement,
     WebUserDataView,
-    run_command,
     web_user_lookup,
 )
 
@@ -63,7 +62,6 @@ urlpatterns = [
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),
         AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^superuser_management/$', SuperuserManagement.as_view(), name=SuperuserManagement.urlname),
-    url(r'^run_command/$', run_command, name="run_management_command"),
     url(r'^phone/restore/$', AdminRestoreView.as_view(), name="admin_restore"),
     url(r'^phone/restore/(?P<app_id>[\w-]+)/$', AdminRestoreView.as_view(), name='app_aware_admin_restore'),
     url(r'^flag_broken_builds/$', FlagBrokenBuilds.as_view(), name="flag_broken_builds"),

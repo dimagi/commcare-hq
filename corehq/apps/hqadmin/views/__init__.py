@@ -44,6 +44,5 @@ from corehq.apps.hqadmin.views.users import (
     FlagBrokenBuilds,
     SuperuserManagement,
     WebUserDataView,
-    run_command,
     web_user_lookup,
 )
