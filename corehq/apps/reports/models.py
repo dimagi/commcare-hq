@@ -500,6 +500,7 @@ class ReportConfig(CachedCouchDocumentMixin, Document):
         mock_request.couch_user.current_domain = self.domain
         mock_request.couch_user.language = lang
         mock_request.method = 'GET'
+        mock_request.bypass_two_factor = True
 
         mock_query_string_parts = [self.query_string, 'filterSet=true']
         if self.is_configurable_report:
