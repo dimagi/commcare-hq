@@ -55,9 +55,8 @@ branches:
   #- jls/add-js-to-sentry # Jenny April 26
   - sr-training # Sravan: May 7
   - np/draggable  # NP 5/10
-  - jr/drilldown-filters-again+fr/case-list-explorer-report-good # FR May 28
-  - jr/drilldown-filters-again # jordan April 23
   - fr/case-list-explorer-report-good  # FR May 30
+  - fr/case-list-explorer-part-2       # FR May 31
   - jls/split-hqadmin-views  # Jenny May 31
 submodules:
   submodules/touchforms-src:
