@@ -1,7 +1,7 @@
 {% extends 'reports/filters/base.html' %}
 {% load hq_shared_tags %}
 {% block filter_content %}
-    <div class="report-filter-xpath-textarea" data-allcaseproperties="{{ all_case_properties }}">
+    <div class="report-filter-xpath-textarea" data-suggestions="{{ suggestions }}">
     {% if help_title and help_content %}
         <div class="row">
             <div class="col-xs-11">

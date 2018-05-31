@@ -7,7 +7,13 @@ ko.bindingHandlers.xPathAutocomplete = {
 
         hqImport('hqwebapp/js/atwho').init($element, {
             atwhoOptions: {
-                displayTpl: '<li><span class="label label-default">${case_type}</span> ${name}</li>',
+                displayTpl: function(item){
+                    if (item.case_type){
+                        return '<li><span class="label label-default">${case_type}</span> ${name}</li>';
+                    }
+                    var labelClass = item.meta_type === 'info' ? 'label-primary' : 'label-info';
+                    return '<li><span class="label ' + labelClass +'">${meta_type}</span> ${name}</li>';
+                },
                 callbacks: {},
             },
             afterInsert: function() {
