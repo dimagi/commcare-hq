@@ -25,9 +25,6 @@
 
 {% block app_view_tabs %}
   {% analytics_ab_test 'kissmetrics.release_manager_ab' ab_test %}
-  {% if mobile_experience_ab_test %}
-  {% analytics_ab_test 'kissmetrics.mobile_signups_test_march2018test' mobile_experience_ab_test %}
-  {% endif %}
   {% initial_page_data 'app_id' app.id %}
   {% initial_page_data 'app_version' app.version %}
   {% initial_page_data 'application_profile_url' application_profile_url %}
@@ -40,7 +37,6 @@
   {% initial_page_data 'latest_build_id' latest_build_id %}
   {% initial_page_data 'sms_contacts' sms_contacts %}
   {% initial_page_data 'confirm' confirm %}
-  {% initial_page_data 'is_mobile_experience' is_mobile_experience %}
   {% registerurl "app_data_json" app.domain '---' %}
   {% registerurl "paginate_releases" domain app.id %}
   {% registerurl "delete_copy" domain app.id %}
