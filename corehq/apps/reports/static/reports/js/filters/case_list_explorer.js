@@ -68,6 +68,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
 
         self.removeProperty = function (property) {
             self.properties.remove(property);
+            $('#fieldset_explorer_columns').trigger('change');
         };
 
         self.allProperties = ko.computed(function(){
