@@ -113,13 +113,6 @@ import six
 from six.moves import filter
 
 
-datespan_default = datespan_in_request(
-    from_param="startdate",
-    to_param="enddate",
-    default_days=30,
-)
-
-
 class AuthenticateAs(BaseAdminSectionView):
     urlname = 'authenticate_as'
     page_title = _("Login as Other User")
