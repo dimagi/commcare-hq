@@ -1843,7 +1843,7 @@ class AdminTab(UITab):
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views.views import AuthenticateAs
+            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
             from corehq.apps.notifications.views import ManageNotificationView
             admin_operations = [

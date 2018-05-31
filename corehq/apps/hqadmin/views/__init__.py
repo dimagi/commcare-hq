@@ -35,15 +35,15 @@ from corehq.apps.hqadmin.views.utils import (
     get_hqadmin_base_context,
     BaseAdminSectionView,
 )
-from corehq.apps.hqadmin.views.views import (
+from corehq.apps.hqadmin.views.users import (
     AuthenticateAs,
-    SuperuserManagement,
     AdminRestoreView,
-    DomainAdminRestoreView,
-    run_command,
-    FlagBrokenBuilds,
-    web_user_lookup,
     DisableUserView,
     DisableTwoFactorView,
+    DomainAdminRestoreView,
+    FlagBrokenBuilds,
+    SuperuserManagement,
     WebUserDataView,
+    run_command,
+    web_user_lookup,
 )

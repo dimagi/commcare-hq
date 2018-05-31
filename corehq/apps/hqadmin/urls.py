@@ -32,16 +32,16 @@ from corehq.apps.hqadmin.views.system import (
     system_ajax,
 )
 from corehq.apps.hqadmin.views.utils import default
-from corehq.apps.hqadmin.views.views import (
+from corehq.apps.hqadmin.views.users import (
     AdminRestoreView,
     AuthenticateAs,
+    DisableTwoFactorView,
+    DisableUserView,
     FlagBrokenBuilds,
     SuperuserManagement,
     WebUserDataView,
     run_command,
     web_user_lookup,
-    DisableTwoFactorView,
-    DisableUserView
 )
 
 from corehq.apps.reports.dispatcher import AdminReportDispatcher

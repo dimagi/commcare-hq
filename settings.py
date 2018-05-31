@@ -678,7 +678,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.views.AuthenticateAs',
+    'corehq.apps.hqadmin.views.users.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
