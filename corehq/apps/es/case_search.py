@@ -157,6 +157,10 @@ class CaseSearchES(CaseES):
             queries.MUST,
         )
 
+    def sort_by_case_property(self, case_property_name, desc=False):
+        sort_filter = filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name)
+        return self.nested_sort(CASE_PROPERTIES_PATH, VALUE, sort_filter, desc)
+
 
 def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
