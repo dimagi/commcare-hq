@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 from corehq.apps.hqadmin.views.data import (
     RecentCouchChangesView,
-    _get_db_from_db_name,
     doc_in_es,
     download_recent_changes,
+    get_db_from_db_name,
     raw_couch,
     raw_doc,
 )

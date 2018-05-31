@@ -149,7 +149,7 @@ _SQL_DBS = OrderedDict((db.dbname, db) for db in [
 ])
 
 
-def _get_db_from_db_name(db_name):
+def get_db_from_db_name(db_name):
     if db_name in _SQL_DBS:
         return _SQL_DBS[db_name]
     elif db_name == couch_config.get_db(None).dbname:  # primary db
@@ -167,7 +167,7 @@ def _lookup_id_in_database(doc_id, db_name=None):
 
     response = {"doc_id": doc_id}
     if db_name:
-        dbs = [_get_db_from_db_name(db_name)]
+        dbs = [get_db_from_db_name(db_name)]
         response['selected_db'] = db_name
     else:
         couch_dbs = list(couch_config.all_dbs_by_slug.values())
