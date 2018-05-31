@@ -3,6 +3,13 @@ from __future__ import unicode_literals
 from django.conf.urls import include, url
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.domain.utils import new_domain_re
+from corehq.apps.hqadmin.views.system import (
+    SystemInfoView,
+    branches_on_staging,
+    check_services,
+    pillow_operation_api,
+    system_ajax,
+)
 from corehq.apps.hqadmin.views.views import (
     AdminRestoreView,
     AuthenticateAs,
@@ -14,12 +21,9 @@ from corehq.apps.hqadmin.views.views import (
     RecentCouchChangesView,
     ReprocessMessagingCaseUpdatesView,
     SuperuserManagement,
-    SystemInfoView,
     WebUserDataView,
     admin_reports_stats_data,
-    branches_on_staging,
     callcenter_test,
-    check_services,
     default,
     doc_in_es,
     download_recent_changes,
@@ -28,8 +32,6 @@ from corehq.apps.hqadmin.views.views import (
     raw_doc,
     run_command,
     stats_data,
-    system_ajax,
-    pillow_operation_api,
     web_user_lookup,
     top_five_projects_by_country,
     DisableTwoFactorView,

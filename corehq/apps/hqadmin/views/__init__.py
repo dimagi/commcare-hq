@@ -1,7 +1,16 @@
 from __future__ import absolute_import
+
+from corehq.apps.hqadmin.views.system import (
+    SystemInfoView,
+    branches_on_staging,
+    check_services,
+    get_rabbitmq_management_url,
+    pillow_operation_api,
+    system_ajax,
+)
+
 from corehq.apps.hqadmin.views.views import (
     default,
-    get_rabbitmq_management_url,
     get_hqadmin_base_context,
     BaseAdminSectionView,
     AuthenticateAs,
@@ -9,10 +18,6 @@ from corehq.apps.hqadmin.views.views import (
     RecentCouchChangesView,
     mass_email,
     download_recent_changes,
-    system_ajax,
-    check_services,
-    SystemInfoView,
-    pillow_operation_api,
     AdminRestoreView,
     DomainAdminRestoreView,
     run_command,
@@ -34,9 +39,6 @@ from corehq.apps.hqadmin.views.views import (
     _malt_csv_response,
     DownloadGIRView,
     _gir_csv_response,
-    branches_on_staging,
-    _get_branches_merged_into_autostaging,
-    _get_submodules,
     CallcenterUCRCheck,
     DimagisphereView,
     ReprocessMessagingCaseUpdatesView,
