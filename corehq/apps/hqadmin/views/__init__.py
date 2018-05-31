@@ -8,6 +8,12 @@ from corehq.apps.hqadmin.views.data import (
     raw_couch,
     raw_doc,
 )
+from corehq.apps.hqadmin.views.operations import (
+    CallcenterUCRCheck,
+    callcenter_test,
+    mass_email,
+    ReprocessMessagingCaseUpdatesView,
+)
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
     branches_on_staging,
@@ -24,7 +30,6 @@ from corehq.apps.hqadmin.views.utils import (
 from corehq.apps.hqadmin.views.views import (
     AuthenticateAs,
     SuperuserManagement,
-    mass_email,
     AdminRestoreView,
     DomainAdminRestoreView,
     run_command,
@@ -34,14 +39,11 @@ from corehq.apps.hqadmin.views.views import (
     web_user_lookup,
     DisableUserView,
     DisableTwoFactorView,
-    callcenter_test,
     DownloadMALTView,
     _malt_csv_response,
     DownloadGIRView,
     _gir_csv_response,
-    CallcenterUCRCheck,
     DimagisphereView,
-    ReprocessMessagingCaseUpdatesView,
     top_five_projects_by_country,
     WebUserDataView,
 )

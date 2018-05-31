@@ -10,6 +10,12 @@ from corehq.apps.hqadmin.views.data import (
     raw_couch,
     raw_doc,
 )
+from corehq.apps.hqadmin.views.operations import (
+    CallcenterUCRCheck,
+    callcenter_test,
+    mass_email,
+    ReprocessMessagingCaseUpdatesView,
+)
 from corehq.apps.hqadmin.views.system import (
     SystemInfoView,
     branches_on_staging,
@@ -21,17 +27,13 @@ from corehq.apps.hqadmin.views.utils import default
 from corehq.apps.hqadmin.views.views import (
     AdminRestoreView,
     AuthenticateAs,
-    CallcenterUCRCheck,
     DimagisphereView,
     DownloadGIRView,
     DownloadMALTView,
     FlagBrokenBuilds,
-    ReprocessMessagingCaseUpdatesView,
     SuperuserManagement,
     WebUserDataView,
     admin_reports_stats_data,
-    callcenter_test,
-    mass_email,
     run_command,
     stats_data,
     web_user_lookup,
