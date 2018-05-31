@@ -201,3 +201,16 @@ class MobileRecoveryMeasure(models.Model):
                        .values_list('sequence_number', flat=True)
                        .first()) or 0
         self.sequence_number = current_max + 1
+
+    def to_mobile_json(self):
+        res = {
+            "sequence_number": self.sequence_number,
+            "type": self.measure,
+        }
+        if not self.cc_all_versions:
+            res["cc_version_min"] = self.cc_version_min
+            res["cc_version_max"] = self.cc_version_max
+        if not self.app_all_versions:
+            res["app_version_min"] = self.app_version_min
+            res["app_version_max"] = self.app_version_max
+        return res
