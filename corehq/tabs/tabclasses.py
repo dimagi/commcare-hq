@@ -1846,8 +1846,9 @@ class AdminTab(UITab):
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
+            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
+            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
             data_operations = [
                 {'title': _('View raw couch documents'),
@@ -1861,6 +1862,8 @@ class AdminTab(UITab):
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': RecentCouchChangesView.page_title,
+                 'url': reverse(RecentCouchChangesView.urlname)},
                 {'title': _('Branches on Staging'),
                  'url': reverse('branches_on_staging')},
             ]
