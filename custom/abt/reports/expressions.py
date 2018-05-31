@@ -96,6 +96,9 @@ class AbtExpressionSpec(JsonObject):
             parts.insert(1, "comments")
             comments_question = question_path[:-1] + ["_".join(parts)]
 
+        if cls.comment_from_root:
+            comments_question = spec.get("base_path")[:-1] + comments_question
+
         comments = cls._get_val(item, comments_question)
         return comments if comments != () else ""
 
@@ -203,7 +206,10 @@ class AbtExpressionSpec(JsonObject):
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
@@ -221,7 +227,10 @@ class AbtExpressionSpec(JsonObject):
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=missing_items),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
                 elif warning_type == "not_selected" and form_value:
@@ -233,7 +242,10 @@ class AbtExpressionSpec(JsonObject):
                             'warning': self._get_warning(spec, item).format(
                                 msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
                             ),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
@@ -249,7 +261,10 @@ class AbtExpressionSpec(JsonObject):
                             'warning': self._get_warning(spec, item).format(
                                 msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
                             ),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
@@ -258,6 +273,7 @@ class AbtExpressionSpec(JsonObject):
 
 class AbtSupervisorExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor')
+    comment_from_root = False
 
     @property
     @memoized
@@ -272,6 +288,7 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
 
 class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
+    comment_from_root = True
 
     @property
     @memoized
