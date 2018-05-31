@@ -157,7 +157,7 @@ hqDefine("reports/js/filters/main", [
         $(".report-filter-xpath-textarea").each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = caseListExplorer.caseSearchXpath(data.allcaseproperties);
+            var model = caseListExplorer.caseSearchXpath(data.suggestions);
             $el.koApplyBindings(model);
         });
         $('[name=selected_group]').each(function(i, el) {
