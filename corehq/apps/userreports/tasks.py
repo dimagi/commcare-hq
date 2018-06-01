@@ -315,22 +315,25 @@ def build_async_indicators(indicator_doc_ids):
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = dict(list)
+    
     def _mark_config_to_remove(config_id, indicator_id):
         for _id in indicator_id:
             configs_to_remove_by_indicator_id[_id].append(config_id)
 
     memoized_docs_by_id = {}
+    
     def _memoized_get_docs(doc_ids, doc_store):
         # return and memoize docs by ids
-        docs_to_return = []
         new_doc_ids = set(doc_ids) - set(memoized_docs_by_id.keys())
         # the parent function is called with chunked ids, so fine to call list method below
-        new_docs = list(doc_store.iter_documents(unmemoized_doc_ids))
+        new_docs = list(doc_store.iter_documents(new_doc_ids))
         memoized_doc_ids = set(doc_ids) & set(memoized_docs_by_id.keys())
         memoized_docs = [
             memoized_docs_by_id[_id]
             for _id in memoized_doc_ids
         ]
+        for doc in new_docs:
+            memoized_docs_by_id[doc['_id']] = doc
         return new_docs + memoized_docs
 
     def index_by_config_id(indicators):
@@ -363,10 +366,12 @@ def build_async_indicators(indicator_doc_ids):
             for config_id, indicators in indicators_by_config_id.iteritems():
                 doc_ids = [i.doc_id for i in indicators]
                 indicator_ids = [i.pk for i in indicators]
+
                 try:
                     config = _get_config(config_id)
                 except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
                     celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                    # remove because the config no longer exists
                     _mark_config_to_remove(config_id, indicator_ids)
                     continue
                 except ESError:
@@ -383,10 +388,11 @@ def build_async_indicators(indicator_doc_ids):
                     message = message_for_exception(e, config_id)
                     celery_task_logger.info(message)
                 else:
+                    # remove because, it's sucessfully processed
                     _mark_config_to_remove(config_id, indicator_ids)
 
                 if config.icds_rebuild_related_docs:
-                    related_doc_ids = related_doc_ids.union(docs_ids)
+                    related_doc_ids = related_doc_ids.union(doc_ids)
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators
