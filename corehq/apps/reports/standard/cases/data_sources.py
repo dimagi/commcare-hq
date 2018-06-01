@@ -159,14 +159,14 @@ class CaseInfo(object):
     def parse_date(self, date_string):
         try:
             return iso_string_to_datetime(date_string)
-        except:
+        except Exception:
             try:
                 date_obj = dateutil.parser.parse(date_string)
                 if isinstance(date_obj, datetime.datetime):
                     return date_obj.replace(tzinfo=None)
                 else:
                     return date_obj
-            except:
+            except Exception:
                 return date_string
 
 
@@ -175,6 +175,7 @@ class CaseDisplay(CaseInfo):
     @property
     def closed_display(self):
         return yesno(self.is_closed, "closed,open")
+    status = closed_display
 
     @property
     def case_link(self):
@@ -188,10 +189,16 @@ class CaseDisplay(CaseInfo):
     @property
     def opened_on(self):
         return self._dateprop('opened_on', False)
+    date_opened = opened_on
 
     @property
     def modified_on(self):
         return self._dateprop('modified_on', False)
+    last_modified = modified_on
+
+    @property
+    def server_last_modified_date(self):
+        return self._dateprop('server_modified_on', False)
 
     @property
     def owner_display(self):
@@ -200,6 +207,7 @@ class CaseDisplay(CaseInfo):
             return '<span class="label label-default">%s</span>' % owner['name']
         else:
             return owner['name']
+    owner_name = owner_display
 
     def user_not_found_display(self, user_id):
         return _("Unknown [%s]") % user_id
@@ -211,3 +219,50 @@ class CaseDisplay(CaseInfo):
             return _("No data")
         else:
             return user['name'] or self.user_not_found_display(user['id'])
+    opened_by_username = creating_user
+
+    @property
+    def opened_by_user_id(self):
+        user = super(CaseDisplay, self).creating_user
+        if user is None:
+            return _("No data")
+        else:
+            return user['id']
+
+    @property
+    def last_modified_by_user_username(self):
+        return self._get_username(self.case['user_id'])
+
+    @property
+    def closed_by_user_id(self):
+        return self.case.get('closed_by')
+
+    @property
+    def closed_by_username(self):
+        return self._get_username(self.closed_by_user_id)
+
+
+class SafeCaseDisplay(object):
+    """Show formatted properties if they are used in XML, otherwise show the property directly from the case
+    """
+    def __init__(self, report, case):
+        self.case = case
+        self.report = report
+
+    def get(self, column):
+        name = column['name']
+        if name == '_link':
+            return self._link
+
+        if column.get('meta_type') == 'info':
+            return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
+
+        return self.case.get(name)
+
+    @property
+    def _link(self):
+        try:
+            link = absolute_reverse('case_data', args=[self.report.domain, self.case.get('_id')])
+        except NoReverseMatch:
+            return _("No link found")
+        return html.mark_safe("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("Link")))
