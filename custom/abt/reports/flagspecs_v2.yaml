@@ -199,7 +199,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q3]
     flag_name: "Team Leaders are supervising the cleaning and wash-up"
     flag_name_fr: "Les chefs d'équipe supervisent le nettoyage des materiels et que les OPs se douchent"
-    warning_type: [not_selected]
+    warning_type: not_selected
     value: "supervised"
     warning: "Problem reported: Team Leaders not supervising cleaning and wash-up."
     warning_fr: "Problème signalé: Les chefs d'équipe ne supervisent pas le rinçage et le nettoyage"
@@ -208,7 +208,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q3]
     flag_name: "The wash facilities have soap and water available for operators"
     flag_name_fr: "Les douches disposent du savon et de l'eau pour les opérateurs"
-    warning_type: [not_selected]
+    warning_type: not_selected
     value: "soap_water"
     warning: "Problem reported: Wash facilities with soap and water must be available to operators."
     warning_fr: "Problem reported: Wash facilities with soap and water must be available to operators."
@@ -217,7 +217,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q3]
     flag_name: "All people (spray operators, washers, maintenance techs) in the wash/soak pit area are wearing full PPE"
     flag_name_fr: "Toutes les personnes (opérateurs de pulvérisation, laveuses, techniciennes d'entretien) dans la zone de lavage / puits d'infiltration portent un EPI complet"
-    warning_type: [not_selected]
+    warning_type: not_selected
     value: "ppe_wash_area"
     warning: "Problem reported: All personnel in the wash area must wear full PPE."
     warning_fr: "Problème signalé: Tout le personnel dans l'aire de lavage doit porter un EPI complet."
@@ -242,7 +242,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q6]
     flag_name: "Spray operators completed their daily report forms"
     flag_name_fr: "Les opérateurs de pulvérisation ont rempli leur formulaire de rapport quotidien"
-    warning_type: [not_selected]
+    warning_type: not_selected
     value: "daily_report"
     warning: "Problem reported: Spray operators must complete daily report forms."
     warning_fr: "Problème signalé: Les opérateurs de pulvérisation doivent remplir des formulaires de rapport quotidiens."
@@ -251,7 +251,7 @@ http://openrosa.org/formdesigner/381E6260-1C5F-4755-BA33-871E464A1C71:
     base_path: [obs_rcd_mgmt_grp, Q6]
     flag_name: "Forms are checked by spray supervisors"
     flag_name_fr: "Les formulaires sont vérifiés par les superviseurs de pulvérisation"
-    warning_type: [not_selected]
+    warning_type: not_selected
     value: "forms_checked"
     warning: "Problem reported: Supervisors must check spray forms."
     warning_fr: "Problème signalé: Les superviseurs doivent vérifier les formulaires de pulvérisation."
