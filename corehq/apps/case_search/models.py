@@ -225,6 +225,7 @@ def enable_case_search(domain):
         config.enabled = True
         config.save()
         case_search_enabled_for_domain.clear(domain)
+        case_search_enabled_domains.clear()
         reindex_case_search_for_domain.delay(domain)
 
 
@@ -239,9 +240,11 @@ def disable_case_search(domain):
         config.enabled = False
         config.save()
         case_search_enabled_for_domain.clear(domain)
+        case_search_enabled_domains.clear()
         delete_case_search_cases_for_domain.delay(domain)
 
 
+@quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
 def case_search_enabled_domains():
     """Returns a list of all domains that have case search enabled
     """
