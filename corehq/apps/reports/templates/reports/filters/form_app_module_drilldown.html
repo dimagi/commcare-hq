@@ -89,4 +89,11 @@
             {% include 'reports/filters/partials/fuzzy_checkbox.html' %}
         </div>
     {% endif %}
+
+    {% if all_form_retrieval_failed %}
+        <div class="alert alert-warning" data-bind="visible: show" style="margin-top: 1em;">
+          {% trans "Filtering by unknown forms is currently unavailable for this project." %}
+          {% trans "If the problem persists please report an issue." %}
+        </div>
+    {% endif %}
 {% endblock %}
