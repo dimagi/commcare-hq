@@ -335,9 +335,9 @@ def get_next_id(request, domain):
 @require_GET
 def recovery_measures(request, domain, build_id):
     app_id = get_app_cached(domain, build_id).master_id
-    measure_objs = MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)
-    return JsonResponse({
-        "app_id": request.GET.get('app_id'),
-        "recovery_measures": [measure.to_mobile_json()
-                              for measure in measure_objs],
-    })
+    response = {"app_id": request.GET.get('app_id')}
+    measures = [measure.to_mobile_json() for measure in
+                MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
+    if measures:
+        response["recovery_measures"] = measures
+    return JsonResponse(response)
