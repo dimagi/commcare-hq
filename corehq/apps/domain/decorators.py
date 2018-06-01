@@ -95,7 +95,7 @@ def login_and_domain_required(view_func):
                 # If the two factor toggle is on, require it for all users.
                 if (
                     _two_factor_required(view_func, domain, couch_user)
-                    and not getattr(req, 'bypass_two_factor')
+                    and not getattr(req, 'bypass_two_factor', False)
                     and not user.is_verified()
                 ):
                     return TemplateResponse(
