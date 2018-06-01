@@ -400,6 +400,7 @@ def build_async_indicators(indicator_doc_ids):
                 docs = _memoized_get_docs(doc_ids, doc_store)
                 try:
                     adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                    # Todo; evaluationcontext and reset_iteration?
                     adapter.bulk_save(docs)
                 except Exception as e:
                     failed_indicators = failed_indicators.union(indicators)

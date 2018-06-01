@@ -1,19 +1,24 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime
+from datetime import datetime, date, time
 from decimal import Decimal
 import functools
 import json
 import os
 import uuid
+import six
+import sqlalchemy
+
 
 from mock import patch
+from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
 from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
+from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
@@ -146,3 +151,31 @@ def get_simple_xform():
         'VT': 'VT',
     })
     return xform.tostring()
+
+
+def load_data_from_db(table_name):
+    engine = connection_manager.get_session_helper('default').engine
+    metadata = sqlalchemy.MetaData(bind=engine)
+    metadata.reflect(bind=engine)
+    table = metadata.tables[table_name]
+    columns = [
+        column.name
+        for column in table.columns
+    ]
+    with engine.begin() as connection:
+        for row in list(connection.execute(table.select())):
+            row = list(row)
+            for idx, value in enumerate(row):
+                if isinstance(value, date):
+                    row[idx] = value.strftime('%Y-%m-%d')
+                elif isinstance(value, time):
+                    row[idx] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
+                elif isinstance(value, six.integer_types):
+                    row[idx] = str(value)
+                elif isinstance(value, (float, Decimal)):
+                    row[idx] = self._convert_decimal_to_string(row[idx])
+                elif isinstance(value, six.string_types):
+                    row[idx] = value.encode('utf-8')
+                elif value is None:
+                    row[idx] = ''
+            yield dict(zip(columns, row))
