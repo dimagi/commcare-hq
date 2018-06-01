@@ -1503,30 +1503,12 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
-    'mobile_signup_redirect_ab_test_controller',
-    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 TARGET_COMMCARE_FLAVOR = StaticToggle(
     'target_commcare_flavor',
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
-    'mobile_signup_redirect_ab_test',
-    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 
 APPCUES_AB_TEST = PredictablyRandomToggle(
     'appcues_ab_test',
