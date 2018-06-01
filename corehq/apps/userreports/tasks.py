@@ -307,28 +307,24 @@ def _get_config(config_id):
     return _get_config_by_id(config_id)
 
 
-def handle_exception(exception, config_id, docs, adapter):
-    if isinstance(exception, (ProtocolError, ReadTimeout)):
-        celery_task_logger.info("Riak error when saving config: {}".format(config_id))
-    elif isinstance(exception, RequestError):
-        celery_task_logger.info("Couch error when saving config: {}".format(config_id))
-    elif isinstance(exception, (ESError, ConnectionTimeout)):
-        # a database had an issue so log it and go on to the next document
-        celery_task_logger.info("ES error when saving config: {}".format(config_id))
-    elif isinstance(exception, (DatabaseError, InternalError)):
-        # a database had an issue so log it and go on to the next document
-        celery_task_logger.info("psql error when saving config: {}".format(config_id))
-    else:
-        # getting the config could fail before the adapter is set
-        if adapter:
-            for doc in docs:
-                adapter.handle_exception(doc, exception)
-
 def build_async_indicators(indicator_doc_ids):
-    lock_keys = [
-        get_async_indicator_modify_lock_key(indicator_id)
-        for indicator_id in indicator_doc_ids
-    ]
+
+    def handle_exception(exception, config_id, docs, adapter):
+        if isinstance(exception, (ProtocolError, ReadTimeout)):
+            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
+        elif isinstance(exception, RequestError):
+            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+        elif isinstance(exception, (ESError, ConnectionTimeout)):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("ES error when saving config: {}".format(config_id))
+        elif isinstance(exception, (DatabaseError, InternalError)):
+            # a database had an issue so log it and go on to the next document
+            celery_task_logger.info("psql error when saving config: {}".format(config_id))
+        else:
+            # getting the config could fail before the adapter is set
+            if adapter:
+                for doc in docs:
+                    adapter.handle_exception(doc, exception)
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = dict(list)
@@ -365,6 +361,10 @@ def build_async_indicators(indicator_doc_ids):
         return indicators_by_config_id
 
     timer = TimingContext()
+    lock_keys = [
+        get_async_indicator_modify_lock_key(indicator_id)
+        for indicator_id in indicator_doc_ids
+    ]
     with CriticalSection(lock_keys):
         all_indicators = AsyncIndicator.objects.filter(
             doc_id__in=indicator_doc_ids
