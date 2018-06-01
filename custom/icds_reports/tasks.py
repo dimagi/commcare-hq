@@ -93,7 +93,16 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_data.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_awc_daily.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'child_health_monthly.sql'),
+]
+
+SQL_VIEWS_PATHS = [
+    ('migrations', 'sql_templates', 'database_views', 'awc_location_months.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_awc_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_ccs_record_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_child_health_monthly.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'daily_attendance.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'agg_awc_daily.sql'),
+    ('migrations', 'sql_templates', 'database_views', 'child_health_monthly.sql'),
 ]
 
 
@@ -124,8 +133,8 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
     if db_alias:
         with connections[db_alias].cursor() as cursor:
             _create_aggregate_functions(cursor)
+            _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
-            _create_child_health_monthly_view()
 
         tasks = []
         state_ids = (SQLLocation.objects
@@ -180,6 +189,23 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         chain(*tasks).delay()
 
 
+def _create_views(cursor):
+    try:
+        celery_task_logger.info("Starting icds reports create_sql_views")
+        for sql_view_path in SQL_VIEWS_PATHS:
+            path = os.path.join(os.path.dirname(__file__), *sql_view_path)
+            with open(path, "r", encoding='utf-8') as sql_file:
+                sql_to_execute = sql_file.read()
+                cursor.execute(sql_to_execute)
+        celery_task_logger.info("Ended icds reports create_views")
+    except Exception:
+        # This is likely due to a change in the UCR models or aggregation script which should be rare
+        # First step would be to look through this error to find what function is causing the error
+        # and look for recent changes in this folder.
+        _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
+        raise
+
+        
 @task(queue="icds_aggregation_queue")
 def no_op_task_for_celery_bug():
     # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
@@ -312,12 +338,6 @@ def _run_custom_sql_script(commands, day=None):
             cursor.execute(command, [day])
 
 
-@track_time
-def _create_child_health_monthly_view():
-    _run_custom_sql_script(["SELECT create_child_health_monthly_view()"])
-
-
-@track_time
 def aggregate_awc_daily(day):
     _run_custom_sql_script(["SELECT aggregate_awc_daily(%s)"], day)
 

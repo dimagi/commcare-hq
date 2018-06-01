@@ -941,12 +941,6 @@ class ChildHealthMonthly(models.Model):
     disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
-    person_name = models.TextField(blank=True, null=True)
-    current_month_nutrition_status_sort = models.IntegerField(blank=True, null=True)
-    current_month_stunting_sort = models.IntegerField(blank=True, null=True)
-    current_month_wasting_sort = models.IntegerField(blank=True, null=True)
-    mother_name = models.TextField(blank=True, null=True)
-    fully_immunized = models.IntegerField(blank=True, null=True)
     immunization_in_month = models.SmallIntegerField(blank=True, null=True)
     days_ration_given_child = models.SmallIntegerField(blank=True, null=True)
     zscore_grading_hfa = models.SmallIntegerField(blank=True, null=True)
@@ -955,6 +949,8 @@ class ChildHealthMonthly(models.Model):
     zscore_grading_wfh_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
     muac_grading = models.SmallIntegerField(blank=True, null=True)
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
+    person_name = models.TextField(blank=True, null=True)
+    mother_name = models.TextField(blank=True, null=True)
 
     class Meta:
         app_label = 'icds_model'
