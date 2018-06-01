@@ -3,7 +3,10 @@ from __future__ import absolute_import, unicode_literals
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
+from corehq.apps.case_search.const import (
+    CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES_MAP,
+)
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
 from corehq.apps.reports.filters.case_list import CaseListFilter
@@ -38,32 +41,37 @@ class CaseListExplorer(CaseListReport):
 
     def _build_query(self):
         query = super(CaseListExplorer, self)._build_query()
+        query = self._populate_sort(query)
         xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             query = query.xpath_query(self.domain, xpath)
         return query
 
+    def _populate_sort(self, query):
+        num_sort_columns = int(self.request.GET.get('iSortingCols', 0))
+        for col_num in range(num_sort_columns):
+            descending = self.request.GET['sSortDir_{}'.format(col_num)] == 'desc'
+            column_id = int(self.request.GET["iSortCol_{}".format(col_num)])
+            column = self.headers.header[column_id]
+            try:
+                special_property = SPECIAL_CASE_PROPERTIES_MAP[column.prop_name]
+                query = query.sort(special_property.sort_property, desc=descending)
+            except KeyError:
+                query = query.sort_by_case_property(column.prop_name, desc=descending)
+        return query
+
     @property
     @memoized
     def columns(self):
-        user_columns = []
-        for column in CaseListExplorerColumns.get_value(self.request, self.domain):
-            try:
-                special_property = SPECIAL_CASE_PROPERTIES_MAP[column['name']]
-                user_columns.append(
-                    DataTablesColumn(
-                        column['label'],
-                        prop_name=special_property.sort_property,
-                        visible=(not column.get('hidden')),
-                    ))
-            except KeyError:
-                user_columns.append(DataTablesColumn(
-                    column['label'],
-                    prop_name=column['name'],
-                    visible=(not column.get('hidden')),
-                ))
-
-        return user_columns
+        return [
+            DataTablesColumn(
+                column['label'],
+                prop_name=column['name'],
+                visible=(not column.get('hidden')),
+                sortable=column['name'] not in CASE_COMPUTED_METADATA,
+            )
+            for column in CaseListExplorerColumns.get_value(self.request, self.domain)
+        ]
 
     @property
     def headers(self):
