@@ -307,6 +307,119 @@ def _get_config(config_id):
     return _get_config_by_id(config_id)
 
 
+def build_async_indicators(indicator_doc_ids):
+    lock_keys = [
+        get_async_indicator_modify_lock_key(indicator_id)
+        for indicator_id in indicator_doc_ids
+    ]
+
+    # tracks processed/deleted configs to be removed from each indicator
+    configs_to_remove_by_indicator_id = dict(list)
+    def _mark_config_to_remove(config_id, indicator_id):
+        for _id in indicator_id:
+            configs_to_remove_by_indicator_id[_id].append(config_id)
+
+    memoized_docs_by_id = {}
+    def _memoized_get_docs(doc_ids, doc_store):
+        # return and memoize docs by ids
+        docs_to_return = []
+        new_doc_ids = set(doc_ids) - set(memoized_docs_by_id.keys())
+        # the parent function is called with chunked ids, so fine to call list method below
+        new_docs = list(doc_store.iter_documents(unmemoized_doc_ids))
+        memoized_doc_ids = set(doc_ids) & set(memoized_docs_by_id.keys())
+        memoized_docs = [
+            memoized_docs_by_id[_id]
+            for _id in memoized_doc_ids
+        ]
+        return new_docs + memoized_docs
+
+    def index_by_config_id(indicators):
+        indicators_by_config_id = dict(list)
+        for indicator in indicators:
+            # input data validation
+            assert indicator.domain == indicators[0].domain
+            assert indicator.doc_type == indicators[0].doc_type
+
+            for config_id in indicator.indicator_config_ids:
+                indicators_by_config_id[config_id].append(indicator)
+        return indicators_by_config_id
+
+    timer = TimingContext()
+    with CriticalSection(lock_keys):
+        all_indicators = AsyncIndicator.objects.filter(
+            doc_id__in=indicator_doc_ids
+        )
+
+        if not all_indicators:
+            return
+
+        doc_store = get_document_store_for_doc_type(
+            all_indicators[0].domain, all_indicators[0].doc_type
+        )
+        related_doc_ids = set()
+        failed_indicators = set()
+        indicators_by_config_id = index_by_config_id(all_indicators)
+        with timer:
+            for config_id, indicators in indicators_by_config_id.iteritems():
+                doc_ids = [i.doc_id for i in indicators]
+                indicator_ids = [i.pk for i in indicators]
+                try:
+                    config = _get_config(config_id)
+                except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                    celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                    _mark_config_to_remove(config_id, indicator_ids)
+                    continue
+                except ESError:
+                    celery_task_logger.info("ES errored when trying to retrieve config")
+                    failed_indicators = failed_indicators.union(indicators)
+                    continue
+
+                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                docs = _memoized_get_docs(doc_ids, doc_store)
+                try:
+                    adapter.bulk_save(docs)
+                except Exception as e:
+                    failed_indicators = failed_indicators.union(indicators)
+                    message = message_for_exception(e, config_id)
+                    celery_task_logger.info(message)
+                else:
+                    _mark_config_to_remove(config_id, indicator_ids)
+
+                if config.icds_rebuild_related_docs:
+                    related_doc_ids = related_doc_ids.union(docs_ids)
+
+        # delete fully processed indicators
+        processed_indicators = set(all_indicators) - failed_indicators
+        AsyncIndicator.objects.filter(pk__in=[i.pk for i in processed_indicators]).delete()
+
+        # update failure for failed indicators
+        with transaction.atomic():
+            for indicator in failed_indicators:
+                indicator.update_failure(
+                    configs_to_remove_by_indicator_id.pop(indicator.pk)
+                )
+                indicator.save()
+
+        # process asyncindicator for any related docs that are not rebuilt so far
+        # Todo avoid queing multiple times from parent function caller?
+        related_docs_to_rebuild = []
+        for _id in related_doc_ids:
+            related_docs_to_rebuild.extend(icds_get_related_docs_ids(_id))
+        related_docs_to_rebuild = set(related_docs_to_rebuild) - set(indicator_doc_ids)
+        _queue_indicators(AsyncIndicator.objects.filter(
+            doc_id__in=related_docs_to_rebuild, date_queued=None
+        ))
+
+        datadog_counter('commcare.async_indicator.processed_success', len(processed_indicators))
+        datadog_counter('commcare.async_indicator.processed_fail', len(failed_indicators))
+        datadog_histogram(
+            'commcare.async_indicator.processing_time', timer.duration,
+            tags=[
+                'config_ids:{}'.format(indicators_by_config_id.keys())
+            ]
+        )
+
+
 @task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def save_document(doc_ids):
     lock_keys = []
