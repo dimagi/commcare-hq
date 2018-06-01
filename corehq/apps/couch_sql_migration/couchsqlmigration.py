@@ -112,8 +112,10 @@ class CouchSqlDomainMigrator(object):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
-        self.queues = PartiallyLockingQueue("form_id")  # needs to be on self to release appropriately
-        pool = Pool(10)
+        # form_id needs to be on self to release appropriately
+        self.queues = PartiallyLockingQueue("form_id", max_size=50000)
+
+        pool = Pool(20)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -129,6 +131,8 @@ class CouchSqlDomainMigrator(object):
             if case_ids:  # if this form involves a case check if we can process it
                 if self.queues.try_obj(case_ids, wrapped_form):
                     pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+                elif self.queues.full:
+                    sleep(0.01)  # swap greenlets
             else:  # if not, just go ahead and process it
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
 
@@ -147,7 +151,7 @@ class CouchSqlDomainMigrator(object):
             else:
                 sleep(0.01)  # swap greenlets
 
-            remaining_items = self.queues.remaining_items() + len(pool)
+            remaining_items = self.queues.remaining_items + len(pool)
             if remaining_items % 10 == 0:
                 self.log_info('Waiting on {} docs'.format(remaining_items))
 
@@ -696,14 +700,16 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="id"):
+    def __init__(self, queue_id_param="id", max_size=-1):
         """
         :queue_id_param string: param of the queued objects to pull an id from
+        :max_size int: the maximum size the queue should reach. -1 means no limit
         """
         self.queue_by_lock_id = defaultdict(deque)
         self.lock_ids_by_queue_id = defaultdict(list)
         self.queue_objs_by_queue_id = dict()
         self.currently_locked = set()
+        self.max_size = max_size
 
         def get_queue_obj_id(queue_obj):
             return getattr(queue_obj, queue_id_param)
@@ -785,8 +791,15 @@ class PartiallyLockingQueue(object):
             return True
         return False
 
+    @property
     def remaining_items(self):
         return len(self.queue_objs_by_queue_id)
+
+    @property
+    def full(self):
+        if self.max_size == -1:
+            return False
+        return self.remaining_items >= self.max_size
 
     def _add_item(self, lock_ids, queue_obj, to_queue=True):
         """

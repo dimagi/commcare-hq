@@ -727,6 +727,21 @@ class TestLockingQueues(TestCase):
         self.queues.release_lock_for_queue_obj(queue_obj)
         self._check_locks(lock_ids, lock_set=False)
 
+    def test_max_size(self):
+        self.assertEqual(-1, self.queues.max_size)
+        self.assertFalse(self.queues.full)  # not full when no max size set
+        self.queues.max_size = 2  # set max_size
+        lock_ids = ['dali', 'manet', 'monet']
+        queue_obj = DummyObject('osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertFalse(self.queues.full)  # not full when not full
+        queue_obj = DummyObject('east osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when full
+        queue_obj = DummyObject('west osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when over full
+
 
 class DummyObject(object):
     def __init__(self, id=None):
