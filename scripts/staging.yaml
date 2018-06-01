@@ -59,7 +59,6 @@ branches:
   - fr/case-list-explorer-part-2       # FR May 31
   - fr/case-list-explorer-report-frontend # FR May 31
   - jls/split-hqadmin-views  # Jenny May 31
-  - jls/kill-jplayer  # Jenny May 31
   - np/id-fiedl # NP 5/31
 submodules:
   submodules/touchforms-src:
