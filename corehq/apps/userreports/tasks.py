@@ -328,13 +328,13 @@ def build_async_indicators(indicator_doc_ids):
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = dict(list)
-    
+
     def _mark_config_to_remove(config_id, indicator_id):
         for _id in indicator_id:
             configs_to_remove_by_indicator_id[_id].append(config_id)
 
     memoized_docs_by_id = {}
-    
+
     def _memoized_get_docs(doc_ids, doc_store):
         # return and memoize docs by ids
         new_doc_ids = set(doc_ids) - set(memoized_docs_by_id.keys())
