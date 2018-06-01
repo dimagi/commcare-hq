@@ -126,7 +126,7 @@ def build_filter_from_ast(domain, node):
         raise CaseFilterError(
             _("You cannot reference a case property on the right side "
               "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-              "quotation marks.").format(serialize(node.right)),
+              "quotation marks").format(serialize(node.right)),
             serialize(node)
         )
 
@@ -174,7 +174,9 @@ def build_filter_from_ast(domain, node):
     def visit(node):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
-                _("Your filter is required to have at least one boolean operator (e.g. '=', '!=')"),
+                _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
+                    boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
+                ),
                 serialize(node)
             )
 

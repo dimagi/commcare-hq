@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 
@@ -7,8 +8,10 @@ from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
     SPECIAL_CASE_PROPERTIES_MAP,
 )
+from corehq.apps.case_search.filter_dsl import CaseFilterError
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.exceptions import BadRequestError
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.select import (
     CaseTypeFilter,
@@ -44,7 +47,15 @@ class CaseListExplorer(CaseListReport):
         query = self._populate_sort(query)
         xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
-            query = query.xpath_query(self.domain, xpath)
+            try:
+                query = query.xpath_query(self.domain, xpath)
+            except CaseFilterError as e:
+                error = "<p>{}.</p>".format(escape(e))
+                bad_part = "<p>{} <strong>{}</strong></p>".format(
+                    _("The part of your search query we didn't understand is: "),
+                    escape(e.filter_part)
+                ) if e.filter_part else ""
+                raise BadRequestError("{}{}".format(error, bad_part))
         return query
 
     def _populate_sort(self, query):
