@@ -1,12 +1,16 @@
 from __future__ import absolute_import, unicode_literals
 
-
 from django.utils.translation import ugettext_lazy as _
 from memoized import memoized
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.es.case_search import CaseSearchES, flatten_result
 from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.filters.case_list import CaseListFilter
+from corehq.apps.reports.filters.select import (
+    CaseTypeFilter,
+    SelectOpenCloseFilter,
+)
 from corehq.apps.reports.standard.cases.basic import CaseListReport
 from corehq.apps.reports.standard.cases.data_sources import SafeCaseDisplay
 from corehq.apps.reports.standard.cases.filters import (
@@ -21,9 +25,9 @@ class CaseListExplorer(CaseListReport):
     search_class = CaseSearchES
 
     fields = [
-        'corehq.apps.reports.filters.case_list.CaseListFilter',
-        'corehq.apps.reports.filters.select.CaseTypeFilter',
-        'corehq.apps.reports.filters.select.SelectOpenCloseFilter',
+        CaseListFilter,
+        CaseTypeFilter,
+        SelectOpenCloseFilter,
         XpathCaseSearchFilter,
         CaseListExplorerColumns,
     ]
