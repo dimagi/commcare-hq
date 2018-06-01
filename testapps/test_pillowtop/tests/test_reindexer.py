@@ -5,6 +5,7 @@ import uuid
 from django.conf import settings
 from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
+import mock
 
 from corehq.apps.case_search.models import CaseSearchConfig, case_search_enabled_domains
 from corehq.apps.domain.shortcuts import create_domain
@@ -87,10 +88,9 @@ class PillowtopReindexerTest(TestCase):
         self._assert_es_empty(esquery=CaseSearchES())
 
         # With case search enabled, it should get indexed
-        CaseSearchConfig.objects.create(domain=self.domain, enabled=True)
-        case_search_enabled_domains.clear()
-        self.addCleanup(CaseSearchConfig.objects.all().delete)
-        reindex_and_clean('case-search')
+        with mock.patch('corehq.pillows.case_search.domains_needing_search_index',
+                        mock.MagicMock(return_value=[self.domain])):
+            reindex_and_clean('case-search')
 
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_case_is_in_es(case, esquery=CaseSearchES())
