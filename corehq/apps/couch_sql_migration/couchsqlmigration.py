@@ -115,7 +115,7 @@ class CouchSqlDomainMigrator(object):
         # form_id needs to be on self to release appropriately
         self.queues = PartiallyLockingQueue("form_id", max_size=50000)
 
-        pool = Pool(10)
+        pool = Pool(20)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -131,6 +131,8 @@ class CouchSqlDomainMigrator(object):
             if case_ids:  # if this form involves a case check if we can process it
                 if self.queues.try_obj(case_ids, wrapped_form):
                     pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+                elif self.queues.full:
+                    sleep(0.01)  # swap greenlets
             else:  # if not, just go ahead and process it
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
 
@@ -138,8 +140,6 @@ class CouchSqlDomainMigrator(object):
             while True:
                 new_wrapped_form = self.queues.get_next()
                 if not new_wrapped_form:
-                    if self.queues.full:
-                        sleep(0.01)  # swap greenlets
                     break
                 pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
 
