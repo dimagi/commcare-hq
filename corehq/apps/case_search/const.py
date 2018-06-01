@@ -37,7 +37,7 @@ SPECIAL_CASE_PROPERTIES_MAP = {
 
     '@status': SpecialCaseProperty('@status', lambda doc: 'closed' if doc.get('closed') else 'open', 'closed'),
 
-    'name': SpecialCaseProperty('name', lambda doc: doc.get('name'), 'name'),
+    'name': SpecialCaseProperty('name', lambda doc: doc.get('name'), 'name.exact'),
     'case_name': SpecialCaseProperty('case_name', lambda doc: doc.get('name'), 'name.exact'),
 
     'external_id': SpecialCaseProperty('external_id', lambda doc: doc.get('external_id', ''), 'external_id'),
@@ -48,6 +48,9 @@ SPECIAL_CASE_PROPERTIES_MAP = {
 SPECIAL_CASE_PROPERTIES = list(SPECIAL_CASE_PROPERTIES_MAP.keys())
 
 
+# Properties that can be shown in the report but are not stored on the case or in the case index
+# These properties are computed in `SafeCaseDisplay` when each case is displayed
+# Hence, they cannot be sorted on
 CASE_COMPUTED_METADATA = [
     'closed_by_username',
     'last_modified_by_user_username',
