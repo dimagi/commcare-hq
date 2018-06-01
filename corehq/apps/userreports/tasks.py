@@ -307,6 +307,23 @@ def _get_config(config_id):
     return _get_config_by_id(config_id)
 
 
+def handle_exception(exception, config_id, docs, adapter):
+    if isinstance(exception, (ProtocolError, ReadTimeout)):
+        celery_task_logger.info("Riak error when saving config: {}".format(config_id))
+    elif isinstance(exception, RequestError):
+        celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+    elif isinstance(exception, (ESError, ConnectionTimeout)):
+        # a database had an issue so log it and go on to the next document
+        celery_task_logger.info("ES error when saving config: {}".format(config_id))
+    elif isinstance(exception, (DatabaseError, InternalError)):
+        # a database had an issue so log it and go on to the next document
+        celery_task_logger.info("psql error when saving config: {}".format(config_id))
+    else:
+        # getting the config could fail before the adapter is set
+        if adapter:
+            for doc in docs:
+                adapter.handle_exception(doc, exception)
+
 def build_async_indicators(indicator_doc_ids):
     lock_keys = [
         get_async_indicator_modify_lock_key(indicator_id)
@@ -379,16 +396,16 @@ def build_async_indicators(indicator_doc_ids):
                     failed_indicators = failed_indicators.union(indicators)
                     continue
 
-                adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                adapter = None
                 docs = _memoized_get_docs(doc_ids, doc_store)
                 try:
+                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
                     adapter.bulk_save(docs)
                 except Exception as e:
                     failed_indicators = failed_indicators.union(indicators)
-                    message = message_for_exception(e, config_id)
-                    celery_task_logger.info(message)
+                    handle_exception(e, config_id, docs, adapter)
                 else:
-                    # remove because, it's sucessfully processed
+                    # remove because it's sucessfully processed
                     _mark_config_to_remove(config_id, indicator_ids)
 
                 if config.icds_rebuild_related_docs:
