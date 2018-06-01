@@ -1942,6 +1942,7 @@ VELLUM_TYPES = {
     },
     "DataBindOnly": {
         'icon': 'fcc fcc-fd-variable',
+        'editable': True,
     },
     "Date": {
         'tag': 'input',

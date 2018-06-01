@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-22 20:03+0000\n"
+"POT-Creation-Date: 2018-05-29 20:25+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Claire O'Grady <cogrady@dimagi.com>, 2018\n"
 "Language-Team: Portuguese (https://www.transifex.com/dimagi/teams/9388/pt/)\n"
@@ -2739,31 +2739,31 @@ msgstr ""
 msgid "Select a Location"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:112
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:116
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:121
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:148
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:156
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:160
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:166
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:170
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:186
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:190
 msgid "Please specify a project name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:203
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:207
 msgid "Please specify."
 msgstr ""
 
@@ -2774,7 +2774,7 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:27
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:64
-msgid "Your password is almost strong enough!"
+msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:29
@@ -2838,6 +2838,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
+#: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr ""
 

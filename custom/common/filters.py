@@ -20,7 +20,6 @@ class RestrictedLocationDrillDown(object):
                 'location_type': loc.location_type.name,
                 'uuid': loc.location_id,
                 'is_archived': loc.is_archived,
-                'level': loc.level,
                 'parent_id': loc.parent_id
             }
         user = self.user
@@ -45,8 +44,9 @@ class RestrictedLocationDrillDown(object):
         for location in user_locations:
             location['children'] = parent_to_location_map[location['pk']]
 
-        min_level = min([location['level'] for location in user_locations])
-        return [x for x in user_locations if x['level'] == min_level]
+        locs = [x for x in user_locations if x['parent_id'] is None]
+        assert locs, "no root locations: {}".format(user_locations)
+        return locs
 
 
 class RestrictedAsyncLocationFilter(AsyncLocationFilter):

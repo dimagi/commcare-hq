@@ -50,17 +50,17 @@ trunk: master
 name: autostaging
 branches:
   - vellum-staging # J$ 11/13
-  - je/report-builder-button # J$ 4/3
   - ce/auto-batches # Cal April 6
   - ce/app-status-staging # Cal April 9
-  - jr/drilldown-filters-again # jordan April 23
-  - jls/add-js-to-sentry # Jenny April 26
-  - nh/motech/uncouple # Norman: May the fourth
+  #- jls/add-js-to-sentry # Jenny April 26
   - sr-training # Sravan: May 7
-  - jls/enforce-privacy-policy  # Jenny May 9
   - np/draggable  # NP 5/10
-  - jls/ejs-async-reports-tabular # Jenny May 15
-  - jls/ejs-dl-status # Jenny May 24
+  - fr/case-list-explorer-report-good  # FR May 30
+  - fr/case-list-explorer-part-2       # FR May 31
+  - fr/case-list-explorer-report-frontend # FR May 31
+  - jls/split-hqadmin-views  # Jenny May 31
+  - jls/kill-jplayer  # Jenny May 31
+  - np/id-fiedl # NP 5/31
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

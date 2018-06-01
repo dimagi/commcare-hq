@@ -38,5 +38,11 @@ hqDefine('export/js/customize_export_old', function() {
                 };
             }
         });
+
+        if (initialPageData("custom_export_id")) {
+            $('#delete-export-modal-' + initialPageData("custom_export_id")).find('form').submit(function() {
+                window.onbeforeunload = undefined;
+            });
+        }
     });
 });
