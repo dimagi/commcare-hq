@@ -48,8 +48,6 @@ class MobileRecoveryMeasureAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.username = request.user.username
-        if not obj.sequence_number:
-            obj.set_sequence_number()
         super(MobileRecoveryMeasureAdmin, self).save_model(request, obj, form, change)
 
 

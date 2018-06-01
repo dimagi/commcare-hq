@@ -168,7 +168,6 @@ class MobileRecoveryMeasure(models.Model):
 
     domain = models.CharField(max_length=255)
     app_id = models.CharField(max_length=50)
-    sequence_number = models.IntegerField(editable=False)
 
     cc_all_versions = models.BooleanField(
         verbose_name="All CommCare Versions", default=True)
@@ -188,19 +187,9 @@ class MobileRecoveryMeasure(models.Model):
     username = models.CharField(max_length=255, editable=False)
     notes = models.TextField(blank=True)
 
-    class Meta(object):
-        unique_together = ('domain', 'app_id', 'sequence_number',)
-
-    def set_sequence_number(self):
-        # It's unlikely there will ever be concurrency issues with this
-        # so it seems reasonable to let the db constraint prevent conflicts
-        current_max = (MobileRecoveryMeasure.objects
-                       .filter(domain=self.domain,
-                               app_id=self.app_id)
-                       .order_by('-sequence_number')
-                       .values_list('sequence_number', flat=True)
-                       .first()) or 0
-        self.sequence_number = current_max + 1
+    @property
+    def sequence_number(self):
+        return self.pk
 
     def to_mobile_json(self):
         res = {
