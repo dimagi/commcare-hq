@@ -184,7 +184,7 @@ class CaseSearchPillowTest(TestCase):
 
     def _bootstrap_cases_in_es_for_domain(self, domain):
         case = self._make_case(domain)
-        CaseSearchConfig.objects.get_or_create(pk=domain, enabled=True)
-        case_search_enabled_domains.clear()
-        CaseSearchReindexerFactory(domain=domain).build().reindex()
+        with patch('corehq.pillows.case_search.domains_needing_search_index',
+                   MagicMock(return_value=[domain])):
+            CaseSearchReindexerFactory(domain=domain).build().reindex()
         return case

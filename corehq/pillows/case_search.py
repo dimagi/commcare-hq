@@ -1,5 +1,4 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from collections import OrderedDict
 from datetime import datetime
@@ -7,6 +6,7 @@ from datetime import datetime
 import six
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
+from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
@@ -53,6 +53,7 @@ from pillowtop.reindexer.reindexer import (
 )
 
 
+@memoized
 def domains_needing_search_index():
     return set(list(case_search_enabled_domains()) + CASE_LIST_EXPLORER.get_enabled_domains())
 
