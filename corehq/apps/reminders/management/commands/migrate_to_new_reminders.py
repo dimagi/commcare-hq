@@ -128,6 +128,31 @@ class BaseMigrator(object):
         else:
             raise TypeError("Expected AlertSchedule or TimedSchedule")
 
+    def set_target_instance_info(self, target_instances):
+        self.target_instance_info = {}
+        for i in target_instances:
+            info = {
+                'recipient_type': i.recipient_type,
+                'recipient_id': i.recipient_id,
+                'active': i.active,
+                'current_event_num': i.current_event_num,
+                'schedule_iteration_num': i.schedule_iteration_num,
+            }
+
+            if isinstance(i, CaseScheduleInstanceMixin):
+                info['case_id'] = i.case_id
+
+            if isinstance(self.schedule, TimedSchedule):
+                info['start_date'] = i.start_date
+
+            if not (
+                isinstance(self.schedule, TimedSchedule) and
+                self.schedule.event_type == TimedSchedule.EVENT_RANDOM_TIME
+            ):
+                info['next_event_due'] = i.next_event_due
+
+            self.target_instance_info[i.schedule_instance_id] = info
+
     def print_status(self):
         source_instances = self.get_source_instances()
         target_instances = self.get_target_instances()
@@ -137,7 +162,7 @@ class BaseMigrator(object):
         target_instance_count = len(target_instances)
         active_target_instance_count = len([i for i in target_instances if i.active])
 
-        self.target_instance_ids = set([i.schedule_instance_id for i in target_instances])
+        self.set_target_instance_info(target_instances)
 
         log("\n")
         self.print_migrator_specific_info()
@@ -834,18 +859,41 @@ class Command(BaseCommand):
         log("Refresh completed.")
 
         for migrator in migrators:
-            current_target_instance_ids = migrator.target_instance_ids
+            old_target_instance_info = migrator.target_instance_info
+            old_target_instance_ids = set(old_target_instance_info)
+
             migrator.print_status()
-            new_target_instance_ids = migrator.target_instance_ids
+            new_target_instance_info = migrator.target_instance_info
+            new_target_instance_ids = set(new_target_instance_info)
 
-            created_instance_ids = new_target_instance_ids - current_target_instance_ids
-            deleted_instance_ids = current_target_instance_ids - new_target_instance_ids
+            created_instance_ids = new_target_instance_ids - old_target_instance_ids
+            deleted_instance_ids = old_target_instance_ids - new_target_instance_ids
 
-            if created_instance_ids or deleted_instance_ids:
-                log("Created instance ids: %s" % created_instance_ids)
-                log("Deleted instance ids: %s" % deleted_instance_ids)
-            else:
-                log("No instances created or deleted during refresh.")
+            differences = False
+
+            log("\nChecking for differences...")
+            for instance_id in old_target_instance_ids.intersection(new_target_instance_ids):
+                old_info = old_target_instance_info[instance_id]
+                new_info = new_target_instance_info[instance_id]
+                if old_info != new_info:
+                    differences = True
+                    log("old: %s" % old_info)
+                    log("new: %s" % new_info)
+
+            if created_instance_ids:
+                differences = True
+                log("\nCreated instances:")
+                for instance_id in created_instance_ids:
+                    log("new: %s" % new_target_instance_info[instance_id])
+
+            if deleted_instance_ids:
+                differences = True
+                log("\nDeleted instances:")
+                for instance_id in deleted_instance_ids:
+                    log("old: %s" % old_target_instance_info[instance_id])
+
+            if not differences:
+                log("No differences detected after refresh.")
 
     def switch_on_new_reminders(self, domain, migrators):
         domain_obj = Domain.get_by_name(domain)
