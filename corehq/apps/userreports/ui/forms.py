@@ -68,7 +68,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     sort_expression = JsonField(expected_type=list)
     soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
-    def __init__(self, domain, instance=None, read_only=False, report_exists=True, *args, **kwargs):
+    def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
 
@@ -93,7 +93,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
             'sort_expression',
             'soft_rollout',
         ]
-        if report_exists:
+        if instance.config_id:
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
@@ -188,9 +188,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         )
     )
 
-    def __init__(self, domain, data_source_exists, *args, **kwargs):
+    def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
-        super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
+        super(ConfigurableDataSourceEditForm, self).__init__(data_source_config, read_only, *args, **kwargs)
 
         if toggles.LOCATIONS_IN_UCR.enabled(domain):
             choices = self.fields['referenced_doc_type'].choices
@@ -220,7 +220,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'backend_id',
             'asynchronous',
         ]
-        if data_source_exists:
+        if data_source_config.get_id:
             fields.append('_id')
 
         self.helper.layout = crispy.Layout(
