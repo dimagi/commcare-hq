@@ -68,7 +68,7 @@ class ConfigurableReportEditForm(DocumentFormBase):
     sort_expression = JsonField(expected_type=list)
     soft_rollout = forms.DecimalField(min_value=0, max_value=1, help_text=SOFT_ROLLOUT_HELP_TEXT)
 
-    def __init__(self, domain, instance=None, read_only=False, *args, **kwargs):
+    def __init__(self, domain, instance=None, read_only=False, report_exists=True, *args, **kwargs):
         super(ConfigurableReportEditForm, self).__init__(instance, read_only, *args, **kwargs)
         self.fields['config_id'] = ReportDataSourceField(domain=domain)
 
@@ -81,20 +81,25 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'config_id',
+            'title',
+            'visible',
+            'description',
+            'aggregation_columns',
+            'filters',
+            'columns',
+            'configured_charts',
+            'sort_expression',
+            'soft_rollout',
+        ]
+        if report_exists:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Report Configuration"),
-                'config_id',
-                'title',
-                'visible',
-                'description',
-                'aggregation_columns',
-                'filters',
-                'columns',
-                'configured_charts',
-                'sort_expression',
-                'soft_rollout',
-                '_id',
+                *fields
             ),
         )
         # Restrict edit for static reports
@@ -183,7 +188,7 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         )
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, data_source_exists, *args, **kwargs):
         self.domain = domain
         super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
 
@@ -202,21 +207,26 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'table_id',
+            'referenced_doc_type',
+            'display_name',
+            'description',
+            'base_item_expression',
+            'configured_filter',
+            'configured_indicators',
+            'named_expressions',
+            'named_filters',
+            'backend_id',
+            'asynchronous',
+        ]
+        if data_source_exists:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Data Source"),
-                'table_id',
-                'referenced_doc_type',
-                'display_name',
-                'description',
-                'base_item_expression',
-                'configured_filter',
-                'configured_indicators',
-                'named_expressions',
-                'named_filters',
-                'backend_id',
-                'asynchronous',
-                '_id',
+                *fields
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
