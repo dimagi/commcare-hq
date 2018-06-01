@@ -1058,7 +1058,6 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
 class CreateDataSourceView(BaseEditDataSourceView):
     urlname = 'create_configurable_data_source'
     page_title = ugettext_lazy("Create Data Source")
-    data_source_exists = False
 
 
 class EditDataSourceView(BaseEditDataSourceView):
