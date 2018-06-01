@@ -6,7 +6,9 @@ INSERT INTO {{ application_dim }} (
     deleted,
     dim_last_modified,
     dim_created_on,
-    batch_id
+    batch_id,
+    version,
+    copy_of
 )
 SELECT
     application_id,
@@ -23,5 +25,16 @@ SELECT
     END,
     now(),
     now(),
-    '{{ batch_id }}'
+    '{{ batch_id }}',
+    version,
+    copy_of
 FROM {{ application_staging }}
+ON CONFLICT (application_id) DO UPDATE
+SET domain = EXCLUDED.domain,
+    name = EXCLUDED.name,
+    application_last_modified = EXCLUDED.application_last_modified,
+    deleted = EXCLUDED.deleted,
+    dim_last_modified = EXCLUDED.dim_last_modified,
+    batch_id = EXCLUDED.batch_id,
+    version = EXCLUDED.version,
+    copy_of = EXCLUDED.copy_of;
