@@ -81,20 +81,25 @@ class ConfigurableReportEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'config_id',
+            'title',
+            'visible',
+            'description',
+            'aggregation_columns',
+            'filters',
+            'columns',
+            'configured_charts',
+            'sort_expression',
+            'soft_rollout',
+        ]
+        if instance.config_id:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Report Configuration"),
-                'config_id',
-                'title',
-                'visible',
-                'description',
-                'aggregation_columns',
-                'filters',
-                'columns',
-                'configured_charts',
-                'sort_expression',
-                'soft_rollout',
-                '_id',
+                *fields
             ),
         )
         # Restrict edit for static reports
@@ -183,9 +188,9 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         )
     )
 
-    def __init__(self, domain, *args, **kwargs):
+    def __init__(self, domain, data_source_config, read_only, *args, **kwargs):
         self.domain = domain
-        super(ConfigurableDataSourceEditForm, self).__init__(*args, **kwargs)
+        super(ConfigurableDataSourceEditForm, self).__init__(data_source_config, read_only, *args, **kwargs)
 
         if toggles.LOCATIONS_IN_UCR.enabled(domain):
             choices = self.fields['referenced_doc_type'].choices
@@ -202,21 +207,26 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
         self.helper.label_class = 'col-sm-3 col-md-2'
         self.helper.field_class = 'col-sm-9 col-md-9'
 
+        fields = [
+            'table_id',
+            'referenced_doc_type',
+            'display_name',
+            'description',
+            'base_item_expression',
+            'configured_filter',
+            'configured_indicators',
+            'named_expressions',
+            'named_filters',
+            'backend_id',
+            'asynchronous',
+        ]
+        if data_source_config.get_id:
+            fields.append('_id')
+
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 _("Edit Data Source"),
-                'table_id',
-                'referenced_doc_type',
-                'display_name',
-                'description',
-                'base_item_expression',
-                'configured_filter',
-                'configured_indicators',
-                'named_expressions',
-                'named_filters',
-                'backend_id',
-                'asynchronous',
-                '_id',
+                *fields
             ),
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
