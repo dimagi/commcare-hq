@@ -530,10 +530,8 @@ def icds_data_validation(day):
         )
     ).values_list(*return_values)
 
-    bad_lbw_awcs = AggChildHealthMonthly.objects.filter(month=month, aggregation_level=5).exclude(
-        weighed_and_born_in_month__gt=(
-            F('low_birth_weight_in_month')
-        )
+    bad_lbw_awcs = AggChildHealthMonthly.objects.filter(
+        month=month, aggregation_level=5, weighed_and_born_in_month__lt=F('low_birth_weight_in_month')
     ).values_list(*return_values)
 
     _send_data_validation_email(
