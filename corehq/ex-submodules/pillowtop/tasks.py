@@ -39,12 +39,12 @@ def pillow_datadog_metrics():
                 tags_with_topic = tags + ['topic:{}'.format(topic_name)]
                 processed_offset = pillow['seq']
             else:
-                if not isinstance(pillow['seq'], dict) or len(pillow['offsets']) != len(pillow['seq']):
-                    _assert(False, "Unexpected kafka pillow format {}".format(pillow['name']))
-                    continue
                 if not pillow['seq']:
                     # this pillow has never been initialized.
                     # (custom pillows on most environments)
+                    continue
+                if not isinstance(pillow['seq'], dict) or len(pillow['offsets']) != len(pillow['seq']):
+                    _assert(False, "Unexpected kafka pillow format {}".format(pillow['name']))
                     continue
                 topic, partition = topic_name.split(',')
                 tags_with_topic = tags + ['topic:{}-{}'.format(topic, partition)]
