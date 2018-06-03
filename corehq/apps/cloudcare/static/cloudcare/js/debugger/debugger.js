@@ -152,6 +152,7 @@ hqDefine('cloudcare/js/debugger/debugger', function () {
             }
         ).done(function(response) {
             this.formattedQuestionsHtml(response.formattedQuestions);
+            hqImport("reports/js/readable_form").init();
             this.instanceXml(response.instanceXml);
             this.evalXPath.autocomplete(response.questionList);
             this.evalXPath.setRecentXPathQueries(response.recentXPathQueries || []);

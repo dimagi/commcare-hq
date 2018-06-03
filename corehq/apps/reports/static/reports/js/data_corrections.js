@@ -79,10 +79,12 @@ hqDefine("reports/js/data_corrections", function() {
             self.generateSearchableNames();
         };
         self.breakWord = function(str) {
-            return str.replace(/([\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
+            // Break words on slashes (as in question paths) or underscores (as in case properties and also questions)
+            // Don't break on slashes that are present because they're in an HTML end tag
+            return str.replace(/([^<]\s*[\/_])/g, "$1\u200B");     // eslint-disable-line no-useless-escape
         };
         var innerTemplate = _.map(self.displayProperties, function(p) {
-            return _.template("<span data-bind='text: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
+            return _.template("<span data-bind='html: $root.breakWord(<%= property %>), visible: $root.displayProperty() === \"<%= property %>\"'></span>")(p);
         }).join("");
         self.propertyTemplate = {
             nodes: $("<div>" + (options.propertyPrefix || "") + innerTemplate + (options.propertySuffix || "") + "</div>"),

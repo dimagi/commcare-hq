@@ -106,6 +106,21 @@ hqDefine("app_manager/js/forms/form_view", function() {
             auto_gps_capture: ko.observable(initial_page_data('auto_gps_capture')),
         });
 
+        if (initial_page_data('is_training_module')) {
+            $('#release-notes-setting').koApplyBindings({
+                is_release_notes_form: ko.observable(initial_page_data('is_release_notes_form')),
+                enable_release_notes: ko.observable(initial_page_data('enable_release_notes')),
+                is_allowed_to_be_release_notes_form: ko.observable(initial_page_data('is_allowed_to_be_release_notes_form')),
+                toggle_enable: function() {
+                    var allowed = this.is_release_notes_form();
+                    if (!allowed){
+                        this.enable_release_notes(false);
+                    }
+                    return true;
+                },
+            });
+        }
+
         var $shadowParent = $('#shadow-parent');
         if ($shadowParent.length) {
             $shadowParent.koApplyBindings({
