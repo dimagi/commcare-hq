@@ -442,6 +442,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AwcLocation',
             fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('doc_id', models.TextField()),
                 ('awc_name', models.TextField(blank=True, null=True)),
                 ('awc_site_code', models.TextField(blank=True, null=True)),
