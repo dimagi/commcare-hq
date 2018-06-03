@@ -629,6 +629,7 @@ class Migration(migrations.Migration):
                 ('form_location', models.TextField(null=True)),
                 ('form_location_lat', models.DecimalField(decimal_places=16, max_digits=64, null=True)),
                 ('form_location_long', models.DecimalField(decimal_places=16, max_digits=64, null=True)),
+                ('image_name', models.TextField(null=True)),
             ],
             options={
                 'db_table': 'daily_attendance',

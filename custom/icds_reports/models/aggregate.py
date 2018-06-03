@@ -509,6 +509,7 @@ class DailyAttendance(models.Model):
     form_location = models.TextField(null=True)
     form_location_lat = models.DecimalField(max_digits=64, decimal_places=16, null=True)
     form_location_long = models.DecimalField(max_digits=64, decimal_places=16, null=True)
+    image_name = models.TextField(null=True)
 
     class Meta:
         db_table = 'daily_attendance'
