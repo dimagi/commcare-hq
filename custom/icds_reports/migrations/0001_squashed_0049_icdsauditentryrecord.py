@@ -6,9 +6,6 @@ import django.contrib.postgres.fields
 import django.contrib.postgres.fields.jsonb
 from django.db import migrations, models
 import uuid
-from corehq.sql_db.operations import RawSQLMigration
-
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
 
 class Migration(migrations.Migration):
 
@@ -677,6 +674,4 @@ class Migration(migrations.Migration):
             name='awclocation',
             unique_together=set([('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id')]),
         ),
-        migrator.get_migration('create_child_health_monthly_view.sql'),
-        migrator.get_migration('create_datasource_views.sql'),
     ]
