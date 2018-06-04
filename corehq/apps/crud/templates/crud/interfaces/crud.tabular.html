@@ -4,7 +4,7 @@
 {% block js-inline %} {{ block.super }}
   <script>
     $.when(
-        $.getScript("{% static 'crud/js/crud.admin.js' %}")
+        $.getScript("{% static 'crud/js/admin.js' %}")
     ).done(function () {
       var crud_interface = CRUDAdminControl({
         itemType: '{{ crud_item.type }}',
