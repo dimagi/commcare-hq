@@ -10,7 +10,6 @@
         itemType: '{{ crud_item.type }}',
         formSubmitPath: '{{ crud_item.url }}',
         formType: '{{ crud_item.form }}',
-        {% if hideButton %}hideButton: 1{% endif %} // True is not accepted in JavaScript
       });
       crud_interface.init();
     });

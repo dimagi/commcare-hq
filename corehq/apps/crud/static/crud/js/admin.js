@@ -12,7 +12,6 @@ hqDefine("crud/js/admin", function() {
         self.formSubmitPath = options.formSubmitPath;
         self.formType = options.formType;
         self.formSubmitURL = self.formSubmitPath + self.formType + '/';
-        self.hideButton = options.hideButton;
         self.newFormSubmitURL = self.formSubmitURL + 'new/';
         self.updateFormSubmitURL = self.formSubmitURL + 'update/';
         self.overrideNewFormType = null;
@@ -43,9 +42,7 @@ hqDefine("crud/js/admin", function() {
 
         self.init = function() {
             $(function() {
-                if (!self.hideButton) {
-                    $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
-                }
+                $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
                 self.actionButton.click(function() {
                     $('#js-add-crud-success').addClass('hide');
                 });
