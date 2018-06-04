@@ -53,7 +53,9 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
 
     def _test_property(self, profile, key, value, setting):
         node = self._get_node(profile, key, "./property[@key='{}']")
-        self.assertEqual(node.get('value'), value, 'Property "{}"'.format(key))
+        actual_value = node.get('value')
+        msg = 'Expected "{}" to equal "{}", got "{}"'.format(key, value, actual_value)
+        self.assertEqual(actual_value, value, msg)
 
         force = setting.get('force', False)
         force_actual = node.get('force')
@@ -112,3 +114,13 @@ class ProfileTest(SimpleTestCase, TestXmlMixin):
         root = profile_xml.find('.')
         self.assertEqual(root.get('requiredMajor'), '2')
         self.assertEqual(root.get('requiredMinor'), '7')
+
+    @flag_enabled('MOBILE_RECOVERY_MEASURES')
+    def test_mobile_recovery_measure(self):
+        profile = self.app.create_profile()
+        self._test_property(
+            ET.fromstring(profile),
+            key='recovery-measures-url',
+            value=self.app.recovery_measures_url,
+            setting={'force': True},
+        )
