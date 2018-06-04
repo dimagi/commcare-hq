@@ -46,6 +46,7 @@ REGEXES = []
 REGEX_DEFAULT_VALUES = {}
 
 
+# Do not use this outside of this module, since it modifies module-level variables
 def pattern(pattern, default=None):
     REGEXES.append(_format_to_regex(pattern))
     if default:
