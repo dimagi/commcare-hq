@@ -460,10 +460,10 @@ BEGIN
     'ebf_no_info_recorded, ' ||
     'weighed_and_height_measured_in_month,' ||
     'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
     'zscore_grading_hfa_normal, ' ||
     'zscore_grading_hfa_moderate, ' ||
     'zscore_grading_hfa_severe, ' ||
-    'days_ration_given_child, ' ||
     'wasting_normal_v2, ' ||
     'wasting_moderate_v2, ' ||
     'wasting_severe_v2 ' ||
@@ -554,10 +554,10 @@ BEGIN
     'ebf_no_info_recorded, ' ||
     'weighed_and_height_measured_in_month,' ||
     'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
     'zscore_grading_hfa_normal, ' ||
     'zscore_grading_hfa_moderate, ' ||
     'zscore_grading_hfa_severe, ' ||
-    'days_ration_given_child, ' ||
     'wasting_normal_v2, ' ||
     'wasting_moderate_v2, ' ||
     'wasting_severe_v2 ' ||
@@ -647,10 +647,10 @@ BEGIN
     'ebf_no_info_recorded, ' ||
     'weighed_and_height_measured_in_month,' ||
     'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
     'zscore_grading_hfa_normal, ' ||
     'zscore_grading_hfa_moderate, ' ||
     'zscore_grading_hfa_severe, ' ||
-    'days_ration_given_child, ' ||
     'wasting_normal_v2, ' ||
     'wasting_moderate_v2, ' ||
     'wasting_severe_v2 ' ||
