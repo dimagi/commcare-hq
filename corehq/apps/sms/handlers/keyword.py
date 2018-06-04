@@ -12,7 +12,7 @@ from corehq.apps.smsforms.app import get_responses, start_session
 from corehq.apps.sms.models import WORKFLOW_KEYWORD, MessagingEvent, Keyword, KeywordAction
 from corehq.apps.sms.messages import *
 from corehq.apps.sms.handlers.form_session import validate_answer
-from corehq.apps.sms.util import touchforms_error_is_config_error
+from corehq.apps.sms.util import touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from corehq.apps.smsforms.util import critical_section_for_smsforms_sessions
 from corehq.apps.reminders.models import (
@@ -375,7 +375,7 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, module,
             logged_subevent.save()
         return (session, responses, False, None)
     except TouchformsError as e:
-        human_readable_message = e.response_data.get('human_readable_message', None)
+        human_readable_message = get_formplayer_exception(domain, e)
         logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
             additional_error_text=human_readable_message)
 

@@ -6,6 +6,7 @@ import datetime
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
+from corehq.toggles import SMS_USE_FORMPLAYER
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
@@ -225,6 +226,13 @@ def touchforms_error_is_config_error(touchforms_error):
         'XPathUnhandledException',
         'XFormParseException',
     )])
+
+
+def get_formplayer_exception(domain, touchforms_error):
+    if SMS_USE_FORMPLAYER.enabled(domain):
+        return touchforms_error.response_data.get('exception')
+    else:
+        return touchforms_error.response_data.get('human_readable_message')
 
 
 @quickcache(['backend_id'], timeout=5 * 60)
