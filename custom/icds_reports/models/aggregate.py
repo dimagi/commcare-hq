@@ -74,6 +74,7 @@ class CcsRecordMonthly(models.Model):
     anc_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
+        managed = False
         db_table = 'ccs_record_monthly'
 
 
@@ -101,6 +102,7 @@ class AwcLocation(models.Model):
     contact_phone_number = models.TextField(blank=True, null=True)
 
     class Meta(object):
+        managed = False
         db_table = 'awc_location'
         unique_together = (('state_id', 'district_id', 'block_id', 'supervisor_id', 'doc_id'),)
 
@@ -182,6 +184,7 @@ class ChildHealthMonthly(models.Model):
     muac_grading_recorded_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta:
+        managed = False
         db_table = 'child_health_monthly'
 
 
@@ -322,6 +325,7 @@ class AggAwc(models.Model):
     infra_infant_weighing_scale = models.IntegerField(null=True)
 
     class Meta:
+        managed = False
         db_table = 'agg_awc'
 
 
@@ -379,6 +383,7 @@ class AggCcsRecord(models.Model):
     pregnant_all = models.IntegerField(null=True)
 
     class Meta:
+        managed = False
         db_table = 'agg_ccs_record'
 
 
@@ -452,6 +457,7 @@ class AggChildHealth(models.Model):
     ebf_no_info_recorded = models.IntegerField(null=True)
 
     class Meta:
+        managed = False
         db_table = 'agg_child_health'
 
 
@@ -489,6 +495,7 @@ class AggAwcDaily(models.Model):
     cases_person_beneficiary_v2 = models.IntegerField(null=True)
 
     class Meta:
+        managed = False
         db_table = 'agg_awc_daily'
 
 
@@ -508,6 +515,7 @@ class DailyAttendance(models.Model):
     image_name = models.TextField(null=True)
 
     class Meta:
+        managed = False
         db_table = 'daily_attendance'
 
 
@@ -573,6 +581,7 @@ class AggregateComplementaryFeedingForms(models.Model):
     )
 
     class Meta(object):
+        managed = False
         db_table = AGG_COMP_FEEDING_TABLE
 
     @classmethod
@@ -671,6 +680,7 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
+        managed = False
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
 
     @classmethod
@@ -726,6 +736,7 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
+        managed = False
         db_table = AGG_CCS_RECORD_PNC_TABLE
 
     @classmethod
@@ -772,6 +783,7 @@ class AggregateChildHealthTHRForms(models.Model):
     )
 
     class Meta(object):
+        managed = False
         db_table = AGG_CHILD_HEALTH_THR_TABLE
 
     @classmethod
@@ -851,6 +863,7 @@ class AggregateGrowthMonitoringForms(models.Model):
     )
 
     class Meta(object):
+        managed = False
         db_table = AGG_GROWTH_MONITORING_TABLE
 
     @classmethod

@@ -21,6 +21,7 @@ class UcrTableNameMapping(models.Model):
     table_name = models.TextField(blank=True, null=True)
 
     class Meta:
+        managed = False
         app_label = 'icds_reports'
         db_table = 'ucr_table_name_mapping'
 
