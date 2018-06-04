@@ -229,6 +229,7 @@ def touchforms_error_is_config_error(domain, touchforms_error):
         return any(s in exception_text for s in (
             'case sharing settings',
             'error in calculation',
+            'problem with display condition',
         ))
     else:
         error_type = touchforms_error.response_data.get('error_type', '')
