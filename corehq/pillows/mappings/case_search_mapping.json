@@ -10,7 +10,7 @@
         "enabled": false
     },
     "properties": {
-        "_indexed_on": {
+        "@indexed_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
@@ -112,17 +112,13 @@
             "type": "date"
         },
         "name": {
+            "type": "string",
             "fields": {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
-                },
-                "name": {
-                    "index": "analyzed",
-                    "type": "string"
                 }
-            },
-            "type": "multi_field"
+            }
         },
         "opened_by": {
             "type": "string",

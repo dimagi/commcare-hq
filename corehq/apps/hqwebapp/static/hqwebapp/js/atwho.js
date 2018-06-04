@@ -1,7 +1,9 @@
-hqDefine('hqwebapp/js/atwho', function () {
-    var _init = function($input, options, afterInsert) {
+hqDefine('hqwebapp/js/atwho', ["underscore"], function (_) {
+    var _init = function($input, options, afterInsert, replaceValue) {
         $input.atwho(options).on("inserted.atwho", function(event, $li, otherEvent) {
-            $input.val($input.data("selected-value")).change();
+            if (replaceValue){
+                $input.val($input.data("selected-value")).change();
+            }
 
             if (afterInsert) {
                 afterInsert();
@@ -16,6 +18,7 @@ hqDefine('hqwebapp/js/atwho', function () {
      *  afterInsert: will be called after new value is selected.
      */
     var init = function($input, options) {
+        var replaceValue = options.replaceValue === undefined || options.replaceValue;
         var atwhoOptions = {
             at: "",
             limit: Infinity,
@@ -34,23 +37,26 @@ hqDefine('hqwebapp/js/atwho', function () {
                 beforeInsert: function(value, $li) {
                     // This and the inserted.atwho handler below ensure that the entire
                     // input's value is replaced, regardless of where the cursor is
-                    $input.data("selected-value", value);
+                    if (replaceValue){
+                        $input.data("selected-value", value);
+                    }
                 },
             },
         };
+        atwhoOptions = _.defaults(options.atwhoOptions || {}, atwhoOptions);
 
         if (options.ajax && options.ajax.url) {
             $input.one('focus', function () {
                 $.ajax(_.defaults(options.ajax, {
                     success: function (data) {
                         atwhoOptions.data = data;
-                        _init($input, atwhoOptions, options.afterInsert);
+                        _init($input, atwhoOptions, options.afterInsert, replaceValue);
                         $input.atwho('run');
                     },
                 }));
             });
         } else {
-            _init($input, atwhoOptions, options.afterInsert);
+            _init($input, atwhoOptions, options.afterInsert, replaceValue);
         }
     };
 
