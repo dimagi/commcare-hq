@@ -16,7 +16,6 @@ from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
@@ -268,15 +267,7 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
 
-        ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
-        assert isinstance(ids_query, ComparedQuerySet), ids_query
-        result = ComparedQuerySet(
-            self.filter(id__in=ids_query._mptt_set) if ids_query._mptt_set is not None else None,
-            self.filter(id__in=ids_query._cte_set) if ids_query._cte_set is not None else None,
-            TimingContext("accessible_to_user"),
-        )
-        result._timing += ids_query._timing
-        return result
+        return SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -302,7 +293,10 @@ class LocationQueriesMixin(object):
 
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
-    pass
+
+    def accessible_to_user(self, domain, user):
+        ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
+        return self.filter(id__in=ids_query)
 
 
 class LocationManager(LocationQueriesMixin, AdjListManager):
