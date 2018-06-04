@@ -45,6 +45,35 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             [['Ao\xfbt', 0, 0, 17, '1700.00%', 17, '100.00%']]
         )
 
+    def test_PPS_avec_donnees_report(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'startdate': '2014-06-01',
+            'enddate': '2014-07-31',
+            'location_id': '1991b4dfe166335e342f28134b85fcac',
+        }
+        mock.datespan = DateSpan(datetime(2014, 6, 1), datetime(2014, 7, 31))
+
+        tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
+
+        PPS_avec_donnees_report = tableu_de_board_report2_report.report_context['reports'][1]['report_table']
+        headers = PPS_avec_donnees_report['headers'].as_export_table[0]
+        rows = PPS_avec_donnees_report['rows']
+
+        print(headers)
+        print(rows)
+        self.assertEqual(
+            headers,
+            [u'PPS', 'PPS Avec Donn\xe9es Soumises']
+        )
+        self.assertEqual(
+            rows,
+            [['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], [None, 1], ['FOUNDIOUGNE', 1],
+             ['SOKONE', 1], ['FATICK', 1]]
+
+        )
+
     def test_products_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
@@ -57,7 +86,7 @@ class TestFicheConsommationReportV2(YeksiTestCase):
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
-        products_report = tableu_de_board_report2_report.report_context['reports'][0]['report_table']
+        products_report = tableu_de_board_report2_report.report_context['reports'][1]['report_table']
         headers = products_report['headers'].as_export_table[0]
         rows = products_report['rows']
         self.assertEqual(

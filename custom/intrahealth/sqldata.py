@@ -868,6 +868,124 @@ class IntraHealthSqlData(SqlData):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
 
 
+class PPSAvecDonneesDataSourceMixin(IntraHealthSqlData):
+    slug = 'pps_avec_donnees_data_source'
+    show_total = False
+    title = 'PPS Avec Données Data Source'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['pps_id']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("PPS ID"), SimpleColumn('pps_id'))]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+        return columns
+
+    @property
+    def values_per_loc(self):
+        values = {}
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+        rows = self.get_data()
+        for row in rows:
+            if row[loc_name] not in values:
+                values[row[loc_name]] = set()
+            values[row[loc_name]].add(row['pps_id'])
+        return values
+
+
+class PPSAvecDonneesV1DataSource(PPSAvecDonneesDataSourceMixin):
+    slug = 'PPSAvecDonneesV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class PPSAvecDonneesV2DataSource(PPSAvecDonneesDataSourceMixin):
+    slug = 'PPSAvecDonneesV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class PPSAvecDonnees2(IntraHealthSqlData):
+    slug = 'pps_avec_donnees2'
+    title = 'PPS Avec Données'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1 = PPSAvecDonneesV1DataSource(config=self.config).values_per_loc
+        values_v2 = PPSAvecDonneesV2DataSource(config=self.config).values_per_loc
+        values = {}
+        for loc_name, pps_ids in values_v1.items():
+            if loc_name not in values:
+                values[loc_name] = set()
+            for pps_id in pps_ids:
+                values[loc_name].add(pps_id)
+        for loc_name, pps_ids in values_v2.items():
+            if loc_name not in values:
+                values[loc_name] = set()
+            for pps_id in pps_ids:
+                values[loc_name].add(pps_id)
+
+        rows = []
+        for loc_name in values:
+            rows.append([loc_name, 1])
+        if 'district_id' in self.config:
+            locations_included = [loc_name for loc_name in values]
+        else:
+            return rows
+
+        all_locations = SQLLocation.objects.get(
+            location_id=self.config['district_id']
+        ).get_children().exclude(is_archived=True).values_list('name', flat=True)
+        locations_not_included = set(all_locations) - set(locations_included)
+        return rows + [[location, {'sort_key': 0, 'html': 0}] for location in locations_not_included]
+
+    @property
+    def headers(self):
+        if 'district_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        headers.add_column(DataTablesColumn('PPS Avec Données Soumises'))
+        return headers
+
+
 class ConventureDataSourceMixin(IntraHealthSqlData):
     slug = 'conventureDataSourceMixin'
     title = 'Converture'
@@ -950,7 +1068,7 @@ class ConventureV2DataSource(ConventureDataSourceMixin):
 
 class ConventureData2(IntraHealthSqlData):
     slug = 'conventure2'
-    title = 'Converture NEW'
+    title = 'Converture'
     show_total = False
 
     @property
