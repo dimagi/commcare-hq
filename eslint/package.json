@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-eslint-dimagi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Dimagi-specific ESLint rules",
   "keywords": [
     "eslint",
