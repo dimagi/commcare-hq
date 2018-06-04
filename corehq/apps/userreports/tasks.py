@@ -327,10 +327,10 @@ def build_async_indicators(indicator_doc_ids):
                     adapter.handle_exception(doc, exception)
 
     # tracks processed/deleted configs to be removed from each indicator
-    configs_to_remove_by_indicator_id = dict(list)
+    configs_to_remove_by_indicator_id = defaultdict(list)
 
-    def _mark_config_to_remove(config_id, indicator_id):
-        for _id in indicator_id:
+    def _mark_config_to_remove(config_id, indicator_ids):
+        for _id in indicator_ids:
             configs_to_remove_by_indicator_id[_id].append(config_id)
 
     memoized_docs_by_id = {}
@@ -350,7 +350,7 @@ def build_async_indicators(indicator_doc_ids):
         return new_docs + memoized_docs
 
     def index_by_config_id(indicators):
-        indicators_by_config_id = dict(list)
+        indicators_by_config_id = defaultdict(list)
         for indicator in indicators:
             # input data validation
             assert indicator.domain == indicators[0].domain
@@ -369,7 +369,6 @@ def build_async_indicators(indicator_doc_ids):
         all_indicators = AsyncIndicator.objects.filter(
             doc_id__in=indicator_doc_ids
         )
-
         if not all_indicators:
             return
 
@@ -383,7 +382,6 @@ def build_async_indicators(indicator_doc_ids):
             for config_id, indicators in indicators_by_config_id.iteritems():
                 doc_ids = [i.doc_id for i in indicators]
                 indicator_ids = [i.pk for i in indicators]
-
                 try:
                     config = _get_config(config_id)
                 except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
@@ -395,7 +393,6 @@ def build_async_indicators(indicator_doc_ids):
                     celery_task_logger.info("ES errored when trying to retrieve config")
                     failed_indicators = failed_indicators.union(indicators)
                     continue
-
                 adapter = None
                 docs = _memoized_get_docs(doc_ids, doc_store)
                 try:
@@ -420,7 +417,7 @@ def build_async_indicators(indicator_doc_ids):
         with transaction.atomic():
             for indicator in failed_indicators:
                 indicator.update_failure(
-                    configs_to_remove_by_indicator_id.pop(indicator.pk)
+                    configs_to_remove_by_indicator_id.get(indicator.pk, [])
                 )
                 indicator.save()
 

@@ -9,13 +9,14 @@ from django.test import TestCase
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
-from corehq.apps.userreports.util import get_indicator_adapter
+from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
+from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.sql_db.connections import connection_manager
 
 
-def get_sample_config():
+def get_sample_config(domain=None):
     return DataSourceConfiguration(
-        domain='domain',
+        domain=domain or 'domain',
         display_name='foo',
         referenced_doc_type='CommCareCase',
         table_id=clean_table_name('domain', str(uuid.uuid4().hex)),
@@ -71,25 +72,27 @@ class SaveErrorsTest(TestCase):
 class IndicatorAdapterTest(TestCase):
 
     def setUp(self):
-        self.config = get_sample_config()
+        self.domain = 'adapter_bulk_save'
+        self.config = get_sample_config(domain=self.domain)
+        self.config.save()
+        self.adapter = get_indicator_adapter(self.config, raise_errors=True)
+
+    def tearDown(self):
+        self.config.delete()
+        self.adapter.clear_table()
 
     def test_bulk_save(self):
         docs = []
         for i in range(10):
             docs.append({
                 "_id": str(i),
-                "domain": "domain",
+                "domain": self.domain,
                 "doc_type": "CommCareCase",
                 "name": 'doc_name_' + str(i)
             })
 
-        adapter = get_indicator_adapter(self.config, raise_errors=True)
-        adapter.build_table()
-        adapter.bulk_save(docs)
-        table = adapter.get_table()
+        self.adapter.build_table()
+        self.adapter.bulk_save(docs)
 
-        engine = connection_manager.get_engine('default')
-        with engine.begin() as connection:
-            results = connection.execute(table.select([table.c.doc_id, table.c.name]))
-
+        results = list(load_data_from_db(get_table_name(self.domain, self.config.table_id)))
         self.assertEqual(len(results), 10)

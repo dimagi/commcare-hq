@@ -154,6 +154,15 @@ def get_simple_xform():
 
 
 def load_data_from_db(table_name):
+    def _convert_decimal_to_string(value):
+        value_str = str(value)
+        p = re.compile('0E-(?P<zeros>[0-9]+)')
+        match = p.match(value_str)
+        if match:
+            return '0.{}'.format(int(match.group('zeros')) * '0')
+        else:
+            return value_str
+
     engine = connection_manager.get_session_helper('default').engine
     metadata = sqlalchemy.MetaData(bind=engine)
     metadata.reflect(bind=engine)
@@ -173,7 +182,7 @@ def load_data_from_db(table_name):
                 elif isinstance(value, six.integer_types):
                     row[idx] = str(value)
                 elif isinstance(value, (float, Decimal)):
-                    row[idx] = self._convert_decimal_to_string(row[idx])
+                    row[idx] = _convert_decimal_to_string(row[idx])
                 elif isinstance(value, six.string_types):
                     row[idx] = value.encode('utf-8')
                 elif value is None:
