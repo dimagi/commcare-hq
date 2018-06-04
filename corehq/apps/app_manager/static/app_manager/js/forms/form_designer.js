@@ -165,6 +165,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
                 });
                 hqImport('analytix/js/kissmetrix').track.event('Entered the Form Builder');
 
+                hqImport('app_manager/js/app_manager').setPrependedPageTitle("\u270E ", true);
                 hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Edit Form"));
 
                 if (initial_page_data('form_uses_cases')) {
@@ -193,6 +194,7 @@ hqDefine("app_manager/js/forms/form_designer", function() {
 
                 var reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     editDetails = hqImport('app_manager/js/forms/edit_form_details');
+                hqImport('app_manager/js/app_manager').updatePageTitle(initial_page_data("form_name"));
                 editDetails.initName(
                     initial_page_data("form_name"),
                     reverse("edit_form_attr", "name")

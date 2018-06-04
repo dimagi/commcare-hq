@@ -13,8 +13,11 @@ hqDefine('app_manager/js/app_manager', function () {
     module.setAppendedPageTitle = function (appendedPageTitle) {
         _private.appendedPageTitle = appendedPageTitle;
     };
-    module.setPrependedPageTitle = function (prependedPageTitle) {
+    module.setPrependedPageTitle = function (prependedPageTitle, noDivider) {
         _private.prependedPageTitle = prependedPageTitle;
+        if (!noDivider) {
+            _private.prependedPageTitle += " - ";
+        }
     };
 
     module.updatePageTitle = function (pageTitle) {
@@ -23,7 +26,7 @@ hqDefine('app_manager/js/app_manager', function () {
             newTitle += " - " + _private.appendedPageTitle;
         }
         if (_private.prependedPageTitle) {
-            newTitle = _private.prependedPageTitle + " - " + newTitle;
+            newTitle = _private.prependedPageTitle + newTitle;
         }
         document.title = newTitle + " - CommCare HQ";
     };

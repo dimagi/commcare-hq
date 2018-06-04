@@ -1,7 +1,10 @@
 /* globals analytics, hqImport, SyntaxHighlighter, Util, django */
 hqDefine("app_manager/js/forms/form_view", function() {
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    hqImport('app_manager/js/app_manager').setAppendedPageTitle(django.gettext("Form Settings"));
+    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get,
+        appManagerUtils = hqImport('app_manager/js/app_manager');
+    appManagerUtils.setPrependedPageTitle("\u2699 ", true);
+    appManagerUtils.setAppendedPageTitle(django.gettext("Form Settings"));
+    appManagerUtils.updatePageTitle(initial_page_data("form_name"));
 
     function formFilterMatches(filter, pattern_matches, substring_matches) {
         if (typeof(filter) !== 'string') {
