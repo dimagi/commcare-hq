@@ -29,8 +29,11 @@ module.exports = {
 
     create: function(context) {
         let allowed = {};
-        for (var i = 0; i < context.options.length; i++) {
-            allowed[context.options[i]] = 1;
+        const optionAllowed = context.options[0];
+        if (optionAllowed) {
+            for (var i = 0; i < optionAllowed.length; i++) {
+                allowed[optionAllowed[i]] = 1;
+            }
         }
 
         return {
