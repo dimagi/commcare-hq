@@ -54,7 +54,6 @@ six==1.11.0
 socketpool==0.5.3
 markdown==2.2.1
 amqp==1.4.7
-amqplib==1.0.2
 sqlagg==0.9.0
 django-redis==4.2
 redis==2.10.5
