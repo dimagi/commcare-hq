@@ -142,7 +142,7 @@ class MobileRecoveryMeasure(models.Model):
     Model representing a method of recovering from a fatal error on mobile.
     """
     MEASURES = (
-        Measure('app_reinstall', "Reinstall App, OTA",
+        Measure('app_reinstall_ota', "Reinstall App, OTA",
                 "Reinstall the current CommCare app by triggering an OTA install"),
         Measure('app_reinstall_local', "Reinstall App, Local",
                 "Reinstall the current CommCare app (by triggering an offline install "
@@ -178,10 +178,10 @@ class MobileRecoveryMeasure(models.Model):
 
     app_all_versions = models.BooleanField(
         verbose_name="All App Versions", default=True)
-    app_version_min = models.CharField(
-        verbose_name="Min App Version", max_length=255, blank=True)
-    app_version_max = models.CharField(
-        verbose_name="Max App Version", max_length=255, blank=True)
+    app_version_min = models.IntegerField(
+        verbose_name="Min App Version", max_length=255, null=True, blank=True)
+    app_version_max = models.IntegerField(
+        verbose_name="Max App Version", max_length=255, null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     username = models.CharField(max_length=255, editable=False)
