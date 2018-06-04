@@ -5,7 +5,7 @@
  */
 
 var CRUDAdminControl = function(options) {
-    var self = this;
+    var self = {};
     self.actionButton = $('<a href="#crud_add_modal" class="btn btn-primary" ' +
         'data-toggle="modal" style="margin-left:2px" />').html('<i class="fa fa-plus"/> ').append(
         "Add New " + options.itemType);
@@ -129,4 +129,5 @@ var CRUDAdminControl = function(options) {
         refreshForm(self.updateItemModal, data, '#crud_update_modal .modal-body');
     };
 
+    return self;
 };
