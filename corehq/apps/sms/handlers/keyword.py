@@ -379,7 +379,7 @@ def start_session_for_structured_sms(domain, contact, phone_number, app, module,
         logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
             additional_error_text=human_readable_message)
 
-        if touchforms_error_is_config_error(e):
+        if touchforms_error_is_config_error(domain, e):
             error_code = MSG_FORM_ERROR
         else:
             notify_exception(None, message=('Could not process structured sms for'

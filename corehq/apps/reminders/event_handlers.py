@@ -383,7 +383,7 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                     logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
                         additional_error_text=human_readable_message)
 
-                    if touchforms_error_is_config_error(e):
+                    if touchforms_error_is_config_error(reminder.domain, e):
                         # Don't reraise the exception because this means there are configuration
                         # issues with the form that need to be fixed
                         continue

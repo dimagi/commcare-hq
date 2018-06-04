@@ -263,7 +263,7 @@ class SMSSurveyContent(Content):
                 additional_error_text=get_formplayer_exception(domain, e)
             )
 
-            if touchforms_error_is_config_error(e):
+            if touchforms_error_is_config_error(domain, e):
                 # Don't reraise the exception because this means there are configuration
                 # issues with the form that need to be fixed. The error is logged in the
                 # above lines.

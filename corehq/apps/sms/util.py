@@ -215,17 +215,28 @@ def get_contact(domain, contact_id):
     return contact
 
 
-def touchforms_error_is_config_error(touchforms_error):
+def touchforms_error_is_config_error(domain, touchforms_error):
     """
     Returns True if the given TouchformsError is the result of a
     form configuration error.
     """
-    error_type = touchforms_error.response_data.get('error_type', '')
-    return any([s in error_type for s in (
-        'XPathTypeMismatchException',
-        'XPathUnhandledException',
-        'XFormParseException',
-    )])
+    if SMS_USE_FORMPLAYER.enabled(domain):
+        # Unfortunately there isn't a better way to do this.
+        # What we want to do is try and pick out the types of exceptions
+        # that are configuration errors such as an xpath reference error
+        # or misconfigured case sharing settings.
+        exception_text = touchforms_error.response_data.get('exception', '').lower()
+        return any(s in exception_text for s in (
+            'case sharing settings',
+            'error in calculation',
+        ))
+    else:
+        error_type = touchforms_error.response_data.get('error_type', '')
+        return any([s in error_type for s in (
+            'XPathTypeMismatchException',
+            'XPathUnhandledException',
+            'XFormParseException',
+        )])
 
 
 def get_formplayer_exception(domain, touchforms_error):
