@@ -315,7 +315,7 @@ def two_factor_check(view_func, api_key):
 
 
 def _two_factor_required(view_func, domain, couch_user):
-    if domain.two_factor_auth or couch_user.is_superuser:
+    if domain.two_factor_auth or (settings.ENFORCE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser):
         return (
             not getattr(view_func, 'two_factor_exempt', False)
             and not couch_user.two_factor_disabled
