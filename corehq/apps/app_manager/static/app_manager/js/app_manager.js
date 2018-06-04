@@ -76,9 +76,9 @@ hqDefine('app_manager/js/app_manager', function () {
         hqImport("hqwebapp/js/main").updateDOM(update);
     };
 
-    module.setupValidation = function (validation_url) {
+    module.setupValidation = function (validationUrl) {
         module.fetchAndShowFormValidation = function () {
-            $.getJSON(validation_url, function (data) {
+            $.getJSON(validationUrl, function (data) {
                 $('#build_errors').html(data.error_html);
             });
         };
@@ -115,7 +115,6 @@ hqDefine('app_manager/js/app_manager', function () {
      * @private
      */
     var _initCommcareVersion = function (args) {
-        var appVersion = args.appVersion;
         module.commcareVersion = ko.observable();
         module.latestCommcareVersion = ko.observable();
         module.latestCommcareVersion(args.latestCommcareVersion);
@@ -296,8 +295,8 @@ hqDefine('app_manager/js/app_manager', function () {
         // Initialize sorting behavior for both modules and forms
         $('.sortable').each(function () {
             var $sortable = $(this);
-            var sorting_forms = $sortable.hasClass('sortable-forms');
-            var init_dict = {
+            var sortingForms = $sortable.hasClass('sortable-forms');
+            var options = {
                 handle: '.drag_handle ',
                 items: ">*:not(.sort-disabled)",
                 update: function (e, ui) {
@@ -309,12 +308,12 @@ hqDefine('app_manager/js/app_manager', function () {
 
                     var to = -1,
                         from = -1,
-                        to_module_id = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
-                        moving_to_new_module = false,
+                        toModuleId = parseInt($sortable.parents('.edit-module-li').data('index'), 10),
+                        movingToNewModule = false,
                         $form;
 
                     // if you're moving modules or moving forms within the same module, use this logic to find to and from
-                    if (!sorting_forms || to_module_id === parseInt(ui.item.data('moduleid'), 10)) {
+                    if (!sortingForms || toModuleId === parseInt(ui.item.data('moduleid'), 10)) {
                         $(this).children().not('.sort-disabled').each(function (i) {
                             var index = parseInt($(this).data('index'), 10);
                             if (from !== -1) {
@@ -335,8 +334,8 @@ hqDefine('app_manager/js/app_manager', function () {
                         });
                     } else { //moving forms to a new submodule
                         $(this).children().not('.sort-disabled').each(function (i) {
-                            if (parseInt($(this).data('moduleid'), 10) !== to_module_id) {
-                                moving_to_new_module = true;
+                            if (parseInt($(this).data('moduleid'), 10) !== toModuleId) {
+                                movingToNewModule = true;
                                 to = i;
                                 from = parseInt(ui.item.data('index'), 10);
                                 return false;
@@ -344,21 +343,21 @@ hqDefine('app_manager/js/app_manager', function () {
                         });
                     }
 
-                    if (moving_to_new_module || to !== from) {
-                        var from_module_id = parseInt(ui.item.data('moduleid'), 10);
+                    if (movingToNewModule || to !== from) {
+                        var fromModuleId = parseInt(ui.item.data('moduleid'), 10);
                         $form = $(this).find('> .sort-action form');
                         $form.find('[name="from"], [name="to"]').remove();
                         $form.append('<input type="hidden" name="from" value="' + from.toString() + '" />');
                         $form.append('<input type="hidden" name="to"   value="' + to.toString() + '" />');
-                        if (sorting_forms) {
-                            $form.append('<input type="hidden" name="from_module_id" value="' + from_module_id.toString() + '" />');
-                            $form.append('<input type="hidden" name="to_module_id"   value="' + to_module_id.toString() + '" />');
+                        if (sortingForms) {
+                            $form.append('<input type="hidden" name="from_module_id" value="' + fromModuleId.toString() + '" />');
+                            $form.append('<input type="hidden" name="to_module_id"   value="' + toModuleId.toString() + '" />');
                         }
 
                         resetIndexes($sortable);
-                        if (from_module_id !== to_module_id) {
+                        if (fromModuleId !== toModuleId) {
                             var $parentSortable = $sortable.parents(".sortable"),
-                                $fromSortable = $parentSortable.find("[data-index=" + from_module_id + "] .sortable");
+                                $fromSortable = $parentSortable.find("[data-index=" + fromModuleId + "] .sortable");
                             resetIndexes($fromSortable);
                         }
                         $.ajax($form.attr('action'), {
@@ -375,10 +374,10 @@ hqDefine('app_manager/js/app_manager', function () {
                     }
                 },
             };
-            if (sorting_forms) {
-                init_dict["connectWith"] = '.sortable-forms';
+            if (sortingForms) {
+                options["connectWith"] = '.sortable-forms';
             }
-            $(this).sortable(init_dict);
+            $(this).sortable(options);
         });
         $('.sort-action').hide();
     };
@@ -405,8 +404,8 @@ hqDefine('app_manager/js/app_manager', function () {
                         }
                         if (data.hasOwnProperty('case_list-show') &&
                                 module.hasOwnProperty('module_view')) {
-                            var requires_case_details = hqImport('app_manager/js/details/screen_config').state.requires_case_details;
-                            requires_case_details(data['case_list-show']);
+                            var requiresCaseDetails = hqImport('app_manager/js/details/screen_config').state.requiresCaseDetails;
+                            requiresCaseDetails(data['case_list-show']);
                         }
                     },
                 });
