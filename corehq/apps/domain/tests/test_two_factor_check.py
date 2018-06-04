@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase, RequestFactory
+from django.test.utils import override_settings
+
 from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
@@ -35,6 +37,9 @@ class TestTwoFactorCheck(TestCase):
 
         request.couch_user.is_superuser = True
         self.assertTrue(_two_factor_required(view_func, self.domain, request.couch_user))
+
+        with override_settings(ENFORCE_TWO_FACTOR_FOR_SUPERUSERS=False):
+            self.assertFalse(_two_factor_required(view_func, self.domain, request.couch_user))
 
     def test_two_factor_check_superuser(self):
         self.request.couch_user.is_superuser = True
