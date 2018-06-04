@@ -38,8 +38,7 @@ class TestViews(TestCase):
         cls.domain.save()
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
-        cls.user.is_superuser = True
+        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True, is_admin=True)
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
         toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
