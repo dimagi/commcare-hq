@@ -48,9 +48,9 @@ celery_task_logger = logging.getLogger('celery.task')
 
 UCRAggregationTask = namedtuple("UCRAggregationTask", ['type', 'date'])
 
-DASHBOARD_TEAM_MEMBERS = ['jemord', 'ssrikrishnan', 'mharrison', 'vmaheshwari', 'stewari']
+DASHBOARD_TEAM_MEMBERS = ['jemord', 'cellowitz', 'mharrison', 'vmaheshwari', 'stewari']
 DASHBOARD_TEAM_EMAILS = ['{}@{}'.format(member_id, 'dimagi.com') for member_id in DASHBOARD_TEAM_MEMBERS]
-_dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS)
+_dashboard_team_soft_assert = soft_assert(to=DASHBOARD_TEAM_EMAILS, send_to_ops=False)
 
 CCS_RECORD_MONTHLY_UCR = 'static-ccs_record_cases_monthly_tableau_v2'
 CHILD_HEALTH_MONTHLY_UCR = 'static-child_cases_monthly_tableau_v2'
@@ -530,10 +530,8 @@ def icds_data_validation(day):
         )
     ).values_list(*return_values)
 
-    bad_lbw_awcs = AggChildHealthMonthly.objects.filter(month=month, aggregation_level=5).exclude(
-        weighed_and_born_in_month__gt=(
-            F('low_birth_weight_in_month')
-        )
+    bad_lbw_awcs = AggChildHealthMonthly.objects.filter(
+        month=month, aggregation_level=5, weighed_and_born_in_month__lt=F('low_birth_weight_in_month')
     ).values_list(*return_values)
 
     _send_data_validation_email(
