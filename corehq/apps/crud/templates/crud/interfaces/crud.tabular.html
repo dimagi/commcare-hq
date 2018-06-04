@@ -6,7 +6,7 @@
     $.when(
         $.getScript("{% static 'crud/js/admin.js' %}")
     ).done(function () {
-      var crud_interface = CRUDAdminControl({
+      var crud_interface = hqImport("crud/js/admin").CRUDAdminControl({
         itemType: '{{ crud_item.type }}',
         formSubmitPath: '{{ crud_item.url }}',
         formType: '{{ crud_item.form }}',
