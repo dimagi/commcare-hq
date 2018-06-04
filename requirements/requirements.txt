@@ -106,7 +106,7 @@ ddtrace==0.9.2
 django-prbac==0.0.5
 html5lib==1.0b8
 xhtml2pdf==0.0.6
-qrcode==5.3
+qrcode==4.0.4
 django-user-agents==0.3.2
 csv342==1.0.0
 Faker==0.8.13
