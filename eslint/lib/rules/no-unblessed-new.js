@@ -32,7 +32,7 @@ module.exports = {
         const optionAllowed = context.options[0];
         if (optionAllowed) {
             for (var i = 0; i < optionAllowed.length; i++) {
-                allowed[optionAllowed[i]] = 1;
+                allowed[optionAllowed[i]] = true;
             }
         }
 
