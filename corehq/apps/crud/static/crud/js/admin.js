@@ -129,7 +129,17 @@ hqDefine("crud/js/admin", function() {
         return self;
     };
 
-    return {
-        CRUDAdminControl: CRUDAdminControl,
-    };
+    var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
+    $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
+        var jsOptions = initialPageData("js_options");
+        if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
+            return;
+        }
+        var crudItem = initialPageData("js_options").crud_item;
+        CRUDAdminControl({
+            itemType: crudItem.type,
+            formSubmitPath: crudItem.url,
+            formType: crudItem.form,
+        }).init();
+    });
 });
