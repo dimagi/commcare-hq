@@ -1456,13 +1456,6 @@ REMOTE_REQUEST_QUESTION_TYPE = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-TWO_FACTOR_SUPERUSER_ROLLOUT = StaticToggle(
-    'two_factor_superuser_rollout',
-    'Users in this list will be forced to have Two-Factor Auth enabled',
-    TAG_INTERNAL,
-    [NAMESPACE_USER]
-)
-
 CUSTOM_ICON_BADGES = StaticToggle(
     'custom_icon_badges',
     'eNikshay: Custom Icon Badges for modules and forms',

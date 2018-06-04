@@ -28,40 +28,27 @@ class TestTwoFactorCheck(TestCase):
         request.couch_user = CouchUser()
         return request
 
-    @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-    def test_two_factor_required_with_feature_flag(self):
+    def test_two_factor_required_for_superuser(self):
         view_func = 'dummy_view_func'
         request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain, request.couch_user)
-        self.assertTrue(two_factor_required_bool)
+        self.assertFalse(_two_factor_required(view_func, self.domain, request.couch_user))
 
-    def test_two_factor_required_without_feature_flag(self):
-        view_func = 'dummy_view_func'
-        request = self.request
-        two_factor_required_bool = _two_factor_required(view_func, self.domain,
-                                                        request.couch_user)
-        self.assertFalse(two_factor_required_bool)
+        request.couch_user.is_superuser = True
+        self.assertTrue(_two_factor_required(view_func, self.domain, request.couch_user))
 
-    @flag_enabled('TWO_FACTOR_SUPERUSER_ROLLOUT')
-    def test_two_factor_check_with_feature_flag(self):
-        mock_fn_to_call = Mock(return_value='Function was called!')
-        mock_fn_to_call.__name__ = b'test_name'
-        request = self.request
-        api_key = None
-        view_func = 'dummy_view_func'
-        two_factor_check_fn = two_factor_check(view_func, api_key)
-        function_getting_checked_with_auth = two_factor_check_fn(mock_fn_to_call)
-        with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
-                        return_value=request.couch_user):
-            response = function_getting_checked_with_auth(request, self.domain.name)
-            data = json.loads(response.content)
-            mock_fn_to_call.assert_not_called()
-            self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
+    def test_two_factor_check_superuser(self):
+        self.request.couch_user.is_superuser = True
+        response = self._test_two_factor_check(self.request, expect_called=False)
+        data = json.loads(response.content)
+        self.assertDictEqual(data, {'error': 'must send X-CommcareHQ-OTP header'})
 
-    def test_two_factor_check_without_feature_flag(self):
+    def test_two_factor_check_non_superuser(self):
+        response = self._test_two_factor_check(self.request, expect_called=True)
+        self.assertEqual(response, 'Function was called!')
+
+    def _test_two_factor_check(self, request, expect_called):
         mock_fn_to_call = Mock(return_value="Function was called!")
         mock_fn_to_call.__name__ = b'test_name'
-        request = self.request
         api_key = None
         view_func = 'dummy_view_func'
         two_factor_check_fn = two_factor_check(view_func, api_key)
@@ -69,5 +56,8 @@ class TestTwoFactorCheck(TestCase):
         with mock.patch('corehq.apps.domain.decorators._ensure_request_couch_user',
                         return_value=request.couch_user):
             response = function_getting_checked_with_auth(request, self.domain.name)
-            self.assertEqual(response, 'Function was called!')
-            mock_fn_to_call.assert_called_once()
+            if expect_called:
+                mock_fn_to_call.assert_called_once()
+            else:
+                mock_fn_to_call.assert_not_called()
+            return response
