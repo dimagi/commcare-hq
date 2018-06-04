@@ -8,10 +8,7 @@ from mock import MagicMock, patch
 
 from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES_MAP
 from corehq.apps.case_search.exceptions import CaseSearchNotEnabledException
-from corehq.apps.case_search.models import (
-    CaseSearchConfig,
-    case_search_enabled_domains,
-)
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.consumer.feed import (
     change_meta_from_kafka_message,
@@ -26,6 +23,7 @@ from corehq.form_processor.tests.utils import FormProcessorTestUtils
 from corehq.pillows.case_search import (
     CaseSearchReindexerFactory,
     delete_case_search_cases,
+    domains_needing_search_index,
     get_case_search_to_elasticsearch_pillow,
 )
 from corehq.pillows.mappings.case_search_mapping import (
@@ -83,7 +81,7 @@ class CaseSearchPillowTest(TestCase):
         """
         other_domain = "yunkai"
         CaseSearchConfig.objects.get_or_create(pk=other_domain, enabled=True)
-        case_search_enabled_domains.clear()
+        domains_needing_search_index.clear()
 
         desired_case = self._make_case(domain=other_domain)
         undesired_case = self._make_case(domain=self.domain)  # noqa

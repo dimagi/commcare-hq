@@ -634,6 +634,8 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
 
 def _enable_search_index(domain, enabled):
     from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+    domains_needing_search_index.clear()
     if enabled:
         reindex_case_search_for_domain.delay(domain)
     else:

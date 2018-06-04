@@ -6,7 +6,6 @@ from datetime import datetime
 import six
 from django.core.mail import mail_admins
 from django.db import ProgrammingError
-from memoized import memoized
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.case_search.const import (
@@ -35,6 +34,7 @@ from corehq.pillows.mappings.case_search_mapping import (
 from corehq.toggles import CASE_LIST_EXPLORER
 from corehq.util.doc_processor.sql import SqlDocumentProvider
 from corehq.util.log import get_traceback_string
+from corehq.util.quickcache import quickcache
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.checkpoints.manager import (
     get_checkpoint_for_elasticsearch_pillow,
@@ -53,7 +53,7 @@ from pillowtop.reindexer.reindexer import (
 )
 
 
-@memoized
+@quickcache([], timeout=24 * 60 * 60, memoize_timeout=60)
 def domains_needing_search_index():
     return set(list(case_search_enabled_domains()) + CASE_LIST_EXPLORER.get_enabled_domains())
 

@@ -7,7 +7,7 @@ from django.test import TestCase
 from elasticsearch.exceptions import ConnectionError
 import mock
 
-from corehq.apps.case_search.models import CaseSearchConfig, case_search_enabled_domains
+from corehq.apps.case_search.models import CaseSearchConfig
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.tests.test_utils import delete_all_domains
 from corehq.apps.es import CaseES, CaseSearchES, DomainES, FormES, UserES, GroupES
@@ -19,6 +19,7 @@ from corehq.apps.users.models import CommCareUser, WebUser
 from corehq.elastic import get_es_new
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, \
     run_with_all_backends
+from corehq.pillows.case_search import domains_needing_search_index
 from corehq.pillows.mappings.case_mapping import CASE_INDEX, CASE_INDEX_INFO
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX
 from corehq.pillows.mappings.domain_mapping import DOMAIN_INDEX
@@ -82,7 +83,7 @@ class PillowtopReindexerTest(TestCase):
 
         # With case search not enabled, case should not make it to ES
         CaseSearchConfig.objects.all().delete()
-        case_search_enabled_domains.clear()
+        domains_needing_search_index.clear()
         reindex_and_clean('case-search')
         es.indices.refresh(CASE_SEARCH_INDEX)  # as well as refresh the index
         self._assert_es_empty(esquery=CaseSearchES())
