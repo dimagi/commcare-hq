@@ -144,6 +144,14 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         for doc in docs:
             indicator_rows.extend(self.get_all_values(doc))
 
+        # transform format from ColumnValue to dict
+        rows = []
+        for row in indicator_rows:
+            column_dict = {}
+            for column in row:
+                column_dict[column.column.id] = column.value
+            rows.append(column_dict)
+
         table = self.get_table()
         delete = table.delete(
             table.c.doc_id.in_(
@@ -152,8 +160,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         )
         with self.session_helper.session_context() as session:
             session.execute(delete)
-            session.bulk_insert_mappings(
-                self.get_sqlalchemy_mapping(), indicator_rows)
+            # Using session.bulk_insert_mappings below might seem more inline
+            #   with sqlalchemy API, but it results in
+            #   appending an empty row which results in a postgres
+            #   not-null constraint error, which has been hard to debug.
+            # In addition, bulk_insert_mappings is less performant than
+            #   the plain INSERT INTO VALUES statement resulting from below line
+            #   because bulk_insert_mappings is meant for multi-table insertion
+            #   so it has overhead of format conversions and multiple statements
+            insert = table.insert().values(rows)
+            session.execute(insert)
 
     def _save_rows(self, rows, doc):
         rows = [
