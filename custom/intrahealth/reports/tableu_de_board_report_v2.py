@@ -87,9 +87,9 @@ class MultiReport(CustomProjectReport, IntraHealthLocationMixin, IntraHealthRepo
 
 
 class TableuDeBoardReport2(MultiReport):
-    title = "Tableau De Bord2"
+    title = "Tableau De Bord NEW"
     fields = [DatespanFilter, LocationFilter]
-    name = "Tableau De Bord2"
+    name = "Tableau De Bord NEW"
     slug = 'tableu_de_board2'
     default_rows = 10
     exportable = True
