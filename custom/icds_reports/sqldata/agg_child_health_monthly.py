@@ -89,11 +89,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                         ]
                     ),
                     SumColumn('height_eligible', alias='height_eligible', filters=filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
-                            NOT(EQ('age_tranche', 'age_72'))
-                        ])
+                        NOT(EQ('age_tranche', 'age_72'))
                     ])
                 ],
                 slug='status_height_efficiency'
