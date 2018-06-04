@@ -1359,7 +1359,7 @@ class XForm(WrappedNode):
         )
 
         self.add_setvalue(
-            ref="/meta/drift",
+            ref="meta/drift",
             event="xforms-revalidate",
             value="instance('commcaresession')/session/context/drift",
         )
