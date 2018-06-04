@@ -29,8 +29,6 @@ class TestDashboard2(YeksiTestCase):
         fiche_consommation_report = fiche_consommation_report2_report.report_context['reports'][0]['report_table']
         headers = fiche_consommation_report['headers'].as_export_table[0]
         rows = fiche_consommation_report['rows']
-        print(headers)
-        print(rows)
         self.assertEqual(
             headers,
             ['', 'ACT Adulte', ' ', ' ', 'ACT Grand Enfant', ' ', ' ', 'ACT Nourisson', ' ', ' ',

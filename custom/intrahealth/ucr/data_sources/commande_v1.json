@@ -155,6 +155,102 @@
           }
         },
         "column_id": "location_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "location_id"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "userID"
+                  ]
+                }
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "District",
+              "type": "constant"
+            }
+          }
+        },
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "value_expression": {
+                "datatype": null,
+                "type": "property_name",
+                "property_name": "location_id"
+              },
+              "type": "related_doc",
+              "related_doc_type": "CommCareUser",
+              "doc_id_expression": {
+                "type": "root_doc",
+                "expression": {
+                  "datatype": null,
+                  "type": "property_path",
+                  "property_path": [
+                    "form",
+                    "meta",
+                    "userID"
+                  ]
+                }
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "R\u00e9gion",
+              "type": "constant"
+            }
+          }
+        },
+        "column_id": "region_id"
       }
     ]
   }

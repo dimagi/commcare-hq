@@ -41,6 +41,13 @@ def setUpModule():
         location_type=region_location_type
     )
 
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='PASSY',
+        location_id='1991b4dfe166335e342f28134b85fcac',
+        location_type=region_location_type
+    )
+
     district_location_type = LocationType.objects.create(
         domain='test-pna',
         name='District',

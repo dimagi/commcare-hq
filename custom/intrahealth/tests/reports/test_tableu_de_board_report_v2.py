@@ -12,9 +12,40 @@ from dimagi.utils.dates import DateSpan
 from datetime import datetime
 
 
-class TestDashboard2(YeksiTestCase):
+class TestFicheConsommationReportV2(YeksiTestCase):
 
-    def test_loss_rate_report(self):
+    def test_conventure_report(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'startdate': '2014-06-01',
+            'enddate': '2014-07-31',
+            'location_id': '1991b4dfe166335e342f28134b85fcac',
+        }
+        mock.datespan = DateSpan(datetime(2014, 6, 1), datetime(2014, 7, 31))
+
+        tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
+
+        conventure_report = tableu_de_board_report2_report.report_context['reports'][0]['report_table']
+        headers = conventure_report['headers'].as_export_table[0]
+        rows = conventure_report['rows']
+
+        self.assertEqual(
+            headers,
+            [
+                'Mois', 'No de PPS (number of PPS registered in that region)',
+                'No de PPS planifie (number of PPS planned)',
+                'No de PPS avec livrasion cet mois (number of PPS visited this month)',
+                'Taux de couverture (coverage ratio)',
+                'No de PPS avec donnees soumises (number of PPS which submitted data)',
+                'Exhaustivite des donnees']
+        )
+        self.assertEqual(
+            rows,
+            [['Ao\xfbt', 0, 0, 17, '1700.00%', 17, '100.00%']]
+        )
+
+    def test_products_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {

@@ -114,6 +114,12 @@ class TableuDeBoardReport2(MultiReport):
 
         if 'district_id' in config:
             return [
+                ConventureData2(config=config),
+            ]
+        elif 'region_id' in config:
+            return [
+                ConventureData2(config=config),
+                DispDesProducts2(config=config),
             ]
         else:
             return [
