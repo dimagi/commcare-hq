@@ -1311,6 +1311,7 @@ class XForm(WrappedNode):
         meta = ET.Element("{orx}meta".format(**namespaces), nsmap=nsmap)
         tags = (
             '{orx}deviceID',
+            '{orx}drift',
             '{orx}timeStart',
             '{orx}timeEnd',
             '{orx}username',
@@ -1355,6 +1356,12 @@ class XForm(WrappedNode):
         self.add_setvalue(
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
+        )
+
+        self.add_setvalue(
+            ref="/meta/drift",
+            event="xforms-revalidate",
+            value="instance('commcaresession')/session/context/drift",
         )
 
         # never add pollsensor to a pre-2.14 app
