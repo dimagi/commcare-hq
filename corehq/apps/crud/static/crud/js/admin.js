@@ -41,53 +41,50 @@ hqDefine("crud/js/admin", function() {
             };
 
         self.init = function() {
-            $(function() {
-                $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
-                self.actionButton.click(function() {
-                    $('#js-add-crud-success').addClass('hide');
-                });
-                self.addItemModal = $('#crud_add_modal');
-                self.updateItemModal = $('#crud_update_modal');
+            $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
+            self.actionButton.click(function() {
+                $('#js-add-crud-success').addClass('hide');
+            });
+            self.addItemModal = $('#crud_add_modal');
+            self.updateItemModal = $('#crud_update_modal');
 
-                self.init_new_form();
+            self.init_new_form();
 
-                $('#crud_add_modal form').submit(function(e) {
-                    var $submitBtn = $('#js-crud-add-submit');
-                    if (!$submitBtn.hasClass('disabled')) {
-                        $submitBtn.button('loading');
-                        $(this).ajaxSubmit({
-                            method: 'POST',
-                            url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
-                            success: function(data) {
-                                self.refreshAddItemForm(data);
-                                reportTables.datatable.fnAddData(data.rows);
-                                $('#js-add-crud-success').removeClass('hide');
-                            },
-                            error: resetSubmitButton,
-                            dataType: 'json',
-                        });
-                    }
-                    e.preventDefault();
-                    return false;
-                });
-
-                $('#crud_update_modal button').click(function(e) {
-                    var submit_url = self.updateFormSubmitURL;
-                    if ($(this).hasClass('btn-danger')) {
-                        submit_url = self.formSubmitURL + 'delete/';
-                    }
-                    self.updateItemModal.find('input[disabled="disabled"]').removeProp('disabled');
-
-                    self.updateItemModal.find('form').ajaxSubmit({
-                        dataType: 'json',
-                        url: overrideFormTypeInUrl(submit_url, self.currentItemFormType) + self.currentItemID + '/',
-                        success: self.refreshUpdateItemForm,
+            $('#crud_add_modal form').submit(function(e) {
+                var $submitBtn = $('#js-crud-add-submit');
+                if (!$submitBtn.hasClass('disabled')) {
+                    $submitBtn.button('loading');
+                    $(this).ajaxSubmit({
+                        method: 'POST',
+                        url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
+                        success: function(data) {
+                            self.refreshAddItemForm(data);
+                            reportTables.datatable.fnAddData(data.rows);
+                            $('#js-add-crud-success').removeClass('hide');
+                        },
                         error: resetSubmitButton,
+                        dataType: 'json',
                     });
-                    e.preventDefault();
-                    return false;
-                });
+                }
+                e.preventDefault();
+                return false;
+            });
 
+            $('#crud_update_modal button').click(function(e) {
+                var submit_url = self.updateFormSubmitURL;
+                if ($(this).hasClass('btn-danger')) {
+                    submit_url = self.formSubmitURL + 'delete/';
+                }
+                self.updateItemModal.find('input[disabled="disabled"]').removeProp('disabled');
+
+                self.updateItemModal.find('form').ajaxSubmit({
+                    dataType: 'json',
+                    url: overrideFormTypeInUrl(submit_url, self.currentItemFormType) + self.currentItemID + '/',
+                    success: self.refreshUpdateItemForm,
+                    error: resetSubmitButton,
+                });
+                e.preventDefault();
+                return false;
             });
         };
 
@@ -135,11 +132,15 @@ hqDefine("crud/js/admin", function() {
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
         }
-        var crudItem = initialPageData("js_options").crud_item;
-        CRUDAdminControl({
+        var crudItem = initialPageData("js_options").crud_item,
+            crudInterface = CRUDAdminControl({
             itemType: crudItem.type,
             formSubmitPath: crudItem.url,
             formType: crudItem.form,
-        }).init();
+        });
+        crudInterface.init();
+        $(".crud_edit").click(function(e) {
+            crudInterface.update_item(e.currentTarget);
+        });
     });
 });
