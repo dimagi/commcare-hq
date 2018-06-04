@@ -15,7 +15,7 @@ from corehq.apps.reports.sqlreport import DataFormatter, \
 from corehq.apps.userreports.util import get_table_name
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
-    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, COMMANDE_V1, COMMANDE_V2
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -822,6 +822,154 @@ class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
 class CountUniqueAndSumCustomColumn(IntraHealthCustomColumn):
     query_cls = CountUniqueAndSumQueryMeta
     name = 'count_unique_and_sum'
+
+
+class IntraHealthSqlData(SqlData):
+    datatables = False
+    show_charts = False
+    show_total = False
+    custom_total_calculate = False
+    no_value = {'sort_key': 0, 'html': 0}
+    fix_left_col = False
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+        return rows
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
+
+
+class CommandeDataSourceMixin(IntraHealthSqlData):
+    slug = 'commandeDataSourceMixin'
+    title = 'Taux de satisfaction de la commande de l\'operateur'
+    show_total = False
+
+    @property
+    def group_by(self):
+        group_by = []
+        if 'region_id' in self.config:
+            group_by.append('region_id')
+        elif 'district_id' in self.config:
+            group_by.append('district_id')
+        group_by.append('productName')
+        return group_by
+
+    @property
+    @memoized
+    def products(self):
+        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('name'))
+
+    @property
+    def values_for_product(self):
+        products = self.products
+        values = {
+            product.name: [0, 0]
+            for product in products
+        }
+
+        rows = self.get_data()
+        for row in rows:
+            productName = row['productName']
+            values[productName] = [
+                row['amountOrdered']['html'],
+                row['amountReceived']['html']
+            ]
+
+        return values
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product in self.products:
+            headers.add_column(DataTablesColumn(product.name))
+        return headers
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('Product Name', SimpleColumn('productName')),
+            DatabaseColumn("Commandes", SumColumn('amountOrdered')),
+            DatabaseColumn("Recu", SumColumn('amountReceived'))
+        ]
+
+
+class CommandeV1DataSource(CommandeDataSourceMixin):
+    slug = 'commandeV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], COMMANDE_V1)
+
+
+class CommandeV2DataSource(CommandeDataSourceMixin):
+    slug = 'commandeV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], COMMANDE_V2)
+
+
+class DispDesProducts2(IntraHealthSqlData):
+    slug = 'products'
+    title = 'Taux de satisfaction de la commande de l\'operateur'
+    show_total = False
+    product_names = set()
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1 = CommandeV1DataSource(config=self.config).values_for_product
+        values_v2 = CommandeV2DataSource(config=self.config).values_for_product
+
+        commandes = ['Commandes']
+        raux = ['Raux']
+        taux = ['Taux']
+
+        for product_name in values_v1:
+            self.product_names.add(product_name)
+        for product_name in values_v2:
+            self.product_names.add(product_name)
+        self.product_names = sorted(self.product_names)
+        for product_name in self.product_names:
+            values_for_product_v1 = values_v1[product_name] if product_name in values_v1 else [0, 0]
+            values_for_product_v2 = values_v2[product_name] if product_name in values_v2 else [0, 0]
+            amountOrdered = values_for_product_v1[0] + values_for_product_v2[0]
+            amountReceived = values_for_product_v1[1] + values_for_product_v2[1]
+            commandes.append(amountOrdered)
+            raux.append(amountReceived)
+            taux.append("%d%%" % (100 * amountOrdered / (amountReceived or 1)))
+        return [commandes, raux, taux]
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumn(product_name))
+        return headers
 
 
 class ContainsFilter(SqlFilter):
