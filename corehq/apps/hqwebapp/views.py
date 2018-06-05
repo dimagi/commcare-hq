@@ -622,24 +622,16 @@ class BugReportView(View):
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
                 "datetime: {datetime}\n"
-                "User Agent: {user_agent}\n"
                 "Is self start: {self_started}\n"
-                "Feature Flags: {feature_flags}\n"
-                "Feature Previews: {feature_previews}\n"
                 "Is scale backend: {scale_backend}\n"
                 "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Internal Project Information: {internal_info_link}\n"
                 "Project description: {project_description}\n"
                 "Sentry Error: {sentry_error}\n"
             ).format(
                 datetime=datetime.utcnow(),
-                user_agent=req.META['HTTP_USER_AGENT'],
                 self_started=domain_object.internal.self_started,
-                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
-                feature_previews=list(feature_previews.previews_dict(domain)),
                 scale_backend=should_use_sql_backend(domain),
                 has_handoff_info=bool(domain_object.internal.partner_contact),
-                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
                 project_description=domain_object.project_description,
                 sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
             )
