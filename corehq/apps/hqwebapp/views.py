@@ -559,9 +559,6 @@ class BugReportView(View):
             'sentry_id',
         )])
 
-        report['user_agent'] = req.META['HTTP_USER_AGENT']
-        report['datetime'] = datetime.utcnow()
-
         try:
             couch_user = req.couch_user
             full_name = couch_user.full_name
@@ -588,8 +585,6 @@ class BugReportView(View):
             "full name: {full_name}\n"
             "domain: {domain}\n"
             "url: {url}\n"
-            "datetime: {datetime}\n"
-            "User Agent: {user_agent}\n"
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
