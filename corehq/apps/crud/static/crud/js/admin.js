@@ -31,12 +31,13 @@ hqDefine("crud/js/admin", function() {
                 });
                 $(rowElem).addClass('active');
             },
-            overrideFormTypeInUrl = function(url, form_type) {
-                if (form_type)
-                    url = url.replace(self.formType, form_type);
+            overrideFormTypeInUrl = function(url, formType) {
+                if (formType) {
+                    url = url.replace(self.formType, formType);
+                }
                 return url;
             },
-            resetSubmitButton = function(data) {
+            resetSubmitButton = function() {
                 $('button[type="submit"]').button('reset');
             };
 
@@ -68,15 +69,15 @@ hqDefine("crud/js/admin", function() {
             });
 
             $('#crud_update_modal button').click(function(e) {
-                var submit_url = self.updateFormSubmitURL;
+                var submitUrl = self.updateFormSubmitURL;
                 if ($(this).hasClass('btn-danger')) {
-                    submit_url = self.formSubmitURL + 'delete/';
+                    submitUrl = self.formSubmitURL + 'delete/';
                 }
                 self.updateItemModal.find('input[disabled="disabled"]').removeProp('disabled');
 
                 self.updateItemModal.find('form').ajaxSubmit({
                     dataType: 'json',
-                    url: overrideFormTypeInUrl(submit_url, self.currentItemFormType) + self.currentItemID + '/',
+                    url: overrideFormTypeInUrl(submitUrl, self.currentItemFormType) + self.currentItemID + '/',
                     success: self.refreshUpdateItemForm,
                     error: resetSubmitButton,
                 });
@@ -124,7 +125,7 @@ hqDefine("crud/js/admin", function() {
     };
 
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-    $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions, data) {
+    $(document).on('ajaxSuccess', function(e, xhr, ajaxOptions) {
         var jsOptions = initialPageData("js_options");
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
@@ -156,13 +157,13 @@ hqDefine("crud/js/admin", function() {
         }
 
         // Add couch doc input behavior
-        var $change_doc_type = $('#id_change_doc_type');
-        if ($change_doc_type) {
+        var $changeDocType = $('#id_change_doc_type');
+        if ($changeDocType) {
             $('#id_doc_type_choices').parent().parent().hide();
             $('#id_change_doc_type').prop('checked', false);
-            $change_doc_type.change(function () {
-                var $doc_type = $('#id_doc_type_choices').parent().parent();
-                ($(this).prop('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();
+            $changeDocType.change(function () {
+                var $docType = $('#id_doc_type_choices').parent().parent();
+                ($(this).prop('checked')) ? $docType.fadeIn() : $docType.fadeOut();
             });
         }
     });
