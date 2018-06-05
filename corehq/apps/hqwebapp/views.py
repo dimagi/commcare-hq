@@ -597,19 +597,10 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.visible_objects.filter(
-                is_active=True,
-                subscriber__domain=domain,
-            )
-            if len(matching_subscriptions) >= 1:
-                software_plan = matching_subscriptions[0].plan_version
-            else:
-                software_plan = 'domain has no active subscription'
-
             message += ((
                 "software plan: {software_plan}\n"
             ).format(
-                software_plan=software_plan,
+                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
