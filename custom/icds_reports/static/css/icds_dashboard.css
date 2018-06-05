@@ -141,6 +141,10 @@ nvd3#sectorChart > div.title.h4 {
         width: 100% !important;
     }
 
+    .dataTable td {
+        white-space: normal !important;
+    }
+
     .row {
         width: 100%;
     }
