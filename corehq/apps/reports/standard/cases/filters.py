@@ -57,11 +57,15 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    PERSISTENT_COLUMNS = [
+    PERSISTENT_COLUMNS = [      # all of these are hidden from exports
         # hidden from view, but used for sorting when no sort column is provided
         {'name': 'last_modified', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
         # shown, but unremovable so there is always at least one column
         {'name': '_link', 'label': _('Link'), 'editable': False},
+    ]
+
+    EXPORT_PERSISTENT_COLUMNS = [  # these are always shown in exports
+        {'name': '_id', 'label': 'case_id'},
     ]
 
     DEFAULT_COLUMNS = [
