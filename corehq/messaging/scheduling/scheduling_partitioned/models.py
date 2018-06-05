@@ -67,17 +67,41 @@ class ScheduleInstance(PartitionedModel):
     @memoized
     def recipient(self):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
-            return CaseAccessors(self.domain).get_case(self.recipient_id)
+            case = CaseAccessors(self.domain).get_case(self.recipient_id)
+            if case.domain != self.domain:
+                return None
+
+            return case
         elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
-            return CommCareUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, CommCareUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
-            return WebUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, WebUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
-            return CommCareCaseGroup.get(self.recipient_id)
+            group = CommCareCaseGroup.get(self.recipient_id)
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
-            return Group.get(self.recipient_id)
+            group = Group.get(self.recipient_id)
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
-            return SQLLocation.by_location_id(self.recipient_id)
+            location = SQLLocation.by_location_id(self.recipient_id)
+            if location.domain != self.domain:
+                return None
+
+            return location
         else:
             raise UnknownRecipientType(self.recipient_type)
 
