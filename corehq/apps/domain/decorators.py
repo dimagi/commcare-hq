@@ -37,7 +37,7 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
+from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +93,11 @@ def login_and_domain_required(view_func):
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
                 # If the two factor toggle is on, require it for all users.
-                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
+                if (
+                    _two_factor_required(view_func, domain, couch_user)
+                    and not getattr(req, 'bypass_two_factor', False)
+                    and not user.is_verified()
+                ):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -423,11 +427,11 @@ def domain_admin_required_ex(redirect_page_name=None):
     return _outer
 
 
-def require_superuser_or_developer(view_func):
+def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
+        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -444,7 +448,7 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
-cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
 def require_previewer(view_func):

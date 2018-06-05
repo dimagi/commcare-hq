@@ -310,6 +310,16 @@ def _edit_form_attr(request, domain, app_id, form_unique_id, attr):
         form.post_form_workflow = request.POST['post_form_workflow']
     if should_edit('auto_gps_capture'):
         form.auto_gps_capture = request.POST['auto_gps_capture'] == 'true'
+    if should_edit('is_release_notes_form'):
+        form.is_release_notes_form = request.POST['is_release_notes_form'] == 'true'
+    if should_edit('enable_release_notes'):
+        form.enable_release_notes = request.POST['enable_release_notes'] == 'true'
+        if not form.is_release_notes_form and form.enable_release_notes:
+            return json_response(
+                {'message': _("You can't enable a form as release notes without allowing it as "
+                    "a release notes form <TODO messaging>")},
+                status_code=400
+            )
     if should_edit('no_vellum'):
         form.no_vellum = request.POST['no_vellum'] == 'true'
     if (should_edit("form_links_xpath_expressions") and
@@ -621,6 +631,8 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'allow_usercase': allow_usercase,
         'is_usercase_in_use': is_usercase_in_use(request.domain),
         'is_module_filter_enabled': app.enable_module_filtering,
+        'is_training_module': module.is_training_module,
+        'is_allowed_to_be_release_notes_form': form.is_allowed_to_be_release_notes_form,
         'root_requires_same_case': module.root_requires_same_case(),
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
@@ -779,27 +791,6 @@ def _get_xform_source(request, app, form, filename="form.xml"):
         return response
     else:
         return json_response(source)
-
-
-def xform_display(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    langs = [request.GET.get('lang')] + app.langs
-
-    questions = form.get_questions(langs, include_triggers=True,
-                                   include_groups=True)
-
-    if request.GET.get('format') == 'html':
-        questions = [FormQuestionResponse(q) for q in questions]
-        return render(request, "app_manager/xform_display.html", {
-            'questions': questions_in_hierarchy(questions)
-        })
-    else:
-        return json_response(questions)
 
 
 @require_can_edit_apps

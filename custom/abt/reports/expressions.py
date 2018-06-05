@@ -11,18 +11,12 @@ import six
 from io import open
 
 
-class AbtSupervisorExpressionSpec(JsonObject):
-    type = TypeProperty('abt_supervisor')
+class AbtExpressionSpec(JsonObject):
 
     @property
     @memoized
     def _flag_specs(self):
-        """
-        Return a dict where keys are form xmlns and values are lists of FlagSpecs
-        """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
-        with open(path, encoding='utf-8') as f:
-            return yaml.load(f)
+        raise NotImplementedError()
 
     @classmethod
     def _get_val(cls, item, path):
@@ -60,17 +54,17 @@ class AbtSupervisorExpressionSpec(JsonObject):
         return {q['value']: q for q in questions}
 
     @classmethod
-    def _get_question_options(cls, item, question_path):
+    def _get_question_options(cls, item, question_path, section='data'):
         """
         Return a list of option values for the given question path and item
         (which is a dict representation of an XFormInstance)
         """
         questions = cls._get_questions(item['app_id'], item['xmlns'], cls._get_language(item))
-        question = questions.get('/data/' + "/".join(question_path), {})
+        question = questions.get('/' + section + '/' + "/".join(question_path), {})
         return question.get("options", [])
 
     @classmethod
-    def _get_unchecked(cls, xform_instance, question_path, answer, ignore=None):
+    def _get_unchecked(cls, xform_instance, question_path, answer, ignore=None, section='data'):
         """
         Return the unchecked options in the given question.
         Do not return any which appear in the option ignore parameter.
@@ -79,7 +73,9 @@ class AbtSupervisorExpressionSpec(JsonObject):
         ignore should be a list of strings.
         """
         answer = answer or ""
-        options = {o['value']: o['label'] for o in cls._get_question_options(xform_instance, question_path)}
+        options = {
+            o['value']: o['label'] for o in cls._get_question_options(xform_instance, question_path, section)
+        }
         checked = set(answer.split(" "))
         unchecked = set(options.keys()) - checked
         relevant_unchecked = unchecked - set(ignore)
@@ -99,6 +95,9 @@ class AbtSupervisorExpressionSpec(JsonObject):
             parts = question_path[-1].split("_")
             parts.insert(1, "comments")
             comments_question = question_path[:-1] + ["_".join(parts)]
+
+        if cls.comment_from_root:
+            comments_question = spec.get("base_path")[:-1] + comments_question
 
         comments = cls._get_val(item, comments_question)
         return comments if comments != () else ""
@@ -194,18 +193,23 @@ class AbtSupervisorExpressionSpec(JsonObject):
                 if warning_type == "unchecked" and form_value:
                     # Don't raise flag if no answer given
                     ignore = spec.get("ignore", [])
+                    section = spec.get("section", "data")
                     unchecked = self._get_unchecked(
                         item,
                         spec.get('base_path', []) + spec['question'],
                         form_value,
-                        ignore
+                        ignore,
+                        section
                     )
                     if unchecked:
                         # Raise a flag because there are unchecked answers.
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=", ".join(unchecked)),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
@@ -223,7 +227,25 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(msg=missing_items),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
+                            'names': names,
+                        })
+                elif warning_type == "not_selected" and form_value:
+                    value = spec.get("velue", "")
+                    if form_value and value not in form_value:
+                        warning_question_data = partial if not spec.get('warning_question_root', False) else item
+                        docs.append({
+                            'flag': self._get_flag_name(item, spec),
+                            'warning': self._get_warning(spec, item).format(
+                                msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
+                            ),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
@@ -233,18 +255,57 @@ class AbtSupervisorExpressionSpec(JsonObject):
                         self._question_answered(form_value) and
                         self._raise_for_any_answer(danger_value)
                     ):
+                        warning_question_data = partial if not spec.get('warning_question_root', False) else item
                         docs.append({
                             'flag': self._get_flag_name(item, spec),
                             'warning': self._get_warning(spec, item).format(
-                                msg=self._get_val(partial, spec.get('warning_question', None)) or ""
+                                msg=self._get_val(warning_question_data, spec.get('warning_question', None)) or ""
                             ),
-                            'comments': self._get_comments(partial, spec),
+                            'comments': self._get_comments(
+                                partial if not self.comment_from_root else item,
+                                spec
+                            ),
                             'names': names,
                         })
 
         return docs
 
 
+class AbtSupervisorExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor')
+    comment_from_root = False
+
+    @property
+    @memoized
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
+class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
+    type = TypeProperty('abt_supervisor_v2')
+    comment_from_root = True
+
+    @property
+    @memoized
+    def _flag_specs(self):
+        """
+        Return a dict where keys are form xmlns and values are lists of FlagSpecs
+        """
+        path = os.path.join(os.path.dirname(__file__), 'flagspecs_v2.yaml')
+        with open(path, encoding='utf-8') as f:
+            return yaml.load(f)
+
+
 def abt_supervisor_expression(spec, context):
     wrapped = AbtSupervisorExpressionSpec.wrap(spec)
+    return wrapped
+
+
+def abt_supervisor_v2_expression(spec, context):
+    wrapped = AbtSupervisorV2ExpressionSpec.wrap(spec)
     return wrapped

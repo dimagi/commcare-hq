@@ -12,7 +12,7 @@ from corehq.sql_db.operations import HqRunPython
 
 
 def add_partitions(apps, schema_editor):
-    partition.run({'module': 'custom.icds_reports.models'})
+    partition.run({'module': 'custom.icds_reports.models.util'})
 
 
 class Migration(migrations.Migration):

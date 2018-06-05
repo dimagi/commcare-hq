@@ -81,7 +81,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
         expected = (
             "Percentage of children who were put to the breast within one hour of birth."
             "<br/><br/>Early initiation of breastfeeding ensure the newborn "
-            "recieves the 'first milk' rich in nutrients"
+            "receives the 'first milk' rich in nutrients"
             " and encourages exclusive breastfeeding practice"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
@@ -296,7 +296,7 @@ class TestEarlyInitiationBreastFeeding(TestCase):
             ),
             {
                 "info": "Percentage of children who were put to the breast within one hour of birth."
-                        "<br/><br/>Early initiation of breastfeeding ensure the newborn recieves the 'first milk'"
+                        "<br/><br/>Early initiation of breastfeeding ensure the newborn receives the 'first milk'"
                         " rich in nutrients and encourages exclusive breastfeeding practice",
                 "tooltips_data": {
                     "s2": {

@@ -34,7 +34,7 @@ def write_cache_heartbeat():
     Writes the current time to the cache. Returns true if written.
     """
     if hasattr(settings, "SOIL_HEARTBEAT_CACHE_KEY"):
-        cache.set(settings.SOIL_HEARTBEAT_CACHE_KEY, datetime.utcnow().strftime(DATE_FORMAT))
+        return cache.set(settings.SOIL_HEARTBEAT_CACHE_KEY, datetime.utcnow().strftime(DATE_FORMAT))
     
 
 def get_file_heartbeat():

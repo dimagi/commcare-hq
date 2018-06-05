@@ -45,7 +45,7 @@ BEGIN
     'extra_meal, ' ||
     'resting_during_pregnancy, ' ||
     'bp_visited_in_month, ' ||
-    'pnc_visited_in_month, ' ||
+    'NULL, ' ||
     'trimester_2, ' ||
     'trimester_3, ' ||
     'counsel_immediate_bf, ' ||
@@ -60,7 +60,7 @@ BEGIN
     'pnc_complete, ' ||
     'postnatal, ' ||
     'has_aadhar_id, ' ||
-    'counsel_fp_methods, ' ||
+    'NULL, ' ||
     'pregnant, ' ||
     'pregnant_all, ' ||
     'lactating, ' ||

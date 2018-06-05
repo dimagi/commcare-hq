@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS domain_registration_request;

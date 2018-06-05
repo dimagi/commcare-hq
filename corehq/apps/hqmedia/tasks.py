@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
@@ -14,7 +15,6 @@ from corehq.util.files import file_extention_from_filename
 from soil import DownloadBase
 from django.utils.translation import ugettext as _
 from soil.util import expose_file_download, expose_cached_download
-from io import open
 
 logging = get_task_logger(__name__)
 
@@ -160,7 +160,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
     else:
         expose_cached_download(
-            FileWrapper(open(fpath, encoding='utf-8')),
+            FileWrapper(open(fpath, 'rb')),
             expiry=(1 * 60 * 60),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs

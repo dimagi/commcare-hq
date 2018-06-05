@@ -290,16 +290,13 @@
                 {% endif %}
             {% endif %}
             <div class="panel panel-appmanager panel-appmanager-form panel-appmanager-form-danger">
-                <form class="form form-horizontal" method="POST" action="{% url "delete_app" domain app.id %}">
-                    {% csrf_token %}
-                    <legend>{% trans "Delete Application" %}</legend>
-                    <div class="panel-body">
-                        <button type="submit" class="btn btn-danger disable-on-submit">
-                            <i class="fa fa-trash"></i>
-                            {% trans "Delete this application" %}
-                        </button>
-                    </div>
-                </form>
+                <legend>{% trans "Delete Application" %}</legend>
+                <div class="panel-body">
+                    <a href="#delete-app-modal" class="btn btn-danger" data-toggle="modal">
+                        <i class="fa fa-trash"></i>
+                        {% trans "Delete this application" %}
+                    </a>
+                </div>
             </div>
         </div>
         <div class="tab-pane" id="add-ons">

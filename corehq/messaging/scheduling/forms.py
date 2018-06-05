@@ -870,14 +870,6 @@ class ScheduleForm(Form):
 
     LANGUAGE_PROJECT_DEFAULT = 'PROJECT_DEFAULT'
 
-    active = ChoiceField(
-        required=True,
-        label='',
-        choices=(
-            ('Y', ugettext_lazy("Active")),
-            ('N', ugettext_lazy("Inactive")),
-        ),
-    )
     send_frequency = ChoiceField(
         required=True,
         label=ugettext_lazy('Send'),
@@ -889,6 +881,14 @@ class ScheduleForm(Form):
             (SEND_CUSTOM_DAILY, ugettext_lazy('Custom Daily Schedule')),
             (SEND_CUSTOM_IMMEDIATE, ugettext_lazy('Custom Immediate Schedule')),
         )
+    )
+    active = ChoiceField(
+        required=True,
+        label='',
+        choices=(
+            ('Y', ugettext_lazy("Active")),
+            ('N', ugettext_lazy("Inactive")),
+        ),
     )
     weekdays = MultipleChoiceField(
         required=False,
@@ -1018,6 +1018,11 @@ class ScheduleForm(Form):
     include_case_updates_in_partial_submissions = BooleanField(
         required=False,
         label=ugettext_lazy("Include case updates in partially completed submissions"),
+    )
+
+    use_utc_as_default_timezone = BooleanField(
+        required=False,
+        label=ugettext_lazy("Interpret send times using GMT when recipient has no preferred time zone"),
     )
 
     # The standalone_content_form should be an instance of ContentForm and is used
@@ -1210,6 +1215,7 @@ class ScheduleForm(Form):
                 if schedule.default_language_code
                 else self.LANGUAGE_PROJECT_DEFAULT
             )
+            result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
                     self.add_initial_for_immediate_schedule(result)
@@ -1653,8 +1659,25 @@ class ScheduleForm(Form):
             ),
         ]
 
+    @property
+    def display_utc_timezone_option(self):
+        """
+        See comment under Schedule.use_utc_as_default_timezone.
+        use_utc_as_default_timezone is only set to True on reminders migrated
+        from the old framework that needed it to be set to True. We don't
+        encourage using this option for new reminders so it's only visible
+        for those reminders that have it set to True. It is possible to edit
+        an old reminder and disable the option, after which it will be hidden
+        and won't be allowed to be enabled again.
+        """
+        return self.initial_schedule and self.initial_schedule.use_utc_as_default_timezone
+
     def get_advanced_layout_fields(self):
         return [
+            crispy.Div(
+                crispy.Field('use_utc_as_default_timezone'),
+                data_bind='visible: %s' % ('true' if self.display_utc_timezone_option else 'false'),
+            ),
             crispy.Field('default_language_code'),
         ]
 
@@ -2084,6 +2107,7 @@ class ScheduleForm(Form):
                 form_data['include_descendant_locations']
             ),
             'location_type_filter': form_data['location_types'],
+            'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
         }
 
     def distill_start_offset(self):
@@ -2306,6 +2330,14 @@ class BroadcastForm(ScheduleForm):
     def __init__(self, domain, schedule, can_use_sms_surveys, broadcast, *args, **kwargs):
         self.initial_broadcast = broadcast
         super(BroadcastForm, self).__init__(domain, schedule, can_use_sms_surveys, *args, **kwargs)
+
+    def clean_active(self):
+        active = super(BroadcastForm, self).clean_active()
+
+        if self.cleaned_data.get('send_frequency') == self.SEND_IMMEDIATELY and not active:
+            raise ValidationError(_("You cannot create an immediate broadcast which is inactive."))
+
+        return active
 
     def get_after_content_layout_fields(self):
         result = super(BroadcastForm, self).get_after_content_layout_fields()

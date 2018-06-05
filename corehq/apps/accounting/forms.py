@@ -94,6 +94,11 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=True,
     )
+    is_customer_billing_account = forms.BooleanField(
+        label=ugettext_lazy("Is Customer Billing Account"),
+        required=False,
+        initial=False
+    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
@@ -131,6 +136,7 @@ class BillingAccountBasicForm(forms.Form):
                 'currency': account.currency.code,
                 'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
+                'is_customer_billing_account': account.is_customer_billing_account,
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -159,6 +165,13 @@ class BillingAccountBasicForm(forms.Form):
                 crispy.Field(
                     'is_active',
                     data_bind="checked: is_active",
+                ),
+            ))
+            additional_fields.append(hqcrispy.B3MultiField(
+                "Customer Billing Account",
+                crispy.Field(
+                    'is_customer_billing_account',
+                    data_bind="checked: is_customer_billing_account",
                 ),
             ))
             if account.subscription_set.count() > 0:
@@ -281,6 +294,7 @@ class BillingAccountBasicForm(forms.Form):
     def update_basic_info(self, account):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
+        account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)

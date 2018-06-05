@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-15 18:58+0000\n"
+"POT-Creation-Date: 2018-06-05 14:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Language-Team: Swahili (https://www.transifex.com/dimagi/teams/9388/sw/)\n"
 "Language: sw\n"
@@ -33,16 +33,16 @@ msgstr ""
 msgid "There was an error saving."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:172
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:174
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:365
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:367
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:393
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:395
 #: corehq/apps/export/static/export/js/customize_export_old.js:36
 msgid "You have unsaved changes"
 msgstr ""
@@ -59,7 +59,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:557
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
-#: corehq/apps/reports/static/reports/js/single_form.js:83
+#: corehq/apps/reports/static/reports/js/single_form.js:85
 msgid "Copied!"
 msgstr ""
 
@@ -374,35 +374,35 @@ msgstr ""
 msgid "Parent property references not allowed for subcases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:168
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:169
 msgid "Edit Form"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:4
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:6
 msgid "Form Settings"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Home Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
 msgid "First Menu"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:84
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:89
 msgid "Parent Menu: "
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:91
 msgid "Previous Screen"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:95
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:100
 msgid "Link to other form"
 msgstr ""
 
@@ -443,15 +443,15 @@ msgstr ""
 msgid "Show All"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:240
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:245
 msgid "Display text is required"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:331
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:336
 msgid "You have unsaved changes in your report list module"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:424
+#: corehq/apps/app_manager/static/app_manager/js/modules/report_module.js:429
 msgid "This code is used in multiple places."
 msgstr ""
 
@@ -506,15 +506,15 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:394
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:393
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:428
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
 msgid "The versions list has changed since you loaded the page."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:433
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:432
 msgid "No new changes!"
 msgstr ""
 
@@ -2212,7 +2212,7 @@ msgstr ""
 msgid "Evaluate XPath"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:271
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:272
 msgid "Error evaluating expression."
 msgstr ""
 
@@ -2233,7 +2233,7 @@ msgstr ""
 msgid "Not a valid choice"
 msgstr ""
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:602
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:620
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2570,7 +2570,7 @@ msgid "Clear"
 msgstr ""
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports/static/reports/js/filters/main.js:67
+#: corehq/apps/reports/static/reports/js/filters/main.js:73
 msgid "Show All Dates"
 msgstr ""
 
@@ -2738,31 +2738,31 @@ msgstr ""
 msgid "Select a Location"
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:112
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:116
 msgid "Please enter your name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:121
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:125
 msgid "Please specify an email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:148
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:152
 msgid "There is already a user with this email."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:156
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:160
 msgid "Checking email..."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:166
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:170
 msgid "Please specify a password."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:186
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:190
 msgid "Please specify a project name."
 msgstr ""
 
-#: corehq/apps/registration/static/registration/js/new_user.ko.js:203
+#: corehq/apps/registration/static/registration/js/new_user.ko.js:207
 msgid "Please specify."
 msgstr ""
 
@@ -2773,7 +2773,7 @@ msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:27
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:64
-msgid "Your password is almost strong enough!"
+msgid "Your password is almost strong enough! Try adding numbers or symbols!"
 msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:29
@@ -2837,6 +2837,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
+#: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr ""
 
@@ -2868,12 +2869,12 @@ msgstr ""
 msgid "Search Reports..."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:135
+#: corehq/apps/reports/static/reports/js/filters/main.js:141
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:148
+#: corehq/apps/reports/static/reports/js/filters/main.js:166
 msgid "Select a group"
 msgstr ""
 
@@ -2946,11 +2947,11 @@ msgid ""
 "your account settings."
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/single_form.js:40
+#: corehq/apps/reports/static/reports/js/single_form.js:42
 msgid "Labels"
 msgstr ""
 
-#: corehq/apps/reports/static/reports/js/single_form.js:44
+#: corehq/apps/reports/static/reports/js/single_form.js:46
 msgid "Question IDs"
 msgstr ""
 
@@ -3309,35 +3310,35 @@ msgstr ""
 msgid "minute(s)"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:196
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:197
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:198
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:199
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:200
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:201
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:229
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:230
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:231
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:232
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:233
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:234
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:378
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:379
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:380
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:381
 msgid "Schedule Broadcast"
 msgstr ""
 

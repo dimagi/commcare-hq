@@ -66,6 +66,14 @@ class Schedule(models.Model):
     # to edit this schedule.
     ui_type = models.CharField(max_length=2, default=UI_TYPE_UNKNOWN)
 
+    #   The old reminders framework would interpret times using UTC if the contact
+    # didn't have a time zone configured. The new reminders framework uses the
+    # project's time zone if the contact doesn't have a time zone configured.
+    #   There are a lot of edge cases which make it not possible to just convert
+    # times in reminders during the reminders migration. So for old reminders
+    # where this makes a difference, this option is set to True during the migration.
+    use_utc_as_default_timezone = models.BooleanField(default=False)
+
     class Meta(object):
         abstract = True
 
@@ -131,6 +139,10 @@ class Schedule(models.Model):
             if isinstance(event.content, SMSSurveyContent):
                 return True
 
+        return False
+
+    @property
+    def references_parent_case(self):
         return False
 
     def delete_related_events(self):

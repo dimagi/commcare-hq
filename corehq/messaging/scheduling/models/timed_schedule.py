@@ -6,6 +6,7 @@ import hashlib
 import json
 import random
 import re
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.messaging.scheduling.exceptions import InvalidMonthlyScheduleConfiguration
 from corehq.messaging.scheduling.models.abstract import Schedule, Event, Broadcast, Content
 from corehq.messaging.scheduling import util
@@ -60,13 +61,18 @@ class TimedSchedule(Schedule):
         being sent at each event, is excluded. This is mainly used to determine
         when a TimedScheduleInstance should recalculate its schedule.
         """
-        schedule_info = json.dumps([
+        result = [
             self.repeat_every,
             self.total_iterations,
             self.start_offset,
             self.start_day_of_week,
             [e.get_scheduling_info(case=case) for e in self.memoized_events],
-        ])
+        ]
+
+        if self.use_utc_as_default_timezone:
+            result.append('UTC_DEFAULT')
+
+        schedule_info = json.dumps(result)
         return hashlib.md5(schedule_info).hexdigest()
 
     @property
@@ -108,7 +114,7 @@ class TimedSchedule(Schedule):
         if start_date:
             instance.start_date = start_date
         else:
-            instance.start_date = instance.today_for_recipient
+            instance.start_date = instance.get_today_for_recipient(self)
 
         self.set_next_event_due_timestamp(instance)
 
@@ -226,7 +232,7 @@ class TimedSchedule(Schedule):
             user_timestamp = self.get_local_next_event_due_timestamp(instance)
 
         instance.next_event_due = (
-            UserTime(user_timestamp, instance.timezone)
+            UserTime(user_timestamp, instance.get_timezone(self))
             .server_time()
             .done()
             .replace(tzinfo=None)
@@ -501,6 +507,17 @@ class TimedSchedule(Schedule):
                 event.content = content
                 event.save()
                 order += 1
+
+    @property
+    def references_parent_case(self):
+        if super(TimedSchedule, self).references_parent_case:
+            return True
+
+        for event in self.memoized_events:
+            if isinstance(event, CasePropertyTimedEvent) and property_references_parent(event.case_property_name):
+                return True
+
+        return False
 
 
 class AbstractTimedEvent(Event):

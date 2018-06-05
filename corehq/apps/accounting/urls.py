@@ -19,6 +19,8 @@ from corehq.apps.accounting.views import (
     ViewSoftwarePlanVersionView,
     WireInvoiceSummaryView,
     accounting_default,
+    enterprise_dashboard,
+    enterprise_dashboard_download,
 )
 
 
@@ -34,6 +36,9 @@ urlpatterns = [
         name=TestRenewalEmailView.urlname),
     url(r'^manage_admins/$', ManageAccountingAdminsView.as_view(),
         name=ManageAccountingAdminsView.urlname),
+    url(r'^enterprise_dashboard/(?P<account_id>\d+)/$', enterprise_dashboard, name='enterprise_dashboard'),
+    url(r'^enterprise_dashboard/(?P<account_id>\d+)/(?P<slug>[^/]*)/$', enterprise_dashboard_download,
+        name='enterprise_dashboard_download'),
     url(r'^accounts/(\d+)/$', ManageBillingAccountView.as_view(), name=ManageBillingAccountView.urlname),
     url(r'^accounts/new/$', NewBillingAccountView.as_view(), name=NewBillingAccountView.urlname),
     url(r'^subscriptions/(\d+)/$', EditSubscriptionView.as_view(), name=EditSubscriptionView.urlname),

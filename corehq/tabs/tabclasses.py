@@ -22,6 +22,21 @@ from corehq.apps.hqwebapp.view_permissions import user_can_view_reports
 from corehq.apps.indicators.dispatcher import IndicatorAdminInterfaceDispatcher
 from corehq.apps.indicators.utils import get_indicator_domains
 from corehq.apps.locations.analytics import users_have_locations
+from corehq.apps.reminders.views import (
+    BroadcastListView as OldBroadcastListView,
+    CreateBroadcastView,
+    EditBroadcastView,
+    CopyBroadcastView,
+    EditScheduledReminderView,
+    CreateScheduledReminderView,
+    CreateComplexScheduledReminderView,
+    RemindersListView,
+    KeywordsListView,
+    AddNormalKeywordView,
+    AddStructuredKeywordView,
+    EditNormalKeywordView,
+    EditStructuredKeywordView,
+)
 from corehq.apps.reports.dispatcher import ProjectReportDispatcher, \
     CustomProjectReportDispatcher
 from corehq.apps.reports.models import ReportConfig, ReportsSidebarOrdering
@@ -34,7 +49,18 @@ from corehq.apps.users.permissions import (
     can_view_sms_exports,
     can_download_data_files,
 )
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.messaging.scheduling.views import (
+    MessagingDashboardView,
+    BroadcastListView as NewBroadcastListView,
+    CreateScheduleView,
+    EditScheduleView,
+    ConditionalAlertListView,
+    CreateConditionalAlertView,
+    EditConditionalAlertView,
+)
+from corehq.messaging.util import show_messaging_dashboard
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -898,12 +924,6 @@ class MessagingTab(UITab):
         reminders_urls = []
 
         if self.can_access_reminders and self.show_old_reminders_pages:
-            from corehq.apps.reminders.views import (
-                EditScheduledReminderView,
-                CreateScheduledReminderView,
-                CreateComplexScheduledReminderView,
-                RemindersListView,
-            )
             reminders_urls.extend([
                 {
                     'title': _("Reminders"),
@@ -922,21 +942,14 @@ class MessagingTab(UITab):
                             'urlname': CreateComplexScheduledReminderView.urlname,
                         },
                     ],
-                    'show_in_dropdown': True,
                 },
                 {
                     'title': _("Reminder Calendar"),
                     'url': reverse('scheduled_reminders', args=[self.domain]),
-                    'show_in_dropdown': True,
                 },
             ])
 
         if self.can_use_inbound_sms:
-            from corehq.apps.reminders.views import (
-                KeywordsListView, AddNormalKeywordView,
-                AddStructuredKeywordView, EditNormalKeywordView,
-                EditStructuredKeywordView,
-            )
             reminders_urls.append({
                 'title': _("Keywords"),
                 'url': reverse(KeywordsListView.urlname, args=[self.domain]),
@@ -980,6 +993,11 @@ class MessagingTab(UITab):
 
     @property
     @memoized
+    def show_dashboard(self):
+        return show_messaging_dashboard(self.domain, self.couch_user)
+
+    @property
+    @memoized
     def messages_urls(self):
         messages_urls = []
 
@@ -993,14 +1011,6 @@ class MessagingTab(UITab):
 
         if self.can_access_reminders:
             if self.show_new_reminders_pages:
-                from corehq.messaging.scheduling.views import (
-                    BroadcastListView as NewBroadcastListView,
-                    CreateScheduleView,
-                    EditScheduleView,
-                    ConditionalAlertListView,
-                    CreateConditionalAlertView,
-                    EditConditionalAlertView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcasts"),
@@ -1015,7 +1025,6 @@ class MessagingTab(UITab):
                                 'urlname': EditScheduleView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                     {
                         'title': _("Conditional Alerts"),
@@ -1030,16 +1039,9 @@ class MessagingTab(UITab):
                                 'urlname': EditConditionalAlertView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
             if self.show_old_reminders_pages:
-                from corehq.apps.reminders.views import (
-                    BroadcastListView as OldBroadcastListView,
-                    CreateBroadcastView,
-                    EditBroadcastView,
-                    CopyBroadcastView,
-                )
                 messages_urls.extend([
                     {
                         'title': _("Broadcast Messages"),
@@ -1058,7 +1060,6 @@ class MessagingTab(UITab):
                                 'urlname': CopyBroadcastView.urlname,
                             },
                         ],
-                        'show_in_dropdown': True,
                     },
                 ])
 
@@ -1147,8 +1148,67 @@ class MessagingTab(UITab):
         return settings_urls
 
     @property
+    def dropdown_items(self):
+        result = []
+
+        if self.show_dashboard:
+            result.append(dropdown_dict(_("Dashboard"), is_header=True))
+            result.append(dropdown_dict(
+                _("Dashboard (beta)"),
+                url=reverse(MessagingDashboardView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_old_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcast Messages"),
+                url=reverse(OldBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Reminders"),
+                url=reverse(RemindersListView.urlname, args=[self.domain]),
+            ))
+
+        if self.show_new_reminders_pages:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(_("Messages"), is_header=True))
+            result.append(dropdown_dict(
+                _("Broadcasts"),
+                url=reverse(NewBroadcastListView.urlname, args=[self.domain]),
+            ))
+            result.append(dropdown_dict(
+                _("Conditional Alerts"),
+                url=reverse(ConditionalAlertListView.urlname, args=[self.domain]),
+            ))
+
+        if not self.show_dashboard:
+            if result:
+                result.append(dropdown_dict(None, is_divider=True))
+
+            result.append(dropdown_dict(
+                _("View All"),
+                url=reverse('sms_compose_message', args=[self.domain]),
+            ))
+
+        return result
+
+    @property
     def sidebar_items(self):
         items = []
+
+        if self.show_dashboard:
+            items.append((
+                _("Dashboard"),
+                [{
+                    'title': _("Dashboard"),
+                    'url': reverse(MessagingDashboardView.urlname, args=[self.domain])
+                }]
+            ))
 
         for title, urls in (
             (_("Messages"), self.messages_urls),
@@ -1552,8 +1612,8 @@ def _get_integration_section(domain):
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
         }, {
-            'title': _(Dhis2LogListView.page_title),
-            'url': reverse(Dhis2LogListView.urlname, args=[domain])
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
@@ -1735,7 +1795,7 @@ class AdminTab(UITab):
     @property
     def dropdown_items(self):
         if (self.couch_user and not self.couch_user.is_superuser
-                and (toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                and (toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
                 dropdown_dict(_("System Info"), url=reverse("system_info")),
                 dropdown_dict(_("Feature Flags"), url=reverse("toggle_list")),
@@ -1770,36 +1830,53 @@ class AdminTab(UITab):
         # todo: convert these to dispatcher-style like other reports
         if (self.couch_user and
                 (not self.couch_user.is_superuser and
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username))):
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
-                (_('Administrative Reports'), [
+                (_('System Health'), [
                     {'title': _('System Info'),
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = [
+        admin_operations = []
+        data_operations = []
+        system_operations = []
+        user_operations = [
             {'title': _('Look up user by email'),
              'url': reverse('web_user_lookup')},
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import (
-                AuthenticateAs, ReprocessMessagingCaseUpdatesView
-            )
+            from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
+            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
+            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
-            admin_operations = [
+            data_operations = [
+                {'title': _('View raw couch documents'),
+                 'url': reverse('raw_couch')},
+                {'title': _('View documents in ES'),
+                 'url': reverse('doc_in_es')},
+            ]
+            system_operations = [
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': RecentCouchChangesView.page_title,
+                 'url': reverse(RecentCouchChangesView.urlname)},
+                {'title': _('Branches on Staging'),
+                 'url': reverse('branches_on_staging')},
+            ]
+            user_operations = [
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
-            ] + admin_operations + [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
-                {'title': _('Check Call Center UCR tables'),
-                 'url': reverse('callcenter_ucr_check')},
+            ] + user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management')},
+            ]
+            admin_operations += [
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
                 {'title': _('Manage Notifications'),
@@ -1807,7 +1884,7 @@ class AdminTab(UITab):
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
             ]
-        return [
+        sections = [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
@@ -1819,8 +1896,6 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('System Info'),
-                 'url': reverse('system_info')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
@@ -1830,26 +1905,34 @@ class AdminTab(UITab):
                 {'title': _('Admin Phone Number Report'),
                  'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
-            (_('Administrative Operations'), admin_operations),
-            (_('CommCare Reports'), [
-                {
-                    'title': report.name,
-                    'url': '{url}{params}'.format(
-                        url=reverse('admin_report_dispatcher', args=(report.slug,)),
-                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
-                    )
-                } for report in [
-                    RealProjectSpacesReport,
-                    CommConnectProjectSpacesReport,
-                    CommTrackProjectSpacesReport,
-                    DeviceLogSoftAssertReport,
-                    UserAuditReport,
-                ]
-            ]),
         ]
+        if admin_operations:
+            sections.append((_('Administrative Operations'), admin_operations))
+        if user_operations:
+            sections.append((_('User Administration'), user_operations))
+        if system_operations:
+            sections.append((_('System Health'), system_operations))
+        if data_operations:
+            sections.append((_('Inspect Data'), data_operations))
+        sections.append((_('CommCare Reports'), [
+            {
+                'title': report.name,
+                'url': '{url}{params}'.format(
+                    url=reverse('admin_report_dispatcher', args=(report.slug,)),
+                    params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
+                )
+            } for report in [
+                RealProjectSpacesReport,
+                CommConnectProjectSpacesReport,
+                CommTrackProjectSpacesReport,
+                DeviceLogSoftAssertReport,
+                UserAuditReport,
+            ]
+        ]))
+        return sections
 
     @property
     def _is_viewable(self):
         return (self.couch_user and
                 (self.couch_user.is_superuser or
-                 toggles.IS_DEVELOPER.enabled(self.couch_user.username)))
+                 toggles.IS_CONTRACTOR.enabled(self.couch_user.username)))

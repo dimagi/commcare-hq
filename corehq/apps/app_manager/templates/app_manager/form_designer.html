@@ -45,7 +45,7 @@
     {% endcompress %}
 {% endblock %}
 
-{% block title %}✎ {{ form.name|clean_trans:langs }} - {% trans 'Edit Form' %}{% endblock %}
+{% block title %}{# controlled by app_manager/js/form_designer.js #}{% endblock %}
 
 {% block form-view %}
     {% initial_page_data 'CKEDITOR_BASEPATH' CKEDITOR_BASEPATH|static %}
