@@ -53,9 +53,8 @@
     <script id="phase-template" type="text/html">
         <tr class="phase" data-bind="style: {cursor: 'move'}">
             <td>
-                <i class="grip sortable-handle"
-                   data-bind="css: hqImport('hqwebapp/js/main').icons.GRIP,
-                              event: {mousedown: function(){ $(':focus').blur(); }},
+                <i class="grip sortable-handle fa fa-arrows-v"
+                   data-bind="event: {mousedown: function(){ $(':focus').blur(); }},
                               visible: $data !== $parent.selectedPhase()"></i>
                 <input data-bind="value: name, visibleAndSelect: $data === $parent.selectedPhase(),
                                   event: { blur: function() { $parent.selectPhase(''); } }"/>

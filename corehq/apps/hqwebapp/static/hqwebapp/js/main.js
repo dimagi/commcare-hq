@@ -351,7 +351,6 @@ hqDefine('hqwebapp/js/main', [
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
         icons: {
-            GRIP: 'icon-resize-vertical icon-blue fa fa-arrows-v',
             ADD: 'icon-plus icon-blue fa fa-plus',
             DELETE: 'icon-remove icon-blue fa fa-remove',
         },

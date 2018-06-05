@@ -34,9 +34,8 @@
             ">
                 <td class="text-center col-sm-1">
                     <span class="sort-disabled" data-bind="ifnot: grip"></span>
-                    <i class="grip sortable-handle" data-bind="
+                    <i class="grip sortable-handle fa fa-arrows-v" data-bind="
                         if: grip,
-                        css: hqImport('hqwebapp/js/main').icons.GRIP,
                         event: {mousedown: function(){ $(':focus').blur(); }}
                     "></i>
                 </td>
