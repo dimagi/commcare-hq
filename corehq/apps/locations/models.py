@@ -379,7 +379,7 @@ class SQLLocation(AdjListModel):
     domain = models.CharField(max_length=255, db_index=True)
     name = models.CharField(max_length=255, null=True)
     location_id = models.CharField(max_length=100, db_index=True, unique=True)
-    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE, db_index=True)
+    location_type = models.ForeignKey(LocationType, on_delete=models.CASCADE)
     site_code = models.CharField(max_length=255)
     external_id = models.CharField(max_length=255, null=True, blank=True)
     metadata = jsonfield.JSONField(default=dict, blank=True)
