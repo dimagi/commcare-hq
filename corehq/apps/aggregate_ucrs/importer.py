@@ -54,12 +54,12 @@ def _update_secondary_tables(spec, table_definition):
         try:
             db_secondary_table = SecondaryTableDefinition.objects.get(
                 table_definition=table_definition,
-                data_source=secondary_table_spec.data_source_id
+                data_source_id=secondary_table_spec.data_source_id
             )
         except SecondaryTableDefinition.DoesNotExist:
             db_secondary_table = SecondaryTableDefinition(
                 table_definition=table_definition,
-                data_source=secondary_table_spec.data_source_id
+                data_source_id=secondary_table_spec.data_source_id
             )
         db_secondary_table.data_source_key = secondary_table_spec.key_column
         db_secondary_table.aggregation_column = secondary_table_spec.aggregation_column
