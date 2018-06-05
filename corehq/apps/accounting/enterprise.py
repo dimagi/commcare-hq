@@ -109,13 +109,14 @@ class EnterpriseDomainReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
-        return [_('Plan'), _('# of Mobile Users'), _('# of Web Users')] + headers
+        return [_('Plan'), _('Created On'), _('# of Mobile Users'), _('# of Web Users')] + headers
 
     def rows_for_domain(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain.name)
         plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         return [[
             plan_version.plan.name,
+            self.format_date(domain.date_created),
             get_mobile_user_count(domain.name, include_inactive=False),
             get_web_user_count(domain.name, include_inactive=False),
         ] + self.domain_properties(domain)]
@@ -161,7 +162,8 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseMobileWorkerReport, self).headers
-        return [_('Username'), _('Name'), _('Last Sync'), _('Last Submission'), _('CommCare Version')] + headers
+        return [_('Username'), _('Name'), _('Created Date'), _('Last Sync'),
+                _('Last Submission'), _('CommCare Version')] + headers
 
     def rows_for_domain(self, domain):
         rows = []
@@ -171,6 +173,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
+                self.format_date(user.created_on),
                 self.format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self.format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
