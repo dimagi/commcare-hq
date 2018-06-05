@@ -142,8 +142,6 @@ class TestLocationView(TestCase):
         cls.factory = RequestFactory()
         cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
         cls.user.is_authenticated = True
-        cls.user.is_superuser = True
-        cls.user.is_authenticated = True
         cls.user.is_active = True
 
     @classmethod
@@ -437,8 +435,6 @@ class TestLocationAncestorsView(TestCase):
         )
         cls.factory = RequestFactory()
         cls.user = WebUser.create(cls.domain.name, 'test', 'passwordtest')
-        cls.user.is_authenticated = True
-        cls.user.is_superuser = True
         cls.user.is_authenticated = True
         cls.user.is_active = True
 
