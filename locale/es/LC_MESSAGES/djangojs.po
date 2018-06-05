@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-05-29 20:25+0000\n"
+"POT-Creation-Date: 2018-06-05 14:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -34,16 +34,16 @@ msgstr "Tiene cambios sin guardar."
 msgid "There was an error saving."
 msgstr "Ocurrió un error al guardar."
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:172
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:174
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Add"
 msgstr "Agregar"
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:365
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:367
 msgid "Moved successfully."
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:393
+#: corehq/apps/app_manager/static/app_manager/js/app_manager.js:395
 #: corehq/apps/export/static/export/js/customize_export_old.js:36
 msgid "You have unsaved changes"
 msgstr "Tiene cambios sin guardar"
@@ -64,7 +64,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:557
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
-#: corehq/apps/reports/static/reports/js/single_form.js:83
+#: corehq/apps/reports/static/reports/js/single_form.js:85
 msgid "Copied!"
 msgstr "¡Copiado!"
 
@@ -384,35 +384,35 @@ msgstr ""
 msgid "Parent property references not allowed for subcases"
 msgstr ""
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:168
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_designer.js:169
 msgid "Edit Form"
 msgstr "Editar Formulario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:4
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:6
 msgid "Form Settings"
 msgstr "Configuración del Formulario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
 msgid "Home Screen"
 msgstr "Pantalla Principal"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
 msgid "First Menu"
 msgstr "Primer Menú"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:87
 msgid "Menu: "
 msgstr "Menú:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:84
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:89
 msgid "Parent Menu: "
 msgstr "Menú Padre:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:91
 msgid "Previous Screen"
 msgstr "Pantallla Anterior"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:95
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:100
 msgid "Link to other form"
 msgstr "Enlace a otro formulario"
 
@@ -521,17 +521,17 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:394
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:393
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:428
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:433
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:432
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -2347,7 +2347,7 @@ msgstr "Formulario XML"
 msgid "Evaluate XPath"
 msgstr "Evaluar XPath"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:271
+#: corehq/apps/cloudcare/static/cloudcare/js/debugger/debugger.js:272
 msgid "Error evaluating expression."
 msgstr "Error al evaluar la expresión."
 
@@ -2716,7 +2716,7 @@ msgid "Clear"
 msgstr "Borrar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports/static/reports/js/filters/main.js:67
+#: corehq/apps/reports/static/reports/js/filters/main.js:73
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
@@ -2925,10 +2925,8 @@ msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
 
 #: corehq/apps/registration/static/registration/js/password.js:27
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:64
-#, fuzzy
-#| msgid "Your password is too weak! Try adding numbers or symbols!"
 msgid "Your password is almost strong enough! Try adding numbers or symbols!"
-msgstr "¡Su contraseña es muy débil! ¡Intente agregar números o simbolos!"
+msgstr ""
 
 #: corehq/apps/registration/static/registration/js/password.js:29
 #: corehq/apps/users/static/users/js/mobile_workers.ng.js:55
@@ -3030,12 +3028,12 @@ msgstr "Reportes Incluidos"
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:135
+#: corehq/apps/reports/static/reports/js/filters/main.js:141
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr "Todo"
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:148
+#: corehq/apps/reports/static/reports/js/filters/main.js:166
 msgid "Select a group"
 msgstr "Seleccione un grupo"
 
@@ -3123,11 +3121,11 @@ msgstr ""
 "El reporte de Excel que solicitó será enviado al correo electrónico definido "
 "en la configuración de su cuenta."
 
-#: corehq/apps/reports/static/reports/js/single_form.js:40
+#: corehq/apps/reports/static/reports/js/single_form.js:42
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: corehq/apps/reports/static/reports/js/single_form.js:44
+#: corehq/apps/reports/static/reports/js/single_form.js:46
 msgid "Question IDs"
 msgstr "ID de Preguntas"
 
@@ -3610,6 +3608,3 @@ msgstr ""
 #: corehq/motech/repeaters/static/repeaters/js/repeat_record_report.js:121
 msgid "Failed to cancel"
 msgstr ""
-
-#~ msgid "Your password is almost strong enough!"
-#~ msgstr "¡Su contraseña casi es suficientemente segura!"
