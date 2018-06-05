@@ -1544,6 +1544,7 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views import (
         FeaturePreviewsView,
         TransferDomainView,
+        RecoveryMeasuresHistory,
     )
 
     administration = []
@@ -1558,6 +1559,12 @@ def _get_administration_section(domain):
                 'url': reverse('domain_manage_multimedia', args=[domain])
             }
         ])
+
+    if toggles.MOBILE_RECOVERY_MEASURES.enabled(domain):
+        administration.append({
+            'title': _(RecoveryMeasuresHistory.page_title),
+            'url': reverse(RecoveryMeasuresHistory.urlname, args=[domain])
+        })
 
     administration.append({
         'title': _(FeaturePreviewsView.page_title),
