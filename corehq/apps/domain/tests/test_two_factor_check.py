@@ -3,11 +3,10 @@ from __future__ import unicode_literals
 from django.test import TestCase, RequestFactory
 from django.test.utils import override_settings
 
-from corehq.util.test_utils import flag_enabled
 from corehq.apps.users.models import CouchUser
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.domain.models import Domain
-from corehq.apps.domain.decorators import _two_factor_required, two_factor_check
+from corehq.apps.domain.decorators import two_factor_required_for_view_or_request, two_factor_check
 from mock import mock, Mock
 import json
 
@@ -33,13 +32,13 @@ class TestTwoFactorCheck(TestCase):
     def test_two_factor_required_for_superuser(self):
         view_func = 'dummy_view_func'
         request = self.request
-        self.assertFalse(_two_factor_required(view_func, self.domain, request.couch_user))
+        self.assertFalse(two_factor_required_for_view_or_request(self.domain, request.couch_user, view_func))
 
         request.couch_user.is_superuser = True
-        self.assertTrue(_two_factor_required(view_func, self.domain, request.couch_user))
+        self.assertTrue(two_factor_required_for_view_or_request(self.domain, request.couch_user, view_func))
 
         with override_settings(ENFORCE_TWO_FACTOR_FOR_SUPERUSERS=False):
-            self.assertFalse(_two_factor_required(view_func, self.domain, request.couch_user))
+            self.assertFalse(two_factor_required_for_view_or_request(self.domain, request.couch_user, view_func))
 
     def test_two_factor_check_superuser(self):
         self.request.couch_user.is_superuser = True

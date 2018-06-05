@@ -93,11 +93,7 @@ def login_and_domain_required(view_func):
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
                 # If the two factor toggle is on, require it for all users.
-                if (
-                    _two_factor_required(view_func, domain, couch_user)
-                    and not getattr(req, 'bypass_two_factor', False)
-                    and not user.is_verified()
-                ):
+                if two_factor_required_for_view_or_request(domain, couch_user, view_func, req) and not user.is_verified():
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -301,7 +297,7 @@ def two_factor_check(view_func, api_key):
         def _inner(request, domain, *args, **kwargs):
             dom = Domain.get_by_name(domain)
             couch_user = _ensure_request_couch_user(request)
-            if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
+            if not api_key and dom and two_factor_required_for_view_or_request(dom, couch_user, view_func):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
                 if not token:
                     return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
@@ -314,10 +310,14 @@ def two_factor_check(view_func, api_key):
     return _outer
 
 
-def _two_factor_required(view_func, domain, couch_user):
-    if domain.two_factor_auth or (settings.ENFORCE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser):
+def two_factor_required_for_view_or_request(domain, couch_user, view_func=None, request=None):
+    force_two_factor = settings.ENFORCE_TWO_FACTOR_FOR_SUPERUSERS and couch_user.is_superuser
+    if domain.two_factor_auth or force_two_factor:
+        view_exempt = view_func and getattr(view_func, 'two_factor_exempt', False)
+        request_exempt = request and getattr(request, 'bypass_two_factor', False)
         return (
-            not getattr(view_func, 'two_factor_exempt', False)
+            not view_exempt
+            and not request_exempt
             and not couch_user.two_factor_disabled
         )
     return False

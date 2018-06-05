@@ -56,7 +56,8 @@ from soil import views as soil_views
 
 from corehq import toggles, feature_previews
 from corehq.apps.accounting.models import Subscription
-from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt
+from corehq.apps.domain.decorators import require_superuser, login_and_domain_required, two_factor_exempt, \
+    two_factor_required_for_view_or_request
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.utils import normalize_domain_name, get_domain_from_url
 from corehq.apps.dropbox.decorators import require_dropbox_session
@@ -211,8 +212,7 @@ def _two_factor_needed(domain_name, request):
     domain = Domain.get_by_name(domain_name)
     if domain:
         return (
-            domain.two_factor_auth
-            and not request.couch_user.two_factor_disabled
+            two_factor_required_for_view_or_request(domain, request.couch_user)
             and not request.user.is_verified()
         )
 
