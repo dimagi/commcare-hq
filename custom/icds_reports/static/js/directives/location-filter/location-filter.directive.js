@@ -122,7 +122,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
 }
 
 
-function LocationFilterController($scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
+function LocationFilterController($rootScope, $scope, $location, $uibModal, locationHierarchy, locationsService, storageService, userLocationId, haveAccessToAllLocations, allUserLocationId) {
     var vm = this;
     if (Object.keys($location.search()).length === 0) {
         $location.search(storageService.getKey('search'));
@@ -275,7 +275,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
 
     var init = function() {
         if (vm.selectedLocationId && vm.selectedLocationId !== 'all' && vm.selectedLocationId !== 'null') {
-            locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+            $rootScope.locationPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                 var locations = data.locations;
 
                 var selectedLocation = data.selected_location;
@@ -326,7 +326,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
             });
         } else {
             initHierarchy();
-            locationsService.getRootLocations().then(function(data) {
+            $rootScope.locationPromise = locationsService.getRootLocations().then(function(data) {
                 vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
                 vm.selectedLocations[0] = ALL_OPTION;
 
@@ -414,7 +414,7 @@ function LocationFilterController($scope, $location, $uibModal, locationHierarch
     init();
 }
 
-LocationFilterController.$inject = ['$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
+LocationFilterController.$inject = ['$rootScope', '$scope', '$location', '$uibModal', 'locationHierarchy', 'locationsService', 'storageService', 'userLocationId', 'haveAccessToAllLocations', 'allUserLocationId'];
 LocationModalController.$inject = ['$uibModalInstance', '$location', 'locationsService', 'selectedLocationId', 'hierarchy', 'selectedLocations', 'locationsCache', 'maxLevel', 'userLocationId', 'showMessage'];
 
 window.angular.module('icdsApp').directive("locationFilter", function() {
