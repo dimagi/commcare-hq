@@ -154,7 +154,7 @@ hqDefine("crud/js/admin", function() {
         });
         crudInterface.init();
 
-        $(".crud_edit").click(function(e) {
+        $(".crud-edit").click(function(e) {
             crudInterface.update_item(e.currentTarget);
         });
         $(".form-label").tooltip();
