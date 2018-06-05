@@ -39,9 +39,10 @@
     {% trans "Add Language" %}
 </button>
 <div data-bind="visible: showSmartLangDisplayOption">
+    <br/>
     <input type="checkbox" data-bind="checked: smartLangDisplay"/>
     {% trans "Smart language display in forms" %}.
-    <a href="#" target="_blank">Learn more</a>.
+    <a href="https://confluence.dimagi.com/display/internal/Hide+languages+in+forms" target="_blank">Learn more</a>.
 </div>
 <span class='label label-warning' data-bind="visible: addLanguageDisabled">{% trans 'Please save before adding another language' %}</span>
 <div data-bind="if: removedLanguages().length" class="removed-languages">
