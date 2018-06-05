@@ -97,7 +97,7 @@ class BillingAccountBasicForm(forms.Form):
     is_customer_billing_account = forms.BooleanField(
         label=ugettext_lazy("Is Customer Billing Account"),
         required=False,
-        initial=True
+        initial=False
     )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
