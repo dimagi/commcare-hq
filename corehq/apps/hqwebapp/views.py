@@ -608,24 +608,8 @@ class BugReportView(View):
 
             message += ((
                 "software plan: {software_plan}\n"
-                "Is self start: {self_started}\n"
-                "Feature Flags: {feature_flags}\n"
-                "Feature Previews: {feature_previews}\n"
-                "Is scale backend: {scale_backend}\n"
-                "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Internal Project Information: {internal_info_link}\n"
-                "Project description: {project_description}\n"
-                "Sentry Error: {sentry_error}\n"
             ).format(
                 software_plan=software_plan,
-                self_started=domain_object.internal.self_started,
-                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
-                feature_previews=list(feature_previews.previews_dict(domain)),
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
             ))
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
