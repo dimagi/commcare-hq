@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import json
 import logging
+import uuid
 
 from django.contrib import messages
 from django.core.cache import cache
@@ -306,6 +307,7 @@ class LocationTypesView(BaseDomainView):
     def post(self, request, *args, **kwargs):
         payload = json.loads(request.POST.get('json'))
         sql_loc_types = {}
+        sql_loc_type_name_code = {}
 
         def _is_fake_pk(pk):
             return isinstance(pk, six.string_types) and pk.startswith("fake-pk-")
@@ -322,14 +324,14 @@ class LocationTypesView(BaseDomainView):
                     pass
             if loc_type is None:
                 loc_type = LocationType(domain=self.domain)
-            loc_type.name = name
             loc_type.administrative = administrative
             loc_type.parent_type = parent
             loc_type.shares_cases = shares_cases
             loc_type.view_descendants = view_descendants
-            loc_type.code = unicode_slug(code)
             loc_type.has_user = has_user
+            loc_type.name = loc_type.code = uuid.uuid4().hex
             sql_loc_types[pk] = loc_type
+            sql_loc_type_name_code[loc_type] = (name, unicode_slug(code))
             loc_type.save()
 
         loc_types = payload['loc_types']
@@ -358,6 +360,11 @@ class LocationTypesView(BaseDomainView):
         for loc_type in hierarchy:
             # make all locations in order
             mk_loctype(**loc_type)
+
+        for loc_type in sql_loc_type_name_code:
+            loc_type.name = loc_type['name']
+            loc_type.code = loc_type['code']
+            loc_type.save()
 
         for loc_type in hierarchy:
             # apply sync boundaries (expand_from, expand_to and include_without_expanding) after the
