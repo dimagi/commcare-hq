@@ -1009,6 +1009,7 @@ class Subscription(models.Model):
     do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
+    is_customer_software_plan = models.BooleanField(default=False)
     skip_invoicing_if_no_feature_charges = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
