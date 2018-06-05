@@ -66,9 +66,8 @@ class AggregateTableDefinition(models.Model):
         for primary_adapter in self.get_primary_column_adapters():
             yield primary_adapter
         for secondary_table in self.secondary_tables.all():
-            for secondary_column in secondary_table.columns.all():
-                # todo: secondary column support
-                yield SecondaryColumnAdapter.from_db_column(secondary_column)
+            for column_adapter in secondary_table.get_column_adapters():
+                yield column_adapter
 
     def _get_id_column_adapater(self):
         return IdColumnAdapter()
@@ -108,9 +107,18 @@ class SecondaryTableDefinition(models.Model):
     """
     table_definition = models.ForeignKey(AggregateTableDefinition, on_delete=models.CASCADE,
                                          related_name='secondary_tables')
-    data_source = models.UUIDField()
+    data_source_id = models.UUIDField()
     data_source_key = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     aggregation_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
+
+    @property
+    @memoized
+    def data_source(self):
+        return get_datasource_config(self.data_source_id.hex, self.table_definition.domain)[0]
+
+    def get_column_adapters(self):
+        for secondary_column in self.columns.all():
+            yield SecondaryColumnAdapter.from_db_column(secondary_column)
 
 
 class SecondaryColumn(models.Model):
