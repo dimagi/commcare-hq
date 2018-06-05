@@ -622,7 +622,7 @@ class SubscriptionForm(forms.Form):
                 ),
                 hqcrispy.B3MultiField(
                     "Customer Software Plan",
-                    crispy.Field('is_customer_software_plan', data_bind="checked: is_customer_software_plan"),
+                    crispy.Field('is_customer_software_plan', data_bind="checked: isCustomerSoftwarePlan"),
                 ),
                 'set_subscription'
             ),
