@@ -645,7 +645,7 @@ class BugReportView(View):
             )
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
-            message = "%s \n\n %s \n\n %s \n\n %s" % (message, extra_debug_info, extra_message, traceback_info)
+            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
         email = EmailMessage(
             subject=subject,
