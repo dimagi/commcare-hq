@@ -11,7 +11,7 @@ from custom.intrahealth.reports import TableuDeBoardReport2
 from dimagi.utils.dates import DateSpan
 
 
-class TestFicheConsommationReportV2(YeksiTestCase):
+class TestTableuDeBoardReportV2(YeksiTestCase):
 
     def test_conventure_report(self):
         mock = MagicMock()
@@ -65,9 +65,9 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             ['PPS', 'PPS Avec Donn\xe9es Soumises']
         )
         self.assertEqual(
-            rows,
-            [['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], [None, 1], ['FOUNDIOUGNE', 1],
-             ['SOKONE', 1], ['FATICK', 1]]
+            sorted(rows, key=lambda x: x[0]),
+            sorted([['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], [None, 1], ['FOUNDIOUGNE', 1],
+                    ['SOKONE', 1], ['FATICK', 1]], key=lambda x: x[0])
         )
 
     def test_consommation_data_report(self):
@@ -91,8 +91,8 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             ['PPS', 'Consumption']
         )
         self.assertEqual(
-            rows,
-            [
+            sorted(rows, key=lambda x: x[0]),
+            sorted([
                 ['NDIOLOFENE', 0], ['PS HLM FASS', 0], ['CS LIBERTE 6 EXTENTION', 0], ['P.S NDIMB', 0],
                 ['PS MARSASSOUM SEDHIOU', 0], [u'PS MEDINA GOUNASS', 0], ['HOPITAL REGIONAL DE KOLDA', 0],
                 ['DAROU MBITEYENE', 0], ['PS Sendou', 0], [u'MEDINA BAYE', 0], ['NAYOBE', 0], ['FASS', 0],
@@ -104,18 +104,18 @@ class TestFicheConsommationReportV2(YeksiTestCase):
                 ['THILAGRAND', 0],
                 ['BACOBOF', 0], ['SOBEME', 0], ['PS FASS', 0], ['HOP. MILITAIRE OUAKAM', 0], ['Wallalde', 0],
                 ['NDANGALMA', 0], ['PS HANN SUR MER', 0], ['PS TOUBA DIACK SAO', 0], ['EPS 1 KAFFRINE', 0]
-            ]
+            ], key=lambda x: x[0])
         )
 
     def test_products_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
-            'startdate': '2016-05-28',
-            'enddate': '2018-06-04',
+            'startdate': '2014-06-01',
+            'enddate': '2014-07-31',
             'location_id': '',
         }
-        mock.datespan = DateSpan(datetime.datetime(2016, 5, 28), datetime.datetime(2018, 6, 4))
+        mock.datespan = DateSpan(datetime.datetime(2014, 6, 1), datetime.datetime(2014, 7, 31))
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
@@ -154,20 +154,34 @@ class TestFicheConsommationReportV2(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Commandes', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2027, 0, 0, 0, 0, 200, 5100,
-                 164600, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2468, 0, 14530, 0, 0, 0, 0, 0, 208280,
-                 26640, 0, 0, 0, 0, 0, 0, 0, 0, 200, 351079, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35800,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ['Raux', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2027, 0, 0, 0, 0, 200, 5100,
-                 156735, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 565, 0, 12730, 0, 0, 0, 0, 0, 198317,
-                 26640, 0, 0, 0, 0, 0, 0, 0, 0, 0, 351079, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35800,
-                 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                ['Taux', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%',
-                 '100%', '0%', '0%', '0%', '0%', '100%', '100%', '105%', '0%', '0%', '0%', '0%', '0%',
-                 '0%', '0%', '0%', '0%', '0%', '0%', '436%', '0%', '114%', '0%', '0%', '0%', '0%', '0%',
-                 '105%', '100%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '20000%', '100%', '0%',
-                 '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '100%', '0%', '0%', '0%', '0%',
-                 '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%',
-                 '0%']
+                [
+                    'Commandes', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1842, 0, 0, 0, 0, 217, 2194, 90675, 0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7510, 0, 0, 0, 0, 0, 113080, 7200, 0, 0, 0, 0, 0, 0, 0,
+                    0, 4000, 48000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0
+                ],
+                [
+                    'Raux', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1842, 0, 0, 0, 0, 217, 2194, 51308, 0, 0,
+                    0,
+                    0,
+                    0, 0, 0, 0, 0, 0, 0, 0, 0, 5810, 0, 0, 0, 0, 0, 59080, 7200, 0, 0, 0, 0, 0, 0, 0, 0, 4000,
+                    48000, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    0
+                ],
+                [
+                    'Taux', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%',
+                    '0%',
+                    '100%', '0%', '0%', '0%', '0%', '100%', '100%', '176%', '0%', '0%', '0%', '0%',
+                    '0%',
+                    '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '129%', '0%', '0%', '0%', '0%',
+                    '0%',
+                    '191%', '100%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '100%', '100%',
+                    '0%',
+                    '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%',
+                    '0%',
+                    '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%', '0%',
+                    '0%',
+                    '0%'
+                ]
             ]
         )
