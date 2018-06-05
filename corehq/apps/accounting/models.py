@@ -1152,7 +1152,7 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None):
+                            skip_auto_downgrade_reason=None, is_customer_software_plan=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1173,6 +1173,7 @@ class Subscription(models.Model):
             funding_source=funding_source,
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
+            is_customer_software_plan=is_customer_software_plan
         )
 
         self.save()
@@ -1217,6 +1218,7 @@ class Subscription(models.Model):
             'funding_source',
             'skip_auto_downgrade',
             'skip_auto_downgrade_reason',
+            'is_customer_software_plan'
         }
 
         assert property_names >= set(kwargs.keys())

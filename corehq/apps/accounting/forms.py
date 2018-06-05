@@ -403,6 +403,10 @@ class SubscriptionForm(forms.Form):
     salesforce_contract_id = forms.CharField(
         label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
+    is_customer_software_plan = forms.BooleanField(
+        label=ugettext_lazy("Customer Software Plan"),
+        required=False
+    )
     do_not_invoice = forms.BooleanField(
         label=ugettext_lazy("Do Not Invoice"), required=False
     )
@@ -515,6 +519,7 @@ class SubscriptionForm(forms.Form):
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
+            self.fields['is_customer_software_plan'].initial = subscription.is_customer_software_plan
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
@@ -615,6 +620,10 @@ class SubscriptionForm(forms.Form):
                     ),
                     data_bind="visible: skipAutoDowngrade",
                 ),
+                hqcrispy.B3MultiField(
+                    "Customer Software Plan",
+                    crispy.Field('is_customer_software_plan', data_bind="checked: is_customer_software_plan"),
+                ),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
@@ -663,6 +672,7 @@ class SubscriptionForm(forms.Form):
             date_start=self.cleaned_data['start_date'],
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
+            is_customer_software_plan=self.cleaned_data['is_customer_software_plan'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
