@@ -185,7 +185,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = _('Form Submissions')
+    title = _('Mobile Form Submissions')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseFormReport, self).__init__(account_id, couch_user)
