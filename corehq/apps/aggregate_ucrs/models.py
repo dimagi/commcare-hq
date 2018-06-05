@@ -60,8 +60,8 @@ class AggregateTableDefinition(models.Model):
     def get_column_adapters(self):
         yield self._get_id_column_adapater()
         yield self._get_aggregation_column_adapter()
-        for primary_column in self.primary_columns.all():
-            yield PrimaryColumnAdapter.from_db_column(primary_column)
+        for primary_adapter in self.get_primary_column_adapters():
+            yield primary_adapter
         for secondary_table in self.secondary_tables.all():
             for secondary_column in secondary_table.columns.all():
                 # todo: secondary column support
@@ -79,6 +79,10 @@ class AggregateTableDefinition(models.Model):
                     ', '.join(u[0] for u in self.AGGREGATION_UNIT_CHOICES)
                 )
             )
+
+    def get_primary_column_adapters(self):
+        for primary_column in self.primary_columns.all():
+            yield PrimaryColumnAdapter.from_db_column(primary_column)
 
 
 class PrimaryColumn(models.Model):
