@@ -6,7 +6,7 @@ from jsonfield import JSONField
 from memoized import memoized
 
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
-    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES
+    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter
 from corehq.apps.userreports.datatypes import DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings
@@ -54,26 +54,25 @@ class AggregateTableDefinition(models.Model):
         return SQLSettings()
 
     def get_columns(self):
-        """
-        :return:
-        """
-        yield self._get_id_column_spec()
-        yield self._get_aggregation_column_spec()
+        for adapter in self.get_column_adapters():
+            yield adapter.to_ucr_column_spec()
+
+    def get_column_adapters(self):
+        yield self._get_id_column_adapater()
+        yield self._get_aggregation_column_adapter()
         for primary_column in self.primary_columns.all():
-            yield primary_column.to_column_spec()
+            yield PrimaryColumnAdapter.from_db_column(primary_column)
         for secondary_table in self.secondary_tables.all():
             for secondary_column in secondary_table.columns.all():
                 # todo: secondary column support
-                yield secondary_column.to_column_spec()
+                yield SecondaryColumnAdapter.from_db_column(secondary_column)
 
-    def _get_id_column_spec(self):
-        return Column('doc_id', datatype=DATA_TYPE_STRING, is_nullable=False,
-                      is_primary_key=True, create_index=True)
+    def _get_id_column_adapater(self):
+        return IdColumnAdapter()
 
-    def _get_aggregation_column_spec(self):
+    def _get_aggregation_column_adapter(self):
         if self.aggregation_unit == self.AGGREGATION_UNIT_CHOICE_MONTH:
-            return Column('month', datatype=DATA_TYPE_DATE, is_nullable=False,
-                          is_primary_key=True, create_index=True)
+            return MonthColumnAdapter()
         else:
             raise Exception(
                 'Aggregation units apart from {} are not supported'.format(
