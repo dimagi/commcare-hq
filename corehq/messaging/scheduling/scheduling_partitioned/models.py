@@ -67,7 +67,11 @@ class ScheduleInstance(PartitionedModel):
     @memoized
     def recipient(self):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
-            case = CaseAccessors(self.domain).get_case(self.recipient_id)
+            try:
+                case = CaseAccessors(self.domain).get_case(self.recipient_id)
+            except (CaseNotFound, ResourceNotFound):
+                return None
+
             if case.domain != self.domain:
                 return None
 
@@ -85,19 +89,31 @@ class ScheduleInstance(PartitionedModel):
 
             return user
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
-            group = CommCareCaseGroup.get(self.recipient_id)
+            try:
+                group = CommCareCaseGroup.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
             if group.domain != self.domain:
                 return None
 
             return group
         elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
-            group = Group.get(self.recipient_id)
+            try:
+                group = Group.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
             if group.domain != self.domain:
                 return None
 
             return group
         elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
             location = SQLLocation.by_location_id(self.recipient_id)
+
+            if location is None:
+                return None
+
             if location.domain != self.domain:
                 return None
 
