@@ -68,6 +68,7 @@ from corehq.blobs.mixin import BlobMixin
 from corehq.const import USER_DATE_FORMAT, USER_TIME_FORMAT
 from corehq.apps.analytics.tasks import track_workflow, send_hubspot_form, HUBSPOT_SAVED_APP_FORM_ID
 from corehq.apps.app_manager.feature_support import CommCareFeatureSupportMixin
+from corehq.apps.app_manager.tasks import prune_auto_generated_builds
 from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
@@ -5304,6 +5305,8 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not copy.is_remote_app():
             copy.update_mm_map()
 
+        prune_auto_generated_builds.delay(self.domain, self._id)
+
         return copy
 
     def delete_app(self):
@@ -5403,6 +5406,7 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
+    is_auto_generated = BooleanProperty(default=False)
 
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
