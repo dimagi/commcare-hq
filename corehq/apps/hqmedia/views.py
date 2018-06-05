@@ -31,6 +31,7 @@ from corehq.middleware import always_allow_browser_caching
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.decorators import safe_cached_download
 from corehq.apps.app_manager.view_helpers import ApplicationViewMixin
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.cache import BulkMultimediaStatusCache, BulkMultimediaStatusCacheNfs
 from corehq.apps.hqmedia.controller import (
     MultimediaBulkUploadController,
@@ -38,7 +39,6 @@ from corehq.apps.hqmedia.controller import (
     MultimediaAudioUploadController,
     MultimediaVideoUploadController
 )
-from corehq.apps.hqmedia.decorators import login_with_permission_from_post
 from corehq.apps.hqmedia.models import CommCareImage, CommCareAudio, CommCareMultimedia, MULTIMEDIA_PREFIX, CommCareVideo
 from corehq.apps.hqmedia.tasks import process_bulk_upload_zip, build_application_zip
 from corehq.apps.users.decorators import require_permission
@@ -52,7 +52,7 @@ import six
 
 class BaseMultimediaView(ApplicationViewMixin, View):
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     def dispatch(self, request, *args, **kwargs):
         return super(BaseMultimediaView, self).dispatch(request, *args, **kwargs)
 
@@ -175,7 +175,7 @@ class BaseProcessUploadedView(BaseMultimediaView):
         except Exception as e:
             raise BadMediaFileException("There was an error fetching the MIME type of your file. Error: %s" % e)
 
-    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_with_permission_from_post()))
+    @method_decorator(require_permission(Permissions.edit_apps, login_decorator=login_and_domain_required))
     # YUI js uploader library doesn't support csrf
     @csrf_exempt
     def dispatch(self, request, *args, **kwargs):

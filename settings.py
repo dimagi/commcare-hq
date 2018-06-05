@@ -197,7 +197,6 @@ DEFAULT_APPS = (
     'crispy_forms',
     'gunicorn',
     'compressor',
-    'mptt',
     'tastypie',
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -262,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.motech.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
@@ -331,8 +329,10 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.motech',
     'corehq.motech.dhis2',
     'corehq.motech.openmrs',
+    'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -372,7 +372,6 @@ HQ_APPS = (
     'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
-    'corehq.motech.openmrs',
     'custom.champ',
 )
 
@@ -679,7 +678,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.AuthenticateAs',
+    'corehq.apps.hqadmin.views.users.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -855,10 +854,10 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 # Example format:
 # {
 # "users":
-#     {
-#      ["pgmain", 5],
-#      ["pgmainstandby", 5]
-#     }
+#     [
+#      ("pgmain", 5),
+#      ("pgmainstandby", 5)
+#     ]
 # }
 LOAD_BALANCED_APPS = {}
 

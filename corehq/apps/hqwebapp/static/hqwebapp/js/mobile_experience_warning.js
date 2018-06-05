@@ -1,14 +1,8 @@
 hqDefine('hqwebapp/js/mobile_experience_warning', function() {
     $(function() {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
-            cookieName = "has-seen-mobile-experience-warning";
+        var cookieName = "has-seen-mobile-experience-warning";
 
-        if (initialPageData("is_mobile_experience") && !$.cookie(cookieName)) {
-            var toggles = hqImport('hqwebapp/js/toggles');
-            if (!toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER') ||
-                    !toggles.toggleEnabled('MOBILE_SIGNUP_REDIRECT_AB_TEST')) {
-                return;
-            }
+        if (!$.cookie(cookieName)) {
             $.cookie(cookieName, true);
 
             $('.full-screen-no-background-modal').css('width', $(window).innerWidth() + 'px');

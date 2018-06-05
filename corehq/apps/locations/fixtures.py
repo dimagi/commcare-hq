@@ -15,7 +15,6 @@ from casexml.apps.phone.fixtures import FixtureProvider
 from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.fixtures.utils import get_index_schema_node
 from corehq.apps.locations.models import SQLLocation, LocationType, LocationFixtureConfiguration
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq import toggles
 
 
@@ -223,15 +222,6 @@ int_array = ArrayField(int_field)
 def get_location_fixture_queryset(user):
     if toggles.SYNC_ALL_LOCATIONS.enabled(user.domain):
         return SQLLocation.active_objects.filter(domain=user.domain).prefetch_related('location_type')
-
-    timing = TimingContext("get_location_fixture_queryset")
-    mptt_set = None
-    with timing("cte"):
-        cte_set = _cte_get_location_fixture_queryset(user)
-    return ComparedQuerySet(mptt_set, cte_set, timing)
-
-
-def _cte_get_location_fixture_queryset(user):
 
     user_locations = user.get_sql_locations(user.domain)
 

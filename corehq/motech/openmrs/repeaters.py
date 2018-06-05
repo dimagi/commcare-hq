@@ -17,11 +17,11 @@ from corehq.motech.openmrs.const import XMLNS_OPENMRS
 from corehq.motech.openmrs.openmrs_config import OpenmrsConfig
 from corehq.motech.openmrs.handler import send_openmrs_data
 from corehq.motech.openmrs.repeater_helpers import (
-    Requests,
     get_form_question_values,
     get_relevant_case_updates_from_form_json,
     get_case_location_ancestor_repeaters,
 )
+from corehq.motech.requests import Requests
 from memoized import memoized
 
 
@@ -109,7 +109,7 @@ class OpenmrsRepeater(CaseRepeater):
         form_question_values = get_form_question_values(payload)
 
         return send_openmrs_data(
-            Requests(self.url, self.username, self.password),
+            Requests(self.domain, self.url, self.username, self.password),
             self.domain,
             payload,
             self.openmrs_config,

@@ -8,7 +8,10 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/button_group',
     'reports/js/filters/schedule_instance',
     'locations/js/location_drilldown',
+    'reports/js/filters/advanced_forms_options',
+    'reports/js/filters/drilldown_options',
     'reports_core/js/choice_list_utils',
+    'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
@@ -20,7 +23,10 @@ hqDefine("reports/js/filters/main", [
     buttonGroup,
     scheduleInstanceFilter,
     locationDrilldown,
-    choiceListUtils
+    advancedFormsOptions,
+    drilldownOptions,
+    choiceListUtils,
+    caseListExplorer
 ) {
     var init = function() {
         // Datespans
@@ -142,6 +148,29 @@ hqDefine("reports/js/filters/main", [
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
+
+        var $casePropertyColumns = $(".report-filter-case-property-columns");
+        $casePropertyColumns.each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = caseListExplorer.casePropertyColumns(data.initialvalue, data.columnsuggestions);
+            $el.koApplyBindings(model);
+        });
+        $casePropertyColumns.on('keyup', function(){
+            $('#fieldset_explorer_columns').trigger('change');
+        });
+
+        var $xpathTextarea = $(".report-filter-xpath-textarea");
+        $xpathTextarea.each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = caseListExplorer.caseSearchXpath(data.suggestions);
+            $el.koApplyBindings(model);
+        });
+        $xpathTextarea.on('keyup', function(){
+            $('#fieldset_search_xpath').trigger('change');
+        });
+
         $('[name=selected_group]').each(function(i, el) {
             $(el).select2({
                 allowClear: true,
@@ -159,6 +188,49 @@ hqDefine("reports/js/filters/main", [
             });
             $el.koApplyBindings(model);
             model.load(data.locs, data.locId);
+        });
+        $('.report-filter-drilldown-options').each(function (i, el) {
+            var $el = $(el), data = $el.data();
+            if ($el.parents('.report-filter-form-drilldown').length > 0) return;
+            if (data.isEmpty) return;
+            var model = drilldownOptions.drilldownOptionFilterControl({
+                drilldown_map: data.drilldownMap,
+                controls: data.controls,
+                selected: data.selected,
+                notifications: data.notifications,
+            });
+            $('#' + data.cssId).koApplyBindings(model);
+            model.init();
+        });
+        $('.report-filter-form-drilldown').each(function (i, el) {
+            // This is copied from drilldown-options above because the order matters
+            // http://manage.dimagi.com/default.asp?231773
+            var $el = $(el), data = $el.data();
+            if (!data.isEmpty) {
+                var model = drilldownOptions.drilldownOptionFilterControl({
+                    drilldown_map: data.drilldownMap,
+                    controls: data.controls,
+                    selected: data.selected,
+                    notifications: data.notifications,
+                });
+                $('#' + data.cssId).koApplyBindings(model);
+                model.init();
+            }
+
+            if (data.unknownAvailable || data.displayAppType) {
+                advancedFormsOptions.advancedFormsOptions(
+                    $('#' + data.cssId + '-advanced-options'),
+                    {
+                        show: data.showAdvanced,
+                        is_unknown_shown: data.isUnknownShown,
+                        selected_unknown_form: data.selectedUnknownForm,
+                        all_unknown_forms: data.allUnknownForms,
+                        caption_text: data.captionText,
+                        css_id: data.cssId,
+                        css_class: data.cssClass,
+                    }
+                );
+            }
         });
         $('.report-filter-logtag').each(function(i, el) {
             var $el = $(el), data = $el.data();

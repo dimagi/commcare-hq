@@ -631,6 +631,25 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+    domains_needing_search_index.clear()
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -1503,30 +1522,12 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
-    'mobile_signup_redirect_ab_test_controller',
-    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 TARGET_COMMCARE_FLAVOR = StaticToggle(
     'target_commcare_flavor',
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
-    'mobile_signup_redirect_ab_test',
-    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 
 APPCUES_AB_TEST = PredictablyRandomToggle(
     'appcues_ab_test',

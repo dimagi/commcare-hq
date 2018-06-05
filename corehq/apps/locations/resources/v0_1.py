@@ -31,11 +31,12 @@ def get_location_or_not_exist(location_id, domain):
 def _user_locations_ids(user, project, only_editable):
     # admins and users not assigned to a location can see and edit everything
     def all_ids():
-        return (SQLLocation.by_domain(project.name)
-                           .values_list('location_id', flat=True))
+        return list(SQLLocation.by_domain(project.name)
+                               .values_list('location_id', flat=True))
 
     if not project.location_restriction_for_users:
-        return SQLLocation.objects.accessible_to_user(project.name, user).location_ids()
+        return list(SQLLocation.objects.accessible_to_user(project.name, user)
+                                       .location_ids())
 
     if user.is_domain_admin(project.name):
         return all_ids()

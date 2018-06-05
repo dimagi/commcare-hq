@@ -14,7 +14,7 @@ from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 
 class Transifex:
     def __init__(self, domain, app_id, source_lang, project_slug, version=None, lang_prefix='default_',
-                 is_source_file=True):
+                 is_source_file=True, exclude_if_default=False):
         """
         :param domain: domain name
         :param app_id: id of the app to be used
@@ -30,7 +30,8 @@ class Transifex:
         self.project_slug = project_slug
         self.is_source_file = is_source_file
         self.source_lang = source_lang
-        self.po_file_generator = POFileGenerator(domain, app_id, version, key_lang, source_lang, lang_prefix)
+        self.po_file_generator = POFileGenerator(domain, app_id, version, key_lang, source_lang, lang_prefix,
+                                                 exclude_if_default)
 
     def send_translation_files(self):
         try:

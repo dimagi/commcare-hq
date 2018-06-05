@@ -98,10 +98,17 @@ def format_traceback_the_way_python_does(type, exc, tb):
     NameError: name 'name' is not defined
     """
 
+    if six.PY3:
+        exc_message = six.text_type(exc)
+    else:
+        exc_message = exc.message
+        if isinstance(exc_message, six.binary_type):
+            exc_message = exc_message.decode('utf-8')
+
     return 'Traceback (most recent call last):\n{}{}: {}'.format(
         ''.join(traceback.format_tb(tb)),
         type.__name__,
-        six.text_type(exc)
+        exc_message
     )
 
 
