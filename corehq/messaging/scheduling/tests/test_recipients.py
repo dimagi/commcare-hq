@@ -14,8 +14,12 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+    CaseTimedScheduleInstance,
+)
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
+from corehq.util.test_utils import create_test_case
 from datetime import time
 from mock import patch
 
@@ -89,6 +93,25 @@ class SchedulingRecipientTest(TestCase):
 
         with create_case(self.domain, 'person') as case:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Owner')
+            self.assertIsNone(instance.recipient)
+
+    @run_with_all_backends
+    def test_last_submitting_user_recipient(self):
+        with create_test_case(self.domain, 'person', 'Joe', user_id=self.mobile_user.get_id) as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
+            self.assertTrue(isinstance(instance.recipient, CommCareUser))
+            self.assertEqual(instance.recipient.get_id, self.mobile_user.get_id)
+
+        with create_test_case(self.domain, 'person', 'Joe', user_id=self.web_user.get_id) as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
+            self.assertTrue(isinstance(instance.recipient, WebUser))
+            self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
+
+        with create_test_case(self.domain, 'person', 'Joe', user_id='system') as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
             self.assertIsNone(instance.recipient)
 
     def test_expand_location_recipients_without_descendants(self):
