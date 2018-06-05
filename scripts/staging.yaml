@@ -59,7 +59,6 @@ branches:
   - fr/case-list-explorer-report-frontend # FR May 31
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
-  - np/uploads-2fa-required # NP June 4
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
