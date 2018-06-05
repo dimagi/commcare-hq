@@ -126,7 +126,7 @@ class CaseSearchES(CaseES):
             return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
         except (TypeError, RuntimeError) as e:
             raise CaseFilterError(
-                _("Malformed query: {}".format(e)),
+                _("Malformed search query: {search_query}").format(search_query=e),
                 None,
             )
 
