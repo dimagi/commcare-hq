@@ -147,10 +147,23 @@ hqDefine("crud/js/admin", function() {
             crudInterface.update_item(e.currentTarget);
         });
         $(".form-label").tooltip();
+
+        // Add bulk copy button
         var $filters = $("#reportFiltersAccordion");
         if (!$filters.find("a.bulk-add").length) {
             var content = '  <a href="' + crudItem.bulk_add_url + '" class="btn btn-primary"><i class="fa fa-copy"></i> Copy Indicators to another Project</a>';
             $filters.find('.row .col-xs-8').append(content);
+        }
+
+        // Add couch doc input behavior
+        var $change_doc_type = $('#id_change_doc_type');
+        if ($change_doc_type) {
+            $('#id_doc_type_choices').parent().parent().hide();
+            $('#id_change_doc_type').prop('checked', false);
+            $change_doc_type.change(function () {
+                var $doc_type = $('#id_doc_type_choices').parent().parent();
+                ($(this).prop('checked')) ? $doc_type.fadeIn() : $doc_type.fadeOut();
+            });
         }
     });
 });
