@@ -9,7 +9,6 @@ from mock.mock import MagicMock
 from custom.intrahealth.tests.utils import YeksiTestCase
 from custom.intrahealth.reports import FicheConsommationReport2
 from dimagi.utils.dates import DateSpan
-from datetime import datetime
 
 
 class TestDashboard2(YeksiTestCase):
@@ -22,7 +21,7 @@ class TestDashboard2(YeksiTestCase):
             'enddate': '2018-06-04',
             'location_id': '',
         }
-        mock.datespan = DateSpan(datetime(2016, 5, 28), datetime(2018, 6, 4))
+        mock.datespan = DateSpan(datetime.datetime(2016, 5, 28), datetime.datetime(2018, 6, 4))
 
         fiche_consommation_report2_report = FicheConsommationReport2(request=mock, domain='test-pna')
 

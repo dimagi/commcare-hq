@@ -4,10 +4,13 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealthLocationMixin, IntraHealthReportConfigMixin
-from custom.intrahealth.sqldata import *
+from custom.intrahealth.sqldata import ConventureData2, PPSAvecDonnees2, DispDesProducts2, ConsommationData2
+from memoized import memoized
+from corehq.apps.locations.models import SQLLocation
 
 
-class MultiReport(CustomProjectReport, IntraHealthLocationMixin, IntraHealthReportConfigMixin, ProjectReportParametersMixin, DatespanMixin):
+class MultiReport(CustomProjectReport, IntraHealthLocationMixin, IntraHealthReportConfigMixin,
+                  ProjectReportParametersMixin, DatespanMixin):
 
     title = ''
     report_template_path = "intrahealth/multi_report.html"

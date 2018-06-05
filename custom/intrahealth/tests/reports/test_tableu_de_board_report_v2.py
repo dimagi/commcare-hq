@@ -9,7 +9,6 @@ from mock.mock import MagicMock
 from custom.intrahealth.tests.utils import YeksiTestCase
 from custom.intrahealth.reports import TableuDeBoardReport2
 from dimagi.utils.dates import DateSpan
-from datetime import datetime
 
 
 class TestFicheConsommationReportV2(YeksiTestCase):
@@ -22,7 +21,7 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             'enddate': '2014-07-31',
             'location_id': '1991b4dfe166335e342f28134b85fcac',
         }
-        mock.datespan = DateSpan(datetime(2014, 6, 1), datetime(2014, 7, 31))
+        mock.datespan = DateSpan(datetime.datetime(2014, 6, 1), datetime.datetime(2014, 7, 31))
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
@@ -53,7 +52,7 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             'enddate': '2014-07-31',
             'location_id': '1991b4dfe166335e342f28134b85fcac',
         }
-        mock.datespan = DateSpan(datetime(2014, 6, 1), datetime(2014, 7, 31))
+        mock.datespan = DateSpan(datetime.datetime(2014, 6, 1), datetime.datetime(2014, 7, 31))
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
@@ -79,7 +78,7 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             'enddate': '2018-06-04',
             'location_id': '',
         }
-        mock.datespan = DateSpan(datetime(2016, 5, 28), datetime(2018, 6, 4))
+        mock.datespan = DateSpan(datetime.datetime(2016, 5, 28), datetime.datetime(2018, 6, 4))
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
@@ -116,7 +115,7 @@ class TestFicheConsommationReportV2(YeksiTestCase):
             'enddate': '2018-06-04',
             'location_id': '',
         }
-        mock.datespan = DateSpan(datetime(2016, 5, 28), datetime(2018, 6, 4))
+        mock.datespan = DateSpan(datetime.datetime(2016, 5, 28), datetime.datetime(2018, 6, 4))
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 

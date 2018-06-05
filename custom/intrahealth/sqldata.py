@@ -489,7 +489,6 @@ class RecapPassageData(BaseSqlData):
         ]
 
 
-# TODO
 class ConsommationData(BaseSqlData):
     slug = 'consommation'
     title = 'Consommation'
