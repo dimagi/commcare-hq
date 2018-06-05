@@ -44,14 +44,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseRedirect,
-    JsonResponse,
-)
-from django.http.response import (
-    HttpResponse,
     HttpResponseNotFound,
+    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
