@@ -350,9 +350,6 @@ hqDefine('hqwebapp/js/main', [
     return {
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
-        icons: {
-            ADD: 'icon-plus icon-blue fa fa-plus',
-        },
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,
