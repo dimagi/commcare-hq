@@ -1,10 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import sqlalchemy
 from django.utils.translation import ugettext_lazy as _
 from abc import ABCMeta, abstractmethod
 
 import six
+from jsonobject.base_properties import DefaultProperty
 
 from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
@@ -52,6 +54,11 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
         pass
 
 
+    @abstractmethod
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        pass
+
+
 PRIMARY_COLUMN_TYPE_REFERENCE = 'reference'
 PRIMARY_COLUMN_TYPE_CONSTANT = 'constant'
 PRIMARY_COLUMN_TYPE_SQL = 'sql_statement'
@@ -84,6 +91,9 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
 
     def get_datatype(self):
         return self._datatype
+
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        return sqlalchemy_table.c[self.column_id]
 
 
 def IdColumnAdapter():
@@ -129,10 +139,20 @@ class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
         return type_to_class_mapping[db_column.column_type](db_column)
 
 
+class ConstantColumnProperties(jsonobject.JsonObject):
+    constant = DefaultProperty(required=True)
+
+
 class ConstantColumnAdapter(PrimaryColumnAdapter):
+    config_spec = ConstantColumnProperties
+
     def get_datatype(self):
         # todo should be configurable
         return DATA_TYPE_INTEGER
+
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        # https://stackoverflow.com/a/7546802/8207
+        return sqlalchemy.sql.expression.bindparam(self.column_id, self.properties.constant)
 
 
 class ReferenceColumnProperties(jsonobject.JsonObject):
@@ -147,6 +167,9 @@ class ReferenceColumnAdapter(PrimaryColumnAdapter):
             self.properties.referenced_column
         ).datatype
 
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        return sqlalchemy_table.c[self.properties.referenced_column]
+
 
 class SqlColumnProperties(jsonobject.JsonObject):
     datatype = DataTypeProperty(required=True)
@@ -159,6 +182,10 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
 
     def get_datatype(self):
         return self.properties.datatype
+
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        # todo:
+        return sqlalchemy.sql.expression.bindparam(self.column_id, 'not working yet')
 
 
 SECONDARY_COLUMN_TYPE_SUM = 'sum'
@@ -196,3 +223,7 @@ class SumColumnAdapter(SecondaryColumnAdapter):
 
     def get_datatype(self):
         return DATA_TYPE_INTEGER
+
+    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+        raise NotImplementedError('todo')
+
