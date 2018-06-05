@@ -35,7 +35,6 @@
         <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
         <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-        <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
     {% if is_saas_environment %}
@@ -72,34 +71,6 @@
       </noscript>
       <!-- end linked in -->
     {% endif %}
-{% endblock %}
-
-{% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
-
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.debug.less' %}" />
-{% else %}
-{% compress css %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.less' %}" />
-{% endcompress %}
-{% endif %}
-{% endblock stylesheets %}
-
-{% block background_content %}
-  <div class="bg-container">
-    <div class="bg-full-cover-fixed bg-registration b-lazy"
-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
-  </div>
 {% endblock %}
 
 {% block content %}
