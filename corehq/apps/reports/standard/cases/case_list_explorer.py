@@ -1,11 +1,16 @@
 from __future__ import absolute_import, unicode_literals
 
+from io import BytesIO
+
+import six
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
+from jq import jq
 from memoized import memoized
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
     SPECIAL_CASE_PROPERTIES_MAP,
 )
 from corehq.apps.case_search.filter_dsl import CaseFilterError
@@ -23,12 +28,19 @@ from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XpathCaseSearchFilter,
 )
+from corehq.elastic import iter_es_docs_from_query
+from couchexport.export import Format
 
 
 class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+
+    exportable = True
+    exportable_all = True
+    _is_exporting = False
+    export_format_override = Format.UNZIPPED_CSV
 
     fields = [
         CaseListFilter,
@@ -38,9 +50,42 @@ class CaseListExplorer(CaseListReport):
         CaseListExplorerColumns,
     ]
 
+    @property
+    def excel_response(self):
+        self._is_exporting = True
+        return BytesIO("\n".join(self.get_data()).encode('UTF-8'))
+
     def get_data(self):
-        for row in self.es_results['hits'].get('hits', []):
-            yield flatten_result(row)
+        if self._is_exporting:
+            return self._get_export_data()
+        else:
+            return (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
+
+    def _get_export_data(self):
+        headers = ",".join(['_id'] + [c['label'] for c in self._filter_columns])
+
+        case_docs = {r['_id']: flatten_result(r) for r in iter_es_docs_from_query(self._build_query())}
+        from corehq.util.log import with_progress_bar
+        computed_properties = [c for c in self._filter_columns if c['name'] in CASE_COMPUTED_METADATA]
+        if computed_properties:
+            for case_id, case_doc in with_progress_bar(six.iteritems(case_docs), length=len(list(case_docs.values()))):
+                case_display = SafeCaseDisplay(self, case_doc)
+                for computed_property in computed_properties:
+                    case_doc[computed_property['name']] = case_display.get(computed_property)
+
+        properties = ['_id']
+        for c in self._filter_columns:
+            try:
+                prop = SPECIAL_CASE_PROPERTIES_MAP[c['name']].doc_property
+            except KeyError:
+                prop = c['name']
+            properties.append(prop)
+
+        jq_query_properties = ",".join('."{}"'.format(prop) for prop in properties)
+        rows = jq('.[] | [{}] | @csv'.format(jq_query_properties)).transform(
+            case_docs, multiple_output=True)
+
+        return [headers] + rows
 
     def _build_query(self):
         query = super(CaseListExplorer, self)._build_query()
@@ -59,6 +104,11 @@ class CaseListExplorer(CaseListReport):
         return query
 
     def _populate_sort(self, query):
+        if self._is_exporting:
+            # Don't sort on export
+            query = query.set_sorting_block({})
+            return query
+
         num_sort_columns = int(self.request.GET.get('iSortingCols', 0))
         for col_num in range(num_sort_columns):
             descending = self.request.GET['sSortDir_{}'.format(col_num)] == 'desc'
@@ -81,8 +131,19 @@ class CaseListExplorer(CaseListReport):
                 visible=(not column.get('hidden')),
                 sortable=column['name'] not in CASE_COMPUTED_METADATA,
             )
-            for column in CaseListExplorerColumns.get_value(self.request, self.domain)
+            for column in self._filter_columns
         ]
+
+    @property
+    def _filter_columns(self):
+        """Columns from the report filter
+        """
+        if self._is_exporting:
+            return [
+                c for c in CaseListExplorerColumns.get_value(self.request, self.domain)
+                if c['name'] not in [p['name'] for p in CaseListExplorerColumns.PERSISTENT_COLUMNS]
+            ]
+        return CaseListExplorerColumns.get_value(self.request, self.domain)
 
     @property
     def headers(self):
@@ -92,10 +153,14 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def rows(self):
-        columns = CaseListExplorerColumns.get_value(self.request, self.domain)
         for case in self.get_data():
             case_display = SafeCaseDisplay(self, case)
             yield [
                 case_display.get(column)
-                for column in columns
+                for column in self._filter_columns
             ]
+
+    @property
+    def export_rows(self):
+        self._is_exporting = True
+        return self.rows
