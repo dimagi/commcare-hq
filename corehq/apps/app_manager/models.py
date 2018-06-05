@@ -97,7 +97,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
@@ -5294,11 +5293,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.build_comment = comment
         copy.comment_from = user_id
-        if user_id:
-            user = CouchUser.get(user_id)
-            if not user.has_built_app:
-                user.has_built_app = True
-                user.save()
         copy.is_released = False
 
         if not copy.is_remote_app():

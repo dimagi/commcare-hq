@@ -1572,6 +1572,11 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     def get_location_id(self, domain):
         return getattr(self.get_domain_membership(domain), 'location_id', None)
 
+    def set_has_built_app(self):
+        if not self.has_built_app:
+            self.has_built_app = True
+            self.save()
+
 
 class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin):
 
