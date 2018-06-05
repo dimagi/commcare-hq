@@ -9,6 +9,7 @@ from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
 
+from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.exceptions import EnterpriseReportError
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
@@ -109,7 +110,8 @@ class EnterpriseDomainReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
-        return [_('Plan'), _('Created On'), _('# of Mobile Users'), _('# of Web Users')] + headers
+        return [_('Plan'), _('Created On'), _('# of Mobile Users'),
+                _('# of Web Users'), _('Last Form Submission')] + headers
 
     def rows_for_domain(self, domain):
         subscription = Subscription.get_active_subscription_by_domain(domain.name)
@@ -119,6 +121,7 @@ class EnterpriseDomainReport(EnterpriseReport):
             self.format_date(domain.date_created),
             get_mobile_user_count(domain.name, include_inactive=False),
             get_web_user_count(domain.name, include_inactive=False),
+            self.format_date(get_last_form_submission_received(domain.name)),
         ] + self.domain_properties(domain)]
 
     def total_for_domain(self, domain):
