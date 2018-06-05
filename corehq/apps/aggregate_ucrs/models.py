@@ -42,6 +42,9 @@ class AggregateTableDefinition(models.Model):
     aggregation_start_column = models.CharField(default='opened_date', max_length=MAX_COLUMN_NAME_LENGTH)
     aggregation_end_column = models.CharField(default='closed_date', max_length=MAX_COLUMN_NAME_LENGTH)
 
+    def __str__(self):
+        return '{} ({})'.format(self.display_name or self.table_id, self.domain)
+
     @property
     @memoized
     def data_source(self):
