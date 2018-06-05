@@ -65,13 +65,13 @@ class ChildrenExport(ExportableMixin, SqlData):
                 'Height measurement efficiency (in month)',
                 percent,
                 [
-                    SumColumn('height_measured_in_month', alias='height_measured_in_month_all'),
-                    SumColumn('height_eligible', filters=self.filters + [
-                        AND([
-                            NOT(EQ('age_tranche', 'age_0')),
-                            NOT(EQ('age_tranche', 'age_6')),
+                    SumColumn('height_measured_in_month', filters=self.filters + [
                             NOT(EQ('age_tranche', 'age_72'))
-                        ])
+                        ],
+                        alias='height_measured_in_month_all'
+                    ),
+                    SumColumn('height_eligible', filters=self.filters + [
+                        NOT(EQ('age_tranche', 'age_72'))
                     ])
                 ],
                 slug='height_measurement'
