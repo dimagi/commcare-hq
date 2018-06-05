@@ -45,7 +45,7 @@ def create_build_files_for_all_app_profiles(domain, build_id):
         app.save()
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build = get_latest_build_id(domain, app_id)
     query = (AppES()
