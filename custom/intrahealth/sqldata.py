@@ -489,6 +489,7 @@ class RecapPassageData(BaseSqlData):
         ]
 
 
+# TODO
 class ConsommationData(BaseSqlData):
     slug = 'consommation'
     title = 'Consommation'
@@ -866,6 +867,104 @@ class IntraHealthSqlData(SqlData):
     @property
     def filter_values(self):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
+
+
+class ConsommationDataSourceMixin(IntraHealthSqlData):
+    slug = 'consommation_data_source'
+    show_total = False
+    title = 'Consommation Data Source'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_("Consumption"), SumColumn('actual_consumption')))
+        return columns
+
+
+class ConsommationV1DataSource(ConsommationDataSourceMixin):
+    slug = 'ConsommationV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class ConsommationV2DataSource(ConsommationDataSourceMixin):
+    slug = 'ConsommationV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class ConsommationData2(IntraHealthSqlData):
+    slug = 'consommation2'
+    title = 'Consommation'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows_v1 = ConsommationV1DataSource(config=self.config).get_data()
+        rows_v2 = ConsommationV2DataSource(config=self.config).get_data()
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+
+        rows = []
+        data = defaultdict(int)
+        for row in rows_v1:
+            if data[row[loc_name]]:
+                data[row[loc_name]] += row['actual_consumption']['html']
+        for row in rows_v2:
+            if data[row[loc_name]]:
+                data[row[loc_name]] += row['actual_consumption']['html']
+        for loc_name, value in data.items():
+            rows.append([loc_name, value])
+        return rows
+
+    @property
+    def headers(self):
+        if 'region_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        headers.add_column(DataTablesColumn('Consumption'))
+        return headers
 
 
 class PPSAvecDonneesDataSourceMixin(IntraHealthSqlData):

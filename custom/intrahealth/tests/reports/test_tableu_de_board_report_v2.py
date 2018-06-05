@@ -61,17 +61,51 @@ class TestFicheConsommationReportV2(YeksiTestCase):
         headers = PPS_avec_donnees_report['headers'].as_export_table[0]
         rows = PPS_avec_donnees_report['rows']
 
-        print(headers)
-        print(rows)
         self.assertEqual(
             headers,
-            [u'PPS', 'PPS Avec Donn\xe9es Soumises']
+            ['PPS', 'PPS Avec Donn\xe9es Soumises']
         )
         self.assertEqual(
             rows,
             [['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], [None, 1], ['FOUNDIOUGNE', 1],
              ['SOKONE', 1], ['FATICK', 1]]
+        )
 
+    def test_consommation_data_report(self):
+        mock = MagicMock()
+        mock.couch_user = self.user
+        mock.GET = {
+            'startdate': '2016-05-28',
+            'enddate': '2018-06-04',
+            'location_id': '',
+        }
+        mock.datespan = DateSpan(datetime(2016, 5, 28), datetime(2018, 6, 4))
+
+        tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
+
+        consommation_data_report = tableu_de_board_report2_report.report_context['reports'][2]['report_table']
+        headers = consommation_data_report['headers'].as_export_table[0]
+        rows = consommation_data_report['rows']
+
+        self.assertEqual(
+            headers,
+            ['PPS', 'Consumption']
+        )
+        self.assertEqual(
+            rows,
+            [
+                ['NDIOLOFENE', 0], ['PS HLM FASS', 0], ['CS LIBERTE 6 EXTENTION', 0], ['P.S NDIMB', 0],
+                ['PS MARSASSOUM SEDHIOU', 0], [u'PS MEDINA GOUNASS', 0], ['HOPITAL REGIONAL DE KOLDA', 0],
+                ['DAROU MBITEYENE', 0], ['PS Sendou', 0], [u'MEDINA BAYE', 0], ['NAYOBE', 0], ['FASS', 0],
+                ['BETENTY', 0], ['TASSINERE', 0], ['PS DIAMAGUENE', 0], [None, 0],
+                ['PPS SANTHIABA ZIGUINCHOR', 0], ['GATE', 0], ['PS TANAFF GOUDOMP', 0], ['SAMBA DIA', 0],
+                ['THIEPP  KEBEMER', 0], [u"N'GALLELE SAINT LOUIS", 0], ['CARITAS', 0], ['PS YOUTOU', 0],
+                ['Thille Boubacar', 0], ['PPS ORKADIERE', 0], ['GANDIAYE', 0], ['PS WASSADOU', 0],
+                ['PS MAMPALAGO BIGNONA', 0], ['RAYON PRIVE SOKONE', 0], ['MEKHE LAMBAYE', 0],
+                ['THILAGRAND', 0],
+                ['BACOBOF', 0], ['SOBEME', 0], ['PS FASS', 0], ['HOP. MILITAIRE OUAKAM', 0], ['Wallalde', 0],
+                ['NDANGALMA', 0], ['PS HANN SUR MER', 0], ['PS TOUBA DIACK SAO', 0], ['EPS 1 KAFFRINE', 0]
+            ]
         )
 
     def test_products_report(self):
