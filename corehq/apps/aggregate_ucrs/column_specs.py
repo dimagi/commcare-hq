@@ -6,29 +6,45 @@ from abc import ABCMeta, abstractmethod
 
 import six
 
-from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty
+from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
 from dimagi.ext import jsonobject
 
 
 class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
+    """
+    A column adapter represents everything needed to work with an aggregate column,
+    including its config as well as its sqlalchemy information (via the ucr column spec)
+    """
     config_spec = jsonobject.JsonObject
 
     def __init__(self, db_column):
-        self.db_column = db_column
+        self._db_column = db_column
+        self.column_id = db_column.column_id
         self.properties = self.config_spec.wrap(db_column.config_params)
+
+    @abstractmethod
+    def is_nullable(self):
+        pass
+
+    @abstractmethod
+    def is_primary_key(self):
+        pass
+
+    @abstractmethod
+    def create_index(self):
+        pass
 
     def to_ucr_column_spec(self):
         """
         :return: a UCR-compatible `Column` object that can be used to be converted to sqlalchemy tables
         """
         return Column(
-            id=self.db_column.column_id,
+            id=self.column_id,
             datatype=self.get_datatype(),
-            # todo: these might need to be configurable some day
-            is_nullable=True,
-            is_primary_key=False,
-            create_index=False,
+            is_nullable=self.is_nullable(),
+            is_primary_key=self.is_primary_key(),
+            create_index=self.create_index(),
         )
 
     @abstractmethod
@@ -46,7 +62,62 @@ PRIMARY_COLUMN_TYPE_CHOICES = (
 )
 
 
+class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+
+    def __init__(self, column_id, datatype, is_nullable, is_primary_key, create_index):
+        # short circuit super class call to avoid refences to db_column
+        # todo: find a better way to do this that doesn't break constructor inheritance
+        self.column_id = column_id
+        self._datatype = datatype
+        self._is_nullable = is_nullable
+        self._is_primary_key = is_primary_key
+        self._create_index = create_index
+
+    def is_nullable(self):
+        return self._is_nullable
+
+    def is_primary_key(self):
+        return self._is_primary_key
+
+    def create_index(self):
+        return self._create_index
+
+    def get_datatype(self):
+        return self._datatype
+
+
+def IdColumnAdapter():
+    # shortcut/convenience method to instantiate id columns
+    return RawColumnAdapter(
+        column_id='doc_id',
+        datatype=DATA_TYPE_STRING,
+        is_nullable=False,
+        is_primary_key=True,
+        create_index=True,
+    )
+
+
+def MonthColumnAdapter():
+    # shortcut/convenience method to instantiate month columns
+    return RawColumnAdapter(
+        column_id='month',
+        datatype=DATA_TYPE_DATE,
+        is_nullable=False,
+        is_primary_key=True,
+        create_index=True,
+    )
+
+
 class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+
+    def is_nullable(self):
+        return True
+
+    def is_primary_key(self):
+        return False
+
+    def create_index(self):
+        return False
 
     @staticmethod
     def from_db_column(db_column):
@@ -56,6 +127,7 @@ class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
             PRIMARY_COLUMN_TYPE_SQL: SqlColumnAdapter,
         }
         return type_to_class_mapping[db_column.column_type](db_column)
+
 
 class ConstantColumnAdapter(PrimaryColumnAdapter):
     def get_datatype(self):
@@ -71,7 +143,7 @@ class ReferenceColumnAdapter(PrimaryColumnAdapter):
     config_spec = ReferenceColumnProperties
 
     def get_datatype(self):
-        return self.db_column.table_definition.data_source.get_column_by_id(
+        return self._db_column.table_definition.data_source.get_column_by_id(
             self.properties.referenced_column
         ).datatype
 
@@ -97,6 +169,15 @@ SECONDARY_COLUMN_TYPE_CHOICES = (
 
 
 class SecondaryColumnAdapter(ColumnAdapater):
+
+    def is_nullable(self):
+        return True
+
+    def is_primary_key(self):
+        return False
+
+    def create_index(self):
+        return False
 
     @staticmethod
     def from_db_column(db_column):
