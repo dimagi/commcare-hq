@@ -123,8 +123,6 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     {{ block.super }}
     {% if app.is_deleted %}
         {% include 'app_manager/partials/undo_delete_app.html' %}
-    {% elif app %}
-        {% include 'app_manager/partials/confirm_delete_app.html' %}
     {% endif %}
 {% endblock modals %}
 
