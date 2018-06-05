@@ -225,5 +225,5 @@ class SumColumnAdapter(SecondaryColumnAdapter):
         return DATA_TYPE_INTEGER
 
     def to_sqlalchemy_query_column(self, sqlalchemy_table):
-        raise NotImplementedError('todo')
+        return sqlalchemy_table.c[self.properties.referenced_column]
 
