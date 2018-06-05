@@ -11,6 +11,7 @@ hqDefine("crud/js/admin", function() {
             "Add New " + options.itemType);
         self.formSubmitPath = options.formSubmitPath;
         self.formType = options.formType;
+        self.slug = options.slug;
         self.formSubmitURL = self.formSubmitPath + self.formType + '/';
         self.newFormSubmitURL = self.formSubmitURL + 'new/';
         self.updateFormSubmitURL = self.formSubmitURL + 'update/';
@@ -41,6 +42,14 @@ hqDefine("crud/js/admin", function() {
                 $('button[type="submit"]').button('reset');
             };
 
+        self.datatable = function() {
+            var selector = $('#report_table_' + self.slug + '.datatable');
+            if (!$(selector).length) {
+                throw new Error("Could not find datatable " + selector);
+            }
+            return $(selector).dataTable();
+        };
+
         self.init = function() {
             $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
             self.addItemModal = $('#crud_add_modal');
@@ -57,7 +66,7 @@ hqDefine("crud/js/admin", function() {
                         url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
                         success: function(data) {
                             self.refreshAddItemForm(data);
-                            hqImport("reports/js/tabular").fnAddData(data.rows);
+                            self.datatable().fnAddData(data.rows);
                             hqImport("hqwebapp/js/alert_user").alert_user(gettext("Indicator added to end of table"), "success");
                         },
                         error: resetSubmitButton,
@@ -115,7 +124,7 @@ hqDefine("crud/js/admin", function() {
         self.refreshUpdateItemForm = function(data) {
             var row = $('[data-item_id="' + self.currentItemID + '"]').parent().parent()[0];
             if (data.deleted)
-                hqImport("reports/js/tabular").fnDeleteRow(row);
+                self.datatable().fnDeleteRow(self.datatable().fnGetPosition(row));
             if (data.success && !data.deleted && data.rows)
                 updateRow(row, data.rows[0]);
             refreshForm(self.updateItemModal, data, '#crud_update_modal .modal-body');
@@ -141,6 +150,7 @@ hqDefine("crud/js/admin", function() {
             itemType: crudItem.type,
             formSubmitPath: crudItem.url,
             formType: crudItem.form,
+            slug: jsOptions.slug,
         });
         crudInterface.init();
 
