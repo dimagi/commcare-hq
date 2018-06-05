@@ -8,7 +8,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
@@ -435,7 +435,7 @@ class CaseScheduleInstanceMixin(object):
 
     RECIPIENT_TYPE_SELF = 'Self'
     RECIPIENT_TYPE_CASE_OWNER = 'Owner'
-    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_LAST_SUBMITTING_USER = 'LastSubmittingUser'
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
@@ -463,7 +463,10 @@ class CaseScheduleInstanceMixin(object):
             return self.case
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
+        elif self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMITTING_USER:
+            if self.case and self.case.modified_by:
+                return CouchUser.get_by_user_id(self.case.modified_by, domain=self.domain)
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
             return None
