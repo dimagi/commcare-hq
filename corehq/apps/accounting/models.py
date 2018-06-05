@@ -692,6 +692,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_customer_software_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'

@@ -981,6 +981,7 @@ class PlanInformationForm(forms.Form):
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+    is_customer_software_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -990,6 +991,7 @@ class PlanInformationForm(forms.Form):
                 'description': plan.description,
                 'edition': plan.edition,
                 'visibility': plan.visibility,
+                'is_customer_software_plan': plan.is_customer_software_plan
             }
         else:
             kwargs['initial'] = {
@@ -1007,6 +1009,7 @@ class PlanInformationForm(forms.Form):
                 'description',
                 'edition',
                 'visibility',
+                'is_customer_software_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1033,10 +1036,12 @@ class PlanInformationForm(forms.Form):
         description = self.cleaned_data['description']
         edition = self.cleaned_data['edition']
         visibility = self.cleaned_data['visibility']
+        is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
-                            visibility=visibility)
+                            visibility=visibility,
+                            is_customer_software_plan=is_customer_software_plan)
         plan.save()
         return plan
 
@@ -1048,6 +1053,7 @@ class PlanInformationForm(forms.Form):
             plan.description = self.cleaned_data['description']
             plan.edition = self.cleaned_data['edition']
             plan.visibility = self.cleaned_data['visibility']
+            plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
