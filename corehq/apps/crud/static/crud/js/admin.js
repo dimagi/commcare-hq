@@ -42,9 +42,6 @@ hqDefine("crud/js/admin", function() {
 
         self.init = function() {
             $('#reportFiltersAccordion .row .col-xs-8').append(self.actionButton);
-            self.actionButton.click(function() {
-                $('#js-add-crud-success').addClass('hide');
-            });
             self.addItemModal = $('#crud_add_modal');
             self.updateItemModal = $('#crud_update_modal');
 
@@ -60,7 +57,7 @@ hqDefine("crud/js/admin", function() {
                         success: function(data) {
                             self.refreshAddItemForm(data);
                             hqImport("reports/js/tabular").fnAddData(data.rows);
-                            $('#js-add-crud-success').removeClass('hide');
+                            hqImport("hqwebapp/js/alert_user").alert_user(gettext("Indicator added to end of table"), "success");
                         },
                         error: resetSubmitButton,
                         dataType: 'json',
