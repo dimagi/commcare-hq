@@ -618,7 +618,7 @@ class BugReportView(View):
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
         if req.POST.get('five-hundred-report'):
-            extra_message = ("This messge was reported from a 500 error page! "
+            extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
             extra_debug_info = (
                 "datetime: {datetime}\n"
