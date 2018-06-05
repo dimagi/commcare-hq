@@ -156,24 +156,23 @@ def not_found(request, template_name='404.html'):
 @require_GET
 @location_safe
 def redirect_to_default(req, domain=None):
+    project = None
+    if domain:
+        domain_name = normalize_domain_name(domain)
+        project = Domain.get_by_name(domain_name)
     if not req.user.is_authenticated:
         if domain != None:
             url = reverse('domain_login', args=[domain])
         else:
             url = reverse('login')
-    elif domain and _two_factor_needed(domain, req):
+    elif _two_factor_needed(project, req):
         return TemplateResponse(
             request=req,
             template='two_factor/core/otp_required.html',
             status=403,
         )
     else:
-        if domain:
-            domain = normalize_domain_name(domain)
-            domains = [Domain.get_by_name(domain)]
-        else:
-            domains = Domain.active_for_user(req.user)
-
+        domains = [project] if domain else Domain.active_for_user(req.user)
         if 0 == len(domains) and not req.user.is_superuser:
             return redirect('registration_domain')
         elif 1 == len(domains):
@@ -207,14 +206,12 @@ def redirect_to_default(req, domain=None):
     return HttpResponseRedirect(url)
 
 
-def _two_factor_needed(domain_name, request):
-    domain_name = normalize_domain_name(domain_name)
-    domain = Domain.get_by_name(domain_name)
-    if domain:
-        return (
-            two_factor_required_for_view_or_request(domain, request.couch_user)
-            and not request.user.is_verified()
-        )
+def _two_factor_needed(domain, request):
+    return (
+        domain
+        and two_factor_required_for_view_or_request(domain, request.couch_user)
+        and not request.user.is_verified()
+    )
 
 
 def yui_crossdomain(req):
