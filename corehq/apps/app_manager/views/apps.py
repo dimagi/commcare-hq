@@ -254,10 +254,7 @@ def get_app_view_context(request, app):
         )
     })
     context.update({
-        'smart_lang_display_enabled': app.smart_lang_display,
-        'show_ui_notification_to_hide_translations': (
-            len(app.langs) > 2
-        )
+        'smart_lang_display_enabled': app.smart_lang_display
     })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
