@@ -11,9 +11,9 @@ from custom.intrahealth.reports import FicheConsommationReport2
 from dimagi.utils.dates import DateSpan
 
 
-class TestDashboard2(YeksiTestCase):
+class TestFicheConsommationReport2(YeksiTestCase):
 
-    def test_loss_rate_report(self):
+    def test_fiche_consommation_report(self):
         mock = MagicMock()
         mock.couch_user = self.user
         mock.GET = {
