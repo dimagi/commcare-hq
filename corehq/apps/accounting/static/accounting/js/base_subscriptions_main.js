@@ -47,8 +47,6 @@ hqDefine('accounting/js/base_subscriptions_main', [
         self.noInvoice = ko.observable(invoice);
         var skipAutoDowngrade = $('#id_skip_auto_downgrade').prop("checked");
         self.skipAutoDowngrade = ko.observable(skipAutoDowngrade);
-        var isCustomerSoftwarePlan = $('#id_is_customer_software_plan').prop("checked");
-        self.isCustomerSoftwarePlan = ko.observable(isCustomerSoftwarePlan);
         return self;
     };
 

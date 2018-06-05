@@ -692,6 +692,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_customer_software_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'
@@ -1009,7 +1010,6 @@ class Subscription(models.Model):
     do_not_email_reminder = models.BooleanField(default=False)
     auto_generate_credits = models.BooleanField(default=False)
     is_trial = models.BooleanField(default=False)
-    is_customer_software_plan = models.BooleanField(default=False)
     skip_invoicing_if_no_feature_charges = models.BooleanField(default=False)
     service_type = models.CharField(
         max_length=25,
@@ -1152,7 +1152,7 @@ class Subscription(models.Model):
                             web_user=None, note=None, adjustment_method=None,
                             service_type=None, pro_bono_status=None, funding_source=None,
                             skip_invoicing_if_no_feature_charges=None, skip_auto_downgrade=None,
-                            skip_auto_downgrade_reason=None, is_customer_software_plan=None):
+                            skip_auto_downgrade_reason=None):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
@@ -1173,7 +1173,6 @@ class Subscription(models.Model):
             funding_source=funding_source,
             skip_auto_downgrade=skip_auto_downgrade,
             skip_auto_downgrade_reason=skip_auto_downgrade_reason,
-            is_customer_software_plan=is_customer_software_plan
         )
 
         self.save()
@@ -1218,7 +1217,6 @@ class Subscription(models.Model):
             'funding_source',
             'skip_auto_downgrade',
             'skip_auto_downgrade_reason',
-            'is_customer_software_plan'
         }
 
         assert property_names >= set(kwargs.keys())

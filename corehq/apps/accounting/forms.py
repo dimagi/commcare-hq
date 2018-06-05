@@ -403,10 +403,6 @@ class SubscriptionForm(forms.Form):
     salesforce_contract_id = forms.CharField(
         label=ugettext_lazy("Salesforce Deployment ID"), max_length=80, required=False
     )
-    is_customer_software_plan = forms.BooleanField(
-        label=ugettext_lazy("Customer Software Plan"),
-        required=False
-    )
     do_not_invoice = forms.BooleanField(
         label=ugettext_lazy("Do Not Invoice"), required=False
     )
@@ -519,7 +515,6 @@ class SubscriptionForm(forms.Form):
             self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
-            self.fields['is_customer_software_plan'].initial = subscription.is_customer_software_plan
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
             self.fields['no_invoice_reason'].initial = subscription.no_invoice_reason
             self.fields['do_not_email_invoice'].initial = subscription.do_not_email_invoice
@@ -620,10 +615,6 @@ class SubscriptionForm(forms.Form):
                     ),
                     data_bind="visible: skipAutoDowngrade",
                 ),
-                hqcrispy.B3MultiField(
-                    "Customer Software Plan",
-                    crispy.Field('is_customer_software_plan', data_bind="checked: isCustomerSoftwarePlan"),
-                ),
                 'set_subscription'
             ),
             hqcrispy.FormActions(
@@ -672,7 +663,6 @@ class SubscriptionForm(forms.Form):
             date_start=self.cleaned_data['start_date'],
             date_end=self.cleaned_data['end_date'],
             date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
-            is_customer_software_plan=self.cleaned_data['is_customer_software_plan'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
@@ -991,6 +981,7 @@ class PlanInformationForm(forms.Form):
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+    is_customer_software_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -1000,6 +991,7 @@ class PlanInformationForm(forms.Form):
                 'description': plan.description,
                 'edition': plan.edition,
                 'visibility': plan.visibility,
+                'is_customer_software_plan': plan.is_customer_software_plan
             }
         else:
             kwargs['initial'] = {
@@ -1017,6 +1009,7 @@ class PlanInformationForm(forms.Form):
                 'description',
                 'edition',
                 'visibility',
+                'is_customer_software_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1043,10 +1036,12 @@ class PlanInformationForm(forms.Form):
         description = self.cleaned_data['description']
         edition = self.cleaned_data['edition']
         visibility = self.cleaned_data['visibility']
+        is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
-                            visibility=visibility)
+                            visibility=visibility,
+                            is_customer_software_plan=is_customer_software_plan)
         plan.save()
         return plan
 
@@ -1058,6 +1053,7 @@ class PlanInformationForm(forms.Form):
             plan.description = self.cleaned_data['description']
             plan.edition = self.cleaned_data['edition']
             plan.visibility = self.cleaned_data['visibility']
+            plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 
