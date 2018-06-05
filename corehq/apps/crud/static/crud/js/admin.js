@@ -59,7 +59,7 @@ hqDefine("crud/js/admin", function() {
                         url: overrideFormTypeInUrl(self.newFormSubmitURL, self.overrideNewFormType),
                         success: function(data) {
                             self.refreshAddItemForm(data);
-                            reportTables.datatable.fnAddData(data.rows);
+                            hqImport("reports/js/tabular").fnAddData(data.rows);
                             $('#js-add-crud-success').removeClass('hide');
                         },
                         error: resetSubmitButton,
@@ -117,7 +117,7 @@ hqDefine("crud/js/admin", function() {
         self.refreshUpdateItemForm = function(data) {
             var row = $('[data-item_id="' + self.currentItemID + '"]').parent().parent()[0];
             if (data.deleted)
-                reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));
+                hqImport("reports/js/tabular").fnDeleteRow(row);
             if (data.success && !data.deleted && data.rows)
                 updateRow(row, data.rows[0]);
             refreshForm(self.updateItemModal, data, '#crud_update_modal .modal-body');
@@ -132,16 +132,28 @@ hqDefine("crud/js/admin", function() {
         if (jsOptions && ajaxOptions.url.indexOf(jsOptions.asyncUrl) === -1) {
             return;
         }
-        var crudItem = initialPageData("js_options").crud_item,
-            crudInterface = CRUDAdminControl({
+
+        // CRUD pages will have supplied a crud_item
+        var crudItem = initialPageData("js_options").crud_item;
+        if (!crudItem) {
+            return;
+        }
+
+        var crudInterface = CRUDAdminControl({
             itemType: crudItem.type,
             formSubmitPath: crudItem.url,
             formType: crudItem.form,
         });
         crudInterface.init();
+
         $(".crud_edit").click(function(e) {
             crudInterface.update_item(e.currentTarget);
         });
         $(".form-label").tooltip();
+        var $filters = $("#reportFiltersAccordion");
+        if (!$filters.find("a.bulk-add").length) {
+            var content = '  <a href="' + crudItem.bulk_add_url + '" class="btn btn-primary"><i class="fa fa-copy"></i> Copy Indicators to another Project</a>';
+            $filters.find('.row .col-xs-8').append(content);
+        }
     });
 });

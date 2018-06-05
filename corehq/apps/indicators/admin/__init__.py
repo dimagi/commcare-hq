@@ -31,14 +31,6 @@ class BaseIndicatorAdminInterface(BaseCRUDAdminInterface):
         )
 
     @property
-    def report_context(self):
-        context = super(BaseIndicatorAdminInterface, self).report_context
-        context.update({
-            "bulk_add_url": self.bulk_add_url,
-        })
-        return context
-
-    @property
     def bulk_add_url(self):
         return reverse("indicator_bulk_copy", args=[self.domain, self.document_class.__name__])
 

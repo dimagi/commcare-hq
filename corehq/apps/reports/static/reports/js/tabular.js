@@ -1,4 +1,9 @@
 hqDefine("reports/js/tabular", function() {
+    // Having this a a module-level variable, accessed by fnAddData and fnDeleteRow,
+    // is a nasty little piece of work that allows the indicators pages to work without
+    // significant refactoring.
+    var reportTables;
+
     function renderPage(slug, tableOptions) {
         if (tableOptions && tableOptions.datatables) {
             var tableConfig = tableOptions,
@@ -38,7 +43,7 @@ hqDefine("reports/js/tabular", function() {
                     fixColsWidth: tableConfig.left_col.fixed.width,
                 });
             }
-            var reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables(options);
+            reportTables = hqImport("reports/js/config.dataTables.bootstrap").HQReportDataTables(options);
             var standardHQReport = hqImport("reports/js/standard_hq_report").getStandardHQReport();
             if (typeof standardHQReport !== 'undefined') {
                 standardHQReport.handleTabularReportCookies(reportTables);
@@ -69,4 +74,23 @@ hqDefine("reports/js/tabular", function() {
             renderPage(initialPageData("js_options").slug, initialPageData("report_table_js_options"));
         }
     });
+
+    var fnAddData = function(rows) {
+        if (!reportTables) {
+            throw new Error("reportTables does not yet exist in fnAddData");
+        }
+        reportTables.datatable.fnAddData(rows);
+    };
+
+    var fnDeleteRow = function(row) {
+        if (!reportTables) {
+            throw new Error("reportTables does not yet exist in fnDeleteRow");
+        }
+        reportTables.datatable.fnDeleteRow(reportTables.datatable.fnGetPosition(row));
+    };
+
+    return {
+        fnAddData: fnAddData,
+        fnDeleteRow: fnDeleteRow,
+    };
 });

@@ -36,6 +36,7 @@ class BaseCRUDAdminInterface(GenericTabularReport):
             'form': self.form_class.__name__,
             'doc': self.document_class.__name__,
             'url': self.crud_form_update_url,
+            'bulk_add_url': self.bulk_add_url,
         }
         return options
 
