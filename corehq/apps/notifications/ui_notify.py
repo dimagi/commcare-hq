@@ -17,8 +17,7 @@ class StaticUINotify(object):
                  only_visible_for_users_created_before=None,
                  only_visible_for_users_created_after=None,
                  starts_on=None,
-                 ends_on=None,
-                 custom_checks=None):
+                 ends_on=None):
         """
         :param slug: should have the format of something_descriptive_month_year
                      e.g. app_builder_publish_page_08_2017
@@ -26,7 +25,6 @@ class StaticUINotify(object):
         :param only_visible_for_users_created_after: datetime or None
         :param starts_on: datetime or None
         :param ends_on: datetime or None
-        :param custom_checks: pass in list of methods to run as custom checks
         """
         # slug should have the format of something_descriptive_month_year
         # e.g. app_builder_publish_page_08_2017
@@ -35,7 +33,6 @@ class StaticUINotify(object):
         self.visible_to_users_after = only_visible_for_users_created_after
         self.starts_on = starts_on
         self.ends_on = ends_on
-        self.custom_checks = custom_checks
 
     def enabled(self, request):
         if settings.ENTERPRISE_MODE:
@@ -64,21 +61,10 @@ class StaticUINotify(object):
                     self.visible_to_users_after)):
                 return False
 
-            if self.custom_checks:
-                for check in self.custom_checks:
-                    if not check(request):
-                        return False
-
             return not DismissedUINotify.is_notification_dismissed(
                 request.user, self.slug
             )
         return False
-
-
-def ensure_app_with_multiple_langs(request):
-    if hasattr(request, 'app'):
-        return len(request.app.langs) > 2
-    return False
 
 
 APP_BUILDER_PUBLISH = StaticUINotify(
@@ -114,5 +100,4 @@ MESSAGING_DASHBOARD = StaticUINotify(
 
 ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
     'ability_to_hide_translations',
-    custom_checks=[ensure_app_with_multiple_langs]
 )

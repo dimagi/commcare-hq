@@ -80,9 +80,10 @@
       {% endif %}
     </nav>
   {% endif %}
-  {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
-    <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
-         data-slug="{{ "ABILITY_TO_HIDE_TRANSLATIONS"|ui_notify_slug }}"
+  {% if show_ui_notification_to_hide_translations %}
+    {% if request|ui_notify_enabled:"ABILITY_TO_HIDE_TRANSLATIONS" %}
+      <div class="alert alert-ui-notify alert-dismissible helpbubble helpbubble-purple helpbubble-no-arrow fade in"
+         data-slug="{{ 'ABILITY_TO_HIDE_TRANSLATIONS'|ui_notify_slug }}"
          role="alert">
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -101,6 +102,7 @@
           </a>
         </p>
       </div>
+    {% endif %}
   {% endif %}
 {% endblock %}
 
