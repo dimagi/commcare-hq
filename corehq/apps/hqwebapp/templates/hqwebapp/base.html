@@ -193,15 +193,29 @@
                  class="navbar navbar-default navbar-static-top navbar-hq-main-menu">
                 <div class="container-fluid">
 
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
-                    <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
-                        <li>
-                            <a href="#hq-full-menu" data-toggle="collapse">
-                                <i class="fa fa-bars"></i>
-                                {% trans "Menu" %}
-                            </a>
-                        </li>
-                    </ul>
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated  %}
+                        <ul class="nav navbar-nav collapse-fullmenu-toggle" id="hq-fullmenu-responsive" role="menu">
+                            <li>
+                                <a href="#hq-full-menu" data-toggle="collapse">
+                                    <i class="fa fa-bars"></i>
+                                    {% trans "Menu" %}
+                                </a>
+                            </li>
+                        </ul>
+                    {% endif %}
+
+                    {% if not request.user.is_authenticated %}
+                      <nav class="navbar-menus navbar-signin" role="navigation">
+                        <div class="nav-settings-bar pull-right">
+                          <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
+                          {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
+                            <a href="#cta-form-get-demo"
+                               target="_blank"
+                               data-toggle="modal"
+                               class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
+                          {% endif %}
+                        </div>
+                      </nav>
                     {% endif %}
 
                     <div class="navbar-header hq-header">
@@ -215,35 +229,24 @@
                         </a>
                     </div>
 
-                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" %}
+                    {% if not request|toggle_enabled:"USER_TESTING_SIMPLIFY" and request.user.is_authenticated %}
+                      <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
+                          <li>
+                              <a href="#hq-main-tabs" data-toggle="collapse">
+                                  <i class="fa fa-bars"></i>
+                                  {% trans "Menu" %}
+                              </a>
+                          </li>
+                      </ul>
 
-                    <ul class="nav navbar-nav collapse-mainmenu-toggle" id="hq-mainmenu-responsive" role="menu">
-                        <li>
-                            <a href="#hq-main-tabs" data-toggle="collapse">
-                                <i class="fa fa-bars"></i>
-                                {% trans "Menu" %}
-                            </a>
-                        </li>
-                    </ul>
-
-                    <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
-                        <div class="nav-settings-bar pull-right">
-                        {% if request.user.is_authenticated %}
+                      <nav class="navbar-menus fullmenu collapse" id="hq-full-menu" role="navigation">
+                          <div class="nav-settings-bar pull-right">
                             {% include 'hqwebapp/includes/global_navigation_bar.html' %}
-                        {% else %}
-                            <a href="{% url "login" %}" class="btn btn-primary navbar-btn">{% trans 'Sign In' %}</a>
-                            {% if is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
-                              <a href="#cta-form-get-demo"
-                                 target="_blank"
-                                 data-toggle="modal"
-                                 class="btn btn-purple navbar-btn">{% trans 'Get Demo' %}</a>
-                            {% endif %}
-                        {% endif %}
-                        </div>
-                        {% block tabs %}
-                            {% format_main_menu %}
-                        {% endblock %}
-                    </nav>
+                          </div>
+                          {% block tabs %}
+                              {% format_main_menu %}
+                          {% endblock %}
+                      </nav>
                     {% endif %}
 
                 </div>
