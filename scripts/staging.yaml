@@ -54,9 +54,6 @@ branches:
   - ce/app-status-staging # Cal April 9
   #- jls/add-js-to-sentry # Jenny April 26
   - np/draggable  # NP 5/10
-  - fr/case-list-explorer-report-good  # FR May 30
-  - fr/case-list-explorer-part-2       # FR May 31
-  - fr/case-list-explorer-report-frontend # FR May 31
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
   - jls/prune-auto-builds  # Jenny June 5
