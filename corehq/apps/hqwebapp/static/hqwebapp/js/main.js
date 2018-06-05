@@ -352,7 +352,6 @@ hqDefine('hqwebapp/js/main', [
         eventize: eventize,
         icons: {
             ADD: 'icon-plus icon-blue fa fa-plus',
-            DELETE: 'icon-remove icon-blue fa fa-remove',
         },
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,

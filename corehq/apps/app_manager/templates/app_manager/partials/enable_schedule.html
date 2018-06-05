@@ -65,9 +65,8 @@
             </td>
             <td data-bind="text: form_abbreviations"></td>
             <td>
-                <i style="cursor: pointer;"
-                   data-bind="css: hqImport('hqwebapp/js/main').icons.DELETE,
-                              click: $parent.removePhase,
+                <i style="cursor: pointer;" class="fa fa-remove"
+                   data-bind="click: $parent.removePhase,
                               visible: forms().length == 0
                               "></i>
                 <i style="cursor: pointer;"

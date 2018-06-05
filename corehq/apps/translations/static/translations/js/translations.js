@@ -20,7 +20,7 @@ hqDefine("translations/js/translations", function() {
                     this.value = hqImport('hqwebapp/js/ui-element').input().val(value);
                     this.solid = true;
 
-                    this.$delete = $('<button class="btn btn-danger"><i></i></button>').addClass(hqImport('hqwebapp/js/main').icons.DELETE).click(function() {
+                    this.$delete = $('<button class="btn btn-danger"><i class="fa fa-remove"></i></button>').click(function() {
                         $(this).remove();
                         translation_ui.deleteTranslation(that.key.val());
                     }).css({
