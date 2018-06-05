@@ -93,10 +93,11 @@ class AggregationScriptTest(TestCase):
             differences = []
 
             for key in dict1.keys():
-                value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
-                value2 = dict2[key].replace('\r\n', '\n')
-                if value1 != value2:
-                    differences.append(key)
+                if key != 'id':
+                    value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
+                    value2 = dict2[key].replace('\r\n', '\n')
+                    if value1 != value2:
+                        differences.append(key)
 
             if differences:
                 messages.append("""
