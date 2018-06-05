@@ -21,7 +21,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, LedgerAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
@@ -79,7 +79,6 @@ from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
 
 from couchexport.exceptions import (
@@ -175,7 +174,6 @@ from .tasks import (
     build_form_multimedia_zip,
     create_metadata_export,
     rebuild_export_async,
-    rebuild_export_task,
     send_delayed_report,
 )
 from .util import (
