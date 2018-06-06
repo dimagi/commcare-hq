@@ -312,7 +312,11 @@ def flatten_result(hit, include_score=False):
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
-    result = hit['_source']
+    try:
+        result = hit['_source']
+    except KeyError:
+        result = hit
+
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])
