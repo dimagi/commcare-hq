@@ -53,9 +53,8 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
     def get_datatype(self):
         pass
 
-
     @abstractmethod
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         pass
 
 
@@ -92,7 +91,7 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
     def get_datatype(self):
         return self._datatype
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         return sqlalchemy_table.c[self.column_id]
 
 
@@ -150,9 +149,9 @@ class ConstantColumnAdapter(PrimaryColumnAdapter):
         # todo should be configurable
         return DATA_TYPE_INTEGER
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         # https://stackoverflow.com/a/7546802/8207
-        return sqlalchemy.sql.expression.bindparam(self.column_id, self.properties.constant)
+        return sqlalchemy.bindparam(self.column_id, self.properties.constant)
 
 
 class ReferenceColumnProperties(jsonobject.JsonObject):
@@ -167,7 +166,7 @@ class ReferenceColumnAdapter(PrimaryColumnAdapter):
             self.properties.referenced_column
         ).datatype
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         return sqlalchemy_table.c[self.properties.referenced_column]
 
 
@@ -183,9 +182,21 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
     def get_datatype(self):
         return self.properties.datatype
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
-        # todo:
-        return sqlalchemy.sql.expression.bindparam(self.column_id, 'not working yet')
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
+        def _map_params(statement_params):
+            mapped_params = {}
+            for param_name, param_value in statement_params.items():
+                mapped_value = param_value
+                # transform anything starting with a ":" to the value passed in from aggregation_params
+                if mapped_value.startswith(':'):
+                    mapped_value = aggregation_params[mapped_value[1:]]
+                mapped_params[param_name] = mapped_value
+            return mapped_params
+
+        mapped_params = _map_params(self.properties.statement_params)
+        return sqlalchemy.text(self.properties.statement).bindparams(
+            **mapped_params
+        )
 
 
 SECONDARY_COLUMN_TYPE_SUM = 'sum'
@@ -224,6 +235,5 @@ class SumColumnAdapter(SecondaryColumnAdapter):
     def get_datatype(self):
         return DATA_TYPE_INTEGER
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table):
-        return sqlalchemy_table.c[self.properties.referenced_column]
-
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
+        return sqlalchemy.func.sum(sqlalchemy_table.c[self.properties.referenced_column])
