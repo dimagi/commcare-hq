@@ -1654,18 +1654,11 @@ def close_case_view(request, domain, case_id):
         device_id = __name__ + ".close_case_view"
         form_id = close_case(case_id, domain, request.couch_user, device_id)
         msg = _('''Case {name} has been closed.
-            <a href="javascript:document.getElementById('{html_form_id}').submit();">Undo</a>.
+            <a href="{url}" class="post-link">Undo</a>.
             You can also reopen the case in the future by archiving the last form in the case history.
-            <form id="{html_form_id}" action="{url}" method="POST">
-                <input type="hidden" name="closing_form" value="{xform_id}" />
-                {csrf_inline}
-            </form>
         '''.format(
             name=case.name,
-            html_form_id='undo-close-case',
-            xform_id=form_id,
-            csrf_inline=csrf_inline(request),
-            url=reverse('undo_close_case', args=[domain, case_id]),
+            url=reverse('undo_close_case', args=[domain, case_id, form_id]),
         ))
         messages.success(request, mark_safe(msg), extra_tags='html')
     return HttpResponseRedirect(reverse('case_data', args=[domain, case_id]))
@@ -1674,12 +1667,12 @@ def close_case_view(request, domain, case_id):
 @require_case_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
-def undo_close_case_view(request, domain, case_id):
+def undo_close_case_view(request, domain, case_id, xform_id):
     case = _get_case_or_404(domain, case_id)
     if not case.closed:
         messages.info(request, 'Case {} is not closed.'.format(case.name))
     else:
-        closing_form_id = request.POST['closing_form']
+        closing_form_id = xform_id
         assert closing_form_id in case.xform_ids
         form = FormAccessors(domain).get_form(closing_form_id)
         form.archive(user_id=request.couch_user._id)
@@ -2386,13 +2379,9 @@ def archive_form(request, domain, instance_id):
         "notif": notify_msg,
         "undo": _("Undo"),
         "url": reverse('unarchive_form', args=[domain, instance_id]),
-        "id": "restore-%s" % instance_id,
-        "csrf_inline": csrf_inline(request)
     }
 
-    msg_template = """{notif} <a href="javascript:document.getElementById('{id}').submit();">{undo}</a>
-        <form id="{id}" action="{url}" method="POST">{csrf_inline}</form>""" \
-        if instance.is_archived else '{notif}'
+    msg_template = "{notif} <a href='{url}' class='post-link'>{undo}</a>" if instance.is_archived else '{notif}'
     msg = msg_template.format(**params)
     messages.add_message(request, notify_level, mark_safe(msg), extra_tags='html')
 
