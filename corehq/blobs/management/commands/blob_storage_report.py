@@ -68,16 +68,25 @@ class Command(BaseCommand):
         sizes, samples_by_type = get_blob_sizes(data, sample_size)
 
         with make_row_writer(output_file, write_csv) as write:
-            report_blobs_by_type(data, write)
+            report_blobs_by_type(data, sizes, samples_by_type, write)
             report_blob_sizes(data, sizes, samples_by_type, write)
 
 
-def report_blobs_by_type(data, write):
+def report_blobs_by_type(data, sizes, samples_by_type, write):
     """report on number of new blobs by blob bucket"""
     assert len(data) < 100, len(data)
-    write(["BUCKET", "BLOB COUNT"])
-    for key, value in sorted(six.iteritems(data)):
-        write([key, len(value)])
+    bucket_missing = defaultdict(int)
+    type_missing = defaultdict(int)
+    for domain_sizes in sizes.values():
+        for size in domain_sizes:
+            if size.length is UNKNOWN:
+                bucket_missing[size.bucket] += 1
+                type_missing[size.doc_type] += 1
+    write(["BUCKET", "BLOB COUNT", "NOT FOUND"])
+    for bucket, key_list in sorted(six.iteritems(data)):
+        write([bucket, len(key_list), bucket_missing.get(bucket, "")])
+        for doc_type, n_samples in sorted(samples_by_type[bucket].items()):
+            write(["  " + doc_type, n_samples, type_missing.get(doc_type, "")])
     write([])
 
 
