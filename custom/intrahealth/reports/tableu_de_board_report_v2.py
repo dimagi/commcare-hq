@@ -5,7 +5,7 @@ from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParam
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealthLocationMixin, IntraHealthReportConfigMixin
 from custom.intrahealth.sqldata import ConventureData2, PPSAvecDonnees2, DispDesProducts2, ConsommationData2, \
-    TauxDeRuptures2
+    TauxDeRuptures2, TauxConsommationData2
 from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 
@@ -122,12 +122,22 @@ class TableuDeBoardReport2(MultiReport):
                 PPSAvecDonnees2(config=config),
                 TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
+                TauxConsommationData2(config=config),
             ]
-        else:
+        elif 'region_id' in config:
             return [
                 ConventureData2(config=config),
                 PPSAvecDonnees2(config=config),
                 DispDesProducts2(config=config),
                 TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
+                TauxConsommationData2(config=config),
+            ]
+        else:
+            return [
+                PPSAvecDonnees2(config=config),
+                DispDesProducts2(config=config),
+                TauxDeRuptures2(config=config),
+                ConsommationData2(config=config),
+                TauxConsommationData2(config=config),
             ]

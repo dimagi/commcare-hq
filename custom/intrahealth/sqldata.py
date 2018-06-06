@@ -840,6 +840,9 @@ class IntraHealthSqlData(SqlData):
                 "p": (100 * float(y or 0) / float(x or 1))
             }
 
+    def format_data_and_cast_to_float(self, value):
+        return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
+
     @property
     def engine_id(self):
         return 'ucr'
@@ -866,6 +869,146 @@ class IntraHealthSqlData(SqlData):
     @property
     def filter_values(self):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
+
+
+class TauxConsommationDataSourceMixin(IntraHealthSqlData):
+    title = ''
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['doc_id', 'product_name', 'actual_consumption', 'total_stock']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Consommation reelle"), SimpleColumn('actual_consumption')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SimpleColumn('total_stock')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+        return columns
+
+
+class TauxConsommationDataV1DataSource(TauxConsommationDataSourceMixin):
+    slug = 'TauxConsommationDataV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class TauxConsommationDataV2DataSource(TauxConsommationDataSourceMixin):
+    slug = 'TauxConsommationDataV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class TauxConsommationData2(IntraHealthSqlData):
+    show_total = False
+    slug = 'taux_consommation'
+    title = 'Taux de Consommation'
+    product_names = set()
+    loc_names = set()
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows_v1 = TauxConsommationDataV1DataSource(config=self.config).get_data()
+        rows_v2 = TauxConsommationDataV2DataSource(config=self.config).get_data()
+
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+
+        data = {}
+        for row in rows_v1:
+            if row['product_name'] and row[loc_name]:
+                self.loc_names.add(row[loc_name])
+                self.product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = {}
+                if row['product_name'] not in data[row[loc_name]]:
+                    data[row[loc_name]][row['product_name']] = defaultdict(list)
+                data[row[loc_name]][row['product_name']]['actual_consumption'].append(row['actual_consumption'])
+                data[row[loc_name]][row['product_name']]['total_stock'].append(row['total_stock'])
+        for row in rows_v2:
+            if row['product_name'] and row[loc_name]:
+                self.loc_names.add(row[loc_name])
+                self.product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = {}
+                if row['product_name'] not in data[row[loc_name]]:
+                    data[row[loc_name]][row['product_name']] = defaultdict(list)
+                data[row[loc_name]][row['product_name']]['actual_consumption'].append(row['actual_consumption'])
+                data[row[loc_name]][row['product_name']]['total_stock'].append(row['total_stock'])
+
+        self.loc_names = sorted(self.loc_names)
+        self.product_names = sorted(self.product_names)
+        rows = []
+        for loc_name in self.loc_names:
+            row = [loc_name]
+            for product_name in self.product_names:
+                actual_consumption = 0
+                total_stock = 0
+                if data.get(loc_name) and data[loc_name].get(product_name):
+                    actual_consumption = [
+                        value for value in data[loc_name][product_name]['actual_consumption'] if value is not None
+                    ]
+                    total_stock = [
+                        value for value in data[loc_name][product_name]['total_stock'] if value is not None
+                    ]
+                if actual_consumption:
+                    actual_consumption = sum(actual_consumption) / len(actual_consumption)
+                if total_stock:
+                    total_stock = sum(total_stock) / len(total_stock)
+                row.append(self.format_data_and_cast_to_float(actual_consumption))
+                row.append(self.format_data_and_cast_to_float(total_stock))
+                row.append(self.percent_fn(total_stock, actual_consumption))
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        if 'region_id' in self.config:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('District')))
+        else:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('PPS')))
+
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumnGroup(
+                product_name,
+                DataTablesColumn('Consommation reelle'),
+                DataTablesColumn('Stock apres derniere livraison'),
+                DataTablesColumn('Taux consommation')
+            ))
+
+        return headers
 
 
 class TauxDeRupturesDataSourceMixin(IntraHealthSqlData):
