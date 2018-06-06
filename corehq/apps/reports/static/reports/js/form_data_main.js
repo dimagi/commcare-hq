@@ -1,10 +1,17 @@
-hqDefine("reports/js/form_data_main", function() {
+hqDefine("reports/js/form_data_main", [
+    "jquery",
+    "hqwebapp/js/initial_page_data",
+    "reports/js/single_form",
+], function(
+    $,
+    initialPageData,
+    singleForm
+) {
     $(function() {
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data").get;
-        hqImport("reports/js/single_form").initSingleForm({
-            instance_id: initialPageData("xform_id"),
-            form_question_map: initialPageData("question_response_map"),
-            ordered_question_values: initialPageData("ordered_question_values"),
+        singleForm.initSingleForm({
+            instance_id: initialPageData.get("xform_id"),
+            form_question_map: initialPageData.get("question_response_map"),
+            ordered_question_values: initialPageData.get("ordered_question_values"),
         });
     });
 });
