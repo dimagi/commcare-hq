@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
 from django.test import TestCase
@@ -132,6 +133,10 @@ class TestDbAccessors(TestCase):
     def test_get_app_ids_by_last_modified(self):
         start = datetime.utcnow() - timedelta(days=3)
         end = datetime.utcnow() + timedelta(days=3)
+
+        for app_id in set(get_application_ids_by_last_modified(start, end)):
+            if app_id not in {self.test_app._id, self.deleted_app._id, self.linked_app._id}:
+                print(Application.get(app_id))
 
         self.assertEqual(
             set(get_application_ids_by_last_modified(start, end)),
