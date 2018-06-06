@@ -13,6 +13,7 @@ hqDefine("reports/js/filters/main", [
     'reports_core/js/choice_list_utils',
     'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
+    'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function(
     $,
     ko,
