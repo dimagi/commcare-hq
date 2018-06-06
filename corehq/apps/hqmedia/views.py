@@ -22,6 +22,7 @@ from django.shortcuts import render
 import shutil
 from corehq import privileges
 from corehq.apps.app_manager.const import TARGET_COMMCARE, TARGET_COMMCARE_LTS
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.files import file_extention_from_filename
 
 from soil import DownloadBase
@@ -133,10 +134,6 @@ class BulkUploadMultimediaView(BaseMultimediaUploaderView):
     def upload_controllers(self):
         return [MultimediaBulkUploadController("hqmedia_bulk", reverse(ProcessBulkUploadView.name,
                                                                        args=[self.domain, self.app_id]))]
-
-
-class BadMediaFileException(Exception):
-    pass
 
 
 class BaseProcessUploadedView(BaseMultimediaView):
