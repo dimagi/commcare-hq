@@ -4,6 +4,7 @@ from corehq.apps.commtrack.tests.util import bootstrap_domain, make_loc
 from corehq.apps.domain.models import Domain
 from corehq.apps.sms.api import incoming
 from corehq.apps.sms.tests.util import delete_domain_phone_numbers, BaseSMSTest, setup_default_sms_test_backend
+from corehq.util.global_request.api import set_request
 from custom.ewsghana.handler import handle
 from custom.ewsghana.utils import bootstrap_user
 from mock import patch
@@ -32,6 +33,7 @@ class HandlerTest(BaseSMSTest):
 
     @classmethod
     def tearDownClass(cls):
+        set_request(None)
         cls.domain_obj.delete()
         super(HandlerTest, cls).tearDownClass()
 
