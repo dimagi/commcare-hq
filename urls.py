@@ -66,7 +66,6 @@ domain_specific = [
     url(r'^cloudcare/', include('corehq.apps.cloudcare.urls')),
     url(r'^fixtures/', include('corehq.apps.fixtures.urls')),
     url(r'^importer/', include('corehq.apps.case_importer.urls')),
-    url(r'^fri/', include('custom.fri.urls')),
     url(r'^ilsgateway/', include('custom.ilsgateway.urls')),
     url(r'^ewsghana/', include('custom.ewsghana.urls')),
     url(r'^up_nrhm/', include('custom.up_nrhm.urls')),
