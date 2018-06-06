@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-06-05 14:37+0000\n"
+"POT-Creation-Date: 2018-06-06 17:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -275,7 +275,6 @@ msgid "User Data"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:84
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
@@ -1448,6 +1447,7 @@ msgstr ""
 "Analizando Error. Por favor verifique que su formulario sea un XML válido."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
 msgid "OK"
 msgstr "SÍ"
@@ -2226,15 +2226,15 @@ msgstr "Iniciar Carga"
 msgid "Replace"
 msgstr "Reemplazar"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "No Reference"
 msgstr "Sin Referencia"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "Advanced: Show Path"
 msgstr "Avanzada: Muestre la Ruta"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
 msgid "Hide Path"
 msgstr "Oculte la Ruta"
 
@@ -2487,6 +2487,10 @@ msgstr ""
 "Lo sentimos, ocurrió un problema al contactar el servidor para recuperar los "
 "datos. Por favor, intente otra vez más tarde."
 
+#: corehq/apps/crud/static/crud/js/admin.js:70
+msgid "Indicator added to end of table"
+msgstr ""
+
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:75
 msgid "You have unsaved changes to your data dictionary."
 msgstr "Usted tiene cambios sin guardar en su diccionario de datos."
@@ -2716,7 +2720,7 @@ msgid "Clear"
 msgstr "Borrar"
 
 #: corehq/apps/hqwebapp/static/hqwebapp/js/daterangepicker.config.js:60
-#: corehq/apps/reports/static/reports/js/filters/main.js:73
+#: corehq/apps/reports/static/reports/js/filters/main.js:74
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
@@ -2992,6 +2996,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:171
 #: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
@@ -3028,12 +3033,12 @@ msgstr "Reportes Incluidos"
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:141
+#: corehq/apps/reports/static/reports/js/filters/main.js:142
 #: corehq/apps/reports/static/reports/js/filters/schedule_instance.js:10
 msgid "All"
 msgstr "Todo"
 
-#: corehq/apps/reports/static/reports/js/filters/main.js:166
+#: corehq/apps/reports/static/reports/js/filters/main.js:178
 msgid "Select a group"
 msgstr "Seleccione un grupo"
 
