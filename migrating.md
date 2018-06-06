@@ -1,8 +1,9 @@
 # Migrating
 
-Modernizing our JavaScript code base often means doing migrations. Two migrations are currently in progress:
+Modernizing our JavaScript code base often means doing migrations. Migrations currently in progress:
 1. Moving in-page `<script>` blocks to separate .js files, also called "externalizing" JavaScript. 
 1. Migrating to RequireJS
+1. Moving away from classical inheritance
 
 ## Migrating inline script blocks to js files
 This page largely summarizes information from [Server Integration Patterns](./integration-patterns.md), organized to be useful to someone who is migrating an entire page of script blocks to external files.
@@ -188,3 +189,15 @@ It's often prohibitively time-consuming to test every JavaScript interaction on 
 - If you replaced any `hqImport` calls that were inside of event handlers or other callbacks, verify that those areas still work correctly. When a migrated module is used on an unmigrated page, its dependencies need to be available at the time the module is defined. This is a change from previous behavior, where the dependencies didn't need to be defined until `hqImport` first called them. We do not currently have a construct to require dependencies after a module is defined.
 - The most likely missing dependencies are the invisible ones: knockout bindings and jquery plugins like select2. These often don't error but will look substantially different on the page if they haven't been initialized.
 - If your page depends on any third-party modules that might not yet be used on any RequireJS pages, test them. Third-party modules sometimes need to be upgraded to be compatible with RequireJS.
+
+## Moving away from classical inheritance
+
+See [our approach to inheritance](https://github.com/dimagi/js-guide/blob/master/code-organization.md#inheritance). Most of our classical-style inheritance is a format than can be fairly mechanically changed to be functional:
+- In the class definition, make sure the instance is initialized to an empty object instead of `this`. There's usually a `var self = this;` line that should be switched to `var self = {};`
+- Throughout the class definition, make sure the code is consistently using `self` instead of `this`
+- Make sure the class definition returns `self` at the end (typically it won't return anything)
+- Update class name from `UpperCamelCase` to `lowerCamelCase`
+- Remove `new` operator from anywhere the class is instantiated
+- Sanity test that the pages using the class still load
+
+Code that actually manipulates the prototype needs more thought.
