@@ -66,7 +66,7 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
-            sorted([['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], [None, 1], ['FOUNDIOUGNE', 1],
+            sorted([['NIAKHAR', 1], ['PASSY', 1], ['DIOFFIOR', 1], ['GOSSAS', 1], ['FOUNDIOUGNE', 1],
                     ['SOKONE', 1], ['FATICK', 1]], key=lambda x: x[0])
         )
 
@@ -82,7 +82,7 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
 
         tableu_de_board_report2_report = TableuDeBoardReport2(request=mock, domain='test-pna')
 
-        consommation_data_report = tableu_de_board_report2_report.report_context['reports'][2]['report_table']
+        consommation_data_report = tableu_de_board_report2_report.report_context['reports'][3]['report_table']
         headers = consommation_data_report['headers'].as_export_table[0]
         rows = consommation_data_report['rows']
 
@@ -93,17 +93,17 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
             sorted([
-                ['NDIOLOFENE', 0], ['PS HLM FASS', 0], ['CS LIBERTE 6 EXTENTION', 0], ['P.S NDIMB', 0],
-                ['PS MARSASSOUM SEDHIOU', 0], [u'PS MEDINA GOUNASS', 0], ['HOPITAL REGIONAL DE KOLDA', 0],
-                ['DAROU MBITEYENE', 0], ['PS Sendou', 0], [u'MEDINA BAYE', 0], ['NAYOBE', 0], ['FASS', 0],
-                ['BETENTY', 0], ['TASSINERE', 0], ['PS DIAMAGUENE', 0], [None, 0],
-                ['PPS SANTHIABA ZIGUINCHOR', 0], ['GATE', 0], ['PS TANAFF GOUDOMP', 0], ['SAMBA DIA', 0],
-                ['THIEPP  KEBEMER', 0], [u"N'GALLELE SAINT LOUIS", 0], ['CARITAS', 0], ['PS YOUTOU', 0],
-                ['Thille Boubacar', 0], ['PPS ORKADIERE', 0], ['GANDIAYE', 0], ['PS WASSADOU', 0],
-                ['PS MAMPALAGO BIGNONA', 0], ['RAYON PRIVE SOKONE', 0], ['MEKHE LAMBAYE', 0],
-                ['THILAGRAND', 0],
-                ['BACOBOF', 0], ['SOBEME', 0], ['PS FASS', 0], ['HOP. MILITAIRE OUAKAM', 0], ['Wallalde', 0],
-                ['NDANGALMA', 0], ['PS HANN SUR MER', 0], ['PS TOUBA DIACK SAO', 0], ['EPS 1 KAFFRINE', 0]
+                ['NDIOLOFENE', 0], ['PS HLM FASS', 380], ['CS LIBERTE 6 EXTENTION', 89], ['P.S NDIMB', 146],
+                ['PS MARSASSOUM SEDHIOU', 0], [u'PS MEDINA GOUNASS', 397], ['HOPITAL REGIONAL DE KOLDA', 793],
+                ['DAROU MBITEYENE', 69], ['PS Sendou', 0], [u'MEDINA BAYE', 445], ['NAYOBE', 132], ['FASS', 171],
+                ['BETENTY', 2149], ['TASSINERE', 442], ['PS DIAMAGUENE', 411], ['NDANGALMA', 160],
+                ['PPS SANTHIABA ZIGUINCHOR', 0], ['GATE', 199], ['PS TANAFF GOUDOMP', 6365], ['SAMBA DIA', 1214],
+                ['THIEPP  KEBEMER', 0], [u"N'GALLELE SAINT LOUIS", 353], ['CARITAS', 4247], ['PS YOUTOU', 0],
+                [u'Thille Boubacar', 222], ['PPS ORKADIERE', 964], ['GANDIAYE', 800], ['PS WASSADOU', 43],
+                [u'PS MAMPALAGO BIGNONA', 488], ['RAYON PRIVE SOKONE', 650], ['MEKHE LAMBAYE', 50],
+                ['THILAGRAND', 570], ['BACOBOF', 482], ['SOBEME', 291], ['PS FASS', 208],
+                ['HOP. MILITAIRE OUAKAM', 256], ['Wallalde', 193], ['PS HANN SUR MER', 133],
+                ['PS TOUBA DIACK SAO', 503], ['EPS 1 KAFFRINE', 236]
             ], key=lambda x: x[0])
         )
 

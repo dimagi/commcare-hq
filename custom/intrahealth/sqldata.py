@@ -1265,6 +1265,11 @@ class ConsommationData2(IntraHealthSqlData):
     def total_row(self):
         return []
 
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
     @property
     def rows(self):
         rows_v1 = ConsommationV1DataSource(config=self.config).get_data()
@@ -1277,11 +1282,11 @@ class ConsommationData2(IntraHealthSqlData):
         rows = []
         data = defaultdict(int)
         for row in rows_v1:
-            if data[row[loc_name]]:
-                data[row[loc_name]] += row['actual_consumption']['html']
+            if row[loc_name]:
+                data[row[loc_name]] += self.get_value(row['actual_consumption'])
         for row in rows_v2:
-            if data[row[loc_name]]:
-                data[row[loc_name]] += row['actual_consumption']['html']
+            if row[loc_name]:
+                data[row[loc_name]] += self.get_value(row['actual_consumption'])
         for loc_name, value in data.items():
             rows.append([loc_name, value])
         return rows
@@ -1343,9 +1348,10 @@ class PPSAvecDonneesDataSourceMixin(IntraHealthSqlData):
             loc_name = 'PPS_name'
         rows = self.get_data()
         for row in rows:
-            if row[loc_name] not in values:
-                values[row[loc_name]] = set()
-            values[row[loc_name]].add(row['pps_id'])
+            if row[loc_name]:
+                if row[loc_name] not in values:
+                    values[row[loc_name]] = set()
+                values[row[loc_name]].add(row['pps_id'])
         return values
 
 
