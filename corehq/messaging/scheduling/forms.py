@@ -3343,6 +3343,10 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     def allow_date_case_property_filter(self):
         return False
 
+    @property
+    def allow_regex_case_property_match(self):
+        return True
+
     def set_read_only_fields_during_editing(self):
         # Django also handles keeping the field's value to its initial value no matter what is posted
         # https://docs.djangoproject.com/en/1.11/ref/forms/fields/#disabled
