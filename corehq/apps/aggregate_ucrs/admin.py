@@ -14,8 +14,16 @@ class PrimaryColumnAdmin(admin.ModelAdmin):
     list_filter = ['column_type', 'table_definition']
 
 
+class SecondaryTableDefinitionAdmin(admin.ModelAdmin):
+    list_display = ['table_definition', 'data_source_id', 'data_source_key', 'aggregation_column']
+
+
+class SecondaryColumnAdmin(admin.ModelAdmin):
+    list_display = ['column_id', 'table_definition', 'aggregation_type']
+
+
 admin.site.register(models.AggregateTableDefinition, AggregateTableDefinitionAdmin)
 admin.site.register(models.PrimaryColumn, PrimaryColumnAdmin)
-admin.site.register(models.SecondaryTableDefinition)
-admin.site.register(models.SecondaryColumn)
+admin.site.register(models.SecondaryTableDefinition, SecondaryTableDefinitionAdmin)
+admin.site.register(models.SecondaryColumn, SecondaryColumnAdmin)
 
