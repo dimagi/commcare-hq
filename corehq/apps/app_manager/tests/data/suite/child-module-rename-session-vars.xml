@@ -21,7 +21,6 @@
           </case_load_goldfish_renamed>
           <orx:meta xmlns:cc="http://commcarehq.org/xforms">
             <orx:deviceID/>
-            <orx:drift/>
             <orx:timeStart/>
             <orx:timeEnd/>
             <orx:username/>
@@ -57,7 +56,6 @@
       <setvalue event="xforms-ready" ref="/data/meta/userID" value="instance('commcaresession')/session/context/userid"/>
       <setvalue event="xforms-ready" ref="/data/meta/instanceID" value="uuid()"/>
       <setvalue event="xforms-ready" ref="/data/meta/appVersion" value="instance('commcaresession')/session/context/appversion"/>
-      <setvalue event="xforms-revalidate" ref="/data/meta/drift" value="instance('commcaresession')/session/context/drift"/>
     </model>
   </h:head>
   <h:body>
