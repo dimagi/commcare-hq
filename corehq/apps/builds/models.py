@@ -219,6 +219,17 @@ class BuildSpec(DocumentSchema):
     def major_release(self):
         return self.version.split('.')[0]
 
+    def release_greater_than_or_equal_to(self, version):
+        if not self.version:
+            return False
+        from_major, from_minor, from_bugfix = map(int, version.split('.'))
+        major, minor, bugfix = map(int, self.version.split('.'))
+        if major != from_major:
+            return major > from_major
+        if minor != from_minor:
+            return minor > from_minor
+        return bugfix >= from_bugfix
+
 
 class BuildMenuItem(DocumentSchema):
     build = SchemaProperty(BuildSpec)
