@@ -10,7 +10,6 @@ import yaml
 import six
 from io import open
 
-from corehq.util.quickcache import quickcache
 
 PROFILE_SETTINGS_TO_TRANSLATE = [
     'name',
@@ -93,12 +92,12 @@ def _load_commcare_settings_layout(doc_type):
     return layout
 
 
-@quickcache([], timeout=60 * 60 * 24)
+@memoized
 def get_custom_commcare_settings():
     return _load_custom_commcare_settings()
 
 
-@quickcache(['doc_type'], timeout=60 * 60 * 24)
+@memoized
 def get_commcare_settings_layout(doc_type):
     if doc_type == "LinkedApplication":
         return {}
