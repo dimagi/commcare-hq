@@ -189,8 +189,6 @@ class BaseProcessUploadedView(BaseMultimediaView):
             response.update(self.process_upload())
         except BadMediaFileException as e:
             self.errors.append(e.message)
-        except IOError:
-            self.errors.append(_('Upload is not a valid image file.'))
         response.update({
             'errors': self.errors,
         })
