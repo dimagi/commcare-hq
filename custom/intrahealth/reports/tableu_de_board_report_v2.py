@@ -4,7 +4,8 @@ from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.intrahealth.filters import LocationFilter
 from custom.intrahealth.reports import IntraHealthLocationMixin, IntraHealthReportConfigMixin
-from custom.intrahealth.sqldata import ConventureData2, PPSAvecDonnees2, DispDesProducts2, ConsommationData2
+from custom.intrahealth.sqldata import ConventureData2, PPSAvecDonnees2, DispDesProducts2, ConsommationData2, \
+    TauxDeRuptures2
 from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 
@@ -119,6 +120,7 @@ class TableuDeBoardReport2(MultiReport):
             return [
                 ConventureData2(config=config),
                 PPSAvecDonnees2(config=config),
+                TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
             ]
         else:
@@ -126,5 +128,6 @@ class TableuDeBoardReport2(MultiReport):
                 ConventureData2(config=config),
                 PPSAvecDonnees2(config=config),
                 DispDesProducts2(config=config),
+                TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
             ]

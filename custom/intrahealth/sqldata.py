@@ -868,6 +868,123 @@ class IntraHealthSqlData(SqlData):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
 
 
+class TauxDeRupturesDataSourceMixin(IntraHealthSqlData):
+    title = ''
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+        return group_by
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(
+            _("Stock total"), CountColumn('total_stock'), format_fn=lambda x: 1 if x > 0 else 0
+        ))
+        return columns
+
+
+class TauxDeRupturesDataV1DataSource(TauxDeRupturesDataSourceMixin):
+    slug = 'TauxDeRupturesDataV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class TauxDeRupturesDataV2DataSource(TauxDeRupturesDataSourceMixin):
+    slug = 'TauxDeRupturesDataV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class TauxDeRuptures2(IntraHealthSqlData):
+    show_total = False
+    slug = 'taux_de_ruptures2'
+    title = 'Disponibilité des Produits - Taux des Ruptures de Stock'
+    product_names = set()
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows_v1 = TauxDeRupturesDataV1DataSource(config=self.config).get_data()
+        rows_v2 = TauxDeRupturesDataV2DataSource(config=self.config).get_data()
+
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+
+        data = {}
+        for row in rows_v1:
+            if row['product_name']:
+                self.product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                data[row[loc_name]][row['product_name']] += row['total_stock']
+        for row in rows_v2:
+            if row['product_name']:
+                self.product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                data[row[loc_name]][row['product_name']] += row['total_stock']
+
+        self.product_names = sorted(self.product_names)
+        rows = []
+
+        for loc_name, values in data.items():
+            row = [loc_name]
+            for product_name in self.product_names:
+                row.append(values[product_name])
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        if 'region_id' in self.config:
+            headers.add_column(
+                DataTablesColumn('District')
+            )
+        else:
+            headers.add_column(
+                DataTablesColumn('PPS')
+            )
+        for product_name in self.product_names:
+            headers.add_column(
+                DataTablesColumn(product_name)
+            )
+        return headers
+
+
 class RecapPassageDateDataSourceMixin(IntraHealthSqlData):
     title = ''
 
