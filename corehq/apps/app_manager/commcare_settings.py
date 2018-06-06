@@ -93,12 +93,12 @@ def _load_commcare_settings_layout(doc_type):
     return layout
 
 
-@quickcache([], timeout=60*60*24)
+@quickcache([], timeout=60 * 60 * 24)
 def get_custom_commcare_settings():
     return _load_custom_commcare_settings()
 
 
-@quickcache(['doc_type'], timeout=60*60*24)
+@quickcache(['doc_type'], timeout=60 * 60 * 24)
 def get_commcare_settings_layout(doc_type):
     if doc_type == "LinkedApplication":
         return {}
