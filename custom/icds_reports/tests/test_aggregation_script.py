@@ -67,7 +67,8 @@ class AggregationScriptTest(TestCase):
             for column in table.columns
         ]
         with engine.begin() as connection:
-            for row in list(connection.execute(table.select().order_by(*sort_key))):
+            rows = connection.execute(table.select().order_by(*sort_key)).fetchall()
+            for row in rows:
                 row = list(row)
                 for idx, value in enumerate(row):
                     if isinstance(value, date):
@@ -121,8 +122,8 @@ class AggregationScriptTest(TestCase):
             self.fail('\n'.join(messages))
 
     def _load_and_compare_data(self, table_name, path, sort_key=None):
-        # To speed up tests, it is recommended to use a sort_key wherever 
-        #   possible and presort the output data csv file using that key.
+        # To speed up tests, we use a sort_key wherever possible
+        #   to presort before comparing data
         if sort_key:
             self._fasterAssertListEqual(
                 list(self._load_data_from_db(table_name, sort_key)),
