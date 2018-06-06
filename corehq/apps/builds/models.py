@@ -9,6 +9,7 @@ from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.util.quickcache import quickcache
 from itertools import groupby
+from distutils.version import LooseVersion
 
 
 class SemanticVersionProperty(StringProperty):
@@ -222,13 +223,7 @@ class BuildSpec(DocumentSchema):
     def release_greater_than_or_equal_to(self, version):
         if not self.version:
             return False
-        from_major, from_minor, from_bugfix = map(int, version.split('.'))
-        major, minor, bugfix = map(int, self.version.split('.'))
-        if major != from_major:
-            return major > from_major
-        if minor != from_minor:
-            return minor > from_minor
-        return bugfix >= from_bugfix
+        return LooseVersion(self.version) >= LooseVersion(version)
 
 
 class BuildMenuItem(DocumentSchema):
