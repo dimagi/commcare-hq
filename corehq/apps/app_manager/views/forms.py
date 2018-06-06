@@ -122,23 +122,24 @@ def copy_form(request, domain, app_id, form_unique_id):
     app = get_app(domain, app_id)
     form = app.get_form(form_unique_id)
     module = form.get_module()
+    to_app = get_app(domain, request.POST['to_app_id']) if request.POST.get('to_app_id') else app
     to_module_id = int(request.POST['to_module_id'])
-    to_module = app.get_module(to_module_id)
+    to_module = to_app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module.id)
+        new_form = app.copy_form(module.id, form.id, to_module.id, to_app)
         if module['case_type'] != to_module['case_type']:
             messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
-        app.save()
+        to_app.save()
     except IncompatibleFormTypeException:
         # don't save!
         messages.error(request, _('This form could not be copied because it '
                                   'is not compatible with the selected module.'))
     else:
-        app.save()
+        to_app.save()
 
     if new_form:
-        return back_to_main(request, domain, app_id=app_id, form_unique_id=new_form.unique_id)
+        return back_to_main(request, domain, app_id=to_app._id, form_unique_id=new_form.unique_id)
     return HttpResponseRedirect(reverse('view_form', args=(domain, app._id, form.unique_id)))
 
 
