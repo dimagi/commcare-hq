@@ -11,7 +11,6 @@ from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColu
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
 from corehq.apps.userreports.tests.utils import load_data_from_db
-from corehq.sql_db.connections import connection_manager
 
 
 def get_sample_config(domain=None):

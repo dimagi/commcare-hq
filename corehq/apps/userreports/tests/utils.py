@@ -6,6 +6,7 @@ import functools
 import json
 import os
 import uuid
+import re
 import six
 import sqlalchemy
 
