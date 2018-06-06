@@ -58,6 +58,7 @@ branches:
   - jls/prune-auto-builds  # Jenny June 5
   - fr/case-list-explorer-frontend-fixes # farid june 5
   - fr/case-list-explorer-report-export # farid june 5
+  - bmb/improve-mobile-signup # biyeun june 6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
