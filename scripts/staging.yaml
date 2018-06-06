@@ -57,6 +57,7 @@ branches:
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
   - jls/prune-auto-builds  # Jenny June 5
+  - fr/case-list-explorer-frontend-fixes # farid june 5
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
