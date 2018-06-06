@@ -165,7 +165,7 @@ def accumulate_put_requests(files):
 def get_blob_sizes(data, sample_size):
     # get domain, blob type, and blob size for each put request (or a sample of them)
     # sizes[domain] = {<BlobSize>, ...}
-    def iter_samples(keys_list):
+    def iter_samples(bucket, keys_list):
         for i, keys in enumerate(keys_list):
             if i >= sample_size:
                 break
@@ -180,9 +180,8 @@ def get_blob_sizes(data, sample_size):
     with_progress = partial(with_progress_bar, oneline="concise", stream=sys.stderr)
     for bucket, keys_list in sorted(data.items()):
         length = min(sample_size, len(keys_list))
-        samples = iter_samples(keys_list)
+        samples = iter_samples(bucket, keys_list)
         for size in with_progress(samples, length, prefix=bucket):
-            size.bucket = bucket
             sizes[size.domain].append(size)
     print("", file=sys.stderr)
     return sizes
@@ -204,14 +203,14 @@ def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
     else:
         size = get_default_blob_size(bucket, "/".join([doc_id, blob_id]))
         length = size.length
-    return BlobSize(domain, doc_type, length)
+    return BlobSize(domain, doc_type, length, bucket)
 
 
 def get_form_blob_size(bucket, attachment_id, blob_id):
     # can't get domain: cannot get attachment metadata from blob id because
     # the metadata is sharded by form_id, which we do not have
     size = get_default_blob_size(bucket, "/".join([attachment_id, blob_id]))
-    return BlobSize(UNKNOWN, "form", size.length)
+    return BlobSize(UNKNOWN, "form", size.length, bucket)
 
 
 def get_default_blob_size(bucket, blob_id):
@@ -220,8 +219,8 @@ def get_default_blob_size(bucket, blob_id):
     except NotFound:
         size = UNKNOWN
     if blob_id.startswith("restore-response-"):
-        return BlobSize(UNKNOWN, "restore", size)
-    return BlobSize(UNKNOWN, bucket, size)
+        return BlobSize(UNKNOWN, "restore", size, bucket)
+    return BlobSize(UNKNOWN, bucket, size, bucket)
 
 
 UNKNOWN = "(unknown)"
@@ -237,11 +236,11 @@ SIZE_GETTERS = {
 
 class BlobSize(object):
 
-    def __init__(self, domain, doc_type, length):
+    def __init__(self, domain, doc_type, length, bucket):
         self.domain = domain
         self.doc_type = doc_type
         self.length = length
-        self.bucket = None
+        self.bucket = bucket
 
 
 def lookup_doc(doc_id, db_name):
