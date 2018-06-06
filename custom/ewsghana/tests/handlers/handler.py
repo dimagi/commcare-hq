@@ -33,7 +33,7 @@ class HandlerTest(BaseSMSTest):
 
     @classmethod
     def tearDownClass(cls):
-        set_request(None)
+        set_request(None)  # https://api.travis-ci.org/v3/job/388562340/log.txt
         cls.domain_obj.delete()
         super(HandlerTest, cls).tearDownClass()
 
