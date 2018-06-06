@@ -4,18 +4,20 @@ from __future__ import division
 from __future__ import unicode_literals
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
+    MonthColumn
 from collections import defaultdict
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
 
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.util import get_table_name
+from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
-    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, COMMANDE_V1, COMMANDE_V2, OPERATEUR_V1, OPERATEUR_V2
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -822,6 +824,622 @@ class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
 class CountUniqueAndSumCustomColumn(IntraHealthCustomColumn):
     query_cls = CountUniqueAndSumQueryMeta
     name = 'count_unique_and_sum'
+
+
+class IntraHealthSqlData(SqlData):
+    datatables = False
+    show_charts = False
+    show_total = False
+    custom_total_calculate = False
+    no_value = {'sort_key': 0, 'html': 0}
+    fix_left_col = False
+
+    def percent_fn(self, x, y):
+        return "%(p).2f%%" % \
+            {
+                "p": (100 * float(y or 0) / float(x or 1))
+            }
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+        return rows
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
+
+
+class ConsommationDataSourceMixin(IntraHealthSqlData):
+    slug = 'consommation_data_source'
+    show_total = False
+    title = 'Consommation Data Source'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = []
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+
+        columns.append(DatabaseColumn(_("Consumption"), SumColumn('actual_consumption')))
+        return columns
+
+
+class ConsommationV1DataSource(ConsommationDataSourceMixin):
+    slug = 'ConsommationV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class ConsommationV2DataSource(ConsommationDataSourceMixin):
+    slug = 'ConsommationV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class ConsommationData2(IntraHealthSqlData):
+    slug = 'consommation2'
+    title = 'Consommation'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows_v1 = ConsommationV1DataSource(config=self.config).get_data()
+        rows_v2 = ConsommationV2DataSource(config=self.config).get_data()
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+
+        rows = []
+        data = defaultdict(int)
+        for row in rows_v1:
+            if data[row[loc_name]]:
+                data[row[loc_name]] += row['actual_consumption']['html']
+        for row in rows_v2:
+            if data[row[loc_name]]:
+                data[row[loc_name]] += row['actual_consumption']['html']
+        for loc_name, value in data.items():
+            rows.append([loc_name, value])
+        return rows
+
+    @property
+    def headers(self):
+        if 'region_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        headers.add_column(DataTablesColumn('Consumption'))
+        return headers
+
+
+class PPSAvecDonneesDataSourceMixin(IntraHealthSqlData):
+    slug = 'pps_avec_donnees_data_source'
+    show_total = False
+    title = 'PPS Avec Données Data Source'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['pps_id']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('PPS_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("PPS ID"), SimpleColumn('pps_id'))]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('PPS_name')))
+        return columns
+
+    @property
+    def values_per_loc(self):
+        values = {}
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'PPS_name'
+        rows = self.get_data()
+        for row in rows:
+            if row[loc_name] not in values:
+                values[row[loc_name]] = set()
+            values[row[loc_name]].add(row['pps_id'])
+        return values
+
+
+class PPSAvecDonneesV1DataSource(PPSAvecDonneesDataSourceMixin):
+    slug = 'PPSAvecDonneesV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class PPSAvecDonneesV2DataSource(PPSAvecDonneesDataSourceMixin):
+    slug = 'PPSAvecDonneesV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class PPSAvecDonnees2(IntraHealthSqlData):
+    slug = 'pps_avec_donnees2'
+    title = 'PPS Avec Données'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1 = PPSAvecDonneesV1DataSource(config=self.config).values_per_loc
+        values_v2 = PPSAvecDonneesV2DataSource(config=self.config).values_per_loc
+        values = {}
+        for loc_name, pps_ids in values_v1.items():
+            if loc_name not in values:
+                values[loc_name] = set()
+            for pps_id in pps_ids:
+                values[loc_name].add(pps_id)
+        for loc_name, pps_ids in values_v2.items():
+            if loc_name not in values:
+                values[loc_name] = set()
+            for pps_id in pps_ids:
+                values[loc_name].add(pps_id)
+
+        rows = []
+        for loc_name in values:
+            rows.append([loc_name, 1])
+        if 'district_id' in self.config:
+            locations_included = [loc_name for loc_name in values]
+        else:
+            return rows
+
+        all_locations = SQLLocation.objects.get(
+            location_id=self.config['district_id']
+        ).get_children().exclude(is_archived=True).values_list('name', flat=True)
+        locations_not_included = set(all_locations) - set(locations_included)
+        return rows + [[location, {'sort_key': 0, 'html': 0}] for location in locations_not_included]
+
+    @property
+    def headers(self):
+        if 'district_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        headers.add_column(DataTablesColumn('PPS Avec Données Soumises'))
+        return headers
+
+
+class ConventureDataSourceMixin(IntraHealthSqlData):
+    slug = 'conventureDataSourceMixin'
+    title = 'Converture'
+    show_total = False
+    custom_total_calculate = True
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['pps_id', 'real_date']
+
+        if 'region_id' in self.config:
+            group_by.append('region_id')
+        elif 'district_id' in self.config:
+            group_by.append('district_id')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Mois', MonthColumn('real_date')),
+            DatabaseColumn('pps_id', SimpleColumn('pps_id')),
+        ]
+        if 'district_id' in self.config:
+            columns.append(DatabaseColumn('district_id', SimpleColumn('district_id')))
+        elif 'region_id' in self.config:
+            columns.append(DatabaseColumn('region_id', SimpleColumn('region_id')))
+        return columns
+
+    @property
+    def values_per_month(self):
+        values = {}
+        if 'district_id' in self.config:
+            loc_name = 'district_id'
+        elif 'region_id' in self.config:
+            loc_name = 'region_id'
+        registered = 0
+        rows = self.get_data()
+        for row in rows:
+            month = int(row['real_date']['html'])
+            if month not in values:
+                loc = get_location(row[loc_name], domain=self.config['domain'])
+                new_registered = _locations_per_type(self.config['domain'], 'PPS', loc)
+                if new_registered > registered:
+                    registered = new_registered
+                values[month] = {
+                    'pps_ids': set(),
+                }
+            values[month]['pps_ids'].add(row['pps_id'])
+
+        return values, registered
+
+
+class ConventureV1DataSource(ConventureDataSourceMixin):
+    slug = 'conventureV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class ConventureV2DataSource(ConventureDataSourceMixin):
+    slug = 'conventureV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class ConventureData2(IntraHealthSqlData):
+    slug = 'conventure2'
+    title = 'Converture'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1, registered_v1 = \
+            ConventureV1DataSource(config=self.config).values_per_month
+        values_v2, registered_v2 = \
+            ConventureV2DataSource(config=self.config).values_per_month
+
+        registered = registered_v1 if registered_v1 > registered_v2 else registered_v2
+
+        rows = []
+        months = set()
+        for month in values_v1:
+            months.add(month)
+        for month in values_v2:
+            months.add(month)
+        months = sorted(months)
+        for month in months:
+            from custom.intrahealth.reports import get_localized_months
+            pps_ids = set()
+            if values_v1.get(month):
+                pps_ids = values_v1[month]['pps_ids']
+            if values_v2.get(month):
+                pps_ids = pps_ids.union(values_v2[month]['pps_ids'])
+            unique = len(pps_ids)
+            rows.append([get_localized_months()[month], registered, 0, unique, self.percent_fn(registered, unique),
+                         unique, self.percent_fn(unique, unique)])
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(
+            DataTablesColumn('Mois'),
+            DataTablesColumn('No de PPS (number of PPS registered in that region)'),
+            DataTablesColumn('No de PPS planifie (number of PPS planned)'),
+            DataTablesColumn('No de PPS avec livrasion cet mois (number of PPS visited this month)'),
+            DataTablesColumn('Taux de couverture (coverage ratio)'),
+            DataTablesColumn('No de PPS avec donnees soumises (number of PPS which submitted data)'),
+            DataTablesColumn('Exhaustivite des donnees'),
+        )
+        return headers
+
+
+class FicheDataSourceMixin(IntraHealthSqlData):
+    slug = 'ficheDataSourceMixin'
+    title = ''
+    show_total = True
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'archived_locations' in self.config:
+            filters.append(_locations_filter(self.config['archived_locations']))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['product_name', 'PPS_name']
+
+    @property
+    def values_for_pps(self):
+        values = {}
+
+        rows = self.get_data()
+        for row in rows:
+            PPS_name = row['PPS_name']
+            if PPS_name not in values:
+                values[PPS_name] = {}
+            productName = row['product_name']
+            values[PPS_name][productName] = [
+                row['actual_consumption']['html'],
+                row['billed_consumption']['html']
+            ]
+
+        return values
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('LISTE des PPS', SimpleColumn('PPS_name')),
+            DatabaseColumn("Consommation Reelle", SumColumn('actual_consumption')),
+            DatabaseColumn("Consommation Facturable", SumColumn('billed_consumption'))
+        ]
+
+
+class FicheV1DataSource(FicheDataSourceMixin):
+    slug = 'ficheV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class FicheV2DataSource(FicheDataSourceMixin):
+    slug = 'ficheV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class FicheData2(IntraHealthSqlData):
+    slug = 'fiche_data'
+    title = ''
+    show_total = False
+    product_names = set()
+    pps_names = set()
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1 = FicheV1DataSource(config=self.config).values_for_pps
+        values_v2 = FicheV2DataSource(config=self.config).values_for_pps
+
+        for pps_name, values in values_v1.items():
+            self.pps_names.add(pps_name)
+            for product_name in values:
+                self.product_names.add(product_name)
+        for pps_name, values in values_v2.items():
+            self.pps_names.add(pps_name)
+            for product_name in values:
+                self.product_names.add(product_name)
+        self.pps_names = sorted(self.pps_names)
+        self.product_names = sorted(self.product_names)
+        rows = []
+        for pps_name in self.pps_names:
+            row = [pps_name]
+            for product_name in self.product_names:
+                values_for_product_v1 = values_v1[pps_name][product_name] if \
+                    pps_name in values_v1 and product_name in values_v1[pps_name] else [0, 0]
+                values_for_product_v2 = values_v2[pps_name][product_name] if \
+                    pps_name in values_v2 and product_name in values_v2[pps_name] else [0, 0]
+                actual_consumption = values_for_product_v1[0] + values_for_product_v2[0]
+                billed_consumption = values_for_product_v1[1] + values_for_product_v2[1]
+                row.append(actual_consumption)
+                row.append(billed_consumption)
+                row.append((actual_consumption or 0) - (billed_consumption or 0))
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        headers.add_column(DataTablesColumnGroup('', DataTablesColumn('LISTE des PPS')))
+
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumnGroup(
+                product_name,
+                DataTablesColumn('Consommation Reelle'),
+                DataTablesColumn('Consommation Facturable'),
+                DataTablesColumn('Consommation Non Facturable')
+            ))
+
+        return headers
+
+
+class CommandeDataSourceMixin(IntraHealthSqlData):
+    slug = 'commandeDataSourceMixin'
+    title = 'Taux de satisfaction de la commande de l\'operateur'
+    show_total = False
+
+    @property
+    def group_by(self):
+        return ['productName']
+
+    @property
+    @memoized
+    def products(self):
+        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('name'))
+
+    @property
+    def values_for_product(self):
+        products = self.products
+        values = {
+            product.name: [0, 0]
+            for product in products
+        }
+
+        rows = self.get_data()
+        for row in rows:
+            productName = row['productName']
+            values[productName] = [
+                row['amountOrdered']['html'],
+                row['amountReceived']['html']
+            ]
+
+        return values
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product in self.products:
+            headers.add_column(DataTablesColumn(product.name))
+        return headers
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('Product Name', SimpleColumn('productName')),
+            DatabaseColumn("Commandes", SumColumn('amountOrdered')),
+            DatabaseColumn("Recu", SumColumn('amountReceived'))
+        ]
+
+
+class CommandeV1DataSource(CommandeDataSourceMixin):
+    slug = 'commandeV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], COMMANDE_V1)
+
+
+class CommandeV2DataSource(CommandeDataSourceMixin):
+    slug = 'commandeV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], COMMANDE_V2)
+
+
+class DispDesProducts2(IntraHealthSqlData):
+    slug = 'products'
+    title = 'Taux de satisfaction de la commande de l\'operateur'
+    show_total = False
+    product_names = set()
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        values_v1 = CommandeV1DataSource(config=self.config).values_for_product
+        values_v2 = CommandeV2DataSource(config=self.config).values_for_product
+
+        commandes = ['Commandes']
+        raux = ['Raux']
+        taux = ['Taux']
+
+        for product_name in values_v1:
+            self.product_names.add(product_name)
+        for product_name in values_v2:
+            self.product_names.add(product_name)
+        self.product_names = sorted(self.product_names)
+        for product_name in self.product_names:
+            values_for_product_v1 = values_v1[product_name] if product_name in values_v1 else [0, 0]
+            values_for_product_v2 = values_v2[product_name] if product_name in values_v2 else [0, 0]
+            amountOrdered = values_for_product_v1[0] + values_for_product_v2[0]
+            amountReceived = values_for_product_v1[1] + values_for_product_v2[1]
+            commandes.append(amountOrdered)
+            raux.append(amountReceived)
+            taux.append("%d%%" % (100 * amountOrdered / (amountReceived or 1)))
+        return [commandes, raux, taux]
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumn(product_name))
+        return headers
 
 
 class ContainsFilter(SqlFilter):

@@ -10,6 +10,7 @@ from mock.mock import Mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -40,6 +41,13 @@ def setUpModule():
         location_type=region_location_type
     )
 
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='PASSY',
+        location_id='1991b4dfe166335e342f28134b85fcac',
+        location_type=region_location_type
+    )
+
     district_location_type = LocationType.objects.create(
         domain='test-pna',
         name='District',
@@ -62,6 +70,13 @@ def setUpModule():
         name='P2',
         location_id='ccf4430f5c3f493797486d6ce1c39682',
         location_type=pps_location_type
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Product 7',
+        code='p7',
+        product_id='p7'
     )
 
     with override_settings(SERVER_ENVIRONMENT='production'):
