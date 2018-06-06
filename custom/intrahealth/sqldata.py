@@ -868,6 +868,223 @@ class IntraHealthSqlData(SqlData):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
 
 
+class RecapPassageDateDataSourceMixin(IntraHealthSqlData):
+    title = ''
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'location_id' in self.config:
+            filters.append(EQ("location_id", "location_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['real_date', ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Date"), SimpleColumn('real_date')),
+        ]
+
+
+class RecapPassageDateV1DataSource(RecapPassageDateDataSourceMixin):
+    slug = 'RecapPassageDateV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+
+class RecapPassageDateV2DataSource(RecapPassageDateDataSourceMixin):
+    slug = 'RecapPassageDateV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class DateSource2(IntraHealthSqlData):
+    slug = 'dateSource2'
+    title = 'DateSource2'
+    show_total = False
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows_v1 = RecapPassageDateV1DataSource(config=self.config).get_data()
+        rows_v2 = RecapPassageDateV2DataSource(config=self.config).get_data()
+        return sorted(list(
+            set(row['real_date'] for row in rows_v1).union(set(row['real_date'] for row in rows_v2))
+        ))
+
+    @property
+    def headers(self):
+        return []
+
+
+class RecapPassageDataSourceMixin(IntraHealthSqlData):
+    slug = 'recap_passage_data_source'
+    show_total = False
+    title = 'Recap Passage Data Source'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'location_id' in self.config:
+            filters.append(EQ("location_id", "location_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['real_date', 'product_name']
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('old_stock_total')),
+            DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
+            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock', alias='stock_total')),
+            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('outside_receipts_amt')),
+            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
+            DatabaseColumn(_("Reelle"), SumColumn('actual_consumption')),
+            DatabaseColumn("Stock Total", AliasColumn('stock_total')),
+            DatabaseColumn("PPS Restant", SumColumn('pps_stock')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt'))
+        ]
+
+
+class RecapPassageV1DataSource(RecapPassageDataSourceMixin):
+    slug = 'RecapPassageV1DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V1)
+
+    @property
+    def columns(self):
+        columns = super(RecapPassageV1DataSource, self).columns
+        columns.append(
+            DatabaseColumn(_("Livraison"), SumColumn('quantity')),
+        )
+        return columns
+
+
+class RecapPassageV2DataSource(RecapPassageDataSourceMixin):
+    slug = 'RecapPassageV2DataSource'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_V2)
+
+
+class RecapPassageData2(IntraHealthSqlData):
+    show_total = False
+
+    @property
+    def slug(self):
+        return 'recap_passage_%s' % json_format_date(self.config['startdate'])
+
+    @property
+    def title(self):
+        return 'Recap Passage %s' % json_format_date(self.config['startdate'])
+
+    @property
+    def total_row(self):
+        return []
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        rows_v1 = RecapPassageV1DataSource(config=self.config).get_data()
+        rows_v2 = RecapPassageV2DataSource(config=self.config).get_data()
+
+        rows = []
+        data = {}
+        for row in rows_v1:
+            if not data.get(row['product_name']):
+                data[row['product_name']] = defaultdict(int)
+            product_data = data[row['product_name']]
+            product_data['old_stock_total'] += self.get_value(row['old_stock_total'])
+            product_data['total_stock'] += self.get_value(row['total_stock'])
+            product_data['livraison'] += self.get_value(row['quantity'])
+            product_data['stock_total'] += self.get_value(row['stock_total'])
+            product_data['old_stock_pps'] += self.get_value(row['old_stock_pps'])
+            product_data['outside_receipts_amt'] += self.get_value(row['outside_receipts_amt'])
+            product_data['billed_consumption'] += self.get_value(row['billed_consumption'])
+            product_data['actual_consumption'] += self.get_value(row['actual_consumption'])
+            product_data['pps_stock'] += self.get_value(row['pps_stock'])
+            product_data['loss_amt'] += self.get_value(row['loss_amt'])
+        for row in rows_v2:
+            if not data.get(row['product_name']):
+                data[row['product_name']] = defaultdict(int)
+            product_data = data[row['product_name']]
+            product_data['old_stock_total'] += self.get_value(row['old_stock_total'])
+            product_data['total_stock'] += self.get_value(row['total_stock'])
+            product_data['livraison'] += self.get_value(row['stock_total']) - self.get_value(row['total_stock'])
+            product_data['stock_total'] += self.get_value(row['stock_total'])
+            product_data['old_stock_pps'] += self.get_value(row['old_stock_pps'])
+            product_data['outside_receipts_amt'] += self.get_value(row['outside_receipts_amt'])
+            product_data['billed_consumption'] += self.get_value(row['billed_consumption'])
+            product_data['actual_consumption'] += self.get_value(row['actual_consumption'])
+            product_data['pps_stock'] += self.get_value(row['pps_stock'])
+            product_data['loss_amt'] += self.get_value(row['loss_amt'])
+
+        for product_name, product_data in data.items():
+            rows.append([
+                product_name,
+                product_data['old_stock_total'],
+                product_data['total_stock'],
+                product_data['livraison'],
+                product_data['stock_total'],
+                product_data['old_stock_pps'],
+                product_data['outside_receipts_amt'],
+                (product_data['actual_consumption'] or 0) - (product_data['billed_consumption'] or 0),
+                product_data['billed_consumption'],
+                product_data['actual_consumption'],
+                product_data['stock_total'],
+                product_data['pps_stock'],
+                product_data['loss_amt'],
+            ])
+        return rows
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Designations'),
+            DataTablesColumn('Stock apres derniere livraison'),
+            DataTablesColumn('Stock disponible et utilisable a la livraison'),
+            DataTablesColumn('Livraison'),
+            DataTablesColumn('Stock Total'),
+            DataTablesColumn('Precedent'),
+            DataTablesColumn('Recu hors entrepots mobiles'),
+            DataTablesColumn('Non Facturable'),
+            DataTablesColumn('Facturable'),
+            DataTablesColumn('Reelle'),
+            DataTablesColumn('Stock Total'),
+            DataTablesColumn('PPS Restant'),
+            DataTablesColumn('Pertes et Adjustement'),
+        )
+
+
 class ConsommationDataSourceMixin(IntraHealthSqlData):
     slug = 'consommation_data_source'
     show_total = False
@@ -1203,7 +1420,7 @@ class ConventureData2(IntraHealthSqlData):
 
     @property
     def headers(self):
-        headers = DataTablesHeader(
+        return DataTablesHeader(
             DataTablesColumn('Mois'),
             DataTablesColumn('No de PPS (number of PPS registered in that region)'),
             DataTablesColumn('No de PPS planifie (number of PPS planned)'),
@@ -1212,7 +1429,6 @@ class ConventureData2(IntraHealthSqlData):
             DataTablesColumn('No de PPS avec donnees soumises (number of PPS which submitted data)'),
             DataTablesColumn('Exhaustivite des donnees'),
         )
-        return headers
 
 
 class FicheDataSourceMixin(IntraHealthSqlData):
