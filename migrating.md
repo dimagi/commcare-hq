@@ -200,4 +200,6 @@ See [our approach to inheritance](https://github.com/dimagi/js-guide/blob/master
 - Remove `new` operator from anywhere the class is instantiated
 - Sanity test that the pages using the class still load
 
+[Sample pull request](https://github.com/dimagi/commcare-hq/pull/19938)
+
 Code that actually manipulates the prototype needs more thought.
