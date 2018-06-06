@@ -100,14 +100,21 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
     statement = sqlalchemy.select(
         all_query_columns
     )
-    # apply join filters
     for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
         sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
+        # apply join filters
         statement = statement.where(
             primary_table.c['doc_id'] == sqlalchemy_secondary_table.c[secondary_table.data_source_key]
         )
+        # and period start/end filters for related model
+        statement = statement.where(
+            sqlalchemy.and_(
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]>=start.value,
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]<end.value,
+            )
+        )
 
-    # apply period start/end filters
+    # apply period start/end filters for primary model
     # to match, start should be before the end of the period and end should be after the start
     # this makes the first and last periods inclusive.
     statement = statement.where(primary_table.c[start.mapped_column_id] < end.value)
@@ -117,7 +124,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
         if not isinstance(primary_column_adapter, ConstantColumnAdapter):
             statement = statement.group_by(primary_column_adapter.to_sqlalchemy_query_column(primary_table, aggregation_params))
 
-    print(statement)
+    # print(statement)
     with aggregate_table_adapter.session_helper.session_context() as session:
         print(session.execute(statement).fetchall())
 
