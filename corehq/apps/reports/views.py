@@ -10,7 +10,6 @@ from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
 from corehq.apps.cloudcare import CLOUDCARE_DEVICE_ID
-from corehq.apps.data_dictionary.util import get_all_case_properties
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.doc_info import get_doc_info_by_id, DocInfo
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
@@ -22,7 +21,7 @@ from corehq.apps.reports.display import xmlns_to_name
 from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, LedgerAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.form_processor.interfaces.processor import FormProcessorInterface
 from corehq.motech.repeaters.dbaccessors import get_repeat_records_by_payload_id
@@ -44,14 +43,11 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.base import ContentFile
 from django.http import (
     Http404,
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseForbidden,
-    HttpResponseRedirect,
-    JsonResponse,
-)
-from django.http.response import (
-    HttpResponse,
     HttpResponseNotFound,
+    HttpResponseRedirect,
     JsonResponse,
     StreamingHttpResponse,
 )
@@ -83,7 +79,6 @@ from casexml.apps.case.views import get_wrapped_case
 from couchdbkit.exceptions import ResourceNotFound
 import couchexport
 from corehq.form_processor.exceptions import XFormNotFound, CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import FormAccessors, CaseAccessors
 from corehq.form_processor.models import UserRequestedRebuild
 
 from couchexport.exceptions import (
@@ -116,6 +111,7 @@ from soil.tasks import prepare_download
 from corehq import privileges, toggles
 from corehq.apps.accounting.decorators import requires_privilege_json_response
 from corehq.apps.app_manager.const import USERCASE_TYPE, USERCASE_ID
+from corehq.apps.app_manager.dbaccessors import get_latest_app_ids_and_versions
 from corehq.apps.app_manager.models import Application, ShadowForm
 from corehq.apps.app_manager.util import get_form_source_download_url
 from corehq.apps.cloudcare.const import DEVICE_ID as FORMPLAYER_DEVICE_ID
@@ -128,6 +124,8 @@ from corehq.apps.domain.decorators import (
 from corehq.apps.domain.models import Domain
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.exceptions import BadExportConfiguration
+from corehq.apps.export.models import CaseExportDataSchema
+from corehq.apps.export.utils import is_occurrence_deleted
 from corehq.apps.reports.exceptions import EditFormValidationError
 from corehq.apps.groups.models import Group
 from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain
@@ -176,7 +174,6 @@ from .tasks import (
     build_form_multimedia_zip,
     create_metadata_export,
     rebuild_export_async,
-    rebuild_export_task,
     send_delayed_report,
 )
 from .util import (
@@ -1559,9 +1556,18 @@ def case_xml(request, domain, case_id):
 @require_GET
 def case_property_names(request, domain, case_id):
     case = _get_case_or_404(domain, case_id)
-    all_property_names = get_all_case_properties(domain, [case.type])
+
+    # We need to look at the export schema in order to remove any case properties that
+    # have been deleted from the app. When the data dictionary is fully public, we can use that
+    # so that users may deprecate those properties manually
+    export_schema = CaseExportDataSchema.generate_schema_from_builds(domain, None, case.type)
+    property_schema = export_schema.group_schemas[0]
+    last_app_ids = get_latest_app_ids_and_versions(domain)
+    all_property_names = {
+        item.path[-1].name for item in property_schema.items
+        if not is_occurrence_deleted(item.last_occurrences, last_app_ids) and '/' not in item.path[-1].name
+    }
     try:
-        all_property_names = all_property_names[case.type]
         # external_id is effectively a dynamic property: see CaseDisplayWrapper.dynamic_properties
         if case.external_id:
             all_property_names.add('external_id')
