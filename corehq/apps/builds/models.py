@@ -220,6 +220,8 @@ class BuildSpec(DocumentSchema):
         return self.version.split('.')[0]
 
     def release_greater_than_or_equal_to(self, version):
+        if not self.version:
+            return False
         from_major, from_minor, from_bugfix = map(int, version.split('.'))
         major, minor, bugfix = map(int, self.version.split('.'))
         if major != from_major:
