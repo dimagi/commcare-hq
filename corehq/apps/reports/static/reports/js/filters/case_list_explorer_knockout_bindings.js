@@ -1,4 +1,4 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout'], function($, ko) {
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho'], function($, ko, atwho) {
 
     ko.bindingHandlers.xPathAutocomplete = {
         init: function(element) {
@@ -7,7 +7,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                 throw new Error("The typeahead binding requires Atwho.js and Caret.js");
             }
 
-            hqImport('hqwebapp/js/atwho').init($element, {
+            atwho.init($element, {
                 atwhoOptions: {
                     displayTpl: function(item){
                         if (item.case_type){
@@ -44,7 +44,7 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                 throw new Error("The typeahead binding requires Atwho.js and Caret.js");
             }
 
-            hqImport('hqwebapp/js/atwho').init($element, {
+            atwho.init($element, {
                 atwhoOptions: {
                     displayTpl: function(item){
                         if (item.case_type){
