@@ -69,4 +69,9 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             $(element).atwho('load', '', ko.utils.unwrapObservable(valueAccessor()));
         },
     };
+
+    return {
+        xPathAutocomplete: ko.bindingHandlers.xPathAutocomplete,
+        explorerColumnsAutocomplete: ko.bindingHandlers.explorerColumnsAutocomplete,
+    };
 });
