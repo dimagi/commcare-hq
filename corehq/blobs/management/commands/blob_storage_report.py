@@ -65,11 +65,11 @@ class Command(BaseCommand):
     def handle(self, files, output_file, write_csv, sample_size, **options):
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
-        sizes = get_blob_sizes(data, sample_size)
+        sizes, samples_by_type = get_blob_sizes(data, sample_size)
 
         with make_row_writer(output_file, write_csv) as write:
             report_blobs_by_type(data, write)
-            report_blob_sizes(data, sizes, write)
+            report_blob_sizes(data, sizes, samples_by_type, write)
 
 
 def report_blobs_by_type(data, write):
@@ -81,7 +81,7 @@ def report_blobs_by_type(data, write):
     write([])
 
 
-def report_blob_sizes(data, sizes, write):
+def report_blob_sizes(data, sizes, samples_by_type, write):
     """report blob type, number of blobs, total size grouped by domain"""
     def iter_headers(by_domain):
         for domain in by_domain:
@@ -93,12 +93,18 @@ def report_blob_sizes(data, sizes, write):
         for domain in by_domain:
             blob_sizes = domain_sizes[domain]
             numerics = [s.length for s in blob_sizes if s.length is not UNKNOWN]
-            mean_size = int(mean(numerics)) if numerics else 0
-            est_size = (
-                mean_size *
-                len(data[blob_sizes[0].bucket]) *       # number blobs in bucket
-                (len(numerics) / samples[doc_type])     # porportion of samples
-            ) if blob_sizes else 0
+            if numerics:
+                bucket = blob_sizes[0].bucket
+                bucket_samples = sum(samples_by_type[bucket].values())
+                mean_size = int(mean(numerics))
+                est_size = (
+                    mean_size *
+                    len(data[bucket]) *                 # number blobs in bucket
+                    (len(numerics) / bucket_samples)    # porportion of samples
+                )
+            else:
+                mean_size = 0
+                est_size = 0
             found_of_total = "{}/{}".format(len(numerics), len(blob_sizes))
             totals[domain]["size"] += est_size
             totals[domain]["found"] += len(numerics)
@@ -121,7 +127,6 @@ def report_blob_sizes(data, sizes, write):
     OTHER = "OTHER"
     by_domain = OrderedDict()
     by_type = defaultdict(lambda: defaultdict(list))
-    samples = defaultdict(lambda: 0)
     for i, (domain, domain_sizes) in enumerate(sorted(six.iteritems(sizes), key=sumlens)):
         if i < 5:
             by_domain[domain] = domain_sizes
@@ -131,7 +136,6 @@ def report_blob_sizes(data, sizes, write):
             by_domain[OTHER].extend(domain_sizes)
             domain = OTHER
         for size in domain_sizes:
-            samples[size.doc_type] += 1
             by_type[size.doc_type][domain].append(size)
 
     def key(item):
@@ -177,14 +181,18 @@ def get_blob_sizes(data, sample_size):
             yield size
 
     sizes = defaultdict(list)
+    samples_by_type = {}  # {bucket: {<doc_type>: <n_samples>, ...}, ...}
     with_progress = partial(with_progress_bar, oneline="concise", stream=sys.stderr)
     for bucket, keys_list in sorted(data.items()):
+        counts = defaultdict(int)  # {<doc_type>: <n_samples>, ...}
         length = min(sample_size, len(keys_list))
         samples = iter_samples(bucket, keys_list)
         for size in with_progress(samples, length, prefix=bucket):
             sizes[size.domain].append(size)
+            counts[size.doc_type] += 1
+        samples_by_type[bucket] = dict(counts)
     print("", file=sys.stderr)
-    return sizes
+    return sizes, samples_by_type
 
 
 def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
