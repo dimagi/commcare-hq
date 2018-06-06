@@ -41,8 +41,8 @@ ES_META = {
     },
 
     'hqapps': {
-        "number_of_replicas": 0,
         "settings": {
+            "number_of_replicas": 0,
             "analysis": {
                 "analyzer": {
                     "default": {
