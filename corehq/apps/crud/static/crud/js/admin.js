@@ -141,7 +141,7 @@ hqDefine("crud/js/admin", function() {
         }
 
         // CRUD pages will have supplied a crud_item
-        var crudItem = initialPageData("js_options").crud_item;
+        var crudItem = (initialPageData("js_options") || {}).crud_item;
         if (!crudItem) {
             return;
         }
