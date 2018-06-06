@@ -496,6 +496,16 @@ def migrate_rule(handler, schedule):
                 property_value=handler.start_value,
                 match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
+        elif handler.start_match_type == MATCH_REGEX:
+            if not handler.start_value:
+                raise ValueError("Expected start_value")
+
+            rule.add_criteria(
+                MatchPropertyDefinition,
+                property_name=handler.start_property,
+                property_value=handler.start_value,
+                match_type=MatchPropertyDefinition.MATCH_REGEX,
+            )
         else:
             raise ValueError("Unexpected start_match_type '%s'" % handler.start_match_type)
 
@@ -585,7 +595,7 @@ class Command(BaseCommand):
         if handler.start_match_type in (MATCH_EXACT, MATCH_REGEX) and not handler.start_value:
             return None
 
-        if handler.start_match_type not in (MATCH_EXACT, MATCH_ANY_VALUE):
+        if handler.start_match_type not in (MATCH_EXACT, MATCH_ANY_VALUE, MATCH_REGEX):
             return None
 
         if not handler.start_property:
