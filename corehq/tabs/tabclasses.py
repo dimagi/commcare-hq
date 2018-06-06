@@ -1546,6 +1546,7 @@ def _get_administration_section(domain):
         TransferDomainView,
         RecoveryMeasuresHistory,
     )
+    from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
     if not settings.ENTERPRISE_MODE:
@@ -1560,7 +1561,8 @@ def _get_administration_section(domain):
             }
         ])
 
-    if toggles.MOBILE_RECOVERY_MEASURES.enabled(domain):
+    if (toggles.MOBILE_RECOVERY_MEASURES.enabled(domain)
+            and MobileRecoveryMeasure.objects.filter(domain=domain).exists()):
         administration.append({
             'title': _(RecoveryMeasuresHistory.page_title),
             'url': reverse(RecoveryMeasuresHistory.urlname, args=[domain])
