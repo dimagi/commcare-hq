@@ -8,7 +8,7 @@ from corehq.apps.domain.models import Domain
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import get_data_source_with_related_doc_type, load_data_from_db
+from corehq.apps.userreports.tests.utils import load_data_from_db
 from corehq.apps.userreports.tasks import build_async_indicators
 
 

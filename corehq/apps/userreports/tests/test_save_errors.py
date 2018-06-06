@@ -68,7 +68,7 @@ class SaveErrorsTest(TestCase):
             adapter.best_effort_save(doc)
 
 
-class IndicatorAdapterTest(TestCase):
+class AdapterBulkSaveTest(TestCase):
 
     def setUp(self):
         self.domain = 'adapter_bulk_save'
