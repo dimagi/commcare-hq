@@ -64,20 +64,14 @@ def _get_ids_by_last_modified(cls, doc_types, start_datetime, end_datetime):
             yield result['id']
 
 
-def get_synclog_ids_by_date(start_datetime, end_datetime):
+def get_synclogs_by_date(start_datetime, end_datetime):
     '''
-    Returns all synclog ids that have been modified within a time range. The start date is
+    Returns all synclogs that have been modified within a time range. The start date is
     exclusive while the end date is inclusive (start_datetime, end_datetime].
     '''
     from casexml.apps.phone.models import SyncLogSQL
 
-    return [
-        synclog_id.hex
-        for synclog_id in SyncLogSQL.objects.filter(
-            date__gt=start_datetime, date__lte=end_datetime
-        ).values_list('synclog_id', flat=True)
-    ]
-
+    return SyncLogSQL.objects.filter(date__gt=start_datetime, date__lte=end_datetime).defer('doc')
 
 def get_forms_by_last_modified(start_datetime, end_datetime):
     '''
@@ -88,7 +82,6 @@ def get_forms_by_last_modified(start_datetime, end_datetime):
         yield form
 
     # TODO Couch forms
-
 
 def get_application_ids_by_last_modified(start_datetime, end_datetime):
     '''
