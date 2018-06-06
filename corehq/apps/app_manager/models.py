@@ -6039,7 +6039,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
-        # only one form can be a release notes form, so set them to False explicity when copying
+        # only one form can be a release notes form, so set them to False explicitly when copying
         copy_source['is_release_notes_form'] = False
         copy_source['enable_release_notes'] = False
         if 'unique_id' in copy_source:
