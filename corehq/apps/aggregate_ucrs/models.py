@@ -111,6 +111,9 @@ class SecondaryTableDefinition(models.Model):
     data_source_key = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     aggregation_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
 
+    def __str__(self):
+        return '{} - {}:{}'.format(self.table_definition, self.data_source_id, self.data_source_key)
+
     @property
     @memoized
     def data_source(self):
