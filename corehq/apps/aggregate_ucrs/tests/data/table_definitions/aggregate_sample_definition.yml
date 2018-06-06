@@ -1,4 +1,4 @@
-domain: ucr-aggregation-domain
+domain: agg
 table_id: monthy_aggregate_pregnancies
 display_name: Pregnancy Data Per Month
 primary_table:

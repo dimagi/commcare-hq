@@ -18,6 +18,7 @@ from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
+from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
@@ -27,8 +28,8 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 
 
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
-    domain = 'ucr-aggregation-domain'
-    case_type = 'ucr-aggregation-case-type'
+    domain = 'agg'
+    case_type = 'agg-cases'
     case_date_opened = datetime(2018, 2, 19)
     case_properties = (
         ('first_name', 'First Name', 'string', 'Mary'),
@@ -46,6 +47,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def setUpClass(cls):
         super(UCRAggregationTest, cls).setUpClass()
+        # cleanup any previous data
+        delete_all_cases()
+        delete_all_xforms()
+        delete_all_apps()
+
         # setup app
         factory = AppFactory(domain=cls.domain)
         m0, f0 = factory.new_basic_module('A Module', cls.case_type)
@@ -61,10 +67,6 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         cls.followup_form = f1
         cls.app = factory.app
         cls.app.save()
-
-        # cleanup any previous forms and cases
-        delete_all_cases()
-        delete_all_xforms()
 
         # create form and case ucrs
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
