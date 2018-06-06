@@ -4749,6 +4749,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     build_comment = StringProperty()
     comment_from = StringProperty()
     build_broken = BooleanProperty(default=False)
+    is_auto_generated = BooleanProperty(default=False)
     # not used yet, but nice for tagging/debugging
     # currently only canonical value is 'incomplete-build',
     # for when build resources aren't found where they should be
@@ -5400,8 +5401,6 @@ def validate_detail_screen_field(field):
 
 
 class SavedAppBuild(ApplicationBase):
-    is_auto_generated = BooleanProperty(default=False)
-
     def to_saved_build_json(self, timezone):
         data = super(SavedAppBuild, self).to_json().copy()
         for key in ('modules', 'user_registration', 'external_blobs',
