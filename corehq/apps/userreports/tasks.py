@@ -287,7 +287,7 @@ def _queue_indicators(indicators):
         now = datetime.utcnow()
         indicator_doc_ids = [i.doc_id for i in indicators]
         AsyncIndicator.objects.filter(doc_id__in=indicator_doc_ids).update(date_queued=now)
-        save_document.delay(indicator_doc_ids)
+        build_async_indicators.delay(indicator_doc_ids)
         datadog_counter('commcare.async_indicator.indicators_queued', len(indicator_doc_ids))
 
     to_queue = []
@@ -303,11 +303,14 @@ def _queue_indicators(indicators):
 
 @quickcache(['config_id'])
 def _get_config(config_id):
-    # performance optimization for save_document. don't use elsewhere
+    # performance optimization for build_async_indicators. don't use elsewhere
     return _get_config_by_id(config_id)
 
 
+@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
 def build_async_indicators(indicator_doc_ids):
+    # written to be used with _queue_indicators, indicator_doc_ids must
+    #   be a chunk of 100
 
     def handle_exception(exception, config_id, docs, adapter):
         if isinstance(exception, (ProtocolError, ReadTimeout)):
@@ -379,7 +382,7 @@ def build_async_indicators(indicator_doc_ids):
         failed_indicators = set()
         indicators_by_config_id = index_by_config_id(all_indicators)
         with timer:
-            for config_id, indicators in indicators_by_config_id.iteritems():
+            for config_id, indicators in six.iteritems(indicators_by_config_id):
                 doc_ids = [i.doc_id for i in indicators]
                 indicator_ids = [i.pk for i in indicators]
                 try:
@@ -422,7 +425,6 @@ def build_async_indicators(indicator_doc_ids):
                 indicator.save()
 
         # process asyncindicator for any related docs that are not rebuilt so far
-        # Todo avoid queing multiple times from parent function caller?
         related_docs_to_rebuild = []
         for _id in related_doc_ids:
             related_docs_to_rebuild.extend(icds_get_related_docs_ids(_id))
@@ -439,117 +441,6 @@ def build_async_indicators(indicator_doc_ids):
                 'config_ids:{}'.format(indicators_by_config_id.keys())
             ]
         )
-
-
-@task(queue=UCR_INDICATOR_CELERY_QUEUE, ignore_result=True, acks_late=True)
-def save_document(doc_ids):
-    lock_keys = []
-    for doc_id in doc_ids:
-        lock_keys.append(get_async_indicator_modify_lock_key(doc_id))
-
-    indicator_config_ids = None
-    timer = TimingContext()
-    with CriticalSection(lock_keys):
-        indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids)
-        if not indicators:
-            return
-
-        first_indicator = indicators[0]
-        processed_indicators = []
-        failed_indicators = []
-
-        for i in indicators:
-            assert i.domain == first_indicator.domain
-            assert i.doc_type == first_indicator.doc_type
-
-        indicator_by_doc_id = {i.doc_id: i for i in indicators}
-        doc_store = get_document_store_for_doc_type(first_indicator.domain, first_indicator.doc_type)
-        indicator_config_ids = first_indicator.indicator_config_ids
-        related_docs_to_rebuild = set()
-
-        with timer:
-            for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
-                indicator = indicator_by_doc_id[doc['_id']]
-                is_success, to_remove, rebuild_related_docs = _save_document_helper(indicator, doc)
-                if rebuild_related_docs:
-                    related_docs_to_rebuild = related_docs_to_rebuild.union(icds_get_related_docs_ids(doc['_id']))
-                if is_success:
-                    processed_indicators.append(indicator.pk)
-                else:
-                    failed_indicators.append((indicator, to_remove))
-
-        num_processed = len(processed_indicators)
-        num_failed = len(failed_indicators)
-        AsyncIndicator.objects.filter(pk__in=processed_indicators).delete()
-        with transaction.atomic():
-            for indicator, to_remove in failed_indicators:
-                indicator.update_failure(to_remove)
-                indicator.save()
-
-    # remove any related docs that were just rebuilt
-    related_docs_to_rebuild = related_docs_to_rebuild - set(doc_ids)
-    # queue the docs that aren't already queued
-    _queue_indicators(AsyncIndicator.objects.filter(
-        doc_id__in=related_docs_to_rebuild, date_queued=None
-    ))
-
-    datadog_counter('commcare.async_indicator.processed_success', num_processed)
-    datadog_counter('commcare.async_indicator.processed_fail', num_failed)
-    datadog_histogram(
-        'commcare.async_indicator.processing_time', timer.duration,
-        tags=[
-            'config_ids:{}'.format(indicator_config_ids)
-        ]
-    )
-
-
-def _save_document_helper(indicator, doc):
-    eval_context = EvaluationContext(doc)
-    something_failed = False
-    to_remove = []
-    configs = dict()
-    for config_id in indicator.indicator_config_ids:
-        try:
-            configs[config_id] = _get_config(config_id)
-        except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
-            celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-            to_remove.append(config_id)
-            continue
-        except ESError:
-            celery_task_logger.info("ES errored when trying to retrieve config")
-            something_failed = True
-            continue
-
-    for config_id, config in six.iteritems(configs):
-        adapter = None
-        try:
-            adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-            adapter.save(doc, eval_context)
-            eval_context.reset_iteration()
-        except (ProtocolError, ReadTimeout):
-            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
-            something_failed = True
-        except RequestError:
-            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
-            something_failed = True
-        except (ESError, ConnectionTimeout):
-            # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("ES error when saving config: {}".format(config_id))
-            something_failed = True
-        except (DatabaseError, InternalError):
-            # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("psql error when saving config: {}".format(config_id))
-            something_failed = True
-        except Exception as e:
-            # getting the config could fail before the adapter is set
-            if adapter:
-                adapter.handle_exception(doc, e)
-            something_failed = True
-        else:
-            to_remove.append(config_id)
-
-    rebuild_related_docs = any(config.icds_rebuild_related_docs for config in six.itervalues(configs) if config)
-    return (not something_failed, to_remove, rebuild_related_docs)
 
 
 @periodic_task(
