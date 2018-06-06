@@ -252,7 +252,7 @@ class AdvancedSuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlPartialEqual(self.get_xml('advanced_module_parent'), app.create_suite(), "./entry[1]")
 
     def test_tiered_select_with_advanced_module_as_parent_with_filters(self):
-        factory = AppFactory(build_version='2.25')
+        factory = AppFactory(build_version='2.25.0')
         parent_module, parent_form = factory.new_advanced_module('parent', 'parent')
         parent_module.case_details.short.filter = 'parent_filter = 1'
 
