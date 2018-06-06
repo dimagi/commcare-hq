@@ -46,6 +46,7 @@ module.exports = {
         "no-new-object": ["error"],
         "no-unneeded-ternary": ["error"],
         "no-throw-literal": ["error"],
+        "no-implicit-globals": ["error"],
 
         "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "RegExp"]],
     }
