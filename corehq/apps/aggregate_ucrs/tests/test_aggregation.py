@@ -35,7 +35,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         ('last_name', 'Last Name', 'string', 'Mom'),
         ('children', 'Children', 'int', '1'),
         ('lmp', 'Pregnancy Start Date', 'date', '2018-01-21'),
-        ('edd', 'Pregnancy End Date', 'date', '2018-10-27'),
+        ('delivery_date', 'Pregnancy End Date', 'date', '2018-10-27'),
     )
     fu_visit_dates = (
         datetime(2018, 3, 16),
