@@ -1,8 +1,8 @@
 hqDefine("repeaters/js/add_form_repeater", [
     'jquery',
     'hqwebapp/js/initial_page_data',
-    'hqwebapp/js/widgets',      // case repeaters use .ko-select2
-    'locations/js/widgets_main',
+    'hqwebapp/js/widgets',          // case repeaters use .ko-select2
+    'locations/js/widgets_main',    // motech repeaters use the SupplyPointSelectWidget
 ], function(
     $,
     initialPageData
