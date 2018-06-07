@@ -67,7 +67,7 @@ logger = logging.getLogger(__name__)
 def default(request, domain):
     if request.couch_user.can_edit_locations():
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
-    elif user_can_edit_location_types(request.couch_user, request.project):
+    elif user_can_edit_location_types(request.couch_user, domain):
         return HttpResponseRedirect(reverse(LocationTypesView.urlname, args=[domain]))
     return no_permissions(request)
 

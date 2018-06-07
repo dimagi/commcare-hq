@@ -132,13 +132,8 @@ def get_user_sql_location(user, domain):
         return user.get_sql_location(domain)
 
 
-def user_can_edit_location_types(user, project):
-    if user.is_domain_admin(project.name):
-        return True
-    elif not user.has_permission(project.name, 'edit_apps'):
-        return False
-    else:
-        return True
+def user_can_edit_location_types(user, domain):
+    return user.has_permission(domain, 'edit_apps')
 
 
 def can_edit_location_types(view_fn):
@@ -147,7 +142,7 @@ def can_edit_location_types(view_fn):
     """
     @wraps(view_fn)
     def _inner(request, domain, *args, **kwargs):
-        if user_can_edit_location_types(request.couch_user, request.project):
+        if user_can_edit_location_types(request.couch_user, request.domain):
             return view_fn(request, domain, *args, **kwargs)
         raise Http404()
     return locations_access_required(_inner)
