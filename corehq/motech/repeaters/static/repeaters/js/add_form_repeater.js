@@ -64,8 +64,8 @@ hqDefine("repeaters/js/add_form_repeater", [
                 error: handleFailure,
             });
         });
+        // TODO: this gets fired in the non-migrated version of this code
         $('#id_url').change(function () {
-            console.log("changing");
             if ($(this).val()) {
                 $testLinkButton.removeClass('disabled');
             } else {
