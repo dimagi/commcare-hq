@@ -64,13 +64,19 @@ class Command(BaseCommand):
             action="store_true",
             help="Ignore all except the default bucket.",
         )
+        parser.add_argument(
+            "--summarize",
+            action="store_true",
+            help="Aggregate all storage use instead of grouping by domain.",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, files, output_file, write_csv, sample_size, default_only, **options):
+    def handle(self, files, output_file, write_csv, sample_size, default_only,
+               summarize, **options):
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
-        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only)
+        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only, summarize)
 
         with make_row_writer(output_file, write_csv) as write:
             report_blobs_by_type(data, sizes, samples_by_type, write)
@@ -182,9 +188,8 @@ def accumulate_put_requests(files):
     return data
 
 
-def get_blob_sizes(data, sample_size, default_only):
+def get_blob_sizes(data, sample_size, default_only, summarize):
     # get domain, blob type, and blob size for each put request (or a sample of them)
-    # sizes[domain] = {<BlobSize>, ...}
     def iter_samples(bucket, keys_list):
         for i, keys in enumerate(keys_list):
             if i >= sample_size:
@@ -194,9 +199,11 @@ def get_blob_sizes(data, sample_size, default_only):
                 size = get_blob_size(bucket, *keys)
             else:
                 size = get_default_blob_size(bucket, "/".join(keys))
+            if summarize:
+                size.domain = "(all)"
             yield size
 
-    sizes = defaultdict(list)
+    sizes = defaultdict(list)  # {domain: [<BlobSize>, ...], ...}
     samples_by_type = {}  # {bucket: {<doc_type>: <n_samples>, ...}, ...}
     with_progress = partial(
         with_progress_bar,
