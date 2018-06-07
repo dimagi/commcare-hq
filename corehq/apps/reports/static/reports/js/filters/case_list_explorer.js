@@ -1,7 +1,7 @@
 hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
-    var suggestions = function(){
+    var applySuggestions = function(allSuggestions){
         // Adds the required properties to filter the case type autocomplete dropdowns
         var self = this;
         self.currentCaseType = ko.observable('');
@@ -11,9 +11,9 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
 
         self.suggestedProperties = ko.computed(function(){
             if (self.currentCaseType() === ''){
-                return self.allSuggestions;
+                return allSuggestions;
             }
-            return _.filter(self.allSuggestions, function(prop){
+            return _.filter(allSuggestions, function(prop){
                 return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
             });
         });
@@ -51,10 +51,10 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
     };
 
     var casePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
-        var self = this;
-
-        self.allSuggestions = allCaseProperties;
-        suggestions.apply(self);
+        var self = {
+            allSuggestions: allCaseProperties,
+        };
+        applySuggestions.call(self, allCaseProperties);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -79,9 +79,8 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
     };
 
     var caseSearchXpathViewModel = function(allSuggestions){
-        var self = this;
-        self.allSuggestions = allSuggestions;
-        suggestions.apply(self);
+        var self = {};
+        applySuggestions.call(self, allSuggestions);
         return self;
     };
 
