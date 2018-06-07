@@ -19,7 +19,7 @@ from couchexport.models import Format
 from corehq.elastic import iter_es_docs, ScanResult
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
-from corehq.util.datadog.gauges import datadog_histogram
+from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
 from corehq.apps.export.esaccessors import (
     get_form_export_base_query,
     get_case_export_base_query,
@@ -454,6 +454,7 @@ def _get_base_query(export_instance):
         )
 
 
+@datadog_track_errors('rebuild_export')
 def rebuild_export(export_instance, filters=None):
     """
     Rebuild the given daily saved ExportInstance

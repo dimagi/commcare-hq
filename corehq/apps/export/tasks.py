@@ -9,6 +9,7 @@ from corehq.apps.export.dbaccessors import get_case_inferred_schema, get_properl
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.users.models import CouchUser
+from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
@@ -24,7 +25,7 @@ logger = logging.getLogger('export_migration')
 
 @task(queue='export_download_queue')
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
-    with TransientTempfile() as temp_path:
+    with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
             filters,
