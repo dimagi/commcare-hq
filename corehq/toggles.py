@@ -1431,6 +1431,15 @@ SKIP_REMOVE_INDICES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_RECOVERY_MEASURES = StaticToggle(
+    'mobile_recovery_measures',
+    'Mobile recovery measures',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=("Used for widely deployed projects where recovery from "
+                 "large-scale failures would otherwise be next to impossible."),
+)
+
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',

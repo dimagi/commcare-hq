@@ -333,9 +333,10 @@ def get_next_id(request, domain):
 # Note: this endpoint does not require authentication
 @location_safe
 @require_GET
+@toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
 def recovery_measures(request, domain, build_id):
     app_id = get_app_cached(domain, build_id).master_id
-    response = {"app_id": request.GET.get('app_id')}
+    response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
     measures = [measure.to_mobile_json() for measure in
                 MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
     if measures:
