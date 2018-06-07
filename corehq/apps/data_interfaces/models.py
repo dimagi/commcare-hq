@@ -616,7 +616,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_regex(self, case, now):
         try:
             regex = re.compile(self.property_value)
-        except:
+        except (re.error, ValueError, TypeError):
             return False
 
         for value in self.get_case_values(case):
@@ -624,7 +624,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
                 try:
                     if regex.match(value):
                         return True
-                except:
+                except (re.error, ValueError, TypeError):
                     pass
 
         return False
