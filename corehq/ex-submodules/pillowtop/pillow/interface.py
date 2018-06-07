@@ -99,6 +99,14 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         pillow_logging.info("Starting pillow %s" % self.__class__)
         self.process_changes(since=self.get_last_checkpoint_sequence(), forever=True)
 
+    def _update_checkpoint(self, change, context):
+        if change:
+            updated = self.fire_change_processed_event(change, context)
+        else:
+            updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
+        if updated:
+            self._record_checkpoint_in_datadog()
+
     def process_changes(self, since, forever):
         """
         Process changes from the changes stream.
@@ -107,18 +115,16 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         try:
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
+                    context.changes_seen += 1
                     self.process_with_error_handling(change, context)
                 else:
-                    updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
-                    if updated:
-                        self._record_checkpoint_in_datadog()
+                    self._update_checkpoint(change, None)
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
     def process_with_error_handling(self, change, context):
         timer = TimingContext()
         try:
-            context.changes_seen += 1
             with timer:
                 try:
                     self.process_change(change)
@@ -131,9 +137,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             self._record_change_exception_in_datadog(change)
             raise
         else:
-            updated = self.fire_change_processed_event(change, context)
-            if updated:
-                self._record_checkpoint_in_datadog()
+            self._update_checkpoint(change, context)
             self._record_change_success_in_datadog(change)
         self._record_change_in_datadog(change, timer)
 
