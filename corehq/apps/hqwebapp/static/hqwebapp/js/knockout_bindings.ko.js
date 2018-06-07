@@ -205,11 +205,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
-
                     ko.bindingHandlers.multi_sortable.updateSortableList(list);
-                    for (var cur = 0; cur < element.children.length; cur++) {
-                        element.children[cur].attributes['data-order'].value = cur;
-                    }
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort");
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
