@@ -1473,7 +1473,7 @@ class TestExportData(TestCase):
                     [
                         [
                             "AWC Name",
-                            "AWC ID",
+                            "AWC Site Code",
                             "Supervisor Name",
                             "Block Name",
                             "Child Name",

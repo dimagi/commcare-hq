@@ -90,9 +90,9 @@ class BeneficiaryExport(ExportableMixin, SqlData):
                 slug='awc_name'
             ),
             DatabaseColumn(
-                'AWC ID',
-                SimpleColumn('awc_id'),
-                slug='awc_id'
+                'AWC Site Code',
+                SimpleColumn('awc_site_code'),
+                slug='awc_site_code'
             ),
             DatabaseColumn(
                 'Supervisor Name',

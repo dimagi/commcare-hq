@@ -99,6 +99,7 @@ class ChildHealthMonthlyView(models.Model):
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
     awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
     supervisor_name = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)

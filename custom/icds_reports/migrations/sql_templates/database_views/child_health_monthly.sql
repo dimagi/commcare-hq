@@ -4,6 +4,7 @@ CREATE VIEW child_health_monthly_view AS
       child_health_monthly.case_id,
       awc_location_months.awc_id,
       awc_location_months.awc_name,
+      awc_location_months.awc_site_code,
       awc_location_months.supervisor_id,
       awc_location_months.supervisor_name,
       awc_location_months.block_id,
