@@ -275,10 +275,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 if (current_index < lastSelectedRowIndex) {
                     // Update UI
-                    $('.isSelectedForExport').addClass('fix');
-                    row.removeClass('fix');
-                    $('.fix:nth-child(' + ($('.fix').length + 1) + ')').after(row);
-                    $('.fix').removeClass('fix');
+                    $('.isSelectedForExport').addClass('selected-for-export-above-last');
+                    row.removeClass('selected-for-export-above-last');
+                    $('.selected-for-export-above-last:nth-child('
+                        + ($('.selected-for-export-above-last').length + 1) + ')').after(row);
+                    $('.selected-for-export-above-last').removeClass('selected-for-export-above-last');
 
                     // Update KO
                     var current_list_item = list().splice(current_index, 1)[0];
