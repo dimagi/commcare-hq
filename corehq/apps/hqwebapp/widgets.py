@@ -108,22 +108,14 @@ class AutocompleteTextarea(forms.Textarea):
 
     def render(self, name, value, attrs=None):
         if hasattr(self, 'choices') and self.choices:
-            output = mark_safe("""
-<script>
-$(function() {
-    $("#%s").select2({
-        multiple: true,
-        tags: %s
-    });
-});
-</script>\n""" % (attrs['id'], json.dumps([{'text': c, 'id': c} for c in self.choices])))
+            if not attrs:
+                attrs = {}
+            attrs.update({
+                'class': 'hqwebapp-autocomplete',
+                'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
+            })
 
-        else:
-            output = mark_safe("")
-
-        output += super(AutocompleteTextarea, self).render(name, value,
-                                                           attrs=attrs)
-        return output
+        return super(AutocompleteTextarea, self).render(name, value, attrs=attrs)
 
 
 class _Select2Mixin(object):
