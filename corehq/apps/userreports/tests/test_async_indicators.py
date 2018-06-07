@@ -178,7 +178,11 @@ class BulkAsyncIndicatorProcessingTest(TestCase):
     def _assert_rows_in_ucr_table(self, config, rows):
         results = list(load_data_from_db(get_table_name(self.domain.name, config.table_id)))
         actual_rows = [{key: r[key] for key in rows[0]} for r in results]
-        self.assertEqual(rows, actual_rows)
+
+        self.assertEqual(
+            sorted(rows, key=lambda x: x['doc_id']),
+            sorted(actual_rows, key=lambda x: x['doc_id'])
+        )
 
     def test_basic_run(self):
         # map some indicators to first config, other to the second config

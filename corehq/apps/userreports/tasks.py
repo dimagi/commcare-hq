@@ -51,6 +51,7 @@ from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
 from dimagi.utils.couch.pagination import DatatablesParams
+from dimagi.utils.logging import notify_exception
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 import six
 
@@ -312,22 +313,25 @@ def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
 
-    def handle_exception(exception, config_id, docs, adapter):
+    def handle_exception(exception, config_id, doc, adapter):
+        metric = None
         if isinstance(exception, (ProtocolError, ReadTimeout)):
-            celery_task_logger.info("Riak error when saving config: {}".format(config_id))
+            metric = 'commcare.async_indicator.riak_error'
         elif isinstance(exception, RequestError):
-            celery_task_logger.info("Couch error when saving config: {}".format(config_id))
+            metric = 'commcare.async_indicator.couch_error'
         elif isinstance(exception, (ESError, ConnectionTimeout)):
             # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("ES error when saving config: {}".format(config_id))
+            metric = 'commcare.async_indicator.es_error'
         elif isinstance(exception, (DatabaseError, InternalError)):
             # a database had an issue so log it and go on to the next document
-            celery_task_logger.info("psql error when saving config: {}".format(config_id))
+            metric = 'commcare.async_indicator.psql_error'
         else:
             # getting the config could fail before the adapter is set
             if adapter:
-                for doc in docs:
-                    adapter.handle_exception(doc, exception)
+                adapter.handle_exception(doc, exception)
+        if metric:
+            datadog_counter(metric, 1,
+                tags={'config_id': config_id, 'doc_id': doc['_id']})
 
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = defaultdict(list)
@@ -335,33 +339,6 @@ def build_async_indicators(indicator_doc_ids):
     def _mark_config_to_remove(config_id, indicator_ids):
         for _id in indicator_ids:
             configs_to_remove_by_indicator_id[_id].append(config_id)
-
-    memoized_docs_by_id = {}
-
-    def _memoized_get_docs(doc_ids, doc_store):
-        # return and memoize docs by ids
-        new_doc_ids = set(doc_ids) - set(memoized_docs_by_id.keys())
-        # the parent function is called with chunked ids, so fine to call list method below
-        new_docs = list(doc_store.iter_documents(new_doc_ids))
-        memoized_doc_ids = set(doc_ids) & set(memoized_docs_by_id.keys())
-        memoized_docs = [
-            memoized_docs_by_id[_id]
-            for _id in memoized_doc_ids
-        ]
-        for doc in new_docs:
-            memoized_docs_by_id[doc['_id']] = doc
-        return new_docs + memoized_docs
-
-    def index_by_config_id(indicators):
-        indicators_by_config_id = defaultdict(list)
-        for indicator in indicators:
-            # input data validation
-            assert indicator.domain == indicators[0].domain
-            assert indicator.doc_type == indicators[0].doc_type
-
-            for config_id in indicator.indicator_config_ids:
-                indicators_by_config_id[config_id].append(indicator)
-        return indicators_by_config_id
 
     timer = TimingContext()
     lock_keys = [
@@ -380,37 +357,56 @@ def build_async_indicators(indicator_doc_ids):
         )
         related_doc_ids = set()
         failed_indicators = set()
-        indicators_by_config_id = index_by_config_id(all_indicators)
+
+        rows_to_save_by_adapter = defaultdict(list)
+        doc_ids_to_save_by_adapter = defaultdict(list)
+        indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
+        config_ids = set()
         with timer:
-            for config_id, indicators in six.iteritems(indicators_by_config_id):
-                doc_ids = [i.doc_id for i in indicators]
-                indicator_ids = [i.pk for i in indicators]
+            for doc in doc_store.iter_documents(list(indicator_by_doc_id.keys())):
+                indicator = indicator_by_doc_id[doc['_id']]
+                eval_context = EvaluationContext(doc)
+                for config_id in indicator.indicator_config_ids:
+                    config_ids.add(config_id)
+                    try:
+                        config = _get_config(config_id)
+                    except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
+                        celery_task_logger.info("{} no longer exists, skipping".format(config_id))
+                        # remove because the config no longer exists
+                        _mark_config_to_remove(config_id, [indicator.pk])
+                        continue
+                    except ESError:
+                        celery_task_logger.info("ES errored when trying to retrieve config")
+                        failed_indicators.add(indicator)
+                        continue
+                    adapter = None
+                    try:
+                        adapter = get_indicator_adapter(config, can_handle_laboratory=True)
+                        rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                        doc_ids_to_save_by_adapter[adapter].append(doc['_id'])
+                        eval_context.reset_iteration()
+                    except Exception as e:
+                        failed_indicators.add(indicator)
+                        handle_exception(e, config_id, doc, adapter)
+
+                    if config and config.icds_rebuild_related_docs:
+                        related_doc_ids.add(doc['_id'])
+
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                doc_ids = doc_ids_to_save_by_adapter[adapter]
+                indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
-                    config = _get_config(config_id)
-                except (ResourceNotFound, StaticDataSourceConfigurationNotFoundError):
-                    celery_task_logger.info("{} no longer exists, skipping".format(config_id))
-                    # remove because the config no longer exists
-                    _mark_config_to_remove(config_id, indicator_ids)
-                    continue
-                except ESError:
-                    celery_task_logger.info("ES errored when trying to retrieve config")
-                    failed_indicators = failed_indicators.union(indicators)
-                    continue
-                adapter = None
-                docs = _memoized_get_docs(doc_ids, doc_store)
-                try:
-                    adapter = get_indicator_adapter(config, can_handle_laboratory=True)
-                    # Todo; evaluationcontext and reset_iteration?
-                    adapter.bulk_save(docs)
+                    adapter._save_rows(rows, doc_ids)
                 except Exception as e:
-                    failed_indicators = failed_indicators.union(indicators)
-                    handle_exception(e, config_id, docs, adapter)
+                    failed_indicators.union(indicators)
+                    notify_exception(None,
+                        "Exception bulk saving async indicators:{}".format(e))
                 else:
                     # remove because it's sucessfully processed
-                    _mark_config_to_remove(config_id, indicator_ids)
-
-                if config.icds_rebuild_related_docs:
-                    related_doc_ids = related_doc_ids.union(doc_ids)
+                    _mark_config_to_remove(
+                        config_id,
+                        [i.pk for i in indicators]
+                    )
 
         # delete fully processed indicators
         processed_indicators = set(all_indicators) - failed_indicators
@@ -438,7 +434,7 @@ def build_async_indicators(indicator_doc_ids):
         datadog_histogram(
             'commcare.async_indicator.processing_time', timer.duration,
             tags=[
-                'config_ids:{}'.format(indicators_by_config_id.keys())
+                'config_ids:{}'.format(config_ids)
             ]
         )
 
