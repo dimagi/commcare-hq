@@ -39,6 +39,9 @@ def profile(log_file, probability=1):
         This makes it easy to run and compare multiple trials.
     :param probability: A number N between 0 and 1 such that P(profile) ~= N
     """
+    assert isinstance(probability, (int, float)), 'probability must be numeric'
+    assert 0 <= probability <= 1, 'probability must be in range [0, 1]'
+
     if not os.path.isabs(log_file):
         log_file = os.path.join(PROFILE_LOG_BASE, log_file)
 

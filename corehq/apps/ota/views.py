@@ -49,7 +49,7 @@ from .utils import (
 from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
 
 
-PROFILE_PROBABILITY = os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0)
+PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
 
 
 @location_safe

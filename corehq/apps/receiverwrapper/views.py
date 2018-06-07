@@ -46,7 +46,7 @@ from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
-PROFILE_PROBABILITY = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0)
+PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 
 
 @profile('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY)
