@@ -319,7 +319,7 @@ def get_export_documents(export_instance, filters):
                     f.write(doc_id + '\n')
 
             # Stream doc ids from disk and fetch documents from ES in chunks
-            with open(temp_path, 'w', encoding='utf-8') as f:
+            with open(temp_path, 'r', encoding='utf-8') as f:
                 doc_ids = (doc_id.strip() for doc_id in f)
                 for doc in iter_es_docs(query.index, doc_ids):
                     yield doc
