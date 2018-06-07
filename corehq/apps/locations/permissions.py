@@ -148,10 +148,6 @@ def can_edit_location_types(view_fn):
     return locations_access_required(_inner)
 
 
-#### Unified location permissions below this point
-# TODO incorporate the above stuff into the new system
-
-
 def can_edit_form_location(domain, web_user, form):
     if web_user.has_permission(domain, 'access_all_locations'):
         return True
