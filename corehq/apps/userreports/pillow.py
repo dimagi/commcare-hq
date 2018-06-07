@@ -79,7 +79,7 @@ def _filter_by_hash(configs, ucr_division):
 class ConfigurableReportTableManagerMixin(object):
 
     def __init__(self, data_source_provider, auto_repopulate_tables=False, ucr_division=None,
-                 include_ucrs=None, exclude_ucrs=None):
+                 include_ucrs=None, exclude_ucrs=None, bootstrap_interval=REBUILD_CHECK_INTERVAL):
         """Initializes the processor for UCRs
 
         Keyword Arguments:
@@ -88,6 +88,7 @@ class ConfigurableReportTableManagerMixin(object):
                         first
         include_ucrs -- list of ucr 'table_ids' to be included in this processor
         exclude_ucrs -- list of ucr 'table_ids' to be excluded in this processor
+        bootstrap_interval -- time in seconds when the pillow checks for any data source changes
         """
         self.bootstrapped = False
         self.last_bootstrapped = datetime.utcnow()
@@ -96,6 +97,7 @@ class ConfigurableReportTableManagerMixin(object):
         self.ucr_division = ucr_division
         self.include_ucrs = include_ucrs
         self.exclude_ucrs = exclude_ucrs
+        self.bootstrap_interval = bootstrap_interval
         if self.include_ucrs and self.ucr_division:
             raise PillowConfigError("You can't have include_ucrs and ucr_division")
 
@@ -118,7 +120,7 @@ class ConfigurableReportTableManagerMixin(object):
     def needs_bootstrap(self):
         return (
             not self.bootstrapped
-            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=REBUILD_CHECK_INTERVAL)
+            or datetime.utcnow() - self.last_bootstrapped > timedelta(seconds=self.bootstrap_interval)
         )
 
     def bootstrap_if_needed(self):
@@ -350,6 +352,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            bootstrap_interval=7 * 24 * 60 * 60  # 1 week
         ),
         pillow_name=pillow_id,
         topics=topics,
