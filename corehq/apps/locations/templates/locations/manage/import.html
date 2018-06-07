@@ -5,6 +5,8 @@
     <script src="{% static 'locations/js/import.js' %}"></script>
 {% endblock %}
 
+{% requirejs_main 'locations/js/import' %}
+
 {% block page_content %}
     {% include "locations/manage/partials/bulk_upload.html" %}
 {% endblock %}
