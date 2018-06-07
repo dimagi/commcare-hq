@@ -10,5 +10,9 @@ hqDefine("hqwebapp/js/widgets", [
                 tags: $input.data("choices"),
             });
         });
+
+        _.each($(".ko-select2"), function(element) {
+            $(element).select2();
+        });
     });
 });

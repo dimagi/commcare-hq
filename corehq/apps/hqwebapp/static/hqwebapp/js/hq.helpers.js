@@ -3,7 +3,6 @@ hqDefine("hqwebapp/js/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
-    'select2-3.5.2-legacy/select2',
 ], function(
     $,
     ko,
@@ -47,13 +46,6 @@ hqDefine("hqwebapp/js/hq.helpers", [
         var post_url = $(this).data('url');
         $.post(post_url, {note_id: note_id});
         $(this).parents('.alert').hide(150);
-    });
-
-    // Initialize common widgets
-    $(function() {
-        _.each($(".ko-select2"), function(element) {
-            $(element).select2();
-        });
     });
 
     if ($.timeago) {
