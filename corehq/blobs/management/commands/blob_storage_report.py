@@ -59,13 +59,18 @@ class Command(BaseCommand):
             default=500,
             help="Sample size.",
         )
+        parser.add_argument(
+            "-d", "--default-only",
+            action="store_true",
+            help="Ignore all except the default bucket.",
+        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
-    def handle(self, files, output_file, write_csv, sample_size, **options):
+    def handle(self, files, output_file, write_csv, sample_size, default_only, **options):
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
-        sizes, samples_by_type = get_blob_sizes(data, sample_size)
+        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only)
 
         with make_row_writer(output_file, write_csv) as write:
             report_blobs_by_type(data, sizes, samples_by_type, write)
@@ -84,6 +89,8 @@ def report_blobs_by_type(data, sizes, samples_by_type, write):
                 type_missing[size.doc_type] += 1
     write(["BUCKET", "BLOB COUNT", "NOT FOUND"])
     for bucket, key_list in sorted(six.iteritems(data)):
+        if bucket not in samples_by_type:
+            continue
         write([bucket, len(key_list), bucket_missing.get(bucket, "")])
         for doc_type, n_samples in sorted(samples_by_type[bucket].items()):
             write(["  " + doc_type, n_samples, type_missing.get(doc_type, "")])
@@ -175,7 +182,7 @@ def accumulate_put_requests(files):
     return data
 
 
-def get_blob_sizes(data, sample_size):
+def get_blob_sizes(data, sample_size, default_only):
     # get domain, blob type, and blob size for each put request (or a sample of them)
     # sizes[domain] = {<BlobSize>, ...}
     def iter_samples(bucket, keys_list):
@@ -191,10 +198,19 @@ def get_blob_sizes(data, sample_size):
 
     sizes = defaultdict(list)
     samples_by_type = {}  # {bucket: {<doc_type>: <n_samples>, ...}, ...}
-    with_progress = partial(with_progress_bar, oneline="concise", stream=sys.stderr)
+    with_progress = partial(
+        with_progress_bar,
+        oneline="concise",
+        stream=sys.stderr,
+        step=1,
+    )
     for bucket, keys_list in sorted(data.items()):
         counts = defaultdict(int)  # {<doc_type>: <n_samples>, ...}
         length = min(sample_size, len(keys_list))
+        if default_only:
+            if bucket != "_default":
+                continue
+            keys_list = (k for k in keys_list if not k[0].startswith("restore-response-"))
         samples = iter_samples(bucket, keys_list)
         for size in with_progress(samples, length, prefix=bucket):
             sizes[size.domain].append(size)

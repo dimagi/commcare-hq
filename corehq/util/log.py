@@ -263,7 +263,7 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout):
+                      stream=sys.stdout, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
@@ -303,7 +303,8 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    step = length // granularity
+    if step is None:
+        step = length // granularity
     i = -1
     try:
         for i, x in enumerate(iterable):
