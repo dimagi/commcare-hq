@@ -206,7 +206,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
 
-                    var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
                     ko.bindingHandlers.multi_sortable.updateSortableList(list);
                     for (var cur = 0; cur < element.children.length; cur++) {
                         element.children[cur].attributes['data-order'].value = cur;
@@ -262,8 +261,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 row.parent().prepend(row);
 
                 // update KO
-                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
-                list.unshift(list.splice(current_index, 1)[0]);
+                list().unshift(list().splice(current_index, 1)[0]);
             });
 
             $(element).on('click', '.send-to-bottom', function (e) {
@@ -273,9 +271,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 var current_index = row[0].attributes['data-order'].value;
 
                 var lastSelectedRowIndex = null;
-                var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor)();
-                for (var i = 0; i < list.length; i++) {
-                    if (list[i].selected()) {
+                for (var i = 0; i < list().length; i++) {
+                    if (list()[i].selected()) {
                         lastSelectedRowIndex = i;
                     }
                 }
@@ -288,8 +285,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $('.fix').removeClass('fix');
 
                     // Update KO
-                    var current_list_item = list.splice(current_index, 1)[0];
-                    list.splice(lastSelectedRowIndex, 0, current_list_item);
+                    var current_list_item = list().splice(current_index, 1)[0];
+                    list().splice(lastSelectedRowIndex, 0, current_list_item);
                 }
             });
 
