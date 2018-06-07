@@ -8,12 +8,15 @@ import hotshot
 import resource
 import os
 import gc
+import logging
 
 from datetime import datetime
 from django.conf import settings
 from corehq.util.decorators import ContextDecorator
 from dimagi.utils.modules import to_function
 import six
+
+logger = logging.getLogger(__name__)
 
 try:
     PROFILE_LOG_BASE = settings.PROFILE_LOG_BASE
@@ -43,6 +46,19 @@ def profile(log_file, probability=1):
         if probability <= 0:
             return f
 
+        base, ext = os.path.splitext(log_file)
+
+        header = '=' * 100
+        logger.warn("""
+        %(header)s
+        Profiling enabled for %(module)s.%(name)s with probability %(prob)s.
+        Output will be written to %(base)s-[datetime]%(ext)s
+        %(header)s
+        """, {
+            'header': header, 'module': f.__module__, 'name': f.__name__,
+            'prob': probability, 'base': base, 'ext': ext
+        })
+
         @wraps(f)
         def _inner(*args, **kwargs):
             if random.random() > probability:
@@ -50,9 +66,7 @@ def profile(log_file, probability=1):
             else:
                 # Add a timestamp to the profile output when the callable
                 # is actually called.
-                (base, ext) = os.path.splitext(log_file)
-                base = base + "-" + datetime.now().isoformat()
-                final_log_file = base + ext
+                final_log_file = '{}-{}{}'.format(base, datetime.now().isoformat(), ext)
 
                 prof = hotshot.Profile(final_log_file)
                 try:
