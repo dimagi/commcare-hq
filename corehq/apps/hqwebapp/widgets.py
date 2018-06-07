@@ -54,7 +54,7 @@ class AutocompleteTextarea(forms.Textarea):
             if not attrs:
                 attrs = {}
             attrs.update({
-                'class': 'hqwebapp-autocomplete',
+                'class': 'hqwebapp-autocomplete form-control',
                 'data-choices': json.dumps([{'text': c, 'id': c} for c in self.choices]),
             })
 
@@ -138,7 +138,7 @@ class Select2Ajax(forms.TextInput):
 
 
 class DateRangePickerWidget(Input):
-    """SUPPORTS BOOTSTRAP 3 ONLY
+    """
     Extends the standard input widget to render a Date Range Picker Widget.
     Documentation and Demo here: http://www.daterangepicker.com/
 
