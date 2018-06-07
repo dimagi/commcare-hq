@@ -71,10 +71,6 @@ hqDefine('hqwebapp/js/main', [
             e.preventDefault();
             $.postGo(action, $.unparam(data));
         });
-        $('.post-link').click(function (e) {
-            e.preventDefault();
-            $.postGo($(this).attr('href'), {});
-        });
 
         $(".button", $elem).button().wrap('<span />');
         $("input[type='submit']", $elem).button();
@@ -287,6 +283,11 @@ hqDefine('hqwebapp/js/main', [
             if (data.category && data.action) {
                 googleAnalytics.track.event(data.category, data.action, data.label);
             }
+        });
+
+        $(document).on('click', '.post-link', function(e) {
+            e.preventDefault();
+            $.postGo($(this).attr('href'), {});
         });
 
         // Maintenance alerts
