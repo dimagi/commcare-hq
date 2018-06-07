@@ -179,9 +179,9 @@ class MobileRecoveryMeasure(models.Model):
     app_all_versions = models.BooleanField(
         verbose_name="All App Versions", default=True)
     app_version_min = models.IntegerField(
-        verbose_name="Min App Version", max_length=255, null=True, blank=True)
+        verbose_name="Min App Version", null=True, blank=True)
     app_version_max = models.IntegerField(
-        verbose_name="Max App Version", max_length=255, null=True, blank=True)
+        verbose_name="Max App Version", null=True, blank=True)
 
     created_on = models.DateTimeField(auto_now_add=True)
     username = models.CharField(max_length=255, editable=False)
