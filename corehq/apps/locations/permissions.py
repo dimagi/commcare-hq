@@ -135,7 +135,7 @@ def is_locations_admin(view_fn):
 
 
 def user_can_edit_any_location(user, project):
-    return user.is_domain_admin(project.name) or not project.location_restriction_for_users
+    return True
 
 
 def can_edit_any_location(view_fn):
@@ -175,19 +175,7 @@ def user_can_edit_location(user, sql_location, project):
 
 
 def user_can_view_location(user, sql_location, project):
-    if (user.is_domain_admin(project.name) or
-            not project.location_restriction_for_users):
-        return True
-
-    user_loc = get_user_location(user, sql_location.domain)
-
-    if not user_loc:
-        return True
-
-    if user_can_edit_location(user, sql_location, project):
-        return True
-
-    return sql_location.location_id in user_loc.lineage
+    return True
 
 
 def user_can_edit_location_types(user, project):
@@ -195,10 +183,8 @@ def user_can_edit_location_types(user, project):
         return True
     elif not user.has_permission(project.name, 'edit_apps'):
         return False
-    elif not project.location_restriction_for_users:
+    else:
         return True
-
-    return not user.get_domain_membership(project.name).location_id
 
 
 def can_edit_location_types(view_fn):
@@ -375,18 +361,6 @@ def can_edit_location(view_fn):
     """
     @wraps(view_fn)
     def _inner(request, domain, loc_id, *args, **kwargs):
-        if Domain.get_by_name(domain).location_restriction_for_users:
-            # TODO Old style restrictions, remove after converting existing projects
-            try:
-                # pass to view?
-                location = SQLLocation.objects.get(location_id=loc_id)
-            except SQLLocation.DoesNotExist:
-                raise Http404()
-            else:
-                if user_can_edit_location(request.couch_user, location, request.project):
-                    return view_fn(request, domain, loc_id, *args, **kwargs)
-            raise Http404()
-
         if user_can_access_location_id(domain, request.couch_user, loc_id):
             return view_fn(request, domain, loc_id, *args, **kwargs)
         return location_restricted_response(request)

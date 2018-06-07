@@ -46,18 +46,6 @@ class TestApiUtils(BaseTestLocationQuerysetMethods):
         user.set_location(self.domain, self.locations['Middlesex'])
         self.restrict_user_to_assigned_locations(user)
         project = self.domain_obj
-        project.location_restriction_for_users = False
-        result = _user_locations_ids(user, project, only_editable=False)
-        self.assertTrue(isinstance(result, list), result)
-        self.assertTrue(
-            all(isinstance(it, six.text_type) for it in result),
-            result,
-        )
-
-    def test_no_user_loc_user_locations_ids(self):
-        user = self.web_user
-        project = self.domain_obj
-        project.location_restriction_for_users = True
         result = _user_locations_ids(user, project, only_editable=False)
         self.assertTrue(isinstance(result, list), result)
         self.assertTrue(

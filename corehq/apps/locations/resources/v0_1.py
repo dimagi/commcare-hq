@@ -29,31 +29,8 @@ def get_location_or_not_exist(location_id, domain):
 
 @quickcache(['user._id', 'project.name', 'only_editable'], timeout=10)
 def _user_locations_ids(user, project, only_editable):
-    # admins and users not assigned to a location can see and edit everything
-    def all_ids():
-        return list(SQLLocation.by_domain(project.name)
-                               .values_list('location_id', flat=True))
-
-    if not project.location_restriction_for_users:
-        return list(SQLLocation.objects.accessible_to_user(project.name, user)
-                                       .location_ids())
-
-    if user.is_domain_admin(project.name):
-        return all_ids()
-
-    user_loc = (user.get_location(project.name) if isinstance(user, WebUser)
-                else user.location)
-    if not user_loc:
-        return all_ids()
-
-    editable = list(user_loc.sql_location.get_descendants(include_self=True)
-                    .values_list('location_id', flat=True))
-    if only_editable:
-        return editable
-    else:
-        viewable = list(user_loc.sql_location.get_ancestors()
-                        .values_list('location_id', flat=True))
-        return viewable + editable
+    return list(SQLLocation.objects.accessible_to_user(project.name, user)
+                                   .location_ids())
 
 
 @location_safe
