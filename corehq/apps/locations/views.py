@@ -45,7 +45,6 @@ from .dbaccessors import get_users_assigned_to_locations
 from .exceptions import LocationConsistencyError
 from .permissions import (
     locations_access_required,
-    is_locations_admin,
     can_edit_location,
     require_can_edit_locations,
     user_can_edit_location_types,
@@ -239,7 +238,8 @@ class LocationFieldsView(CustomDataModelMixin, BaseLocationView):
     entity_string = ugettext_lazy("Location")
     template_name = "custom_data_fields/custom_data_fields.html"
 
-    @method_decorator(is_locations_admin)
+    @method_decorator(locations_access_required)
+    @method_decorator(domain_admin_required)
     @method_decorator(check_pending_locations_import())
     def dispatch(self, request, *args, **kwargs):
         return super(LocationFieldsView, self).dispatch(request, *args, **kwargs)

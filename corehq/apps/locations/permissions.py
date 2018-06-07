@@ -5,8 +5,8 @@ Location Permissions
 Normal Access
 -------------
 
-Location Types - Users who can edit apps on the domain can edit location types::
-Locations - Users who can edit mobile workers on the domain can edit locations
+Location Types - Users who can edit apps on the domain can edit location types.
+Locations - There is an "edit_locations" permission.
 
 
 Restricted Access and Whitelist
@@ -64,15 +64,6 @@ You should create a user who is restricted and click through the desired
 workflow to make sure it still makes sense, there could be for instance, ajax
 requests that must also be protected, or links to features the user shouldn't
 see.
-
-
-Legacy Implementation
----------------------
-Prior to the implementation of the whitelist, we created a series of
-unconnected location-based permissions schemes controlled by feature flags.
-These each restrict access to a particular feature and don't affect the rest of
-HQ. These are deprecated, and we intend to transition projects off of those
-onto the whitelist once we've added enough features to meet their use-case.
 """
 from __future__ import absolute_import
 from __future__ import unicode_literals
@@ -125,13 +116,6 @@ def require_can_edit_locations(view_fn):
     return locations_access_required(
         require_permission('edit_locations')(view_fn)
     )
-
-
-def is_locations_admin(view_fn):
-    """
-    Decorator controlling write access to locations.
-    """
-    return locations_access_required(domain_admin_required(view_fn))
 
 
 def user_can_edit_any_location(user, project):
