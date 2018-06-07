@@ -1,4 +1,4 @@
-/* globals REQUIRED */
+/* globals REQUIRED */// TODO: check this
 hqDefine('locations/js/location_drilldown', [
     'jquery',
     'knockout',
