@@ -27,12 +27,6 @@ def get_location_or_not_exist(location_id, domain):
         raise object_does_not_exist('Location', location_id)
 
 
-@quickcache(['user._id', 'project.name', 'only_editable'], timeout=10)
-def _user_locations_ids(user, project, only_editable):
-    return list(SQLLocation.objects.accessible_to_user(project.name, user)
-                                   .location_ids())
-
-
 @location_safe
 class LocationResource(HqBaseResource):
     type = "location"
@@ -62,23 +56,20 @@ class LocationResource(HqBaseResource):
         parent_id = bundle.request.GET.get('parent_id', None)
         include_inactive = json.loads(bundle.request.GET.get('include_inactive', 'false'))
         user = bundle.request.couch_user
-        viewable = _user_locations_ids(user, project, only_editable=False)
 
         if not parent_id:
             if not user.has_permission(domain, 'access_all_locations'):
                 raise BadRequest(LOCATION_ACCESS_DENIED)
-            locs = SQLLocation.root_locations(domain, include_inactive)
+            return SQLLocation.root_locations(domain, include_inactive)
         else:
             if not user_can_access_location_id(kwargs['domain'], user, parent_id):
                 raise BadRequest(LOCATION_ACCESS_DENIED)
             parent = get_location_or_not_exist(parent_id, domain)
-            locs = self.child_queryset(domain, include_inactive, parent)
-        return [child for child in locs if child.location_id in viewable]
+            return self.child_queryset(domain, include_inactive, parent)
 
     def dehydrate_can_edit(self, bundle):
-        project = getattr(bundle.request, 'project', self.domain_obj(bundle.request.domain))
-        editable_ids = _user_locations_ids(bundle.request.couch_user, project, only_editable=True)
-        return bundle.obj.location_id in editable_ids
+        # This is a relic of times past; if you can see a location, you can edit it
+        return True
 
     class Meta(CustomResourceMeta):
         authentication = LoginAndDomainAuthentication()
