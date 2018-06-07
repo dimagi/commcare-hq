@@ -88,7 +88,6 @@ from django.http import Http404
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy
 from django.views.generic import View
-from corehq import toggles
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.decorators import (login_and_domain_required,
                                            domain_admin_required)
@@ -219,26 +218,6 @@ def can_edit_location_types(view_fn):
 
 
 def can_edit_form_location(domain, web_user, form):
-    # Domain admins can always edit locations.  If the user isn't an admin and
-    # the location restriction is enabled, they can only edit forms that are
-    # explicitly at or below them in the location tree.
-
-    # This first block checks for old permissions, remove when that's gone
-    if toggles.RESTRICT_FORM_EDIT_BY_LOCATION.enabled(domain):
-        domain_obj = Domain.get_by_name(domain)
-        if user_can_edit_any_location(web_user, domain_obj):
-            return True
-        if not form.user_id:
-            return False
-        form_user = CouchUser.get_by_user_id(form.user_id)
-        if not form_user:
-            # form most likely submitted by a system user
-            return False
-        for location in form_user.get_sql_locations(domain):
-            if user_can_edit_location(web_user, location, domain_obj):
-                return True
-        return False
-
     if web_user.has_permission(domain, 'access_all_locations'):
         return True
 

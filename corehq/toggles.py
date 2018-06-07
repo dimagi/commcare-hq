@@ -1026,14 +1026,6 @@ MULTIPLE_CHOICE_CUSTOM_FIELD = StaticToggle(
     description='This flag allows multiple choice fields in custom user data, location data and product data',
 )
 
-RESTRICT_FORM_EDIT_BY_LOCATION = StaticToggle(
-    'restrict_form_edit_by_location',
-    "(Deprecated) Restrict ability to edit/archive forms by the web user's location",
-    TAG_DEPRECATED,
-    namespaces=[NAMESPACE_DOMAIN],
-    description="Don't enable this flag."
-)
-
 SUPPORT = StaticToggle(
     'support',
     'General toggle for support features',

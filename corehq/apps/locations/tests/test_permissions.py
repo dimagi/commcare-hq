@@ -13,7 +13,7 @@ from django.http import HttpResponse
 from corehq.apps.es.fake.users_fake import UserESFake
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 from corehq.apps.users.models import WebUser, CommCareUser
-from corehq.toggles import (RESTRICT_FORM_EDIT_BY_LOCATION, NAMESPACE_DOMAIN)
+from corehq.toggles import NAMESPACE_DOMAIN
 from corehq.apps.users.views.mobile import users as user_views
 from corehq.form_processor.utils.xform import (
     TestFormMetadata,
@@ -117,26 +117,6 @@ class FormEditRestrictionsMixin(object):
     def assertCannotEdit(self, user, form):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
-
-
-class TestDeprecatedFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
-    """This class mostly just tests the RESTRICT_FORM_EDIT_BY_LOCATION feature flag"""
-    domain = 'TestDeprecatedFormEditRestrictions-domain'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestDeprecatedFormEditRestrictions, cls).setUpClass()
-        cls.extra_setup()
-        # enable flag
-        RESTRICT_FORM_EDIT_BY_LOCATION.set(cls.domain, True, NAMESPACE_DOMAIN)
-        # check checkbox
-        cls.domain_obj.location_restriction_for_users = True
-        cls.domain_obj.save()
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.extra_teardown()
-        super(TestDeprecatedFormEditRestrictions, cls).tearDownClass()
 
 
 class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
