@@ -988,13 +988,13 @@ def child_locations_for_select2(request, domain):
     page = int(request.GET.get('page', 1))
     user = request.couch_user
 
-    base_queryset = SQLLocation.objects.accessible_to_user(domain, user)
-
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    locs = base_queryset.filter(domain=domain, is_archived=False)
-    if locs != [] and query:
+    locs = (SQLLocation.objects
+            .accessible_to_user(domain, user)
+            .filter(domain=domain, is_archived=False))
+    if query:
         locs = locs.filter(name__icontains=query)
 
     # 10 results per page
