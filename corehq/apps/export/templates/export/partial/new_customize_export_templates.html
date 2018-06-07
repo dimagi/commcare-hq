@@ -53,6 +53,14 @@
                         <a class="btn btn-xs btn-primary" data-bind="click: table.selectAll">{% trans "Select All" %}</a>
                         <a class="btn btn-xs btn-default" data-bind="click: table.selectNone">{% trans "Select None" %}</a>
                     </th>
+                    {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+                        <th>
+                            {% trans "Send to Bottom" %}
+                        </th>
+                        <th>
+                            {% trans "Send to Top" %}
+                        </th>
+                    {% endif %}
                     <th data-bind="attr: { 'class': $root.questionColumnClass }">
                         {% if export_instance.type == 'form' %}
                             {% trans "Question" %}
@@ -165,14 +173,6 @@
                         css: { isSelectedForExport: column.selected }
                         ">
                         <td class="text-center">
-                            {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
-                            <span class="send-to-bottom">
-                                <i class="fa fa-arrow-down"></i>
-                            </span>
-                            <span class="send-to-top">
-                                <i class="fa fa-arrow-up"></i>
-                            </span>
-                            {% endif %}
                             <!--ko if: ($root.is_deidentified() && column.item.isCaseName()) -->
                             <input type="checkbox"
                                    class="field-include"
@@ -195,6 +195,18 @@
                             </div>
                             <!-- /ko -->
                         </td>
+                        {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
+                        <td class="text-center">
+                            <span class="send-to-bottom">
+                                <i class="fa fa-arrow-down"></i>
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <span class="send-to-top">
+                                <i class="fa fa-arrow-up"></i>
+                            </span>
+                        </td>
+                        {% endif %}
                         <td>
                             <span data-bind="foreach: { data: column.tags, as: 'tag' }">
                                 <span data-bind="
