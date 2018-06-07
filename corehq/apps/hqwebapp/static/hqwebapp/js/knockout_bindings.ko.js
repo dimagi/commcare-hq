@@ -203,14 +203,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if(e.ctrlKey) {
-                    console.log('ctrlKey');
-                } else if(e.metaKey) {
-                    console.log('metaKey');
-                } else if(e.shiftKey) {
-                    console.log('shiftKey');
-                }
-
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
 
