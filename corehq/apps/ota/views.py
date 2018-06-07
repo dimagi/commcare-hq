@@ -50,6 +50,8 @@ from corehq.apps.users.util import update_device_meta, update_latest_builds, upd
 
 
 PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_RESTORE_LIMIT')
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else None
 
 
 @location_safe
@@ -169,7 +171,7 @@ def get_restore_params(request):
     }
 
 
-@profile('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY)
+@profile('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,

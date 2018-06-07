@@ -47,9 +47,11 @@ from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
 PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_LIMIT')
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else None
 
 
-@profile('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY)
+@profile('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [

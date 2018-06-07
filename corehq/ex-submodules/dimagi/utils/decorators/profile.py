@@ -26,7 +26,7 @@ except Exception:
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
 
 
-def profile(log_file, probability=1):
+def profile(log_file, probability=1, limit=None):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
@@ -38,9 +38,11 @@ def profile(log_file, probability=1):
         'my_view.prof' become 'my_view-2018-06-07T12:46:56.367347.prof', where the time stamp is in UTC.
         This makes it easy to run and compare multiple trials.
     :param probability: A number N between 0 and 1 such that P(profile) ~= N
+    :param limit: The maximum number of profiles to record.
     """
     assert isinstance(probability, (int, float)), 'probability must be numeric'
     assert 0 <= probability <= 1, 'probability must be in range [0, 1]'
+    assert not limit or isinstance(limit, int), 'limit must be an integer'
 
     if not os.path.isabs(log_file):
         log_file = os.path.join(PROFILE_LOG_BASE, log_file)
@@ -62,11 +64,17 @@ def profile(log_file, probability=1):
             'prob': probability, 'base': base, 'ext': ext
         })
 
+        class Scope:
+            """Class to keep outer scoped variable"""
+            profile_count = 0
+
         @wraps(f)
         def _inner(*args, **kwargs):
-            if random.random() > probability:
+            hit_limit = limit and Scope.profile_count > limit
+            if hit_limit or random.random() > probability:
                 return f(*args, **kwargs)
             else:
+                Scope.profile_count += 1
                 # Add a timestamp to the profile output when the callable
                 # is actually called.
                 final_log_file = '{}-{}{}'.format(base, datetime.now().isoformat(), ext)
