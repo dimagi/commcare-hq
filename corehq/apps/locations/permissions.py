@@ -118,22 +118,6 @@ def require_can_edit_locations(view_fn):
     )
 
 
-def user_can_edit_any_location(user, project):
-    return True
-
-
-def can_edit_any_location(view_fn):
-    """
-    Decorator determining whether a user has permission to edit all locations in a project
-    """
-    @wraps(view_fn)
-    def _inner(request, domain, *args, **kwargs):
-        if user_can_edit_any_location(request.couch_user, request.project):
-            return view_fn(request, domain, *args, **kwargs)
-        raise Http404()
-    return require_can_edit_locations(_inner)
-
-
 def get_user_location(user, domain):
     if user.is_commcare_user():
         return user.location
@@ -149,13 +133,7 @@ def get_user_sql_location(user, domain):
 
 
 def user_can_edit_location(user, sql_location, project):
-    if user_can_edit_any_location(user, project):
-        return True
-
-    user_loc = get_user_sql_location(user, sql_location.domain)
-    if not user_loc:
-        return False
-    return user_loc.is_direct_ancestor_of(sql_location)
+    return True
 
 
 def user_can_view_location(user, sql_location, project):

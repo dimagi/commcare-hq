@@ -49,8 +49,6 @@ from .permissions import (
     require_can_edit_locations,
     user_can_edit_location_types,
     can_edit_location_types,
-    user_can_edit_any_location,
-    can_edit_any_location,
 )
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm, RelatedLocationForm
@@ -200,7 +198,6 @@ class LocationsListView(BaseLocationView):
             'show_inactive': self.show_inactive,
             'has_location_types': has_location_types,
             'can_edit_root': self.can_access_all_locations,
-            'can_edit_any_location': user_can_edit_any_location(self.request.couch_user, self.request.project),
         }
 
     def get_visible_locations(self):
@@ -830,7 +827,7 @@ class LocationImportView(BaseLocationView):
     page_title = ugettext_noop('Upload Organization Structure From Excel')
     template_name = 'locations/manage/import.html'
 
-    @method_decorator(can_edit_any_location)
+    @method_decorator(require_can_edit_locations)
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(LocationImportView, self).dispatch(request, *args, **kwargs)
@@ -996,14 +993,7 @@ def child_locations_for_select2(request, domain):
     def loc_to_payload(loc):
         return {'id': loc.location_id, 'name': loc.get_path_display()}
 
-    locs = []
-    user_loc = user.get_sql_location(domain)
-
-    if user_can_edit_any_location(user, request.project):
-        locs = base_queryset.filter(domain=domain, is_archived=False)
-    elif user_loc:
-        locs = user_loc.get_descendants(include_self=True)
-
+    locs = base_queryset.filter(domain=domain, is_archived=False)
     if locs != [] and query:
         locs = locs.filter(name__icontains=query)
 
