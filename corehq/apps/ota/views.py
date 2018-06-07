@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import os
+
 from couchdbkit import ResourceConflict
 from distutils.version import LooseVersion
 
@@ -15,6 +17,7 @@ from iso8601 import iso8601
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
+from dimagi.utils.decorators.profile import profile
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -44,6 +47,9 @@ from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response)
 from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
+
+
+PROFILE_PROBABILITY = os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0)
 
 
 @location_safe
@@ -163,6 +169,7 @@ def get_restore_params(request):
     }
 
 
+@profile('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY)
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,

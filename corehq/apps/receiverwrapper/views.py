@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
+import os
 
 import six
 from couchdbkit import ResourceNotFound
@@ -40,11 +41,15 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
+from dimagi.utils.decorators.profile import profile
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
 
+PROFILE_PROBABILITY = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0)
 
+
+@profile('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [
