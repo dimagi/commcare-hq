@@ -1,6 +1,17 @@
-/* globals _, ko, $ */
-
-hqDefine('locations/js/location_types', function(){
+hqDefine('locations/js/location_types', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    ko,
+    _,
+    initialPageData,
+    googleAnalytics
+){
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
@@ -67,7 +78,7 @@ hqDefine('locations/js/location_types', function(){
             };
             self.loc_types.push(new_loctype);
             $(".include-only").last().select2();
-            hqImport('analytix/js/google').track.event('Organization Levels', 'New Organization Level');
+            googleAnalytics.track.event('Organization Levels', 'New Organization Level');
         };
 
         self.validate = function() {
@@ -346,9 +357,8 @@ hqDefine('locations/js/location_types', function(){
     }
 
     $(function() {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            loc_types = initial_page_data('location_types'),
-            commtrack_enabled = initial_page_data('commtrack_enabled'),
+        var loc_types = initialPageData.get('location_types'),
+            commtrack_enabled = initialPageData.get('commtrack_enabled'),
             model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
 
         var $settings = $('#settings');
