@@ -36,6 +36,7 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.util.quickcache import quickcache
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import string_to_utc_datetime
 
@@ -330,15 +331,20 @@ def get_next_id(request, domain):
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
 
 
+@quickcache(['domain', 'app_id'], timeout=60 * 60 * 24)
+def get_recovery_measures_cached(domain, app_id):
+    return [measure.to_mobile_json() for measure in
+            MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
+
+
 # Note: this endpoint does not require authentication
 @location_safe
 @require_GET
 @toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
 def recovery_measures(request, domain, build_id):
-    app_id = get_app_cached(domain, build_id).master_id
     response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
-    measures = [measure.to_mobile_json() for measure in
-                MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
+    app_id = get_app_cached(domain, build_id).master_id
+    measures = get_recovery_measures_cached(domain, app_id)
     if measures:
         response["recovery_measures"] = measures
     return JsonResponse(response)

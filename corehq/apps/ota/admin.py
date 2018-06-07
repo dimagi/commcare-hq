@@ -4,6 +4,7 @@ from django import forms
 from django.contrib import admin
 from django.core.exceptions import ValidationError
 from .models import DemoUserRestore, MobileRecoveryMeasure
+from .views import get_recovery_measures_cached
 
 
 class DemoUserRestoreAdmin(admin.ModelAdmin):
@@ -49,6 +50,7 @@ class MobileRecoveryMeasureAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         obj.username = request.user.username
         super(MobileRecoveryMeasureAdmin, self).save_model(request, obj, form, change)
+        get_recovery_measures_cached.clear(obj.domain, obj.app_id)
 
 
 admin.site.register(DemoUserRestore, DemoUserRestoreAdmin)
