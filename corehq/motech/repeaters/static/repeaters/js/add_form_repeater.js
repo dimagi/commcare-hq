@@ -1,4 +1,11 @@
-hqDefine("repeaters/js/add_form_repeater", function() {
+hqDefine("repeaters/js/add_form_repeater", [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'locations/js/widgets_main',
+], function(
+    $,
+    initialPageData
+) {
     $(function() {
         var $testLinkButton = $('#test-forward-link'),
             $testResult = $('#test-forward-result');
@@ -43,7 +50,7 @@ hqDefine("repeaters/js/add_form_repeater", function() {
             var data = {
                 url: $('#id_url').val(),
                 format: $('#id_format').val(),
-                repeater_type: hqImport("hqwebapp/js/initial_page_data").get("repeater_type"),
+                repeater_type: initialPageData.get("repeater_type"),
                 auth_type: $('#id_auth_type').val(),
                 username: $('#id_username').val(),
                 password: $('#id_password').val(),
@@ -51,13 +58,14 @@ hqDefine("repeaters/js/add_form_repeater", function() {
             $testLinkButton.disableButton();
 
             $.post({
-                url: hqImport("hqwebapp/js/initial_page_data").reverse("test_repeater"),
+                url: initialPageData.reverse("test_repeater"),
                 data: data,
                 success: handleSuccess,
                 error: handleFailure,
             });
         });
         $('#id_url').change(function () {
+            console.log("changing");
             if ($(this).val()) {
                 $testLinkButton.removeClass('disabled');
             } else {
