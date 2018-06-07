@@ -133,31 +133,29 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     def _best_effort_save_rows(self, rows, doc):
         try:
-            self._save_rows(rows, doc)
+            self._save_rows(rows, [doc['_id']])
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
             self.handle_exception(doc, e)
 
     def bulk_save(self, docs):
-        indicator_rows = []
-        for doc in docs:
-            indicator_rows.extend(self.get_all_values(doc))
-
-        # transform format from ColumnValue to dict
         rows = []
-        for row in indicator_rows:
+        for doc in docs:
+            rows.extend(self.get_all_values(doc))
+        self.bulk_save_rows(rows, [doc['_id'] for doc in docs])
+
+    def _save_rows(self, rows, doc_ids):
+        # transform format from ColumnValue to dict
+        formatted_rows = []
+        for row in rows:
             column_dict = {}
             for column in row:
                 column_dict[column.column.id] = column.value
-            rows.append(column_dict)
+            formatted_rows.append(column_dict)
 
         table = self.get_table()
-        delete = table.delete(
-            table.c.doc_id.in_(
-                [doc['_id'] for doc in docs]
-            )
-        )
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_helper.session_context() as session:
             session.execute(delete)
             # Using session.bulk_insert_mappings below might seem more inline
@@ -168,20 +166,8 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             #   the plain INSERT INTO VALUES statement resulting from below line
             #   because bulk_insert_mappings is meant for multi-table insertion
             #   so it has overhead of format conversions and multiple statements
-            insert = table.insert().values(rows)
+            insert = table.insert().values(formatted_rows)
             session.execute(insert)
-
-    def _save_rows(self, rows, doc):
-        rows = [
-            {i.column.database_column_name: i.value for i in row}
-            for row in rows
-        ]
-
-        table = self.get_table()
-        delete = table.delete(table.c.doc_id == doc['_id'])
-        with self.session_helper.session_context() as session:
-            session.execute(delete)
-            session.bulk_insert_mappings(self.get_sqlalchemy_mapping(), rows)
 
     def delete(self, doc):
         table = self.get_table()
