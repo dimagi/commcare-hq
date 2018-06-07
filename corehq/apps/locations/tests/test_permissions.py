@@ -28,7 +28,8 @@ from ..permissions import can_edit_form_location, user_can_access_case
 from .util import LocationHierarchyTestCase
 
 
-class FormEditRestrictionsMixin(object):
+class TestNewFormEditRestrictions(LocationHierarchyTestCase):
+    domain = 'TestNewFormEditRestrictions-domain'
     location_type_names = ['state', 'county', 'city']
     stock_tracking_types = ['state', 'county', 'city']
     location_structure = [
@@ -43,6 +44,19 @@ class FormEditRestrictionsMixin(object):
             ])
         ])
     ]
+
+    @classmethod
+    def setUpClass(cls):
+        super(TestNewFormEditRestrictions, cls).setUpClass()
+        cls.extra_setup()
+        cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
+        cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
+        cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.extra_teardown()
+        super(TestNewFormEditRestrictions, cls).tearDownClass()
 
     @run_with_all_backends
     def test_can_edit_form_in_county(self):
@@ -117,27 +131,6 @@ class FormEditRestrictionsMixin(object):
     def assertCannotEdit(self, user, form):
         msg = "This user CAN edit this form!"
         self.assertFalse(can_edit_form_location(self.domain, user, form), msg=msg)
-
-
-class TestNewFormEditRestrictions(FormEditRestrictionsMixin, LocationHierarchyTestCase):
-    """Tests the new way of doing location-based restrictions.
-    TODO: reconcile with the Mixin after removing the old permissions"""
-    domain = 'TestNewFormEditRestrictions-domain'
-
-    @classmethod
-    def setUpClass(cls):
-        super(TestNewFormEditRestrictions, cls).setUpClass()
-        cls.extra_setup()
-        cls.restrict_user_to_assigned_locations(cls.middlesex_web_user)
-        cls.restrict_user_to_assigned_locations(cls.massachusetts_web_user)
-        cls.restrict_user_to_assigned_locations(cls.locationless_web_user)
-
-    @classmethod
-    def tearDownClass(cls):
-        cls.extra_teardown()
-        super(TestNewFormEditRestrictions, cls).tearDownClass()
-
-    # TODO add more tests, maybe with cls.project_admin?
 
 
 @mock.patch('django_prbac.decorators.has_privilege', new=lambda *args, **kwargs: True)
