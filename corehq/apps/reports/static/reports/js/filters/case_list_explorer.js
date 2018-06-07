@@ -1,4 +1,4 @@
-hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
+hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
 
     var suggestions = function(){
