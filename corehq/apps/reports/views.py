@@ -194,6 +194,7 @@ from corehq.apps.hqwebapp.decorators import (
 import six
 from six.moves import range
 from no_exceptions.exceptions import Http403
+from io import open
 
 
 # Number of columns in case property history popup
@@ -692,7 +693,7 @@ def export_all_form_metadata(req, domain):
     format = req.GET.get("format", Format.XLS_2007)
     tmp_path = save_metadata_export_to_tempfile(domain, format=format)
 
-    return export_response(open(tmp_path), format, "%s_forms" % domain)
+    return export_response(open(tmp_path, 'rb'), format, "%s_forms" % domain)
 
 
 @login_or_digest
@@ -1774,7 +1775,7 @@ def generate_case_export_payload(domain, include_closed, format, group, user_fil
         )
         export_users(users, workbook)
         workbook.close()
-    return FileWrapper(open(path))
+    return FileWrapper(open(path, 'rb'))
 
 
 @requires_privilege_json_response(privileges.API_ACCESS)
