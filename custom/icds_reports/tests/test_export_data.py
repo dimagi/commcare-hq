@@ -1472,6 +1472,10 @@ class TestExportData(TestCase):
                     "Child Beneficiary",
                     [
                         [
+                            "AWC Name",
+                            "AWC ID",
+                            "Supervisor Name",
+                            "Block Name",
                             "Child Name",
                             "Date of Birth",
                             "Current Age (as of 2017-05-01)",
@@ -1486,6 +1490,10 @@ class TestExportData(TestCase):
                             "Days attended PSE (as of 2017-05-01)"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1783",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1500,6 +1508,10 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1788",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1514,6 +1526,10 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1790",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1528,6 +1544,10 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1795",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1542,6 +1562,10 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1797",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1556,6 +1580,10 @@ class TestExportData(TestCase):
                             23
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1814",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1570,6 +1598,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1832",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1584,6 +1616,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 1876",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1598,6 +1634,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2027",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1612,6 +1652,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2054",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1626,6 +1670,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2056",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1640,6 +1688,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2060",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1654,6 +1706,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2073",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1668,6 +1724,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2094",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1682,6 +1742,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2117",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1696,6 +1760,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2134",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1710,6 +1778,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2141",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1724,6 +1796,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2171",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1738,6 +1814,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2173",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1752,6 +1832,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2182",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1766,6 +1850,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2188",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1780,6 +1868,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2192",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1794,6 +1886,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2207",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1808,6 +1904,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2210",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1822,6 +1922,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2241",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1836,6 +1940,10 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2250",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1850,6 +1958,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2254",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1864,6 +1976,10 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2263",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1878,6 +1994,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2265",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1892,6 +2012,10 @@ class TestExportData(TestCase):
                             18
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2266",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1906,6 +2030,10 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2267",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1920,6 +2048,10 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2271",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1934,6 +2066,10 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2276",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1948,6 +2084,10 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2330",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1962,6 +2102,10 @@ class TestExportData(TestCase):
                             21
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2331",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1976,6 +2120,10 @@ class TestExportData(TestCase):
                             19
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2333",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -1990,6 +2138,10 @@ class TestExportData(TestCase):
                             "Data Not Entered"
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2335",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2004,6 +2156,10 @@ class TestExportData(TestCase):
                             20
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2337",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2018,6 +2174,10 @@ class TestExportData(TestCase):
                             26
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2338",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2032,6 +2192,10 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2339",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2046,6 +2210,10 @@ class TestExportData(TestCase):
                             27
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2340",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2060,6 +2228,10 @@ class TestExportData(TestCase):
                             17
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2341",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2074,6 +2246,10 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2342",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2088,6 +2264,10 @@ class TestExportData(TestCase):
                             24
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2344",
                             "Data Not Entered",
                             "Data Not Entered",
@@ -2102,6 +2282,10 @@ class TestExportData(TestCase):
                             22
                         ],
                         [
+                            "a7",
+                            "a7",
+                            "s7",
+                            "b4",
                             "Name 2346",
                             "Data Not Entered",
                             "Data Not Entered",

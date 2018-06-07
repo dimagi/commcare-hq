@@ -3,8 +3,11 @@ CREATE VIEW child_health_monthly_view AS
   SELECT
       child_health_monthly.case_id,
       awc_location_months.awc_id,
+      awc_location_months.awc_name,
       awc_location_months.supervisor_id,
+      awc_location_months.supervisor_name,
       awc_location_months.block_id,
+      awc_location_months.block_name,
       awc_location_months.district_id,
       awc_location_months.state_id,
       child_health_monthly.person_name,

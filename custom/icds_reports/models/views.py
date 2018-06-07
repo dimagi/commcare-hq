@@ -98,8 +98,11 @@ class DailyAttendanceView(models.Model):
 class ChildHealthMonthlyView(models.Model):
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     person_name = models.TextField(blank=True, null=True)
