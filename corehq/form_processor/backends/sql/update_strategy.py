@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
-from collections import defaultdict
 
 from iso8601 import iso8601
 
@@ -14,9 +13,8 @@ from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
 from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
 from corehq.form_processor.update_strategy_base import UpdateStrategy
+from corehq.form_processor.backends.couch.update_strategy import _action_sort_key_function
 from django.utils.translation import ugettext as _
-
-from corehq.util.soft_assert import soft_assert
 
 
 def _validate_length(length):
@@ -98,6 +96,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
         if xformdoc.is_deprecated:
             return
+
+        if sql_migration_in_progress:
+            case_update.actions.sort(
+                key=_action_sort_key_function(self.case)
+            )
 
         for action in case_update.actions:
             self._apply_action(case_update, action, xformdoc)
