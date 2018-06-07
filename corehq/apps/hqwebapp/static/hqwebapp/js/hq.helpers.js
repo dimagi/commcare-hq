@@ -3,6 +3,7 @@ hqDefine("hqwebapp/js/hq.helpers", [
     'knockout',
     'underscore',
     'analytix/js/google',
+    'select2-3.5.2-legacy/select2',
 ], function(
     $,
     ko,
