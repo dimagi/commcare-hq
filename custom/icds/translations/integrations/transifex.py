@@ -6,6 +6,7 @@ import sys
 
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from memoized import memoized
 
 from corehq.apps.app_manager.app_translations.generators import POFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
@@ -27,6 +28,7 @@ class Transifex:
         """
         if version:
             version = int(version)
+        self.version = version
         self.key_lang = "en"  # the lang in which the string keys are, should be english
         self.lang_prefix = lang_prefix
         self.project_slug = project_slug
@@ -37,6 +39,10 @@ class Transifex:
         self.parser = TranslationsParser(self)
 
     def send_translation_files(self):
+        """
+        submit files to transifex for performing translations
+        :return:
+        """
         try:
             self.po_file_generator.generate_translation_files()
             file_uploads = self._send_files_to_transifex()
@@ -47,6 +53,7 @@ class Transifex:
             self._cleanup()
             six.reraise(t, v, tb)
 
+    @memoized
     def client(self):
         transifex_account_details = settings.TRANSIFEX_DETAILS
         if transifex_account_details:
@@ -88,20 +95,39 @@ class Transifex:
                 os.remove(filepath)
 
     def _get_resource_slugs_for_version(self, version):
+        """
+        :param version: version number
+        :return: list of resource slugs corresponding to version
+        """
         return [r['name']
                 for r in self.client().list_resources().json()
                 if r['name'].endswith("v%s" % version)]
 
-    def get_translations(self, version, resource_slugs=None):
+    @staticmethod
+    def _ensure_resource_slugs_for_version(resource_slugs, version):
+        """
+        confirms that resource slugs provided are for the expected version by checking for its name to end with
+        v[version number] like v15 for version 15.
+        :param resource_slugs: list of resource slugs
+        :param version: version
+        """
+        for resource_slug in resource_slugs:
+            if not resource_slug.endswith("v%s" % version):
+                raise Exception("Resource name '{}' is expected to contain version".format(
+                    resource_slug
+                ))
+
+    def get_translations(self, resource_slugs=None):
+        """
+        pull translations from transifex
+        :param resource_slugs: optional argument. All resource slugs corresponding to version are used otherwise.
+        :return: list of POEntry objects
+        """
         if resource_slugs:
-            for resource_slug in resource_slugs:
-                if not resource_slug.endswith("v%s" % version):
-                    raise Exception("Resource name '{}' is expected to contain version".format(
-                        resource_slug
-                    ))
+            self._ensure_resource_slugs_for_version(resource_slugs, self.version)
         client = self.client()
         if not resource_slugs:
-            resource_slugs = self._get_resource_slugs_for_version(version)
+            resource_slugs = self._get_resource_slugs_for_version(self.version)
         if not resource_slugs:
             raise Exception("No resources found for this version")
         po_entries = {}
@@ -112,8 +138,13 @@ class Transifex:
             )
         return po_entries
 
-    def resources_pending_translations(self, version, break_if_true=False):
-        resource_slugs = self._get_resource_slugs_for_version(version)
+    def resources_pending_translations(self, break_if_true=False):
+        """
+        :param break_if_true: break as soon as untranslated resource is found and return its slug/name
+        :return: single resource slug in case of break_if_true or a list of resources that are found
+        with pending translations
+        """
+        resource_slugs = self._get_resource_slugs_for_version(self.version)
         resources_pending_translations = []
         for resource_slug in resource_slugs:
             if not self.client().confirm_complete_translation(

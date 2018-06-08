@@ -75,13 +75,14 @@ def pull_translation_files_from_transifex(domain, data, email=None):
     transifex = Transifex(domain,
                           data.get('app_id'),
                           data.get('target_lang') or data.get('source_lang'),
-                          data.get('transifex_project_slug'))
-    translation_file, filename = transifex.parser.generate_excel_file(version)
+                          data.get('transifex_project_slug'),
+                          version)
+    translation_file, filename = transifex.parser.generate_excel_file()
     try:
         with open(translation_file.name) as file_obj:
             email = EmailMessage(
-                subject='[{}] - Transifex translations'.format(settings.SERVER_ENVIRONMENT),
-                body="Translations Generated",
+                subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
+                body="PFA Translations pulled from transifex.",
                 to=[email],
                 from_email=settings.DEFAULT_FROM_EMAIL
             )

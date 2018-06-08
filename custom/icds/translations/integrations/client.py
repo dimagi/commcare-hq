@@ -81,6 +81,9 @@ class TransifexApiClient():
         raise Exception(response.content)
 
     def confirm_complete_translation(self, resource_slug, lang):
+        """
+        check if a resource has been completely translated for the target lang
+        """
         return self.resource_details(resource_slug, lang)['completed'] == "100%"
 
     def get_translation(self, resource_slug, lang):
