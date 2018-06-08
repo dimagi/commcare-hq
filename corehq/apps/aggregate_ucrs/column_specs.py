@@ -8,6 +8,9 @@ from abc import ABCMeta, abstractmethod
 import six
 from jsonobject.base_properties import DefaultProperty
 
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM
+from corehq.apps.aggregate_ucrs.query_column_providers import StandardQueryColumnProvider, \
+    AggregationParamQueryColumnProvider
 from corehq.apps.userreports.datatypes import DATA_TYPE_INTEGER, DataTypeProperty, DATA_TYPE_STRING, DATA_TYPE_DATE
 from corehq.apps.userreports.indicators import Column
 from dimagi.ext import jsonobject
@@ -70,7 +73,7 @@ PRIMARY_COLUMN_TYPE_CHOICES = (
 
 class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
 
-    def __init__(self, column_id, datatype, is_nullable, is_primary_key, create_index):
+    def __init__(self, column_id, datatype, is_nullable, is_primary_key, create_index, query_column_provider):
         # short circuit super class call to avoid refences to db_column
         # todo: find a better way to do this that doesn't break constructor inheritance
         self.column_id = column_id
@@ -78,6 +81,7 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
         self._is_nullable = is_nullable
         self._is_primary_key = is_primary_key
         self._create_index = create_index
+        self.query_column_provider = query_column_provider
 
     def is_nullable(self):
         return self._is_nullable
@@ -92,7 +96,7 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
         return self._datatype
 
     def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
-        return sqlalchemy_table.c[self.column_id]
+        return self.query_column_provider.get_query_column(sqlalchemy_table, aggregation_params)
 
 
 def IdColumnAdapter():
@@ -103,6 +107,7 @@ def IdColumnAdapter():
         is_nullable=False,
         is_primary_key=True,
         create_index=True,
+        query_column_provider=StandardQueryColumnProvider('doc_id'),
     )
 
 
@@ -114,6 +119,7 @@ def MonthColumnAdapter():
         is_nullable=False,
         is_primary_key=True,
         create_index=True,
+        query_column_provider=AggregationParamQueryColumnProvider(AGG_WINDOW_START_PARAM)
     )
 
 
