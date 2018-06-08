@@ -135,12 +135,3 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
     insert_statement = aggregate_table.insert().from_select(aggregate_table.c, select_statment)
     with aggregate_table_adapter.session_helper.session_context() as session:
         session.execute(insert_statement)
-
-
-    # ideally this should be a single SQL script that takes the form:
-    # insert into [aggregate_table] values (
-    #   select p.id, month, [p.columns] [s1.columns] [s2.columns] from [primary_table] p (
-    #     inner join [secondary_table] s1 on [s1.primary_col_id] = [primary_table].id
-    #   group by p.id, month
-    #   )
-    # )
