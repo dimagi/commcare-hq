@@ -50,21 +50,21 @@ function hqDefine(path, dependencies, moduleAccessor) {
         return hqDefine(path, [], dependencies);
     }
 
-    var thirdParty = {
-        'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
-        'knockout': typeof ko === 'undefined' ? undefined : ko,
-        'ko': typeof ko === 'undefined' ? undefined : ko,
-        'underscore': typeof _ === 'undefined' ? undefined : _,
-    };
     (function(factory) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {
+            var thirdPartyMap = {
+                'jquery': '$',
+                'knockout': 'ko',
+                'underscore': '_',
+                'clipboard/dist/clipboard': 'Clipboard',
+            };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
-                if (thirdParty.hasOwnProperty(dependency)) {
-                    args[i] = thirdParty[dependency];
+                if (thirdPartyMap.hasOwnProperty(dependency)) {
+                    args[i] = window[thirdPartyMap[dependency]];
                 } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
                 }
