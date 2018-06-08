@@ -383,7 +383,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self._test_generic_suite('app_print_detail', 'suite-print-detail')
 
     def test_fixture_to_case_selection(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -397,7 +397,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_with_form_filtering(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -413,7 +413,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-with-form-filtering'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_localization(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         module, form = factory.new_basic_module('my_module', 'cases')
         module.fixture_select.active = True
@@ -428,7 +428,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         self.assertXmlEqual(self.get_xml('fixture-to-case-selection-localization'), factory.app.create_suite())
 
     def test_fixture_to_case_selection_parent_child(self):
-        factory = AppFactory(build_version='2.9')
+        factory = AppFactory(build_version='2.9.0')
 
         m0, m0f0 = factory.new_basic_module('parent', 'parent')
         m0.fixture_select.active = True
