@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
 
-from cached_property import cached_property
+from django.utils.functional import cached_property
 from jsonobject import JsonObject
 import yaml
 from corehq.apps.userreports.specs import TypeProperty
