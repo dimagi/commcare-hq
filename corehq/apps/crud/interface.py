@@ -29,15 +29,22 @@ class BaseCRUDAdminInterface(GenericTabularReport):
         raise NotImplementedError("Validation of document_class class does not exist.")
 
     @property
+    def js_options(self):
+        options = super(BaseCRUDAdminInterface, self).js_options
+        options['crud_item'] = {
+            'type': self.crud_item_type,
+            'form': self.form_class.__name__,
+            'doc': self.document_class.__name__,
+            'url': self.crud_form_update_url,
+            'bulk_add_url': self.bulk_add_url,
+        }
+        return options
+
+    @property
     def report_context(self):
         context = super(BaseCRUDAdminInterface, self).report_context
         context.update(
             detailed_description=self.detailed_description,
-            crud_item = {
-                'type': self.crud_item_type,
-                'form': self.form_class.__name__,
-                'doc': self.document_class.__name__,
-                'url': self.crud_form_update_url,
-            },
+            crud_item_type=self.crud_item_type,
         )
         return context

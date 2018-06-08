@@ -5,3 +5,4 @@ mocker
 ethiopian-date
 architect
 django-nose
+amqplib

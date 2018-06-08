@@ -8,6 +8,7 @@ from corehq.apps.products.models import Product
 from corehq.apps.programs.models import Program
 from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_domain_phone_numbers
 from corehq.apps.users.models import WebUser
+from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
 
 from custom.ewsghana.alerts.alert import Notification
 from custom.ewsghana.alerts.ongoing_non_reporting import OnGoingNonReporting
@@ -30,6 +31,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
     @classmethod
     def setUpClass(cls):
         super(MissingReportNotificationTestCase, cls).setUpClass()
+        delete_all_users()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
 
@@ -52,9 +54,7 @@ class MissingReportNotificationTestCase(EWSTestCase):
 
     def tearDown(self):
         delete_all_locations()
-
-        for user in WebUser.by_domain(self.TEST_DOMAIN):
-            user.delete()
+        delete_all_users()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
@@ -174,6 +174,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
     @classmethod
     def setUpClass(cls):
         super(StockoutReportNotificationTestCase, cls).setUpClass()
+        delete_all_users()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
@@ -192,9 +193,7 @@ class StockoutReportNotificationTestCase(EWSTestCase):
 
     def tearDown(self):
         delete_all_locations()
-
-        for user in WebUser.by_domain(self.TEST_DOMAIN):
-            user.delete()
+        delete_all_users()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
@@ -291,6 +290,7 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
     @classmethod
     def setUpClass(cls):
         super(UrgentStockoutNotificationTestCase, cls).setUpClass()
+        delete_all_users()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
@@ -319,9 +319,7 @@ class UrgentStockoutNotificationTestCase(EWSTestCase):
 
     def tearDown(self):
         delete_all_locations()
-
-        for user in WebUser.by_domain(self.TEST_DOMAIN):
-            user.delete()
+        delete_all_users()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
@@ -458,6 +456,7 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
     @classmethod
     def setUpClass(cls):
         super(UrgentNonReportingNotificationTestCase, cls).setUpClass()
+        delete_all_users()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
         cls.program = Program(domain=cls.TEST_DOMAIN, name='Test Program')
@@ -486,9 +485,7 @@ class UrgentNonReportingNotificationTestCase(EWSTestCase):
 
     def tearDown(self):
         delete_all_locations()
-
-        for user in WebUser.by_domain(self.TEST_DOMAIN):
-            user.delete()
+        delete_all_users()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 
@@ -597,6 +594,7 @@ class SMSNotificationTestCase(EWSTestCase):
     @classmethod
     def setUpClass(cls):
         super(SMSNotificationTestCase, cls).setUpClass()
+        delete_all_users()
         cls.backend, cls.sms_backend_mapping = setup_default_sms_test_backend()
         cls.domain = prepare_domain(cls.TEST_DOMAIN)
 
@@ -612,9 +610,7 @@ class SMSNotificationTestCase(EWSTestCase):
 
     def tearDown(self):
         delete_all_locations()
-
-        for user in WebUser.by_domain(self.TEST_DOMAIN):
-            user.delete()
+        delete_all_users()
 
         delete_domain_phone_numbers(self.TEST_DOMAIN)
 

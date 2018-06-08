@@ -1,5 +1,5 @@
 # Based on Dockerfile. Use diff to compare them.
-FROM python:3.6
+FROM python:3.6-jessie
 MAINTAINER Dimagi <devops@dimagi.com>
 
 ENV PYTHONUNBUFFERED=1 \

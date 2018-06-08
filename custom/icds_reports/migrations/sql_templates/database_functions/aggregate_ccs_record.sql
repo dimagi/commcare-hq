@@ -29,7 +29,61 @@ BEGIN
   _no_text = 'no';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('ccs_record_monthly') INTO _ucr_ccs_record_table;
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'ccs_status, ' ||
+    'trimester, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'lactating, ' ||
+    'pregnant, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_normal, ' ||
+    'anemic_moderate, ' ||
+    'anemic_severe, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'postnatal, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'valid_all_registered_in_month, ' ||
+    'institutional_delivery_in_month, ' ||
+    'lactating_all, ' ||
+    'pregnant_all ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     'block_id, ' ||
@@ -135,7 +189,61 @@ BEGIN
     'sum(lactating_all), ' ||
     'sum(pregnant_all) ';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'ccs_status, ' ||
+    'trimester, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'lactating, ' ||
+    'pregnant, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_normal, ' ||
+    'anemic_moderate, ' ||
+    'anemic_severe, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'postnatal, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'valid_all_registered_in_month, ' ||
+    'institutional_delivery_in_month, ' ||
+    'lactating_all, ' ||
+    'pregnant_all ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     'block_id, ' ||
@@ -159,7 +267,61 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx4') || ' ON ' || quote_ident(_tablename4) || '(supervisor_id)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(ccs_status)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'ccs_status, ' ||
+    'trimester, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'lactating, ' ||
+    'pregnant, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_normal, ' ||
+    'anemic_moderate, ' ||
+    'anemic_severe, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'postnatal, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'valid_all_registered_in_month, ' ||
+    'institutional_delivery_in_month, ' ||
+    'lactating_all, ' ||
+    'pregnant_all ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     'block_id, ' ||
@@ -182,7 +344,61 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx3') || ' ON ' || quote_ident(_tablename3) || '(block_id)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(ccs_status)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'ccs_status, ' ||
+    'trimester, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'lactating, ' ||
+    'pregnant, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_normal, ' ||
+    'anemic_moderate, ' ||
+    'anemic_severe, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'postnatal, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'valid_all_registered_in_month, ' ||
+    'institutional_delivery_in_month, ' ||
+    'lactating_all, ' ||
+    'pregnant_all ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     quote_literal(_all_text) || ', ' ||
@@ -204,7 +420,61 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx2') || ' ON ' || quote_ident(_tablename2) || '(district_id)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(ccs_status)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'ccs_status, ' ||
+    'trimester, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'lactating, ' ||
+    'pregnant, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_normal, ' ||
+    'anemic_moderate, ' ||
+    'anemic_severe, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'postnatal, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'valid_all_registered_in_month, ' ||
+    'institutional_delivery_in_month, ' ||
+    'lactating_all, ' ||
+    'pregnant_all ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     quote_literal(_all_text) || ', ' ||
     quote_literal(_all_text) || ', ' ||

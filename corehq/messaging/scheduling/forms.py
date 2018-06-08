@@ -1020,6 +1020,11 @@ class ScheduleForm(Form):
         label=ugettext_lazy("Include case updates in partially completed submissions"),
     )
 
+    use_utc_as_default_timezone = BooleanField(
+        required=False,
+        label=ugettext_lazy("Interpret send times using GMT when recipient has no preferred time zone"),
+    )
+
     # The standalone_content_form should be an instance of ContentForm and is used
     # for defining the content used with any of the predefined schedule types (Immediate,
     # Daily, Weekly, or Monthly).
@@ -1210,6 +1215,7 @@ class ScheduleForm(Form):
                 if schedule.default_language_code
                 else self.LANGUAGE_PROJECT_DEFAULT
             )
+            result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
                     self.add_initial_for_immediate_schedule(result)
@@ -1653,8 +1659,25 @@ class ScheduleForm(Form):
             ),
         ]
 
+    @property
+    def display_utc_timezone_option(self):
+        """
+        See comment under Schedule.use_utc_as_default_timezone.
+        use_utc_as_default_timezone is only set to True on reminders migrated
+        from the old framework that needed it to be set to True. We don't
+        encourage using this option for new reminders so it's only visible
+        for those reminders that have it set to True. It is possible to edit
+        an old reminder and disable the option, after which it will be hidden
+        and won't be allowed to be enabled again.
+        """
+        return self.initial_schedule and self.initial_schedule.use_utc_as_default_timezone
+
     def get_advanced_layout_fields(self):
         return [
+            crispy.Div(
+                crispy.Field('use_utc_as_default_timezone'),
+                data_bind='visible: %s' % ('true' if self.display_utc_timezone_option else 'false'),
+            ),
             crispy.Field('default_language_code'),
         ]
 
@@ -2084,6 +2107,7 @@ class ScheduleForm(Form):
                 form_data['include_descendant_locations']
             ),
             'location_type_filter': form_data['location_types'],
+            'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
         }
 
     def distill_start_offset(self):
@@ -2646,6 +2670,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         new_choices = [
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
 
@@ -3155,11 +3180,13 @@ class ConditionalAlertScheduleForm(ScheduleForm):
         result = super(ConditionalAlertScheduleForm, self).distill_recipients()
         recipient_types = self.cleaned_data['recipient_types']
 
-        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF in recipient_types:
-            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None))
-
-        if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER in recipient_types:
-            result.append((CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None))
+        for recipient_type_without_id in (
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+        ):
+            if recipient_type_without_id in recipient_types:
+                result.append((recipient_type_without_id, None))
 
         if CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM in recipient_types:
             custom_recipient_id = self.cleaned_data['custom_recipient']
@@ -3315,6 +3342,10 @@ class ConditionalAlertCriteriaForm(CaseRuleCriteriaForm):
     @property
     def allow_date_case_property_filter(self):
         return False
+
+    @property
+    def allow_regex_case_property_match(self):
+        return True
 
     def set_read_only_fields_during_editing(self):
         # Django also handles keeping the field's value to its initial value no matter what is posted

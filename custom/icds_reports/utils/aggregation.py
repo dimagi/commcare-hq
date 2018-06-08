@@ -500,12 +500,15 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def _data_from_ucr_query(self, column=None):
+    def _data_from_ucr_query(self, column=None, uses_zero_as_null=False):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
         if column is not None:
             select_line = ", LAST_VALUE({column}) OVER w AS {column}".format(column=column)
-            where_line = " AND {column} IS NOT NULL".format(column=column)
+            if uses_zero_as_null:
+                where_line = " AND {column} != 0".format(column=column)
+            else:
+                where_line = " AND {column} IS NOT NULL".format(column=column)
         else:
             select_line, where_line = '', ''
 
@@ -532,8 +535,8 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             "state_id": self.state_id,
         }
 
-    def data_from_ucr_query(self, column=None):
-        return self._data_from_ucr_query(column)
+    def data_from_ucr_query(self, column=None, uses_zero_as_null=False):
+        return self._data_from_ucr_query(column, uses_zero_as_null)
 
     def _inital_aggregation_query(self):
         month = self.month.replace(day=1)
@@ -566,12 +569,12 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             tablename=tablename
         ), query_params
 
-    def _aggregation_query_for_column(self, column):
+    def _aggregation_query_for_column(self, column, uses_zero_as_null):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
         previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
 
-        ucr_query, ucr_query_params = self.data_from_ucr_query(column)
+        ucr_query, ucr_query_params = self.data_from_ucr_query(column, uses_zero_as_null)
         query_params = {
             "month": month_formatter(month),
             "state_id": self.state_id,
@@ -609,17 +612,18 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
 
     def aggregation_queries(self):
         columns = (
-            'weight_child',
-            'height_child',
-            'zscore_grading_wfa',
-            'zscore_grading_hfa',
-            'zscore_grading_wfh',
-            'muac_grading',
+            ('weight_child', False),
+            ('height_child', False),
+            ('zscore_grading_wfa', True),
+            ('zscore_grading_hfa', True),
+            ('zscore_grading_wfh', True),
+            ('muac_grading', True),
         )
 
         initial_query = self._inital_aggregation_query()
         return [initial_query] + [
-            self._aggregation_query_for_column(column) for column in columns
+            self._aggregation_query_for_column(column, uses_zero_as_null)
+            for column, uses_zero_as_null in columns
         ]
 
     def compare_with_old_data_query(self):

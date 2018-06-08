@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import uuid
 from django.test import TestCase
+from corehq.apps.casegroups.models import CommCareCaseGroup
 from corehq.apps.data_interfaces.tests.util import create_case
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.hqcase.utils import update_case
@@ -14,8 +15,13 @@ from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.tests.utils import run_with_all_backends
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.models import TimedSchedule, TimedEvent, SMSContent, Content
-from corehq.messaging.scheduling.scheduling_partitioned.models import CaseTimedScheduleInstance
+from corehq.messaging.scheduling.scheduling_partitioned.models import (
+    CaseScheduleInstanceMixin,
+    CaseTimedScheduleInstance,
+    ScheduleInstance,
+)
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
+from corehq.util.test_utils import create_test_case
 from datetime import time
 from mock import patch
 
@@ -45,6 +51,9 @@ class SchedulingRecipientTest(TestCase):
         cls.group = Group(domain=cls.domain, users=[cls.mobile_user.get_id])
         cls.group.save()
 
+        cls.case_group = CommCareCaseGroup(domain=cls.domain)
+        cls.case_group.save()
+
     @classmethod
     def tearDownClass(cls):
         cls.domain_obj.delete()
@@ -57,6 +66,117 @@ class SchedulingRecipientTest(TestCase):
 
     def user_ids(self, users):
         return [user.get_id for user in users]
+
+    @run_with_all_backends
+    def test_specific_case_recipient(self):
+        with create_case(self.domain, 'person') as case:
+            instance = ScheduleInstance(
+                domain=self.domain,
+                recipient_type=ScheduleInstance.RECIPIENT_TYPE_CASE,
+                recipient_id=case.case_id,
+            )
+            self.assertEqual(instance.recipient.case_id, case.case_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_CASE,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
+
+    def test_specific_mobile_worker_recipient(self):
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+            recipient_id=self.mobile_user.get_id,
+        )
+        self.assertTrue(isinstance(instance.recipient, CommCareUser))
+        self.assertEqual(instance.recipient.get_id, self.mobile_user.get_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+            recipient_id=self.web_user.get_id,
+        )
+        self.assertIsNone(instance.recipient)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_MOBILE_WORKER,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
+
+    def test_specific_web_user_recipient(self):
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_WEB_USER,
+            recipient_id=self.web_user.get_id,
+        )
+        self.assertTrue(isinstance(instance.recipient, WebUser))
+        self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_WEB_USER,
+            recipient_id=self.mobile_user.get_id,
+        )
+        self.assertIsNone(instance.recipient)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_WEB_USER,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
+
+    def test_specific_case_group_recipient(self):
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
+            recipient_id=self.case_group.get_id,
+        )
+        self.assertTrue(isinstance(instance.recipient, CommCareCaseGroup))
+        self.assertEqual(instance.recipient.get_id, self.case_group.get_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_CASE_GROUP,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
+
+    def test_specific_group_recipient(self):
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
+            recipient_id=self.group.get_id,
+        )
+        self.assertTrue(isinstance(instance.recipient, Group))
+        self.assertEqual(instance.recipient.get_id, self.group.get_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_USER_GROUP,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
+
+    def test_specific_location_recipient(self):
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_LOCATION,
+            recipient_id=self.city_location.location_id,
+        )
+        self.assertTrue(isinstance(instance.recipient, SQLLocation))
+        self.assertEqual(instance.recipient.location_id, self.city_location.location_id)
+
+        instance = ScheduleInstance(
+            domain=self.domain,
+            recipient_type=ScheduleInstance.RECIPIENT_TYPE_LOCATION,
+            recipient_id='id-does-not-exist',
+        )
+        self.assertIsNone(instance.recipient)
 
     @run_with_all_backends
     def test_case_recipient(self):
@@ -89,6 +209,25 @@ class SchedulingRecipientTest(TestCase):
 
         with create_case(self.domain, 'person') as case:
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id, recipient_type='Owner')
+            self.assertIsNone(instance.recipient)
+
+    @run_with_all_backends
+    def test_last_submitting_user_recipient(self):
+        with create_test_case(self.domain, 'person', 'Joe', user_id=self.mobile_user.get_id) as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
+            self.assertTrue(isinstance(instance.recipient, CommCareUser))
+            self.assertEqual(instance.recipient.get_id, self.mobile_user.get_id)
+
+        with create_test_case(self.domain, 'person', 'Joe', user_id=self.web_user.get_id) as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
+            self.assertTrue(isinstance(instance.recipient, WebUser))
+            self.assertEqual(instance.recipient.get_id, self.web_user.get_id)
+
+        with create_test_case(self.domain, 'person', 'Joe', user_id='system') as case:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
             self.assertIsNone(instance.recipient)
 
     def test_expand_location_recipients_without_descendants(self):

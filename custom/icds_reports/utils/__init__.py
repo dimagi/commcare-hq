@@ -615,7 +615,7 @@ def track_time(func):
         result = func(*args, **kwargs)
         end = time.time()
         AggregateSQLProfile.objects.create(
-            name=str(func),
+            name=func.__name__,
             duration=int(end - start)
         )
         return result

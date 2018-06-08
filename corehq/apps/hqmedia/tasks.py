@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from io import open
 import os
 import tempfile
 from wsgiref.util import FileWrapper
@@ -159,7 +160,7 @@ def build_application_zip(include_multimedia_files, include_index_files, app,
         )
     else:
         expose_cached_download(
-            FileWrapper(open(fpath)),
+            FileWrapper(open(fpath, 'rb')),
             expiry=(1 * 60 * 60),
             file_extension=file_extention_from_filename(filename),
             **common_kwargs

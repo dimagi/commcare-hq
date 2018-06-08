@@ -9,7 +9,6 @@ from commcare_translations import load_translations
 from corehq.apps.app_manager import app_strings
 from corehq.apps.app_manager.ui_translations.commcare_versioning import \
     get_commcare_version_from_workbook, set_commcare_version_in_workbook
-from corehq.apps.translations import system_text_sources
 from corehq.util.workbook_json.excel import WorkbookJSONReader
 from couchexport.export import export_raw_to_writer
 import six
@@ -50,7 +49,7 @@ def process_ui_translation_upload(app, trans_file):
 
 def build_ui_translation_download_file(app):
 
-    properties = tuple(["property"] + app.langs + ["platform"])
+    properties = tuple(["property"] + app.langs)
     temp = io.BytesIO()
     headers = (("translations", properties),)
 
@@ -85,19 +84,6 @@ def build_ui_translation_download_file(app):
             # If no custom translation exists, replace it.
             row[row_index] = all_prop_trans.get(row[0], "")
         return row
-
-    def add_sources(row):
-        platform_map = {
-            "CommCareAndroid": "Android",
-            "CommCareJava": "Java",
-            "ODK": "Android",
-            "JavaRosa": "Java",
-        }
-        source = system_text_sources.SOURCES.get(row[0], "")
-        row[-1] = platform_map.get(source, "")
-        return row
-
-    rows = [add_sources(add_default(fillrow(row))) for row in rows]
 
     data = (("translations", tuple(rows)),)
     with export_raw_to_writer(headers, data, temp) as writer:
