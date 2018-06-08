@@ -113,9 +113,9 @@ class CouchSqlDomainMigrator(object):
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
         # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=50000)
+        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
 
-        pool = Pool(20)
+        pool = Pool(15)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -200,7 +200,7 @@ class CouchSqlDomainMigrator(object):
         )
 
     def _copy_unprocessed_forms(self):
-        pool = Pool(5)
+        pool = Pool(10)
         for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
             assert couch_form_json['problem']
             couch_form_json['doc_type'] = 'XFormError'
@@ -233,7 +233,7 @@ class CouchSqlDomainMigrator(object):
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
-        pool = Pool(5)
+        pool = Pool(10)
         changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
@@ -285,11 +285,12 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
-        pool = Pool(5)
+        batch_size = 100
+        pool = Pool(10)
         changes = _get_case_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
-            if len(cases) == 500:
+            if len(cases) == batch_size:
                 pool.spawn(self._diff_cases, deepcopy(cases))
                 cases = {}
 
@@ -297,7 +298,7 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._diff_cases, cases)
 
         while not pool.join(timeout=10):
-            self.log_info("Waiting on at most {} more docs".format(len(pool) * 1000))
+            self.log_info("Waiting on at most {} more docs".format(len(pool) * batch_size))
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff

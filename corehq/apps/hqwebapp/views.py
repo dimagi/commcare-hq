@@ -559,9 +559,6 @@ class BugReportView(View):
             'sentry_id',
         )])
 
-        report['user_agent'] = req.META['HTTP_USER_AGENT']
-        report['datetime'] = datetime.utcnow()
-
         try:
             couch_user = req.couch_user
             full_name = couch_user.full_name
@@ -588,8 +585,6 @@ class BugReportView(View):
             "full name: {full_name}\n"
             "domain: {domain}\n"
             "url: {url}\n"
-            "datetime: {datetime}\n"
-            "User Agent: {user_agent}\n"
         ).format(**report)
 
         domain_object = Domain.get_by_name(domain) if report['domain'] else None
@@ -602,35 +597,10 @@ class BugReportView(View):
                 domain_object.project_description = new_project_description
                 domain_object.save()
 
-            matching_subscriptions = Subscription.visible_objects.filter(
-                is_active=True,
-                subscriber__domain=domain,
-            )
-            if len(matching_subscriptions) >= 1:
-                software_plan = matching_subscriptions[0].plan_version
-            else:
-                software_plan = 'domain has no active subscription'
-
             message += ((
                 "software plan: {software_plan}\n"
-                "Is self start: {self_started}\n"
-                "Feature Flags: {feature_flags}\n"
-                "Feature Previews: {feature_previews}\n"
-                "Is scale backend: {scale_backend}\n"
-                "Has Support Hand-off Info: {has_handoff_info}\n"
-                "Internal Project Information: {internal_info_link}\n"
-                "Project description: {project_description}\n"
-                "Sentry Error: {sentry_error}\n"
             ).format(
-                software_plan=software_plan,
-                self_started=domain_object.internal.self_started,
-                feature_flags=list(toggles.toggles_dict(username=report['username'], domain=domain)),
-                feature_previews=list(feature_previews.previews_dict(domain)),
-                scale_backend=should_use_sql_backend(domain),
-                has_handoff_info=bool(domain_object.internal.partner_contact),
-                internal_info_link=reverse('domain_internal_settings', args=[domain], absolute=True),
-                project_description=domain_object.project_description,
-                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+                software_plan=Subscription.get_subscribed_plan_by_domain(domain),
             ))
 
         subject = '{subject} ({domain})'.format(subject=report['subject'], domain=domain)
@@ -648,11 +618,26 @@ class BugReportView(View):
 
         message += "Message:\n\n{message}\n".format(message=report['message'])
         if req.POST.get('five-hundred-report'):
-            extra_message = ("This messge was reported from a 500 error page! "
+            extra_message = ("This message was reported from a 500 error page! "
                              "Please fix this ASAP (as if you wouldn't anyway)...")
+            extra_debug_info = (
+                "datetime: {datetime}\n"
+                "Is self start: {self_started}\n"
+                "Is scale backend: {scale_backend}\n"
+                "Has Support Hand-off Info: {has_handoff_info}\n"
+                "Project description: {project_description}\n"
+                "Sentry Error: {sentry_error}\n"
+            ).format(
+                datetime=datetime.utcnow(),
+                self_started=domain_object.internal.self_started,
+                scale_backend=should_use_sql_backend(domain),
+                has_handoff_info=bool(domain_object.internal.partner_contact),
+                project_description=domain_object.project_description,
+                sentry_error='{}{}'.format(getattr(settings, 'SENTRY_QUERY_URL'), report['sentry_id'])
+            )
             traceback_info = cache.cache.get(report['500traceback'])
             cache.cache.delete(report['500traceback'])
-            message = "%s \n\n %s \n\n %s" % (message, extra_message, traceback_info)
+            message = "\n\n".join([message, extra_debug_info, extra_message, traceback_info])
 
         email = EmailMessage(
             subject=subject,

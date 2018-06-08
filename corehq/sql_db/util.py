@@ -240,7 +240,7 @@ def select_db_for_read(weighted_dbs):
     weights_by_db = {_db: weight for _db, weight in weighted_dbs}
 
     # filter out stale standby dbs
-    fresh_dbs = filter_out_stale_standbys(weights_by_db.keys())
+    fresh_dbs = filter_out_stale_standbys(weights_by_db)
     dbs = []
     weights = []
     for _db, weight in six.iteritems(weights_by_db):

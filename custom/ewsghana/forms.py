@@ -89,8 +89,7 @@ class EWSUserSettings(forms.Form):
             domain = kwargs['domain']
             del kwargs['domain']
         super(EWSUserSettings, self).__init__(*args, **kwargs)
-        query_url = reverse('custom.ewsghana.views.non_administrative_locations_for_select2',
-                            args=[domain])
+        query_url = reverse('non_administrative_locations_for_select2', args=[domain])
         self.fields['facility'].widget = SupplyPointSelectWidget(domain=domain, id='facility', query_url=query_url)
 
     def save(self, user, domain):

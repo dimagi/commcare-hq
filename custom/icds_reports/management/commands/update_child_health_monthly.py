@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 from django.db import connections, transaction
 
 from corehq.sql_db.connections import get_icds_ucr_db_alias
+from io import open
 
 
 @transaction.atomic
@@ -27,7 +28,7 @@ class Command(BaseCommand):
         start_date = datetime.date(2017, 3, 1)
         dates = [dt for dt in rrule(MONTHLY, dtstart=start_date, until=datetime.datetime.utcnow())]
         path = os.path.join(os.path.dirname(__file__), 'sql_scripts', 'update_child_health_monthly.sql')
-        with open(path, "r") as sql_file:
+        with open(path, "r", encoding='utf-8') as sql_file:
             sql_to_execute = sql_file.read()
             _run_custom_sql_script(sql_to_execute)
 

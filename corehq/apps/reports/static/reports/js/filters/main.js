@@ -11,7 +11,9 @@ hqDefine("reports/js/filters/main", [
     'reports/js/filters/advanced_forms_options',
     'reports/js/filters/drilldown_options',
     'reports_core/js/choice_list_utils',
+    'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
+    'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function(
     $,
     ko,
@@ -24,7 +26,8 @@ hqDefine("reports/js/filters/main", [
     locationDrilldown,
     advancedFormsOptions,
     drilldownOptions,
-    choiceListUtils
+    choiceListUtils,
+    caseListExplorer
 ) {
     var init = function() {
         // Datespans
@@ -146,6 +149,29 @@ hqDefine("reports/js/filters/main", [
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
+
+        var $casePropertyColumns = $(".report-filter-case-property-columns");
+        $casePropertyColumns.each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = caseListExplorer.casePropertyColumns(data.initialvalue, data.columnsuggestions);
+            $el.koApplyBindings(model);
+        });
+        $casePropertyColumns.on('keyup', function(){
+            $('#fieldset_explorer_columns').trigger('change');
+        });
+
+        var $xpathTextarea = $(".report-filter-xpath-textarea");
+        $xpathTextarea.each(function (i, el) {
+            var $el = $(el),
+                data = $el.data();
+            var model = caseListExplorer.caseSearchXpath(data.suggestions);
+            $el.koApplyBindings(model);
+        });
+        $xpathTextarea.on('keyup', function(){
+            $('#fieldset_search_xpath').trigger('change');
+        });
+
         $('[name=selected_group]').each(function(i, el) {
             $(el).select2({
                 allowClear: true,

@@ -29,15 +29,18 @@ module.exports = {
 
     create: function(context) {
         let allowed = {};
-        for (var i = 0; i < context.options.length; i++) {
-            allowed[context.options[i]] = 1;
+        const optionAllowed = context.options[0];
+        if (optionAllowed) {
+            for (var i = 0; i < optionAllowed.length; i++) {
+                allowed[optionAllowed[i]] = true;
+            }
         }
 
         return {
 
             NewExpression(node) {
                 if (!allowed[node.callee.name]) {
-                    context.report({ node, message: "Rewrite " + node.callee.name + " in a functional style" });
+                    context.report({ node, message: "Rewrite " + node.callee.name + " in a functional style. See https://github.com/dimagi/js-guide/blob/master/migrating.md#moving-away-from-classical-inheritance" });
                 }
             }
 

@@ -39,7 +39,7 @@ from corehq.form_processor.exceptions import CaseNotFound
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from .models import SerialIdBucket
+from .models import SerialIdBucket, MobileRecoveryMeasure
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response)
@@ -84,7 +84,7 @@ def search(request, domain):
         return _handle_es_exception(request, e, case_search_criteria.query_addition_debug_details)
 
     # Even if it's a SQL domain, we just need to render the hits as cases, so CommCareCase.wrap will be fine
-    cases = [CommCareCase.wrap(flatten_result(result)) for result in hits]
+    cases = [CommCareCase.wrap(flatten_result(result, include_score=True)) for result in hits]
     fixtures = CaseDBFixture(cases).fixture
     return HttpResponse(fixtures, content_type="text/xml; charset=utf-8")
 
@@ -328,3 +328,17 @@ def get_next_id(request, domain):
     if bucket_id is None:
         return HttpResponseBadRequest("You must provide a pool_id parameter")
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
+
+
+# Note: this endpoint does not require authentication
+@location_safe
+@require_GET
+@toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
+def recovery_measures(request, domain, build_id):
+    app_id = get_app_cached(domain, build_id).master_id
+    response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
+    measures = [measure.to_mobile_json() for measure in
+                MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
+    if measures:
+        response["recovery_measures"] = measures
+    return JsonResponse(response)

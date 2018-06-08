@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
-from django.utils.translation import ugettext_noop
+from django.utils.translation import ugettext_lazy
 from elasticsearch import TransportError
 
 from corehq.apps.locations.dbaccessors import (
@@ -42,9 +42,10 @@ class CaseListMixin(ElasticProjectInspectionReport, ProjectReportParametersMixin
     case_filter = {}
     ajax_pagination = True
     asynchronous = True
+    search_class = case_es.CaseES
 
     def _build_query(self):
-        query = (case_es.CaseES()
+        query = (self.search_class()
                  .domain(self.domain)
                  .size(self.pagination.count)
                  .start(self.pagination.start))
@@ -255,7 +256,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     # point is the decouple generating the raw report data from the report view/django
     # request. but currently these are too tightly bound to decouple
 
-    name = ugettext_noop('Case List')
+    name = ugettext_lazy('Case List')
     slug = 'case_list'
 
     @classmethod
