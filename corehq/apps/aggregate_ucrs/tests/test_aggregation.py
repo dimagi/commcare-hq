@@ -195,27 +195,49 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
 
-        print('found {} total rows'.format(aggregate_query.count()))
         doc_id_column = aggregate_table.c['doc_id']
-        results = aggregate_query.filter(doc_id_column == self.case_id)
-        print('found {} rows for case'.format(results.count()))
+        month_column = aggregate_table.c['month']
 
-        # todo:
-        # aggregate the data
-        # test the results
+        # before december the case should not exist
+        self.assertEqual(0, aggregate_query.filter(
+            doc_id_column == self.case_id,
+            month_column <= '2017-11-01'
+        ).count())
 
-        # everything below here is garbage/test code
-        # check pregnancy
-        run_date_tests = True
-        if run_date_tests:
-            # confirm is_pregnant is true in each month date
-            for month in range(1, 10):
-                this_month = Month(2018, month)
-                print(this_month)
-                # self.assertEqual()
-                self.assertEqual(3, aggregate_query.filter(doc_id_column == self.case_id).count())
-                # self.
-                # todo something like this
-                # q.filter_by('form.case.@case_id'=self.case_id)
-                # q = q.filter_by(case_id=self.case_id)
-                # print(list(q))
+
+        # in december the case should exist, but should not be flagged as pregnant
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            month_column == '2017-12-01'
+        ).one()
+        self.assertEqual(self.case_name, row.name)
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(0, row.pregnant_in_month)
+        self.assertEqual(None, row.fu_forms_in_month)
+
+        # in january the case should exist, and be flagged as pregnant
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            month_column == '2018-01-01'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(None, row.fu_forms_in_month)
+
+        # in march the case should exist, be flagged as pregnant, and there is a form
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            month_column == '2018-03-01'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(1, row.fu_forms_in_month)
+
+        # in april the case should exist, be flagged as pregnant, and there are 2 forms
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            month_column == '2018-04-01'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(2, row.fu_forms_in_month)
