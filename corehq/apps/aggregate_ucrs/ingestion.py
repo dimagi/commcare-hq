@@ -31,7 +31,6 @@ def populate_aggregate_table_data(aggregate_table_adapter):
     start_month = current_month = Month.datetime_to_month(start_date)
     end_month = Month.datetime_to_month(end_date)
     while current_month <= end_month:
-        print ('processing data for {}'.format(current_month))
         start = AggregationParam(
             AGG_WINDOW_START_PARAM, json_format_date(current_month.start), aggregate_table_definition.aggregation_start_column
         )
