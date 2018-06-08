@@ -773,8 +773,8 @@ class MultipleSelectionForm(forms.Form):
         def dispatch(self, request, *args, **kwargs):
             return super(MyView, self).dispatch(request, *args, **kwargs)
 
-        # html
-        <script>
+        # javascript
+        hqDefine("app/js/module", function() {
             // Multiselect widget
             $(function () {
                 var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
@@ -785,7 +785,7 @@ class MultipleSelectionForm(forms.Form):
                     django.gettext("Search Things...")
                 );
             });
-        </script>
+        });
     """
     selected_ids = forms.MultipleChoiceField(
         label=ugettext_lazy("Group Membership"),
