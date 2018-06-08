@@ -191,12 +191,16 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         aggregate_table_adapter.rebuild_table()
 
         populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_results()
 
+    def _check_results(self):
+        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
 
         doc_id_column = aggregate_table.c['doc_id']
         month_column = aggregate_table.c['month']
+
 
         # before december the case should not exist
         self.assertEqual(0, aggregate_query.filter(
