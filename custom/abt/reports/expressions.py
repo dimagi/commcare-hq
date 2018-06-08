@@ -1,20 +1,21 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os
+
+from cached_property import cached_property
 from jsonobject import JsonObject
 import yaml
 from corehq.apps.userreports.specs import TypeProperty
 from corehq.apps.app_manager.models import Application
 from corehq.util.quickcache import quickcache
-from memoized import memoized
 import six
 from io import open
 
 
 class AbtExpressionSpec(JsonObject):
+    domain = None
 
-    @property
-    @memoized
+    @cached_property
     def _flag_specs(self):
         raise NotImplementedError()
 
@@ -170,6 +171,7 @@ class AbtExpressionSpec(JsonObject):
         """
         names = self._get_inspector_names(item)
         docs = []
+        self.domain = item.get('domain', None)
         for spec in self._flag_specs.get(item['xmlns'], []):
 
             if spec.get("base_path", False):
@@ -275,13 +277,16 @@ class AbtSupervisorExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor')
     comment_from_root = False
 
-    @property
-    @memoized
+    @cached_property
     def _flag_specs(self):
         """
         Return a dict where keys are form xmlns and values are lists of FlagSpecs
         """
-        path = os.path.join(os.path.dirname(__file__), 'flagspecs.yaml')
+        if self.domain == 'vectorlink-uganda':
+            file_name = 'flagspecs_uganda.yaml'
+        else:
+            file_name = 'flagspecs.yaml'
+        path = os.path.join(os.path.dirname(__file__), file_name)
         with open(path, encoding='utf-8') as f:
             return yaml.load(f)
 
@@ -290,8 +295,7 @@ class AbtSupervisorV2ExpressionSpec(AbtExpressionSpec):
     type = TypeProperty('abt_supervisor_v2')
     comment_from_root = True
 
-    @property
-    @memoized
+    @cached_property
     def _flag_specs(self):
         """
         Return a dict where keys are form xmlns and values are lists of FlagSpecs
