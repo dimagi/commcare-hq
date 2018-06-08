@@ -12,6 +12,11 @@ class Axis(object):
         self.format = format
         self.dateFormat = dateFormat
 
+    def to_json(self):
+        return {'label': self.label,
+                'format': self.format,
+                }
+
 
 class Chart(object):
     template_partial = ''
