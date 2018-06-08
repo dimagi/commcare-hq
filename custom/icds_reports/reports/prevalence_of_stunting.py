@@ -15,7 +15,7 @@ from custom.icds_reports.const import LocationTypes, ChartColors, MapColors
 from custom.icds_reports.models import AggChildHealthMonthly
 from custom.icds_reports.utils import apply_exclude, chosen_filters_to_labels, indian_formatted_number, \
     get_child_locations, stunting_moderate_column, stunting_severe_column, stunting_normal_column, \
-    default_age_interval
+    default_age_interval, hfa_recorded_in_month_column
 
 
 @quickcache(['domain', 'config', 'loc_level', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -32,7 +32,7 @@ def get_prevalence_of_stunting_data_map(domain, config, loc_level, show_test=Fal
             severe=Sum(stunting_severe_column(icds_feature_flag)),
             normal=Sum(stunting_normal_column(icds_feature_flag)),
             total=Sum('height_eligible'),
-            total_measured=Sum('height_measured_in_month'),
+            total_measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
         ).order_by('%s_name' % loc_level, '%s_map_location_name' % loc_level)
         if not show_test:
             queryset = apply_exclude(domain, queryset)
@@ -171,7 +171,7 @@ def get_prevalence_of_stunting_data_chart(domain, config, loc_level, show_test=F
         severe=Sum(stunting_severe_column(icds_feature_flag)),
         normal=Sum(stunting_normal_column(icds_feature_flag)),
         total=Sum('height_eligible'),
-        measured=Sum('height_measured_in_month'),
+        measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
     ).order_by('month')
 
     if not show_test:
@@ -295,7 +295,7 @@ def get_prevalence_of_stunting_sector_data(domain, config, loc_level, location_i
         severe=Sum(stunting_severe_column(icds_feature_flag)),
         normal=Sum(stunting_normal_column(icds_feature_flag)),
         total=Sum('height_eligible'),
-        total_measured=Sum('height_measured_in_month'),
+        total_measured=Sum(hfa_recorded_in_month_column(icds_feature_flag)),
     ).order_by('%s_name' % loc_level)
 
     if not show_test:
