@@ -96,6 +96,8 @@ class Select2Ajax(forms.TextInput):
     You must use `set_url()` to set the url. This will usually be done in the form's __init__() method.
     The url is not specified in the form class definition because in most cases the url will be dependent on the
     domain of the request.
+
+    TODO: CallCenterOwnerWidget inherits from this, and othe rpages use it
     """
     def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
