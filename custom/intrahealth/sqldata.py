@@ -171,7 +171,7 @@ class ConventureData(BaseSqlData):
 
         # Months are displayed in chronological order
         if 'month' in self.group_by:
-            from custom.intrahealth.reports import get_localized_months
+            from custom.intrahealth.reports.utils import get_localized_months
             return sorted(rows, key=lambda row: get_localized_months().index(row[0]))
 
         return rows
@@ -841,7 +841,7 @@ class IntraHealthSqlData(SqlData):
             }
 
     def format_data_and_cast_to_float(self, value):
-        return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
+        return {"html": "%.2f".format(value), "sort_key": "%.2f".format(value)} if value is not None else value
 
     @property
     def engine_id(self):
@@ -1674,7 +1674,7 @@ class ConventureData2(IntraHealthSqlData):
             months.add(month)
         months = sorted(months)
         for month in months:
-            from custom.intrahealth.reports import get_localized_months
+            from custom.intrahealth.reports.utils import get_localized_months
             pps_ids = set()
             if values_v1.get(month):
                 pps_ids = values_v1[month]['pps_ids']
