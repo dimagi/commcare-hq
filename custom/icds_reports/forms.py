@@ -40,6 +40,11 @@ class AppTranslationsForm(forms.Form):
                                choices=[('push', ugettext_lazy('Push to transifex')),
                                         ('pull', ugettext_lazy('Pull from transifex'))]
                                )
+    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for completion"),
+                                                  help_text=ugettext_lazy(
+                                                      "Check for translation completion before pulling files"),
+                                                  required=False,
+                                                  initial=True)
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -62,6 +67,7 @@ class AppTranslationsForm(forms.Form):
             'source_lang',
             'target_lang',
             'action',
+            'perform_translated_check',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
                     ugettext_lazy("Submit"),
