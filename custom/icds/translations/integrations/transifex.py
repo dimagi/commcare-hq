@@ -87,6 +87,11 @@ class Transifex:
             if os.path.exists(filepath):
                 os.remove(filepath)
 
+    def _get_resource_slugs_for_version(self, version):
+        return [r['name']
+                for r in self.client().list_resources().json()
+                if r['name'].endswith("v%s" % version)]
+
     def get_translations(self, version, resource_slugs=None):
         if resource_slugs:
             for resource_slug in resource_slugs:
@@ -96,10 +101,7 @@ class Transifex:
                     ))
         client = self.client()
         if not resource_slugs:
-            resource_slugs = [r['name']
-                              for r in client.list_resources().json()
-                              if r['name'].endswith("v%s" % version)
-                              ]
+            resource_slugs = self._get_resource_slugs_for_version(version)
         if not resource_slugs:
             raise Exception("No resources found for this version")
         po_entries = {}
@@ -109,3 +111,15 @@ class Transifex:
                 SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)
             )
         return po_entries
+
+    def resources_pending_translations(self, version, break_if_true=False):
+        resource_slugs = self._get_resource_slugs_for_version(version)
+        resources_pending_translations = []
+        for resource_slug in resource_slugs:
+            if not self.client().confirm_complete_translation(
+                    resource_slug,
+                    SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)):
+                if break_if_true:
+                    return resource_slug
+                resources_pending_translations.append(resource_slug)
+        return resources_pending_translations
