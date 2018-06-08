@@ -1,5 +1,8 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
+import re
+
+import six
 from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import Step, serialize
@@ -58,6 +61,8 @@ COMPARISON_MAPPING = {
 
 EQ = "="
 NEQ = "!="
+
+ALL_OPERATORS = [EQ, NEQ] + list(OPERATOR_MAPPING.keys()) + list(COMPARISON_MAPPING.keys())
 
 
 def build_filter_from_ast(domain, node):
@@ -202,6 +207,39 @@ def build_filter_from_ast(domain, node):
         )
 
     return visit(node)
+
+
+def build_filter_from_xpath(domain, xpath):
+    try:
+        return build_filter_from_ast(domain, parse_xpath(xpath))
+    except TypeError as e:
+        text_error = re.search(r"Unknown text '(.+)'", six.text_type(e))
+        if text_error:
+            # This often happens if there is a bad operator (e.g. a ~ b)
+            bad_part = text_error.groups()[0]
+            raise CaseFilterError(
+                _("We didn't understand what you were trying to do with {}. "
+                  "Please try reformatting your query. "
+                  "The operators we accept are: {}").format(
+                      bad_part,
+                      ", ".join(ALL_OPERATORS)),
+                bad_part,
+            )
+        raise CaseFilterError(_("Malformed search query"), None)
+    except RuntimeError as e:
+        # eulxml passes us string errors from YACC
+        lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", six.text_type(e))
+        if lex_token_error:
+            bad_part = lex_token_error.groups()[1]
+            raise CaseFilterError(
+                _("We didn't understand what you were trying to do with {}. "
+                  "Please try reformatting your query. "
+                  "The operators we accept are: {}").format(
+                      bad_part,
+                      ", ".join(ALL_OPERATORS)),
+                bad_part,
+            )
+        raise CaseFilterError(_("Malformed search query"), None)
 
 
 def get_properties_from_ast(node):

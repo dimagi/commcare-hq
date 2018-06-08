@@ -9,23 +9,20 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from warnings import warn
 
 import six
 from django.utils.dateparse import parse_date
-from django.utils.translation import ugettext as _
-from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES,
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
+    SPECIAL_CASE_PROPERTIES,
     SYSTEM_PROPERTIES,
     VALUE,
 )
@@ -117,18 +114,8 @@ class CaseSearchES(CaseES):
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
         """
-        from corehq.apps.case_search.filter_dsl import (
-            CaseFilterError,
-            build_filter_from_ast,
-        )
-
-        try:
-            return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
-        except (TypeError, RuntimeError) as e:
-            raise CaseFilterError(
-                _("Malformed search query: {search_query}").format(search_query=e),
-                None,
-            )
+        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
+        return self.filter(build_filter_from_xpath(domain, xpath))
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
