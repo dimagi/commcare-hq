@@ -61,8 +61,6 @@ class AggregateTableDefinition(models.Model):
             yield adapter.to_ucr_column_spec()
 
     def get_column_adapters(self):
-        yield self._get_id_column_adapater()
-        yield self._get_aggregation_column_adapter()
         for primary_adapter in self.get_primary_column_adapters():
             yield primary_adapter
         for secondary_table in self.secondary_tables.all():
@@ -83,6 +81,8 @@ class AggregateTableDefinition(models.Model):
             )
 
     def get_primary_column_adapters(self):
+        yield self._get_id_column_adapater()
+        yield self._get_aggregation_column_adapter()
         for primary_column in self.primary_columns.all():
             yield PrimaryColumnAdapter.from_db_column(primary_column)
 
