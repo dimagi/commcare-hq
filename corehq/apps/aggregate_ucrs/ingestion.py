@@ -27,7 +27,7 @@ def populate_aggregate_table_data(aggregate_table_adapter):
     start_date = get_aggregation_start_period(aggregate_table_definition, last_update)
     end_date = get_aggregation_end_period(aggregate_table_definition, last_update)
     assert end_date >= start_date
-    start_month = current_month = Month.datetime_to_month(start_date).get_previous_month().get_previous_month().get_previous_month()
+    start_month = current_month = Month.datetime_to_month(start_date)
     end_month = Month.datetime_to_month(end_date)
     while current_month <= end_month:
         print ('processing data for {}'.format(current_month))
@@ -115,7 +115,6 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
             )
         )
 
-
     statement = statement.select_from(select_table)
     # apply period start/end filters for primary model
     # to match, start should be before the end of the period and end should be after the start
@@ -126,7 +125,11 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
 
     for primary_column_adapter in primary_column_adapters:
         if not isinstance(primary_column_adapter, ConstantColumnAdapter):
-            statement = statement.group_by(primary_column_adapter.to_sqlalchemy_query_column(primary_table, aggregation_params))
+            statement = statement.group_by(
+                primary_column_adapter.to_sqlalchemy_query_column(
+                    primary_table, aggregation_params
+                )
+            )
 
     # print(statement)
     with aggregate_table_adapter.session_helper.session_context() as session:
