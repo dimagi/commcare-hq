@@ -35,7 +35,10 @@ from corehq.apps.users.models import UserRole
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds.tasks import send_translation_files_to_transifex
+from custom.icds.tasks import (
+    push_translation_files_to_transifex,
+    pull_translation_files_from_transifex,
+)
 from custom.icds.translations.integrations.client import TransifexApiClient
 from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
@@ -1645,7 +1648,14 @@ class ICDSAppTranslations(BaseDomainView):
                 if not self.ensure_source_language(form_data):
                     messages.error(request, _('Source lang selected not available for the project'))
                 else:
-                    send_translation_files_to_transifex.delay(request.domain, form_data)
+                    if form_data['action'] == 'push':
+                        push_translation_files_to_transifex.delay(request.domain, form_data)
+                        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                    else:
+
+                        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+                        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                                    'You should receive an email shortly'))
                     messages.success(request, _('Successfully enqueued request to submit files for translations'))
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)

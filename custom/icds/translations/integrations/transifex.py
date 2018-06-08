@@ -8,6 +8,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
 from corehq.apps.app_manager.app_translations.generators import POFileGenerator
+from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
 from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 
@@ -26,12 +27,14 @@ class Transifex:
         """
         if version:
             version = int(version)
-        key_lang = "en"  # the lang in which the string keys are, should be english
+        self.key_lang = "en"  # the lang in which the string keys are, should be english
+        self.lang_prefix = lang_prefix
         self.project_slug = project_slug
         self.is_source_file = is_source_file
         self.source_lang = source_lang
-        self.po_file_generator = POFileGenerator(domain, app_id, version, key_lang, source_lang, lang_prefix,
+        self.po_file_generator = POFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
                                                  exclude_if_default)
+        self.parser = TranslationsParser(self)
 
     def send_translation_files(self):
         try:
@@ -83,3 +86,26 @@ class Transifex:
         for resource_name, filepath in self.po_file_generator.generated_files:
             if os.path.exists(filepath):
                 os.remove(filepath)
+
+    def get_translations(self, version, resource_slugs=None):
+        if resource_slugs:
+            for resource_slug in resource_slugs:
+                if not resource_slug.endswith("v%s" % version):
+                    raise Exception("Resource name '{}' is expected to contain version".format(
+                        resource_slug
+                    ))
+        client = self.client()
+        if not resource_slugs:
+            resource_slugs = [r['name']
+                              for r in client.list_resources().json()
+                              if r['name'].endswith("v%s" % version)
+                              ]
+        if not resource_slugs:
+            raise Exception("No resources found for this version")
+        po_entries = {}
+        for resource_slug in resource_slugs:
+            po_entries[resource_slug] = client.get_translation(
+                resource_slug,
+                SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)
+            )
+        return po_entries

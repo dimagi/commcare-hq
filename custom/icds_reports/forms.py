@@ -33,8 +33,13 @@ class AppTranslationsForm(forms.Form):
                                              ('hin', ugettext_lazy('Hindi')),
                                              ('mr', ugettext_lazy('Marathi')),
                                              ('te', ugettext_lazy('Telugu'))],
-                                    help_text=ugettext_lazy("Leave blank to skip")
+                                    help_text=ugettext_lazy("Leave blank to skip"),
+                                    required=False,
                                     )
+    action = forms.ChoiceField(label=ugettext_lazy("Action"),
+                               choices=[('push', ugettext_lazy('Push to transifex')),
+                                        ('pull', ugettext_lazy('Pull from transifex'))]
+                               )
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -56,9 +61,10 @@ class AppTranslationsForm(forms.Form):
             'transifex_project_slug',
             'source_lang',
             'target_lang',
+            'action',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit files for translation to Transifex"),
+                    ugettext_lazy("Submit"),
                     type="submit",
                     css_class="btn btn-primary btn-lg disable-on-submit",
                 )

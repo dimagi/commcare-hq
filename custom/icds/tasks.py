@@ -9,6 +9,7 @@ from corehq.blobs import get_blob_db
 from corehq.form_processor.models import XFormAttachmentSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
+from django.core.mail.message import EmailMessage
 from custom.icds.translations.integrations.transifex import Transifex
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
@@ -48,13 +49,7 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
 
 @task
-def send_translation_files_to_transifex(domain, data):
-    if data.get('source_lang'):
-        Transifex(domain,
-                  data.get('app_id'),
-                  data.get('source_lang'),
-                  data.get('transifex_project_slug'),
-                  data.get('version')).send_translation_files()
+def push_translation_files_to_transifex(domain, data):
     if data.get('target_lang'):
         Transifex(domain,
                   data.get('app_id'),
@@ -63,3 +58,28 @@ def send_translation_files_to_transifex(domain, data):
                   data.get('version'),
                   is_source_file=False,
                   exclude_if_default=True).send_translation_files()
+    elif data.get('source_lang'):
+        Transifex(domain,
+                  data.get('app_id'),
+                  data.get('source_lang'),
+                  data.get('transifex_project_slug'),
+                  data.get('version')).send_translation_files()
+
+
+@task
+def pull_translation_files_from_transifex(domain, data, email=None):
+    version = data.get('version')
+    transifex = Transifex(domain,
+              data.get('app_id'),
+              data.get('target_lang') or data.get('source_lang'),
+              data.get('transifex_project_slug'))
+    translation_file = transifex.parser.generate_excel_file(version)
+    file_obj = open(translation_file, 'r')
+    email = EmailMessage(
+        subject='[{}] - Transifex translations'.format(settings.SERVER_ENVIRONMENT),
+        body="Translations Generated",
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    email.attach(filename=translation_file, content=file_obj.read())
+    email.send()
