@@ -13,7 +13,7 @@ from custom.icds_reports.queries import get_test_state_locations_id
 from custom.icds_reports.utils.mixins import ProgressReportMixIn
 from custom.icds_reports.utils import percent_num, get_age_filters, wasting_severe_column, \
     wasting_moderate_column, wasting_normal_column, stunting_severe_column, stunting_moderate_column, \
-    stunting_normal_column
+    stunting_normal_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column
 from custom.utils.utils import clean_IN_filter_value
 
 
@@ -148,7 +148,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                         filters=filters + get_age_filters(self.beta)
                     ),
                     SumColumn(
-                        'weighed_and_height_measured_in_month',
+                        wfh_recorded_in_month_column(self.beta),
                         alias='weighed_and_height_measured_in_month',
                         filters=filters + get_age_filters(self.beta)
                     )
@@ -188,7 +188,7 @@ class AggChildHealthMonthlyDataSource(ProgressReportMixIn, SqlData):
                         filters=filters + get_age_filters(self.beta)
                     ),
                     SumColumn(
-                        'height_measured_in_month',
+                        hfa_recorded_in_month_column(self.beta),
                         alias='height_measured_in_month',
                         filters=filters + get_age_filters(self.beta)
                     )

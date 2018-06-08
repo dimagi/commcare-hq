@@ -592,3 +592,33 @@ class TestXForm(SimpleTestCase, TestXmlMixin):
     def test_set_name_on_empty_form(self):
         form = self.construct_form()
         form.wrapped_xform().set_name("Passes if there is no exception")
+
+
+class TestFormMeta(BaseIndexTest):
+    def test_meta_drift(self):
+        # when version is less than META_DRIFT_ADDED_FROM_CC_VERSION
+        self.app.build_spec.version = '2.43.0'
+        self.assertTrue(
+            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+value="instance('commcaresession')/session/context/drift"/>""" not in
+            self.form.render_xform()
+        )
+        self.assertTrue("<orx:drift/>" not in self.form.render_xform())
+
+        # when version same as META_DRIFT_ADDED_FROM_CC_VERSION
+        self.app.build_spec.version = '2.44.0'
+        self.assertTrue(
+            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+value="instance('commcaresession')/session/context/drift"/>""" in
+            self.form.render_xform()
+        )
+        self.assertTrue("<orx:drift/>" in self.form.render_xform())
+
+        # when version greater than META_DRIFT_ADDED_FROM_CC_VERSION
+        self.app.build_spec.version = '2.44.1'
+        self.assertTrue(
+            """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
+value="instance('commcaresession')/session/context/drift"/>""" in
+            self.form.render_xform()
+        )
+        self.assertTrue("<orx:drift/>" in self.form.render_xform())

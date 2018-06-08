@@ -845,7 +845,7 @@ class CaseRuleCriteriaForm(forms.Form):
 
                 try:
                     re.compile(property_value)
-                except:
+                except (re.error, ValueError, TypeError):
                     raise ValidationError(_("Please enter a valid regular expression to match"))
 
                 result.append({

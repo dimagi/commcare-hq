@@ -619,7 +619,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     "moderate": 0,
                     "normal": 0,
                     'total_height_eligible': 454,
-                    "total_measured": 7,
+                    "total_measured": 0,
                     "total_weighed": 317,
                     'original_name': ["st1"],
                     "fillKey": "0%-5%"
@@ -629,10 +629,10 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     "moderate": 1,
                     "normal": 0,
                     'total_height_eligible': 497,
-                    "total_measured": 24,
+                    "total_measured": 0,
                     "total_weighed": 379,
                     'original_name': ["st2"],
-                    "fillKey": "0%-5%"
+                    "fillKey": "7%-100%"
                 }
             }
         )
@@ -689,10 +689,10 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             [
                 {'indicator': 'Total Children (0 - 5 years) weighed in given month:', 'value': '696'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
-                 'value': '31'},
+                 'value': '0'},
                 {'indicator': 'Number of children (0 - 5 years) unmeasured:', 'value': '255'},
                 {'indicator': '% Severely Acute Malnutrition (0 - 5 years):', 'value': '0.00%'},
-                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '3.23%'},
+                {'indicator': '% Moderately Acute Malnutrition (0 - 5 years):', 'value': '100.00%'},
                 {'indicator': '% Normal (0 - 5 years):', 'value': '0.00%'}
             ]
         )
@@ -728,7 +728,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
             {
                 'block_map': {
                     'moderate': 0,
-                    'total_measured': 7,
+                    'total_measured': 0,
                     'normal': 0,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
@@ -774,7 +774,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667,
+                    "percent": 100.0,
                 },
             ]
         )
@@ -799,7 +799,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667,
+                    "percent": 100.0,
                 },
             ]
         )
@@ -840,14 +840,14 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 11,
+                        'total_measured': 1,
                         'total_height_eligible': 981,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -891,14 +891,14 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         "y": 0.00,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 11,
+                        'total_measured': 1,
                         'total_height_eligible': 981,
                     },
                     {
-                        "y": 0.03225806451612903,
+                        "y": 1.0,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 31,
+                        'total_measured': 00,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -939,17 +939,17 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                         'total_height_eligible': 0
                     },
                     {
-                        "y": 0.09090909090909091,
+                        "y": 1.0,
                         "x": 1491004800000,
                         "total_weighed": 691,
-                        'total_measured': 11,
+                        'total_measured': 1,
                         'total_height_eligible': 981,
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "total_weighed": 696,
-                        'total_measured': 31,
+                        'total_measured': 0,
                         'total_height_eligible': 951,
                     }
                 ],
@@ -977,7 +977,7 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                 },
                 {
                     "loc_name": "st2",
-                    "percent": 4.166666666666667,
+                    "percent": 100.0,
                 },
             ]
         )
@@ -1000,14 +1000,6 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
         self.assertDictEqual(
             data['tooltips_data'],
             {
-                "s2": {
-                    "total_weighed": 91,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 4,
-                    "normal": 0,
-                    "total_height_eligible": 153,
-                },
                 "s1": {
                     "total_weighed": 67,
                     "severe": 0,
@@ -1015,7 +1007,15 @@ class TestPrevalenceOfSevereICDSFeatureFlag(TestCase):
                     "total_measured": 0,
                     "normal": 0,
                     "total_height_eligible": 71,
-                }
+                },
+                "s2": {
+                    "total_weighed": 91,
+                    "severe": 0,
+                    "moderate": 0,
+                    "total_measured": 0,
+                    "normal": 0,
+                    "total_height_eligible": 153,
+                },
             }
         )
 
