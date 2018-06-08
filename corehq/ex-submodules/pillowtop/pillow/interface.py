@@ -14,7 +14,7 @@ from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
-from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError
+from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError, PillowConfigError
 from pillowtop.logger import pillow_logging
 import six
 
@@ -140,14 +140,14 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     def process_chunk_with_error_handling(self, changes_chunk, context):
         """
         Passes given changes_chunk to the processor for chunked processing
-            If there is an exception in bulk processing, falls back
+            If there is an exception in chunked processing, falls back
             to passing changes one by one to the processor
         """
         if not changes_chunk:
             return
         try:
-            # bulk processing is supported if there is only one processor
-            self.processors[0].process_changes_chunk(changes_chunk)
+            # chunked processing is supported if there is only one processor
+            self.processors[0].process_changes_chunk(self, changes_chunk)
         except BulkPorcessingError as ex:
             notify_exception(
                 None,
@@ -283,6 +283,15 @@ class ConstructedPillow(PillowBase):
             self.processors = [processor]
 
         self._change_processed_event_handler = change_processed_event_handler
+        self.validate_processor_config()
+
+    def validate_processor_config(self):
+        for processor in self.processors:
+            if processor.processor_chunk_size > 0:
+                if not callable(getattr(processor, 'process_changes_chunk', None)):
+                    raise PillowConfigError("Processor must implement the method `process_changes_chunk`")
+                if not len(self.processors) == 1:
+                    raise PillowConfigError("Chunked processing is supported if there is only one processor")
 
     @property
     def pillow_id(self):

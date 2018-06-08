@@ -35,6 +35,7 @@ from fluff.signals import (
     reformat_alembic_diffs
 )
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
+from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import PillowProcessor
@@ -42,10 +43,6 @@ from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
 LONG_UCR_LOGGING_THRESHOLD = 0.5
-
-
-class PillowConfigError(Exception):
-    pass
 
 
 def time_ucr_process_change(method):
@@ -211,6 +208,10 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
 
     domain_timing_context = Counter()
 
+    def __init__(self, *args, **kwargs):
+        self.processor_chunk_size = kwargs.pop('processor_chunk_size', 0)
+        super(ConfigurableReportPillowProcessor, self).__init__(*args, **kwargs)
+
     @time_ucr_process_change
     def _save_doc_to_table(self, domain, table, doc, eval_context):
         # best effort will swallow errors in the table
@@ -219,6 +220,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Pil
         except UserReportsWarning:
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
+
+    def process_changes_chunk(self, pillow_instance, changes_chunk):
+        # Todo; do actual implementation
+        for change in changes_chunk:
+            self.process_change(pillow_instance, change)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
@@ -330,6 +336,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            processor_chunk_size=100,
         ),
         pillow_name=pillow_id,
         topics=topics,
@@ -350,6 +357,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
+            processor_chunk_size=100,
         ),
         pillow_name=pillow_id,
         topics=topics,

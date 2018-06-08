@@ -47,3 +47,17 @@ class TestProcessor(PillowProcessor):
 
     def process_change(self, pillow_instance, change):
         self.changes_seen.append(change)
+
+
+class ChunkedCountProcessor(PillowProcessor):
+    processor_chunk_size = 2
+
+    def __init__(self):
+        self.count = 0
+
+    def process_change(self, pillow_instance, change):
+        self.count += 1
+
+    def process_changes_chunk(self, pillow_instance, changes_chunk):
+        print("the processor did get it")
+        self.count += len(changes_chunk)
