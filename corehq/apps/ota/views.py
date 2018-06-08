@@ -17,7 +17,7 @@ from iso8601 import iso8601
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
-from dimagi.utils.decorators.profile_prod import profile_prod
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
