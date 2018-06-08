@@ -1620,7 +1620,6 @@ class ConventureDataSourceMixin(IntraHealthSqlData):
             month = int(row['real_date']['html'])
             if month not in values:
                 if row.get(loc_name):
-                    print(row[loc_name])
                     loc = get_location(row[loc_name], domain=self.config['domain'])
                     new_registered = _locations_per_type(self.config['domain'], 'PPS', loc)
                     if new_registered > registered:
