@@ -1650,7 +1650,8 @@ class ICDSAppTranslations(BaseDomainView):
                 else:
                     if form_data['action'] == 'push':
                         push_translation_files_to_transifex.delay(request.domain, form_data)
-                        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                        messages.success(request,
+                                         _('Successfully enqueued request to submit files for translations'))
                     else:
                         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
                         messages.success(request, _('Successfully enqueued request to pull for translations. '

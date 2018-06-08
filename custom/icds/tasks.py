@@ -73,9 +73,9 @@ def push_translation_files_to_transifex(domain, data):
 def pull_translation_files_from_transifex(domain, data, email=None):
     version = data.get('version')
     transifex = Transifex(domain,
-              data.get('app_id'),
-              data.get('target_lang') or data.get('source_lang'),
-              data.get('transifex_project_slug'))
+                          data.get('app_id'),
+                          data.get('target_lang') or data.get('source_lang'),
+                          data.get('transifex_project_slug'))
     translation_file, filename = transifex.parser.generate_excel_file(version)
     try:
         with open(translation_file.name) as file_obj:

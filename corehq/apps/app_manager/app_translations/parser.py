@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 import re
 from datetime import datetime
 
@@ -87,4 +89,3 @@ class TranslationsParser:
                 version, datetime.utcnow().strftime(DATETIME_FORMAT))
             wb.save(tempfile)
             return tempfile, result_file_name
-
