@@ -5,6 +5,7 @@ from openpyxl import Workbook
 
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
+from tempfile import NamedTemporaryFile
 
 
 class TranslationsParser:
@@ -80,9 +81,10 @@ class TranslationsParser:
                 self._parse_form_sheet(ws, key_lang_str, source_lang_str, po_entries)
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
-        result_file_name = "TransifexTranslations {}-{}:v{} {}.xlsx".format(
-            self.transifex.key_lang, self.transifex.source_lang,
-            version, datetime.utcnow().strftime(DATETIME_FORMAT))
-        wb.save(result_file_name)
-        return result_file_name
+        with NamedTemporaryFile(delete=False) as tempfile:
+            result_file_name = "TransifexTranslations {}-{}:v{} {}.xlsx".format(
+                self.transifex.key_lang, self.transifex.source_lang,
+                version, datetime.utcnow().strftime(DATETIME_FORMAT))
+            wb.save(tempfile)
+            return tempfile, result_file_name
 

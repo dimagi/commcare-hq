@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import os
+
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from celery.task import periodic_task
@@ -73,13 +76,17 @@ def pull_translation_files_from_transifex(domain, data, email=None):
               data.get('app_id'),
               data.get('target_lang') or data.get('source_lang'),
               data.get('transifex_project_slug'))
-    translation_file = transifex.parser.generate_excel_file(version)
-    file_obj = open(translation_file, 'r')
-    email = EmailMessage(
-        subject='[{}] - Transifex translations'.format(settings.SERVER_ENVIRONMENT),
-        body="Translations Generated",
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL
-    )
-    email.attach(filename=translation_file, content=file_obj.read())
-    email.send()
+    translation_file, filename = transifex.parser.generate_excel_file(version)
+    try:
+        with open(translation_file.name) as file_obj:
+            email = EmailMessage(
+                subject='[{}] - Transifex translations'.format(settings.SERVER_ENVIRONMENT),
+                body="Translations Generated",
+                to=[email],
+                from_email=settings.DEFAULT_FROM_EMAIL
+            )
+            email.attach(filename=filename, content=file_obj.read())
+            email.send()
+    finally:
+        if os.path.exists(translation_file.name):
+            os.remove(translation_file.name)
