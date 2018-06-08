@@ -1652,10 +1652,8 @@ class ICDSAppTranslations(BaseDomainView):
                         push_translation_files_to_transifex.delay(request.domain, form_data)
                         messages.success(request, _('Successfully enqueued request to submit files for translations'))
                     else:
-
                         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
                         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                                     'You should receive an email shortly'))
-                    messages.success(request, _('Successfully enqueued request to submit files for translations'))
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
