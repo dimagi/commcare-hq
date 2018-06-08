@@ -118,7 +118,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     context.changes_seen += 1
                     self.process_with_error_handling(change, context)
                 else:
-                    self._update_checkpoint(change, None)
+                    self._update_checkpoint(None, None)
         except PillowtopCheckpointReset:
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
 
@@ -126,16 +126,16 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         timer = TimingContext()
         try:
             with timer:
-                try:
-                    self.process_change(change)
-                except Exception as ex:
-                    handle_pillow_error(self, change, ex)
-        except Exception as e:
-            notify_exception(None, 'processor error in pillow {} {}'.format(
-                self.get_name(), e,
-            ))
-            self._record_change_exception_in_datadog(change)
-            raise
+                self.process_change(change)
+        except Exception as ex:
+            try:
+                handle_pillow_error(self, change, ex)
+            except Exception as e:
+                notify_exception(None, 'processor error in pillow {} {}'.format(
+                    self.get_name(), e,
+                ))
+                self._record_change_exception_in_datadog(change)
+                raise
         else:
             self._update_checkpoint(change, context)
             self._record_change_success_in_datadog(change)
