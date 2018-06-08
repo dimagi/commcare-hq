@@ -26,7 +26,11 @@ except Exception:
 # Source: http://code.djangoproject.com/wiki/ProfilingDjango
 
 
-def profile(log_file, probability=1, limit=None):
+def profile(log_file):
+    return profile_prod(log_file, 1, None)
+
+
+def profile_prod(log_file, probability, limit):
     """Profile some callable.
 
     This decorator uses the hotshot profiler to profile some callable (like
@@ -56,12 +60,12 @@ def profile(log_file, probability=1, limit=None):
         header = '=' * 100
         logger.warn("""
         %(header)s
-        Profiling enabled for %(module)s.%(name)s with probability %(prob)s.
+        Profiling enabled for %(module)s.%(name)s with probability %(prob)s and limit %(limit)s.
         Output will be written to %(base)s-[datetime]%(ext)s
         %(header)s
         """, {
             'header': header, 'module': f.__module__, 'name': f.__name__,
-            'prob': probability, 'base': base, 'ext': ext
+            'prob': probability, 'base': base, 'ext': ext, 'limit': limit
         })
 
         class Scope:

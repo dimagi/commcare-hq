@@ -41,7 +41,7 @@ from django.views.decorators.csrf import csrf_exempt
 from couchforms.const import MAGIC_PROPERTY
 from couchforms import openrosa_response
 from couchforms.getters import MultimediaBug
-from dimagi.utils.decorators.profile import profile
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from corehq.apps.ota.utils import handle_401_response
 from corehq import toggles
@@ -51,7 +51,7 @@ PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_LIMIT')
 PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else None
 
 
-@profile('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
+@profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def _process_form(request, domain, app_id, user_id, authenticated,
                   auth_cls=AuthContext):
     metric_tags = [

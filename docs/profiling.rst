@@ -57,7 +57,7 @@ turn this on and off and possibly only profile a limited number of function call
 This can be accomplished by using an environment variable to set the probability of profiling a function.
 Here's an example::
 
-    @profile('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
+    @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
     def location_export(request, domain):
         ....
 
@@ -69,7 +69,7 @@ variable. Values closer to 1 will get more profiling.
 You can also limit the total number of profiles to be recorded using the `limit` keyword argument.
 You could also expose this via an environment variable or some other method to make it configurable::
 
-    @profile('locations_download.prof', limit=10)
+    @profile_prod('locations_download.prof', 1, limit=10)
     def location_export(request, domain):
         ....
 
