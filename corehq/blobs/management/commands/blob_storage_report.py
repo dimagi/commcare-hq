@@ -65,6 +65,11 @@ class Command(BaseCommand):
             help="Ignore all except the default bucket.",
         )
         parser.add_argument(
+            "--list-blob-ids",
+            action="store_true",
+            help="List blob ids in output (--output-file recommended).",
+        )
+        parser.add_argument(
             "--summarize",
             action="store_true",
             help="Aggregate all storage use instead of grouping by domain.",
@@ -73,7 +78,7 @@ class Command(BaseCommand):
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, files, output_file, write_csv, sample_size, default_only,
-               summarize, **options):
+               summarize, list_blob_ids, **options):
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
         sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only, summarize)
@@ -81,6 +86,8 @@ class Command(BaseCommand):
         with make_row_writer(output_file, write_csv) as write:
             report_blobs_by_type(data, sizes, samples_by_type, write)
             report_blob_sizes(data, sizes, samples_by_type, write)
+            if list_blob_ids:
+                report_blob_ids(sizes, write)
 
 
 def report_blobs_by_type(data, sizes, samples_by_type, write):
@@ -174,6 +181,29 @@ def report_blob_sizes(data, sizes, samples_by_type, write):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
     write(["---"] + ["---" for x in iter_headers(by_domain)])
     write(list(iter_totals(totals)))
+    write([])
+
+
+def report_blob_ids(sizes, write):
+    def iter_sizes(sizes):
+        for domain_sizes in sizes.values():
+            for size in domain_sizes:
+                yield size
+
+    def key(size):
+        length = 0 if size.length is UNKNOWN else size.length
+        return size.bucket, size.domain, size.doc_type, -length
+
+    write("BUCKET DOMAIN DOC_TYPE SIZE BLOB_ID".split())
+    for size in sorted(iter_sizes(sizes), key=key):
+        write([
+            size.bucket,
+            size.domain,
+            size.doc_type,
+            sizeof_fmt(size.length) if size.length is not UNKNOWN else "",
+            size.blob_id,
+        ])
+    write([])
 
 
 def accumulate_put_requests(files):
@@ -229,8 +259,9 @@ def get_blob_sizes(data, sample_size, default_only, summarize):
 
 def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
     doc = lookup_doc(doc_id, db_name)
+    key = "/".join([doc_id, blob_id])
     if doc is None:
-        return get_default_blob_size(bucket, "/".join([doc_id, blob_id]))
+        return get_default_blob_size(bucket, key)
     domain = doc.get("domain", UNKNOWN)
     doc_type = doc.get("doc_type", UNKNOWN)
     for blob in doc["external_blobs"].values():
@@ -241,26 +272,27 @@ def get_couch_blob_size(db_name, bucket, doc_id, blob_id):
             except KeyError:
                 pass
     else:
-        size = get_default_blob_size(bucket, "/".join([doc_id, blob_id]))
+        size = get_default_blob_size(bucket, key)
         length = size.length
-    return BlobSize(domain, doc_type, length, bucket)
+    return BlobSize(domain, doc_type, length, bucket, key)
 
 
-def get_form_blob_size(bucket, attachment_id, blob_id):
+def get_form_blob_size(bucket, attachment_id, subkey):
     # can't get domain: cannot get attachment metadata from blob id because
     # the metadata is sharded by form_id, which we do not have
-    size = get_default_blob_size(bucket, "/".join([attachment_id, blob_id]))
-    return BlobSize(UNKNOWN, "form", size.length, bucket)
+    blob_id = "/".join([attachment_id, subkey])
+    size = get_default_blob_size(bucket, blob_id)
+    return BlobSize(UNKNOWN, "form", size.length, bucket, blob_id)
 
 
 def get_default_blob_size(bucket, blob_id):
     try:
-        size = get_blob_db().size(blob_id, bucket)
+        length = get_blob_db().size(blob_id, bucket)
     except NotFound:
-        size = UNKNOWN
+        length = UNKNOWN
     if blob_id.startswith("restore-response-"):
-        return BlobSize(UNKNOWN, "restore", size, bucket)
-    return BlobSize(UNKNOWN, bucket, size, bucket)
+        return BlobSize(UNKNOWN, "restore", length, bucket, blob_id)
+    return BlobSize(UNKNOWN, bucket, length, bucket, blob_id)
 
 
 UNKNOWN = "(unknown)"
@@ -276,11 +308,12 @@ SIZE_GETTERS = {
 
 class BlobSize(object):
 
-    def __init__(self, domain, doc_type, length, bucket):
+    def __init__(self, domain, doc_type, length, bucket, blob_id):
         self.domain = domain
         self.doc_type = doc_type
         self.length = length
         self.bucket = bucket
+        self.blob_id = blob_id
 
 
 def lookup_doc(doc_id, db_name):
