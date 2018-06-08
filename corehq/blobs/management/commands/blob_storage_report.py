@@ -9,6 +9,7 @@ import sys
 from collections import defaultdict, OrderedDict
 from contextlib import contextmanager
 from functools import partial
+from itertools import chain
 
 import six
 from six.moves.urllib.parse import unquote
@@ -69,23 +70,19 @@ class Command(BaseCommand):
             action="store_true",
             help="List blob ids in output (--output-file recommended).",
         )
-        parser.add_argument(
-            "--summarize",
-            action="store_true",
-            help="Aggregate all storage use instead of grouping by domain.",
-        )
 
     @change_log_level('boto3', logging.WARNING)
     @change_log_level('botocore', logging.WARNING)
     def handle(self, files, output_file, write_csv, sample_size, default_only,
-               summarize, list_blob_ids, **options):
+               list_blob_ids, **options):
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
-        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only, summarize)
+        sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only)
 
         with make_row_writer(output_file, write_csv) as write:
             report_blobs_by_type(data, sizes, samples_by_type, write)
             report_blob_sizes(data, sizes, samples_by_type, write)
+            report_blob_sizes(data, sizes, samples_by_type, write, summarize=True)
             if list_blob_ids:
                 report_blob_ids(sizes, write)
 
@@ -110,7 +107,7 @@ def report_blobs_by_type(data, sizes, samples_by_type, write):
     write([])
 
 
-def report_blob_sizes(data, sizes, samples_by_type, write):
+def report_blob_sizes(data, sizes, samples_by_type, write, summarize=False):
     """report blob type, number of blobs, total size grouped by domain"""
     def iter_headers(by_domain):
         for domain in by_domain:
@@ -152,6 +149,9 @@ def report_blob_sizes(data, sizes, samples_by_type, write):
     def sumlens(item):
         return -sum(s.length for s in item[1] if s.length is not UNKNOWN)
 
+    if summarize:
+        sizes = {"EST SIZE": list(chain.from_iterable(six.itervalues(sizes)))}
+
     # get top five domains + all others combined
     OTHER = "OTHER"
     by_domain = OrderedDict()
@@ -175,7 +175,10 @@ def report_blob_sizes(data, sizes, samples_by_type, write):
         "found": 0,
         "count": 0,
     } for domain in by_domain}
-    write(["Storage use based on sampled estimates (may be inaccurate)"])
+    if summarize:
+        write(["SUMMARY"])
+    else:
+        write(["Storage use based on sampled estimates (may be inaccurate)"])
     write(["DOC_TYPE"] + list(iter_headers(by_domain)))
     for doc_type, domain_sizes in sorted(six.iteritems(by_type), key=key):
         write([doc_type] + list(iter_sizes(doc_type, domain_sizes, totals)))
@@ -218,7 +221,7 @@ def accumulate_put_requests(files):
     return data
 
 
-def get_blob_sizes(data, sample_size, default_only, summarize):
+def get_blob_sizes(data, sample_size, default_only):
     # get domain, blob type, and blob size for each put request (or a sample of them)
     def iter_samples(bucket, keys_list):
         for i, keys in enumerate(keys_list):
@@ -229,8 +232,6 @@ def get_blob_sizes(data, sample_size, default_only, summarize):
                 size = get_blob_size(bucket, *keys)
             else:
                 size = get_default_blob_size(bucket, "/".join(keys))
-            if summarize:
-                size.domain = "(all)"
             yield size
 
     sizes = defaultdict(list)  # {domain: [<BlobSize>, ...], ...}
