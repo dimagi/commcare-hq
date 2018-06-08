@@ -41,7 +41,7 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
         return context
 
     def get_suggestions(self):
-        case_properties = get_flattened_case_properties(self.domain)
+        case_properties = get_flattened_case_properties(self.domain, include_parent_properties=True)
         special_case_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
             for prop in SPECIAL_CASE_PROPERTIES
@@ -94,7 +94,7 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         return context
 
     def get_column_suggestions(self):
-        case_properties = get_flattened_case_properties(self.domain)
+        case_properties = get_flattened_case_properties(self.domain, include_parent_properties=False)
         special_properties = [
             {'name': prop, 'case_type': None, 'meta_type': 'info'}
             for prop in SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA
@@ -107,8 +107,11 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         return json.loads(value or "[]")
 
 
-def get_flattened_case_properties(domain):
-    all_properties_by_type = all_case_properties_by_domain(domain, include_parent_properties=False)
+def get_flattened_case_properties(domain, include_parent_properties=False):
+    all_properties_by_type = all_case_properties_by_domain(
+        domain,
+        include_parent_properties=include_parent_properties
+    )
     all_properties = [
         {'name': value, 'case_type': case_type}
         for case_type, values in six.iteritems(all_properties_by_type)
