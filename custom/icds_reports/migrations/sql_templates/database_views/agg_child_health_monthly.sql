@@ -80,7 +80,9 @@ CREATE VIEW agg_child_health_monthly AS
         COALESCE("agg_child_health"."fully_immunized_late", 0) AS "fully_immunized_late",
         COALESCE("agg_child_health"."weighed_and_height_measured_in_month", 0) AS "weighed_and_height_measured_in_month",
         COALESCE("agg_child_health"."weighed_and_born_in_month", 0) AS "weighed_and_born_in_month",
-        "agg_child_health"."days_ration_given_child" AS "days_ration_given_child"
+        "agg_child_health"."days_ration_given_child" AS "days_ration_given_child",
+        COALESCE("agg_child_health"."zscore_grading_hfa_recorded_in_month", 0) AS "zscore_grading_hfa_recorded_in_month",
+        COALESCE("agg_child_health"."zscore_grading_wfh_recorded_in_month", 0) AS "zscore_grading_wfh_recorded_in_month"
     FROM "public"."awc_location_months" "awc_location_months"
     LEFT JOIN "public"."agg_child_health" "agg_child_health" ON (
         ("awc_location_months"."month" = "agg_child_health"."month") AND

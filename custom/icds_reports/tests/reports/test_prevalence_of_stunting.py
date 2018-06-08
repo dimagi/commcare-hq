@@ -570,7 +570,7 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
                     "severe": 0,
                     "moderate": 0,
                     "normal": 0,
-                    "total_measured": 7,
+                    "total_measured": 0,
                     "total": 454,
                     'original_name': ["st1"],
                     "fillKey": "0%-25%"
@@ -579,7 +579,7 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
                     "severe": 0,
                     "moderate": 0,
                     "normal": 0,
-                    "total_measured": 25,
+                    "total_measured": 0,
                     "total": 497,
                     'original_name': ["st2"],
                     "fillKey": "0%-25%"
@@ -636,8 +636,8 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
             [
                 {'indicator': 'Total Children (0 - 5 years) eligible to have height measured:', 'value': '951'},
                 {'indicator': 'Total Children (0 - 5 years) with height measured in given month:',
-                 'value': '32'},
-                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '919'},
+                 'value': '0'},
+                {'indicator': 'Number of Children (0 - 5 years) unmeasured:', 'value': '951'},
                 {'indicator': '% children (0 - 5 years) with severely stunted growth:', 'value': '0.00%'},
                 {'indicator': '% children (0 - 5 years) with moderate stunted growth:', 'value': '0.00%'},
                 {'indicator': '% children (0 - 5 years) with normal stunted growth:', 'value': '0.00%'}
@@ -675,7 +675,7 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
             {
                 'block_map': {
                     'moderate': 0,
-                    'total_measured': 7,
+                    'total_measured': 0,
                     'normal': 0,
                     'original_name': ['b1', 'b2'],
                     'severe': 0,
@@ -781,16 +781,16 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
                         "measured": 0
                     },
                     {
-                        "y": 0.09090909090909091,
+                        "y": 1.0,
                         "x": 1491004800000,
                         "all": 981,
-                        "measured": 11
+                        "measured": 1
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 951,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% normal"
@@ -831,13 +831,13 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "all": 981,
-                        "measured": 11
+                        "measured": 1
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 951,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% moderately stunted"
@@ -878,13 +878,13 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
                         "y": 0.0,
                         "x": 1491004800000,
                         "all": 981,
-                        "measured": 11
+                        "measured": 1
                     },
                     {
                         "y": 0.0,
                         "x": 1493596800000,
                         "all": 951,
-                        "measured": 32
+                        "measured": 0
                     }
                 ],
                 "key": "% severely stunted"
@@ -957,20 +957,20 @@ class TestPrevalenceOfStuntingICDSFeatureFlag(TestCase):
         self.assertDictEqual(
             data['tooltips_data'],
             {
-                "s2": {
-                    "total": 153,
-                    "severe": 0,
-                    "moderate": 0,
-                    "total_measured": 4,
-                    "normal": 0
-                },
                 "s1": {
                     "total": 71,
                     "severe": 0,
                     "moderate": 0,
                     "total_measured": 0,
                     "normal": 0
-                }
+                },
+                "s2": {
+                    "total": 153,
+                    "severe": 0,
+                    "moderate": 0,
+                    "total_measured": 0,
+                    "normal": 0
+                },
             }
         )
 

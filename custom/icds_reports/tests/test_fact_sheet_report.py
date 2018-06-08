@@ -478,7 +478,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with severe acute malnutrition (weight-for-height)'},
-                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 100.0, 'sort_key': 100.0},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
@@ -495,13 +495,13 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
             self.get_data()['config']['sections'][0]['rows_config'][7],
             {
                 'average': {
-                    'html': 3.225806451612903,
-                    'sort_key': 3.225806451612903
+                    'html': 100.0,
+                    'sort_key': 100.0
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with moderate acute malnutrition (weight-for-height)'},
                     {'html': 0.0, 'sort_key': 0.0},
-                    {'html': 3.225806451612903, 'sort_key': 3.225806451612903},
+                    {'html': 100.0, 'sort_key': 100.0},
                     {'html': 0}
                 ],
                 'data_source': 'AggChildHealthMonthlyDataSource',
@@ -587,7 +587,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
                 },
                 'data': [
                     {'html': 'Children from 0 - 5 years with normal height-for-age'},
-                    {'html': 9.090909090909092, 'sort_key': 9.090909090909092},
+                    {'html': 100.0, 'sort_key': 100.0},
                     {'html': 0.0, 'sort_key': 0.0},
                     {'html': 0}
                 ],
