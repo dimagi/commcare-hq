@@ -124,7 +124,7 @@ def get_registration_element(restore_user):
 # Case registration blocks do not have a password
 def get_registration_element_for_case(restore_user, case_id, username):
     if not username:
-        username = restore_user.username
+        username = ''
     root = safe_element("Registration")
     root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
     root.append(safe_element("username", username))
