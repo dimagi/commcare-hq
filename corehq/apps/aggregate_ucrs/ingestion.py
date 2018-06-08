@@ -98,7 +98,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
         for column_adapter in secondary_table.get_column_adapters():
             all_query_columns.append(column_adapter.to_sqlalchemy_query_column(sqlalchemy_secondary_table, aggregation_params))
 
-    statement = sqlalchemy.select(
+    select_statment = sqlalchemy.select(
         all_query_columns
     )
 
@@ -116,25 +116,26 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
             )
         )
 
-    statement = statement.select_from(select_table)
+    select_statment = select_statment.select_from(select_table)
     # apply period start/end filters for primary model
     # to match, start should be before the end of the period and end should be after the start
     # this makes the first and last periods inclusive.
-    statement = statement.where(primary_table.c[start.mapped_column_id] < end.value)
-    statement = statement.where(sqlalchemy.or_(primary_table.c[end.mapped_column_id] == None,
+    select_statment = select_statment.where(primary_table.c[start.mapped_column_id] < end.value)
+    select_statment = select_statment.where(sqlalchemy.or_(primary_table.c[end.mapped_column_id] == None,
                                                primary_table.c[end.mapped_column_id] >= start.value))
 
     for primary_column_adapter in primary_column_adapters:
         if primary_column_adapter.is_groupable():
-            statement = statement.group_by(
+            select_statment = select_statment.group_by(
                 primary_column_adapter.to_sqlalchemy_query_column(
                     primary_table, aggregation_params
                 )
             )
 
-    # print(statement)
+    aggregate_table = aggregate_table_adapter.get_table()
+    insert_statement = aggregate_table.insert().from_select(aggregate_table.c, select_statment)
     with aggregate_table_adapter.session_helper.session_context() as session:
-        print(session.execute(statement).fetchall())
+        session.execute(insert_statement)
 
 
     # ideally this should be a single SQL script that takes the form:
