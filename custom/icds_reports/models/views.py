@@ -346,6 +346,8 @@ class AggChildHealthMonthly(models.Model):
     weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
     weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
     days_ration_given_child = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'
