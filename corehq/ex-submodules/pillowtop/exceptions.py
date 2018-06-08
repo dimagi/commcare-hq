@@ -10,3 +10,7 @@ class PillowNotFoundError(Exception):
 
 class PillowtopIndexingError(Exception):
     pass
+
+
+class BulkPorcessingError(Exception):
+    pass

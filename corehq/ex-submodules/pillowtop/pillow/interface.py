@@ -14,7 +14,7 @@ from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
-from pillowtop.exceptions import PillowtopCheckpointReset
+from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError
 from pillowtop.logger import pillow_logging
 import six
 
@@ -107,20 +107,62 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         if updated:
             self._record_checkpoint_in_datadog()
 
+    @property
+    def _should_process_in_chunks(self):
+        # chunked processing is only supported for pillows with single processor
+        return len(self.processors) == 1 and self.processors[0].can_process_in_chunks
+
     def process_changes(self, since, forever):
         """
-        Process changes from the changes stream.
+        Handle changes stream from the changes stream and pass it to processors
         """
         context = PillowRuntimeContext(changes_seen=0)
         try:
+            changes_chunk = []
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 if change:
                     context.changes_seen += 1
-                    self.process_with_error_handling(change, context)
+                    if self._should_process_in_chunks:
+                        changes_chunk.append(change)
+                        if len(changes_chunk) == self.processors[0].chunk_size:
+                            self.process_chunk_with_error_handling(changes_chunk, context)
+                            changes_chunk = []
+                    else:
+                        self.process_with_error_handling(change, context)
                 else:
                     self._update_checkpoint(None, None)
+            self.process_chunk_with_error_handling(changes_chunk, context)
         except PillowtopCheckpointReset:
+            # finish processing any ramining chunk
+            self.process_chunk_with_error_handling(changes_chunk, context)
             self.process_changes(since=self.get_last_checkpoint_sequence(), forever=forever)
+
+    def process_chunk_with_error_handling(self, changes_chunk, context):
+        """
+        Passes given changes_chunk to the processor for chunked processing
+            If there is an exception in bulk processing, falls back
+            to passing changes one by one to the processor
+        """
+        if not changes_chunk:
+            return
+        try:
+            # bulk processing is supported if there is only one processor
+            self.processors[0].process_changes_chunk(changes_chunk)
+        except BulkPorcessingError as ex:
+            notify_exception(
+                None,
+                "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                    pillow_name=self.get_name(),
+                    change_ids=[c.id for c in changes_chunk],
+                    ex=ex
+                ))
+            # fall back to processing one by one
+            for change in changes_chunk:
+                self.process_with_error_handling(change, context)
+        else:
+            for change in changes_chunk:
+                self._update_checkpoint(change, context)
+                self._record_change_success_in_datadog(change)
 
     def process_with_error_handling(self, change, context):
         timer = TimingContext()
