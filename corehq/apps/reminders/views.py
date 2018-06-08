@@ -72,13 +72,6 @@ ACTION_DEACTIVATE = 'deactivate'
 ACTION_DELETE = 'delete'
 
 
-survey_reminders_permission = lambda *args, **kwargs: (
-    require_permission(Permissions.edit_data)(
-        requires_privilege_with_fallback(privileges.INBOUND_SMS)(*args, **kwargs)
-    )
-)
-
-
 def add_migration_in_progress_message(request):
     messages.warning(
         request,
@@ -511,7 +504,7 @@ class AddStructuredKeywordView(BaseMessagingSectionView):
 
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(AddStructuredKeywordView, self).dispatch(*args, **kwargs)
 
     @property
     def parent_pages(self):
@@ -1105,7 +1098,7 @@ class KeywordsListView(BaseMessagingSectionView, CRUDPaginatedViewMixin):
 
     @method_decorator(requires_privilege_with_fallback(privileges.INBOUND_SMS))
     def dispatch(self, *args, **kwargs):
-        return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
+        return super(KeywordsListView, self).dispatch(*args, **kwargs)
 
     @property
     def page_url(self):
