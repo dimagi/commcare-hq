@@ -72,7 +72,19 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         };
 
         self.allProperties = ko.computed(function(){
-            return JSON.stringify(ko.toJS(self.properties()));
+
+            return JSON.stringify(
+                _.map(self.properties(), function(property){
+                    var pertinent_props = {name: property.name(), label: property.label()};
+                    if (property.hidden()){
+                        pertinent_props.hidden = property.hidden();
+                    }
+                    if (property.meta_type()){
+                        pertinent_props.meta_type = property.meta_type();
+                    }
+                    return pertinent_props;
+                })
+            );
         });
 
         return self;
