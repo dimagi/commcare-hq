@@ -7,6 +7,7 @@ from collections import namedtuple
 from datetime import datetime
 import sqlalchemy
 
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM
 from corehq.apps.aggregate_ucrs.column_specs import ConstantColumnAdapter
 from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
@@ -32,10 +33,10 @@ def populate_aggregate_table_data(aggregate_table_adapter):
     while current_month <= end_month:
         print ('processing data for {}'.format(current_month))
         start = AggregationParam(
-            'agg_window_start', json_format_date(current_month.start), aggregate_table_definition.aggregation_start_column
+            AGG_WINDOW_START_PARAM, json_format_date(current_month.start), aggregate_table_definition.aggregation_start_column
         )
         end = AggregationParam(
-            'agg_window_end', json_format_date(current_month.end), aggregate_table_definition.aggregation_end_column
+            AGG_WINDOW_END_PARAM, json_format_date(current_month.end), aggregate_table_definition.aggregation_end_column
         )
         populate_aggregate_table_data_for_time_period(
             aggregate_table_adapter, start, end,
