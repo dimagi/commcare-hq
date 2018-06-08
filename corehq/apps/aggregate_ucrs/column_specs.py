@@ -60,6 +60,14 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
     def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         pass
 
+    @abstractmethod
+    def is_groupable(self):
+        """
+        Whether the column should be included in the group by clause when doing aggregation queries
+        """
+        pass
+
+
 
 PRIMARY_COLUMN_TYPE_REFERENCE = 'reference'
 PRIMARY_COLUMN_TYPE_CONSTANT = 'constant'
@@ -97,6 +105,9 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
 
     def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         return self.query_column_provider.get_query_column(sqlalchemy_table, aggregation_params)
+
+    def is_groupable(self):
+        return self.query_column_provider.is_groupable()
 
 
 def IdColumnAdapter():
@@ -143,6 +154,9 @@ class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
         }
         return type_to_class_mapping[db_column.column_type](db_column)
 
+    def is_groupable(self):
+        return True
+
 
 class ConstantColumnProperties(jsonobject.JsonObject):
     constant = DefaultProperty(required=True)
@@ -158,6 +172,9 @@ class ConstantColumnAdapter(PrimaryColumnAdapter):
     def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         # https://stackoverflow.com/a/7546802/8207
         return sqlalchemy.bindparam(self.column_id, self.properties.constant)
+
+    def is_groupable(self):
+        return False
 
 
 class ReferenceColumnProperties(jsonobject.JsonObject):
@@ -229,6 +246,9 @@ class SecondaryColumnAdapter(ColumnAdapater):
             SECONDARY_COLUMN_TYPE_SUM: SumColumnAdapter,
         }
         return type_to_class_mapping[db_column.aggregation_type](db_column)
+
+    def is_groupable(self):
+        return False
 
 
 class SingleFieldColumnProperties(jsonobject.JsonObject):
