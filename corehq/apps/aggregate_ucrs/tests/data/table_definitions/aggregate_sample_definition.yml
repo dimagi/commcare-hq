@@ -29,7 +29,7 @@ primary_table:
       config_params:
         # sql statements will only be able to access the current row
         datatype: small_integer
-        statement: lmp < :month_end and (delivery_date is null or delivery_date >= :month_start)
+        statement: CASE WHEN lmp < :month_end and (delivery_date is null or delivery_date >= :month_start) THEN 1 ELSE 0 END
         statement_params:
           # these '_agg' things are magic variables that let you reference the aggregation window's start/end conditions
           month_start: :agg_window_start
