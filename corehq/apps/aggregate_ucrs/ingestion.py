@@ -125,7 +125,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
                                                primary_table.c[end.mapped_column_id] >= start.value))
 
     for primary_column_adapter in primary_column_adapters:
-        if not isinstance(primary_column_adapter, ConstantColumnAdapter):
+        if primary_column_adapter.is_groupable():
             statement = statement.group_by(
                 primary_column_adapter.to_sqlalchemy_query_column(
                     primary_table, aggregation_params
