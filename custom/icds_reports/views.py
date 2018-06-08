@@ -1667,9 +1667,10 @@ class ICDSAppTranslations(BaseDomainView):
                                 resource_pending_translations = self.resource_pending_translations(
                                     request.domain, form_data)
                                 if resource_pending_translations:
-                                    messages.error(request,
-                                                   _("Resources yet to be completely translated, for ex: {}".format(
-                                                       resource_pending_translations)))
+                                    messages.error(
+                                        request,
+                                        _("Resources yet to be completely translated, for ex: {}".format(
+                                            resource_pending_translations)))
                                     return self.get(request, *args, **kwargs)
                             except ResourceMissing as e:
                                 messages.error(request, e)
