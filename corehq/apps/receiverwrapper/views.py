@@ -48,7 +48,7 @@ from corehq import toggles
 
 PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_SUBMISSION_PROBABILITY', 0))
 PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_SUBMISSION_LIMIT')
-PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else None
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
 @profile_prod('commcare_receiverwapper_process_form.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
