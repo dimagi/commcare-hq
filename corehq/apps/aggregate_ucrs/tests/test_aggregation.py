@@ -193,6 +193,10 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         populate_aggregate_table_data(aggregate_table_adapter)
         self._check_results()
 
+        # confirm it's also idempotent
+        populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_results()
+
     def _check_results(self):
         aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
         aggregate_table = aggregate_table_adapter.get_table()
