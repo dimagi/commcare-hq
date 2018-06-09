@@ -6,6 +6,7 @@ This module deals with data ingestion: populating the tables from other tables.
 from collections import namedtuple
 from datetime import datetime
 import sqlalchemy
+from sqlalchemy.dialects.postgresql import insert
 
 from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM
 from corehq.apps.aggregate_ucrs.date_utils import Month
@@ -131,6 +132,21 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
             )
 
     aggregate_table = aggregate_table_adapter.get_table()
-    insert_statement = aggregate_table.insert().from_select(aggregate_table.c, select_statment)
+    primary_key_columns = [
+        aggregate_table.c[spec.column_id] for spec in primary_column_adapters if spec.is_primary_key()
+    ]
+    secondary_column_ids = [
+        spec.column_id for spec in aggregate_table_adapter.config.get_column_adapters() if not spec.is_primary_key()
+    ]
+    insert_statement = insert(aggregate_table).from_select(
+        aggregate_table.c, select_statment
+    )
+    insert_statement = insert_statement.on_conflict_do_update(
+        index_elements=primary_key_columns,
+        set_={
+            k: insert_statement.excluded[k] for k in secondary_column_ids
+        }
+
+    )
     with aggregate_table_adapter.session_helper.session_context() as session:
         session.execute(insert_statement)
