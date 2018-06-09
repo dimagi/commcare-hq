@@ -10,7 +10,6 @@ from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
-from corehq.apps.aggregate_ucrs.date_utils import Month
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
     get_aggregation_end_period
