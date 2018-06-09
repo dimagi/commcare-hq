@@ -90,7 +90,6 @@ class Transifex:
 
     def _get_resource_slugs_for_version(self):
         """
-        :param version: version number
         :return: list of resource slugs corresponding to version
         """
         return [r['name']
@@ -102,7 +101,6 @@ class Transifex:
         confirms that resource slugs provided are for the expected version by checking for its name to end with
         v[version number] like v15 for version 15.
         :param resource_slugs: list of resource slugs
-        :param version: version
         """
         for resource_slug in resource_slugs:
             if not resource_slug.endswith("v%s" % self.version):
@@ -138,7 +136,7 @@ class Transifex:
         resource_slugs = self._get_resource_slugs_for_version()
         resources_pending_translations = []
         for resource_slug in resource_slugs:
-            if not self.client.confirm_complete_translation(resource_slug, self.source_lang):
+            if not self.client.translation_completed(resource_slug, self.source_lang):
                 if break_if_true:
                     return resource_slug
                 resources_pending_translations.append(resource_slug)
@@ -149,4 +147,7 @@ class Transifex:
         return parser.generate_excel_file()
 
     def source_lang_is(self, hq_lang_code):
+        """
+        confirm is source lang on transifex is same as hq lang code
+        """
         return self.client.source_lang_is(hq_lang_code)
