@@ -39,8 +39,6 @@ from custom.icds.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
 )
-from custom.icds.translations.integrations.client import TransifexApiClient
-from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
@@ -1629,24 +1627,12 @@ class ICDSAppTranslations(BaseDomainView):
         return
 
     @staticmethod
-    def ensure_source_language(form_data):
-        transifex_project_slug = form_data.get('transifex_project_slug')
-        source_language_code = form_data.get('source_lang')
-        transifex_account_details = settings.TRANSIFEX_DETAILS
-        client = TransifexApiClient(transifex_account_details.get('token'),
-                                    transifex_account_details.get('organization'),
-                                    transifex_project_slug)
-        project_source_langugage_code = client.project_details().json().get('source_language_code')
-        return project_source_langugage_code == SOURCE_LANGUAGE_MAPPING.get(source_language_code,
-                                                                            source_language_code)
-
-    @staticmethod
-    def resource_pending_translations(domain, form_data):
+    @memoized
+    def transifex(domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
         source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-        transifex = Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                              form_data['version'])
-        return transifex.resources_pending_translations(break_if_true=True)
+        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                         form_data['version'])
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
@@ -1655,7 +1641,9 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                if not self.ensure_source_language(form_data):
+                source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+                transifex = self.transifex(request.domain, form_data)
+                if not transifex.source_lang_is(source_language_code):
                     messages.error(request, _('Source lang selected not available for the project'))
                 else:
                     if form_data['action'] == 'push':
@@ -1665,8 +1653,9 @@ class ICDSAppTranslations(BaseDomainView):
                     else:
                         if form_data['perform_translated_check']:
                             try:
-                                resource_pending_translations = self.resource_pending_translations(
-                                    request.domain, form_data)
+                                resource_pending_translations = (transifex.
+                                                                 resources_pending_translations(
+                                                                    break_if_true=True))
                                 if resource_pending_translations:
                                     messages.error(
                                         request,

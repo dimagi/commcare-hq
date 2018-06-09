@@ -6,7 +6,7 @@ import json
 import tempfile
 import polib
 
-from custom.icds.translations.integrations.const import API_USER
+from custom.icds.translations.integrations.const import API_USER, SOURCE_LANGUAGE_MAPPING
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 
 
@@ -48,7 +48,8 @@ class TransifexApiClient():
             url, data=json.dumps(data), auth=self._auth, headers=headers,
         )
 
-    def upload_translation(self, path_to_pofile, resource_slug, resource_name, target_lang_code):
+    def upload_translation(self, path_to_pofile, resource_slug, resource_name, hq_lang_code):
+        target_lang_code = self.transifex_lang_code(hq_lang_code)
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}".format(
             self.project, resource_name, target_lang_code)
         content = open(path_to_pofile, 'r').read()
@@ -80,13 +81,15 @@ class TransifexApiClient():
             raise ResourceMissing("Resource {} not found for lang {}".format(resource_slug, lang))
         raise Exception(response.content)
 
-    def confirm_complete_translation(self, resource_slug, lang):
+    def confirm_complete_translation(self, resource_slug, hq_lang_code):
         """
         check if a resource has been completely translated for the target lang
         """
+        lang = self.transifex_lang_code(hq_lang_code)
         return self.resource_details(resource_slug, lang)['completed'] == "100%"
 
-    def get_translation(self, resource_slug, lang):
+    def get_translation(self, resource_slug, hq_lang_code):
+        lang = self.transifex_lang_code(hq_lang_code)
         url = "https://www.transifex.com/api/2/project/{}/resource/{}/translation/{}/?file".format(
             self.project, resource_slug, lang
         )
@@ -97,3 +100,13 @@ class TransifexApiClient():
         with open(temp_file.name, 'w') as f:
             f.write(response.content)
         return polib.pofile(temp_file.name)
+
+    @staticmethod
+    def transifex_lang_code(hq_lang_code):
+        return SOURCE_LANGUAGE_MAPPING.get(hq_lang_code, hq_lang_code)
+
+    def source_lang_is(self, hq_lang_code):
+        return self.transifex_lang_code(hq_lang_code) == self.get_source_lang()
+
+    def get_source_lang(self):
+        return self.project_details().json().get('source_language_code')

@@ -11,7 +11,6 @@ from memoized import memoized
 from corehq.apps.app_manager.app_translations.generators import POFileGenerator
 from corehq.apps.app_manager.app_translations.parser import TranslationsParser
 from custom.icds.translations.integrations.client import TransifexApiClient
-from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
 
 
 class Transifex:
@@ -74,12 +73,9 @@ class Transifex:
                     resource_name
                 )
             else:
-                lang_code = SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)
                 response = self.client.upload_translation(
-                    path_to_file,
-                    resource_name,
-                    resource_name,
-                    lang_code
+                    path_to_file, resource_name,
+                    resource_name, self.source_lang
                 )
             if response.status_code in [200, 201]:
                 file_uploads[resource_name] = _("Successfully Uploaded")
@@ -101,7 +97,7 @@ class Transifex:
                 for r in self.client.list_resources().json()
                 if r['name'].endswith("v%s" % self.version)]
 
-    def _ensure_resource_slugs_for_version(self, resource_slugs):
+    def _ensure_resources_belong_to_version(self, resource_slugs):
         """
         confirms that resource slugs provided are for the expected version by checking for its name to end with
         v[version number] like v15 for version 15.
@@ -121,7 +117,7 @@ class Transifex:
         :return: dict of resource_slug mapped to POEntry objects
         """
         if resource_slugs:
-            self._ensure_resource_slugs_for_version(resource_slugs)
+            self._ensure_resources_belong_to_version(resource_slugs)
         client = self.client
         if not resource_slugs:
             resource_slugs = self._get_resource_slugs_for_version()
@@ -129,10 +125,7 @@ class Transifex:
             raise Exception("No resources found for this version")
         po_entries = {}
         for resource_slug in resource_slugs:
-            po_entries[resource_slug] = client.get_translation(
-                resource_slug,
-                SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)
-            )
+            po_entries[resource_slug] = client.get_translation(resource_slug, self.source_lang)
         return po_entries
 
     def resources_pending_translations(self, break_if_true=False):
@@ -144,9 +137,7 @@ class Transifex:
         resource_slugs = self._get_resource_slugs_for_version()
         resources_pending_translations = []
         for resource_slug in resource_slugs:
-            if not self.client.confirm_complete_translation(
-                    resource_slug,
-                    SOURCE_LANGUAGE_MAPPING.get(self.source_lang, self.source_lang)):
+            if not self.client.confirm_complete_translation(resource_slug, self.source_lang):
                 if break_if_true:
                     return resource_slug
                 resources_pending_translations.append(resource_slug)
@@ -155,3 +146,6 @@ class Transifex:
     def generate_excel_file(self):
         parser = TranslationsParser(self)
         return parser.generate_excel_file()
+
+    def source_lang_is(self, hq_lang_code):
+        return self.client.source_lang_is(hq_lang_code)
