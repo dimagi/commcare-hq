@@ -1659,9 +1659,8 @@ class ICDSAppTranslations(BaseDomainView):
         return True
 
     def perform_request(self, request, form_data):
-        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
         transifex = self.transifex(request.domain, form_data)
-        if not transifex.source_lang_is(source_language_code):
+        if not transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
