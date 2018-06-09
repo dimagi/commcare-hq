@@ -13,7 +13,7 @@ class AggregationBaseTestMixin(TestFileMixin):
 
     @classmethod
     def get_config_json(cls):
-        config_yml = cls.get_file('aggregate_sample_definition', 'yml')
+        config_yml = cls.get_file('monthly_aggregate_definition', 'yml')
         return yaml.load(config_yml)
 
     @classmethod
