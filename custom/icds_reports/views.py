@@ -1616,9 +1616,7 @@ class ICDSAppTranslations(BaseDomainView):
     @property
     def page_context(self):
         transifex_details_available = transifex_details_available_for_domain(self.domain)
-        context = {
-            'integration_available': transifex_details_available
-        }
+        context = {'integration_available': transifex_details_available}
         if transifex_details_available:
             context['translations_form'] = self.translations_form
         return context
@@ -1634,6 +1632,44 @@ class ICDSAppTranslations(BaseDomainView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'])
 
+    @staticmethod
+    def perform_push_request(request, form_data):
+        push_translation_files_to_transifex.delay(request.domain, form_data)
+        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        return True
+
+    @staticmethod
+    def perform_pull_request(request, form_data, transifex):
+        if form_data['perform_translated_check']:
+            try:
+                resource_pending_translations = (transifex.
+                                                 resources_pending_translations(break_if_true=True))
+                if resource_pending_translations:
+                    messages.error(
+                        request,
+                        _("Resources yet to be completely translated, for ex: {}".format(
+                            resource_pending_translations)))
+                    return False
+            except ResourceMissing as e:
+                messages.error(request, e)
+                return False
+        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                    'You should receive an email shortly'))
+        return True
+
+    def perform_request(self, request, form_data):
+        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+        transifex = self.transifex(request.domain, form_data)
+        if not transifex.source_lang_is(source_language_code):
+            messages.error(request, _('Source lang selected not available for the project'))
+            return False
+        else:
+            if form_data['action'] == 'push':
+                return self.perform_push_request(request, form_data)
+            else:
+                return self.perform_pull_request(request, form_data, transifex)
+
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
             messages.error(request, _('Transifex account not set up for this environment'))
@@ -1641,33 +1677,6 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-                transifex = self.transifex(request.domain, form_data)
-                if not transifex.source_lang_is(source_language_code):
-                    messages.error(request, _('Source lang selected not available for the project'))
-                else:
-                    if form_data['action'] == 'push':
-                        push_translation_files_to_transifex.delay(request.domain, form_data)
-                        messages.success(request,
-                                         _('Successfully enqueued request to submit files for translations'))
-                    else:
-                        if form_data['perform_translated_check']:
-                            try:
-                                resource_pending_translations = (transifex.
-                                                                 resources_pending_translations(
-                                                                    break_if_true=True))
-                                if resource_pending_translations:
-                                    messages.error(
-                                        request,
-                                        _("Resources yet to be completely translated, for ex: {}".format(
-                                            resource_pending_translations)))
-                                    return self.get(request, *args, **kwargs)
-                            except ResourceMissing as e:
-                                messages.error(request, e)
-                                return self.get(request, *args, **kwargs)
-                        pull_translation_files_from_transifex.delay(request.domain, form_data,
-                                                                    request.user.email)
-                        messages.success(request, _('Successfully enqueued request to pull for translations. '
-                                                    'You should receive an email shortly'))
+                if self.perform_request(request, form_data):
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
