@@ -127,7 +127,7 @@ def import_build(request):
     build_number = request.POST.get('build_number')
 
     try:
-        SemanticVersionProperty().validate(version)
+        SemanticVersionProperty(required=True).validate(version)
     except BadValueError as e:
         return json_response({
             'reason': 'Badly formatted version',

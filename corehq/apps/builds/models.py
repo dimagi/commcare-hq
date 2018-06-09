@@ -16,6 +16,8 @@ class SemanticVersionProperty(StringProperty):
 
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
+        if not self.required and not value:
+            return value
         try:
             major, minor, point = value.split('.')
             int(major)
@@ -167,7 +169,7 @@ class CommCareBuild(Document):
 
 
 class BuildSpec(DocumentSchema):
-    version = StringProperty()
+    version = SemanticVersionProperty(required=False)
     build_number = IntegerProperty(required=False)
     latest = BooleanProperty()
 
