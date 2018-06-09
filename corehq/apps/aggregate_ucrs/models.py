@@ -7,8 +7,6 @@ from memoized import memoized
 
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter
-from corehq.apps.userreports.datatypes import DATA_TYPE_STRING, DATA_TYPE_DATE
-from corehq.apps.userreports.indicators import Column
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
