@@ -12,7 +12,6 @@ from corehq.apps.dump_reload.const import DATETIME_FORMAT
 class TranslationsParser:
     def __init__(self, transifex):
         self.transifex = transifex
-        self.translations = {}
         self.key_lang_str = '{}{}'.format(self.transifex.lang_prefix, self.transifex.key_lang)
         self.source_lang_str = '{}{}'.format(self.transifex.lang_prefix, self.transifex.source_lang)
 
@@ -41,15 +40,6 @@ class TranslationsParser:
             context = po_entry.msgctxt
             _index, _type, _sheet_name, _unique_id = re.match(context_regex, context).groups()
             ws.append([_type, _sheet_name, po_entry.msgid, po_entry.msgstr, _unique_id])
-            self.translations[ws.title].append(
-                {
-                    'Type': _type,
-                    'sheet_name': _sheet_name,
-                    self.key_lang_str: po_entry.msgid,
-                    self.source_lang_str: po_entry.msgstr,
-                    'unique_id': _unique_id
-                }
-            )
 
     def _add_module_sheet(self, ws, po_entries):
         # expected context format
@@ -60,14 +50,6 @@ class TranslationsParser:
             context = po_entry.msgctxt
             _index, _case_property, _list_or_detail = re.match(context_regex, context).groups()
             ws.append([_case_property, _list_or_detail, po_entry.msgid, po_entry.msgstr])
-            self.translations[ws.title].append(
-                {
-                    'case_property': _case_property,
-                    'list_or_detail': _list_or_detail,
-                    self.key_lang_str: po_entry.msgid,
-                    self.source_lang_str: po_entry.msgstr
-                }
-            )
 
     def _add_form_sheet(self, ws, po_entries):
         # expected context regex
@@ -78,13 +60,6 @@ class TranslationsParser:
             context = po_entry.msgctxt
             _index, _label = re.match(context_regex, context).groups()
             ws.append([_label, po_entry.msgid, po_entry.msgstr])
-            self.translations[ws.title].append(
-                {
-                    'label': _label,
-                    self.key_lang_str: po_entry.msgid,
-                    self.source_lang_str: po_entry.msgstr
-                }
-            )
 
     def result_file_name(self, version):
         return ("TransifexTranslations {}-{}:v{} {}.xlsx".format(
@@ -97,7 +72,6 @@ class TranslationsParser:
         all_translations = self.transifex.get_translations(resource_slugs)
         for resource_name, po_entries in all_translations.items():
             sheet_name = resource_name.split("_v%s" % version)[0]
-            self.translations[sheet_name] = []
             ws = wb.create_sheet(title=sheet_name)
             self._add_sheet(ws, po_entries)
 
