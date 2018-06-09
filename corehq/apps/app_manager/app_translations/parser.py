@@ -16,7 +16,7 @@ class TranslationsParser:
         self.key_lang_str = '{}{}'.format(self.transifex.lang_prefix, self.transifex.key_lang)
         self.source_lang_str = '{}{}'.format(self.transifex.lang_prefix, self.transifex.source_lang)
 
-    def _parse_sheet(self, ws, po_entries):
+    def _add_sheet(self, ws, po_entries):
         """
         :param ws: workbook sheet object
         :param po_entries: list of POEntry Objects to read translations from
@@ -24,15 +24,15 @@ class TranslationsParser:
         """
         sheet_name = ws.title
         if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
-            self._parse_module_and_form_sheet(ws, po_entries)
+            self._add_module_and_form_sheet(ws, po_entries)
         elif 'module' in sheet_name and 'form' not in sheet_name:
-            self._parse_module_sheet(ws, po_entries)
+            self._add_module_sheet(ws, po_entries)
         elif 'module' in sheet_name and 'form' in sheet_name:
-            self._parse_form_sheet(ws, po_entries)
+            self._add_form_sheet(ws, po_entries)
         else:
             raise Exception("Got unexpected sheet name %s" % sheet_name)
 
-    def _parse_module_and_form_sheet(self, ws, po_entries):
+    def _add_module_and_form_sheet(self, ws, po_entries):
         # expected context format
         # index:Module or Form: sheet name for module/form: unique id
         context_regex = r'^(\d+):(Module|Form):(\w+):(\w+)$'
@@ -51,7 +51,7 @@ class TranslationsParser:
                 }
             )
 
-    def _parse_module_sheet(self, ws, po_entries):
+    def _add_module_sheet(self, ws, po_entries):
         # expected context format
         # index: case property: list/detail
         context_regex = r'^(\d+):(.+):(list|detail)$'
@@ -69,7 +69,7 @@ class TranslationsParser:
                 }
             )
 
-    def _parse_form_sheet(self, ws, po_entries):
+    def _add_form_sheet(self, ws, po_entries):
         # expected context regex
         # index: label
         context_regex = r'^(\d+):(.+)$'
@@ -99,7 +99,7 @@ class TranslationsParser:
             sheet_name = resource_name.split("_v%s" % version)[0]
             self.translations[sheet_name] = []
             ws = wb.create_sheet(title=sheet_name)
-            self._parse_sheet(ws, po_entries)
+            self._add_sheet(ws, po_entries)
 
     def generate_excel_file(self, resource_slugs=None):
         version = self.transifex.version
