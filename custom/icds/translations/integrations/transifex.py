@@ -51,8 +51,8 @@ class Transifex:
             self._cleanup()
             six.reraise(t, v, tb)
 
-    @memoized
     @property
+    @memoized
     def client(self):
         transifex_account_details = settings.TRANSIFEX_DETAILS
         if transifex_account_details:
