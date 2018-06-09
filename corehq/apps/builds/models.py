@@ -17,9 +17,10 @@ class SemanticVersionProperty(StringProperty):
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
         try:
-            major, minor, _ = value.split('.')
+            major, minor, point = value.split('.')
             int(major)
             int(minor)
+            int(point)
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
