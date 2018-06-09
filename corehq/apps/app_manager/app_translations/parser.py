@@ -94,9 +94,8 @@ class TranslationsParser:
 
     def _generate_sheets(self, wb, resource_slugs):
         version = self.transifex.version
-        all_translations = self.transifex.get_translations(version, resource_slugs)
-        for resource_name in all_translations:
-            po_entries = all_translations[resource_name]
+        all_translations = self.transifex.get_translations(resource_slugs)
+        for resource_name, po_entries in all_translations.items():
             sheet_name = resource_name.split("_v%s" % version)[0]
             self.translations[sheet_name] = []
             ws = wb.create_sheet(title=sheet_name)

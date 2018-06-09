@@ -1644,8 +1644,9 @@ class ICDSAppTranslations(BaseDomainView):
     def resource_pending_translations(domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
         source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-        transifex = Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug)
-        return transifex.resources_pending_translations(form_data['version'], break_if_true=True)
+        transifex = Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                              form_data['version'])
+        return transifex.resources_pending_translations(break_if_true=True)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):

@@ -77,7 +77,7 @@ def pull_translation_files_from_transifex(domain, data, email=None):
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
                           version)
-    translation_file, filename = transifex.parser.generate_excel_file()
+    translation_file, filename = transifex.generate_excel_file()
     try:
         with open(translation_file.name) as file_obj:
             email = EmailMessage(
