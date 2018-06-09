@@ -116,16 +116,17 @@ class Transifex:
         :param resource_slugs: optional argument. All resource slugs corresponding to version are used otherwise.
         :return: dict of resource_slug mapped to POEntry objects
         """
+        # if passed ensure belonging to version
         if resource_slugs:
             self._ensure_resources_belong_to_version(resource_slugs)
-        client = self.client
-        if not resource_slugs:
+        else:
             resource_slugs = self._get_resource_slugs_for_version()
+        # if still no resources raise error
         if not resource_slugs:
             raise Exception("No resources found for this version")
         po_entries = {}
         for resource_slug in resource_slugs:
-            po_entries[resource_slug] = client.get_translation(resource_slug, self.source_lang)
+            po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang)
         return po_entries
 
     def resources_pending_translations(self, break_if_true=False):
