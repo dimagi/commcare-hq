@@ -197,7 +197,6 @@ DEFAULT_APPS = (
     'crispy_forms',
     'gunicorn',
     'compressor',
-    'mptt',
     'tastypie',
     'django_otp',
     'django_otp.plugins.otp_static',
@@ -262,7 +261,6 @@ HQ_APPS = (
     'corehq.apps.crud',
     'corehq.apps.custom_data_fields',
     'corehq.apps.receiverwrapper',
-    'corehq.motech.repeaters',
     'corehq.apps.app_manager',
     'corehq.apps.es',
     'corehq.apps.fixtures',
@@ -318,7 +316,6 @@ HQ_APPS = (
     'corehq.preindex',
     'corehq.tabs',
     'custom.apps.wisepill',
-    'custom.fri',
     'custom.openclinica',
     'fluff',
     'fluff.fluff_filter',
@@ -331,8 +328,10 @@ HQ_APPS = (
     'corehq.apps.styleguide',
     'corehq.messaging.smsbackends.grapevine',
     'corehq.apps.dashboard',
+    'corehq.motech',
     'corehq.motech.dhis2',
     'corehq.motech.openmrs',
+    'corehq.motech.repeaters',
     'corehq.util',
     'dimagi.ext',
     'corehq.doctypemigrations',
@@ -372,7 +371,6 @@ HQ_APPS = (
     'custom.pnlppgi',
     'custom.nic_compliance',
     'custom.hki',
-    'corehq.motech.openmrs',
     'custom.champ',
 )
 
@@ -425,10 +423,6 @@ INSTALLED_APPS = ('hqscripts',) + DEFAULT_APPS + HQ_APPS + ENIKSHAY_APPS
 # after login, django redirects to this URL
 # rather than the default 'accounts/profile'
 LOGIN_REDIRECT_URL = 'homepage'
-
-# may be overridden in localsettings
-IS_LOCATION_CTE_ENABLED = True
-IS_LOCATION_CTE_ONLY = True
 
 REPORT_CACHE = 'default'  # or e.g. 'redis'
 
@@ -683,7 +677,7 @@ AUDIT_MODEL_SAVE = [
 
 AUDIT_VIEWS = [
     'corehq.apps.settings.views.ChangeMyPasswordView',
-    'corehq.apps.hqadmin.views.AuthenticateAs',
+    'corehq.apps.hqadmin.views.users.AuthenticateAs',
 ]
 
 AUDIT_MODULES = [
@@ -859,10 +853,10 @@ WAREHOUSE_DATABASE_ALIAS = 'default'
 # Example format:
 # {
 # "users":
-#     {
-#      ["pgmain", 5],
-#      ["pgmainstandby", 5]
-#     }
+#     [
+#      ("pgmain", 5),
+#      ("pgmainstandby", 5)
+#     ]
 # }
 LOAD_BALANCED_APPS = {}
 
@@ -1411,7 +1405,6 @@ COUCHDB_APPS = [
     'phonelog',
     'registration',
     'wisepill',
-    'fri',
     'crs_reports',
     'grapevine',
     'openclinica',
@@ -1562,10 +1555,6 @@ SMS_GATEWAY_TIMEOUT = 5
 # If the function is not in here, it will not be called.
 # Used by the old reminders framework
 ALLOWED_CUSTOM_CONTENT_HANDLERS = {
-    "FRI_SMS_CONTENT": "custom.fri.api.custom_content_handler",
-    "FRI_SMS_CATCHUP_CONTENT": "custom.fri.api.catchup_custom_content_handler",
-    "FRI_SMS_SHIFT": "custom.fri.api.shift_custom_content_handler",
-    "FRI_SMS_OFF_DAY": "custom.fri.api.off_day_custom_content_handler",
     "UCLA_GENERAL_HEALTH": "custom.ucla.api.general_health_message_bank_content",
     "UCLA_MENTAL_HEALTH": "custom.ucla.api.mental_health_message_bank_content",
     "UCLA_SEXUAL_HEALTH": "custom.ucla.api.sexual_health_message_bank_content",
@@ -1671,9 +1660,7 @@ AVAILABLE_CUSTOM_RULE_ACTIONS = {
 }
 
 # These are custom templates which can wrap default the sms/chat.html template
-CUSTOM_CHAT_TEMPLATES = {
-    "FRI": "fri/chat.html",
-}
+CUSTOM_CHAT_TEMPLATES = {}
 
 CASE_WRAPPER = 'corehq.apps.hqcase.utils.get_case_wrapper'
 
@@ -1869,6 +1856,7 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_3.json'),
     os.path.join('custom', 'abt', 'reports', 'spray_progress_level_4.json'),
     os.path.join('custom', 'abt', 'reports', 'supervisory_report.json'),
+    os.path.join('custom', 'abt', 'reports', 'supervisory_report_v2.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_3_person_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_household_cases.json'),
     os.path.join('custom', 'icds_reports', 'ucr', 'reports', 'asr_2_lactating.json'),
@@ -1957,6 +1945,7 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'succeed', 'data_sources', 'patient_task_list.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'sms_case.json'),
     os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory.json'),
+    os.path.join('custom', 'abt', 'reports', 'data_sources', 'supervisory_v2.json'),
     os.path.join('custom', '_legacy', 'mvp', 'ucr', 'reports', 'data_sources', 'va_datasource.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'malaria_consortium.json'),
     os.path.join('custom', 'reports', 'mc', 'data_sources', 'weekly_forms.json'),
@@ -2083,6 +2072,7 @@ ES_XFORM_FULL_INDEX_DOMAINS = [
 
 CUSTOM_UCR_EXPRESSIONS = [
     ('abt_supervisor', 'custom.abt.reports.expressions.abt_supervisor_expression'),
+    ('abt_supervisor_v2', 'custom.abt.reports.expressions.abt_supervisor_v2_expression'),
     ('succeed_referenced_id', 'custom.succeed.expressions.succeed_referenced_id'),
     ('location_type_name', 'corehq.apps.locations.ucr_expressions.location_type_name'),
     ('location_parent_id', 'corehq.apps.locations.ucr_expressions.location_parent_id'),
@@ -2136,8 +2126,6 @@ REMOTE_APP_NAMESPACE = "%(domain)s.commcarehq.org"
 DOMAIN_MODULE_MAP = {
     'care-bihar': 'custom.bihar',
     'bihar': 'custom.bihar',
-    'fri': 'custom.fri.reports',
-    'fri-testing': 'custom.fri.reports',
     'hsph-dev': 'hsph',
     'hsph-betterbirth-pilot-2': 'hsph',
     'mc-inscale': 'custom.reports.mc',
@@ -2297,6 +2285,3 @@ if RESTRICT_USED_PASSWORDS_FOR_NIC_COMPLIANCE:
     ]
 
 PACKAGE_MONITOR_REQUIREMENTS_FILE = os.path.join(FILEPATH, 'requirements', 'requirements.txt')
-
-# IS_LOCATION_CTE_ONLY is always False when IS_LOCATION_CTE_ENABLED == False
-IS_LOCATION_CTE_ONLY = bool(IS_LOCATION_CTE_ENABLED and IS_LOCATION_CTE_ONLY)

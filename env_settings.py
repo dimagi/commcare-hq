@@ -23,6 +23,7 @@ ES_META = {
     # Default settings for aliases on all environments (overrides default settings)
     'hqdomains': {
         "settings": {
+            "number_of_replicas": 0,
             "analysis": {
                 "analyzer": {
                     "default": {
@@ -41,6 +42,7 @@ ES_META = {
 
     'hqapps': {
         "settings": {
+            "number_of_replicas": 0,
             "analysis": {
                 "analyzer": {
                     "default": {

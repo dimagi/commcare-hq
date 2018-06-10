@@ -155,16 +155,15 @@ hqDefine('app_manager/js/releases/releases', function () {
               + '&download_target_version=' + (self.download_targeted_version() ? 'true' : '');
         });
 
-        self.sms_url = function(index) {
-            if (index === 0) { // sending to sms
-                return self.short_url();
-            } else { // sending to odk
-                if (self.include_media() && self.short_odk_media_url()) {
-                    return self.short_odk_media_url();
-                } else {
-                    return self.short_odk_url();
-                }
+        self.sms_odk_url = function() {
+            if (self.include_media() && self.short_odk_media_url()) {
+                return self.short_odk_media_url();
             }
+            return self.short_odk_url();
+        };
+
+        self.sms_url = function() {
+            return self.short_url();
         };
 
         self.download_application_zip = function (multimediaOnly, buildProfile) {

@@ -300,7 +300,7 @@
                 <div class="container-fluid">
                     <div class="row">
                         <div class="col-xs-12">
-                            <a href="http://www.commcarehq.org/" class="footer-link-img">
+                            <a href="https://dimagi.com/commcare/" class="footer-link-img">
                                 <img src="{% static 'hqwebapp/images/commcare-flower-footer.png' %}"
                                      alt="CommCare"
                                      height="30"  />
@@ -312,13 +312,13 @@
                             </a>
                         &nbsp;
                             {% blocktrans %}
-                                <a href="http://www.commcarehq.org/">CommCare HQ</a>
+                                <a href="https://dimagi.com/commcare/">CommCare</a>
                                 is copyright &copy;
                             {% endblocktrans %}{% now "Y" %}
                             <a href="http://www.dimagi.com/">Dimagi, Inc.</a>
                             {% if request.user.is_authenticated %}
                                 &nbsp;|&nbsp;
-                                <a href="http://www.dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
+                                <a href="https://dimagi.com/commcare/">{% trans 'Learn more about CommCare HQ' %}</a>
                             {% endif %}
                             &nbsp;|&nbsp;
                             <a href="http://www.dimagi.com/terms/latest/privacy/" target="_blank">

@@ -206,7 +206,7 @@ class ExpandedMobileWorkerFilter(BaseMultipleOptionFilter):
         "Specify groups and users to include in the report")
     is_cacheable = False
     options_url = 'emwf_options'
-    search_help_inline = mark_safe(ugettext_lazy(
+    search_help_inline = ugettext_lazy(mark_safe(
         'To quick search for a location, write your query as "parent"/descendant. '
         'For more info, see the '
         '<a href="https://confluence.dimagi.com/display/commcarepublic/Exact+Search+for+Locations" '

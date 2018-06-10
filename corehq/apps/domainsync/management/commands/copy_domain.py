@@ -22,6 +22,7 @@ from corehq.apps.domainsync.config import DocumentTransform, save
 from dimagi.utils.parsing import json_format_date
 from six.moves import range
 import six
+from io import open
 
 DEFAULT_EXCLUDE_TYPES = [
     'ReportNotification',
@@ -296,7 +297,7 @@ class Command(BaseCommand):
         for i in range(1000):  # arbitrarily large number
             candidate = name % i
             if not os.path.isfile(candidate):
-                return open(candidate, 'a', buffering=1)
+                return open(candidate, 'a', buffering=1, encoding='utf-8')
 
 
 class Worker(Process):

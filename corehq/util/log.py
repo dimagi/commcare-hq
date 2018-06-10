@@ -27,6 +27,7 @@ from corehq.util.datadog.utils import get_url_group, sanitize_url
 from corehq.util.datadog.metrics import ERROR_COUNT
 from corehq.util.datadog.const import DATADOG_UNKNOWN
 from six.moves import range
+from io import open
 
 
 def clean_exception(exception):
@@ -157,7 +158,7 @@ class HqAdminEmailHandler(AdminEmailHandler):
             filename = trace[0]
             lineno = trace[1]
             offset = 10
-            with open(filename) as f:
+            with open(filename, encoding='utf-8') as f:
                 code_context = list(islice(f, lineno - offset, lineno + offset))
 
             return highlight(''.join(code_context),

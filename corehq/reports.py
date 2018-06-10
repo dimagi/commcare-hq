@@ -40,6 +40,7 @@ from corehq.apps.userreports.views import TEMP_REPORT_PREFIX
 from corehq.form_processor.utils import should_use_sql_backend
 import phonelog.reports as phonelog
 from corehq.apps.reports import commtrack
+from corehq.apps.reports.standard.cases.case_list_explorer import CaseListExplorer
 from corehq.apps.fixtures.interface import FixtureViewInterface, FixtureEditInterface
 import hashlib
 from dimagi.utils.modules import to_function
@@ -97,15 +98,20 @@ def REPORTS(project):
         phonelog.DeviceLogDetailsReport,
         deployments.ApplicationErrorReport,
     )
+    experimental_reports = []
+    if toggles.CASE_LIST_EXPLORER.enabled(project.name):
+        experimental_reports.append(CaseListExplorer)
 
     monitoring_reports = _filter_reports(report_set, monitoring_reports)
     inspect_reports = _filter_reports(report_set, inspect_reports)
     deployments_reports = _filter_reports(report_set, deployments_reports)
+    experimental_reports = _filter_reports(report_set, experimental_reports)
 
     reports.extend([
         (ugettext_lazy("Monitor Workers"), monitoring_reports),
         (ugettext_lazy("Inspect Data"), inspect_reports),
         (ugettext_lazy("Manage Deployments"), deployments_reports),
+        (ugettext_lazy("Experimental"), experimental_reports)
     ])
 
     if project.commtrack_enabled:

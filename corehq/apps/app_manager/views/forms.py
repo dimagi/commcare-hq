@@ -793,27 +793,6 @@ def _get_xform_source(request, app, form, filename="form.xml"):
         return json_response(source)
 
 
-def xform_display(request, domain, form_unique_id):
-    try:
-        form, app = Form.get_form(form_unique_id, and_app=True)
-    except ResourceNotFound:
-        raise Http404()
-    if domain != app.domain:
-        raise Http404()
-    langs = [request.GET.get('lang')] + app.langs
-
-    questions = form.get_questions(langs, include_triggers=True,
-                                   include_groups=True)
-
-    if request.GET.get('format') == 'html':
-        questions = [FormQuestionResponse(q) for q in questions]
-        return render(request, "app_manager/xform_display.html", {
-            'questions': questions_in_hierarchy(questions)
-        })
-    else:
-        return json_response(questions)
-
-
 @require_can_edit_apps
 def form_casexml(request, domain, form_unique_id):
     try:

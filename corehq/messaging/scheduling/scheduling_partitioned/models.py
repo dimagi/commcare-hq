@@ -8,7 +8,7 @@ from corehq.apps.locations.dbaccessors import get_all_users_by_location
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.sms.models import MessagingEvent
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
-from corehq.apps.users.models import CommCareUser, WebUser
+from corehq.apps.users.models import CommCareUser, WebUser, CouchUser
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.utils import is_commcarecase
@@ -60,25 +60,64 @@ class ScheduleInstance(PartitionedModel):
             ('domain', 'active', 'next_event_due'),
         )
 
-    @property
-    def today_for_recipient(self):
-        return ServerTime(util.utcnow()).user_time(self.timezone).done().date()
+    def get_today_for_recipient(self, schedule):
+        return ServerTime(util.utcnow()).user_time(self.get_timezone(schedule)).done().date()
 
     @property
     @memoized
     def recipient(self):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
-            return CaseAccessors(self.domain).get_case(self.recipient_id)
+            try:
+                case = CaseAccessors(self.domain).get_case(self.recipient_id)
+            except (CaseNotFound, ResourceNotFound):
+                return None
+
+            if case.domain != self.domain:
+                return None
+
+            return case
         elif self.recipient_type == self.RECIPIENT_TYPE_MOBILE_WORKER:
-            return CommCareUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, CommCareUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_WEB_USER:
-            return WebUser.get(self.recipient_id)
+            user = CouchUser.get_by_user_id(self.recipient_id, domain=self.domain)
+            if not isinstance(user, WebUser):
+                return None
+
+            return user
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_GROUP:
-            return CommCareCaseGroup.get(self.recipient_id)
+            try:
+                group = CommCareCaseGroup.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_USER_GROUP:
-            return Group.get(self.recipient_id)
+            try:
+                group = Group.get(self.recipient_id)
+            except ResourceNotFound:
+                return None
+
+            if group.domain != self.domain:
+                return None
+
+            return group
         elif self.recipient_type == self.RECIPIENT_TYPE_LOCATION:
-            return SQLLocation.by_location_id(self.recipient_id)
+            location = SQLLocation.by_location_id(self.recipient_id)
+
+            if location is None:
+                return None
+
+            if location.domain != self.domain:
+                return None
+
+            return location
         else:
             raise UnknownRecipientType(self.recipient_type)
 
@@ -91,28 +130,28 @@ class ScheduleInstance(PartitionedModel):
 
     @property
     @memoized
-    def timezone(self):
-        timezone = None
+    def domain_timezone(self):
+        try:
+            return get_timezone_for_domain(self.domain)
+        except ValidationError:
+            return pytz.UTC
 
+    def get_timezone(self, schedule):
         if self.recipient_is_an_individual_contact(self.recipient):
             try:
-                timezone = self.recipient.get_time_zone()
+                timezone_str = self.recipient.get_time_zone()
+                if timezone_str:
+                    return coerce_timezone_value(timezone_str)
             except ValidationError:
                 pass
 
-        if not timezone:
-            timezone = get_timezone_for_domain(self.domain)
-
-        if isinstance(timezone, tzinfo):
-            return timezone
-
-        if isinstance(timezone, six.string_types):
-            try:
-                return coerce_timezone_value(timezone)
-            except ValidationError:
-                pass
-
-        return pytz.UTC
+        if schedule.use_utc_as_default_timezone:
+            # See note on Schedule.use_utc_as_default_timezone.
+            # When use_utc_as_default_timezone is enabled and the contact has
+            # no time zone configured, use UTC.
+            return pytz.UTC
+        else:
+            return self.domain_timezone
 
     @classmethod
     def create_for_recipient(cls, schedule, recipient_type, recipient_id, start_date=None,
@@ -412,7 +451,7 @@ class CaseScheduleInstanceMixin(object):
 
     RECIPIENT_TYPE_SELF = 'Self'
     RECIPIENT_TYPE_CASE_OWNER = 'Owner'
-    RECIPIENT_TYPE_LAST_SUBMTTING_USER = 'LastSubmittingUser'
+    RECIPIENT_TYPE_LAST_SUBMITTING_USER = 'LastSubmittingUser'
     RECIPIENT_TYPE_PARENT_CASE = 'ParentCase'
     RECIPIENT_TYPE_CHILD_CASE = 'SubCase'
     RECIPIENT_TYPE_CUSTOM = 'CustomRecipient'
@@ -440,7 +479,10 @@ class CaseScheduleInstanceMixin(object):
             return self.case
         elif self.recipient_type == self.RECIPIENT_TYPE_CASE_OWNER:
             return self.case_owner
-        if self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMTTING_USER:
+        elif self.recipient_type == self.RECIPIENT_TYPE_LAST_SUBMITTING_USER:
+            if self.case and self.case.modified_by:
+                return CouchUser.get_by_user_id(self.case.modified_by, domain=self.domain)
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
             return None

@@ -94,9 +94,6 @@ def setUpModule():
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
-            if adapter.config.table_id == 'static-child_health_cases':
-                # hack because this is in a migration
-                continue
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
@@ -110,7 +107,7 @@ def setUpModule():
                 if not table_name.startswith('icds_dashboard_'):
                     postgres_copy.copy_from(f, table, engine, format=b'csv', null=b'', header=True)
 
-        _aggregate_child_health_pnc_forms(datetime(2017, 3, 31))
+        _aggregate_child_health_pnc_forms('st1', datetime(2017, 3, 31))
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)

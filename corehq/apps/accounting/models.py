@@ -347,6 +347,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
+    is_customer_billing_account = models.BooleanField(default=False)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -691,6 +692,7 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_customer_software_plan = models.BooleanField(default=False)
 
     class Meta(object):
         app_label = 'accounting'

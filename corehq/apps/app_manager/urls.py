@@ -17,7 +17,7 @@ from corehq.apps.app_manager.views import (
     upload_bulk_app_translations, multimedia_ajax, releases_ajax, current_app_version, paginate_releases,
     release_build, view_module, view_module_legacy, view_form, view_form_legacy,
     get_form_datums, form_source, form_source_legacy, update_build_comment, export_gzip,
-    xform_display, get_xform_source, form_casexml, app_source, import_app, copy_app,
+    get_xform_source, form_casexml, app_source, import_app, copy_app,
     get_form_data_schema, new_module, new_app, default_new_app, new_form, drop_user_case, delete_app,
     delete_module, delete_form, copy_form, undo_delete_app, undo_delete_module, undo_delete_form, edit_form_attr,
     edit_form_attr_api, patch_xform, validate_form_for_build, rename_language, validate_language,
@@ -76,7 +76,6 @@ app_urls = [
 
 urlpatterns = [
     url(r'^$', view_app, name='default_app'),
-    url(r'^xform/(?P<form_unique_id>[\w-]+)/$', xform_display, name='xform_display'),
     url(r'^browse/(?P<app_id>[\w-]+)/(?P<form_unique_id>[\w-]+)/source/$',
         get_xform_source, name='get_xform_source'),
     url(r'^casexml/(?P<form_unique_id>[\w-]+)/$', form_casexml, name='form_casexml'),

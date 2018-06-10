@@ -133,6 +133,7 @@ def _get_form_designer_view(request, domain, app, module, form):
             app,
             request.couch_user.username,
         ),
+        'show_ui_notification_to_hide_translations': (len(app.langs) > 2),
     })
     context.update(_get_requirejs_context())
     context['current_app_version_url'] = reverse(
@@ -210,7 +211,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
-            'showOnlyCurrentLang': toggles.HIDE_TRANSLATIONS_FROM_FORMS.enabled_for_request(request),
+            'showOnlyCurrentLang': app.smart_lang_display,
         },
         'uploader': {
             'uploadUrls': {

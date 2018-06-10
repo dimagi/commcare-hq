@@ -13,7 +13,7 @@ from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, META_DRIFT_ADDED_FROM_CC_VERSION)
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -1298,7 +1298,8 @@ class XForm(WrappedNode):
 
     def add_meta_2(self, form):
         case_parent = self.data_node
-
+        app = form.get_app()
+        add_meta_drift = app.build_spec.release_greater_than_or_equal_to(META_DRIFT_ADDED_FROM_CC_VERSION)
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
@@ -1318,6 +1319,8 @@ class XForm(WrappedNode):
             '{orx}instanceID',
             '{cc}appVersion',
         )
+        if add_meta_drift:
+            tags += ('{orx}drift',)
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
         for tag in tags:
@@ -1357,8 +1360,15 @@ class XForm(WrappedNode):
             value="instance('commcaresession')/session/context/appversion"
         )
 
+        if add_meta_drift:
+            self.add_setvalue(
+                ref="meta/drift",
+                event="xforms-revalidate",
+                value="instance('commcaresession')/session/context/drift",
+            )
+
         # never add pollsensor to a pre-2.14 app
-        if form.get_app().enable_auto_gps:
+        if app.enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
@@ -1942,6 +1952,7 @@ VELLUM_TYPES = {
     },
     "DataBindOnly": {
         'icon': 'fcc fcc-fd-variable',
+        'editable': True,
     },
     "Date": {
         'tag': 'input',

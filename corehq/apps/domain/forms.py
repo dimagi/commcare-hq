@@ -94,6 +94,7 @@ from memoized import memoized
 import six
 from six.moves import range
 from six import unichr
+from io import open
 
 # used to resize uploaded custom logos, aspect ratio is preserved
 LOGO_SIZE = (211, 32)
@@ -652,7 +653,7 @@ class DomainGlobalSettingsForm(forms.Form):
                 tmpfilename = "/tmp/%s_%s" % (uuid.uuid4(), logo.name)
                 input_image.save(tmpfilename, 'PNG')
 
-                with open(tmpfilename) as tmpfile:
+                with open(tmpfilename, 'rb') as tmpfile:
                     domain.put_attachment(tmpfile, name=LOGO_ATTACHMENT)
             elif self.cleaned_data['delete_logo']:
                 domain.delete_attachment(LOGO_ATTACHMENT)

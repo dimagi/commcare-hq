@@ -11,13 +11,11 @@ from django.conf import settings
 from django.db import models, transaction
 from django_cte import CTEQuerySet
 from memoized import memoized
-from mptt.models import TreeForeignKey
 
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.adjacencylist import AdjListModel, AdjListManager
-from corehq.apps.locations.queryutil import ComparedQuerySet, TimingContext
 from corehq.apps.products.models import SQLProduct
 from corehq.toggles import LOCATION_TYPE_STOCK_RATES
 
@@ -114,7 +112,7 @@ class LocationType(models.Model):
     # If specified, include only the linked types
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
@@ -269,15 +267,7 @@ class LocationQueriesMixin(object):
         if not assigned_location_ids:
             return self.none()  # No locations are assigned to this user
 
-        ids_query = SQLLocation.objects.get_locations_and_children(assigned_location_ids)
-        assert isinstance(ids_query, ComparedQuerySet), ids_query
-        result = ComparedQuerySet(
-            self.filter(id__in=ids_query._mptt_set) if ids_query._mptt_set is not None else None,
-            self.filter(id__in=ids_query._cte_set) if ids_query._cte_set is not None else None,
-            TimingContext("accessible_to_user"),
-        )
-        result._timing += ids_query._timing
-        return result
+        return SQLLocation.objects.get_locations_and_children(assigned_location_ids)
 
     def delete(self, *args, **kwargs):
         from .document_store import publish_location_saved
@@ -303,7 +293,10 @@ class LocationQueriesMixin(object):
 
 
 class LocationQuerySet(LocationQueriesMixin, CTEQuerySet):
-    pass
+
+    def accessible_to_user(self, domain, user):
+        ids_query = super(LocationQuerySet, self).accessible_to_user(domain, user)
+        return self.filter(id__in=ids_query)
 
 
 class LocationManager(LocationQueriesMixin, AdjListManager):
@@ -315,10 +308,7 @@ class LocationManager(LocationQueriesMixin, AdjListManager):
             return None
 
     def get_queryset(self):
-        query = LocationQuerySet(self.model, using=self._db)
-        if not settings.IS_LOCATION_CTE_ONLY:
-            query = query.order_by(self.tree_id_attr, self.left_attr)  # mptt default
-        return query
+        return LocationQuerySet(self.model, using=self._db)
 
     def get_from_user_input(self, domain, user_input):
         """
@@ -388,11 +378,11 @@ class SQLLocation(AdjListModel):
     external_id = models.CharField(max_length=255, null=True, blank=True)
     metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
-    parent = TreeForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='children', on_delete=models.CASCADE)
 
     # Use getter and setter below to access this value
     # since stocks_all_products can cause an empty list to
@@ -556,9 +546,6 @@ class SQLLocation(AdjListModel):
     class Meta(object):
         app_label = 'locations'
         unique_together = ('domain', 'site_code',)
-        index_together = [
-            ('tree_id', 'lft', 'rght')
-        ]
 
     def __unicode__(self):
         return "{} ({})".format(self.name, self.domain)

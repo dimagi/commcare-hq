@@ -24,6 +24,7 @@ from corehq.blobs import get_blob_db
 from corehq.util.files import safe_filename_header
 
 from zipfile import ZipFile
+from io import open
 
 
 def expose_cached_download(payload, expiry, file_extension, mimetype=None,
@@ -144,7 +145,7 @@ def expose_download(use_transfer, file_path, filename, download_id, file_type):
         )
     else:
         expose_cached_download(
-            FileWrapper(open(file_path, 'r')),
+            FileWrapper(open(file_path, 'rb')),
             expiry=(1 * 60 * 60),
             file_extension=file_type,
             **common_kwargs
