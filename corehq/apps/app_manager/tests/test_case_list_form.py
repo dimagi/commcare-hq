@@ -404,7 +404,7 @@ class CaseListFormSuiteTests(SimpleTestCase, TestXmlMixin):
             './entry')
 
     def test_case_list_form_requires_parent_case_but_target_doesnt(self):
-        factory = AppFactory(build_version='2.9.0/latest')
+        factory = AppFactory(build_version='2.9.0')
         register_household_module, register_household_form = factory.new_basic_module('new_household', 'household')
         factory.form_opens_case(register_household_form)
 
