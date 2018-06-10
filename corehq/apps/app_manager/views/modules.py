@@ -522,7 +522,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        module.case_list_form.set_icon(lang, new_path)
+        module.case_list_form.set_icon(lang, new_path, app)
 
     if should_edit('case_list_form_media_audio'):
         new_path = process_media_attribute(
@@ -530,7 +530,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.set_audio(lang, new_path)
+        module.case_list_form.set_audio(lang, new_path, app)
 
     if should_edit('case_list-menu_item_media_image'):
         val = process_media_attribute(
@@ -538,14 +538,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
-        module.case_list.set_icon(lang, val)
+        module.case_list.set_icon(lang, val, app)
     if should_edit('case_list-menu_item_media_audio'):
         val = process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
         )
-        module.case_list.set_audio(lang, val)
+        module.case_list.set_audio(lang, val, app)
 
     if should_edit("name"):
         name = request.POST.get("name", None)
@@ -574,7 +574,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
         excl.remove('0')  # Placeholder value to make sure excl_form_ids is POSTed when no forms are excluded
         module.excluded_form_ids = excl
 
-    handle_media_edits(request, module, should_edit, resp, lang, app)
+    handle_media_edits(request, module, should_edit, resp, lang)
 
     app.save(resp)
     resp['case_list-show'] = module.requires_case_details()

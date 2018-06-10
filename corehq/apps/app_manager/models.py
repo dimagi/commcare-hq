@@ -1573,7 +1573,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
             return custom_icon.form, custom_icon_text
         return None, None
 
-    def _set_media(self, media_attr, lang, media_path):
+    def _set_media(self, media_attr, lang, media_path, app=None):
         """
             Caller's responsibility to save doc.
             Currently only called from the view which saves after all Edits
@@ -1585,16 +1585,17 @@ class NavMenuItemMediaMixin(DocumentSchema):
         # remove the entry from app multimedia mappings if media is being removed now
         # This does not remove the multimedia but just it's reference in mapping
         if old_value and not media_path:
-            app = self.get_app()
+            if app is None:
+                app = self.get_app()
             app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
-    def set_icon(self, lang, icon_path):
-        self._set_media('media_image', lang, icon_path)
+    def set_icon(self, lang, icon_path, app=None):
+        self._set_media('media_image', lang, icon_path, app)
 
-    def set_audio(self, lang, audio_path):
-        self._set_media('media_audio', lang, audio_path)
+    def set_audio(self, lang, audio_path, app=None):
+        self._set_media('media_audio', lang, audio_path, app)
 
     def _all_media_paths(self, media_attr):
         assert media_attr in ('media_image', 'media_audio')

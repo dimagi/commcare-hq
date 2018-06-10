@@ -26,7 +26,7 @@ def interpolate_media_path(val):
     return val
 
 
-def handle_media_edits(request, item, should_edit, resp, lang, app):
+def handle_media_edits(request, item, should_edit, resp, lang):
     if 'corrections' not in resp:
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
