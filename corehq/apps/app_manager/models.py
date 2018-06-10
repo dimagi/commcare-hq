@@ -1581,6 +1581,12 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        if old_value and not media_path:
+            app = self.get_app()
+            app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 

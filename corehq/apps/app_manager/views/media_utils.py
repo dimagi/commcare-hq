@@ -31,10 +31,5 @@ def handle_media_edits(request, item, should_edit, resp, lang, app):
         resp['corrections'] = {}
     for attribute in ('media_image', 'media_audio'):
         if should_edit(attribute):
-            old_value = getattr(item, attribute, {}).get(lang, None)
             media_path = process_media_attribute(attribute, resp, request.POST.get(attribute))
             item._set_media(attribute, lang, media_path)
-            # remove the entry from app multimedia mappings if media is being removed now
-            # This does not remove the multimedia but just it's reference in mapping
-            if old_value and not media_path:
-                app.multimedia_map.pop(old_value, None)
