@@ -385,9 +385,6 @@ ENIKSHAY_APPS = (
     'custom.enikshay.two_b_release_1',
 )
 
-# DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
-TEST_APPS = ()
-
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
     'captcha',
