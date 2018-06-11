@@ -9,6 +9,8 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
@@ -730,19 +732,16 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user' or username == ANONYMOUS_USERNAME:
             return {'error': _('Username {} is reserved.').format(username)}
-        if '@' in username:
+        try:
+            validate_email(username)
+        except ValidationError:
             return {
-                'error': _('Username {} cannot contain "@".').format(username)
+                'error': _(
+                    "Username may only contain letters, numbers, or any of the following symbols: "
+                    "-!#$%&'*+/=?^_`{}'."
+                )
             }
-        if '&' in username:
-            return {
-                'error': _('Username {} cannot contain "&".').format(username)
-            }
-        if ' ' in username:
-            return {
-                'error': _('Username {} cannot contain '
-                           'spaces.').format(username)
-            }
+
         full_username = format_username(username, self.domain)
         exists = user_exists(full_username)
         if exists.exists:
