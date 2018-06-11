@@ -90,6 +90,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     ]
     exportable = True
     emailable = True
+    ajax_pagination = True
+    asynchronous = True
+
+    @property
+    def total_records(self):
+        return len(super(CurrentStockStatusReport, self).products)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -143,6 +149,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             domain=self.domain,
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
+            pagination=self.pagination,
             entry_ids=product_ids,
         )
         product_grouping = {}
