@@ -235,7 +235,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
 
                     var next = firstRow;
-                    for(var i = start; i <= end; i++) {
+                    for (var i = start; i <= end; i++) {
                         next.addClass('selected-for-sort');
                         next = next.next();
                     }
