@@ -313,17 +313,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     });
 
                     // Reorder the data in knockout
-                    var newList = [];
+                    var newList = [],
+                        cur = 0,
+                        i = 0;
                     for (var cur = 0; cur < element.children.length; cur++) {
-                        var i = parseInt(element.children[cur].attributes['data-order'].value);
+                        i = parseInt(element.children[cur].attributes['data-order'].value);
                         newList.push(list()[i]);
                     }
                     list().splice(0, list().length);
-                    for (var i = 0; i < newList.length; i++) {
+                    for (i = 0; i < newList.length; i++) {
                         list().push(newList[i]);
                     }
 
-                    for (var cur = 0; cur < element.children.length; cur++) {
+                    for (cur = 0; cur < element.children.length; cur++) {
                         element.children[cur].attributes['data-order'].value = cur;
                     }
                 }
