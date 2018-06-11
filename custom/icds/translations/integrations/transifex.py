@@ -153,3 +153,7 @@ class Transifex:
         confirm is source lang on transifex is same as hq lang code
         """
         return self.client.source_lang_is(hq_lang_code)
+
+    def delete_resources(self):
+        for resource_slug in self._get_resource_slugs_for_version():
+            self.client.delete_resource(resource_slug)

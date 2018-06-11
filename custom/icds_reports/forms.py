@@ -38,7 +38,8 @@ class AppTranslationsForm(forms.Form):
                                     )
     action = forms.ChoiceField(label=ugettext_lazy("Action"),
                                choices=[('push', ugettext_lazy('Push to transifex')),
-                                        ('pull', ugettext_lazy('Pull from transifex'))]
+                                        ('pull', ugettext_lazy('Pull from transifex')),
+                                        ('delete', ugettext_lazy('Delete resources on transifex')),]
                                )
     lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
                                            help_text=ugettext_lazy(

@@ -38,6 +38,7 @@ from custom.icds.const import AWC_LOCATION_TYPE_CODE
 from custom.icds.tasks import (
     push_translation_files_to_transifex,
     pull_translation_files_from_transifex,
+    delete_resources_on_transifex,
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from custom.icds.translations.integrations.transifex import Transifex
@@ -1658,6 +1659,15 @@ class ICDSAppTranslations(BaseDomainView):
                                     'You should receive an email shortly'))
         return True
 
+    @staticmethod
+    def perform_delete_request(request, form_data, transifex):
+        if not transifex._get_resource_slugs_for_version():
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        delete_resources_on_transifex(request.domain, form_data)
+        messages.success(request, _('Successfully enqueued request to delete resources.'))
+        return True
+
     def perform_request(self, request, form_data):
         transifex = self.transifex(request.domain, form_data)
         if not transifex.source_lang_is(form_data.get('source_lang')):
@@ -1666,8 +1676,10 @@ class ICDSAppTranslations(BaseDomainView):
         else:
             if form_data['action'] == 'push':
                 return self.perform_push_request(request, form_data)
-            else:
+            elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data, transifex)
+            elif form_data['action'] == 'delete':
+                return self.perform_delete_request(request, form_data, transifex)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):

@@ -52,6 +52,17 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
 
 @task
+def delete_resources_on_transifex(domain, data):
+    version = data.get('version')
+    transifex = Transifex(domain,
+                          data.get('app_id'),
+                          data.get('target_lang') or data.get('source_lang'),
+                          data.get('transifex_project_slug'),
+                          version,)
+    transifex.delete_resources()
+
+
+@task
 def push_translation_files_to_transifex(domain, data):
     if data.get('target_lang'):
         Transifex(domain,
