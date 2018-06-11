@@ -254,24 +254,6 @@ def use_maps(view_func):
     return _wrapped
 
 
-def use_maps_async(view_func):
-    """Use this decorator on the dispatch method of a TemplateView subclass
-    to enable the inclusion of the maps (with async utils) library at the base
-    template level.
-
-    Example:
-
-    @use_maps_async
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyView, self).dispatch(request, *args, **kwargs)
-    """
-    @wraps(view_func)
-    def _wrapped(class_based_view, request, *args, **kwargs):
-        request.use_maps_async = True
-        return view_func(class_based_view, request, *args, **kwargs)
-    return _wrapped
-
-
 def maps_prefer_canvas(view_func):
     """Use this decorator on the dispatch method of a TemplateView subclass
     to set L_PREFER_CANVAS = true; before including the maps library.
