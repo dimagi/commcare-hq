@@ -13,7 +13,7 @@ from custom.icds.translations.integrations.const import (
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 
 
-class TransifexApiClient():
+class TransifexApiClient(object):
     def __init__(self, token, organization, project):
         self.username = API_USER
         self.token = token
@@ -30,6 +30,14 @@ class TransifexApiClient():
             self.project
         )
         return requests.get(url, auth=self._auth)
+
+    def get_resource_slugs(self, version):
+        """
+        :return: list of resource slugs corresponding to version
+        """
+        return [r['name']
+                for r in self.list_resources().json()
+                if r['name'].endswith("v%s" % version)]
 
     def lock_resource(self, resource_slug):
         """
@@ -127,6 +135,7 @@ class TransifexApiClient():
         lock/freeze the resource if successfully pulled translations
         :param resource_slug: resource slug
         :param hq_lang_code: target lang code on HQ
+        :param lock_resource: lock resource after pulling translation
         :return: list of POEntry objects
         """
         lang = self.transifex_lang_code(hq_lang_code)

@@ -1661,10 +1661,10 @@ class ICDSAppTranslations(BaseDomainView):
 
     @staticmethod
     def perform_delete_request(request, form_data, transifex):
-        if not transifex._get_resource_slugs_for_version():
+        if not transifex.resource_slugs:
             messages.error(request, _('Resources not found for this project and version.'))
             return False
-        delete_resources_on_transifex(request.domain, form_data)
+        delete_resources_on_transifex.delay(request.domain, form_data)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 

@@ -72,24 +72,24 @@ class TranslationsParser(object):
             ws.append([_label, po_entry.msgid, po_entry.msgstr])
 
     @memoized
-    def _result_file_name(self, version):
+    def _result_file_name(self):
         return ("TransifexTranslations {}-{}:v{} {}.xlsx".format(
             self.transifex.key_lang, self.transifex.source_lang,
-            version, datetime.utcnow().strftime(DATETIME_FORMAT))
+            self.transifex.version, datetime.utcnow().strftime(DATETIME_FORMAT))
         )
 
     def _get_sheet_name(self, resource_name):
         return resource_name.split("_v%s" % self.transifex.version)[0]
 
-    def _generate_sheets(self, wb, resource_slugs):
-        for resource_name, po_entries in self.transifex.get_translations(resource_slugs).items():
+    def _generate_sheets(self, wb):
+        for resource_name, po_entries in self.transifex.get_translations().items():
             ws = wb.create_sheet(title=self._get_sheet_name(resource_name))
             self._add_sheet(ws, po_entries)
 
-    def generate_excel_file(self, resource_slugs=None):
+    def generate_excel_file(self):
         wb = Workbook(write_only=True)
-        self._generate_sheets(wb, resource_slugs)
+        self._generate_sheets(wb)
 
         with NamedTemporaryFile(delete=False) as tempfile:
             wb.save(tempfile)
-            return tempfile, self._result_file_name(self.transifex.version)
+            return tempfile, self._result_file_name()
