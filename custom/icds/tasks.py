@@ -76,7 +76,8 @@ def pull_translation_files_from_transifex(domain, data, email=None):
                           data.get('app_id'),
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
-                          version)
+                          version,
+                          lock_translations=data.get('lock_translations'),)
     translation_file = None
     try:
         translation_file, filename = transifex.generate_excel_file()

@@ -15,7 +15,7 @@ from custom.icds.translations.integrations.client import TransifexApiClient
 
 class Transifex:
     def __init__(self, domain, app_id, source_lang, project_slug, version=None, lang_prefix='default_',
-                 is_source_file=True, exclude_if_default=False):
+                 is_source_file=True, exclude_if_default=False, lock_translations=False):
         """
         :param domain: domain name
         :param app_id: id of the app to be used
@@ -33,6 +33,7 @@ class Transifex:
         self.project_slug = project_slug
         self.is_source_file = is_source_file
         self.source_lang = source_lang
+        self.lock_translations = lock_translations
         self.po_file_generator = POFileGenerator(domain, app_id, version, self.key_lang, source_lang, lang_prefix,
                                                  exclude_if_default)
 
@@ -124,7 +125,8 @@ class Transifex:
             raise Exception("No resources found for this version")
         po_entries = {}
         for resource_slug in resource_slugs:
-            po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang)
+            po_entries[resource_slug] = self.client.get_translation(resource_slug, self.source_lang,
+                                                                    self.lock_translations)
         return po_entries
 
     def resources_pending_translations(self, break_if_true=False):

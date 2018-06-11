@@ -31,6 +31,21 @@ class TransifexApiClient():
         )
         return requests.get(url, auth=self._auth)
 
+    def lock_resource(self, resource_slug):
+        """
+        lock a resource so that it can't be translated/reviewed anymore.
+        :param resource_slug:
+        """
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
+            self.project, resource_slug)
+        data = {
+            'accept_translations': False
+        }
+        headers = {'content-type': 'application/json'}
+        return requests.put(
+            url, data=json.dumps(data), auth=self._auth, headers=headers,
+        )
+
     def delete_resource(self, resource_slug):
         url = "https://www.transifex.com/api/2/project/{}/resource/{}".format(
             self.project, resource_slug)
@@ -106,9 +121,10 @@ class TransifexApiClient():
         lang = self.transifex_lang_code(hq_lang_code)
         return self._resource_details(resource_slug, lang)['completed'] == "100%"
 
-    def get_translation(self, resource_slug, hq_lang_code):
+    def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
-        get translations for a resource in the target lang
+        get translations for a resource in the target lang.
+        lock/freeze the resource if successfully pulled translations
         :param resource_slug: resource slug
         :param hq_lang_code: target lang code on HQ
         :return: list of POEntry objects
@@ -123,6 +139,8 @@ class TransifexApiClient():
         temp_file = tempfile.NamedTemporaryFile()
         with open(temp_file.name, 'w') as f:
             f.write(response.content)
+        if lock_resource:
+            self.lock_resource(resource_slug)
         return polib.pofile(temp_file.name)
 
     @staticmethod
