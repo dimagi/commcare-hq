@@ -703,11 +703,11 @@ class ExportIndicatorView(View):
             awcs = request.POST.get('selected_awcs').split(',')
             location = request.POST.get('location', '')
             if 'all' in awcs and location:
-                awcs = SQLLocation.objects.get(
+                awcs = list(SQLLocation.objects.get(
                     location_id=location
                 ).get_descendants().filter(
                     location_type__code=AWC_LOCATION_TYPE_CODE
-                ).location_ids()
+                ).location_ids())
             pdf_format = request.POST.get('pdfformat')
             task = prepare_issnip_monthly_register_reports.delay(
                 self.kwargs['domain'],
