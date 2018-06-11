@@ -61,17 +61,12 @@ class CaseListExplorerColumns(BaseSimpleFilter):
         # hidden from view, but used for sorting when no sort column is provided
         {'name': 'last_modified', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
         # shown, but unremovable so there is always at least one column
-        {'name': '_link', 'label': _('Link'), 'editable': False},
+        {'name': '_link', 'label': _('View Case'), 'editable': False},
     ]
 
     DEFAULT_COLUMNS = [
         {'name': '@case_type', 'label': _('Case Type')},
         {'name': 'case_name', 'label': _('Case Name')},
-        {'name': 'owner_name', 'label': _('Owner Name')},
-        {'name': 'date_opened', 'label': _('Date Opened')},
-        {'name': 'opened_by_username', 'label': _('Opened By Username')},
-        {'name': 'last_modified', 'label': _('Last Modified')},
-        {'name': '@status', 'label': _('Status')},
     ]
 
     @property

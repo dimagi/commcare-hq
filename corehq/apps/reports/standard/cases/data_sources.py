@@ -265,4 +265,6 @@ class SafeCaseDisplay(object):
             link = absolute_reverse('case_data', args=[self.report.domain, self.case.get('_id')])
         except NoReverseMatch:
             return _("No link found")
-        return html.mark_safe("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("Link")))
+        return html.mark_safe(
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("View Case"))
+        )
