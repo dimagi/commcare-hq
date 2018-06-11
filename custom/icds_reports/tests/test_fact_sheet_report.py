@@ -373,7 +373,7 @@ class TestFactSheetReportMaternalAndChildNutritionICDSFeatureFlagEnabled(TestCas
         self.assertDictEqual(
             self.get_data()['config']['sections'][0]['rows_config'][1],
             {
-                'average': {u'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
+                'average': {'html': 3.3648790746582544, 'sort_key': 3.3648790746582544},
                 'data': [
                     {'html': 'Height measurement efficiency (Children <5 measured)'},
                     {'html': 1.1213047910295617, 'sort_key': 1.1213047910295617},
