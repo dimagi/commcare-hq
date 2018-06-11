@@ -4,6 +4,7 @@ import re
 from datetime import datetime
 from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
+from memoized import memoized
 
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.dump_reload.const import DATETIME_FORMAT
@@ -70,6 +71,7 @@ class TranslationsParser:
             _index, _label = re.match(context_regex, context).groups()
             ws.append([_label, po_entry.msgid, po_entry.msgstr])
 
+    @memoized
     def _result_file_name(self, version):
         return ("TransifexTranslations {}-{}:v{} {}.xlsx".format(
             self.transifex.key_lang, self.transifex.source_lang,

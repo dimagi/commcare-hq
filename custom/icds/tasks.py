@@ -77,8 +77,9 @@ def pull_translation_files_from_transifex(domain, data, email=None):
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
                           version)
-    translation_file, filename = transifex.generate_excel_file()
+    translation_file = None
     try:
+        translation_file, filename = transifex.generate_excel_file()
         with open(translation_file.name) as file_obj:
             email = EmailMessage(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
@@ -89,5 +90,5 @@ def pull_translation_files_from_transifex(domain, data, email=None):
             email.attach(filename=filename, content=file_obj.read())
             email.send()
     finally:
-        if os.path.exists(translation_file.name):
+        if translation_file and os.path.exists(translation_file.name):
             os.remove(translation_file.name)
