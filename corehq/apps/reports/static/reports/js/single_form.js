@@ -4,13 +4,34 @@
     also in the single form view page that's accessible from the submit history report or the "View standalone
     form" button when looking at a form in case history.
 */
-hqDefine("reports/js/single_form", function() {
+hqDefine("reports/js/single_form", [
+    "jquery",
+    "underscore",
+    "hqwebapp/js/assert_properties",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/main",
+    "analytix/js/google",
+    "analytix/js/kissmetrix",
+    "reports/js/readable_form",
+    "reports/js/data_corrections",
+    "clipboard/dist/clipboard",
+], function(
+    $,
+    _,
+    assertProperties,
+    initialPageData,
+    hqMain,
+    googleAnalytics,
+    kissAnalytics,
+    readableForm,
+    dataCorrections,
+    Clipboard
+) {
     var initSingleForm = function(options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['instance_id', 'form_question_map', 'ordered_question_values'], ['container']);
+        assertProperties.assert(options, ['instance_id', 'form_question_map', 'ordered_question_values'], ['container']);
 
         var $container = options.container || $("body");
 
-        var initialPageData = hqImport("hqwebapp/js/initial_page_data");
         var analyticsUsage = function(action, callback) {
             var label = 'standalone_form',
                 extra = {},
@@ -18,18 +39,20 @@ hqDefine("reports/js/single_form", function() {
             if (caseId) {
                 label = 'case';
             }
-            hqImport('analytix/js/google').track.event('Edit Data', action, label, '', extra, callback);
+            googleAnalytics.track.event('Edit Data', action, label, '', extra, callback);
         };
 
         $('.hq-help-template', $container).each(function () {
-            hqImport("hqwebapp/js/main").transformHelpTemplate($(this), true);
+            hqMain.transformHelpTemplate($(this), true);
         });
 
         $('#edit-form', $container).click(function() {
             analyticsUsage('Edit Form Submission');
         });
 
-        hqImport("reports/js/data_corrections").init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
+        readableForm.init();
+
+        dataCorrections.init($container.find(".data-corrections-trigger"), $container.find(".data-corrections-modal"), {
             properties: options.form_question_map,
             propertyNames: options.ordered_question_values,
             propertyPrefix: "<div class='form-data-question'><i data-bind='attr: { class: icon }'></i> ",
@@ -57,14 +80,14 @@ hqDefine("reports/js/single_form", function() {
                 document.getElementById('archive-form').submit();
             });
             analyticsUsage('Archive Form Submission', analyticsCallback);
-            hqImport('analytix/js/kissmetrix').track.event("Clicked on Archive Form", {}, analyticsCallback);
+            kissAnalytics.track.event("Clicked on Archive Form", {}, analyticsCallback);
 
             return false;
         });
         $("#unarchive-form", $container).submit(function() {
             document.getElementById('unarchive-form-btn').disabled=true;
             $('#unarchive-spinner', $container).show();
-            hqImport('analytix/js/google').track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
+            googleAnalytics.track.event('Reports', 'Case History', 'Restore this form', "", {}, function () {
                 document.getElementById('unarchive-form').submit();
             });
             return false;
@@ -74,18 +97,14 @@ hqDefine("reports/js/single_form", function() {
             $('#resave-spinner', $container).show();
         });
 
-        $.when(
-            $.getScript(hqImport("hqwebapp/js/initial_page_data").get("clipboardScript"))
-        ).done(function () {
-            var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre', $container).text(); } }),
-                $copyBtn = $('.copy-xml', $container);
-            $copyBtn.tooltip({
-                title: gettext("Copied!"),
-            });
-            clipboard.on('success', function() {
-                $copyBtn.tooltip('show');
-                window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000);
-            });
+        var clipboard = new Clipboard('.copy-xml', { text: function() { return $('#form-xml pre', $container).text(); } }),
+            $copyBtn = $('.copy-xml', $container);
+        $copyBtn.tooltip({
+            title: gettext("Copied!"),
+        });
+        clipboard.on('success', function() {
+            $copyBtn.tooltip('show');
+            window.setTimeout(function() { $copyBtn.tooltip('hide'); }, 1000);
         });
     };
 

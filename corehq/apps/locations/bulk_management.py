@@ -857,8 +857,7 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
     :param types_by_code: (dict) Mapping of 'code' to LocationType SQL objects
     :param excel_importer: Used for providing progress feedback. Disabled on None
 
-    This recursively saves tree top to bottom. Note that the bulk updates are not possible
-    as the mptt.Model (inherited by SQLLocation) doesn't support bulk creation
+    This recursively saves tree top to bottom.
     """
 
     def order_by_location_type():

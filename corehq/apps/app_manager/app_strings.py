@@ -54,8 +54,8 @@ def _create_custom_app_strings(app, lang, for_default=False):
     yield id_strings.homescreen_title(), app.name
     yield id_strings.app_display_name(), app.name
 
-    yield 'cchq.case', "Case"
-    yield 'cchq.referral', "Referral"
+    for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
+        yield id, value
 
     if for_default:
         # include language code names and current language
@@ -118,11 +118,6 @@ def _create_custom_app_strings(app, lang, for_default=False):
             yield _get_custom_icon_app_locale_and_value(custom_icon_form, custom_icon_text, module=module)
 
         if hasattr(module, 'report_configs'):
-            yield id_strings.report_menu(), 'Reports'
-            yield id_strings.report_name_header(), 'Report Name'
-            yield id_strings.report_description_header(), 'Report Description'
-            yield id_strings.report_last_sync(), 'Last Sync'
-            yield id_strings.report_data_table(), 'Data Table'
             for config in module.report_configs:
                 yield id_strings.report_command(config.uuid), trans(config.header)
                 yield id_strings.report_name(config.uuid), trans(config.header)
@@ -196,7 +191,10 @@ class AppStringsBase(object):
 
     @memoized
     def get_default_translations(self, lang, commcare_version):
-        return self._load_translations(lang, commcare_version=commcare_version)
+        translations = self._load_translations(lang, commcare_version=commcare_version)
+        for id, value in id_strings.REGEX_DEFAULT_VALUES.items():
+            translations[id] = value
+        return translations
 
     def create_custom_app_strings(self, app, lang, for_default=False):
         custom = dict(_create_custom_app_strings(app, lang, for_default=for_default))

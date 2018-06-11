@@ -22,6 +22,7 @@
 {% initial_page_data 'presave' presave %}
 {% initial_page_data 'table_configuration' table_configuration %}
 {% initial_page_data 'custom_export' custom_export %}
+{% initial_page_data 'custom_export_id' custom_export.get_id %}
 {% initial_page_data 'custom_export_type' custom_export.type %}
 <div id="customize-export" style="display: none;" data-bind="visible: true">
     {# content for multi-select help popover #}
@@ -328,11 +329,6 @@
     {% if custom_export.get_id %}
         {% with custom_export as export %}
             {% include "export/dialogs/delete_custom_export_dialog.html" %}
-            <script>
-                $('#delete-export-modal-{{ export.get_id }}').find('form').submit(function() {
-                    window.onbeforeunload = undefined;
-                });
-            </script>
         {% endwith %}
     {% endif %}
 {% endblock %}

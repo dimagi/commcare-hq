@@ -28,5 +28,4 @@ class Migration(migrations.Migration):
                 'managed': False,
             }
         ),
-        migrator.get_migration('create_datasource_views.sql')
     ]

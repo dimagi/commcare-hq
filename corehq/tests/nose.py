@@ -226,7 +226,7 @@ class HqdbContext(DatabaseContext):
                 return False
             old_names.append((connection, db["NAME"], True))
 
-        self.old_names = old_names, []
+        self.old_names = old_names
         return True
 
     def delete_couch_databases(self):

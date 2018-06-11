@@ -113,6 +113,7 @@ if __name__ == "__main__":
         GeventCommand('mvp_force_update', None),
         GeventCommand('run_gunicorn', None),
         GeventCommand('preindex_everything', None),
+        GeventCommand('migrate_multi', None),
         GeventCommand('prime_views', None),
         GeventCommand('ptop_preindex', None),
         GeventCommand('sync_prepare_couchdb_multi', None),

@@ -54,6 +54,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.users.models import CouchUser
 import six
 
 
@@ -133,20 +134,6 @@ def get_releases_context(request, domain, app_id):
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
-    is_in_mobile_experiment = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-        request.couch_user.username
-    )
-    is_mobile_ab = toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-        request.couch_user.username, toggles.NAMESPACE_USER
-    )
-    if is_in_mobile_experiment:
-        context.update({
-            'mobile_experience_ab_test': {
-                'name': 'mobile_signups_test_march2018test',
-                'version': 'variation' if is_mobile_ab else 'control',
-            },
-        })
-
     context.update({
         'release_manager': True,
         'can_send_sms': can_send_sms,
@@ -164,7 +151,6 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-        'is_mobile_experience': (is_in_mobile_experiment and is_mobile_ab),
     })
     if not app.is_remote_app():
         context.update({
@@ -244,12 +230,14 @@ def save_copy(request, domain, app_id):
 
     if not errors:
         try:
+            user_id = request.couch_user.get_id
             copy = app.make_build(
                 comment=comment,
-                user_id=request.couch_user.get_id,
+                user_id=user_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
             copy.save(increment_version=False)
+            CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():

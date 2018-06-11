@@ -8,7 +8,30 @@ BEGIN
   all_text = 'All';
   null_value = NULL;
 
-  EXECUTE 'INSERT INTO awc_location (SELECT ' ||
+  EXECUTE 'INSERT INTO awc_location (
+     doc_id,
+     awc_name,
+     awc_site_code,
+     supervisor_id,
+     supervisor_name,
+     supervisor_site_code,
+     block_id,
+     block_name,
+     block_site_code,
+     district_id,
+     district_name,
+     district_site_code,
+     state_id,
+     state_name,
+     state_site_code,
+     aggregation_level,
+     block_map_location_name,
+     district_map_location_name,
+     state_map_location_name,
+     aww_name,
+     contact_phone_number
+    )
+    (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
     quote_nullable(null_value) || ', ' ||
     quote_nullable(all_text) || ', ' ||
@@ -35,7 +58,31 @@ BEGIN
     'block_map_location_name, district_map_location_name, state_map_location_name ' ||
     ')';
 
-  EXECUTE 'INSERT INTO awc_location (SELECT ' ||
+  EXECUTE 'INSERT INTO awc_location 
+    (
+     doc_id,
+     awc_name,
+     awc_site_code,
+     supervisor_id,
+     supervisor_name,
+     supervisor_site_code,
+     block_id,
+     block_name,
+     block_site_code,
+     district_id,
+     district_name,
+     district_site_code,
+     state_id,
+     state_name,
+     state_site_code,
+     aggregation_level,
+     block_map_location_name,
+     district_map_location_name,
+     state_map_location_name,
+     aww_name,
+     contact_phone_number
+    )
+    (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
     quote_nullable(null_value) || ', ' ||
     quote_nullable(all_text) || ', ' ||
@@ -61,7 +108,31 @@ BEGIN
     'block_map_location_name, district_map_location_name, state_map_location_name ' ||
     ')';
 
-  EXECUTE 'INSERT INTO awc_location (SELECT ' ||
+  EXECUTE 'INSERT INTO awc_location 
+    (
+     doc_id,
+     awc_name,
+     awc_site_code,
+     supervisor_id,
+     supervisor_name,
+     supervisor_site_code,
+     block_id,
+     block_name,
+     block_site_code,
+     district_id,
+     district_name,
+     district_site_code,
+     state_id,
+     state_name,
+     state_site_code,
+     aggregation_level,
+     block_map_location_name,
+     district_map_location_name,
+     state_map_location_name,
+     aww_name,
+     contact_phone_number
+    )
+    (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
     quote_nullable(null_value) || ', ' ||
     quote_nullable(all_text) || ', ' ||
@@ -86,7 +157,31 @@ BEGIN
     'district_map_location_name, state_map_location_name ' ||
     ')';
 
-  EXECUTE 'INSERT INTO awc_location (SELECT ' ||
+  EXECUTE 'INSERT INTO awc_location 
+    (
+     doc_id,
+     awc_name,
+     awc_site_code,
+     supervisor_id,
+     supervisor_name,
+     supervisor_site_code,
+     block_id,
+     block_name,
+     block_site_code,
+     district_id,
+     district_name,
+     district_site_code,
+     state_id,
+     state_name,
+     state_site_code,
+     aggregation_level,
+     block_map_location_name,
+     district_map_location_name,
+     state_map_location_name,
+     aww_name,
+     contact_phone_number
+    )
+    (SELECT ' ||
     quote_nullable(all_text) || ', ' ||
     quote_nullable(null_value) || ', ' ||
     quote_nullable(all_text) || ', ' ||

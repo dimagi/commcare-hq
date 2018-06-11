@@ -631,6 +631,25 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+    domains_needing_search_index.clear()
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
+)
+
 LIVEQUERY_SYNC = StaticToggle(
     'livequery_sync',
     'Enable livequery sync algorithm',
@@ -1412,6 +1431,15 @@ SKIP_REMOVE_INDICES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_RECOVERY_MEASURES = StaticToggle(
+    'mobile_recovery_measures',
+    'Mobile recovery measures',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=("Used for widely deployed projects where recovery from "
+                 "large-scale failures would otherwise be next to impossible."),
+)
+
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
@@ -1503,30 +1531,12 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
-    'mobile_signup_redirect_ab_test_controller',
-    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 TARGET_COMMCARE_FLAVOR = StaticToggle(
     'target_commcare_flavor',
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
-    'mobile_signup_redirect_ab_test',
-    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 
 APPCUES_AB_TEST = PredictablyRandomToggle(
     'appcues_ab_test',
@@ -1536,6 +1546,12 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     randomness=0.5
 )
 
+WAREHOUSE_APP_STATUS = StaticToggle(
+    'warehouse_app_status',
+    "User warehouse backend for the app status report. Currently only for sql domains",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 TRAINING_MODULE = StaticToggle(
     'training-module',
@@ -1552,14 +1568,3 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-
-HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
-    'hide_translations_from_forms',
-    'Hide translations for languages from forms',
-    TAG_CUSTOM,
-    description=(
-        "Do not show translations in forms. Comes in handy when your app support multiple "
-        "languages but you want to focus just on app building."
-    ),
-    namespaces=[NAMESPACE_DOMAIN]
-)
