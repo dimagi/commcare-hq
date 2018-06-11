@@ -242,6 +242,151 @@
           "true_values": ["yes"],
           "false_values": ["no"]
         }
+      },
+      {
+        "column_id": "anc_weight",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_weight"]
+        }
+      },
+      {
+        "column_id": "anc_blood_pressure",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_path",
+            "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_blood_pressure"]
+          },
+          "cases": {
+            "normal": {
+              "type": "constant",
+              "constant": 1
+            },
+            "high": {
+              "type": "constant",
+              "constant": 2
+            }
+            "not_measured": {
+              "type": "constant",
+              "constant": 3
+            }
+          }
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
+      },
+      {
+        "column_id": "bp_sys",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "bp_sys"]
+        }
+      },
+      {
+        "column_id": "bp_dia",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "bp_dia"]
+        }
+      },
+      {
+        "column_id": "anc_abnormalities",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_abnormalities"]
+        }
+      },
+      {
+        "column_id": "anc_hemoglobin",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "property_path",
+          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_hemoglobin"]
+        }
+      },
+      {
+        "column_id": "bleeding",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "bleeding"]
+          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "swelling",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "swelling"]
+          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "blurred_vision",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "blurred_vision"]
+          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "convulsions",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "convulsions"]
+          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "rupture",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "property_path",
+            "property_path": ["form", "bp2", "rupture"]
+          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       }
     ],
     "named_expressions": {
