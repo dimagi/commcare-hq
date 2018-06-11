@@ -221,20 +221,20 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         lastClickedRow = $(this).parent().children().eq(0);
                     }
 
-                    var first_row = null,
+                    var firstRow = null,
                         start = null,
                         end = null;
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
-                        first_row = shiftClickedRow;
+                        firstRow = shiftClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
-                        first_row = lastClickedRow;
+                        firstRow = lastClickedRow;
                     }
 
-                    var next = first_row;
+                    var next = firstRow;
                     for(var i = start; i <= end; i++) {
                         next.addClass('selected-for-sort');
                         next = next.next();
