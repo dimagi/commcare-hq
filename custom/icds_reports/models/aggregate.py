@@ -455,6 +455,8 @@ class AggChildHealth(models.Model):
     stunting_normal = models.IntegerField(null=True)
     valid_all_registered_in_month = models.IntegerField(null=True)
     ebf_no_info_recorded = models.IntegerField(null=True)
+    zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False

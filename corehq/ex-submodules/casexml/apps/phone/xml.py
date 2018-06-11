@@ -121,11 +121,14 @@ def get_registration_element(restore_user):
     return root
 
 
-def get_registration_element_for_case(restore_user, case_id):
+# Case registration blocks do not have a password
+def get_registration_element_for_case(restore_user, case_id, username):
+    if not username:
+        username = ''
     root = safe_element("Registration")
     root.attrib = {"xmlns": USER_REGISTRATION_XMLNS}
-    root.append(safe_element("username", restore_user.username))
-    root.append(safe_element("password", restore_user.password))
+    root.append(safe_element("username", username))
+    root.append(safe_element("password", ""))
     root.append(safe_element("uuid", case_id))
     root.append(safe_element("date", date_to_xml_string(restore_user.date_joined)))
     root.append(get_data_element('user_data', restore_user.user_session_data))

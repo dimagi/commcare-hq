@@ -35,11 +35,17 @@ class DataTablesColumn(object):
 
     @property
     def render_html(self):
+        css_classes = []
+        if self.css_span:
+            css_classes.append("span%d" % self.css_span)
+        if self.sortable:
+            css_classes.append("clickable")
+
         column_params = dict(
             title=self.html,
             sort=self.sortable,
             rotate=self.rotate,
-            css="span%d" % self.css_span if self.css_span > 0 else '',
+            css=" ".join(css_classes),
             rowspan=self.rowspan,
             help_text=self.help_text,
             expected=self.expected,

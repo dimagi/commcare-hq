@@ -102,6 +102,13 @@ class TestSubscription(BaseAccountingTest):
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertFalse(subscription.is_active)
 
+    def test_no_activation_date_start_equals_date_end(self):
+        self.subscription.date_end = self.subscription.date_start
+        self.subscription.save()
+        tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
+        self.assertFalse(subscription.is_active)
+
     def test_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         subscription = Subscription.visible_objects.get(id=self.subscription.id)

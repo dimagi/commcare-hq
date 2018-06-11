@@ -138,6 +138,7 @@ class BaseMessagingSectionView(BaseDomainView):
         return has_privilege(self.request, privileges.INBOUND_SMS)
 
     @method_decorator(require_privilege_but_override_for_migrator(privileges.OUTBOUND_SMS))
+    @method_decorator(require_permission(Permissions.edit_data))
     def dispatch(self, *args, **kwargs):
         return super(BaseMessagingSectionView, self).dispatch(*args, **kwargs)
 
@@ -174,7 +175,6 @@ class ComposeMessageView(BaseMessagingSectionView):
         page_context.update(get_sms_autocomplete_context(self.request, self.domain))
         return page_context
 
-    @method_decorator(require_permission(Permissions.edit_data))
     @use_typeahead
     def dispatch(self, *args, **kwargs):
         return super(ComposeMessageView, self).dispatch(*args, **kwargs)
@@ -221,6 +221,11 @@ def get_sms_autocomplete_context(request, domain):
 @login_and_domain_required
 @requires_privilege_with_fallback(privileges.OUTBOUND_SMS)
 def send_to_recipients(request, domain):
+    # This is invoked from both the ComposeMessageView as well as from
+    # the view that sends SMS to users when publishing an app.
+    # Currently the permission to publish an app is just the login_and_domain_required
+    # decorator, and this view matches that.
+
     recipients = request.POST.get('recipients')
     message = request.POST.get('message')
     if not recipients:
@@ -400,7 +405,7 @@ class TestSMSMessageView(BaseDomainView):
 
 
 @csrf_exempt
-@login_or_digest_ex(allow_cc_users=True)
+@require_permission(Permissions.edit_data, login_decorator=login_or_digest_ex(allow_cc_users=True))
 @requires_privilege_plaintext_response(privileges.OUTBOUND_SMS)
 def api_send_sms(request, domain):
     """
@@ -692,7 +697,6 @@ class ChatOverSMSView(BaseMessagingSectionView):
     template_name = 'sms/chat_contacts.html'
     page_title = _("Chat over SMS")
 
-    @method_decorator(require_permission(Permissions.edit_data))
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ChatOverSMSView, self).dispatch(*args, **kwargs)
@@ -2023,10 +2027,6 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
     loading_message = ugettext_noop("Loading invitations...")
     strict_domain_fetching = True
 
-    @method_decorator(require_permission(Permissions.edit_data))
-    def dispatch(self, request, *args, **kwargs):
-        return super(ManageRegistrationInvitationsView, self).dispatch(request, *args, **kwargs)
-
     @property
     @memoized
     def invitations_form(self):
@@ -2159,6 +2159,10 @@ class ManageRegistrationInvitationsView(BaseAdvancedMessagingSectionView, CRUDPa
 
 
 class InvitationAppInfoView(View, DomainViewMixin):
+    """
+    This view is accessed by CommCare automatically by logged-out users during
+    installation of an app in the mobile worker self-registration workflow.
+    """
     urlname = 'sms_registration_invitation_app_info'
 
     @property

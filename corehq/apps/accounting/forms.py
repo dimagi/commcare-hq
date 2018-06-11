@@ -1041,7 +1041,8 @@ class PlanInformationForm(forms.Form):
                             description=description,
                             edition=edition,
                             visibility=visibility,
-                            is_customer_software_plan=is_customer_software_plan)
+                            is_customer_software_plan=is_customer_software_plan
+                            )
         plan.save()
         return plan
 

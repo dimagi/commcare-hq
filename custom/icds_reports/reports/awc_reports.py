@@ -18,7 +18,7 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
-    current_month_wasting_column
+    current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column
 from custom.icds_reports.const import MapColors
 import six
 
@@ -358,11 +358,11 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
         )
         height_measured_in_month = exclude_records_by_age_for_column(
             age_filters,
-            'height_measured_in_month'
+            hfa_recorded_in_month_column(icds_feature_flag)
         )
         weighed_and_height_measured_in_month = exclude_records_by_age_for_column(
             age_filters,
-            'weighed_and_height_measured_in_month'
+            wfh_recorded_in_month_column(icds_feature_flag)
         )
 
         queryset = AggChildHealthMonthly.objects.filter(

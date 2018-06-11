@@ -9,6 +9,7 @@ from corehq.apps.builds.fixtures import commcare_build_config
 from corehq.apps.builds.jadjar import JadJar
 from corehq.util.quickcache import quickcache
 from itertools import groupby
+from distutils.version import StrictVersion
 
 
 class SemanticVersionProperty(StringProperty):
@@ -218,6 +219,11 @@ class BuildSpec(DocumentSchema):
 
     def major_release(self):
         return self.version.split('.')[0]
+
+    def release_greater_than_or_equal_to(self, version):
+        if not self.version:
+            return False
+        return StrictVersion(self.version) >= StrictVersion(version)
 
 
 class BuildMenuItem(DocumentSchema):

@@ -501,11 +501,13 @@ def get_usercase_properties(app):
 
 def all_case_properties_by_domain(domain, case_types=None, include_parent_properties=True):
     result = {}
+    get_case_types_from_apps = case_types is None
+
     for app in all_apps_by_domain(domain):
         if app.is_remote_app():
             continue
 
-        if case_types is None:
+        if get_case_types_from_apps:
             case_types = app.get_case_types()
 
         property_map = get_case_properties(app, case_types,

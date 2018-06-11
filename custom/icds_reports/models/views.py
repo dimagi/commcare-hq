@@ -98,8 +98,12 @@ class DailyAttendanceView(models.Model):
 class ChildHealthMonthlyView(models.Model):
     case_id = models.TextField(primary_key=True)
     awc_id = models.TextField(blank=True, null=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
     supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
     block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
     district_id = models.TextField(blank=True, null=True)
     state_id = models.TextField(blank=True, null=True)
     person_name = models.TextField(blank=True, null=True)
@@ -346,6 +350,8 @@ class AggChildHealthMonthly(models.Model):
     weighed_and_height_measured_in_month = models.IntegerField(blank=True, null=True)
     weighed_and_born_in_month = models.IntegerField(blank=True, null=True)
     days_ration_given_child = models.IntegerField(blank=True, null=True)
+    zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

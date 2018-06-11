@@ -77,7 +77,7 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "wasting",
                 "color": "green",
-                "all": 31,
+                "all": 0,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
@@ -87,7 +87,7 @@ class TestMaternalChildData(TestCase):
                              "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
                              "undernutrition usually as a consequence of insufficient food intake or a high "
                              "incidence of infectious diseases.",
-                "percent": -64.51612903225806,
+                "percent": 0,
                 "value": 1,
                 "label": "Wasting (Weight-for-Height)"
             }
@@ -135,7 +135,7 @@ class TestMaternalChildData(TestCase):
             {
                 "redirect": "stunting",
                 "color": "red",
-                "all": 32,
+                "all": 0,
                 "frequency": "month",
                 "format": "percent_and_div",
                 "help_text": "Percentage of children between 0 - 5 years enrolled for Anganwadi Services  with "

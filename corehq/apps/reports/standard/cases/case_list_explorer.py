@@ -25,6 +25,7 @@ from corehq.apps.reports.standard.cases.filters import (
     XpathCaseSearchFilter,
 )
 from corehq.elastic import iter_es_docs_from_query
+from six.moves import range
 
 
 class CaseListExplorer(CaseListReport):
