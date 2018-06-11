@@ -20,7 +20,7 @@ CONTEXT_REGEXS = {
 }
 
 
-class TranslationsParser:
+class TranslationsParser(object):
     def __init__(self, transifex):
         self.transifex = transifex
         self.key_lang_str = '{}{}'.format(self.transifex.lang_prefix, self.transifex.key_lang)
