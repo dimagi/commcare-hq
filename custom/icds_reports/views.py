@@ -1626,12 +1626,10 @@ class ICDSAppTranslations(BaseDomainView):
         return
 
     def transifex(self, domain, form_data):
-        if not hasattr(self, '_transifex'):
-            transifex_project_slug = form_data.get('transifex_project_slug')
-            source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
-            self._transifex = Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
-                                        form_data['version'])
-        return self._transifex
+        transifex_project_slug = form_data.get('transifex_project_slug')
+        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                         form_data['version'])
 
     @staticmethod
     def perform_push_request(request, form_data):
