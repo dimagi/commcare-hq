@@ -4,8 +4,8 @@ hqDefine("reports/js/base_maps", function() {
     $(document).ajaxComplete(function() {
         var $data = $(".base-maps-data");
         if ($data.length && !done) {
-            var context = $data.data("context");
-            iconPath = $data.data("icon_path");
+            var context = $data.data("context"),
+                iconPath = $data.data("icon_path");
             if (iconPath && context) {
                 hqImport("reports/js/maps_utils").load(context, iconPath);
                 done = true;
