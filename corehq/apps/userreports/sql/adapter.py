@@ -147,12 +147,10 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     def _save_rows(self, rows, doc_ids):
         # transform format from ColumnValue to dict
-        formatted_rows = []
-        for row in rows:
-            column_dict = {}
-            for column in row:
-                column_dict[column.column.id] = column.value
-            formatted_rows.append(column_dict)
+        formatted_rows = [
+            {i.column.database_column_name: i.value for i in row}
+            for row in rows
+        ]
 
         table = self.get_table()
         delete = table.delete(table.c.doc_id.in_(doc_ids))
