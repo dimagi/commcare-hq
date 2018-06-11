@@ -25,7 +25,7 @@ MetricsControl = L.Control.extend({
 
             // highlight in detail popup
             $popup.find('.data').removeClass('detail_active');
-            forEachDimension(metric, function(type, meta) {
+            hqImport("reports/js/maps_utils").forEachDimension(metric, function(type, meta) {
                 $popup.find('.data-' + meta.column).addClass('detail_active');
             });
         });
@@ -34,7 +34,7 @@ MetricsControl = L.Control.extend({
     },
 
     init: function() {
-        var koModel = new MetricsViewModel(this);
+        var koModel = new (hqImport("reports/js/maps_utils").MetricsViewModel)(this);
         $('#metrics').koApplyBindings(koModel);
         koModel.load(this.options.metrics);
     },
@@ -46,7 +46,7 @@ MetricsControl = L.Control.extend({
         resetTable(this.options.data); // clear out handlers on table before makeDisplayContext adds new ones
 
         var m = this;
-        loadData(this._map, this.options.data, makeDisplayContext(metric, function(f) {
+        loadData(this._map, this.options.data, hqImport("reports/js/maps_utils").makeDisplayContext(metric, function(f) {
             m.options.info.setActive(f, m.activeMetric);
         }));
 
@@ -60,7 +60,7 @@ MetricsControl = L.Control.extend({
 // main entry point
 function mapsInit(context) {
     var map = initMap($('#map'), context.layers, [30., 0.], 2);
-    initData(context.data, context.config);
+    hqImport("reports/js/maps_utils").initData(context.data, context.config);
     var display = context.config.display;
     if (!display) {
         // we can add other things here eventually
@@ -71,7 +71,7 @@ function mapsInit(context) {
     if (display.table) {
         var table = initTable(context.data, context.config);
     }
-    initMetrics(map, table, context.data, context.config);
+    hqImport("reports/js/maps_utils").initMetrics(map, table, context.data, context.config);
     $('#zoomtofit').css('display', 'block');
     $('#toggletable').css('display', 'block');
     return map;
@@ -80,10 +80,10 @@ function mapsInit(context) {
 // initialize leaflet map
 function initMap($div, layers, default_pos, default_zoom) {
     var map = L.map($div.attr('id'), {trackResize: false}).setView(default_pos, default_zoom);
-    initLayers(map, layers);
+    hqImport("reports/js/maps_utils").initLayers(map, layers);
 
-    new ZoomToFitControl().addTo(map);
-    new ToggleTableControl().addTo(map);
+    new (hqImport("reports/js/maps_utils").ZoomToFitControl)().addTo(map);
+    new (hqImport("reports/js/maps_utils").ToggleTableControl)().addTo(map);
     L.control.scale().addTo(map);
 
     return map;
@@ -105,7 +105,7 @@ function initTable(data, config) {
     $('#tabular').append('<thead></thead><tbody></tbody>');
     var colSorting = initTableHeader(config, data, row);
     $.each(data.features, function(i, e) {
-        var ctx = infoContext(e, config, 'table');
+        var ctx = hqImport("reports/js/maps_utils").infoContext(e, config, 'table');
         e.$tr = row($('#tabular'), false, ctx.info, function($cell, e) {
             $cell.html(e.value);
             var $sortkey = $('<span>');
@@ -135,7 +135,7 @@ function initTable(data, config) {
 
 // the ridiculousness of this function is from handling nested column headers
 function initTableHeader(config, data, mkRow) {
-    var cols = getTableColumns(config);
+    var cols = hqImport("reports/js/maps_utils").getTableColumns(config);
 
     var maxDepth = function(col) {
         return 1 + (typeof col === 'string' ? 0 :
@@ -156,7 +156,7 @@ function initTableHeader(config, data, mkRow) {
 
     var process = function(col, depth) {
         if (typeof col === 'string') {
-            var entry = {title: getColumnTitle(col, config), terminal: true};
+            var entry = {title: hqImport("reports/js/maps_utils").getColumnTitle(col, config), terminal: true};
             config._table_columns_flat.push(col); // a bit hacky
         } else {
             var entry = {title: col.title, span: breadth(col)};
@@ -188,8 +188,8 @@ function initTableHeader(config, data, mkRow) {
             'numeric': {sType: 'title-numeric'},
         }[datatype];
     };
-    return _.map(getTableColumns(config, true), function(col) {
-        var stats = summarizeColumn({column: col}, data);
+    return _.map(hqImport("reports/js/maps_utils").getTableColumns(config, true), function(col) {
+        var stats = hqImport("reports/js/maps_utils").summarizeColumn({column: col}, data);
         return sortColumnAs(stats.nonnumeric ? 'text' : 'numeric');
     });
 }
