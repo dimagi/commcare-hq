@@ -1619,14 +1619,14 @@ class ConventureDataSourceMixin(IntraHealthSqlData):
         for row in rows:
             month = int(row['real_date']['html'])
             if month not in values:
-                if row.get(loc_name):
-                    loc = get_location(row[loc_name], domain=self.config['domain'])
-                    new_registered = _locations_per_type(self.config['domain'], 'PPS', loc)
-                    if new_registered > registered:
-                        registered = new_registered
                 values[month] = {
                     'pps_ids': set(),
                 }
+            if row.get(loc_name):
+                loc = get_location(row[loc_name], domain=self.config['domain'])
+                new_registered = _locations_per_type(self.config['domain'], 'PPS', loc)
+                if new_registered > registered:
+                    registered = new_registered
             values[month]['pps_ids'].add(row['pps_id'])
 
         return values, registered
