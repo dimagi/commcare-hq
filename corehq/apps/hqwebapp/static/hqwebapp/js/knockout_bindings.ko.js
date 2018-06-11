@@ -316,7 +316,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     var newList = [],
                         cur = 0,
                         i = 0;
-                    for (var cur = 0; cur < element.children.length; cur++) {
+                    for (cur = 0; cur < element.children.length; cur++) {
                         i = parseInt(element.children[cur].attributes['data-order'].value);
                         newList.push(list()[i]);
                     }
