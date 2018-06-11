@@ -14,7 +14,7 @@ from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
-from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError, PillowConfigError
+from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError
 from pillowtop.logger import pillow_logging
 import six
 
