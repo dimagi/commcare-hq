@@ -512,13 +512,6 @@
         {% endif %}
         {% endif %}
 
-        {% if request.maps_prefer_canvas and not requirejs_main %}
-        {% addtoblock js-inline %}
-        {# This is fine as an inline script; this flag is only used by custom reports which we're not currently externalizing #}
-        <script>L_PREFER_CANVAS = true;</script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_maps and not requirejs_main %}
         {% compress js %}
         <script src="{% static 'reports/js/maps.js' %}"></script>
