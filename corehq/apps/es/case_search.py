@@ -226,7 +226,13 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
 
     # if its a date, use it
     # date range
-    kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
+    kwargs = {
+        key: parse_date(value) for key, value in six.iteritems(kwargs)
+        if value is not None and parse_date(value) is not None
+    }
+    if not kwargs:
+        raise TypeError()       # Neither a date nor number was passed in
+
     return _base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)

@@ -170,9 +170,10 @@ def build_filter_from_ast(domain, node):
             case_property_name = serialize(node.left)
             value = node.right
             return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
-        except TypeError:
+        except (TypeError, ValueError):
             raise CaseFilterError(
-                _("The right hand side of a comparison must be a number or date"),
+                _("The right hand side of a comparison must be a number or date. "
+                  "Dates must be surrounded in quotation marks"),
                 serialize(node),
             )
 
