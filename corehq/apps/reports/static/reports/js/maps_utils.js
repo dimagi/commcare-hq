@@ -1751,16 +1751,8 @@ hqDefine("reports/js/maps_utils", function() {
     }
 
     return {
-        getTableColumns: getTableColumns,
-        infoContext: infoContext,
-        initData: initData,
-        initLayers: initLayers,
-        initMetrics: initMetrics,
         load: load,
-        makeDisplayContext: makeDisplayContext,
         setMapHeight: setMapHeight,
-        MetricsViewModel: MetricsViewModel,
-        summarizeColumn: summarizeColumn,
         ZoomToFitControl: ZoomToFitControl,
         zoomToAll: zoomToAll,
     };
