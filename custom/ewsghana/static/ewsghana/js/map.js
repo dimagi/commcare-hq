@@ -8,7 +8,7 @@ hqDefine("ewsghana/js/map", function() {
         var map = mapsInit(context);
 
         var resize = function() {
-            setMapHeight(map);
+            hqImport("reports/js/maps_utils").setMapHeight(map);
         };
         $(window).resize(resize);
         var $reportFiltersAccordion = $('#reportFiltersAccordion');

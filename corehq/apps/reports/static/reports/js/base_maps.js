@@ -9,7 +9,7 @@ hqDefine("reports/js/base_maps", function() {
             var context = $data.data("context");
             ICON_PATH = $data.data("icon_path");
             if (ICON_PATH && context) {
-                load(context, ICON_PATH);
+                hqImport("reports/js/maps_utils").load(context, ICON_PATH);
                 done = true;
             }
         }

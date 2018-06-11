@@ -149,7 +149,7 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             }
                             applyBootstrapMagic();
                             if ('context' in data){
-                                load(data['context'], ICON_PATH);
+                                hqImport("reports/js/maps_utils").load(data['context'], ICON_PATH);
                             }
                             if (self.successCallbacks) {
                                 for (i = 0; i < self.successCallbacks.length; i++) {
