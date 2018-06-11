@@ -245,6 +245,25 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
                 self.assertEqual(f.name['en'], 'Copy of {}'.format(original_form.name['en']))
         self.assertEqual(form_count, 2, 'Copy form has copied multiple times!')
 
+    def test_copy_form_to_app(self):
+        src_app = Application.new_app('domain', "Source Application")
+        src_module = src_app.add_module(AdvancedModule.new_module('Source Module', None))
+        original_form = src_app.new_form(src_module.id, "Untitled Form", None)
+        original_form.source = '<source>'
+        dst_app = Application.new_app('domain', "Destination Application")
+        dst_module = dst_app.add_module(AdvancedModule.new_module('Destination Module', None))
+
+        src_app._copy_form(src_module, original_form, dst_module, dst_app, rename=True)
+
+        form_count = 0
+        for f in src_app.get_forms():
+            form_count += 1
+        self.assertEqual(form_count, 1, 'Form copied to the wrong app')
+        form_count = 0
+        for f in dst_app.get_forms():
+            form_count += 1
+        self.assertEqual(form_count, 1)
+
     def test_owner_name(self):
         self._test_generic_suite('owner-name')
 
