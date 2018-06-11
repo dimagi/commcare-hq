@@ -1,8 +1,5 @@
-/* globals ICON_PATH, leafletImage */
-ICON_PATH = hqImport("hqwebapp/js/initial_page_data").get('icon_path');
+/* globals leafletImage */
 hqDefine("ewsghana/js/map", function() {
-    var context = hqImport("hqwebapp/js/initial_page_data").get('context');
-
     function load(context, iconPath) {
         L.Icon.Default.imagePath = iconPath;
         var map = mapsInit(context);
@@ -19,8 +16,11 @@ hqDefine("ewsghana/js/map", function() {
     }
 
     $(function() {
+        var baseMapsData = $(".base-maps-data").data(),
+            context = baseMapsData.context,
+            iconPath = baseMapsData.icon_path;
         if (context !== '') {
-            var map = load(context, ICON_PATH);
+            var map = load(context, iconPath);
             $('#export-jpg').click(function() {
                 var $button = $(this);
                 var text = $button.text();
