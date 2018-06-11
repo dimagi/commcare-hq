@@ -49,6 +49,30 @@ These are created in /tmp/ by default, however you can change it by adding a val
 
 Note that the files created are huge; this code should only be run locally.
 
+Profiling in production
+^^^^^^^^^^^^^^^^^^^^^^^
+The same method can be used to profile functions in production. Obviously we want to be able to
+turn this on and off and possibly only profile a limited number of function calls.
+
+This can be accomplished by using an environment variable to set the probability of profiling a function.
+Here's an example::
+
+    @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
+    def location_export(request, domain):
+        ....
+
+By default this wil not do any profiling but if the `PROFILE_LOCATIONS_EXPORT` environment variable
+is set to a value between 0 and 1 and the Django process is restarted then the function will
+get profiled. The number of profiles that are done will depend on the value of the environment
+variable. Values closer to 1 will get more profiling.
+
+You can also limit the total number of profiles to be recorded using the `limit` keyword argument.
+You could also expose this via an environment variable or some other method to make it configurable::
+
+    @profile_prod('locations_download.prof', 1, limit=10)
+    def location_export(request, domain):
+        ....
+
 
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1568,14 +1568,3 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-
-HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
-    'hide_translations_from_forms',
-    'Hide translations for languages from forms',
-    TAG_CUSTOM,
-    description=(
-        "Do not show translations in forms. Comes in handy when your app support multiple "
-        "languages but you want to focus just on app building."
-    ),
-    namespaces=[NAMESPACE_DOMAIN]
-)

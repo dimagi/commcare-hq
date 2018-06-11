@@ -48,13 +48,6 @@ hqDefine("hqwebapp/js/hq.helpers", [
         $(this).parents('.alert').hide(150);
     });
 
-    // Initialize common widgets
-    $(function() {
-        _.each($(".ko-select2"), function(element) {
-            $(element).select2();
-        });
-    });
-
     if ($.timeago) {
         $.timeago.settings.allowFuture = true;
         $(".timeago").timeago();

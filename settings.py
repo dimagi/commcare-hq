@@ -377,16 +377,11 @@ HQ_APPS = (
 ENIKSHAY_APPS = (
     'custom.enikshay',
     'custom.enikshay.integrations.ninetyninedots',
-    'custom.enikshay.nikshay_datamigration',
     'custom.enikshay.integrations.nikshay',
     'custom.enikshay.integrations.bets',
-    'custom.enikshay.private_sector_datamigration',
     'custom.enikshay.two_b_datamigration',
     'custom.enikshay.two_b_release_1',
 )
-
-# DEPRECATED use LOCAL_APPS instead; can be removed with testrunner.py
-TEST_APPS = ()
 
 # also excludes any app starting with 'django.'
 APPS_TO_EXCLUDE_FROM_TESTS = (
@@ -2018,6 +2013,10 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v1.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_v2.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v1.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_v2.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
