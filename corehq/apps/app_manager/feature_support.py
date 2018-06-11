@@ -92,9 +92,9 @@ class CommCareFeatureSupportMixin(object):
     def enable_localized_menu_media(self):
         """
         Forms/Modules can have language-specific icon/audio for apps
-        version 2.21 or higher
+        version 2.21.0 or higher
         """
-        return self._require_minimum_version('2.21')
+        return self._require_minimum_version('2.21.0')
 
     @property
     def enable_case_list_icon_dynamic_width(self):

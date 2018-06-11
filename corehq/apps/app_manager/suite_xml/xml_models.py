@@ -286,14 +286,14 @@ class CommandMixin(XmlObject):
 
 class LocalizedCommand(CommandMixin, TextOrDisplay, IdNode):
     """
-        For CC >= 2.21
+        For CC >= 2.21.0
     """
     pass
 
 
 class Command(CommandMixin, DisplayNode, IdNode):
     """
-        For CC < 2.21
+        For CC < 2.21.0
     """
     pass
 
@@ -524,14 +524,14 @@ class MenuMixin(XmlObject):
 
 class Menu(MenuMixin, DisplayNode, IdNode):
     """
-        For CC < 2.21
+        For CC < 2.21.0
     """
     pass
 
 
 class LocalizedMenu(MenuMixin, TextOrDisplay, IdNode):
     """
-        For CC >= 2.21
+        For CC >= 2.21.0
     """
     pass
 
@@ -681,13 +681,13 @@ class ActionMixin(OrderedXmlObject):
 
 
 class Action(ActionMixin):
-    """ For CC < 2.21 """
+    """ For CC < 2.21.0 """
 
     display = NodeField('display', Display)
 
 
 class LocalizedAction(ActionMixin, TextOrDisplay):
-    """ For CC >= 2.21 """
+    """ For CC >= 2.21.0 """
     pass
 
 
