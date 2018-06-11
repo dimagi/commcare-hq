@@ -5,9 +5,13 @@ import re
 import six
 from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
-from eulxml.xpath.ast import Step, serialize
+from eulxml.xpath.ast import FunctionCall, Step, serialize
 from six import integer_types, string_types
 
+from corehq.apps.case_search.xpath_functions import (
+    XPATH_FUNCTIONS,
+    XPathFunctionException,
+)
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
@@ -135,14 +139,33 @@ def build_filter_from_ast(domain, node):
             serialize(node)
         )
 
+    def _unwrap_function(node):
+        """Returns the value of the node if it is wrapped in a function, otherwise just returns the node
+        """
+        if not isinstance(node, FunctionCall):
+            return node
+        try:
+            return XPATH_FUNCTIONS[node.name](node)
+        except KeyError:
+            raise CaseFilterError(
+                _("We don't know what to do with the function \"{}\". Accepted functions are: {}").format(
+                    node.name,
+                    ", ".join(list(XPATH_FUNCTIONS.keys())),
+                ),
+                serialize(node)
+            )
+        except XPathFunctionException as e:
+            raise CaseFilterError(six.text_type(e), serialize(node))
+
     def _equality(node):
         """Returns the filter for an equality operation (=, !=)
 
         """
-        if isinstance(node.left, Step) and isinstance(node.right, integer_types + (string_types, float)):
+        if isinstance(node.left, Step) and (
+                isinstance(node.right, integer_types + (string_types, float, FunctionCall))):
             # This is a leaf node
             case_property_name = serialize(node.left)
-            value = node.right
+            value = _unwrap_function(node.right)
 
             if value == '':
                 q = case_property_missing(case_property_name)
@@ -168,7 +191,7 @@ def build_filter_from_ast(domain, node):
         """
         try:
             case_property_name = serialize(node.left)
-            value = node.right
+            value = _unwrap_function(node.right)
             return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
         except (TypeError, ValueError):
             raise CaseFilterError(
