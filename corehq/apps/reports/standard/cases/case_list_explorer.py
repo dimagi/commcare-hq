@@ -23,6 +23,7 @@ from corehq.apps.reports.standard.cases.filters import (
     CaseListExplorerColumns,
     XpathCaseSearchFilter,
 )
+from six.moves import range
 
 
 class CaseListExplorer(CaseListReport):
