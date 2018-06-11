@@ -222,19 +222,16 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
 
                     var first_row = null,
-                        second_row = null,
                         start = null,
                         end = null;
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
                         first_row = shiftClickedRow;
-                        second_row = lastClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
                         first_row = lastClickedRow;
-                        second_row = shiftClickedRow;
                     }
 
                     var next = first_row;
