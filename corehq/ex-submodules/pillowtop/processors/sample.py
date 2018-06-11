@@ -59,5 +59,4 @@ class ChunkedCountProcessor(BulkPillowProcessor):
         self.count += 1
 
     def process_changes_chunk(self, pillow_instance, changes_chunk):
-        print("the processor did get it")
         self.count += len(changes_chunk)
