@@ -150,7 +150,8 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
         });
 
-        var $casePropertyColumns = $(".report-filter-case-property-columns");
+        var $casePropertyColumns = $(".report-filter-case-property-columns"),
+            $fieldsetExplorerColumns = $("#fieldset_explorer_columns");
         $casePropertyColumns.each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
@@ -158,7 +159,10 @@ hqDefine("reports/js/filters/main", [
             $el.koApplyBindings(model);
         });
         $casePropertyColumns.on('keyup', function(){
-            $('#fieldset_explorer_columns').trigger('change');
+            $fieldsetExplorerColumns.trigger('change');
+        });
+        $fieldsetExplorerColumns.on('hidden.bs.collapse show.bs.collapse', function(e){
+            e.stopPropagation();
         });
 
         var $xpathTextarea = $(".report-filter-xpath-textarea");
