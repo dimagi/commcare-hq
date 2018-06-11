@@ -302,7 +302,10 @@ def convert_saved_export_to_export_instance(
     if isinstance(instance, CaseExportInstance):
         migration_meta.has_case_history = instance.has_case_history_table
 
-    if not dryrun:
+    has_issues = any([migration_meta.skipped_tables,
+                      migration_meta.skipped_columns,
+                      migration_meta.has_case_history])
+    if not dryrun and (force_convert_columns or not has_issues):
         migration_meta.save()
         instance.save()
         if inferred_schema:
