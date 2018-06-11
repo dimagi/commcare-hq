@@ -90,7 +90,16 @@ class IndicatorAdapter(object):
         return self.config.get_all_values(doc, eval_context)
 
     def _save_rows(self, rows, doc_ids):
-        "Saves rows to a data source"
+        """
+        Saves rows to a data source after deleting the rows corresponding
+            to list of doc_ids
+
+        *args:
+            rows: list of database rows of Column to be inserted
+            doc_ids: list of doc_ids corresponding to rows and
+                any additional doc_ids for which the rows must be
+                deleted
+        """
         raise NotImplementedError
 
     def delete(self, doc):
