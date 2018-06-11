@@ -74,11 +74,11 @@ describe('Location Filter Controller', function () {
     it('tests init hierarchy', function () {
         var result = controller.hierarchy;
         var expected = [
-            [{"name": "awc", "parents": ["supervisor"], "level": 4}],
-            [{"name": "block", "parents": ["district"], "level": 2}],
-            [{"name": "district", "parents": ["state"], "level": 1}],
             [{"name": "state", "parents": [null], "level": 0}],
+            [{"name": "district", "parents": ["state"], "level": 1}],
+            [{"name": "block", "parents": ["district"], "level": 2}],
             [{"name": "supervisor", "parents": ["block"], "level": 3}],
+            [{"name": "awc", "parents": ["supervisor"], "level": 4}],
         ];
 
         assert.deepEqual(expected, result);

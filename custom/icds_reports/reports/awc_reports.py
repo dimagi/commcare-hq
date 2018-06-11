@@ -1046,7 +1046,7 @@ def get_beneficiary_details(case_id):
         case_id=case_id
     ).order_by('month')
 
-    min_height = 45
+    min_height = 35
     max_height = 120.0
 
     beneficiary = {
