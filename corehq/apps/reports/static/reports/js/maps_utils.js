@@ -1,3 +1,6 @@
+hqDefine("reports/js/maps_utils", function() {
+
+});
 DISPLAY_DIMENSIONS = ['size', 'color', 'icon'];
 TABLE_TOGGLE = false;
 var map_obj;
@@ -1530,39 +1533,3 @@ function make_canvas(w, h) {
     $canvas.attr('height', h);
     return $canvas;
 }
-
-
-
-
-//// OLD STUFF
-/*
-function canvas_context(canvas) {
-    var ctx = canvas.getContext('2d');
-    ctx.clear = function() {
-        ctx.save();
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-    };
-    return ctx;
-}
-
-// draw to a canvas and export the result as an image (data url)
-function render_icon(draw, width, height) {
-    var canvas = make_canvas(width, height)[0];
-    var ctx = canvas_context(canvas);
-    draw(ctx, width, height);
-    return canvas.toDataURL('image/png');
-}
-
-// create an icon rendered via canvas
-function render_marker(draw, w, h, anchor) {
-    anchor = anchor || [0, 0];
-    return new google.maps.MarkerImage(
-        render_icon(draw, w, h),
-        new google.maps.Size(w, h),
-        new google.maps.Point(0, 0),
-        new google.maps.Point(w * .5 * (anchor[0] + 1.), h * .5 * (1. - anchor[1]))
-    );
-}
-*/
