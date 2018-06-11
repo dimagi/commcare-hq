@@ -514,7 +514,6 @@
 
         {% if request.use_maps and not requirejs_main %}
         {% compress js %}
-        <script src="{% static 'reports/js/maps.js' %}"></script>
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
