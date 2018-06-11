@@ -210,31 +210,31 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $(this).toggleClass("selected-for-sort");
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    var shift_selected_index = parseInt($(this)[0].attributes['data-order'].value),
-                        shift_clicked_row = $(this),
-                        last_clicked_index = 0,
-                        last_clicked_row = null;
+                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
+                        shiftClickedRow = $(this),
+                        lastClickedIndex = 0,
+                        lastClickedRow = null;
                     if ($('.last-clicked').length > 0) {
-                        last_clicked_row = $('.last-clicked').eq(0);
-                        last_clicked_index = parseInt(last_clicked_row[0].attributes['data-order'].value);
+                        lastClickedRow = $('.last-clicked').eq(0);
+                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
                     } else {
-                        last_clicked_row = $(this).parent().children().eq(0);
+                        lastClickedRow = $(this).parent().children().eq(0);
                     }
 
                     var first_row = null,
                         second_row = null,
                         start = null,
                         end = null;
-                    if (shift_selected_index < last_clicked_index) {
-                        start = shift_selected_index;
-                        end = last_clicked_index;
-                        first_row = shift_clicked_row;
-                        second_row = last_clicked_row;
+                    if (shiftSelectedIndex < lastClickedIndex) {
+                        start = shiftSelectedIndex;
+                        end = lastClickedIndex;
+                        first_row = shiftClickedRow;
+                        second_row = lastClickedRow;
                     } else {
-                        start = last_clicked_index;
-                        end = shift_selected_index;
-                        first_row = last_clicked_row;
-                        second_row = shift_clicked_row;
+                        start = lastClickedIndex;
+                        end = shiftSelectedIndex;
+                        first_row = lastClickedRow;
+                        second_row = shiftClickedRow;
                     }
 
                     var next = first_row;
@@ -253,18 +253,18 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 // update UI
                 var row = $(this).parent().parent();
-                var current_index = row[0].attributes['data-order'].value;
+                var currentIndex = row[0].attributes['data-order'].value;
                 row.parent().prepend(row);
 
                 // update KO
-                list().unshift(list().splice(current_index, 1)[0]);
+                list().unshift(list().splice(currentIndex, 1)[0]);
             });
 
             $(element).on('click', '.send-to-bottom', function (e) {
                 $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
 
                 var row = $(this).parent().parent();
-                var current_index = row[0].attributes['data-order'].value;
+                var currentIndex = row[0].attributes['data-order'].value;
 
                 var lastSelectedRowIndex = null;
                 for (var i = 0; i < list().length; i++) {
@@ -273,7 +273,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
                 }
 
-                if (current_index < lastSelectedRowIndex) {
+                if (currentIndex < lastSelectedRowIndex) {
                     // Update UI
                     $('.isSelectedForExport').addClass('selected-for-export-above-last');
                     row.removeClass('selected-for-export-above-last');
@@ -282,8 +282,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $('.selected-for-export-above-last').removeClass('selected-for-export-above-last');
 
                     // Update KO
-                    var current_list_item = list().splice(current_index, 1)[0];
-                    list().splice(lastSelectedRowIndex, 0, current_list_item);
+                    var currentListItem = list().splice(currentIndex, 1)[0];
+                    list().splice(lastSelectedRowIndex, 0, currentListItem);
                 }
             });
 
@@ -304,11 +304,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     // TODO - get working
                     $('.selected-for-sort').sort(function(a, b) {
-                        var a_data_order = parseInt(a.attributes['data-order'].value),
-                            b_data_order = parseInt(b.attributes['data-order'].value);
-                        if (a_data_order < b_data_order) {
+                        var aDataOrder = parseInt(a.attributes['data-order'].value),
+                            bDataOrder = parseInt(b.attributes['data-order'].value);
+                        if (aDataOrder < bDataOrder) {
                             return -1;
-                        } else if (b_data_order < a_data_order) {
+                        } else if (bDataOrder < aDataOrder) {
                             return 1;
                         } else {
                             return 0;
@@ -316,14 +316,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     });
 
                     // Reorder the data in knockout
-                    var new_list = [];
+                    var newList = [];
                     for (var cur = 0; cur < element.children.length; cur++) {
                         var i = parseInt(element.children[cur].attributes['data-order'].value);
-                        new_list.push(list()[i]);
+                        newList.push(list()[i]);
                     }
                     list().splice(0, list().length);
-                    for (var i = 0; i < new_list.length; i++) {
-                        list().push(new_list[i]);
+                    for (var i = 0; i < newList.length; i++) {
+                        list().push(newList[i]);
                     }
 
                     for (var cur = 0; cur < element.children.length; cur++) {
