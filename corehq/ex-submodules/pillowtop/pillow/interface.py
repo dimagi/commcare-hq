@@ -110,7 +110,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     @property
     def _should_process_in_chunks(self):
         # chunked processing is only supported for pillows with single processor
-        return len(self.processors) == 1 and self.processors[0].processor_chunk_size > 0
+        return (len(self.processors) == 1
+            and getattr(self.processors[0], 'processor_chunk_size', 0) > 0)
 
     def process_changes(self, since, forever):
         """
@@ -283,15 +284,6 @@ class ConstructedPillow(PillowBase):
             self.processors = [processor]
 
         self._change_processed_event_handler = change_processed_event_handler
-        self.validate_processor_config()
-
-    def validate_processor_config(self):
-        for processor in self.processors:
-            if processor.processor_chunk_size > 0:
-                if not callable(getattr(processor, 'process_changes_chunk', None)):
-                    raise PillowConfigError("Processor must implement the method `process_changes_chunk`")
-                if not len(self.processors) == 1:
-                    raise PillowConfigError("Chunked processing is supported if there is only one processor")
 
     @property
     def pillow_id(self):
