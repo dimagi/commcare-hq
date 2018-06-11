@@ -23,18 +23,18 @@ class CommCareFeatureSupportMixin(object):
         """
         Multi (tiered) sort is supported by apps version 2.2 or higher
         """
-        return self._require_minimum_version('2.2')
+        return self._require_minimum_version('2.2.0')
 
     @property
     def enable_multimedia_case_property(self):
         """
         Multimedia case properties are supported by apps version 2.6 or higher
         """
-        return self._require_minimum_version('2.6')
+        return self._require_minimum_version('2.6.0')
 
     @property
     def enable_relative_suite_path(self):
-        return self._require_minimum_version('2.12')
+        return self._require_minimum_version('2.12.0')
 
     @property
     def enable_local_resource(self):
@@ -47,7 +47,7 @@ class CommCareFeatureSupportMixin(object):
         https://github.com/dimagi/commcare-hq/pull/3511#discussion_r13159938
 
         """
-        return self._require_minimum_version('2.13')
+        return self._require_minimum_version('2.13.0')
 
     @property
     def enable_offline_install(self):
@@ -60,11 +60,11 @@ class CommCareFeatureSupportMixin(object):
         # but could not be used until the local resource bug was fixed.
         # I wanted to record that dependency
         return (self.enable_local_resource
-                and self._require_minimum_version('2.12'))
+                and self._require_minimum_version('2.12.0'))
 
     @property
     def enable_auto_gps(self):
-        return self._require_minimum_version('2.14')
+        return self._require_minimum_version('2.14.0')
 
     @property
     def enable_group_in_field_list(self):
@@ -72,21 +72,21 @@ class CommCareFeatureSupportMixin(object):
         Groups and repeat groups inside of a field list supported by apps
         version 2.16 or higher
         """
-        return self._require_minimum_version('2.16')
+        return self._require_minimum_version('2.16.0')
 
     @property
     def enable_post_form_workflow(self):
         """
         Post form workflow is supported by apps version 2.9 or higher
         """
-        return self._require_minimum_version('2.9')
+        return self._require_minimum_version('2.9.0')
 
     @property
     def enable_module_filtering(self):
         """
         Filtering modules is supported by apps version 2.20 or higher
         """
-        return self._require_minimum_version('2.20')
+        return self._require_minimum_version('2.20.0')
 
     @property
     def enable_localized_menu_media(self):
@@ -111,57 +111,57 @@ class CommCareFeatureSupportMixin(object):
         """
         Image resize only supported > 2.23
         """
-        return self._require_minimum_version('2.23')
+        return self._require_minimum_version('2.23.0')
 
     @property
     def enable_markdown_in_groups(self):
         """
         Markdown in groups only supported > 2.23
         """
-        return self._require_minimum_version('2.23')
+        return self._require_minimum_version('2.23.0')
 
     @property
     def enable_case_list_sort_blanks(self):
         """
         Ability to control where blanks sort for case list sort properties only supported > 2.35
         """
-        return self._require_minimum_version('2.35')
+        return self._require_minimum_version('2.35.0')
 
     @property
     def enable_detail_print(self):
         """
         Ability to print case detail screen, based on an HTML template, only supported > 2.35
         """
-        return self._require_minimum_version('2.35')
+        return self._require_minimum_version('2.35.0')
 
     @property
     def supports_practice_users(self):
         """
         Ability to configure practice mobile workers for apps
         """
-        return self._require_minimum_version('2.26')
+        return self._require_minimum_version('2.26.0')
 
     @property
     def enable_sorted_itemsets(self):
         """
         Enable sorted itemsets in the form builder.
         """
-        return self._require_minimum_version('2.38')
+        return self._require_minimum_version('2.38.0')
 
     @property
     def supports_update_prompts(self):
         """
         Ability to configure apk/app update checks
         """
-        return self._require_minimum_version('2.38')
+        return self._require_minimum_version('2.38.0')
 
     @property
     def enable_remote_requests(self):
         """
         Enable Remote Request question type in the form builder.
         """
-        return self._require_minimum_version('2.40')
+        return self._require_minimum_version('2.40.0')
 
     @property
     def enable_training_modules(self):
-        return self._require_minimum_version('2.43')
+        return self._require_minimum_version('2.43.0')
