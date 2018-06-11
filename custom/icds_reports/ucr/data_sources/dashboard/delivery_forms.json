@@ -133,6 +133,36 @@
             "constant": 0
           }
         }
+      },
+      {
+        "column_id": "delivery_nature",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "switch",
+          "switch_on": {
+            "type": "property_path",
+            "property_path": ["form", "delivery_nature"]
+          },
+          "cases": {
+            "vaginal": {
+              "type": "constant",
+              "constant": 1
+            },
+            "caesarean": {
+              "type": "constant",
+              "constant": 2
+            },
+            "instrumental": {
+              "type": "constant",
+              "constant": 3
+            }
+          },
+          "default": {
+            "type": "constant",
+            "constant": 0
+          }
+        }
       }
     ],
     "named_expressions": {
