@@ -38,7 +38,7 @@ from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
 from pillowtop.exceptions import PillowConfigError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
-from pillowtop.processors import PillowProcessor
+from pillowtop.processors import BulkPillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
 REBUILD_CHECK_INTERVAL = 60 * 60  # in seconds
@@ -204,7 +204,7 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(adapter.config.get_id)
 
 
-class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, PillowProcessor):
+class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
 
     domain_timing_context = Counter()
 
