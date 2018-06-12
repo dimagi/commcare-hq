@@ -198,12 +198,16 @@
                         {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
                         <td class="text-center">
                             <span class="send-to-bottom">
-                                <i class="fa fa-angle-double-down"></i>
+                                <button type="button">
+                                    <i class="fa fa-angle-double-down"></i>
+                                </button>
                             </span>
                         </td>
                         <td class="text-center">
                             <span class="send-to-top">
-                                <i class="fa fa-angle-double-up"></i>
+                                <button type="button">
+                                    <i class="fa fa-angle-double-up"></i>
+                                </button>
                             </span>
                         </td>
                         {% endif %}
