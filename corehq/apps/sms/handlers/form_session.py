@@ -157,8 +157,11 @@ def validate_answer(event, text, v):
     # Validate int
     elif event.datatype == "int":
         try:
-            int(text)
-            valid = True
+            value = int(text)
+            if value >= -2147483648 and value <= 2147483647:
+                valid = True
+            else:
+                error_msg = get_message(MSG_INVALID_INT_RANGE, v)
         except ValueError:
             error_msg = get_message(MSG_INVALID_INT, v)
     

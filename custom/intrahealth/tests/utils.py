@@ -36,6 +36,9 @@ class YeksiTestCase(TestCase):
         user.is_active = True
         self.user = user
 
+    def tearDown(self):
+        self.user.delete()
+
 
 class TestDataSourceExpressions(SimpleTestCase):
 
