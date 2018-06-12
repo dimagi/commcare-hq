@@ -97,8 +97,8 @@ class MessagingDashboardView(BaseMessagingSectionView):
 
     def get_messaging_history_errors_url(self, messaging_history_url):
         url_param_tuples = [
-            ('startdate', self.domain_now.date().strftime('%Y-%m-%d')),
-            ('enddate', (self.domain_now.date() - timedelta(days=6)).strftime('%Y-%m-%d')),
+            ('startdate', (self.domain_now.date() - timedelta(days=6)).strftime('%Y-%m-%d')),
+            ('enddate', self.domain_now.date().strftime('%Y-%m-%d')),
             (EventStatusFilter.slug, MessagingEvent.STATUS_ERROR),
         ]
 
