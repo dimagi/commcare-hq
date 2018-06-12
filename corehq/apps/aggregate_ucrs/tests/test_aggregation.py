@@ -153,7 +153,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
     @classmethod
     def _get_monthly_aggregate_table_definition(cls):
-        spec = cls.get_config_spec()
+        spec = cls.get_monthly_config_spec()
         spec.primary_table.data_source_id = cls.case_data_source._id
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
         return import_aggregation_models_from_spec(spec)

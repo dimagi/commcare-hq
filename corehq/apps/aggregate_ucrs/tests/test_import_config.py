@@ -14,7 +14,7 @@ class ConfigImportTest(TestCase, AggregationBaseTestMixin):
         AggregateTableDefinition.objects.all().delete()
 
     def test_import_from_basic_definition(self):
-        spec = self.get_config_spec()
+        spec = self.get_monthly_config_spec()
         data_source = DataSourceConfiguration(
             domain=spec.domain,
             referenced_doc_type='CommCareCase',
