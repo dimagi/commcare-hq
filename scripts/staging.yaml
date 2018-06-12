@@ -49,8 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  #- vellum-staging # J$ 11/13
-  #- jls/add-js-to-sentry # Jenny April 26
   - np/draggable  # NP 5/10
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
