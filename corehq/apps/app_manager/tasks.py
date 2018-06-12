@@ -49,18 +49,18 @@ def create_build_files_for_all_app_profiles(domain, build_id):
 @task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
-    query = (AppES()
+    build_ids = (AppES()
              .domain(domain)
              .is_build()
              .is_released(False)
              .term('is_auto_generated', True)
              .term('copy_of', app_id)
-             .values_list(['_id'], flat=True))
+             .values_list('_id', flat=True))
 
-    for hit in query.run().hits:
-        if hit['_id'] == last_build_id:
+    for build_id in build_ids:
+        if build_id == last_build_id:
             continue
-        app = get_app(domain, hit['_id'])
+        app = get_app(domain, build_id)
         if not app.is_auto_generated or app.copy_of != app_id or app.id == last_build_id:
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
         app.delete()
