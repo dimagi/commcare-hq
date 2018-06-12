@@ -13,7 +13,12 @@ AGG_WINDOW_START_PARAM = 'agg_window_start'
 AGG_WINDOW_END_PARAM = 'agg_window_end'
 
 
-class TimeAggregation(six.with_metaclass(ABCMeta, object)):
+class TimeAggregationWindow(six.with_metaclass(ABCMeta, object)):
+    """
+    Base class for holding a time-based aggregation window.
+    Should deal with conversion of a period into start/end dates, equality checks
+    and getting the next window from an existing window.
+    """
 
     def __init__(self, datetime):
         self._datetime = datetime
@@ -21,7 +26,7 @@ class TimeAggregation(six.with_metaclass(ABCMeta, object)):
     @classmethod
     def from_aggregation_unit(cls, unit):
         adapter_classes = {
-            AGGREGATION_UNIT_CHOICE_MONTH: MonthAggregation
+            AGGREGATION_UNIT_CHOICE_MONTH: MonthAggregationWindow
         }
         return adapter_classes[unit]
 
@@ -42,10 +47,13 @@ class TimeAggregation(six.with_metaclass(ABCMeta, object)):
 
 
 @total_ordering
-class MonthAggregation(six.with_metaclass(ABCMeta, TimeAggregation)):
+class MonthAggregationWindow(six.with_metaclass(ABCMeta, TimeAggregationWindow)):
+    """
+    An aggregation window based on months.
+    """
 
     def next_window(self):
-        return MonthAggregation(self._month.end)
+        return MonthAggregationWindow(self._month.end)
 
     @property
     def start(self):
@@ -56,11 +64,11 @@ class MonthAggregation(six.with_metaclass(ABCMeta, TimeAggregation)):
         return self._month.end
 
     def __init__(self, datetime):
-        super(MonthAggregation, self).__init__(datetime)
+        super(MonthAggregationWindow, self).__init__(datetime)
         self._month = Month.datetime_to_month(self._datetime)
 
     def __eq__(self, other):
-        return isinstance(other, MonthAggregation) and self._month == other._month
+        return isinstance(other, MonthAggregationWindow) and self._month == other._month
 
     def __hash__(self):
         return hash((type(self), self.start))
