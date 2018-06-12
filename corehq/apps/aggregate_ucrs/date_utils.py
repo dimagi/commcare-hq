@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 
 
 class Month(namedtuple('Month', 'year month')):
+    """
+    Utility class for working with months.
+    """
 
     @property
     def start(self):
