@@ -1,3 +1,7 @@
+"""
+Utility functions for importing AggregateTableDefinitions and associated models
+from their config specifications.
+"""
 from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 

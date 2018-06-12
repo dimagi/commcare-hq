@@ -1,7 +1,5 @@
-
-
 """
-This module deals with data ingestion: populating the tables from other tables.
+This module deals with data ingestion: populating the aggregate tables from other tables.
 """
 from __future__ import absolute_import, unicode_literals
 from collections import namedtuple
@@ -20,11 +18,8 @@ AggregationWindow = namedtuple('AggregationWindow', 'start end')
 
 def populate_aggregate_table_data(aggregate_table_adapter):
     """
-    Seeds the database table with all initial data from the table adapter.
+    Seeds the database table with all data from the table adapter.
     """
-    # this is where you are working and where there will be an error
-    # you need to change this method to be generic based on an arbitrary (possibly non-existent)
-    # set of aggregations
     aggregate_table_definition = aggregate_table_adapter.config
     # get checkpoint
     last_update = get_last_aggregate_checkpoint(aggregate_table_definition)
