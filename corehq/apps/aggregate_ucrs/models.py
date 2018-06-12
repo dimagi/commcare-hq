@@ -52,7 +52,8 @@ class AggregateTableDefinition(models.Model):
     primary_data_source_id = models.UUIDField()  # id of DataSourceConfig
     primary_data_source_key = models.CharField(default='doc_id', max_length=MAX_COLUMN_NAME_LENGTH)
 
-    time_aggregation = models.OneToOneField(TimeAggregationDefinition, null=True, blank=True)
+    time_aggregation = models.OneToOneField(TimeAggregationDefinition, null=True, blank=True,
+                                            on_delete=models.CASCADE)
 
     def __str__(self):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
