@@ -90,6 +90,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         AggregateTableDefinition.objects.all().delete()
         cls.aggregate_table_definition = cls._get_aggregate_table_definition()
 
+    def setUp(self):
+        # confirm that our setupClass function properly did its job
+        self.assertEqual(1, self.case_adapter.get_query_object().count())
+        self.assertEqual(3, self.form_adapter.get_query_object().count())
+
     @classmethod
     def _get_xform(cls):
         xform = XFormBuilder()
@@ -180,12 +185,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(datetime.utcnow().date(),
                          get_aggregation_end_period(self.aggregate_table_definition).date())
 
-    def test_basic_aggregation(self):
-        # first check our setup function properly did its job
-        self.assertEqual(1, self.case_adapter.get_query_object().count())
-        self.assertEqual(3, self.form_adapter.get_query_object().count())
-
-        # next generate our table
+    def test_monthly_aggregation(self):
+        # generate our table
         aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.aggregate_table_definition)
         aggregate_table_adapter.rebuild_table()
 
