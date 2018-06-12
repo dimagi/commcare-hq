@@ -89,6 +89,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         # setup/cleanup AggregateTableDefinition
         AggregateTableDefinition.objects.all().delete()
         cls.monthly_aggregate_table_definition = cls._get_monthly_aggregate_table_definition()
+        cls.basic_aggregate_table_definition = cls._get_basic_aggregate_table_definition()
 
     def setUp(self):
         # confirm that our setupClass function properly did its job
@@ -158,6 +159,13 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
         return import_aggregation_models_from_spec(spec)
 
+    @classmethod
+    def _get_basic_aggregate_table_definition(cls):
+        spec = cls.get_basic_config_spec()
+        spec.primary_table.data_source_id = cls.case_data_source._id
+        spec.secondary_tables[0].data_source_id = cls.form_data_source._id
+        return import_aggregation_models_from_spec(spec)
+
     def test_aggregate_table(self):
         adapter = AggregateIndicatorSqlAdapter(self.monthly_aggregate_table_definition)
         table = adapter.get_table()
@@ -184,6 +192,37 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     def test_get_aggregation_end_period(self):
         self.assertEqual(datetime.utcnow().date(),
                          get_aggregation_end_period(self.monthly_aggregate_table_definition).date())
+
+    def test_basic_aggregation(self):
+        # next generate our table
+        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.basic_aggregate_table_definition)
+        aggregate_table_adapter.rebuild_table()
+
+        populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_basic_results()
+
+        # confirm it's also idempotent
+        populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_basic_results()
+
+    def _check_basic_results(self):
+        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.basic_aggregate_table_definition)
+        aggregate_table = aggregate_table_adapter.get_table()
+        aggregate_query = aggregate_table_adapter.get_query_object()
+
+        doc_id_column = aggregate_table.c['doc_id']
+
+        # before december the case should not exist
+        self.assertEqual(1, aggregate_query.filter(
+            doc_id_column == self.case_id,
+        ).count())
+
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+        ).one()
+        self.assertEqual(self.case_name, row.name)
+        self.assertEqual('2018-01-21', row.pregnancy_start_date)
+        self.assertEqual(3, row.fu_forms)
 
     def test_monthly_aggregation(self):
         # generate our table
