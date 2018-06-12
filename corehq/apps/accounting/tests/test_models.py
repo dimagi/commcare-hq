@@ -109,6 +109,13 @@ class TestSubscription(BaseAccountingTest):
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
         self.assertFalse(subscription.is_active)
 
+    def test_no_activation_after_date_end(self):
+        with mock.patch('corehq.apps.accounting.tasks.date') as mock_date:
+            mock_date.today.return_value = self.subscription.date_end
+            tasks.activate_subscriptions()
+        subscription = Subscription.visible_objects.get(id=self.subscription.id)
+        self.assertFalse(subscription.is_active)
+
     def test_activation(self):
         tasks.activate_subscriptions(based_on_date=self.subscription.date_start)
         subscription = Subscription.visible_objects.get(id=self.subscription.id)
