@@ -34,8 +34,7 @@ primary_table:
           # these '_agg' things are magic variables that let you reference the aggregation window's start/end conditions
           month_start: :agg_window_start
           month_end: :agg_window_end
-# todo: this should be scoped/named specifically to indicate that it's *only* time-based aggregation (I think)
-aggregation_config:
+time_aggregation:
   unit: month  # unit additionally determines the datatype and the column name used
   # conditions for inclusion of a particular row on a particular month
   # start and end conditions must (currently) be based off the primary data source table

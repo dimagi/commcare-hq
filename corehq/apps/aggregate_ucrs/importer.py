@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition, PrimaryColumn, SecondaryTableDefinition, \
-    SecondaryColumn
+    SecondaryColumn, TimeAggregationDefinition
 
 
 def import_aggregation_models_from_spec(spec):
@@ -27,11 +27,16 @@ def _create_or_update_table_definition(spec):
     table_definition.display_name = spec.display_name
     table_definition.primary_data_source_id = UUID(spec.primary_table.data_source_id)
     table_definition.primary_data_source_key = spec.primary_table.key_column
-    table_definition.aggregation_unit = spec.aggregation_config.unit
-    table_definition.aggregation_start_column = spec.aggregation_config.start_column
-    table_definition.aggregation_end_column = spec.aggregation_config.end_column
+    if spec.time_aggregation:
+        db_aggregation_spec = table_definition.time_aggregation or TimeAggregationDefinition()
+        db_aggregation_spec.aggregation_unit = spec.time_aggregation.unit
+        db_aggregation_spec.start_column = spec.time_aggregation.start_column
+        db_aggregation_spec.end_column = spec.time_aggregation.end_column
+        db_aggregation_spec.save()
+        table_definition.time_aggregation = db_aggregation_spec
     table_definition.save()
     return table_definition
+
 
 def _update_primary_columns(spec, table_definition):
     found_column_ids = set()
