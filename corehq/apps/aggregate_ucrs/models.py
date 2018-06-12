@@ -19,7 +19,6 @@ class TimeAggregationDefinition(models.Model):
     AGGREGATION_UNIT_CHOICES = (
         (AGGREGATION_UNIT_CHOICE_MONTH, _('Month')),
     )
-    # aggregation config
     aggregation_unit = models.CharField(max_length=10, choices=AGGREGATION_UNIT_CHOICES,
                                         default=AGGREGATION_UNIT_CHOICE_MONTH)
     start_column = models.CharField(default='opened_date', max_length=MAX_COLUMN_NAME_LENGTH)
@@ -101,9 +100,6 @@ class PrimaryColumn(models.Model):
     column_type = models.CharField(max_length=20, choices=PRIMARY_COLUMN_TYPE_CHOICES)
     config_params = JSONField()
 
-    def to_column_spec(self):
-        return PrimaryColumnAdapter.from_db_column(self).to_ucr_column_spec()
-
 
 class SecondaryTableDefinition(models.Model):
     """
@@ -138,6 +134,3 @@ class SecondaryColumn(models.Model):
     column_id = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     aggregation_type = models.CharField(max_length=10, choices=SECONDARY_COLUMN_TYPE_CHOICES)
     config_params = JSONField()
-
-    def to_column_spec(self):
-        return SecondaryColumnAdapter.from_db_column(self).to_ucr_column_spec()
