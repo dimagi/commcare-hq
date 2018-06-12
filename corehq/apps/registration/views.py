@@ -130,16 +130,13 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
         email = new_user.email
 
-        if self.request.user_agent.is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
-
         # registration analytics
         persona = reg_form.cleaned_data['persona']
         persona_other = reg_form.cleaned_data['persona_other']
         appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
                                                           toggles.NAMESPACE_USER)
 
-        track_workflow(email, "Registered new account")
+        track_workflow(email, "Requested New Account")
         track_workflow(email, "Persona Field Filled Out", {
             'personachoice': persona,
             'personaother': persona_other,
@@ -185,12 +182,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
             return {
                 'success': True,
-                'is_mobile_experience': (
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                        username) and
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                        username, toggles.NAMESPACE_USER)
-                ),
                 'appcues_ab_test': appcues_ab_test,
             }
         logging.error(

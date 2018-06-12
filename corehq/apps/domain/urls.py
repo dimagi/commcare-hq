@@ -50,6 +50,7 @@ from corehq.apps.domain.views import (
     ManageProjectMediaView,
     PasswordResetView,
     ProBonoView,
+    RecoveryMeasuresHistory,
     SMSRatesView,
     SelectPlanView,
     SelectedEnterprisePlanView,
@@ -208,7 +209,9 @@ domain_settings = [
     url(r'^flags/$', FlagsAndPrivilegesView.as_view(), name=FlagsAndPrivilegesView.urlname),
     url(r'^toggle_diff/$', toggle_diff, name='toggle_diff'),
     url(r'^sms_rates/$', SMSRatesView.as_view(), name=SMSRatesView.urlname),
-    url(r'^dhis2/', include('corehq.motech.dhis2.urls')),
+    url(r'^recovery_measures_history/$',
+        RecoveryMeasuresHistory.as_view(),
+        name=RecoveryMeasuresHistory.urlname),
 
     DomainReportDispatcher.url_pattern()
 ]

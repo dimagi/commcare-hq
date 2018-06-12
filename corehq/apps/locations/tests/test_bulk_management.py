@@ -514,9 +514,9 @@ class TestBulkManagement(TestCase):
             actual.append((attr, parent))
 
         self.assertEqual(set(actual), expected_locations)
-        self.assertMpttDescendants(expected_locations)
+        self.assertDescendants(expected_locations)
 
-    def assertMpttDescendants(self, pairs):
+    def assertDescendants(self, pairs):
         # Given list of (child, parent), check that for each location
         # SQLLocation.get_descendants is same as calculated descendants
 

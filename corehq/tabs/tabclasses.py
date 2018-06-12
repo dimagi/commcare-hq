@@ -59,7 +59,8 @@ from corehq.messaging.scheduling.views import (
     EditConditionalAlertView,
 )
 from corehq.messaging.util import show_messaging_dashboard
-from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView, Dhis2LogListView
+from corehq.motech.dhis2.view import Dhis2ConnectionView, DataSetMapView
+from corehq.motech.views import MotechLogListView
 from corehq.motech.openmrs.views import OpenmrsImporterView
 from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
@@ -1543,7 +1544,9 @@ def _get_administration_section(domain):
     from corehq.apps.domain.views import (
         FeaturePreviewsView,
         TransferDomainView,
+        RecoveryMeasuresHistory,
     )
+    from corehq.apps.ota.models import MobileRecoveryMeasure
 
     administration = []
     if not settings.ENTERPRISE_MODE:
@@ -1557,6 +1560,13 @@ def _get_administration_section(domain):
                 'url': reverse('domain_manage_multimedia', args=[domain])
             }
         ])
+
+    if (toggles.MOBILE_RECOVERY_MEASURES.enabled(domain)
+            and MobileRecoveryMeasure.objects.filter(domain=domain).exists()):
+        administration.append({
+            'title': _(RecoveryMeasuresHistory.page_title),
+            'url': reverse(RecoveryMeasuresHistory.urlname, args=[domain])
+        })
 
     administration.append({
         'title': _(FeaturePreviewsView.page_title),
@@ -1611,8 +1621,8 @@ def _get_integration_section(domain):
             'title': _(DataSetMapView.page_title),
             'url': reverse(DataSetMapView.urlname, args=[domain])
         }, {
-            'title': _(Dhis2LogListView.page_title),
-            'url': reverse(Dhis2LogListView.urlname, args=[domain])
+            'title': _(MotechLogListView.page_title),
+            'url': reverse(MotechLogListView.urlname, args=[domain])
         }])
 
     if toggles.OPENMRS_INTEGRATION.enabled(domain):
@@ -1831,34 +1841,51 @@ class AdminTab(UITab):
                 (not self.couch_user.is_superuser and
                  toggles.IS_CONTRACTOR.enabled(self.couch_user.username))):
             return [
-                (_('Administrative Reports'), [
+                (_('System Health'), [
                     {'title': _('System Info'),
                      'url': reverse('system_info')},
                 ])]
 
-        admin_operations = [
+        admin_operations = []
+        data_operations = []
+        system_operations = []
+        user_operations = [
             {'title': _('Look up user by email'),
              'url': reverse('web_user_lookup')},
         ]
 
         if self.couch_user and self.couch_user.is_staff:
-            from corehq.apps.hqadmin.views import (
-                AuthenticateAs, ReprocessMessagingCaseUpdatesView
-            )
+            from corehq.apps.hqadmin.views.operations import ReprocessMessagingCaseUpdatesView
+            from corehq.apps.hqadmin.views.system import RecentCouchChangesView
+            from corehq.apps.hqadmin.views.users import AuthenticateAs
             from corehq.apps.notifications.views import ManageNotificationView
-            admin_operations = [
+            data_operations = [
+                {'title': _('View raw couch documents'),
+                 'url': reverse('raw_couch')},
+                {'title': _('View documents in ES'),
+                 'url': reverse('doc_in_es')},
+            ]
+            system_operations = [
+                {'title': _('System Info'),
+                 'url': reverse('system_info')},
                 {'title': _('PillowTop Errors'),
                  'url': reverse('admin_report_dispatcher',
                                 args=('pillow_errors',))},
+                {'title': RecentCouchChangesView.page_title,
+                 'url': reverse(RecentCouchChangesView.urlname)},
+                {'title': _('Branches on Staging'),
+                 'url': reverse('branches_on_staging')},
+            ]
+            user_operations = [
                 {'title': _('Login as another user'),
                  'url': reverse(AuthenticateAs.urlname)},
-            ] + admin_operations + [
-                {'title': _('View raw couch documents'),
-                 'url': reverse('raw_couch')},
-                {'title': _('Check Call Center UCR tables'),
-                 'url': reverse('callcenter_ucr_check')},
+            ] + user_operations + [
                 {'title': _('Grant superuser privileges'),
                  'url': reverse('superuser_management')},
+            ]
+            admin_operations += [
+                {'title': _('Check Call Center UCR tables'),
+                 'url': reverse('callcenter_ucr_check')},
                 {'title': _('Reprocess Messaging Case Updates'),
                  'url': reverse(ReprocessMessagingCaseUpdatesView.urlname)},
                 {'title': _('Manage Notifications'),
@@ -1866,7 +1893,7 @@ class AdminTab(UITab):
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
             ]
-        return [
+        sections = [
             (_('Administrative Reports'), [
                 {'title': _('Project Space List'),
                  'url': reverse('admin_report_dispatcher', args=('domains',))},
@@ -1878,8 +1905,6 @@ class AdminTab(UITab):
                  'url': reverse('admin_report_dispatcher', args=('user_list',))},
                 {'title': _('Application List'),
                  'url': reverse('admin_report_dispatcher', args=('app_list',))},
-                {'title': _('System Info'),
-                 'url': reverse('system_info')},
                 {'title': _('Download Malt table'),
                  'url': reverse('download_malt')},
                 {'title': _('Download Global Impact Report'),
@@ -1889,23 +1914,31 @@ class AdminTab(UITab):
                 {'title': _('Admin Phone Number Report'),
                  'url': reverse('admin_report_dispatcher', args=('phone_number_report',))},
             ]),
-            (_('Administrative Operations'), admin_operations),
-            (_('CommCare Reports'), [
-                {
-                    'title': report.name,
-                    'url': '{url}{params}'.format(
-                        url=reverse('admin_report_dispatcher', args=(report.slug,)),
-                        params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
-                    )
-                } for report in [
-                    RealProjectSpacesReport,
-                    CommConnectProjectSpacesReport,
-                    CommTrackProjectSpacesReport,
-                    DeviceLogSoftAssertReport,
-                    UserAuditReport,
-                ]
-            ]),
         ]
+        if admin_operations:
+            sections.append((_('Administrative Operations'), admin_operations))
+        if user_operations:
+            sections.append((_('User Administration'), user_operations))
+        if system_operations:
+            sections.append((_('System Health'), system_operations))
+        if data_operations:
+            sections.append((_('Inspect Data'), data_operations))
+        sections.append((_('CommCare Reports'), [
+            {
+                'title': report.name,
+                'url': '{url}{params}'.format(
+                    url=reverse('admin_report_dispatcher', args=(report.slug,)),
+                    params="?{}".format(urlencode(report.default_params)) if report.default_params else ""
+                )
+            } for report in [
+                RealProjectSpacesReport,
+                CommConnectProjectSpacesReport,
+                CommTrackProjectSpacesReport,
+                DeviceLogSoftAssertReport,
+                UserAuditReport,
+            ]
+        ]))
+        return sections
 
     @property
     def _is_viewable(self):

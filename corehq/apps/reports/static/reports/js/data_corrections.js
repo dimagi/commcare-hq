@@ -5,7 +5,7 @@
  *  The modal will be sized depending on the number of properties: small, large, or full-screen.
  *
  *  Used with reports/partials/data_corrections_modal.html and a button to trigger the modal.
- *  Usage: hqImport("reports/js/data_corrections").init($triggerElement, $modalElement, options);
+ *  Usage: dataCorrections.init($triggerElement, $modalElement, options);
  *  Options:
  *      Required:
  *          saveUrl
@@ -23,7 +23,17 @@
  *              Property is the data, plucked from the properties array. Name is displayed in the menu that lets
  *              user toggle between display properties.
  */
-hqDefine("reports/js/data_corrections", function() {
+hqDefine("reports/js/data_corrections", [
+    "jquery",
+    "knockout",
+    "underscore",
+    "hqwebapp/js/assert_properties",
+], function(
+    $,
+    ko,
+    _,
+    assertProperties
+) {
     // Represents a single property/value pair, e.g., a form question and its response
     var PropertyModel = function(options) {
         // Don't assert properties of options because PropertyModel allows for
@@ -45,7 +55,7 @@ hqDefine("reports/js/data_corrections", function() {
 
     // Controls the full modal UI
     var DataCorrectionsModel = function(options) {
-        hqImport("hqwebapp/js/assert_properties").assert(options, ['saveUrl', 'properties'],
+        assertProperties.assert(options, ['saveUrl', 'properties'],
             ['propertyNames', 'propertyNamesUrl', 'displayProperties', 'propertyPrefix', 'propertySuffix']);
         var self = {};
 

@@ -1,4 +1,4 @@
-<div class="map-chart">
+<div class="map-chart" cg-busy="[$ctrl.myPromise, $rootScope.locationPromise]">
     <div class="row no-margin fixes-filters">
         <div class="col-md-5">
             <div class="row">
@@ -27,7 +27,7 @@
             <filters filters="$ctrl.filters" data="$ctrl.filtersData" selected-locations="$ctrl.selectedLocations"></filters>
         </div>
     </div>
-    <div class="report-content" cg-busy="$ctrl.myPromise">
+    <div class="report-content" >
         <div ng-if="$ctrl.message" class="alert alert-info">
             <strong>Info!</strong> Data for this report is shown at the sector level. For AWC-level information, please use the AWC Report.
         </div>

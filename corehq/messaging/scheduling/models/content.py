@@ -18,7 +18,7 @@ from corehq.apps.sms.api import (
     send_sms_to_verified_number,
 )
 from corehq.apps.sms.models import MessagingEvent, PhoneNumber, PhoneBlacklist
-from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
+from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.smsforms.models import SQLXFormsSession
 from couchdbkit.resource import ResourceNotFound
 from memoized import memoized
@@ -260,10 +260,10 @@ class SMSSurveyContent(Content):
         except TouchformsError as e:
             logged_subevent.error(
                 MessagingEvent.ERROR_TOUCHFORMS_ERROR,
-                additional_error_text=e.response_data.get('human_readable_message')
+                additional_error_text=get_formplayer_exception(domain, e)
             )
 
-            if touchforms_error_is_config_error(e):
+            if touchforms_error_is_config_error(domain, e):
                 # Don't reraise the exception because this means there are configuration
                 # issues with the form that need to be fixed. The error is logged in the
                 # above lines.

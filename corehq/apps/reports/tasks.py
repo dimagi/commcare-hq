@@ -62,6 +62,7 @@ from .scheduled import get_scheduled_report_ids
 import six
 from six.moves import map
 from six.moves import filter
+from io import open
 
 
 logging = get_task_logger(__name__)

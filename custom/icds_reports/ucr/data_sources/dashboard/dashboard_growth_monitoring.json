@@ -95,8 +95,7 @@
             },
             "location_type": "state"
           }
-        },
-        "create_index": true
+        }
       },
       {
         "column_id": "received_on",
@@ -343,6 +342,26 @@
         }
       ]
     },
+    "sql_column_indexes": [
+      {
+        "column_ids": ["state_id", "weight_child"]
+      },
+      {
+        "column_ids": ["state_id", "height_child"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_wfa"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_hfa"]
+      },
+      {
+        "column_ids": ["state_id", "zscore_grading_wfh"]
+      },
+      {
+        "column_ids": ["state_id", "muac_grading"]
+      }
+    ],
     "disable_destructive_rebuild": true
   }
 }

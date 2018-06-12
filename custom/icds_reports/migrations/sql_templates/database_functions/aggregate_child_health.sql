@@ -98,7 +98,9 @@ BEGIN
     'zscore_grading_hfa_severe, ' ||
     'wasting_normal_v2, ' ||
     'wasting_moderate_v2, ' ||
-    'wasting_severe_v2 ' ||
+    'wasting_severe_v2, ' ||
+    'zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month ' ||
     ')' ||
   '(SELECT ' ||
     'state_id, ' ||
@@ -161,7 +163,7 @@ BEGIN
     '0, ' ||
     'sum(CASE WHEN nutrition_status_weighed = 1 AND height_measured_in_month = 1 THEN 1 ELSE 0 END), ' ||
     'sum(CASE WHEN (born_in_month = 1 AND (nutrition_status_weighed = 1 OR low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END), ' ||
-    '0, 0, 0, 0, 0, 0 ' ||
+    '0, 0, 0, 0, 0, 0, 0, 0 ' ||
     'FROM ' || quote_ident(_ucr_child_monthly_table) || ' ' ||
     'WHERE state_id != ' || quote_literal(_blank_value) ||  ' AND month = ' || quote_literal(_start_date) || ' ' ||
     'GROUP BY state_id, district_id, block_id, supervisor_id, awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident)';
@@ -199,7 +201,9 @@ BEGIN
     'counsel_adequate_bf = temp.counsel_adequate_bf, ' ||
     'ebf_no_info_recorded = temp.ebf_no_info_recorded, ' ||
     'thr_eligible = temp.thr_eligible, ' ||
-    'rations_21_plus_distributed = temp.rations_21_plus_distributed ' ||
+    'rations_21_plus_distributed = temp.rations_21_plus_distributed, ' ||
+    'zscore_grading_hfa_recorded_in_month = temp.zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month = temp.zscore_grading_wfh_recorded_in_month ' ||
     'FROM (SELECT ' ||
       'awc_id, month, sex, age_tranche, caste, ' ||
       'coalesce(disabled, ' || quote_nullable(_no_text) || ') as coalesce_disabled, ' ||
@@ -238,7 +242,9 @@ BEGIN
       'sum(counsel_adequate_bf) as counsel_adequate_bf, ' ||
       'sum(ebf_no_info_recorded) as ebf_no_info_recorded, ' ||
       'sum(thr_eligible) as thr_eligible, ' ||
-      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed ' ||
+      'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed, ' ||
+      'sum(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month, '
+      'sum(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month ' ||
       'FROM ' || quote_ident(_child_health_monthly_table) || ' ' ||
       'GROUP BY awc_id, month, sex, age_tranche, caste, coalesce_disabled, coalesce_minority, coalesce_resident) temp ' ||
     'WHERE temp.awc_id = agg_child_health.awc_id AND temp.month = agg_child_health.month AND temp.sex = agg_child_health.gender ' ||
@@ -301,9 +307,83 @@ BEGIN
       'sum(zscore_grading_hfa_severe), ' ||
       'sum(wasting_normal_v2), ' ||
       'sum(wasting_moderate_v2), ' ||
-      'sum(wasting_severe_v2) ';
+      'sum(wasting_severe_v2), ' ||
+      'sum(zscore_grading_hfa_recorded_in_month), ' ||
+      'sum(zscore_grading_wfh_recorded_in_month) ';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename4) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'gender, ' ||
+    'age_tranche, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'nutrition_status_weighed, ' ||
+    'nutrition_status_unweighed, ' ||
+    'nutrition_status_normal, ' ||
+    'nutrition_status_moderately_underweight, ' ||
+    'nutrition_status_severely_underweight, ' ||
+    'wer_eligible, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'pse_eligible, ' ||
+    'pse_attended_16_days, ' ||
+    'born_in_month, ' ||
+    'low_birth_weight_in_month, ' ||
+    'bf_at_birth, ' ||
+    'ebf_eligible, ' ||
+    'ebf_in_month, ' ||
+    'cf_eligible, ' ||
+    'cf_in_month, ' ||
+    'cf_diet_diversity, ' ||
+    'cf_diet_quantity, ' ||
+    'cf_demo, ' ||
+    'cf_handwashing, ' ||
+    'counsel_increase_food_bf, ' ||
+    'counsel_manage_breast_problems, ' ||
+    'counsel_ebf, ' ||
+    'counsel_adequate_bf, ' ||
+    'counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video, ' ||
+    'fully_immunized_eligible, ' ||
+    'fully_immunized_on_time, ' ||
+    'fully_immunized_late, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'pnc_eligible, ' ||
+    'height_eligible, ' ||
+    'wasting_moderate, ' ||
+    'wasting_severe, ' ||
+    'stunting_moderate, ' ||
+    'stunting_severe, ' ||
+    'cf_initiation_in_month, ' ||
+    'cf_initiation_eligible, ' ||
+    'height_measured_in_month, ' ||
+    'wasting_normal, ' ||
+    'stunting_normal, ' ||
+    'valid_all_registered_in_month, ' ||
+    'ebf_no_info_recorded, ' ||
+    'weighed_and_height_measured_in_month,' ||
+    'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
+    'zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2, ' ||
+    'wasting_moderate_v2, ' ||
+    'wasting_severe_v2, ' ||
+    'zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     'block_id, ' ||
@@ -328,7 +408,79 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx5') || ' ON ' || quote_ident(_tablename4) || '(gender)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename4 || '_indx6') || ' ON ' || quote_ident(_tablename4) || '(age_tranche)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename3) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'gender, ' ||
+    'age_tranche, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'nutrition_status_weighed, ' ||
+    'nutrition_status_unweighed, ' ||
+    'nutrition_status_normal, ' ||
+    'nutrition_status_moderately_underweight, ' ||
+    'nutrition_status_severely_underweight, ' ||
+    'wer_eligible, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'pse_eligible, ' ||
+    'pse_attended_16_days, ' ||
+    'born_in_month, ' ||
+    'low_birth_weight_in_month, ' ||
+    'bf_at_birth, ' ||
+    'ebf_eligible, ' ||
+    'ebf_in_month, ' ||
+    'cf_eligible, ' ||
+    'cf_in_month, ' ||
+    'cf_diet_diversity, ' ||
+    'cf_diet_quantity, ' ||
+    'cf_demo, ' ||
+    'cf_handwashing, ' ||
+    'counsel_increase_food_bf, ' ||
+    'counsel_manage_breast_problems, ' ||
+    'counsel_ebf, ' ||
+    'counsel_adequate_bf, ' ||
+    'counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video, ' ||
+    'fully_immunized_eligible, ' ||
+    'fully_immunized_on_time, ' ||
+    'fully_immunized_late, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'pnc_eligible, ' ||
+    'height_eligible, ' ||
+    'wasting_moderate, ' ||
+    'wasting_severe, ' ||
+    'stunting_moderate, ' ||
+    'stunting_severe, ' ||
+    'cf_initiation_in_month, ' ||
+    'cf_initiation_eligible, ' ||
+    'height_measured_in_month, ' ||
+    'wasting_normal, ' ||
+    'stunting_normal, ' ||
+    'valid_all_registered_in_month, ' ||
+    'ebf_no_info_recorded, ' ||
+    'weighed_and_height_measured_in_month,' ||
+    'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
+    'zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2, ' ||
+    'wasting_moderate_v2, ' ||
+    'wasting_severe_v2, ' ||
+    'zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     'block_id, ' ||
@@ -352,7 +504,79 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx4') || ' ON ' || quote_ident(_tablename3) || '(gender)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename3 || '_indx5') || ' ON ' || quote_ident(_tablename3) || '(age_tranche)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename2) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'gender, ' ||
+    'age_tranche, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'nutrition_status_weighed, ' ||
+    'nutrition_status_unweighed, ' ||
+    'nutrition_status_normal, ' ||
+    'nutrition_status_moderately_underweight, ' ||
+    'nutrition_status_severely_underweight, ' ||
+    'wer_eligible, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'pse_eligible, ' ||
+    'pse_attended_16_days, ' ||
+    'born_in_month, ' ||
+    'low_birth_weight_in_month, ' ||
+    'bf_at_birth, ' ||
+    'ebf_eligible, ' ||
+    'ebf_in_month, ' ||
+    'cf_eligible, ' ||
+    'cf_in_month, ' ||
+    'cf_diet_diversity, ' ||
+    'cf_diet_quantity, ' ||
+    'cf_demo, ' ||
+    'cf_handwashing, ' ||
+    'counsel_increase_food_bf, ' ||
+    'counsel_manage_breast_problems, ' ||
+    'counsel_ebf, ' ||
+    'counsel_adequate_bf, ' ||
+    'counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video, ' ||
+    'fully_immunized_eligible, ' ||
+    'fully_immunized_on_time, ' ||
+    'fully_immunized_late, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'pnc_eligible, ' ||
+    'height_eligible, ' ||
+    'wasting_moderate, ' ||
+    'wasting_severe, ' ||
+    'stunting_moderate, ' ||
+    'stunting_severe, ' ||
+    'cf_initiation_in_month, ' ||
+    'cf_initiation_eligible, ' ||
+    'height_measured_in_month, ' ||
+    'wasting_normal, ' ||
+    'stunting_normal, ' ||
+    'valid_all_registered_in_month, ' ||
+    'ebf_no_info_recorded, ' ||
+    'weighed_and_height_measured_in_month,' ||
+    'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
+    'zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2, ' ||
+    'wasting_moderate_v2, ' ||
+    'wasting_severe_v2, ' ||
+    'zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     'district_id, ' ||
     quote_literal(_all_text) || ', ' ||
@@ -375,7 +599,79 @@ BEGIN
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx3') || ' ON ' || quote_ident(_tablename2) || '(gender)';
   EXECUTE 'CREATE INDEX ' || quote_ident(_tablename2 || '_indx4') || ' ON ' || quote_ident(_tablename2) || '(age_tranche)';
 
-  EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || '(SELECT ' ||
+  EXECUTE 'INSERT INTO ' || quote_ident(_tablename1) || ' ' ||
+    '(' ||
+    'state_id, ' ||
+    'district_id, ' ||
+    'block_id, ' ||
+    'supervisor_id, ' ||
+    'awc_id, ' ||
+    'month, ' ||
+    'gender, ' ||
+    'age_tranche, ' ||
+    'caste, ' ||
+    'disabled, ' ||
+    'minority, ' ||
+    'resident, ' ||
+    'valid_in_month, ' ||
+    'nutrition_status_weighed, ' ||
+    'nutrition_status_unweighed, ' ||
+    'nutrition_status_normal, ' ||
+    'nutrition_status_moderately_underweight, ' ||
+    'nutrition_status_severely_underweight, ' ||
+    'wer_eligible, ' ||
+    'thr_eligible, ' ||
+    'rations_21_plus_distributed, ' ||
+    'pse_eligible, ' ||
+    'pse_attended_16_days, ' ||
+    'born_in_month, ' ||
+    'low_birth_weight_in_month, ' ||
+    'bf_at_birth, ' ||
+    'ebf_eligible, ' ||
+    'ebf_in_month, ' ||
+    'cf_eligible, ' ||
+    'cf_in_month, ' ||
+    'cf_diet_diversity, ' ||
+    'cf_diet_quantity, ' ||
+    'cf_demo, ' ||
+    'cf_handwashing, ' ||
+    'counsel_increase_food_bf, ' ||
+    'counsel_manage_breast_problems, ' ||
+    'counsel_ebf, ' ||
+    'counsel_adequate_bf, ' ||
+    'counsel_pediatric_ifa, ' ||
+    'counsel_play_cf_video, ' ||
+    'fully_immunized_eligible, ' ||
+    'fully_immunized_on_time, ' ||
+    'fully_immunized_late, ' ||
+    'has_aadhar_id, ' ||
+    'aggregation_level, ' ||
+    'pnc_eligible, ' ||
+    'height_eligible, ' ||
+    'wasting_moderate, ' ||
+    'wasting_severe, ' ||
+    'stunting_moderate, ' ||
+    'stunting_severe, ' ||
+    'cf_initiation_in_month, ' ||
+    'cf_initiation_eligible, ' ||
+    'height_measured_in_month, ' ||
+    'wasting_normal, ' ||
+    'stunting_normal, ' ||
+    'valid_all_registered_in_month, ' ||
+    'ebf_no_info_recorded, ' ||
+    'weighed_and_height_measured_in_month,' ||
+    'weighed_and_born_in_month, ' ||
+    'days_ration_given_child, ' ||
+    'zscore_grading_hfa_normal, ' ||
+    'zscore_grading_hfa_moderate, ' ||
+    'zscore_grading_hfa_severe, ' ||
+    'wasting_normal_v2, ' ||
+    'wasting_moderate_v2, ' ||
+    'wasting_severe_v2, ' ||
+    'zscore_grading_hfa_recorded_in_month, ' ||
+    'zscore_grading_wfh_recorded_in_month ' ||
+    ')' ||
+    '(SELECT ' ||
     'state_id, ' ||
     quote_literal(_all_text) || ', ' ||
     quote_literal(_all_text) || ', ' ||

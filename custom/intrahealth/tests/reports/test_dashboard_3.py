@@ -297,32 +297,10 @@ class TestDashboard3(YeksiTestCase):
         self.assertItemsEqual(
             rows,
             sorted([
-                ['ACETATE DE MEDROXY PROGESTERONE 104MG/0.65ML INJ. (SAYANA PRESS)', '0', '0', '0', '0', '0',
-                 '0'],
-                ['ACETATE DE MEDROXY PROGESTERONE 150MG/ML+S A B KIT (1+1) (DEPO-PROVERA)', '0', '0', '0',
-                 '0', '0', '0'], ['ACT ADULTE', '0', '0', '0', '0', '0', '0'],
-                ['ACT PETIT ENFANT', '0', '0', '0', '0', '0', '0'],
-                ['ALBENDAZOL 4% SB.', '0', '0', '0', '0', '0', '0'],
-                ['DISPOSITIF INTRA UTERIN (TCU 380 A) - DIU', '0', '0', '0', '0', '0', '0'],
-                ['EFAVIRENZ 600MG CP.', '0', '0', '0', '0', '0', '0'],
-                ['LAMIVUDINE+NEVIRAPINE+ZIDOVUDINE (30+50+60)MG CP.', '0', '0', '0', '0', '0', '0'],
-                ['LEVONORGESTREL+ETHYNILESTRADIOL+FER (0.15+0.03+75)MG (MICROGYNON)', '0', '0', '0', '0',
-                 '0', '0'], ['NEVIRAPINE 200MG CP.', '0', '0', '0', '0', '0', '0'],
-                ['PARACETAMOL 500MG CP.', '0', '0', '0', '0', '0', '0'],
-                ['Produit 1', '0', '0', '0', '0', '0', '0'],
-                ['Produit 10', '0', '0', '0', '0', '0', '0'],
-                ['Produit 12', '0', '0', '0', '0', '0', '0'],
-                ['Produit 14', '0', '0', '0', '0', '0', '0'],
-                ['Produit 15', '0', '0', '0', '0', '0', '0'],
-                ['Produit 2', '0', '0', '0', '0', '0', '0'],
                 ['Produit A', '442.500', '717.500', '412.500', '150.000', '437.500', '150.000'],
                 ['Produit B', '336.000', '558.000', '334.500', '157.500', '453.000', '127.500'],
-                ['Produit C', '198.000', '386.400', '0', '120.000', '0', '0'],
-                ['RIFAMPICINE+ISONIAZIDE (150+75)MG CP.', '0', '0', '0', '0', '0', '0'],
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE (60+30+150)MG CP. DISPER', '0', '0', '0', '0', '0',
-                 '0'],
-                ['RIFAMPICINE+ISONIAZIDE+PYRAZINAMIDE+ETHAMBUTOL (150+75+400+2', '0', '0', '0', '0', '0',
-                 '0'], ['TEST RAPIDE HIV 1/2 (SD BIOLINE)', '0', '0', '0', '0', '0', '0']
+                ['Produit C', '198.000', '386.400', 'pas de donn\xe9es', '120.000', 'pas de donn\xe9es',
+                 'pas de donn\xe9es'],
             ], key=lambda x: x[0])
         )
         self.assertEqual(

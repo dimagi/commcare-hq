@@ -630,7 +630,7 @@ class TestLockingQueues(TestCase):
         self.queues = PartiallyLockingQueue()
 
     def _add_to_queues(self, queue_obj_id, lock_ids):
-        self.queues.add_item(lock_ids, DummyObject(queue_obj_id))
+        self.queues._add_item(lock_ids, DummyObject(queue_obj_id))
         self._check_queue_dicts(queue_obj_id, lock_ids, -1)
 
     def _check_queue_dicts(self, queue_obj_id, lock_ids, location=None, present=True):
@@ -639,15 +639,18 @@ class TestLockingQueues(TestCase):
         present determines whether it's expected to be in the queue_by_lock_id or not
         """
         for lock_id in lock_ids:
-            if location:
-                self.assertEqual(queue_obj_id, self.queues.queue_by_lock_id[lock_id][location].id)
+            if location is not None:
+                self.assertEqual(
+                    present,
+                    (len(self.queues.queue_by_lock_id[lock_id]) > (location - 1) and
+                        queue_obj_id == self.queues.queue_by_lock_id[lock_id][location]))
             else:
                 self.assertEqual(present, queue_obj_id in self.queues.queue_by_lock_id[lock_id])
 
         self.assertItemsEqual(lock_ids, self.queues.lock_ids_by_queue_id[queue_obj_id])
 
     def _check_locks(self, lock_ids, lock_set=True):
-        self.assertEqual(lock_set, self.queues.check_lock(lock_ids))
+        self.assertEqual(lock_set, self.queues._check_lock(lock_ids))
 
     def test_has_next(self):
         self.assertFalse(self.queues.has_next())
@@ -712,17 +715,32 @@ class TestLockingQueues(TestCase):
     def test_release_locks(self):
         lock_ids = ['rubaeus', 'dirty_bastard', 'red\'s_rye']
         self._check_locks(lock_ids, lock_set=False)
-        self.queues.set_lock(lock_ids)
+        self.queues._set_lock(lock_ids)
         self._check_locks(lock_ids, lock_set=True)
-        self.queues.release_lock(lock_ids)
+        self.queues._release_lock(lock_ids)
         self._check_locks(lock_ids, lock_set=False)
 
         queue_obj = DummyObject('kancamagus')
-        self.queues.add_item(lock_ids, queue_obj, to_queue=False)
-        self.queues.set_lock(lock_ids)
+        self.queues._add_item(lock_ids, queue_obj, to_queue=False)
+        self.queues._set_lock(lock_ids)
         self._check_locks(lock_ids, lock_set=True)
         self.queues.release_lock_for_queue_obj(queue_obj)
         self._check_locks(lock_ids, lock_set=False)
+
+    def test_max_size(self):
+        self.assertEqual(-1, self.queues.max_size)
+        self.assertFalse(self.queues.full)  # not full when no max size set
+        self.queues.max_size = 2  # set max_size
+        lock_ids = ['dali', 'manet', 'monet']
+        queue_obj = DummyObject('osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertFalse(self.queues.full)  # not full when not full
+        queue_obj = DummyObject('east osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when full
+        queue_obj = DummyObject('west osceola')
+        self.queues._add_item(lock_ids, queue_obj)
+        self.assertTrue(self.queues.full)  # full when over full
 
 
 class DummyObject(object):

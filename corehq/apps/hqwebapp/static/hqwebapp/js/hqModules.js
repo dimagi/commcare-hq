@@ -52,7 +52,6 @@ function hqDefine(path, dependencies, moduleAccessor) {
 
     var thirdParty = {
         'jquery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
-        'jQuery': typeof $ === 'undefined' ? (typeof jQuery === 'undefined' ? undefined : jQuery) : $,
         'knockout': typeof ko === 'undefined' ? undefined : ko,
         'ko': typeof ko === 'undefined' ? undefined : ko,
         'underscore': typeof _ === 'undefined' ? undefined : _,

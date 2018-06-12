@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 import datetime
+from collections import defaultdict
 from decimal import Decimal
 import logging
 import json
@@ -128,6 +129,7 @@ from corehq.apps.users.decorators import require_can_edit_web_users, require_per
 from toggle.models import Toggle
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.signals import clear_login_attempts
+from corehq.apps.ota.models import MobileRecoveryMeasure
 import six
 from six.moves import map
 
@@ -2927,3 +2929,26 @@ class PasswordResetView(View):
         couch_user = CouchUser.from_django_user(user)
         clear_login_attempts(couch_user)
         return response
+
+
+@method_decorator(domain_admin_required, name='dispatch')
+class RecoveryMeasuresHistory(BaseAdminProjectSettingsView):
+    urlname = 'recovery_measures_history'
+    page_title = ugettext_lazy("Recovery Measures History")
+    template_name = 'domain/admin/recovery_measures_history.html'
+
+    @property
+    def page_context(self):
+        measures_by_app_id = defaultdict(list)
+        for measure in (MobileRecoveryMeasure.objects
+                        .filter(domain=self.domain)
+                        .order_by('pk')):
+            measures_by_app_id[measure.app_id].append(measure)
+
+        all_apps = get_apps_in_domain(self.domain, include_remote=False)
+        return {
+            'measures_by_app': sorted((
+                (app.name, measures_by_app_id[app._id])
+                for app in all_apps
+            ), key=lambda x: (-1 * len(x[1]), x[0])),
+        }

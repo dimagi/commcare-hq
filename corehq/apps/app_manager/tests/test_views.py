@@ -70,7 +70,7 @@ class TestViews(TestCase):
         module = self.app.add_module(Module.new_module("Module0", "en"))
 
         # These builds are checked in to the repo for use in tests
-        build1 = {'version': '1.2.dev', 'build_number': 7106}
+        build1 = {'version': '1.2.0', 'build_number': 7106}
         build2 = {'version': '2.7.0', 'build_number': 20655}
 
         add_build(**build1)

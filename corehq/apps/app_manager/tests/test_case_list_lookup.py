@@ -149,7 +149,7 @@ class CaseListLookupTest(SimpleTestCase, TestXmlMixin):
         )
 
     def test_case_list_lookup_display_results(self):
-        factory = AppFactory(build_version='2.11')
+        factory = AppFactory(build_version='2.11.0')
         module, form = factory.new_basic_module('follow_up', 'case')
         case_list = module.case_details.short
         case_list.lookup_enabled = True

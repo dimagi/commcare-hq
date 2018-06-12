@@ -80,6 +80,7 @@ from dimagi.utils.logging import notify_exception
 from dimagi.utils.web import json_response, json_request
 from toggle.shortcuts import set_toggle
 import six
+from io import open
 
 
 @no_conflict_require_POST
@@ -146,7 +147,7 @@ def get_app_view_context(request, app):
     context = {}
 
     settings_layout = copy.deepcopy(
-        get_commcare_settings_layout(request.user)[app.get_doc_type()]
+        get_commcare_settings_layout(app.get_doc_type())
     )
     for section in settings_layout:
         new_settings = []
@@ -252,6 +253,9 @@ def get_app_view_context(request, app):
             context,
             context_key="bulk_app_translation_upload"
         )
+    })
+    context.update({
+        'smart_lang_display_enabled': app.smart_lang_display
     })
     # Not used in APP_MANAGER_V2
     context['is_app_view'] = True
@@ -393,7 +397,7 @@ def export_gzip(req, domain, app_id):
         with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr('application.json', app_json.export_json())
 
-    wrapper = FileWrapper(open(fpath))
+    wrapper = FileWrapper(open(fpath, 'rb'))
     response = HttpResponse(wrapper, content_type='application/zip')
     response['Content-Length'] = os.path.getsize(fpath)
     app = Application.get(app_id)
@@ -546,6 +550,7 @@ def edit_app_langs(request, domain, app_id):
             "en": "en",
             "es": "es"
         },
+        smart_lang_display: true,
         build: ["es", "hin"]
     }
     """
@@ -576,7 +581,7 @@ def edit_app_langs(request, domain, app_id):
                 list1.pop()
             list1.extend(list2)
     replace_all(app.langs, langs)
-
+    app.smart_lang_display = json.loads(request.body)['smart_lang_display']
     app.save()
     return json_response(langs)
 
