@@ -111,7 +111,10 @@ class CsvFileWriter(ExportFileWriter):
         self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
-        self._csvwriter.writerow(row)
+        self._csvwriter.writerow([
+            col if isinstance(col, six.text_type) else col.decode('utf-8')
+            for col in row
+        ])
 
 
 class PartialHtmlFileWriter(ExportFileWriter):
