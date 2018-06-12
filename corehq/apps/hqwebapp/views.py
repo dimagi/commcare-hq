@@ -28,7 +28,9 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.translation import ugettext as _, ugettext_noop, activate, LANGUAGE_SESSION_KEY
+
+
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -42,6 +44,7 @@ from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
+from corehq.apps.users.models import CouchUser
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -379,6 +382,9 @@ def login(req):
 
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
+
+    _update_session_language(req)
+
     return _login(req, domain, "login_and_password/login.html")
 
 
@@ -392,7 +398,22 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # necessary domain contexts:
     req.project = project
 
+    _update_session_language(req)
+
     return _login(req, domain, template_name)
+
+
+def _update_session_language(req):
+    # Update the language for this session if the user signing in has a different language than the current
+    # session default
+    if 'auth-username' in req.POST:
+        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
+        old_lang = req.session[LANGUAGE_SESSION_KEY]
+        if new_lang != old_lang:
+            # update the current session's language setting
+            req.session[LANGUAGE_SESSION_KEY] = new_lang
+            # and activate it for the current thread so the response page is translated too
+            activate(new_lang)
 
 
 class HQLoginView(LoginView):
