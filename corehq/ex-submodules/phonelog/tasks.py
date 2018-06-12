@@ -26,7 +26,7 @@ def purge_old_device_report_entries():
     UserEntry.objects.filter(server_date__lt=max_age).delete()
 
 
-@no_result_task(queue='sumologic_logs_queue', default_retry_delay=10 * 60, max_retries=10, bind=True)
+@no_result_task(queue='sumologic_logs_queue', default_retry_delay=10 * 60, max_retries=3, bind=True)
 def send_device_logs_to_sumologic(self, domain, xform, url):
     try:
         SumoLogicLog(domain, xform).send_data(url)
