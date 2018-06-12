@@ -1,3 +1,12 @@
+"""
+Classes responsible for creating/validating aggregate ucr specs
+in their json/yaml formats.
+
+These objects are only used to parse the configs and generate / import
+the django models.
+
+They may be able to be replaced with django rest framework serializers.
+"""
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
