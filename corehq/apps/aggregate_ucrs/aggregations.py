@@ -60,7 +60,10 @@ class MonthAggregation(six.with_metaclass(ABCMeta, TimeAggregation)):
         self._month = Month.datetime_to_month(self._datetime)
 
     def __eq__(self, other):
-        return self._month == other._month
+        return isinstance(other, MonthAggregation) and self._month == other._month
+
+    def __hash__(self):
+        return hash((type(self), self.start))
 
     def __lt__(self, other):
         return self._month < other._month
