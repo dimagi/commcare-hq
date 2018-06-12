@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from abc import ABCMeta, abstractmethod
 
 import six
@@ -32,6 +33,7 @@ class StandardQueryColumnProvider(six.with_metaclass(ABCMeta, QueryColumnProvide
 
     def is_groupable(self):
         return True
+
 
 class AggregationParamQueryColumnProvider(six.with_metaclass(ABCMeta, QueryColumnProvider)):
     """

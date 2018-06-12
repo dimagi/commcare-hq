@@ -26,4 +26,3 @@ admin.site.register(models.AggregateTableDefinition, AggregateTableDefinitionAdm
 admin.site.register(models.PrimaryColumn, PrimaryColumnAdmin)
 admin.site.register(models.SecondaryTableDefinition, SecondaryTableDefinitionAdmin)
 admin.site.register(models.SecondaryColumn, SecondaryColumnAdmin)
-

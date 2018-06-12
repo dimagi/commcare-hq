@@ -68,7 +68,6 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
         pass
 
 
-
 PRIMARY_COLUMN_TYPE_REFERENCE = 'reference'
 PRIMARY_COLUMN_TYPE_CONSTANT = 'constant'
 PRIMARY_COLUMN_TYPE_SQL = 'sql_statement'

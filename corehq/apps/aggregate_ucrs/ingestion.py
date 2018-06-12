@@ -3,6 +3,7 @@
 """
 This module deals with data ingestion: populating the tables from other tables.
 """
+from __future__ import absolute_import, unicode_literals
 from collections import namedtuple
 from datetime import datetime
 import sqlalchemy
@@ -115,11 +116,15 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
 
     primary_column_adapters = list(aggregate_table_adapter.config.get_primary_column_adapters())
     primary_table = IndicatorSqlAdapter(aggregate_table_adapter.config.data_source).get_table()
-    all_query_columns = [pca.to_sqlalchemy_query_column(primary_table, aggregation_params) for pca in primary_column_adapters]
+    all_query_columns = [
+        pca.to_sqlalchemy_query_column(primary_table, aggregation_params) for pca in primary_column_adapters
+    ]
     for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
         sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
         for column_adapter in secondary_table.get_column_adapters():
-            all_query_columns.append(column_adapter.to_sqlalchemy_query_column(sqlalchemy_secondary_table, aggregation_params))
+            all_query_columns.append(
+                column_adapter.to_sqlalchemy_query_column(sqlalchemy_secondary_table, aggregation_params)
+            )
 
     select_statement = sqlalchemy.select(
         all_query_columns
@@ -135,8 +140,8 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         ]
         if doing_time_aggregation:
             join_conditions.extend([
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]>=window.start.value,
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]<window.end.value
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column] >= window.start.value,
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column] < window.end.value
             ])
         select_table = select_table.outerjoin(
             sqlalchemy_secondary_table,
@@ -148,7 +153,9 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
     # to match, start should be before the end of the period and end should be after the start
     # this makes the first and last periods inclusive.
     if doing_time_aggregation:
-        select_statement = select_statement.where(primary_table.c[window.start.mapped_column_id] < window.end.value)
+        select_statement = select_statement.where(
+            primary_table.c[window.start.mapped_column_id] < window.end.value
+        )
         select_statement = select_statement.where(
             sqlalchemy.or_(primary_table.c[window.end.mapped_column_id] == None,
                            primary_table.c[window.end.mapped_column_id] >= window.start.value))
@@ -166,7 +173,8 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         aggregate_table.c[spec.column_id] for spec in primary_column_adapters if spec.is_primary_key()
     ]
     secondary_column_ids = [
-        spec.column_id for spec in aggregate_table_adapter.config.get_column_adapters() if not spec.is_primary_key()
+        spec.column_id for spec in aggregate_table_adapter.config.get_column_adapters()
+        if not spec.is_primary_key()
     ]
     insert_statement = insert(aggregate_table).from_select(
         aggregate_table.c, select_statement
