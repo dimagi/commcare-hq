@@ -42,10 +42,6 @@ from io import open
 
 logger = logging.getLogger(__name__)
 
-CASE_XPATH_PATTERN_MATCHES = [
-    DOT_INTERPOLATE_PATTERN
-]
-
 CASE_XPATH_SUBSTRING_MATCHES = [
     "instance('casedb')",
     'session/data/case_id',
@@ -54,8 +50,6 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#host",
 ]
 
-
-USER_CASE_XPATH_PATTERN_MATCHES = []
 
 USER_CASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
@@ -95,7 +89,7 @@ def _check_xpath_for_matches(xpath, substring_matches=None, pattern_matches=None
     ])
 
 
-def xpath_references_case(xpath):
+def xpath_references_case(xpath, interpolated=False):
     # We want to determine here if the xpath references any cases other
     # than the user case. To determine if the xpath references the user
     # case, see xpath_references_user_case()
@@ -105,7 +99,7 @@ def xpath_references_case(xpath):
     return _check_xpath_for_matches(
         xpath,
         substring_matches=CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=CASE_XPATH_PATTERN_MATCHES
+        pattern_matches=[] if interpolated else DOT_INTERPOLATE_PATTERN
     )
 
 
@@ -113,7 +107,7 @@ def xpath_references_user_case(xpath):
     return _check_xpath_for_matches(
         xpath,
         substring_matches=USER_CASE_XPATH_SUBSTRING_MATCHES,
-        pattern_matches=USER_CASE_XPATH_PATTERN_MATCHES,
+        pattern_matches=[],
     )
 
 

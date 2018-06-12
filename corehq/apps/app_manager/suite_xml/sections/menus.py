@@ -48,7 +48,7 @@ class MenuContributor(SuiteContributorByModule):
                     interpolated_xpath = interpolate_xpath(form.form_filter, case, fixture_xpath,
                         module=module, form=form)
 
-                    if xpath_references_case(interpolated_xpath) and \
+                    if xpath_references_case(interpolated_xpath, interpolated=True) and \
                             (not module_uses_case() or
                             module.put_in_root and not module.root_requires_same_case()):
                         raise CaseXPathValidationError(module=module, form=form)

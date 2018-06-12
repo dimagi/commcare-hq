@@ -80,7 +80,7 @@ def interpolate_xpath(string, case_xpath=None, fixture_xpath=None, module=None, 
         '#host' in string,
         # DOT_INTERPOLATE_PATTERN throws false positives, so if it flags the string,
         # verify that the string's dots would actually get replaced
-        re.search(DOT_INTERPOLATE_PATTERN, string) and dot_interpolate(string, "") != string,
+        re.search(DOT_INTERPOLATE_PATTERN, string) and dot_interpolate(string, ".") != string,
     ]):
         # At the moment this function is only used by module and form filters.
         # If that changes, amend the error message accordingly.
