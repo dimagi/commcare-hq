@@ -1861,25 +1861,25 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
+    vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (recorded_weight) {
-            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        if (weightRecorded) {
+            recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
         }
-        if (recorded_height && parseInt(recorded_height) !== 0) {
-            if (type === 'height' && parseInt(recorded_height) <= 35 && parseInt(recorded_height) >= 120) {
+        if (heightRecorded && parseInt(heightRecorded) !== 0) {
+            if (type === 'height' && parseInt(heightRecorded) <= 35 && parseInt(heightRecorded) >= 120) {
                 recordedHeight = 'Data Not Valid';
             } else {
-                recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+                recordedHeight = d3.format(".2f")(heightRecorded) + ' cm';
             }
         }
-        if (age_in_months) {
-            age = age_in_months + ' months';
+        if (ageInMonths) {
+            age = ageInMonths + ' months';
         }
 
         if (type === 'weight' || type === 'both') {
