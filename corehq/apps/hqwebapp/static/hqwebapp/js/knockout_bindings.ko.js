@@ -207,7 +207,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $(this).removeClass('moving');
                     ko.bindingHandlers.multi_sortable.updateSortableList(list);
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort");
+                    $(this).toggleClass("selected-for-sort").toggleClass('success');
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
                     var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
@@ -236,12 +236,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort');
+                        next.addClass('selected-for-sort').addClass('success');
                         next = next.next();
                     }
                 } else {
-                    $(this).addClass("selected-for-sort").addClass('last-clicked')
-                           .siblings().removeClass('selected-for-sort').removeClass('last-clicked');
+                    $(this).addClass("selected-for-sort").addClass('success').addClass('last-clicked')
+                           .siblings().removeClass('selected-for-sort').removeClass('success').removeClass('last-clicked');
                 }
             });
 
@@ -288,7 +288,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 delay: 150,
                 helper: function (e, item) {
                     if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort').siblings().removeClass('selected-for-sort');
+                        item.addClass('selected-for-sort').addClass('success')
+                            .siblings().removeClass('selected-for-sort').removeClass('success');
                     }
 
                     var elements = item.siblings('.selected-for-sort').detach();

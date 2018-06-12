@@ -10,10 +10,6 @@
     <script src="{% static 'export/js/customize_export_new.js' %}"></script>
 {% endblock %}
 
-{% block head %} {{ block.super }}
-    <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/export.css" %}">
-{% endblock %}
-
 {% block page_content %}
 {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
 {% initial_page_data 'format_options' format_options %}
