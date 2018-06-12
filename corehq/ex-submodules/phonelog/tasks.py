@@ -7,6 +7,7 @@ from celery.schedules import crontab
 from celery.task import periodic_task
 from django.conf import settings
 from django.db import connection
+from requests.exceptions import RequestException
 
 from phonelog.models import ForceCloseEntry, UserEntry, UserErrorEntry
 from phonelog.utils import SumoLogicLog
@@ -30,5 +31,5 @@ def purge_old_device_report_entries():
 def send_device_logs_to_sumologic(self, domain, xform, url):
     try:
         SumoLogicLog(domain, xform).send_data(url)
-    except SumoLogicRequestFailed as e:
+    except RequestException as e:
         self.retry(exc=e)
