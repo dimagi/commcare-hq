@@ -30,6 +30,10 @@ class ConfigImportTest(TestCase, AggregationBaseTestMixin):
         table_def = AggregateTableDefinition.objects.get(pk=aggregate_table_definition.pk)
         self.assertEqual(data_source._id, table_def.primary_data_source_id.hex)
         self.assertEqual(4, table_def.primary_columns.count())
+        aggregation = table_def.time_aggregation
+        self.assertEqual('month', aggregation.aggregation_unit)
+        self.assertEqual('opened_date', aggregation.start_column)
+        self.assertEqual('closed_date', aggregation.end_column)
         self.assertEqual(1, table_def.secondary_tables.count())
         secondary_table = table_def.secondary_tables.get()
         self.assertEqual(data_source._id, secondary_table.data_source_id.hex)
@@ -38,5 +42,3 @@ class ConfigImportTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, secondary_table.columns.count())
         secondary_column = secondary_table.columns.get()
         self.assertEqual('fu_forms_in_month', secondary_column.column_id)
-
-

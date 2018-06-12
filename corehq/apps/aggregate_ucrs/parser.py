@@ -1,6 +1,5 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import yaml
 
 from dimagi.ext import jsonobject
 
@@ -17,7 +16,7 @@ class PrimaryTableSpec(jsonobject.JsonObject):
     columns = jsonobject.ListProperty(PrimaryColumnSpec)
 
 
-class AggregationConfigSpec(jsonobject.JsonObject):
+class TimeAggregationConfigSpec(jsonobject.JsonObject):
     unit = jsonobject.StringProperty(required=True)
     start_column = jsonobject.StringProperty(required=True)
     end_column = jsonobject.StringProperty(required=True)
@@ -41,5 +40,5 @@ class AggregationSpec(jsonobject.JsonObject):
     table_id = jsonobject.StringProperty(required=True)
     display_name = jsonobject.StringProperty()
     primary_table = jsonobject.ObjectProperty(PrimaryTableSpec)
-    aggregation_config = jsonobject.ObjectProperty(AggregationConfigSpec)
+    time_aggregation = jsonobject.ObjectProperty(TimeAggregationConfigSpec)
     secondary_tables = jsonobject.ListProperty(SecondaryTableSpec)

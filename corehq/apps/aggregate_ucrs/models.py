@@ -14,15 +14,33 @@ from corehq.sql_db.connections import UCR_ENGINE_ID
 MAX_COLUMN_NAME_LENGTH = MAX_TABLE_NAME_LENGTH = 63
 
 
+class TimeAggregationDefinition(models.Model):
+    AGGREGATION_UNIT_CHOICE_MONTH = 'month'
+    AGGREGATION_UNIT_CHOICES = (
+        (AGGREGATION_UNIT_CHOICE_MONTH, _('Month')),
+    )
+    # aggregation config
+    aggregation_unit = models.CharField(max_length=10, choices=AGGREGATION_UNIT_CHOICES,
+                                        default=AGGREGATION_UNIT_CHOICE_MONTH)
+    start_column = models.CharField(default='opened_date', max_length=MAX_COLUMN_NAME_LENGTH)
+    end_column = models.CharField(default='closed_date', max_length=MAX_COLUMN_NAME_LENGTH)
+
+    def get_column_adapter(self):
+        if self.aggregation_unit == self.AGGREGATION_UNIT_CHOICE_MONTH:
+            return MonthColumnAdapter()
+        else:
+            raise Exception(
+                'Aggregation units apart from {} are not supported'.format(
+                    ', '.join(u[0] for u in self.AGGREGATION_UNIT_CHOICES)
+                )
+            )
+
+
 class AggregateTableDefinition(models.Model):
     """
     An aggregate table definition associated with multiple UCR data sources.
     Used to "join" data across multiple UCR tables.
     """
-    AGGREGATION_UNIT_CHOICE_MONTH = 'month'
-    AGGREGATION_UNIT_CHOICES = (
-        (AGGREGATION_UNIT_CHOICE_MONTH, _('Month')),
-    )
     domain = models.CharField(max_length=100)
     engine_id = models.CharField(default=UCR_ENGINE_ID, max_length=100)
     table_id = models.CharField(max_length=MAX_TABLE_NAME_LENGTH)
@@ -34,11 +52,7 @@ class AggregateTableDefinition(models.Model):
     primary_data_source_id = models.UUIDField()  # id of DataSourceConfig
     primary_data_source_key = models.CharField(default='doc_id', max_length=MAX_COLUMN_NAME_LENGTH)
 
-    # aggregation config
-    aggregation_unit = models.CharField(max_length=10, choices=AGGREGATION_UNIT_CHOICES,
-                                        default=AGGREGATION_UNIT_CHOICE_MONTH)
-    aggregation_start_column = models.CharField(default='opened_date', max_length=MAX_COLUMN_NAME_LENGTH)
-    aggregation_end_column = models.CharField(default='closed_date', max_length=MAX_COLUMN_NAME_LENGTH)
+    time_aggregation = models.OneToOneField(TimeAggregationDefinition, null=True, blank=True)
 
     def __str__(self):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
@@ -68,19 +82,10 @@ class AggregateTableDefinition(models.Model):
     def _get_id_column_adapater(self):
         return IdColumnAdapter()
 
-    def _get_aggregation_column_adapter(self):
-        if self.aggregation_unit == self.AGGREGATION_UNIT_CHOICE_MONTH:
-            return MonthColumnAdapter()
-        else:
-            raise Exception(
-                'Aggregation units apart from {} are not supported'.format(
-                    ', '.join(u[0] for u in self.AGGREGATION_UNIT_CHOICES)
-                )
-            )
-
     def get_primary_column_adapters(self):
         yield self._get_id_column_adapater()
-        yield self._get_aggregation_column_adapter()
+        if self.time_aggregation:
+            yield self.time_aggregation.get_column_adapter()
         for primary_column in self.primary_columns.all():
             yield PrimaryColumnAdapter.from_db_column(primary_column)
 
