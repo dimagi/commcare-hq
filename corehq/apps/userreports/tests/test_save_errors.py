@@ -91,8 +91,7 @@ class AdapterBulkSaveTest(TestCase):
             })
 
         self.adapter.build_table()
-        with self.assertNumQueries(2):
-            self.adapter.bulk_save(docs)
+        self.adapter.bulk_save(docs)
 
         results = list(load_data_from_db(get_table_name(self.domain, self.config.table_id)))
         self.assertEqual(len(results), 10)
