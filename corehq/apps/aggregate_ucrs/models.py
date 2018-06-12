@@ -5,6 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from memoized import memoized
 
+from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONTH
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings
@@ -15,7 +16,6 @@ MAX_COLUMN_NAME_LENGTH = MAX_TABLE_NAME_LENGTH = 63
 
 
 class TimeAggregationDefinition(models.Model):
-    AGGREGATION_UNIT_CHOICE_MONTH = 'month'
     AGGREGATION_UNIT_CHOICES = (
         (AGGREGATION_UNIT_CHOICE_MONTH, _('Month')),
     )
@@ -26,7 +26,7 @@ class TimeAggregationDefinition(models.Model):
     end_column = models.CharField(default='closed_date', max_length=MAX_COLUMN_NAME_LENGTH)
 
     def get_column_adapter(self):
-        if self.aggregation_unit == self.AGGREGATION_UNIT_CHOICE_MONTH:
+        if self.aggregation_unit == AGGREGATION_UNIT_CHOICE_MONTH:
             return MonthColumnAdapter()
         else:
             raise Exception(
