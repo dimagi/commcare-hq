@@ -161,7 +161,12 @@ hqDefine("reports/js/filters/main", [
         $casePropertyColumns.on('keyup', function(){
             $fieldsetExplorerColumns.trigger('change');
         });
-        $fieldsetExplorerColumns.on('hidden.bs.collapse show.bs.collapse', function(e){
+        $fieldsetExplorerColumns.on('hidden.bs.collapse', function(e){
+            $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            e.stopPropagation();
+        });
+        $fieldsetExplorerColumns.on('show.bs.collapse', function(e){
+            $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-down').addClass('fa-chevron-up');
             e.stopPropagation();
         });
 

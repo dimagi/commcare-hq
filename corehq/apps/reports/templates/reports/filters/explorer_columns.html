@@ -5,11 +5,14 @@
     <div class="panel-group" id="case-list-explorer-columns" role="tablist" aria-multiselectable="true">
         <div class="panel panel-default">
             <div class="panel-heading" role="tab">
-                <h4 class="panel-title">
-                    <a role="button" data-toggle="collapse" data-parent="#case-list-explorer-columns" href="#columns-editor">
+                <a role="button" data-toggle="collapse" data-parent="#case-list-explorer-columns" href="#columns-editor">
+                    <h4 class="panel-title">
                         {% trans "Edit Columns" %}
-                    </a>
-                </h4>
+                        <span class="pull-right" id="panel-chevron">
+                            <i class="fa fa-chevron-down"></i>
+                        </span>
+                    </h4>
+                </a>
             </div>
             <div id="columns-editor" class="collapse" role="tabpanel">
                 <div class="panel-body">
