@@ -705,6 +705,19 @@ class SoftwarePlan(models.Model):
         except SoftwarePlanVersion.DoesNotExist:
             return None
 
+    def at_max_domains(self):
+        # If no domain limit is set, return True
+        if not self.max_domains:
+            return False
+
+        subscription_count = 0
+        for version in self.softwareplanversion_set.all():
+            subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
+        if subscription_count >= self.max_domains:
+            return True
+        else:
+            return False
+
 
 class DefaultProductPlan(models.Model):
     """
@@ -1244,7 +1257,7 @@ class Subscription(models.Model):
         assert self.is_active
         assert date_end is None or date_end >= today
 
-        if new_plan_version.subscription_set.count() >= new_plan_version.plan.max_domains:
+        if new_plan_version.plan.at_max_domains():
             raise SubscriptionAdjustmentError(
                 'The maximum number of project spaces has been reached for %(new_plan_version)s. ' % {
                     'new_plan_version': new_plan_version,
@@ -1588,7 +1601,7 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
-        if plan_version.subscription_set.count() >= plan_version.plan.max_domains:
+        if plan_version.plan.at_max_domains():
             raise NewSubscriptionError(
                 'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
                     'plan_version': plan_version,
