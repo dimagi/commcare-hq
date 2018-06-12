@@ -47,7 +47,7 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
+from corehq.apps.export.utils import convert_saved_export_to_export_instance, saved_export_set_task
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
@@ -1091,7 +1091,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     def update_emailed_es_export_data(self, in_data):
         export_instance_id = in_data['export']['id']
-        manually_rebuild_export_task.delay(export_instance_id)
+        saved_export_set_task(manually_rebuild_export_task.delay(export_instance_id),
+                              export_instance_id)
         return format_angular_success({})
 
     @allow_remote_invocation

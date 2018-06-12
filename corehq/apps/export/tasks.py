@@ -29,6 +29,7 @@ from .dbaccessors import (
 from .export import get_export_file, rebuild_export, should_rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
+from .utils import saved_export_set_task
 
 from six.moves import filter
 
@@ -77,7 +78,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-def _start_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+def _start_export_task(export_instance_id, last_access_cutoff, filter, progress_tracker):
     keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
     with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
@@ -85,17 +86,19 @@ def _start_export_task(export_instance_id, last_access_cutoff=None, filter=None)
             export_instance = get_properly_wrapped_export_instance(
                 export_instance_id)
             if should_rebuild_export(export_instance, last_access_cutoff):
-                rebuild_export(export_instance, filter)
+                rebuild_export(export_instance, filter, progress_tracker)
 
 
 @task(queue='background_queue', ignore_result=True)
 def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
-    _start_export_task(export_instance_id, last_access_cutoff, filter)
+    _start_export_task(export_instance_id, last_access_cutoff, filter,
+                       progress_tracker=rebuild_export_task)
 
 
 @task(queue='export_download_queue', ignore_result=True)
 def manually_rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
-    _start_export_task(export_instance_id, last_access_cutoff, filter)
+    _start_export_task(export_instance_id, last_access_cutoff, filter,
+                       progress_tracker=manually_rebuild_export_task)
 
 
 @serial_task('{domain}-{case_type}', queue='background_queue')
@@ -119,7 +122,7 @@ def saved_exports():
 
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_export_task.apply_async(
+        saved_export_set_task(rebuild_export_task.apply_async(
             args=[
                 daily_saved_export_id, last_access_cutoff
             ],
@@ -127,7 +130,7 @@ def saved_exports():
             # however we want to override it to use its own queue so that it does
             # not disrupt other actions.
             queue=SAVED_EXPORTS_QUEUE,
-        )
+        ))
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
