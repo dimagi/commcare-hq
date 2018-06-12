@@ -19,7 +19,10 @@ from dimagi.ext import jsonobject
 class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
     """
     A column adapter represents everything needed to work with an aggregate column,
-    including its config as well as its sqlalchemy information (via the ucr column spec)
+    including its config as well as its sqlalchemy information (via the ucr column spec).
+
+    Column adapters handle both the querying side (via the to_sqlalchemy_query_column function)
+    as well as the table creation/writing side.
     """
     config_spec = jsonobject.JsonObject
 
@@ -79,6 +82,9 @@ PRIMARY_COLUMN_TYPE_CHOICES = (
 
 
 class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+    """
+    A ColumnAdapter that is composed of all the possible fields it can have.
+    """
 
     def __init__(self, column_id, datatype, is_nullable, is_primary_key, create_index, query_column_provider):
         # short circuit super class call to avoid refences to db_column
@@ -110,7 +116,7 @@ class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
 
 
 def IdColumnAdapter():
-    # shortcut/convenience method to instantiate id columns
+    """shortcut/convenience method to instantiate id columns"""
     return RawColumnAdapter(
         column_id='doc_id',
         datatype=DATA_TYPE_STRING,
@@ -122,7 +128,7 @@ def IdColumnAdapter():
 
 
 def MonthColumnAdapter():
-    # shortcut/convenience method to instantiate month columns
+    """shortcut/convenience method to instantiate month columns"""
     return RawColumnAdapter(
         column_id='month',
         datatype=DATA_TYPE_DATE,
@@ -134,6 +140,9 @@ def MonthColumnAdapter():
 
 
 class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+    """
+    A base ColumnAdapter class for columns associated with the primary table.
+    """
 
     def is_nullable(self):
         return True
@@ -162,6 +171,10 @@ class ConstantColumnProperties(jsonobject.JsonObject):
 
 
 class ConstantColumnAdapter(PrimaryColumnAdapter):
+    """
+    A PrimaryColumnAdapter class that allows populating a table with constant values.
+    """
+
     config_spec = ConstantColumnProperties
 
     def get_datatype(self):
@@ -181,6 +194,11 @@ class ReferenceColumnProperties(jsonobject.JsonObject):
 
 
 class ReferenceColumnAdapter(PrimaryColumnAdapter):
+    """
+    A PrimaryColumnAdapter class that allows populating a table with the value
+    of a column in the primary table.
+    """
+
     config_spec = ReferenceColumnProperties
 
     def get_datatype(self):
@@ -199,6 +217,11 @@ class SqlColumnProperties(jsonobject.JsonObject):
 
 
 class SqlColumnAdapter(PrimaryColumnAdapter):
+    """
+    A PrimaryColumnAdapter class that allows populating a table with the value
+    of a sql expression run on the primary table.
+    """
+
     config_spec = SqlColumnProperties
 
     def get_datatype(self):
@@ -229,6 +252,9 @@ SECONDARY_COLUMN_TYPE_CHOICES = (
 
 
 class SecondaryColumnAdapter(ColumnAdapater):
+    """
+    A base ColumnAdapter class for columns associated with secondary tables.
+    """
 
     def is_nullable(self):
         return True
@@ -255,6 +281,10 @@ class SingleFieldColumnProperties(jsonobject.JsonObject):
 
 
 class SumColumnAdapter(SecondaryColumnAdapter):
+    """
+    A SecondaryColumnAdapter class that sums the values of a given column in the
+    secondary table.
+    """
     config_spec = SingleFieldColumnProperties
 
     def get_datatype(self):
