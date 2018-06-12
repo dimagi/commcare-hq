@@ -244,13 +244,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         doc_id_column = aggregate_table.c['doc_id']
         month_column = aggregate_table.c['month']
 
-
         # before december the case should not exist
         self.assertEqual(0, aggregate_query.filter(
             doc_id_column == self.case_id,
             month_column <= '2017-11-01'
         ).count())
-
 
         # in december the case should exist, but should not be flagged as pregnant
         row = aggregate_query.filter(

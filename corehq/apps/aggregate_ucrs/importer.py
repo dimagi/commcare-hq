@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from uuid import UUID
 
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition, PrimaryColumn, SecondaryTableDefinition, \

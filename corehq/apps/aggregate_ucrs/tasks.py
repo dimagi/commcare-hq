@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data
 
 

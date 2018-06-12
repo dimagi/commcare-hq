@@ -38,7 +38,7 @@ class MonthTest(SimpleTestCase):
         self.assertEqual(2018, next.year)
         self.assertEqual(4, next.month)
 
-    def test_get_next_month(self):
+    def test_get_next_month_year_border(self):
         month = Month(2017, 12)
         next = month.get_next_month()
         self.assertEqual(2018, next.year)
