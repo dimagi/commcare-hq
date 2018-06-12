@@ -6,7 +6,7 @@ import os
 import re
 import tempfile
 import zipfile
-import csv342 as csv
+import csv
 import json
 import bz2
 from collections import OrderedDict
@@ -111,10 +111,7 @@ class CsvFileWriter(ExportFileWriter):
         self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
-        self._csvwriter.writerow([
-            col if isinstance(col, six.text_type) else col.decode('utf-8')
-            for col in row
-        ])
+        self._csvwriter.writerow(row)
 
 
 class PartialHtmlFileWriter(ExportFileWriter):
