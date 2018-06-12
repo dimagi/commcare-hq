@@ -330,6 +330,7 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
+    _update_session_language(req)
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -369,6 +370,19 @@ def _login(req, domain_name, template_name):
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
 
 
+def _update_session_language(req):
+    # Update the language for this session if the user signing in has a different language than the current
+    # session default
+    if 'auth-username' in req.POST:
+        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
+        old_lang = req.session[LANGUAGE_SESSION_KEY]
+        if new_lang != old_lang:
+            # update the current session's language setting
+            req.session[LANGUAGE_SESSION_KEY] = new_lang
+            # and activate it for the current thread so the response page is translated too
+            activate(new_lang)
+
+
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
@@ -383,8 +397,6 @@ def login(req):
     req_params = req.GET if req.method == 'GET' else req.POST
     domain = req_params.get('domain', None)
 
-    _update_session_language(req)
-
     return _login(req, domain, "login_and_password/login.html")
 
 
@@ -398,22 +410,7 @@ def domain_login(req, domain, template_name="login_and_password/login.html"):
     # necessary domain contexts:
     req.project = project
 
-    _update_session_language(req)
-
     return _login(req, domain, template_name)
-
-
-def _update_session_language(req):
-    # Update the language for this session if the user signing in has a different language than the current
-    # session default
-    if 'auth-username' in req.POST:
-        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
-        old_lang = req.session[LANGUAGE_SESSION_KEY]
-        if new_lang != old_lang:
-            # update the current session's language setting
-            req.session[LANGUAGE_SESSION_KEY] = new_lang
-            # and activate it for the current thread so the response page is translated too
-            activate(new_lang)
 
 
 class HQLoginView(LoginView):
