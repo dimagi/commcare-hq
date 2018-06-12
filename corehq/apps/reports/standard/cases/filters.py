@@ -52,7 +52,7 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
         ]
         operators = [
             {'name': prop, 'case_type': None, 'meta_type': 'operator'}
-            for prop in ['=', '!=', '>=', '<=', '>', '<']
+            for prop in ['=', '!=', '>=', '<=', '>', '<', 'and', 'or']
         ]
         return case_properties + special_case_properties + operators
 
