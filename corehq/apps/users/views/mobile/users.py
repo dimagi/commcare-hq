@@ -99,7 +99,7 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
 DEFAULT_USER_LIST_LIMIT = 10
-BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z.+-_]")
+BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
 
 def _can_edit_workers_location(web_user, mobile_worker):
