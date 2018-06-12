@@ -5300,7 +5300,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
         if not copy.is_remote_app():
             copy.update_mm_map()
 
-        prune_auto_generated_builds(self.domain, self._id)
+        prune_auto_generated_builds.delay(self.domain, self._id)
 
         return copy
 

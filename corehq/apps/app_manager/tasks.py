@@ -55,7 +55,7 @@ def prune_auto_generated_builds(domain, app_id):
              .is_released(False)
              .term('is_auto_generated', True)
              .term('copy_of', app_id)
-             .source(['_id']))
+             .values_list(['_id'], flat=True))
 
     for hit in query.run().hits:
         if hit['_id'] == last_build_id:
