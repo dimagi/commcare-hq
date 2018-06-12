@@ -112,8 +112,7 @@ class CsvFileWriter(ExportFileWriter):
 
     def write_row(self, row):
         self._csvwriter.writerow([
-            col if isinstance(col, six.text_type) else col.decode('utf-8')
-            for col in row
+            row if isinstance(row, six.text_type) else row.decode('utf-8')
         ])
 
 
