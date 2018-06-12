@@ -19,9 +19,8 @@
                     <div class="report-filter-case-property-columns" data-initialvalue="{{ initial_value }}" data-columnsuggestions="{{ column_suggestions }}">
                         <table class="table table-condensed">
                             <thead>
-                                <th></th>
+                                <th>&nbsp;</th>
                                 <th>{% trans "Property" %}</th>
-                                <th>{% trans "Display Text" %}</th>
                                 <th>&nbsp;</th>
                             </thead>
                             <tbody data-bind="foreach: properties, sortableList: properties">
@@ -41,12 +40,10 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <input type="text" class="form-control" data-bind="value: label" /></td>
-                                        <td>
-                                            <i style="cursor: pointer;"
-                                               data-bind="click: $parent.removeProperty"
-                                               class="fa fa-remove"></i>
-                                        </td>
+                                        <i style="cursor: pointer;"
+                                           data-bind="click: $parent.removeProperty"
+                                           class="fa fa-remove"></i>
+                                    </td>
                                 </tr>
                             </tbody>
                         </table>

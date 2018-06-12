@@ -5,7 +5,6 @@ from collections import Counter
 
 import six
 from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
@@ -61,29 +60,26 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
+    HIDDEN_COLUMNS = ['last_modified']
     PERSISTENT_COLUMNS = [
         # hidden from view, but used for sorting when no sort column is provided
-        {'name': 'last_modified', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
+        'last_modified',
         # shown, but unremovable so there is always at least one column
-        {'name': '_link', 'label': _('View Case'), 'editable': False},
+        'View Case'
     ]
-
-    DEFAULT_COLUMNS = [
-        {'name': '@case_type', 'label': _('Case Type')},
-        {'name': 'case_name', 'label': _('Case Name')},
-    ]
+    DEFAULT_COLUMNS = ['@case_type', 'case_name']
 
     @property
     def filter_context(self):
         context = super(CaseListExplorerColumns, self).filter_context
         initial_values = self.get_value(self.request, self.domain) or []
 
-        user_value_names = [v['name'] for v in initial_values]
+        user_value_names = [v for v in initial_values]
         if not user_value_names:
             initial_values = self.DEFAULT_COLUMNS
 
         for persistent_column in reversed(self.PERSISTENT_COLUMNS):
-            if persistent_column['name'] not in user_value_names:
+            if persistent_column not in user_value_names:
                 initial_values = [persistent_column] + initial_values
 
         context.update({

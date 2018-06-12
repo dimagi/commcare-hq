@@ -77,10 +77,10 @@ class CaseListExplorer(CaseListReport):
     def columns(self):
         return [
             DataTablesColumn(
-                column['label'],
-                prop_name=column['name'],
-                visible=(not column.get('hidden')),
-                sortable=column['name'] not in CASE_COMPUTED_METADATA,
+                column,
+                prop_name=column,
+                visible=column not in CaseListExplorerColumns.HIDDEN_COLUMNS,
+                sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]

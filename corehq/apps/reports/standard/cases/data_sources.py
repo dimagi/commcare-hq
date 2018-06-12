@@ -16,6 +16,10 @@ from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 from memoized import memoized
+from corehq.apps.case_search.const import (
+    CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
+)
 
 
 class CaseInfo(object):
@@ -249,12 +253,11 @@ class SafeCaseDisplay(object):
         self.case = case
         self.report = report
 
-    def get(self, column):
-        name = column['name']
-        if name == '_link':
+    def get(self, name):
+        if name == 'View Case':
             return self._link
 
-        if column.get('meta_type') == 'info':
+        if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
             return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
 
         return self.case.get(name)

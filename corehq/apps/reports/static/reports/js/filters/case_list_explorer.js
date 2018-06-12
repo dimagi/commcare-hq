@@ -32,21 +32,9 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         });
     };
 
-    var Property = function ($parent, name, label, editable, hidden) {
+    var Property = function ($parent, name, editable, hidden) {
         var self = {};
         self.name = ko.observable(name).trimmed();
-
-        self.label = ko.observable(label || name).trimmed();
-
-        self.name.subscribe(function(newValue){
-            // Set the label value to the value of the name if it isn't otherwise set
-            if (!self.label() && newValue !== 'undefined'){ // atwho sometimes sets the value to the string 'undefined'
-                var val = newValue.replace('@', '').replace(/_/g, ' ').replace(/\w\S*/g, function(txt){
-                    return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-                });
-                self.label(val);
-            }
-        });
 
         self.meta_type = ko.computed(function(){
             var value = _.find($parent.allSuggestions, function(prop){
@@ -72,11 +60,11 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
             var initialColumn = initialColumns[i];
-            self.properties.push(Property(self, initialColumn.name, initialColumn.label, initialColumn.editable, initialColumn.hidden));
+            self.properties.push(Property(self, initialColumn));
         }
 
         self.addProperty = function () {
-            self.properties.push(Property(self, '', ''));
+            self.properties.push(Property(self, ''));
         };
 
         self.removeProperty = function (property) {
@@ -88,14 +76,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
 
             return JSON.stringify(
                 _.map(self.properties(), function(property){
-                    var pertinent_props = {name: property.name(), label: property.label()};
-                    if (property.hidden()){
-                        pertinent_props.hidden = property.hidden();
-                    }
-                    if (property.meta_type()){
-                        pertinent_props.meta_type = property.meta_type();
-                    }
-                    return pertinent_props;
+                    return property.name();
                 })
             );
         });
