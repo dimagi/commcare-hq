@@ -245,7 +245,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             });
 
-            $(element).on('click', '.send-to-top', function (e) {
+            $(element).on('click', '.send-to-top', function () {
                 $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
 
                 // update UI
@@ -257,7 +257,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 list().unshift(list().splice(currentIndex, 1)[0]);
             });
 
-            $(element).on('click', '.send-to-bottom', function (e) {
+            $(element).on('click', '.send-to-bottom', function () {
                 $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
 
                 var row = $(this).parent().parent();
