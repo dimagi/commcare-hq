@@ -99,7 +99,7 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
 DEFAULT_USER_LIST_LIMIT = 10
-BAD_MOBILE_USERNAME_REGEX = re.compile("[@!#%&'*/=?^`{}|]")
+BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z.+-_]")
 
 
 def _can_edit_workers_location(web_user, mobile_worker):
@@ -738,8 +738,16 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
                 raise ValidationError("Username contained an invalid character")
         except ValidationError:
+            if '..' in username:
+                return {
+                    'error': _("Username may not contain consecutive . (period).")
+                }
+            if username.endswith('.'):
+                return {
+                    'error': _("Username may not end with a . (period).")
+                }
             return {
-                'error': _("Username may only contain letters, numbers, + or .")
+                'error': _("Username may not contain special characters.")
             }
 
         full_username = format_username(username, self.domain)
