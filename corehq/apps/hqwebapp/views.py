@@ -28,7 +28,7 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, activate, LANGUAGE_SESSION_KEY
+from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
 
 
 from django.views.decorators.debug import sensitive_post_parameters
@@ -70,7 +70,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -330,7 +330,10 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    _update_session_language(req)
+    if 'auth-username' in req.POST:
+        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
+        old_lang = req.session[LANGUAGE_SESSION_KEY]
+        update_session_language(req, old_lang, new_lang)
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -368,19 +371,6 @@ def _login(req, domain_name, template_name):
 
     auth_view = HQLoginView if not domain_name else CloudCareLoginView
     return auth_view.as_view(template_name=template_name, extra_context=context)(req)
-
-
-def _update_session_language(req):
-    # Update the language for this session if the user signing in has a different language than the current
-    # session default
-    if 'auth-username' in req.POST:
-        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
-        old_lang = req.session[LANGUAGE_SESSION_KEY]
-        if new_lang != old_lang:
-            # update the current session's language setting
-            req.session[LANGUAGE_SESSION_KEY] = new_lang
-            # and activate it for the current thread so the response page is translated too
-            activate(new_lang)
 
 
 @two_factor_exempt
