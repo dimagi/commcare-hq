@@ -1584,9 +1584,10 @@ class NavMenuItemMediaMixin(DocumentSchema):
         old_value = media_dict.get(lang)
         # remove the entry from app multimedia mappings if media is being removed now
         # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        # ToDo: remove app argument and where ever its passed when called
+        app = self.get_app()
         if old_value and not media_path:
-            if app is None:
-                app = self.get_app()
             app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
@@ -2323,6 +2324,8 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2400,6 +2403,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
+
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
@@ -2416,22 +2422,34 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     def is_surveys(self):
         return self.case_type == ""
 
+    def after_add(self):
+        self.get_or_create_unique_id()
+        self.assign_references()
+
+    def assign_references(self):
+        if hasattr(self, 'case_list'):
+            self.case_list._module = self
+        if hasattr(self, 'case_list_form'):
+            self.case_list_form._module = self
+
     @classmethod
     def wrap(cls, data):
         if cls is ModuleBase:
             doc_type = data['doc_type']
             if doc_type == 'Module':
-                return Module.wrap(data)
+                wrapped_obj = Module.wrap(data)
             elif doc_type == 'AdvancedModule':
-                return AdvancedModule.wrap(data)
+                wrapped_obj = AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
-                return ReportModule.wrap(data)
+                wrapped_obj = ReportModule.wrap(data)
             elif doc_type == 'ShadowModule':
-                return ShadowModule.wrap(data)
+                wrapped_obj = ShadowModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
-            return super(ModuleBase, cls).wrap(data)
+            wrapped_obj = super(ModuleBase, cls).wrap(data)
+        wrapped_obj.assign_references()
+        return wrapped_obj
 
     def get_or_create_unique_id(self):
         """
@@ -2785,7 +2803,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 long=Detail(detail.to_json()),
             ),
         )
-        module.get_or_create_unique_id()
+        module.after_add()
         return module
 
     @classmethod
@@ -3505,7 +3523,7 @@ class AdvancedModule(ModuleBase):
                 long=Detail(),
             ),
         )
-        module.get_or_create_unique_id()
+        module.after_add()
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -4202,7 +4220,7 @@ class ReportModule(ModuleBase):
             name={(lang or 'en'): name or ugettext("Reports")},
             case_type='',
         )
-        module.get_or_create_unique_id()
+        module.after_add()
         return module
 
     def get_details(self):
@@ -4387,7 +4405,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
                 long=Detail(detail.to_json()),
             ),
         )
-        module.get_or_create_unique_id()
+        module.after_add()
         return module
 
     def validate_for_build(self):
