@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import io
 from base64 import b64decode
 from codecs import BOM_UTF8
 import os
 import re
 import tempfile
 import zipfile
-import csv
+import csv342 as csv
 import json
 import bz2
 from collections import OrderedDict
@@ -108,10 +110,15 @@ class CsvFileWriter(ExportFileWriter):
     def _open(self):
         # Excel needs UTF8-encoded CSVs to start with the UTF-8 byte-order mark (FB 163268)
         self._file.write(BOM_UTF8)
-        self._csvwriter = csv.writer(self._file, csv.excel)
 
     def write_row(self, row):
-        self._csvwriter.writerow(row)
+        buffer = io.StringIO()
+        csvwriter = csv.writer(buffer, csv.excel)
+        csvwriter.writerow([
+            col.decode('utf-8') if isinstance(col, six.binary_type) else col
+            for col in row
+        ])
+        self._file.write(buffer.getvalue().encode('utf-8'))
 
 
 class PartialHtmlFileWriter(ExportFileWriter):
