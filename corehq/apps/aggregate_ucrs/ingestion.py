@@ -9,7 +9,7 @@ from datetime import datetime
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, TimeAggregation
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, TimeAggregationWindow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from dimagi.utils.parsing import json_format_date
 
@@ -51,7 +51,7 @@ def get_time_aggregation_windows(aggregate_table_definition, last_update):
         start_time = get_aggregation_start_period(aggregate_table_definition, last_update)
         end_time = get_aggregation_end_period(aggregate_table_definition, last_update)
         assert end_time >= start_time
-        adapter_class = TimeAggregation.from_aggregation_unit(
+        adapter_class = TimeAggregationWindow.from_aggregation_unit(
             aggregate_table_definition.time_aggregation.aggregation_unit
         )
         current_window = adapter_class(start_time)
