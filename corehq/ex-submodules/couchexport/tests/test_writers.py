@@ -73,7 +73,7 @@ class CsvFileWriterTests(SimpleTestCase):
         writer.write_row(headers)
         writer.finish()
         file_start = writer.get_file().read(7)
-        self.assertEqual(file_start, BOM_UTF8 + b'hám')
+        self.assertEqual(file_start, BOM_UTF8 + 'hám'.encode('utf-8'))
 
     def test_csv_file_writer_int(self):
         writer = CsvFileWriter()
