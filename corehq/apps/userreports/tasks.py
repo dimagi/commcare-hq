@@ -312,6 +312,7 @@ def _get_config(config_id):
 def build_async_indicators(indicator_doc_ids):
     # written to be used with _queue_indicators, indicator_doc_ids must
     #   be a chunk of 100
+    assert len(indicator_doc_ids) <= ASYNC_INDICATOR_CHUNK_SIZE
 
     def handle_exception(exception, config_id, doc, adapter):
         metric = None
