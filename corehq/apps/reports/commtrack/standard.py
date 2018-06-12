@@ -23,6 +23,7 @@ from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, ge
     get_product_ids_for_program, get_consumption_helper_from_ledger_value
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
+from corehq.apps.es import LedgerES
 import six
 
 
@@ -95,7 +96,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def total_records(self):
-        return len(super(CurrentStockStatusReport, self).products)
+        return LedgerES().domain(self.domain).count()
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
