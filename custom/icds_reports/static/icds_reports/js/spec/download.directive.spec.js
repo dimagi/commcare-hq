@@ -13,11 +13,12 @@ describe('Download Directive', function () {
         beforeEach(module('icdsApp', function ($provide) {
             $provide.constant("userLocationId", null);
             $provide.constant("locationHierarchy", [
-                ['awc', ['supervisor']],
-                ['block', ['district']],
-                ['district', ['state']],
                 ['state', [null]],
-                ['supervisor', ['block']]]);
+                ['district', ['state']],
+                ['block', ['district']],
+                ['supervisor', ['block']],
+                ['awc', ['supervisor']],
+            ]);
             $provide.constant("haveAccessToFeatures", false);
         }));
 

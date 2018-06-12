@@ -39,8 +39,13 @@ describe('Location Filter Controller', function () {
         $provide.constant("userLocationId", null);
         $provide.constant("allUserLocationId", []);
         $provide.constant("haveAccessToAllLocations", true);
-        $provide.constant("locationHierarchy", [['awc', ['supervisor']], ['block', ['district']],
-            ['district', ['state']], ['state', [null]], ['supervisor', ['block']]]);
+        $provide.constant("locationHierarchy", [
+            ['state', [null]],
+            ['district', ['state']],
+            ['block', ['district']],
+            ['supervisor', ['block']],
+            ['awc', ['supervisor']],
+        ]);
     }));
 
     beforeEach(function () {
