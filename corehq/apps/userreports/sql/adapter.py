@@ -133,7 +133,7 @@ class IndicatorSqlAdapter(IndicatorAdapter):
 
     def _best_effort_save_rows(self, rows, doc):
         try:
-            self.save_rows(rows, [doc['_id']])
+            self.save_rows(rows)
         except IntegrityError:
             pass  # can be due to users messing up their tables/data so don't bother logging
         except Exception as e:
@@ -143,15 +143,16 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         rows = []
         for doc in docs:
             rows.extend(self.get_all_values(doc))
-        self.save_rows(rows, [doc['_id'] for doc in docs])
+        self.save_rows(rows)
 
-    def save_rows(self, rows, doc_ids):
+    def save_rows(self, rows):
         # transform format from ColumnValue to dict
+        # doc_ids = {row}
         formatted_rows = [
             {i.column.database_column_name: i.value for i in row}
             for row in rows
         ]
-
+        doc_ids = set(row['doc_id'] for row in formatted_rows)
         table = self.get_table()
         delete = table.delete(table.c.doc_id.in_(doc_ids))
         with self.session_helper.session_context() as session:

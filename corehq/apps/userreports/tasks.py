@@ -334,6 +334,13 @@ def build_async_indicators(indicator_doc_ids):
             datadog_counter(metric, 1,
                 tags={'config_id': config_id, 'doc_id': doc['_id']})
 
+    def doc_ids_from_rows(rows):
+        formatted_rows = [
+            {column.column.database_column_name: column.value for column in row}
+            for row in rows
+        ]
+        return set(row['doc_id'] for row in formatted_rows)
+
     # tracks processed/deleted configs to be removed from each indicator
     configs_to_remove_by_indicator_id = defaultdict(list)
 
@@ -360,7 +367,6 @@ def build_async_indicators(indicator_doc_ids):
         failed_indicators = set()
 
         rows_to_save_by_adapter = defaultdict(list)
-        doc_ids_to_save_by_adapter = defaultdict(list)
         indicator_by_doc_id = {i.doc_id: i for i in all_indicators}
         config_ids = set()
         with timer:
@@ -384,7 +390,6 @@ def build_async_indicators(indicator_doc_ids):
                     try:
                         adapter = get_indicator_adapter(config, can_handle_laboratory=True)
                         rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                        doc_ids_to_save_by_adapter[adapter].append(doc['_id'])
                         eval_context.reset_iteration()
                     except Exception as e:
                         failed_indicators.add(indicator)
@@ -394,10 +399,10 @@ def build_async_indicators(indicator_doc_ids):
                         related_doc_ids.add(doc['_id'])
 
             for adapter, rows in six.iteritems(rows_to_save_by_adapter):
-                doc_ids = doc_ids_to_save_by_adapter[adapter]
+                doc_ids = doc_ids_from_rows(rows)
                 indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
-                    adapter.save_rows(rows, doc_ids)
+                    adapter.save_rows(rows)
                 except Exception as e:
                     failed_indicators.union(indicators)
                     notify_exception(None,
