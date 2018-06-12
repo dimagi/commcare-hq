@@ -7,6 +7,8 @@ import six
 
 from corehq.apps.aggregate_ucrs.date_utils import Month
 
+AGGREGATION_UNIT_CHOICE_MONTH = 'month'
+
 AGG_WINDOW_START_PARAM = 'agg_window_start'
 AGG_WINDOW_END_PARAM = 'agg_window_end'
 
@@ -18,9 +20,8 @@ class TimeAggregation(six.with_metaclass(ABCMeta, object)):
 
     @classmethod
     def from_aggregation_unit(cls, unit):
-        from corehq.apps.aggregate_ucrs.models import TimeAggregationDefinition
         adapter_classes = {
-            TimeAggregationDefinition.AGGREGATION_UNIT_CHOICE_MONTH: MonthAggregation
+            AGGREGATION_UNIT_CHOICE_MONTH: MonthAggregation
         }
         return adapter_classes[unit]
 
