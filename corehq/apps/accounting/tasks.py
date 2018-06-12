@@ -97,7 +97,11 @@ def activate_subscriptions(based_on_date=None):
     if based_on_date:
         starting_subscriptions = starting_subscriptions.filter(date_start=based_on_date)
     else:
-        starting_subscriptions = starting_subscriptions.filter(date_start__lte=date.today())
+        today = date.today()
+        starting_subscriptions = starting_subscriptions.filter(
+            date_start__lte=today,
+            date_end__gt=today,
+        )
 
     for subscription in starting_subscriptions:
         try:
