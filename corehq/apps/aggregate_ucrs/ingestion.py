@@ -121,7 +121,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         for column_adapter in secondary_table.get_column_adapters():
             all_query_columns.append(column_adapter.to_sqlalchemy_query_column(sqlalchemy_secondary_table, aggregation_params))
 
-    select_statment = sqlalchemy.select(
+    select_statement = sqlalchemy.select(
         all_query_columns
     )
 
@@ -143,19 +143,19 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
             sqlalchemy.and_(*join_conditions)
         )
 
-    select_statment = select_statment.select_from(select_table)
+    select_statement = select_statement.select_from(select_table)
     # apply period start/end filters for primary model
     # to match, start should be before the end of the period and end should be after the start
     # this makes the first and last periods inclusive.
     if doing_time_aggregation:
-        select_statment = select_statment.where(primary_table.c[window.start.mapped_column_id] < window.end.value)
-        select_statment = select_statment.where(
+        select_statement = select_statement.where(primary_table.c[window.start.mapped_column_id] < window.end.value)
+        select_statement = select_statement.where(
             sqlalchemy.or_(primary_table.c[window.end.mapped_column_id] == None,
                            primary_table.c[window.end.mapped_column_id] >= window.start.value))
 
     for primary_column_adapter in primary_column_adapters:
         if primary_column_adapter.is_groupable():
-            select_statment = select_statment.group_by(
+            select_statement = select_statement.group_by(
                 primary_column_adapter.to_sqlalchemy_query_column(
                     primary_table, aggregation_params
                 )
@@ -169,7 +169,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         spec.column_id for spec in aggregate_table_adapter.config.get_column_adapters() if not spec.is_primary_key()
     ]
     insert_statement = insert(aggregate_table).from_select(
-        aggregate_table.c, select_statment
+        aggregate_table.c, select_statement
     )
     insert_statement = insert_statement.on_conflict_do_update(
         index_elements=primary_key_columns,
