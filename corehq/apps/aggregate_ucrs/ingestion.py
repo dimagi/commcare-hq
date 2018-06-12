@@ -157,7 +157,7 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
             primary_table.c[window.start.mapped_column_id] < window.end.value
         )
         select_statement = select_statement.where(
-            sqlalchemy.or_(primary_table.c[window.end.mapped_column_id] == None,
+            sqlalchemy.or_(primary_table.c[window.end.mapped_column_id] == None,  # noqa
                            primary_table.c[window.end.mapped_column_id] >= window.start.value))
 
     for primary_column_adapter in primary_column_adapters:
