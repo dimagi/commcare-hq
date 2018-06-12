@@ -75,7 +75,7 @@ class IndicatorAdapter(object):
         Saves the document. Should bubble up known errors.
         """
         indicator_rows = self.get_all_values(doc, eval_context)
-        self._save_rows(indicator_rows, [doc['_id']])
+        self.save_rows(indicator_rows, [doc['_id']])
 
     def bulk_save(self, docs):
         """
@@ -89,7 +89,7 @@ class IndicatorAdapter(object):
         "Gets all the values from a document to save"
         return self.config.get_all_values(doc, eval_context)
 
-    def _save_rows(self, rows, doc_ids):
+    def save_rows(self, rows, doc_ids):
         """
         Saves rows to a data source after deleting the rows corresponding
             to list of doc_ids

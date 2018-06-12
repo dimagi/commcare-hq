@@ -396,7 +396,7 @@ def build_async_indicators(indicator_doc_ids):
                 doc_ids = doc_ids_to_save_by_adapter[adapter]
                 indicators = [indicator_by_doc_id[doc_id] for doc_id in doc_ids]
                 try:
-                    adapter._save_rows(rows, doc_ids)
+                    adapter.save_rows(rows, doc_ids)
                 except Exception as e:
                     failed_indicators.union(indicators)
                     notify_exception(None,

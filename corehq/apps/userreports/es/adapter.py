@@ -194,11 +194,11 @@ class IndicatorESAdapter(IndicatorAdapter):
 
     def _best_effort_save_rows(self, rows, doc):
         try:
-            self._save_rows(rows, [doc['_id']])
+            self.save_rows(rows, [doc['_id']])
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def _save_rows(self, rows, doc_ids):
+    def save_rows(self, rows, doc_ids):
         if not rows:
             return
 
