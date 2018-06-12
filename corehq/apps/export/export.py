@@ -14,6 +14,7 @@ from couchdbkit import ResourceConflict
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
 
+from couchexport import writers
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.elastic import iter_es_docs, ScanResult
@@ -78,7 +79,8 @@ class _ExportWriter(object):
             table.label for instance in export_instances for table in instance.selected_tables
         )
 
-        with open(self.path, 'wb') as file:
+        mode = 'w' if isinstance(self.writer, writers.CsvExportWriter) else 'wb'
+        with open(self.path, mode) as file:
 
             # open the ExportWriter
             headers = []
