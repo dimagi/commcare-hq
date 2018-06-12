@@ -11,7 +11,20 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
 
         self.suggestedProperties = ko.computed(function(){
             if (self.currentCaseType() === ''){
-                return allSuggestions;
+                var filteredProperties = [];
+                for (var i = 0; i < allSuggestions.length; i++){
+                    var suggestion = Object.assign({}, allSuggestions[i]);
+                    if (suggestion.count === 1){
+                        filteredProperties.push(suggestion);
+                    }
+                    else if (_.findWhere(filteredProperties, {name: suggestion.name}) === undefined){
+                        if (suggestion.count !== undefined){
+                            suggestion.case_type = suggestion.count + " " + gettext("case types");
+                        }
+                        filteredProperties.push(suggestion);
+                    }
+                }
+                return filteredProperties;
             }
             return _.filter(allSuggestions, function(prop){
                 return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;

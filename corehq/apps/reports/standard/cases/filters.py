@@ -1,16 +1,20 @@
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 import json
+from collections import Counter
 
-from django.utils.safestring import mark_safe
-from django.utils.translation import ugettext_lazy, ugettext as _
 import six
+from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from corehq.apps.app_manager.app_schemas.case_properties import (
     all_case_properties_by_domain,
 )
-from corehq.apps.case_search.const import SPECIAL_CASE_PROPERTIES, CASE_COMPUTED_METADATA
+from corehq.apps.case_search.const import (
+    CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
+)
 from corehq.apps.reports.filters.base import BaseSimpleFilter
 
 
@@ -107,8 +111,9 @@ def get_flattened_case_properties(domain, include_parent_properties=False):
         domain,
         include_parent_properties=include_parent_properties
     )
+    property_counts = Counter(item for sublist in all_properties_by_type.values() for item in sublist)
     all_properties = [
-        {'name': value, 'case_type': case_type}
+        {'name': value, 'case_type': case_type, 'count': property_counts[value]}
         for case_type, values in six.iteritems(all_properties_by_type)
         for value in values
     ]
