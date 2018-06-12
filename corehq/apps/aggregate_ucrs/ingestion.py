@@ -7,7 +7,8 @@ from datetime import datetime
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, TimeAggregationWindow
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, \
+    TimeAggregationWindow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from dimagi.utils.parsing import json_format_date
 
