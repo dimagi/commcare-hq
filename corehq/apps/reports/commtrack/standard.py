@@ -150,8 +150,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             domain=self.domain,
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
-            pagination=self.pagination,
             entry_ids=product_ids,
+            pagination=self.pagination,
         )
         product_grouping = {}
         for ledger_value in ledger_values:

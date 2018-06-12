@@ -563,15 +563,21 @@ def get_username_in_last_form_user_id_submitted(domain, user_id):
         return user_submissions[0]['form']['meta'].get('username', None)
 
 
-def get_wrapped_ledger_values(domain, case_ids, section_id, pagination, entry_ids=None):
+def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None, pagination=None):
     # todo: figure out why this causes circular import
     from corehq.apps.reports.commtrack.util import StockLedgerValueWrapper
-    query = (LedgerES()
-             .domain(domain)
-             .size(pagination.count)
-             .start(pagination.start)
-             .section(section_id)
-             .case(case_ids))
+    if pagination:
+        query = (LedgerES()
+                 .domain(domain)
+                 .size(pagination.count)
+                 .start(pagination.start)
+                 .section(section_id)
+                 .case(case_ids))
+    else:
+        query = (LedgerES()
+                 .domain(domain)
+                 .section(section_id)
+                 .case(case_ids))
     if entry_ids:
         query = query.entry(entry_ids)
 
