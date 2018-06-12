@@ -510,84 +510,84 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         # but the windows include all forms (this works because we use LAST_VALUE and NULLs are sorted to the top
         return """
             SELECT
-                DISTINCT child_health_case_id as case_id,
-                LAST_VALUE(weight_child) OVER weight_child as weight_child,
+                DISTINCT child_health_case_id AS case_id,
+                LAST_VALUE(weight_child) OVER weight_child AS weight_child,
                 CASE
                     WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
-                    ELSE LAST_VALUE(timeend) over weight_child
-                END as weight_child_last_recorded,
-                LAST_VALUE(height_child) OVER height_child as height_child,
+                    ELSE LAST_VALUE(timeend) OVER weight_child
+                END AS weight_child_last_recorded,
+                LAST_VALUE(height_child) OVER height_child AS height_child,
                 CASE
-                    WHEN LAST_VALUE(height_child) over height_child IS NULL THEN NULL
-                    ELSE LAST_VALUE(timeend) over height_child
-                END as height_child_last_recorded,
+                    WHEN LAST_VALUE(height_child) OVER height_child IS NULL THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER height_child
+                END AS height_child_last_recorded,
                 CASE
-                    WHEN LAST_VALUE(zscore_grading_wfa) over zscore_grading_wfa = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_wfa) over zscore_grading_wfa
-                END as zscore_grading_wfa,
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa,
                 CASE
-                    WHEN LAST_VALUE(zscore_grading_wfa) over zscore_grading_wfa = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) over zscore_grading_wfa
-                END as zscore_grading_wfa_last_recorded,
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa_last_recorded,
                 CASE
-                    WHEN LAST_VALUE(zscore_grading_hfa) over zscore_grading_hfa = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_hfa) over zscore_grading_hfa
-                END as zscore_grading_hfa,
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa,
                 CASE
-                    WHEN LAST_VALUE(zscore_grading_hfa) over zscore_grading_hfa = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) over zscore_grading_hfa
-                END as zscore_grading_hfa_last_recorded,
-                CASE
-                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
-                    ELSE LAST_VALUE(zscore_grading_wfh) over zscore_grading_wfh
-                END as zscore_grading_wfh,
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa_last_recorded,
                 CASE
                     WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) over zscore_grading_wfh
-                END as zscore_grading_wfh_last_recorded,
+                    ELSE LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh,
                 CASE
-                    WHEN LAST_VALUE(muac_grading) over muac_grading = 0 THEN NULL
-                    ELSE LAST_VALUE(muac_grading) over muac_grading
-                END as muac_grading,
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh_last_recorded,
                 CASE
                     WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
-                    ELSE LAST_VALUE(timeend) over muac_grading
-                END as muac_grading_last_recorded
+                    ELSE LAST_VALUE(muac_grading) OVER muac_grading
+                END AS muac_grading,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER muac_grading
+                END AS muac_grading_last_recorded
             FROM "{ucr_tablename}"
             WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
                 AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
             WINDOW
-                weight_child as (
+                weight_child AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN weight_child IS NULL THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
-                height_child as (
+                height_child AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN height_child IS NULL THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
-                zscore_grading_wfa as (
+                zscore_grading_wfa AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_wfa = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
-                zscore_grading_hfa as (
+                zscore_grading_hfa AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_hfa = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
-                zscore_grading_wfh as (
+                zscore_grading_wfh AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN zscore_grading_wfh = 0 THEN 0 ELSE 1 END ASC,
                         timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
                 ),
-                muac_grading as (
+                muac_grading AS (
                     PARTITION BY child_health_case_id
                     ORDER BY
                         CASE WHEN muac_grading = 0 THEN 0 ELSE 1 END ASC,
