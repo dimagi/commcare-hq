@@ -706,17 +706,13 @@ class SoftwarePlan(models.Model):
             return None
 
     def at_max_domains(self):
-        # If no domain limit is set, return True
         if not self.max_domains:
             return False
 
         subscription_count = 0
         for version in self.softwareplanversion_set.all():
             subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
-        if subscription_count >= self.max_domains:
-            return True
-        else:
-            return False
+        return subscription_count >= self.max_domains
 
 
 class DefaultProductPlan(models.Model):
