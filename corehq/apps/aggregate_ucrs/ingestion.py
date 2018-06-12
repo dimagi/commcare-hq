@@ -8,39 +8,29 @@ from datetime import datetime
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 
-from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM
-from corehq.apps.aggregate_ucrs.date_utils import Month
+from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, TimeAggregation
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from dimagi.utils.parsing import json_format_date
 
 
 AggregationParam = namedtuple('AggregationParam', 'name value mapped_column_id')
+AggregationWindow = namedtuple('AggregationWindow', 'start end')
 
 
 def populate_aggregate_table_data(aggregate_table_adapter):
     """
     Seeds the database table with all initial data from the table adapter.
     """
+    # this is where you are working and where there will be an error
+    # you need to change this method to be generic based on an arbitrary (possibly non-existent)
+    # set of aggregations
     aggregate_table_definition = aggregate_table_adapter.config
     # get checkpoint
     last_update = get_last_aggregate_checkpoint(aggregate_table_definition)
-    # get the earliest start date from the dataset
-    start_date = get_aggregation_start_period(aggregate_table_definition, last_update)
-    end_date = get_aggregation_end_period(aggregate_table_definition, last_update)
-    assert end_date >= start_date
-    start_month = current_month = Month.datetime_to_month(start_date)
-    end_month = Month.datetime_to_month(end_date)
-    while current_month <= end_month:
-        start = AggregationParam(
-            AGG_WINDOW_START_PARAM, json_format_date(current_month.start), aggregate_table_definition.aggregation_start_column
-        )
-        end = AggregationParam(
-            AGG_WINDOW_END_PARAM, json_format_date(current_month.end), aggregate_table_definition.aggregation_end_column
-        )
+    for window in get_time_aggregation_windows(aggregate_table_definition, last_update):
         populate_aggregate_table_data_for_time_period(
-            aggregate_table_adapter, start, end,
+            aggregate_table_adapter, window,
         )
-        current_month = current_month.get_next_month()
 
 
 def get_last_aggregate_checkpoint(aggregate_table_definition):
@@ -52,10 +42,39 @@ def get_last_aggregate_checkpoint(aggregate_table_definition):
     return None
 
 
+def get_time_aggregation_windows(aggregate_table_definition, last_update):
+    if aggregate_table_definition.time_aggregation is None:
+        # if there is no time aggregation just include a single window with no value
+        yield None
+    else:
+        start_time = get_aggregation_start_period(aggregate_table_definition, last_update)
+        end_time = get_aggregation_end_period(aggregate_table_definition, last_update)
+        assert end_time >= start_time
+        adapter_class = TimeAggregation.from_aggregation_unit(
+            aggregate_table_definition.time_aggregation.aggregation_unit
+        )
+        current_window = adapter_class(start_time)
+        end_window = adapter_class(end_time)
+        while current_window <= end_window:
+            yield AggregationWindow(
+                start=AggregationParam(
+                    name=AGG_WINDOW_START_PARAM,
+                    value=json_format_date(current_window.start),
+                    mapped_column_id=aggregate_table_definition.time_aggregation.start_column
+                ),
+                end=AggregationParam(
+                    name=AGG_WINDOW_END_PARAM,
+                    value=json_format_date(current_window.end),
+                    mapped_column_id=aggregate_table_definition.time_aggregation.end_column
+                )
+            )
+            current_window = current_window.next_window()
+
+
 def get_aggregation_start_period(aggregate_table_definition, last_update=None):
     return _get_aggregation_from_primary_table(
         aggregate_table_definition=aggregate_table_definition,
-        column_id=aggregate_table_definition.aggregation_start_column,
+        column_id=aggregate_table_definition.time_aggregation.start_column,
         sqlalchemy_agg_fn=sqlalchemy.func.min,
         last_update=last_update,
     )
@@ -64,7 +83,7 @@ def get_aggregation_start_period(aggregate_table_definition, last_update=None):
 def get_aggregation_end_period(aggregate_table_definition, last_update=None):
     return _get_aggregation_from_primary_table(
         aggregate_table_definition=aggregate_table_definition,
-        column_id=aggregate_table_definition.aggregation_end_column,
+        column_id=aggregate_table_definition.time_aggregation.end_column,
         sqlalchemy_agg_fn=sqlalchemy.func.max,
         last_update=last_update,
     ) or datetime.utcnow()
@@ -80,15 +99,20 @@ def _get_aggregation_from_primary_table(aggregate_table_definition, column_id, s
         return session.execute(query).scalar()
 
 
-def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start, end):
+def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, window):
     """
     For a given period (start/end) - populate all data in the aggregate table associated
     with that period.
     """
-    aggregation_params = {
-        start.name: start.value,
-        end.name: end.value,
-    }
+    doing_time_aggregation = window is not None
+    if doing_time_aggregation:
+        aggregation_params = {
+            window.start.name: window.start.value,
+            window.end.name: window.end.value,
+        }
+    else:
+        aggregation_params = {}
+
     primary_column_adapters = list(aggregate_table_adapter.config.get_primary_column_adapters())
     primary_table = IndicatorSqlAdapter(aggregate_table_adapter.config.data_source).get_table()
     all_query_columns = [pca.to_sqlalchemy_query_column(primary_table, aggregation_params) for pca in primary_column_adapters]
@@ -105,23 +129,29 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, start
     select_table = primary_table
     for secondary_table in aggregate_table_adapter.config.secondary_tables.all():
         sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
-        # apply join filters along with period start/end filters for related model
+        # apply join filters along with period start/end filters (if necessary) for related model
+        join_conditions = [
+            primary_table.c['doc_id'] == sqlalchemy_secondary_table.c[secondary_table.data_source_key]
+        ]
+        if doing_time_aggregation:
+            join_conditions.extend([
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]>=window.start.value,
+                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]<window.end.value
+            ])
         select_table = select_table.outerjoin(
             sqlalchemy_secondary_table,
-            sqlalchemy.and_(
-                primary_table.c['doc_id'] == sqlalchemy_secondary_table.c[secondary_table.data_source_key],
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]>=start.value,
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column]<end.value
-            )
+            sqlalchemy.and_(*join_conditions)
         )
 
     select_statment = select_statment.select_from(select_table)
     # apply period start/end filters for primary model
     # to match, start should be before the end of the period and end should be after the start
     # this makes the first and last periods inclusive.
-    select_statment = select_statment.where(primary_table.c[start.mapped_column_id] < end.value)
-    select_statment = select_statment.where(sqlalchemy.or_(primary_table.c[end.mapped_column_id] == None,
-                                               primary_table.c[end.mapped_column_id] >= start.value))
+    if doing_time_aggregation:
+        select_statment = select_statment.where(primary_table.c[window.start.mapped_column_id] < window.end.value)
+        select_statment = select_statment.where(
+            sqlalchemy.or_(primary_table.c[window.end.mapped_column_id] == None,
+                           primary_table.c[window.end.mapped_column_id] >= window.start.value))
 
     for primary_column_adapter in primary_column_adapters:
         if primary_column_adapter.is_groupable():
