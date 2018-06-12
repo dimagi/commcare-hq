@@ -376,9 +376,7 @@ def _login(req, domain_name, template_name):
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
-    # this view, and the one below, is overridden because
-    # we need to set the base template to use somewhere
-    # somewhere that the login page can access it.
+    # This is a wrapper around the _login view
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
@@ -392,6 +390,7 @@ def login(req):
 
 @location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
+    # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
