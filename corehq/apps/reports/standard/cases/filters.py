@@ -60,27 +60,16 @@ class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    HIDDEN_COLUMNS = ['last_modified']
-    PERSISTENT_COLUMNS = [
-        # hidden from view, but used for sorting when no sort column is provided
-        'last_modified',
-        # shown, but unremovable so there is always at least one column
-        'View Case'
-    ]
+
     DEFAULT_COLUMNS = ['@case_type', 'case_name']
 
     @property
     def filter_context(self):
         context = super(CaseListExplorerColumns, self).filter_context
-        initial_values = self.get_value(self.request, self.domain) or []
 
-        user_value_names = [v for v in initial_values]
-        if not user_value_names:
+        initial_values = self.get_value(self.request, self.domain)
+        if not initial_values:
             initial_values = self.DEFAULT_COLUMNS
-
-        for persistent_column in reversed(self.PERSISTENT_COLUMNS):
-            if persistent_column not in user_value_names:
-                initial_values = [persistent_column] + initial_values
 
         context.update({
             'initial_value': json.dumps(initial_values),

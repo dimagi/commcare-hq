@@ -32,7 +32,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
         });
     };
 
-    var Property = function ($parent, name, editable, hidden) {
+    var Property = function ($parent, name) {
         var self = {};
         self.name = ko.observable(name).trimmed();
 
@@ -45,8 +45,6 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
             }
             return null;
         });
-        self.editable = ko.observable(editable === undefined ? true : editable);
-        self.hidden = ko.observable(hidden || false);
 
         return self;
     };

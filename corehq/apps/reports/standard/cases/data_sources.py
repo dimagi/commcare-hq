@@ -38,6 +38,7 @@ class CaseInfo(object):
     @property
     def case_name(self):
         return self.case['name']
+    name = case_name
 
     @property
     def case_name_display(self):
@@ -254,7 +255,7 @@ class SafeCaseDisplay(object):
         self.report = report
 
     def get(self, name):
-        if name == 'View Case':
+        if name == '_link':
             return self._link
 
         if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
