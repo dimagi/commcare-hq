@@ -1,0 +1,25 @@
+domain: agg
+table_id: pregnancies_with_forms
+display_name: Pregnancy Data With Form Aggregates
+primary_table:
+  data_source_id: 550c3cd432d931387e75e8506b5caf9e  # the data source ID of e.g. the 'pregnancy_cases' table
+  key_column: doc_id
+  columns:
+    - column_id: name
+      type: reference
+      config_params:
+        referenced_column: name
+    - column_id: pregnancy_start_date
+      type: reference
+      config_params:
+        referenced_column: lmp
+time_aggregation:
+secondary_tables:
+  # this is a list, though in this example there is only one.
+  - data_source_id: d824a4864ecb421fb3be8bf8173a05d7
+    key_column: form.case.@case_id  # how rows will get joined from primary to secondary tables
+    columns:
+      - column_id: fu_forms
+        aggregation_type: sum
+        config_params:
+          referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row
