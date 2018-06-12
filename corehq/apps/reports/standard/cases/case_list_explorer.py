@@ -78,18 +78,23 @@ class CaseListExplorer(CaseListReport):
         return query
 
     @property
-    def headers(self):
-        header = DataTablesHeader(*self.columns)
-        header.custom_sort = [[0, 'desc']]
-        return header
-
-    @property
     def columns(self):
         return [
             DataTablesColumn(
+                "case_name",
+                prop_name='case_name',
+                sortable=True,
+                visible=False,
+            ),
+            DataTablesColumn(
+                _("View Case"),
+                prop_name='_link',
+                sortable=False,
+            )
+        ] + [
+            DataTablesColumn(
                 column,
                 prop_name=column,
-                visible=column not in CaseListExplorerColumns.HIDDEN_COLUMNS,
                 sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in self._columns
@@ -107,6 +112,19 @@ class CaseListExplorer(CaseListReport):
         return CaseListExplorerColumns.get_value(self.request, self.domain)
 
     @property
+    def headers(self):
+        column_names = [c.prop_name for c in self.columns]
+        headers = DataTablesHeader(*self.columns)
+        # by default, sort by name, otherwise we fall back to the case_name hidden column
+        if "case_name" in column_names[1:]:
+            headers.custom_sort = [[column_names[1:].index("case_name") + 1, 'asc']]
+        elif "name" in column_names:
+            headers.custom_sort = [[column_names.index("name"), 'asc']]
+        else:
+            headers.custom_sort = [[0, 'asc']]
+        return headers
+
+    @property
     def rows(self):
         data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
         return self._get_rows(data)
@@ -120,8 +138,8 @@ class CaseListExplorer(CaseListReport):
         for case in data:
             case_display = SafeCaseDisplay(self, case)
             yield [
-                case_display.get(column)
-                for column in self._columns
+                case_display.get(column.prop_name)
+                for column in self.columns
             ]
 
     @property
