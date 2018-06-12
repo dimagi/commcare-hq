@@ -113,7 +113,8 @@ class SecondaryTableDefinition(models.Model):
                                          related_name='secondary_tables')
     data_source_id = models.UUIDField()
     data_source_key = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
-    aggregation_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
+    # todo: rename to time_aggregation_column?
+    aggregation_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH, null=True, blank=True)
 
     def __str__(self):
         return '{} - {}:{}'.format(self.table_definition, self.data_source_id, self.data_source_key)
