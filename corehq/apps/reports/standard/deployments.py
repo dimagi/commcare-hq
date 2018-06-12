@@ -509,7 +509,6 @@ class AggregateUserStatusReport(ProjectReport, ProjectReportParametersMixin):
     ]
     exportable = False
     emailable = False
-    js_scripts = ['reports/js/aggregate_user_status.js']
 
     @use_nvd3
     def decorator_dispatcher(self, request, *args, **kwargs):
