@@ -12,10 +12,10 @@ class AggregationBaseTestMixin(TestFileMixin):
     root = os.path.dirname(__file__)
 
     @classmethod
-    def get_config_json(cls):
+    def get_monthly_config_json(cls):
         config_yml = cls.get_file('monthly_aggregate_definition', 'yml')
         return yaml.load(config_yml)
 
     @classmethod
-    def get_config_spec(cls):
-        return AggregationSpec.wrap(cls.get_config_json())
+    def get_monthly_config_spec(cls):
+        return AggregationSpec.wrap(cls.get_monthly_config_json())

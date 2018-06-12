@@ -8,7 +8,7 @@ from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 class ConfigParseTest(SimpleTestCase, AggregationBaseTestMixin):
 
     def test_parse_basic_definition(self):
-        spec = self.get_config_spec()
+        spec = self.get_monthly_config_spec()
         self.assertEqual('550c3cd432d931387e75e8506b5caf9e', spec.primary_table.data_source_id)
         self.assertEqual('doc_id', spec.primary_table.key_column)
         self.assertEqual(4, len(spec.primary_table.columns))
