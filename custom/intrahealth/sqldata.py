@@ -878,7 +878,6 @@ class RecouvrementDesCouts2(IntraHealthSqlData):
     show_total = True
     slug = 'recouvrement'
     title = 'Recouvrement des côuts - Taxu de Recouvrement'
-    loc_names = set()
 
     @property
     def table_name(self):
@@ -914,13 +913,14 @@ class RecouvrementDesCouts2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        loc_names = set()
         rows = self.get_data()
         loc_name = 'district_name'
 
         data = {}
         for row in rows:
             if row.get(loc_name):
-                self.loc_names.add(row[loc_name])
+                loc_names.add(row[loc_name])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = defaultdict(int)
                 data[row[loc_name]]['quantite_reale_a_payer'] += self.get_value(row['quantite_reale_a_payer'])
@@ -929,7 +929,7 @@ class RecouvrementDesCouts2(IntraHealthSqlData):
                 data[row[loc_name]]['payee_trois_mois'] += self.get_value(row['payee_trois_mois'])
                 data[row[loc_name]]['payee_un_an'] += self.get_value(row['payee_un_an'])
 
-        self.loc_names = sorted(self.loc_names)
+        loc_names = sorted(loc_names)
 
         rows = []
         total_values = {
@@ -939,7 +939,7 @@ class RecouvrementDesCouts2(IntraHealthSqlData):
             'payee_trois_mois': 0,
             'payee_un_an': 0,
         }
-        for loc_name in self.loc_names:
+        for loc_name in loc_names:
             rows.append([
                 loc_name,
                 data[loc_name]['quantite_reale_a_payer'],
@@ -981,7 +981,6 @@ class DureeData2(IntraHealthSqlData):
     show_total = True
     slug = 'duree'
     title = 'Durée moyenne des retards de livraison'
-    loc_names = set()
 
     @property
     def table_name(self):
@@ -1016,21 +1015,22 @@ class DureeData2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        loc_names = set()
         rows = self.get_data()
         loc_name = 'district_name'
 
         data = defaultdict(list)
         for row in rows:
             if row.get(loc_name):
-                self.loc_names.add(row[loc_name])
+                loc_names.add(row[loc_name])
                 data[row[loc_name]].append(self.get_value(row['duree_moyenne_livraison']))
 
-        self.loc_names = sorted(self.loc_names)
+        loc_names = sorted(loc_names)
 
         rows = []
         total_sum = 0
         total_len = 0
-        for loc_name in self.loc_names:
+        for loc_name in loc_names:
             rows.append([
                 loc_name,
                 "{:.2f}".format(sum(data[loc_name]) / (len(data[loc_name]) or 1))
@@ -1120,6 +1120,7 @@ class GestionDeLIPMTauxDeRuptures2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        loc_names = set()
         rows = self.get_data()
         if 'region_id' in self.config:
             loc_name = 'district_name'
@@ -1130,6 +1131,7 @@ class GestionDeLIPMTauxDeRuptures2(IntraHealthSqlData):
         product_data = defaultdict(int)
         for row in rows:
             if row.get(loc_name):
+                loc_names.add(row[loc_name])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = defaultdict(int)
                 for raw_product_name in self.product_names:
@@ -1151,7 +1153,9 @@ class GestionDeLIPMTauxDeRuptures2(IntraHealthSqlData):
         )
 
         rows = []
-        for loc_name, values in data.items():
+        loc_names = sorted(loc_names)
+        for loc_name in loc_names:
+            values = data[loc_name]
             row = [loc_name]
             for raw_product_name in raw_product_names:
                 row.append(values[raw_product_name])
@@ -1191,7 +1195,6 @@ class NombreData2(IntraHealthSqlData):
     slug = 'nombre'
     title = 'Nombre de mois de stock disponibles et utilisables aux PPS'
     product_names = set()
-    loc_names = set()
 
     @property
     def table_name(self):
@@ -1235,6 +1238,8 @@ class NombreData2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        product_names = set()
+        loc_names = set()
         rows = self.get_data()
 
         if 'region_id' in self.config:
@@ -1245,8 +1250,8 @@ class NombreData2(IntraHealthSqlData):
         data = {}
         for row in rows:
             if row.get('product_name') and row.get(loc_name):
-                self.loc_names.add(row[loc_name])
-                self.product_names.add(row['product_name'])
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = {}
                 if row['product_name'] not in data[row[loc_name]]:
@@ -1254,14 +1259,15 @@ class NombreData2(IntraHealthSqlData):
                 data[row[loc_name]][row['product_name']]['display_total_stock'].append(row['display_total_stock'])
                 data[row[loc_name]][row['product_name']]['default_consumption'].append(row['default_consumption'])
 
-        self.loc_names = sorted(self.loc_names)
-        self.product_names = sorted(self.product_names)
+        loc_names = sorted(loc_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
         rows = []
         display_total_stock_per_product = defaultdict(int)
         default_consumption_per_product = defaultdict(int)
-        for loc_name in self.loc_names:
+        for loc_name in loc_names:
             row = [loc_name]
-            for product_name in self.product_names:
+            for product_name in product_names:
                 display_total_stock = 0
                 default_consumption = 0
                 if data.get(loc_name) and data[loc_name].get(product_name):
@@ -1285,7 +1291,7 @@ class NombreData2(IntraHealthSqlData):
                 ))
             rows.append(row)
         total_row = ['']
-        for product_name in self.product_names:
+        for product_name in product_names:
             total_row.append(display_total_stock_per_product[product_name])
             total_row.append(default_consumption_per_product[product_name])
             total_row.append("{:0.3f}".format(
@@ -1319,7 +1325,6 @@ class TauxConsommationData2(IntraHealthSqlData):
     slug = 'taux_consommation'
     title = 'Taux de Consommation'
     product_names = set()
-    loc_names = set()
 
     @property
     def table_name(self):
@@ -1363,6 +1368,8 @@ class TauxConsommationData2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        product_names = set()
+        loc_names = set()
         rows = self.get_data()
 
         if 'region_id' in self.config:
@@ -1373,8 +1380,8 @@ class TauxConsommationData2(IntraHealthSqlData):
         data = {}
         for row in rows:
             if row.get('product_name') and row.get(loc_name):
-                self.loc_names.add(row[loc_name])
-                self.product_names.add(row['product_name'])
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = {}
                 if row['product_name'] not in data[row[loc_name]]:
@@ -1382,14 +1389,15 @@ class TauxConsommationData2(IntraHealthSqlData):
                 data[row[loc_name]][row['product_name']]['actual_consumption'].append(row['actual_consumption'])
                 data[row[loc_name]][row['product_name']]['total_stock'].append(row['total_stock'])
 
-        self.loc_names = sorted(self.loc_names)
-        self.product_names = sorted(self.product_names)
+        loc_names = sorted(loc_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
         rows = []
         actual_consumption_per_product = defaultdict(int)
         total_stock_per_product = defaultdict(int)
-        for loc_name in self.loc_names:
+        for loc_name in loc_names:
             row = [loc_name]
-            for product_name in self.product_names:
+            for product_name in product_names:
                 actual_consumption = 0
                 total_stock = 0
                 if data.get(loc_name) and data[loc_name].get(product_name):
@@ -1410,7 +1418,7 @@ class TauxConsommationData2(IntraHealthSqlData):
                 row.append(self.percent_fn(total_stock, actual_consumption))
             rows.append(row)
         total_row = ['']
-        for product_name in self.product_names:
+        for product_name in product_names:
             total_row.append(actual_consumption_per_product[product_name])
             total_row.append(total_stock_per_product[product_name])
             total_row.append(self.percent_fn(
@@ -1489,6 +1497,8 @@ class TauxDeRuptures2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        loc_names = set()
+        product_names = set()
         rows = self.get_data()
 
         if 'region_id' in self.config:
@@ -1500,24 +1510,29 @@ class TauxDeRuptures2(IntraHealthSqlData):
         product_data = defaultdict(int)
         for row in rows:
             if row.get('product_name'):
-                self.product_names.add(row['product_name'])
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = defaultdict(int)
                 data[row[loc_name]][row['product_name']] += row['total_stock']
                 product_data[row['product_name']] += row['total_stock']
 
-        self.product_names = sorted(self.product_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
         rows = []
 
-        for loc_name, values in data.items():
+        loc_names = sorted(loc_names)
+
+        for loc_name in loc_names:
+            values = data[loc_name]
             row = [loc_name]
-            for product_name in self.product_names:
+            for product_name in product_names:
                 row.append(values[product_name])
             rows.append(row)
         row = ['Total']
         total_row = ['Taux rupture']
         number_of_locs = len(data) or 1
-        for product_name in self.product_names:
+        for product_name in product_names:
             row.append(product_data[product_name])
             total_row.append('({0}/{1}) {2:.2f}%'.format(
                 product_data[product_name], number_of_locs, (product_data[product_name] * 100) / number_of_locs,
@@ -1761,6 +1776,8 @@ class ConsommationData2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        product_names = set()
+        loc_names = set()
         rows = self.get_data()
         if 'region_id' in self.config:
             loc_name = 'district_name'
@@ -1771,21 +1788,25 @@ class ConsommationData2(IntraHealthSqlData):
         product_data = defaultdict(int)
         for row in rows:
             if row.get('product_name'):
-                self.product_names.add(row['product_name'])
+                product_names.add(row['product_name'])
+                loc_names.add(row[loc_name])
                 if row[loc_name] not in data:
                     data[row[loc_name]] = defaultdict(int)
                 data[row[loc_name]][row['product_name']] += self.get_value(row['actual_consumption'])
                 product_data[row['product_name']] += self.get_value(row['actual_consumption'])
 
-        self.product_names = sorted(self.product_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        loc_names = sorted(loc_names)
         rows = []
-        for loc_name, values in data.items():
+        for loc_name in loc_names:
+            values = data[loc_name]
             row = [loc_name]
-            for product_name in self.product_names:
+            for product_name in product_names:
                 row.append(values[product_name])
             rows.append(row)
         total_row = ['Total']
-        for product_name in self.product_names:
+        for product_name in product_names:
             total_row.append(product_data[product_name])
         self.total_row = total_row
         return rows
@@ -1850,6 +1871,7 @@ class PPSAvecDonnees2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        loc_names = set()
         values = {}
         if 'region_id' in self.config:
             loc_name = 'district_name'
@@ -1858,12 +1880,15 @@ class PPSAvecDonnees2(IntraHealthSqlData):
         rows = self.get_data()
         for row in rows:
             if row.get(loc_name):
+                loc_names.add(row[loc_name])
                 if row[loc_name] not in values:
                     values[row[loc_name]] = set()
                 values[row[loc_name]].add(row['pps_id'])
 
         rows = []
-        for loc_name, pps_ids in values.items():
+        loc_names = sorted(loc_names)
+        for loc_name in loc_names:
+            pps_ids = values[loc_name]
             rows.append([loc_name, len(pps_ids)])
         self.total_row = ['Total', sum(len(pps_ids) for pps_ids in values.values())]
         if 'district_id' in self.config:
@@ -1994,7 +2019,6 @@ class FicheData2(IntraHealthSqlData):
     title = ''
     show_total = False
     product_names = set()
-    pps_names = set()
 
     @property
     def table_name(self):
@@ -2043,14 +2067,16 @@ class FicheData2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        product_names = set()
+        pps_names = set()
         values = {}
 
         rows = self.get_data()
         for row in rows:
             pps_name = row['pps_name']
             product_name = row['product_name']
-            self.pps_names.add(pps_name)
-            self.product_names.add(product_name)
+            pps_names.add(pps_name)
+            product_names.add(product_name)
             if pps_name not in values:
                 values[pps_name] = {}
             if product_name not in values[pps_name]:
@@ -2058,12 +2084,13 @@ class FicheData2(IntraHealthSqlData):
             values[pps_name][product_name]['actual_consumption'] += 1
             values[pps_name][product_name]['billed_consumption'] += 1
 
-        self.pps_names = sorted(self.pps_names)
-        self.product_names = sorted(self.product_names)
+        pps_names = sorted(pps_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
         rows = []
-        for pps_name in self.pps_names:
+        for pps_name in pps_names:
             row = [pps_name]
-            for product_name in self.product_names:
+            for product_name in product_names:
                 values_for_product = values[pps_name][product_name] if \
                     product_name in values[pps_name] else {
                     'actual_consumption': 0,
@@ -2126,6 +2153,7 @@ class DispDesProducts2(IntraHealthSqlData):
 
     @property
     def rows(self):
+        product_names = set()
         products = self.products
         values = {
             product.name: [0, 0]
@@ -2135,7 +2163,7 @@ class DispDesProducts2(IntraHealthSqlData):
         rows = self.get_data()
         for row in rows:
             productName = row['productName']
-            self.product_names.add(productName)
+            product_names.add(productName)
             values[productName] = [
                 row['amountOrdered']['html'],
                 row['amountReceived']['html']
@@ -2145,8 +2173,9 @@ class DispDesProducts2(IntraHealthSqlData):
         raux = ['Raux']
         taux = ['Taux']
 
-        self.product_names = sorted(self.product_names)
-        for product_name in self.product_names:
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        for product_name in product_names:
             values_for_product = values[product_name]
             amountOrdered = values_for_product[0]
             amountReceived = values_for_product[1]
