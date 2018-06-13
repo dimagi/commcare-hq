@@ -1155,16 +1155,6 @@ hqDefine('app_manager/js/details/screen_config', function() {
             label: gettext('Distance from current location'),
         }];
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
-            DetailScreenConfig.MENU_OPTIONS.push({
-                value: "picture",
-                label: gettext('Picture'),
-            }, {
-                value: "audio",
-                label: gettext('Audio'),
-            });
-        }
-
         var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
         if (addOns.enum_image) {
             DetailScreenConfig.MENU_OPTIONS.push({
