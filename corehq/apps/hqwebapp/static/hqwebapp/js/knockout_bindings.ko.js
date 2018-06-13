@@ -248,13 +248,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).on('click', '.send-to-top', function () {
                 $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
 
-                // update UI
                 var row = $(this).parent().parent();
                 var currentIndex = row[0].attributes['data-order'].value;
-                row.parent().prepend(row);
-
-                // update KO
-                list().unshift(list().splice(currentIndex, 1)[0]);
+                list.unshift(list.splice(currentIndex, 1)[0]);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
