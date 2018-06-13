@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from pillowtop.logger import pillow_logging
-from pillowtop.processors.interface import BulkPillowProcessor, PillowProcessor
+from pillowtop.processors.interface import BulkPillowProcessor, PillowProcessor, BulkProcessingResult
 
 
 class NoopProcessor(PillowProcessor):
@@ -60,3 +60,4 @@ class ChunkedCountProcessor(BulkPillowProcessor):
 
     def process_changes_chunk(self, pillow_instance, changes_chunk):
         self.count += len(changes_chunk)
+        return BulkProcessingResult(changes_chunk, [])

@@ -39,6 +39,7 @@ from pillowtop.dao.exceptions import DocumentMismatchError
 from pillowtop.exceptions import PillowConfigError, BulkPorcessingError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
+from pillowtop.processors.interface import BulkProcessingResult
 from pillowtop.processors import BulkPillowProcessor
 from pillowtop.utils import ensure_matched_revisions, ensure_document_exists
 
@@ -207,9 +208,6 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(adapter.config.get_id)
 
 
-BulkProcessingResult = namedtuple('BulkProcessingResult', ['succeeded_changes', 'failed_changes'])
-
-
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
 
     domain_timing_context = Counter()
@@ -278,7 +276,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
             for adapter in adapters:
                 doc_ids_to_delete_by_adapter[adapter] = to_delete
-                adapter.bulk_delete([change.metadata.document_id for change in to_delete])
                 for doc in docs:
                     eval_context = EvaluationContext(doc)
                     if adapter.config.filter(doc):
@@ -299,7 +296,8 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     raise BulkPorcessingError('Error bulk saving calculated UCR rows {}'.format(e))
 
             succeeded_changes.union(changes_chunk)
-            AsyncIndicator.bulk_update_records(async_configs_by_doc_id)
+            if async_configs_by_doc_id:
+                AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, docs[0].doc_type)
             return BulkProcessingResult(succeeded_changes, failed_changes)
 
     def process_change(self, pillow_instance, change):
