@@ -883,6 +883,29 @@ class AsyncIndicator(models.Model):
             for doc_id in doc_ids
         ])
 
+    @classmethod
+    def bulk_update_records(cls, configs_by_docs, domain, doc_type):
+        # configs_by_docs should be a dict of doc_id -> list of config_ids
+        if not configs_by_docs:
+            return
+        doc_ids = configs_by_docs.keys()
+
+        old_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
+        to_update = []
+        from bulk_update.helper import bulk_update as bulk_update_helper
+        for indicator in old_indicators:
+            if set(indicator.indicator_config_ids) != set(configs_by_docs[indicator.doc_id]):
+                indicator.indicator_config_ids = sorted(configs_by_docs[indicator.doc_id])
+                indicator.unsuccessful_attempts = 0
+                to_update.append(indicator)
+        bulk_update_helper(to_update)
+
+        new_doc_ids = set(doc_ids) - set([i.doc_id for i in old_indicators])
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            for doc_id in new_doc_ids
+        ])
+
 
 def get_datasource_config(config_id, domain):
     def _raise_not_found():

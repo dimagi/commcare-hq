@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
-from corehq.apps.userreports.models import DataSourceConfiguration
+from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.apps.userreports.tests.utils import get_data_source_with_related_doc_type
 
+import six
 
 class RunAsynchronousTest(SimpleTestCase):
     def _create_data_source_config(self, indicators=None):
@@ -69,3 +70,48 @@ class RunAsynchronousTest(SimpleTestCase):
     #     indicator_configuration = get_data_source_with_related_doc_type()
     #     adapter = get_indicator_adapter(indicator_configuration)
     #     self.assertTrue(adapter.run_asynchronous)
+
+
+class TestBulkUpdate(TestCase):
+    def tearDown(self):
+        AsyncIndicator.objects.all().delete()
+
+    def _get_indicator_data(self):
+        return {
+            i.doc_id: i.indicator_config_ids
+            for i in AsyncIndicator.objects.all()
+        }
+
+    def test_update_record(self):
+        domain = 'test-update-record'
+        doc_type = 'form'
+        initial_data = {
+            'd1': ['c1', 'c2'],
+            'd2': ['c1'],
+            'd3': ['c2']
+        }
+        AsyncIndicator.objects.bulk_create([
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(config_ids))
+            for doc_id, config_ids in six.iteritems(initial_data)
+        ])
+        updated_data = {
+            'd2': ['c2'],
+            'd3': ['c3'],
+            'd4': ['c2', 'c1'],
+            'd5': ['c4']
+        }
+
+        with self.assertNumQueries(3):
+            # 3 queries, 1 for query, 1 for update, 1 for create
+            AsyncIndicator.bulk_update_records(updated_data, domain, doc_type)
+
+        self.assertEqual(
+            self._get_indicator_data(),
+            {
+                'd1': ['c1', 'c2'],
+                'd2': ['c2'],
+                'd3': ['c3'],
+                'd4': ['c1', 'c2'],
+                'd5': ['c4']
+            }
+        )
