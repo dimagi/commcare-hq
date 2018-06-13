@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import (
@@ -560,7 +561,7 @@ def migrate_simple_daily_schedule(handler):
 
 def migrate_simple_weekly_schedule(handler):
     if handler.schedule_length > 0 and (handler.schedule_length % 7) == 0:
-        repeat_every = handler.schedule_length / 7
+        repeat_every = handler.schedule_length // 7
     elif handler.max_iteration_count == 1:
         repeat_every = 1
     else:
