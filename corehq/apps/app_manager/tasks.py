@@ -21,7 +21,7 @@ def create_user_cases(domain_name):
 @serial_task('{app._id}-{app.version}', max_retries=0, timeout=60*60)
 def make_async_build(app, username):
     latest_build = app.get_latest_app(released_only=False)
-    if latest_build.version == app.version:
+    if latest_build and latest_build.version == app.version:
         return
     errors = app.validate_app()
     if not errors:
