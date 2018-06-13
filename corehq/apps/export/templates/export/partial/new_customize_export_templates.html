@@ -172,7 +172,7 @@
                         attr: {'data-order': _sortableOrder},
                         css: { isSelectedForExport: column.selected }
                         "
-                        {% if request|toggle_enabled:"EXPORT_MULTISORT" %}style="cursor:move"{% endif %}
+                        {% if request|toggle_enabled:"EXPORT_MULTISORT" %}style="cursor:pointer"{% endif %}
                     >
                         <td class="text-center">
                             <span class="sortable-handle">
