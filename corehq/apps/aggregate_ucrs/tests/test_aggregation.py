@@ -32,8 +32,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     case_name = 'Mary Mom'
     case_date_opened = datetime(2017, 12, 19)
     case_properties = (
-        ('first_name', 'First Name', 'string', 'Mary'),
-        ('last_name', 'Last Name', 'string', 'Mom'),
+        ('first_name', 'First Name', 'string', 'Rowena'),
+        ('last_name', 'Last Name', 'string', 'Luk'),
         ('children', 'Children', 'int', '1'),
         ('lmp', 'Pregnancy Start Date', 'date', '2018-01-21'),
         ('delivery_date', 'Pregnancy End Date', 'date', '2018-10-27'),
