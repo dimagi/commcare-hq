@@ -136,8 +136,8 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         ]
         if doing_time_aggregation:
             join_conditions.extend([
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column] >= window.start.value,
-                sqlalchemy_secondary_table.c[secondary_table.aggregation_column] < window.end.value
+                sqlalchemy_secondary_table.c[secondary_table.time_window_column] >= window.start.value,
+                sqlalchemy_secondary_table.c[secondary_table.time_window_column] < window.end.value
             ])
         select_table = select_table.outerjoin(
             sqlalchemy_secondary_table,

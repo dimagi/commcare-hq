@@ -40,7 +40,7 @@ class SecondaryColumnSpec(jsonobject.JsonObject):
 class SecondaryTableSpec(jsonobject.JsonObject):
     data_source_id = jsonobject.StringProperty(required=True)
     key_column = jsonobject.StringProperty(required=True)
-    aggregation_column = jsonobject.StringProperty()
+    time_window_column = jsonobject.StringProperty()
     columns = jsonobject.ListProperty(SecondaryColumnSpec)
 
 

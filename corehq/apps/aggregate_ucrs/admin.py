@@ -15,7 +15,7 @@ class PrimaryColumnAdmin(admin.ModelAdmin):
 
 
 class SecondaryTableDefinitionAdmin(admin.ModelAdmin):
-    list_display = ['table_definition', 'data_source_id', 'data_source_key', 'aggregation_column']
+    list_display = ['table_definition', 'data_source_id', 'data_source_key', 'time_window_column']
 
 
 class SecondaryColumnAdmin(admin.ModelAdmin):
