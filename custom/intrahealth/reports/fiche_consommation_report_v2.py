@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
 from custom.intrahealth.filters import FicheLocationFilter
-from custom.intrahealth.reports import IntraHealthLocationMixin, IntraHealthReportConfigMixin
+from custom.intrahealth.reports.utils import IntraHealthLocationMixin, IntraHealthReportConfigMixin
 from custom.intrahealth.sqldata import FicheData2
 from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
