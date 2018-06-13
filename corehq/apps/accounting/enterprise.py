@@ -192,7 +192,7 @@ class EnterpriseFormReport(EnterpriseReport):
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseFormReport, self).__init__(account_id, couch_user)
-        self.window = 7
+        self.window = 30
         self.subtitle = _("past {} days").format(self.window)
 
     @property
