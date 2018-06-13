@@ -916,34 +916,37 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("must implement fmt_export_data")
 
-    def fmt_emailed_export_data(self, group_id=None, index=None,
-                                has_file=False, file_id=None, size=0,
-                                last_updated=None, last_accessed=None,
-                                download_url=None, filters=None, export_type=None):
+    def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
         """
+
+        has_file = export.has_file()
         file_data = {}
         if has_file:
+            download_url = self.request.build_absolute_uri(
+                reverse('download_daily_saved_export', args=[self.domain, export._id]))
             file_data = self._fmt_emailed_export_fileData(
-                has_file, file_id, size, last_updated, last_accessed, download_url
+                export._id, export.file_size, export.last_updated,
+                export.last_accessed, download_url
             )
 
         location_restrictions = []
         locations = []
+        filters = export.filters
         if filters.accessible_location_ids:
             locations = SQLLocation.objects.filter(location_id__in=filters.accessible_location_ids)
         for location in locations:
             location_restrictions.append(location.display_name)
 
         return {
-            'groupId': group_id,  # This can be removed when we're off legacy exports
+            'groupId': None,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
-            'index': index,  # This can be removed when we're off legacy exports
+            'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
             'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
-                filters, self.domain, export_type
+                filters, self.domain, type(export)
             ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
             "locationRestrictions": location_restrictions,
@@ -984,26 +987,24 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             'isLocationSafeForUser': self.request.can_access_all_locations,
         }
 
-    def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
+    def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
                                      last_accessed, download_url):
         """
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
         """
-        if has_file:
-            return {
-                'fileId': fileId,
-                'size': filesizeformat(size),
-                'lastUpdated': naturaltime(last_updated),
-                'lastAccessed': naturaltime(last_accessed),
-                'showExpiredWarning': (
-                    last_accessed and
-                    last_accessed <
-                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-                ),
-                'downloadUrl': download_url,
-            }
-        return {}
+        return {
+            'fileId': fileId,
+            'size': filesizeformat(size),
+            'lastUpdated': naturaltime(last_updated),
+            'lastAccessed': naturaltime(last_accessed),
+            'showExpiredWarning': (
+                last_accessed and
+                last_accessed <
+                (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
+            ),
+            'downloadUrl': download_url,
+        }
 
     def get_formatted_emailed_export(self, export):
 
@@ -1020,21 +1021,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
             saved_basic_export=emailed_export.saved_version,
             is_safe=export.is_safe,
-        )
-
-    def _get_daily_saved_export_metadata(self, export):
-
-        return self.fmt_emailed_export_data(
-            filters=export.filters,
-            has_file=export.has_file(),
-            file_id=export._id,
-            size=export.file_size,
-            last_updated=export.last_updated,
-            last_accessed=export.last_accessed,
-            download_url=self.request.build_absolute_uri(reverse(
-                'download_daily_saved_export', args=[self.domain, export._id]
-            )),
-            export_type=type(export),
         )
 
     @allow_remote_invocation
