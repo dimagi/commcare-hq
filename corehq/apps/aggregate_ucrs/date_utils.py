@@ -1,13 +1,17 @@
 from __future__ import absolute_import, unicode_literals
-from collections import namedtuple
 
 from datetime import datetime, timedelta
 
+import attr
 
-class Month(namedtuple('Month', 'year month')):
+
+@attr.s
+class Month(object):
     """
     Utility class for working with months.
     """
+    year = attr.ib()
+    month = attr.ib()
 
     @property
     def start(self):
