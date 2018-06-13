@@ -6,27 +6,57 @@
     "ct-apr"
   ],
   "config": {
-    "table_id": "commande_v2",
-    "display_name": "Commande",
+    "table_id": "commande_combined",
+    "display_name": "Commande Combined",
     "referenced_doc_type": "XFormInstance",
     "description": "",
     "named_expressions": {
     },
     "named_filters": {
+      "is_v2": {
+        "operator": "eq",
+        "expression": {
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "xmlns"
+          },
+          "type": "root_doc"
+        },
+        "type": "boolean_expression",
+        "comment": null,
+        "property_value": "http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
+      }
     },
     "engine_id": "ucr",
     "disable_destructive_rebuild": false,
     "base_item_expression": {
-      "datatype": null,
-      "type": "property_path",
-      "property_path": [
-        "form",
-        "products",
-        "item"
-      ]
+      "test": {
+        "comment": null,
+        "type": "named",
+        "name": "is_v2"
+      },
+      "expression_if_true": {
+        "datatype": null,
+        "type": "property_path",
+        "property_path": [
+          "form",
+          "products",
+          "item"
+        ]
+      },
+      "type": "conditional",
+      "expression_if_false": {
+        "datatype": null,
+        "type": "property_path",
+        "property_path": [
+          "form",
+          "products"
+        ]
+      }
     },
     "configured_filter": {
-      "operator": "eq",
+      "operator": "in",
       "expression": {
         "datatype": null,
         "type": "property_name",
@@ -34,7 +64,11 @@
       },
       "type": "boolean_expression",
       "comment": null,
-      "property_value": "http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
+      "property_value": [
+        "http://openrosa.org/formdesigner/9ED66735-752D-4C69-B9C8-77CEDAAA0348",
+        "http://openrosa.org/formdesigner/12b412390011cb9b13406030ab10447ffd99bdf8",
+        "http://openrosa.org/formdesigner/865DDF78-90D7-4B7C-B3A5-9D7F530B471D"
+      ]
     },
     "configured_indicators": [
       {
@@ -65,12 +99,27 @@
         "is_primary_key": false,
         "is_nullable": true,
         "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "qlist",
-            "amountOrdered"
-          ]
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v2"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "qlist",
+              "amountOrdered"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "amountOrdered"
+            ]
+          }
         },
         "column_id": "amountOrdered"
       },
@@ -84,12 +133,27 @@
         "is_primary_key": false,
         "is_nullable": true,
         "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "qlist",
-            "amountReceived"
-          ]
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v2"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "qlist",
+              "amountReceived"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "amountReceived"
+            ]
+          }
         },
         "column_id": "amountReceived"
       },
@@ -110,24 +174,6 @@
           ]
         },
         "column_id": "productName"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "string",
-        "type": "expression",
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "product_id"
-          ]
-        },
-        "column_id": "product_id"
       },
       {
         "comment": null,
@@ -166,10 +212,6 @@
         "create_index": false,
         "display_name": "District ID",
         "datatype": "string",
-        "type": "expression",
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -178,6 +220,8 @@
           },
           "type": "nested",
           "argument_expression": {
+            "type": "ancestor_location",
+            "location_property": null,
             "location_id": {
               "value_expression": {
                 "datatype": null,
@@ -187,7 +231,6 @@
               "type": "related_doc",
               "related_doc_type": "CommCareUser",
               "doc_id_expression": {
-                "type": "root_doc",
                 "expression": {
                   "datatype": null,
                   "type": "property_path",
@@ -196,17 +239,20 @@
                     "meta",
                     "userID"
                   ]
-                }
+                },
+                "type": "root_doc"
               }
             },
-            "location_property": null,
-            "type": "ancestor_location",
             "location_type": {
-              "constant": "District",
-              "type": "constant"
+              "type": "constant",
+              "constant": "District"
             }
           }
         },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
         "column_id": "district_id"
       },
       {
@@ -214,10 +260,6 @@
         "create_index": false,
         "display_name": "Region ID",
         "datatype": "string",
-        "type": "expression",
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -226,6 +268,8 @@
           },
           "type": "nested",
           "argument_expression": {
+            "type": "ancestor_location",
+            "location_property": null,
             "location_id": {
               "value_expression": {
                 "datatype": null,
@@ -235,7 +279,6 @@
               "type": "related_doc",
               "related_doc_type": "CommCareUser",
               "doc_id_expression": {
-                "type": "root_doc",
                 "expression": {
                   "datatype": null,
                   "type": "property_path",
@@ -244,17 +287,20 @@
                     "meta",
                     "userID"
                   ]
-                }
+                },
+                "type": "root_doc"
               }
             },
-            "location_property": null,
-            "type": "ancestor_location",
             "location_type": {
-              "constant": "R\u00e9gion",
-              "type": "constant"
+              "type": "constant",
+              "constant": "R\u00e9gion"
             }
           }
         },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
         "column_id": "region_id"
       }
     ]
