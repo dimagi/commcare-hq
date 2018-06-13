@@ -7,6 +7,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.modules import to_function
 from dimagi.utils.couch import CriticalSection
 from soil import DownloadBase
+from soil.progress import get_task_status
 from toggle.shortcuts import set_toggle
 
 from corehq.apps.accounting.utils import domain_has_privilege
@@ -692,7 +693,7 @@ def domain_has_daily_saved_export_access(domain):
     return domain_has_privilege(domain, DAILY_SAVED_EXPORT)
 
 
-def get_saved_export_download_data(export_instance_id):
+def _get_saved_export_download_data(export_instance_id):
     download_id = 'rebuild_export_tracker.{}'.format(export_instance_id)
     download_data = DownloadBase.get(download_id)
     if download_data is None:
@@ -701,6 +702,19 @@ def get_saved_export_download_data(export_instance_id):
 
 
 def saved_export_set_task(celery_task_result, export_instance_id):
-    # For now, just assume there's not an existing task
-    download_data = get_saved_export_download_data(export_instance_id)
+    """Associates a celery task with a particular export instance
+
+    :param celery_task_result: the result of my_celery_task.delay(..)
+    """
+    download_data = _get_saved_export_download_data(export_instance_id)
     download_data.set_task(celery_task_result)
+
+
+def get_saved_export_task_status(export_instance_id):
+    """Get info on the ongoing rebuild task if one exists.
+
+    (This is built with the assumption that there shouldn't be multiple
+    rebuilds in progress for a single export instance)
+    """
+    download_data = _get_saved_export_download_data(export_instance_id)
+    return get_task_status(download_data.task)

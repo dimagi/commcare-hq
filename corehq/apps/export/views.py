@@ -47,7 +47,11 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.utils import convert_saved_export_to_export_instance, saved_export_set_task
+from corehq.apps.export.utils import (
+    convert_saved_export_to_export_instance,
+    get_saved_export_task_status,
+    saved_export_set_task,
+)
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
@@ -1145,6 +1149,19 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             )
         return format_angular_success({
             'url': create_url,
+        })
+
+    @allow_remote_invocation
+    def get_saved_export_progress(self, in_data):
+        export_instance_id = in_data['export']['id']
+        status = get_saved_export_task_status(export_instance_id)
+        return format_angular_success({
+            'percent_complete': status.progress.percent,
+            'failed': status.failed(),
+            'missing': status.missing(),
+            'not_started': status.not_started(),
+            'started': status.started(),
+            'success': status.success(),
         })
 
 
