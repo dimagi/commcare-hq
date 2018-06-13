@@ -360,6 +360,7 @@ hqDefine('export/js/models', function () {
         include: [
             '_id',
             'name',
+            'description',
             'tables',
             'type',
             'export_format',
