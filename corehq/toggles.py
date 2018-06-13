@@ -514,14 +514,6 @@ IS_CONTRACTOR = StaticToggle(
     description="Used to give non super-users access to select super-user features"
 )
 
-MM_CASE_PROPERTIES = StaticToggle(
-    'mm_case_properties',
-    'Multimedia Case Properties',
-    TAG_DEPRECATED,
-    help_link='https://confluence.dimagi.com/display/ccinternal/Multimedia+Case+Properties+Feature+Flag',
-    namespaces=[NAMESPACE_DOMAIN]
-)
-
 NEW_MULTIMEDIA_UPLOADER = StaticToggle(
     'new_multimedia_uploader',
     'Display new multimedia uploader',

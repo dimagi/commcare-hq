@@ -26,13 +26,6 @@ class CommCareFeatureSupportMixin(object):
         return self._require_minimum_version('2.2')
 
     @property
-    def enable_multimedia_case_property(self):
-        """
-        Multimedia case properties are supported by apps version 2.6 or higher
-        """
-        return self._require_minimum_version('2.6')
-
-    @property
     def enable_relative_suite_path(self):
         return self._require_minimum_version('2.12')
 
