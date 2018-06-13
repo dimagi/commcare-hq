@@ -500,45 +500,106 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def _data_from_ucr_query(self, column=None, uses_zero_as_null=False):
+    def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
-        if column is not None:
-            select_line = ", LAST_VALUE({column}) OVER w AS {column}".format(column=column)
-            if uses_zero_as_null:
-                where_line = " AND {column} != 0".format(column=column)
-            else:
-                where_line = " AND {column} IS NOT NULL".format(column=column)
-        else:
-            select_line, where_line = '', ''
 
+        # We need many windows here because we want the last time changed for each of these columns
+        # Window definitions inspired by https://stackoverflow.com/a/47223416
+        # The CASE/WHEN's are needed, because time end should be NULL when a form has not changed the value,
+        # but the windows include all forms (this works because we use LAST_VALUE and NULLs are sorted to the top
         return """
-        SELECT DISTINCT child_health_case_id AS case_id,
-        LAST_VALUE(timeend) OVER w AS latest_time_end
-        {select_line}
-        FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND
-              timeend < %(next_month_start)s AND
-              state_id = %(state_id)s {where_line} AND
-              child_health_case_id IS NOT NULL
-        WINDOW w AS (
-            PARTITION BY child_health_case_id
-            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-        )
-        """.format(
-            ucr_tablename=self.ucr_tablename,
-            select_line=select_line,
-            where_line=where_line
-        ), {
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                LAST_VALUE(weight_child) OVER weight_child AS weight_child,
+                CASE
+                    WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER weight_child
+                END AS weight_child_last_recorded,
+                LAST_VALUE(height_child) OVER height_child AS height_child,
+                CASE
+                    WHEN LAST_VALUE(height_child) OVER height_child IS NULL THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER height_child
+                END AS height_child_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
+                    ELSE LAST_VALUE(muac_grading) OVER muac_grading
+                END AS muac_grading,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER muac_grading
+                END AS muac_grading_last_recorded
+            FROM "{ucr_tablename}"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+            WINDOW
+                weight_child AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN weight_child IS NULL THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                height_child AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN height_child IS NULL THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_wfa AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_wfa = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_hfa AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_hfa = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_wfh AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_wfh = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                muac_grading AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN muac_grading = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        """.format(ucr_tablename=self.ucr_tablename), {
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
-            "state_id": self.state_id,
+            "state_id": self.state_id
         }
 
-    def data_from_ucr_query(self, column=None, uses_zero_as_null=False):
-        return self._data_from_ucr_query(column, uses_zero_as_null)
-
-    def _inital_aggregation_query(self):
+    def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
         previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
@@ -546,19 +607,48 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
-            "state_id": self.state_id,
+            "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
 
+        # The '1970-01-01' is a fallback, this should never happen,
+        # but an unexpected NULL should not block other data
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed
+            state_id, month, case_id, latest_time_end_processed,
+            weight_child, weight_child_last_recorded,
+            height_child, height_child_last_recorded,
+            zscore_grading_wfa, zscore_grading_wfa_last_recorded,
+            zscore_grading_hfa, zscore_grading_hfa_last_recorded,
+            zscore_grading_wfh, zscore_grading_wfh_last_recorded,
+            muac_grading, muac_grading_last_recorded
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed
+            GREATEST(
+                ucr.weight_child_last_recorded,
+                ucr.height_child_last_recorded,
+                ucr.zscore_grading_wfa_last_recorded,
+                ucr.zscore_grading_hfa_last_recorded,
+                ucr.zscore_grading_wfh_last_recorded,
+                ucr.muac_grading_last_recorded,
+                prev_month.latest_time_end_processed,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            COALESCE(ucr.weight_child, prev_month.weight_child) AS weight_child,
+            GREATEST(ucr.weight_child_last_recorded, prev_month.weight_child_last_recorded) AS weight_child_last_recorded,
+            COALESCE(ucr.height_child, prev_month.height_child) AS height_child,
+            GREATEST(ucr.height_child_last_recorded, prev_month.height_child_last_recorded) AS height_child_last_recorded,
+            COALESCE(ucr.zscore_grading_wfa, prev_month.zscore_grading_wfa) AS zscore_grading_wfa,
+            GREATEST(ucr.zscore_grading_wfa_last_recorded, prev_month.zscore_grading_wfa_last_recorded) AS zscore_grading_wfa_last_recorded,
+            COALESCE(ucr.zscore_grading_hfa, prev_month.zscore_grading_hfa) AS zscore_grading_hfa,
+            GREATEST(ucr.zscore_grading_hfa_last_recorded, prev_month.zscore_grading_hfa_last_recorded) AS zscore_grading_hfa_last_recorded,
+            COALESCE(ucr.zscore_grading_wfh, prev_month.zscore_grading_wfh) AS zscore_grading_wfh,
+            GREATEST(ucr.zscore_grading_wfh_last_recorded, prev_month.zscore_grading_wfh_last_recorded) AS zscore_grading_wfh_last_recorded,
+            COALESCE(ucr.muac_grading, prev_month.muac_grading) AS muac_grading,
+            GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded) AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -568,63 +658,6 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             previous_month_tablename=previous_month_tablename,
             tablename=tablename
         ), query_params
-
-    def _aggregation_query_for_column(self, column, uses_zero_as_null):
-        month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
-        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
-
-        ucr_query, ucr_query_params = self.data_from_ucr_query(column, uses_zero_as_null)
-        query_params = {
-            "month": month_formatter(month),
-            "state_id": self.state_id,
-        }
-        query_params.update(ucr_query_params)
-        update_line = "{column} = ut.{column}, {column}_last_recorded = ut.{column}_last_recorded".format(
-            column=column)
-
-        select_line = """
-            COALESCE(ucr.{column}, prev_month.{column}) AS {column},
-            GREATEST(ucr.latest_time_end, prev_month.{column}_last_recorded) AS {column}_last_recorded
-        """.format(column=column)
-
-        return """
-        UPDATE "{tablename}" AS agg_table SET
-            {update_line}
-        FROM (
-          SELECT
-            %(state_id)s::text AS state_id,
-            %(month)s::date AS month,
-            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            {select_line}
-          FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{previous_month_tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id
-        ) ut
-        WHERE ut.state_id = agg_table.state_id AND ut.month = agg_table.month AND ut.case_id = agg_table.case_id
-        """.format(
-            ucr_table_query=ucr_query,
-            previous_month_tablename=previous_month_tablename,
-            tablename=tablename,
-            update_line=update_line,
-            select_line=select_line
-        ), query_params
-
-    def aggregation_queries(self):
-        columns = (
-            ('weight_child', False),
-            ('height_child', False),
-            ('zscore_grading_wfa', True),
-            ('zscore_grading_hfa', True),
-            ('zscore_grading_wfh', True),
-            ('muac_grading', True),
-        )
-
-        initial_query = self._inital_aggregation_query()
-        return [initial_query] + [
-            self._aggregation_query_for_column(column, uses_zero_as_null)
-            for column, uses_zero_as_null in columns
-        ]
 
     def compare_with_old_data_query(self):
         # only partially implements this comparison for now
