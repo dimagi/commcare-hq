@@ -844,7 +844,7 @@ class IntraHealthSqlData(SqlData):
                }
 
     def format_data_and_cast_to_float(self, value):
-        return {"html": round(value, 2), "sort_key": round(value, 2)} if value is not None else value
+        return {"html": "{:.2f}".format(value), "sort_key": "{:.2f}".format(value)} if value is not None else value
 
     @property
     def engine_id(self):
@@ -872,7 +872,6 @@ class IntraHealthSqlData(SqlData):
     @property
     def filter_values(self):
         return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
-
 
 
 class RecouvrementDesCouts2(IntraHealthSqlData):
@@ -1038,7 +1037,6 @@ class DureeData2(IntraHealthSqlData):
             ])
             total_sum += sum(data[loc_name])
             total_len += len(data[loc_name])
-
 
         total_row = [
             'Moyenne Region',
@@ -1943,7 +1941,7 @@ class ConventureData2(IntraHealthSqlData):
         total_row_values = defaultdict(int)
         months = sorted(set(month for month in values))
         for month in months:
-            from custom.intrahealth.reports import get_localized_months
+            from custom.intrahealth.reports.utils import get_localized_months
             pps_ids = values[month]['pps_ids']
             unique = len(pps_ids)
             total_row_values['registered'] += registered
