@@ -693,6 +693,7 @@ class SoftwarePlan(models.Model):
     )
     last_modified = models.DateTimeField(auto_now=True)
     is_customer_software_plan = models.BooleanField(default=False)
+    max_domains = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -703,6 +704,15 @@ class SoftwarePlan(models.Model):
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
         except SoftwarePlanVersion.DoesNotExist:
             return None
+
+    def at_max_domains(self):
+        if not self.max_domains:
+            return False
+
+        subscription_count = 0
+        for version in self.softwareplanversion_set.all():
+            subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
+        return subscription_count >= self.max_domains
 
 
 class DefaultProductPlan(models.Model):
@@ -1243,6 +1253,13 @@ class Subscription(models.Model):
         assert self.is_active
         assert date_end is None or date_end >= today
 
+        if new_plan_version.plan.at_max_domains():
+            raise SubscriptionAdjustmentError(
+                'The maximum number of project spaces has been reached for %(new_plan_version)s. ' % {
+                    'new_plan_version': new_plan_version,
+                }
+            )
+
         self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
             self.date_delay_invoicing = today
@@ -1580,6 +1597,13 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
+        if plan_version.plan.at_max_domains():
+            raise NewSubscriptionError(
+                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
+                    'plan_version': plan_version,
+                }
+            )
+
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         today = datetime.date.today()
         date_start = date_start or today

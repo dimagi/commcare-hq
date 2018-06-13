@@ -981,6 +981,7 @@ class PlanInformationForm(forms.Form):
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+    max_domains = forms.IntegerField(required=False)
     is_customer_software_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
@@ -991,6 +992,7 @@ class PlanInformationForm(forms.Form):
                 'description': plan.description,
                 'edition': plan.edition,
                 'visibility': plan.visibility,
+                'max_domains': plan.max_domains,
                 'is_customer_software_plan': plan.is_customer_software_plan
             }
         else:
@@ -1009,6 +1011,7 @@ class PlanInformationForm(forms.Form):
                 'description',
                 'edition',
                 'visibility',
+                'max_domains',
                 'is_customer_software_plan'
             ),
             hqcrispy.FormActions(
@@ -1036,11 +1039,13 @@ class PlanInformationForm(forms.Form):
         description = self.cleaned_data['description']
         edition = self.cleaned_data['edition']
         visibility = self.cleaned_data['visibility']
+        max_domains = self.cleaned_data['max_domains']
         is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
                             visibility=visibility,
+                            max_domains=max_domains,
                             is_customer_software_plan=is_customer_software_plan
                             )
         plan.save()
@@ -1054,6 +1059,7 @@ class PlanInformationForm(forms.Form):
             plan.description = self.cleaned_data['description']
             plan.edition = self.cleaned_data['edition']
             plan.visibility = self.cleaned_data['visibility']
+            plan.max_domains = self.cleaned_data['max_domains']
             plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
