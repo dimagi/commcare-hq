@@ -332,7 +332,7 @@ def _login(req, domain_name, template_name):
 
     if 'auth-username' in req.POST:
         new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
-        old_lang = req.session[LANGUAGE_SESSION_KEY]
+        old_lang = req.session.get(LANGUAGE_SESSION_KEY)
         update_session_language(req, old_lang, new_lang)
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
