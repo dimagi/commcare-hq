@@ -949,7 +949,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
                 filters, self.domain, type(export)
             ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
-            "locationRestrictions": location_restrictions,
+            'locationRestrictions': location_restrictions,
+            'taskStatus': self._get_task_status_json(export._id),
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
@@ -1137,18 +1138,19 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             'url': create_url,
         })
 
+    @staticmethod
+    def _get_task_status_json(export_instance_id):
+        status = get_saved_export_task_status(export_instance_id)
+        return {
+            'percentComplete': status.progress.percent or 0,
+            'inProgress': status.started(),
+            'success': status.success(),
+        }
+
     @allow_remote_invocation
     def get_saved_export_progress(self, in_data):
-        export_instance_id = in_data['export_instance_id']
-        status = get_saved_export_task_status(export_instance_id)
-        return format_angular_success({
-            'percent_complete': status.progress.percent,
-            'failed': status.failed(),
-            'missing': status.missing(),
-            'not_started': status.not_started(),
-            'started': status.started(),
-            'success': status.success(),
-        })
+        return format_angular_success(
+            self._get_task_status_json(in_data['export_instance_id']))
 
 
 @location_safe

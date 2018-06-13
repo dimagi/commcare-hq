@@ -45,6 +45,11 @@
                 .success(function (data) {
                     if (data.success) {
                         $scope.exports = data.exports;
+                        _.each($scope.exports, function (exp) {
+                            if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
+                                pollProgressBar(exp);
+                            }
+                        });
                     } else {
                         $scope.exportsListError = data.error;
                     }
@@ -113,17 +118,18 @@
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
 
-        var pollProgressBar = function (component, exp) {
+        var pollProgressBar = function (exp) {
             var tick = function () {
                 djangoRMI.get_saved_export_progress({
                     'export_instance_id': exp.id,
                 }).success(function (data) {
-                    console.log(data);
+                    exp.emailedExport.taskStatus = data;
                     if (!data.success) {
-                        exp.percent_complete = data.percent_complete;
+                        // The first few ticks don't yet register the task
+                        exp.emailedExport.taskStatus.inProgress = true;
                         $timeout(tick, 3000);
                     } else {
-                        component.updatedDataTriggered = false;
+                        console.log('done!');
                     }
                 });
             };
@@ -142,8 +148,13 @@
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
                         component.updatingData = false;
-                        component.updatedDataTriggered = true;
-                        pollProgressBar(component, exp);
+                        component.taskInProgress = true;
+                        component.taskStatus = {
+                            'percentComplete': 0,
+                            'inProgress': true,
+                            'success': false,
+                        };
+                        pollProgressBar(exp);
                     }
                 });
         };

@@ -175,7 +175,7 @@ describe('ListExportsController Unit Tests', function() {
                 assert.isTrue(component.updatingData);
                 $httpBackend.flush();
                 assert.isFalse(component.updatingData);
-                assert.isTrue(component.updatedDataTriggered);
+                assert.isTrue(component.taskStatus.inProgress);
             });
 
             it('analytics ok', function() {

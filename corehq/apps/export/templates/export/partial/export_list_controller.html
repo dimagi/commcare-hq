@@ -167,7 +167,7 @@
                                     <div ng-if="isLocationSafeForUser(export)">
                                         <button type="button"
                                                 class="btn btn-default btn-xs"
-                                                ng-show="!(export.emailedExport.updatingData || export.emailedExport.updatedDataTriggered)"
+                                                ng-show="!(export.emailedExport.updatingData || export.emailedExport.taskStatus.inProgress)"
                                                 data-toggle="modal"
                                                 data-target="#modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
                                             <i class="fa fa-refresh"></i>
@@ -181,15 +181,15 @@
                                             <i class="fa fa-refresh fa-spin"></i>
                                             {% trans "Updating Data, please wait..." %}
                                         </button>
-                                        <div ng-if="export.emailedExport.updatedDataTriggered">
+                                        <div ng-if="export.emailedExport.taskStatus.inProgress">
                                             <div class="progress">
                                                 {% angularjs %}
                                                 <div class="progress-bar progress-bar-striped active"
                                                      role="progressbar"
                                                      aria-valuemin="0"
                                                      aria-valuemax="100"
-                                                     aria-valuenow="{{ export.percent_complete }}"
-                                                     style="width:{{ export.percent_complete }}%">
+                                                     aria-valuenow="{{ export.emailedExport.taskStatus.percentComplete }}"
+                                                     style="width:{{ export.emailedExport.taskStatus.percentComplete }}%">
                                                 </div>
                                                 {% endangularjs %}
                                             </div>
@@ -236,7 +236,7 @@
                                 </div>
 
                                 <div ng-if="isLocationSafeForUser(export)">
-                                    <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.updatedDataTriggered">
+                                    <p ng-if="!export.emailedExport.hasFile && !export.emailedExport.taskStatus.inProgress">
                                         {% blocktrans %}
                                         <strong>No data is available yet.</strong><br />
                                             Please click 'update data' if the automatic scheduler hasn't picked up the changes in a while.
