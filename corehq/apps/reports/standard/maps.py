@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import csv342 as csv
 import json
 import os.path
 import re
@@ -16,6 +17,7 @@ from dimagi.utils.modules import to_function
 from django.template.loader import render_to_string
 import six
 from six.moves import zip
+from io import open
 
 
 class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
@@ -207,12 +209,11 @@ class GenericMapReport(ProjectReport, ProjectReportParametersMixin):
                 yield data
 
     def _get_data_csv(self, params, filters):
-        import csv
-        with open(params['path']) as f:
+        with open(params['path'], encoding='utf-8') as f:
             return list(csv.DictReader(f))
 
     def _get_data_geojson(self, params, filters):
-        with open(params['path']) as f:
+        with open(params['path'], encoding='utf-8') as f:
             data = json.load(f)
 
         for feature in data['features']:

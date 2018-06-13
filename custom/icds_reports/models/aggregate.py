@@ -455,6 +455,8 @@ class AggChildHealth(models.Model):
     stunting_normal = models.IntegerField(null=True)
     valid_all_registered_in_month = models.IntegerField(null=True)
     ebf_no_info_recorded = models.IntegerField(null=True)
+    zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -871,14 +873,13 @@ class AggregateGrowthMonitoringForms(models.Model):
         helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
         prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
         curr_month_query, curr_month_params = helper.create_table_query()
-        aggregate_queries = helper.aggregation_queries()
+        agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
             cursor.execute(prev_month_query, prev_month_params)
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
-            for query, params in aggregate_queries:
-                cursor.execute(query, params)
+            cursor.execute(agg_query, agg_params)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):

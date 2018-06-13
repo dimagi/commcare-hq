@@ -22,7 +22,4 @@ def require_privilege_but_override_for_migrator(privilege):
     return decorate
 
 
-def reminders_framework_permission(fn):
-    return require_permission(Permissions.edit_data)(
-        require_privilege_but_override_for_migrator(privileges.REMINDERS_FRAMEWORK)(fn)
-    )
+reminders_framework_permission = require_privilege_but_override_for_migrator(privileges.REMINDERS_FRAMEWORK)

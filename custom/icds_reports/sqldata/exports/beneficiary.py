@@ -85,6 +85,26 @@ class BeneficiaryExport(ExportableMixin, SqlData):
 
         columns = [
             DatabaseColumn(
+                'AWC Name',
+                SimpleColumn('awc_name'),
+                slug='awc_name'
+            ),
+            DatabaseColumn(
+                'AWC Site Code',
+                SimpleColumn('awc_site_code'),
+                slug='awc_site_code'
+            ),
+            DatabaseColumn(
+                'Supervisor Name',
+                SimpleColumn('supervisor_name'),
+                slug='supervisor_name'
+            ),
+            DatabaseColumn(
+                'Block Name',
+                SimpleColumn('block_name'),
+                slug='block_name'
+            ),
+            DatabaseColumn(
                 'Child Name',
                 SimpleColumn('person_name'),
                 slug='person_name'

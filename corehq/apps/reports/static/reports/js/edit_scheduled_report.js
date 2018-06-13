@@ -1,5 +1,17 @@
-/* globals django */
-hqDefine("reports/js/edit_scheduled_report", function() {
+hqDefine("reports/js/edit_scheduled_report", [
+    "jquery",
+    "underscore",
+    "analytix/js/google",
+    "hqwebapp/js/initial_page_data",
+    "hqwebapp/js/multiselect_utils",
+    "hqwebapp/js/widgets",  // autocomplete widget for email recipient list
+], function(
+    $,
+    _,
+    googleAnalytics,
+    initialPageData,
+    multiselectUtils
+) {
     var add_options_to_select = function($select, opt_list, selected_val) {
         for (var i = 0; i < opt_list.length; i++) {
             var $opt = $('<option />').val(opt_list[i][0]).text(opt_list[i][1]);
@@ -41,11 +53,10 @@ hqDefine("reports/js/edit_scheduled_report", function() {
         };
     };
 
-    var initial_page_data = hqImport("hqwebapp/js/initial_page_data").get;
-    var isConfigurableMap = initial_page_data('is_configurable_map');
-    var languagesMap = initial_page_data('languages_map');
-    var languagesForSelect = initial_page_data('languages_for_select');
-    var isOwner = initial_page_data('is_owner');
+    var isConfigurableMap = initialPageData.get('is_configurable_map');
+    var languagesMap = initialPageData.get('languages_map');
+    var languagesForSelect = initialPageData.get('languages_for_select');
+    var isOwner = initialPageData.get('is_owner');
 
     var updateUcrElements = function(selectedConfigs){
         var showUcrElements = _.any(
@@ -103,25 +114,24 @@ hqDefine("reports/js/edit_scheduled_report", function() {
         );
     }
     else {
-        var multiselect_utils = hqImport('hqwebapp/js/multiselect_utils');
-        multiselect_utils.createFullMultiselectWidget(
+        multiselectUtils.createFullMultiselectWidget(
             'id_config_ids',
-            django.gettext("Available Reports"),
-            django.gettext("Included Reports"),
-            django.gettext("Search Reports...")
+            gettext("Available Reports"),
+            gettext("Included Reports"),
+            gettext("Search Reports...")
         );
     }
     updateUcrElements($("#id_config_ids").val());
 
     var scheduled_report_form_helper = new ScheduledReportFormHelper({
-        weekly_options: initial_page_data('weekly_day_options'),
-        monthly_options: initial_page_data('monthly_day_options'),
-        day_value: initial_page_data('day_value'),
+        weekly_options: initialPageData.get('weekly_day_options'),
+        monthly_options: initialPageData.get('monthly_day_options'),
+        day_value: initialPageData.get('day_value'),
     });
     scheduled_report_form_helper.init();
 
     $('#id-scheduledReportForm').submit(function() {
-        hqImport('analytix/js/google').track.event('Scheduled Reports', 'Create a scheduled report', '-', "", {}, function () {
+        googleAnalytics.track.event('Scheduled Reports', 'Create a scheduled report', '-', "", {}, function () {
             document.getElementById('id-scheduledReportForm').submit();
         });
         return false;

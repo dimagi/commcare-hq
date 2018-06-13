@@ -112,7 +112,7 @@ class LocationType(models.Model):
     # If specified, include only the linked types
     include_only = models.ManyToManyField('self', symmetrical=False, related_name='included_in')
 
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     has_user = models.BooleanField(default=False)
 
     emergency_level = StockLevelField(default=0.5)
@@ -378,7 +378,7 @@ class SQLLocation(AdjListModel):
     external_id = models.CharField(max_length=255, null=True, blank=True)
     metadata = jsonfield.JSONField(default=dict, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    last_modified = models.DateTimeField(auto_now=True)
+    last_modified = models.DateTimeField(auto_now=True, db_index=True)
     is_archived = models.BooleanField(default=False)
     latitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)
     longitude = models.DecimalField(max_digits=20, decimal_places=10, null=True, blank=True)

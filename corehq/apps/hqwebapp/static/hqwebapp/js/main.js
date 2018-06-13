@@ -71,10 +71,6 @@ hqDefine('hqwebapp/js/main', [
             e.preventDefault();
             $.postGo(action, $.unparam(data));
         });
-        $('.post-link').click(function (e) {
-            e.preventDefault();
-            $.postGo($(this).attr('href'), {});
-        });
 
         $(".button", $elem).button().wrap('<span />');
         $("input[type='submit']", $elem).button();
@@ -289,6 +285,11 @@ hqDefine('hqwebapp/js/main', [
             }
         });
 
+        $(document).on('click', '.post-link', function(e) {
+            e.preventDefault();
+            $.postGo($(this).attr('href'), {});
+        });
+
         // Maintenance alerts
         var $maintenance = $(".alert-maintenance");
         if ($maintenance.length) {
@@ -350,11 +351,6 @@ hqDefine('hqwebapp/js/main', [
     return {
         beforeUnloadCallback: beforeUnloadCallback,
         eventize: eventize,
-        icons: {
-            GRIP: 'icon-resize-vertical icon-blue fa fa-arrows-v',
-            ADD: 'icon-plus icon-blue fa fa-plus',
-            DELETE: 'icon-remove icon-blue fa fa-remove',
-        },
         initBlock: initBlock,
         initDeleteButton: DeleteButton.init,
         initSaveButton: SaveButton.init,

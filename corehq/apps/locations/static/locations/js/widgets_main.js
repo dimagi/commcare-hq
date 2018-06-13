@@ -1,4 +1,10 @@
-hqDefine("locations/js/widgets_main", function() {
+hqDefine("locations/js/widgets_main", [
+    'jquery',
+    'underscore',
+], function(
+    $,
+    _
+) {
     // Update the options available to one select2 to be
     // the selected values from another (multiselect) select2
     function updateSelect2($source, $select) {

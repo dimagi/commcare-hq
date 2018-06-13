@@ -10,6 +10,7 @@ import magic
 from couchdbkit.exceptions import ResourceConflict
 from django.template.defaultfilters import filesizeformat
 
+from corehq.apps.hqmedia.exceptions import BadMediaFileException
 from corehq.util.soft_assert import soft_assert
 from dimagi.ext.couchdbkit import *
 from dimagi.utils.couch.database import get_safe_read_kwargs, iter_docs
@@ -352,7 +353,10 @@ class CommCareImage(CommCareMultimedia):
 
     @classmethod
     def get_image_object(cls, data):
-        return Image.open(BytesIO(data))
+        try:
+            return Image.open(BytesIO(data))
+        except IOError:
+            raise BadMediaFileException(_('Upload is not a valid image file.'))
 
     @classmethod
     def _get_resized_image(cls, image, size):

@@ -66,6 +66,7 @@ EXPECTED_PROD_INDICES = [
         "type": "app",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -111,6 +112,7 @@ EXPECTED_PROD_INDICES = [
         "type": "hqdomain",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {

@@ -8,17 +8,11 @@
     <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "reports/js/data_corrections.js" %}"></script>
-    <script src="{% static "reports/js/readable_form.js" %}"></script>
-    <script src="{% static "reports/js/single_form.js" %}"></script>
-    <script src="{% static "reports/js/form_data_main.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'reports/js/form_data_main' %}
 
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
 
 {% block page_content %}
-    {% initial_page_data 'clipboardScript' "clipboard/dist/clipboard.js"|static %}
     {% initial_page_data 'ordered_question_values' ordered_question_values %}
     {% initial_page_data 'question_response_map' question_response_map %}
     {% initial_page_data 'xform_id' instance.get_id %}

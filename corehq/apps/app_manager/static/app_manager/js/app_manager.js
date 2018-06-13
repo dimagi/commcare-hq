@@ -284,7 +284,7 @@ hqDefine('app_manager/js/app_manager', function () {
         }
 
         $('.sortable .sort-action').addClass('sort-disabled');
-        $('.drag_handle').addClass(hqImport("hqwebapp/js/main").icons.GRIP);
+        $('.drag_handle').addClass('fa fa-arrows-v');
 
         $('.js-appnav-drag-module').on('mouseenter', function() {
             $(this).closest('.js-sorted-li').addClass('appnav-highlight');

@@ -5010,6 +5010,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def jar_url(self):
         return reverse('download_jar', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def recovery_measures_url(self):
+        return reverse('recovery_measures', args=[self.domain, self._id])
+
     def get_jar_path(self):
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -5451,6 +5455,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
+    smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5675,6 +5680,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
                     'value': self.logo_refs[logo_name]['path'],
                 }
+
+        if toggles.MOBILE_RECOVERY_MEASURES.enabled(self.domain):
+            app_profile['properties']['recovery-measures-url'] = {
+                'force': True,
+                'value': self.recovery_measures_url,
+            }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')

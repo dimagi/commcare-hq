@@ -22,6 +22,10 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
 class AggregationScriptTest(TestCase):
+    """
+    Note: test setup and teardown are done at module level using
+        setUpModule and tearDownModule
+    """
 
     def _load_csv(self, path):
         with open(path, encoding='utf-8') as f:
@@ -53,7 +57,7 @@ class AggregationScriptTest(TestCase):
         else:
             return value_str
 
-    def _load_data_from_db(self, table_name):
+    def _load_data_from_db(self, table_name, sort_key):
         engine = connection_manager.get_session_helper('default').engine
         metadata = sqlalchemy.MetaData(bind=engine)
         metadata.reflect(bind=engine)
@@ -63,7 +67,8 @@ class AggregationScriptTest(TestCase):
             for column in table.columns
         ]
         with engine.begin() as connection:
-            for row in list(connection.execute(table.select())):
+            rows = connection.execute(table.select().order_by(*sort_key)).fetchall()
+            for row in rows:
                 row = list(row)
                 for idx, value in enumerate(row):
                     if isinstance(value, date):
@@ -118,298 +123,280 @@ class AggregationScriptTest(TestCase):
             self.fail('\n'.join(messages))
 
     def _load_and_compare_data(self, table_name, path, sort_key=None):
-        sort_key = sort_key or (lambda x: x)
-        self._fasterAssertListEqual(
-            sorted(
-                list(self._load_data_from_db(table_name)),
-                key=sort_key
-            ),
-            sorted(
-                self._load_csv(path),
-                key=sort_key
+        # To speed up tests, we use a sort_key wherever possible
+        #   to presort before comparing data
+        if sort_key:
+            self._fasterAssertListEqual(
+                list(self._load_data_from_db(table_name, sort_key)),
+                self._load_csv(path)
             )
-        )
+        else:
+            sort_key = lambda x: x
+            self._fasterAssertListEqual(
+                sorted(
+                    list(self._load_data_from_db(table_name, [])),
+                    key=sort_key
+                ),
+                sorted(
+                    self._load_csv(path),
+                    key=sort_key
+                )
+            )
 
     def test_icds_months(self):
         self._load_and_compare_data(
             'icds_months',
-            os.path.join(OUTPUT_PATH, 'icds_months.csv'),
-            sort_key=lambda x: x['month_name']
+            os.path.join(OUTPUT_PATH, 'icds_months_sorted.csv'),
+            sort_key=['month_name']
         )
 
     def test_ccs_record_monthly_2017_04_01(self):
         self._load_and_compare_data(
             'ccs_record_monthly_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-04-01.csv'),
-            sort_key=lambda x: (x['awc_id'], x['case_id'])
+            os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
     def test_ccs_record_monthly_2017_05_01(self):
         self._load_and_compare_data(
             'ccs_record_monthly_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01.csv'),
-            sort_key=lambda x: (x['awc_id'], x['case_id'])
+            os.path.join(OUTPUT_PATH, 'ccs_record_monthly_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
     def test_daily_attendance_2017_04_01(self):
         self._load_and_compare_data(
             'daily_attendance_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01.csv'),
-            sort_key=lambda x: (x['awc_id'], x['doc_id'])
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'doc_id']
         )
 
     def test_daily_attendance_2017_05_01(self):
         self._load_and_compare_data(
             'daily_attendance_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01.csv'),
-            sort_key=lambda x: (x['awc_id'], x['doc_id'])
+            os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'doc_id']
         )
 
     def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
             'child_health_monthly_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01.csv')
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
     def test_child_health_monthly_2017_05_01(self):
         self._load_and_compare_data(
             'child_health_monthly_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01.csv')
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )
 
     def test_agg_awc_daily(self):
         self._load_and_compare_data(
             'agg_awc_daily_2017-05-28',
-            os.path.join(OUTPUT_PATH, 'agg_awc_daily_2017-05-28.csv'),
-            sort_key=lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_daily_2017-05-28_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_04_01_1(self):
         self._load_and_compare_data(
             'agg_awc_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_1.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_1_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_awc_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_2.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_2_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_awc_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_3.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_3_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_awc_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_4.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_4_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_awc_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_5.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-04-01_5_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_awc_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_1.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_1_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_awc_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_2.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_2_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_awc_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_3.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_3_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_awc_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_4.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_4_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_awc_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_awc_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_5.csv'),
-            lambda x: (x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'])
+            os.path.join(OUTPUT_PATH, 'agg_awc_2017-05-01_5_sorted.csv'),
+            sort_key=['state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id']
         )
 
     def test_agg_child_health_2017_04_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_1_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_2_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_3_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_4_sorted.csv'),
         )
 
     def test_agg_child_health_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-04-01_5_sorted.csv'),
         )
 
     def test_agg_child_health_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_1_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_2_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_3_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_child_health_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_4_sorted.csv'),
         )
 
     def test_agg_child_health_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_child_health_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5.csv'),
-            lambda x: (
-                x['state_id'], x['district_id'], x['block_id'], x['supervisor_id'], x['awc_id'],
-                x['gender'], x['age_tranche'], x['caste'], x['disabled'], x['minority'], x['resident']
-            )
+            os.path.join(OUTPUT_PATH, 'agg_child_health_2017-05-01_5_sorted.csv'),
         )
 
     def test_agg_ccs_record_2017_04_01_1(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-04-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_1_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_04_01_2(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-04-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_2_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_04_01_3(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-04-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_3_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_04_01_4(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-04-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_4_sorted.csv'),
         )
 
     def test_agg_ccs_record_2017_04_01_5(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-04-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-04-01_5_sorted.csv'),
         )
 
     def test_agg_ccs_record_2017_05_01_1(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_1',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_1_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_05_01_2(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_2',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_2_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_05_01_3(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_3',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_3_sorted.csv'),
+            sort_key=['awc_id']
         )
 
     def test_agg_ccs_record_2017_05_01_4(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_4',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_4_sorted.csv'),
         )
 
     def test_agg_ccs_record_2017_05_01_5(self):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_5',
-            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5.csv')
+            os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
         )

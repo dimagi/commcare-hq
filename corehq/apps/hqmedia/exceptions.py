@@ -1,0 +1,2 @@
+class BadMediaFileException(Exception):
+    pass
