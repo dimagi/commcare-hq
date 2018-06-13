@@ -11,7 +11,7 @@ from custom.intrahealth.reports import RecapPassageReport2
 from dimagi.utils.dates import DateSpan
 
 
-class TestFicheConsommationReport2(YeksiTestCase):
+class TestRecapPassageReport2(YeksiTestCase):
 
     def test_recap_passage_report(self):
         mock = MagicMock()
@@ -46,15 +46,15 @@ class TestFicheConsommationReport2(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Depo-Provera', 791, 606, 0, 606, 0, 0, 0, 185, 185, 606, -185, 0],
-                ['Preservatif Masculin', 279, 258, 100, 358, 68, 0, 21, 0, 21, 358, 47, 0],
-                ['Preservatif Feminin', 20, 10, 10, 20, 0, 0, 0, 10, 10, 20, -10, 0],
-                ['Microlut/Ovrette', 234, 197, 0, 197, 0, 0, 0, 37, 37, 197, -37, 0],
-                ['Microgynon/Lof.', 801, 522, 160, 682, 0, 0, 0, 279, 279, 682, -279, 0],
+                ['CU', 12, 12, 0, 12, 0, 0, 0, 0, 0, 12, 0, 0],
                 ['Collier', 9, 9, 0, 9, 4, 0, 0, 0, 0, 9, 4, 0],
-                ['Jadelle', 45, 28, 20, 48, 0, 0, 0, 17, 17, 48, -17, 0],
                 ['DIU', 21, 7, 30, 37, 0, 0, 0, 14, 14, 37, -14, 0],
-                ['CU', 12, 12, 0, 12, 0, 0, 0, 0, 0, 12, 0, 0]
+                ['Depo-Provera', 791, 606, 0, 606, 0, 0, 0, 185, 185, 606, -185, 0],
+                ['Jadelle', 45, 28, 20, 48, 0, 0, 0, 17, 17, 48, -17, 0],
+                ['Microgynon/Lof.', 801, 522, 160, 682, 0, 0, 0, 279, 279, 682, -279, 0],
+                ['Microlut/Ovrette', 234, 197, 0, 197, 0, 0, 0, 37, 37, 197, -37, 0],
+                ['Preservatif Feminin', 20, 10, 10, 20, 0, 0, 0, 10, 10, 20, -10, 0],
+                ['Preservatif Masculin', 279, 258, 100, 358, 68, 0, 21, 0, 21, 358, 47, 0],
             ]
         )
         headers = recap_passage_report2_second['headers'].as_export_table[0]
@@ -76,15 +76,15 @@ class TestFicheConsommationReport2(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Depo-Provera', 160, 145, 0, 145, 0, 0, 0, 15, 15, 145, -15, 0],
-                ['Preservatif Masculin', 160, 160, 0, 160, 0, 0, 0, 0, 0, 160, 0, 0],
-                ['Preservatif Feminin', 15, 15, 0, 15, 0, 0, 0, 0, 0, 15, 0, 0],
-                ['Microlut/Ovrette', 100, 88, 18, 106, 0, 0, 0, 12, 12, 106, -12, 0],
-                ['Microgynon/Lof.', 189, 156, 0, 156, 0, 0, 0, 33, 33, 156, -33, 0],
+                ['CU', 10, 9, 0, 9, 0, 0, 0, 1, 1, 9, -1, 0],
                 ['Collier', 6, 6, 0, 6, 0, 0, 0, 0, 0, 6, 0, 0],
-                ['Jadelle', 13, 13, 0, 13, 0, 0, 0, 0, 0, 13, 0, 0],
                 ['DIU', 6, 6, 0, 6, 0, 0, 0, 0, 0, 6, 0, 0],
-                ['CU', 10, 9, 0, 9, 0, 0, 0, 1, 1, 9, -1, 0]
+                ['Depo-Provera', 160, 145, 0, 145, 0, 0, 0, 15, 15, 145, -15, 0],
+                ['Jadelle', 13, 13, 0, 13, 0, 0, 0, 0, 0, 13, 0, 0],
+                ['Microgynon/Lof.', 189, 156, 0, 156, 0, 0, 0, 33, 33, 156, -33, 0],
+                ['Microlut/Ovrette', 100, 88, 18, 106, 0, 0, 0, 12, 12, 106, -12, 0],
+                ['Preservatif Feminin', 15, 15, 0, 15, 0, 0, 0, 0, 0, 15, 0, 0],
+                ['Preservatif Masculin', 160, 160, 0, 160, 0, 0, 0, 0, 0, 160, 0, 0],
             ]
         )
 
@@ -121,15 +121,15 @@ class TestFicheConsommationReport2(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Depo-Provera', 791, 606, 0, 606, 0, 0, 0, 185, 185, 606, -185, 0],
-                ['Preservatif Masculin', 279, 258, 100, 358, 68, 0, 21, 0, 21, 358, 47, 0],
-                ['Preservatif Feminin', 20, 10, 10, 20, 0, 0, 0, 10, 10, 20, -10, 0],
-                ['Microlut/Ovrette', 234, 197, 0, 197, 0, 0, 0, 37, 37, 197, -37, 0],
-                ['Microgynon/Lof.', 801, 522, 160, 682, 0, 0, 0, 279, 279, 682, -279, 0],
+                ['CU', 12, 12, 0, 12, 0, 0, 0, 0, 0, 12, 0, 0],
                 ['Collier', 9, 9, 0, 9, 4, 0, 0, 0, 0, 9, 4, 0],
-                ['Jadelle', 45, 28, 20, 48, 0, 0, 0, 17, 17, 48, -17, 0],
                 ['DIU', 21, 7, 30, 37, 0, 0, 0, 14, 14, 37, -14, 0],
-                ['CU', 12, 12, 0, 12, 0, 0, 0, 0, 0, 12, 0, 0]
+                ['Depo-Provera', 791, 606, 0, 606, 0, 0, 0, 185, 185, 606, -185, 0],
+                ['Jadelle', 45, 28, 20, 48, 0, 0, 0, 17, 17, 48, -17, 0],
+                ['Microgynon/Lof.', 801, 522, 160, 682, 0, 0, 0, 279, 279, 682, -279, 0],
+                ['Microlut/Ovrette', 234, 197, 0, 197, 0, 0, 0, 37, 37, 197, -37, 0],
+                ['Preservatif Feminin', 20, 10, 10, 20, 0, 0, 0, 10, 10, 20, -10, 0],
+                ['Preservatif Masculin', 279, 258, 100, 358, 68, 0, 21, 0, 21, 358, 47, 0],
             ]
         )
         headers = recap_passage_report2_second['headers'].as_export_table[0]
@@ -151,14 +151,14 @@ class TestFicheConsommationReport2(YeksiTestCase):
         self.assertEqual(
             rows,
             [
-                ['Depo-Provera', 160, 145, 0, 145, 0, 0, 0, 15, 15, 145, -15, 0],
-                ['Preservatif Masculin', 160, 160, 0, 160, 0, 0, 0, 0, 0, 160, 0, 0],
-                ['Preservatif Feminin', 15, 15, 0, 15, 0, 0, 0, 0, 0, 15, 0, 0],
-                ['Microlut/Ovrette', 100, 88, 18, 106, 0, 0, 0, 12, 12, 106, -12, 0],
-                ['Microgynon/Lof.', 189, 156, 0, 156, 0, 0, 0, 33, 33, 156, -33, 0],
+                ['CU', 10, 9, 0, 9, 0, 0, 0, 1, 1, 9, -1, 0],
                 ['Collier', 6, 6, 0, 6, 0, 0, 0, 0, 0, 6, 0, 0],
-                ['Jadelle', 13, 13, 0, 13, 0, 0, 0, 0, 0, 13, 0, 0],
                 ['DIU', 6, 6, 0, 6, 0, 0, 0, 0, 0, 6, 0, 0],
-                ['CU', 10, 9, 0, 9, 0, 0, 0, 1, 1, 9, -1, 0]
+                ['Depo-Provera', 160, 145, 0, 145, 0, 0, 0, 15, 15, 145, -15, 0],
+                ['Jadelle', 13, 13, 0, 13, 0, 0, 0, 0, 0, 13, 0, 0],
+                ['Microgynon/Lof.', 189, 156, 0, 156, 0, 0, 0, 33, 33, 156, -33, 0],
+                ['Microlut/Ovrette', 100, 88, 18, 106, 0, 0, 0, 12, 12, 106, -12, 0],
+                ['Preservatif Feminin', 15, 15, 0, 15, 0, 0, 0, 0, 0, 15, 0, 0],
+                ['Preservatif Masculin', 160, 160, 0, 160, 0, 0, 0, 0, 0, 160, 0, 0],
             ]
         )

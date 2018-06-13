@@ -50,8 +50,8 @@ PRODUCT_NAMES = {
 }
 
 
-def _locations_filter(archived_locations):
-    return NOT(IN('location_id', get_INFilter_bindparams('archived_locations', archived_locations)))
+def _locations_filter(archived_locations, location_field_name='location_id'):
+    return NOT(IN(location_field_name, get_INFilter_bindparams('archived_locations', archived_locations)))
 
 
 class BaseSqlData(SqlData):
@@ -1200,12 +1200,15 @@ class NombreData2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1325,12 +1328,15 @@ class TauxConsommationData2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1451,12 +1457,15 @@ class TauxDeRuptures2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1592,8 +1601,6 @@ class RecapPassageData2(IntraHealthSqlData):
             filters.append(EQ("region_id", "region_id"))
         elif 'district_id' in self.config:
             filters.append(EQ("district_id", "district_id"))
-        if 'location_id' in self.config:
-            filters.append(EQ("location_id", "location_id"))
         return filters
 
     @property
@@ -1641,11 +1648,14 @@ class RecapPassageData2(IntraHealthSqlData):
     @property
     def rows(self):
         rows = self.get_data()
+        product_names = set()
         data = {}
         for row in rows:
-            if not data.get(row['product_name']):
-                data[row['product_name']] = defaultdict(int)
-            product_data = data[row['product_name']]
+            product_name = row['product_name']
+            product_names.add(product_name)
+            if not data.get(product_name):
+                data[product_name] = defaultdict(int)
+            product_data = data[product_name]
             product_data['old_stock_total'] += self.get_value(row['old_stock_total'])
             product_data['total_stock'] += self.get_value(row['total_stock'])
             product_data['livraison'] += self.get_value(row['livraison'])
@@ -1658,7 +1668,9 @@ class RecapPassageData2(IntraHealthSqlData):
             product_data['loss_amt'] += self.get_value(row['loss_amt'])
 
         rows = []
-        for product_name, product_data in data.items():
+        product_names = sorted(product_names)
+        for product_name in product_names:
+            product_data = data[product_name]
             rows.append([
                 product_name,
                 product_data['old_stock_total'],
@@ -1708,12 +1720,15 @@ class ConsommationData2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1804,12 +1819,15 @@ class PPSAvecDonnees2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1885,12 +1903,15 @@ class ConventureData2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
@@ -1982,12 +2003,15 @@ class FicheData2(IntraHealthSqlData):
     @property
     def filters(self):
         filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        loc_name = None
         if 'region_id' in self.config:
-            filters.append(EQ("region_id", "region_id"))
+            loc_name = 'region_id'
         elif 'district_id' in self.config:
-            filters.append(EQ("district_id", "district_id"))
-        if 'archived_locations' in self.config:
-            filters.append(_locations_filter(self.config['archived_locations']))
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
         return filters
 
     @property
