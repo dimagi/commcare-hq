@@ -13,6 +13,7 @@ module.exports = {
         "define": false,
         "hqDefine": false,
         "hqImport": false,
+        "hqRequire": false,
         "requirejs": false,
         "gettext": false,
         "ngettext": false,
