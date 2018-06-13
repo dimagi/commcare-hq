@@ -1604,8 +1604,7 @@ class Subscription(models.Model):
                 }
             )
 
-        if (not plan_version.plan.is_customer_software_plan and account.is_customer_billing_account) or \
-                (plan_version.plan.is_customer_software_plan and not account.is_customer_billing_account):
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
             if plan_version.plan.is_customer_software_plan:
                 raise NewSubscriptionError(
                     'You are trying to add a Customer Software Plan to a regular Billing Account. '
