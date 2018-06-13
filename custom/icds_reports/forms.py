@@ -33,8 +33,24 @@ class AppTranslationsForm(forms.Form):
                                              ('hin', ugettext_lazy('Hindi')),
                                              ('mr', ugettext_lazy('Marathi')),
                                              ('te', ugettext_lazy('Telugu'))],
-                                    help_text=ugettext_lazy("Leave blank to skip")
+                                    help_text=ugettext_lazy("Leave blank to skip"),
+                                    required=False,
                                     )
+    action = forms.ChoiceField(label=ugettext_lazy("Action"),
+                               choices=[('push', ugettext_lazy('Push to transifex')),
+                                        ('pull', ugettext_lazy('Pull from transifex')),
+                                        ('delete', ugettext_lazy('Delete resources on transifex'))]
+                               )
+    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
+                                           help_text=ugettext_lazy(
+                                               "Lock translations for resources that are being pulled"),
+                                           required=False,
+                                           initial=False)
+    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for completion"),
+                                                  help_text=ugettext_lazy(
+                                                      "Check for translation completion before pulling files"),
+                                                  required=False,
+                                                  initial=True)
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -56,9 +72,12 @@ class AppTranslationsForm(forms.Form):
             'transifex_project_slug',
             'source_lang',
             'target_lang',
+            'action',
+            'lock_translations',
+            'perform_translated_check',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit files for translation to Transifex"),
+                    ugettext_lazy("Submit"),
                     type="submit",
                     css_class="btn btn-primary btn-lg disable-on-submit",
                 )

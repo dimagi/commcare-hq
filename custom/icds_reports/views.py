@@ -35,9 +35,13 @@ from corehq.apps.users.models import UserRole
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
-from custom.icds.tasks import send_translation_files_to_transifex
-from custom.icds.translations.integrations.client import TransifexApiClient
-from custom.icds.translations.integrations.const import SOURCE_LANGUAGE_MAPPING
+from custom.icds.tasks import (
+    push_translation_files_to_transifex,
+    pull_translation_files_from_transifex,
+    delete_resources_on_transifex,
+)
+from custom.icds.translations.integrations.exceptions import ResourceMissing
+from custom.icds.translations.integrations.transifex import Transifex
 from custom.icds.translations.integrations.utils import transifex_details_available_for_domain
 from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAIL, CHILDREN_EXPORT, \
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
@@ -1613,9 +1617,7 @@ class ICDSAppTranslations(BaseDomainView):
     @property
     def page_context(self):
         transifex_details_available = transifex_details_available_for_domain(self.domain)
-        context = {
-            'integration_available': transifex_details_available
-        }
+        context = {'integration_available': transifex_details_available}
         if transifex_details_available:
             context['translations_form'] = self.translations_form
         return context
@@ -1623,17 +1625,59 @@ class ICDSAppTranslations(BaseDomainView):
     def section_url(self):
         return
 
-    @staticmethod
-    def ensure_source_language(form_data):
+    def transifex(self, domain, form_data):
         transifex_project_slug = form_data.get('transifex_project_slug')
-        source_language_code = form_data.get('source_lang')
-        transifex_account_details = settings.TRANSIFEX_DETAILS
-        client = TransifexApiClient(transifex_account_details.get('token'),
-                                    transifex_account_details.get('organization'),
-                                    transifex_project_slug)
-        project_source_langugage_code = client.project_details().json().get('source_language_code')
-        return project_source_langugage_code == SOURCE_LANGUAGE_MAPPING.get(source_language_code,
-                                                                            source_language_code)
+        source_language_code = form_data.get('target_lang') or form_data.get('source_lang')
+        return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
+                         form_data['version'])
+
+    @staticmethod
+    def perform_push_request(request, form_data):
+        push_translation_files_to_transifex.delay(request.domain, form_data)
+        messages.success(request, _('Successfully enqueued request to submit files for translations'))
+        return True
+
+    @staticmethod
+    def perform_pull_request(request, form_data, transifex):
+        if form_data['perform_translated_check']:
+            try:
+                resource_pending_translations = (transifex.
+                                                 resources_pending_translations(break_if_true=True))
+                if resource_pending_translations:
+                    messages.error(
+                        request,
+                        _("Resources yet to be completely translated, for ex: {}".format(
+                            resource_pending_translations)))
+                    return False
+            except ResourceMissing as e:
+                messages.error(request, e)
+                return False
+        pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
+        messages.success(request, _('Successfully enqueued request to pull for translations. '
+                                    'You should receive an email shortly'))
+        return True
+
+    @staticmethod
+    def perform_delete_request(request, form_data, transifex):
+        if not transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        delete_resources_on_transifex.delay(request.domain, form_data)
+        messages.success(request, _('Successfully enqueued request to delete resources.'))
+        return True
+
+    def perform_request(self, request, form_data):
+        transifex = self.transifex(request.domain, form_data)
+        if not transifex.source_lang_is(form_data.get('source_lang')):
+            messages.error(request, _('Source lang selected not available for the project'))
+            return False
+        else:
+            if form_data['action'] == 'push':
+                return self.perform_push_request(request, form_data)
+            elif form_data['action'] == 'pull':
+                return self.perform_pull_request(request, form_data, transifex)
+            elif form_data['action'] == 'delete':
+                return self.perform_delete_request(request, form_data, transifex)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
@@ -1642,10 +1686,6 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                if not self.ensure_source_language(form_data):
-                    messages.error(request, _('Source lang selected not available for the project'))
-                else:
-                    send_translation_files_to_transifex.delay(request.domain, form_data)
-                    messages.success(request, _('Successfully enqueued request to submit files for translations'))
+                if self.perform_request(request, form_data):
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
