@@ -235,8 +235,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 return []
             document_stores = list(set(change.document_store for change in _changes))
             if len(document_stores) > 1:
-                # since the pillow passes changes for a particular doc-type
-                #   this should not happen
+                # Todo; handle multiple doc-types
                 raise BulkPorcessingError(
                     "Received changes of more than one doc_type from change feed for the domain".format(domain)
                 )
@@ -297,6 +296,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
             succeeded_changes.union(changes_chunk)
             if async_configs_by_doc_id:
+                # Todo; handle multiple doc-types
                 AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, docs[0].doc_type)
             return BulkProcessingResult(succeeded_changes, failed_changes)
 
