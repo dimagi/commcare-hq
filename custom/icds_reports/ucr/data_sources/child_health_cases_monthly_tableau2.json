@@ -859,8 +859,13 @@
         "expression": {
           "type": "conditional",
           "test": {
-            "type": "named",
-            "name": "height_eligible"
+            "type": "boolean_expression",
+            "operator": "eq",
+            "property_value": "yes",
+            "expression": {
+              "type": "named",
+              "name": "valid_in_month"
+            }
           },
           "expression_if_true": {
             "type": "named",
