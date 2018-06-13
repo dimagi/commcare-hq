@@ -58,6 +58,7 @@ branches:
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
   - jls/kill-mm-case-properties  # Jenny June 13
+  - np/add-case-type  # NP June 13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
