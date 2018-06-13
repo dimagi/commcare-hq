@@ -6,6 +6,7 @@ from functools import total_ordering
 import six
 
 from corehq.apps.aggregate_ucrs.date_utils import Month
+from dimagi.utils.parsing import json_format_date
 
 AGGREGATION_UNIT_CHOICE_MONTH = 'month'
 
@@ -36,11 +37,32 @@ class TimeAggregationWindow(six.with_metaclass(ABCMeta, object)):
 
     @abstractproperty
     def start(self):
+        """
+        :return: the start of the window as a datetime
+        """
         pass
+
+    @property
+    def start_param(self):
+        """
+        :return: the start of the window as a string (to be used in SQL)
+        """
+        return json_format_date(self.start)
+
 
     @abstractproperty
     def end(self):
+        """
+        :return: the end of the window as a datetime
+        """
         pass
+
+    @property
+    def end_param(self):
+        """
+        :return: the end of the window as a string (to be used in SQL)
+        """
+        return json_format_date(self.end)
 
     def __str__(self):
         return '{}: {}-{}'.format(type(self).__name__, self.start, self.end)
