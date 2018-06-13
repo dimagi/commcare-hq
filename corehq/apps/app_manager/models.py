@@ -1208,8 +1208,6 @@ class FormBase(DocumentSchema):
             valid_paths = {}
 
         def format_key(key, path):
-            if valid_paths.get(path) == "upload":
-                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
