@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_total_records
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
@@ -90,6 +90,14 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     ]
     exportable = True
     emailable = True
+    ajax_pagination = True
+    asynchronous = True
+
+    @property
+    def total_records(self):
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+        product_ids = get_product_ids_for_program(self.domain, self.program_id) if self.program_id else None
+        return get_total_records(self.domain, sp_ids, STOCK_SECTION_TYPE, product_ids)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -144,6 +152,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
             entry_ids=product_ids,
+            pagination=self.pagination,
         )
         product_grouping = {}
         for ledger_value in ledger_values:
