@@ -15,6 +15,7 @@ class Axis(object):
     def to_json(self):
         return {'label': self.label,
                 'format': self.format,
+                'dateFormat': self.dateFormat,
                 }
 
 
