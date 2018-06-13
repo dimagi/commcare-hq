@@ -129,7 +129,7 @@
                         exp.emailedExport.taskStatus.inProgress = true;
                         $timeout(tick, 3000);
                     } else {
-                        console.log('done!');
+                        exp.emailedExport.taskStatus.justFinished = true;
                     }
                 });
             };

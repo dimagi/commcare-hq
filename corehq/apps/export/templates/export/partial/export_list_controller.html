@@ -159,7 +159,13 @@
                                 <div class="h5">
                                     <span ng-if="export.emailedExport.hasFile">
                                         <strong>{% trans "Size:" %}</strong> {{ export.emailedExport.fileData.size }}&nbsp;&nbsp;&nbsp;
-                                        <strong>{% trans "Last Updated:" %}</strong> {{ export.emailedExport.fileData.lastUpdated }}&nbsp;&nbsp;&nbsp;
+                                        <strong>{% trans "Last Updated:" %}</strong>
+                                        <span ng-if="!export.emailedExport.taskStatus.justFinished">
+                                            {{ export.emailedExport.fileData.lastUpdated }}&nbsp;&nbsp;&nbsp;
+                                        </span>
+                                        <span ng-if="export.emailedExport.taskStatus.justFinished">
+                                            {% trans "Just now" %}&nbsp;&nbsp;&nbsp;
+                                        </span>
                                         <strong>{% trans "Last Downloaded:" %}</strong> {{ export.emailedExport.fileData.lastAccessed }}
                                     </span>
                                     &nbsp;&nbsp;
@@ -232,6 +238,10 @@
                                         the last 35 days. To renew daily updates, click the 'Update Data'
                                         button and download the file.
                                     {% endblocktrans %}
+                                </p>
+                                <p ng-if="export.emailedExport.taskStatus.justFinished">
+                                    <i class="fa fa-check"></i>
+                                    {% trans "Your export is ready for download" %}
                                 </p>
                                 </div>
 
