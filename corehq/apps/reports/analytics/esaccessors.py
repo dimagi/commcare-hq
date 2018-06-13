@@ -578,6 +578,13 @@ def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None, pagi
     return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
 
 
+def get_total_records(domain, case_ids, section_id, entry_ids=None):
+    query = LedgerES().domain(domain).section(section_id).case(case_ids)
+    if entry_ids:
+        query = query.entry(entry_ids)
+    return query.count()
+
+
 def get_aggregated_ledger_values(domain, case_ids, section_id, entry_ids=None):
     # todo: figure out why this causes circular import
     query = LedgerES().domain(domain).section(section_id).case(case_ids)
