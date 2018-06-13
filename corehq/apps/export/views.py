@@ -1153,7 +1153,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     @allow_remote_invocation
     def get_saved_export_progress(self, in_data):
-        export_instance_id = in_data['export']['id']
+        export_instance_id = in_data['export_instance_id']
         status = get_saved_export_task_status(export_instance_id)
         return format_angular_success({
             'percent_complete': status.progress.percent,

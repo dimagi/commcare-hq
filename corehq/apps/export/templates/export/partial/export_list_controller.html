@@ -167,7 +167,7 @@
                                     <div ng-if="isLocationSafeForUser(export)">
                                         <button type="button"
                                                 class="btn btn-default btn-xs"
-                                                ng-show="!export.emailedExport.updatingData"
+                                                ng-show="!(export.emailedExport.updatingData || export.emailedExport.updatedDataTriggered)"
                                                 data-toggle="modal"
                                                 data-target="#modalRefreshExportConfirm-{{ export.id }}-{{ export.emailedExport.groupId }}">
                                             <i class="fa fa-refresh"></i>
@@ -181,6 +181,19 @@
                                             <i class="fa fa-refresh fa-spin"></i>
                                             {% trans "Updating Data, please wait..." %}
                                         </button>
+                                        <div ng-if="export.emailedExport.updatedDataTriggered">
+                                            <div class="progress">
+                                                {% angularjs %}
+                                                <div class="progress-bar progress-bar-striped active"
+                                                     role="progressbar"
+                                                     aria-valuemin="0"
+                                                     aria-valuemax="100"
+                                                     aria-valuenow="{{ export.percent_complete }}"
+                                                     style="width:{{ export.percent_complete }}%">
+                                                </div>
+                                                {% endangularjs %}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -219,11 +232,6 @@
                                         the last 35 days. To renew daily updates, click the 'Update Data'
                                         button and download the file.
                                     {% endblocktrans %}
-                                </p>
-                                <p ng-if="export.emailedExport.updatedDataTriggered">
-                                    <i class="fa fa-check"></i>
-                                    <strong>{% trans "Data update started." %}</strong><br />
-                                    {% trans "Please check back later for updates. (Page refresh required)" %}
                                 </p>
                                 </div>
 

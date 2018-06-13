@@ -20,7 +20,8 @@
 
     var exportsControllers = {};
     exportsControllers.ListExportsController = function (
-        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType
+        $scope, djangoRMI, bulk_download_url, legacy_bulk_download_url, $rootScope, modelType,
+        $timeout
     ) {
         /**
          * This controller fetches a list of saved exports from
@@ -111,6 +112,24 @@
         $scope.sendExportAnalytics = function() {
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
+
+        var pollProgressBar = function (component, exp) {
+            var tick = function () {
+                djangoRMI.get_saved_export_progress({
+                    'export_instance_id': exp.id,
+                }).success(function (data) {
+                    console.log(data);
+                    if (!data.success) {
+                        exp.percent_complete = data.percent_complete;
+                        $timeout(tick, 3000);
+                    } else {
+                        component.updatedDataTriggered = false;
+                    }
+                });
+            };
+            tick();
+        };
+
         $scope.updateEmailedExportData = function (component, exp) {
             $('#modalRefreshExportConfirm-' + exp.id + '-' + (component.groupId ? component.groupId : '')).modal('hide');
             component.updatingData = true;
@@ -124,6 +143,7 @@
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
                         component.updatingData = false;
                         component.updatedDataTriggered = true;
+                        pollProgressBar(component, exp);
                     }
                 });
         };
