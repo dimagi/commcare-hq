@@ -4,13 +4,13 @@ This module deals with data ingestion: populating the aggregate tables from othe
 from __future__ import absolute_import, unicode_literals
 from collections import namedtuple
 from datetime import datetime
+
 import sqlalchemy
 from sqlalchemy.dialects.postgresql import insert
 
 from corehq.apps.aggregate_ucrs.aggregations import AGG_WINDOW_START_PARAM, AGG_WINDOW_END_PARAM, \
     TimeAggregationWindow
 from corehq.apps.userreports.sql import IndicatorSqlAdapter
-from dimagi.utils.parsing import json_format_date
 
 
 AggregationParam = namedtuple('AggregationParam', 'name value mapped_column_id')
@@ -56,12 +56,12 @@ def get_time_aggregation_windows(aggregate_table_definition, last_update):
             yield AggregationWindow(
                 start=AggregationParam(
                     name=AGG_WINDOW_START_PARAM,
-                    value=json_format_date(current_window.start),
+                    value=current_window.start_param,
                     mapped_column_id=aggregate_table_definition.time_aggregation.start_column
                 ),
                 end=AggregationParam(
                     name=AGG_WINDOW_END_PARAM,
-                    value=json_format_date(current_window.end),
+                    value=current_window.end_param,
                     mapped_column_id=aggregate_table_definition.time_aggregation.end_column
                 )
             )
