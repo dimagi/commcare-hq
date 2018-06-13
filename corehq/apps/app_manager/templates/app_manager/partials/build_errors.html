@@ -257,8 +257,6 @@
                             {% else %}
                                 {% trans "You're loading or saving a case property but have not chosen a question from the form. Please choose a question from the dropdown next to the case property." %}
                             {% endif %}
-                        {% case "multimedia case property not supported" %}
-                            Multimedia case property "{{ error.path }}" is not supported on apps on or before v2.5
                         {% case "remote error" %}
                             Remote Error:
                         {% case "empty lang" %}

@@ -7,7 +7,6 @@ import logging
 from dimagi.utils.parsing import json_format_datetime, json_format_date
 from dateutil.parser import parse as parse_datetime
 
-from corehq.toggles import MM_CASE_PROPERTIES
 from corehq.util.quickcache import quickcache
 import six
 
@@ -147,9 +146,6 @@ class V1CaseXMLGenerator(CaseXMLGeneratorBase):
             logging.info("Tried to add indices to version 1 CaseXML restore. This is not supported. "
                          "The case id is %s, domain %s." % (self.case.case_id, self.case.domain))
 
-    def add_attachments(self, element):
-        pass
-
 
 class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
@@ -192,28 +188,6 @@ class V2CaseXMLGenerator(CaseXMLGeneratorBase):
 
             element.append(index_elem)
 
-    def add_attachments(self, element):
-        if _sync_attachments(self.case.domain):
-            if self.case.case_attachments:
-                attachment_elem = safe_element("attachment")
-                for k, a in self.case.case_attachments.items():
-                    aroot = safe_element(k)
-                    # moved to attrs in v2
-                    aroot.attrib = {
-                        "src": self.case.get_attachment_server_url(k),
-                        "from": "remote"
-                    }
-                    attachment_elem.append(aroot)
-                element.append(attachment_elem)
-
-
-@quickcache(['domain'],
-            skip_arg=lambda _: settings.UNIT_TESTING,
-            memoize_timeout=12 * 60 * 60,
-            timeout=12 * 60 * 60)
-def _sync_attachments(domain):
-    return MM_CASE_PROPERTIES.enabled(domain)
-
 
 def get_generator(version, case):
     check_version(version)
@@ -252,5 +226,4 @@ class CaseDBXMLGenerator(V2CaseXMLGenerator):
         self.add_base_properties(element)
         self.add_custom_properties(element)
         self.add_indices(element)
-        self.add_attachments(element)
         return element

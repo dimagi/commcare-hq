@@ -239,40 +239,6 @@ class CaseMultimediaTest(BaseCaseMultimediaTest):
             attach_actions = [x for x in case.actions if x['action_type'] == 'attachment']
             self.assertEqual(2, len(attach_actions))
 
-    @flag_enabled('MM_CASE_PROPERTIES')
-    def testOTARestoreSingle(self):
-        _, case = self._doCreateCaseWithMultimedia()
-        restore_attachments = ['fruity_file']
-        self._validateOTARestore(case.case_id, restore_attachments)
-
-    @flag_enabled('MM_CASE_PROPERTIES')
-    def testOTARestoreMultiple(self):
-        _, case = self._doCreateCaseWithMultimedia()
-        restore_attachments = ['commcare_logo_file', 'dimagi_logo_file']
-        removes = ['fruity_file']
-        _, case = self._doSubmitUpdateWithMultimedia(new_attachments=restore_attachments, removes=removes)
-
-        self._validateOTARestore(case.case_id, restore_attachments)
-
-    def _validateOTARestore(self, case_id, restore_attachments):
-        case_xml = CaseAccessors().get_case(case_id).to_xml(V2)
-        root_node = lxml.etree.fromstring(case_xml)
-        attaches = root_node.find('{http://commcarehq.org/case/transaction/v2}attachment')
-        self.assertEqual(len(restore_attachments), len(attaches))
-
-        for attach in attaches:
-            url = list(attach.values())[1]
-            case_id = url.split('/')[-2]
-            attach_key_from_url = url.split('/')[-1]
-            tag = attach.tag
-            clean_tag = tag.replace('{http://commcarehq.org/case/transaction/v2}', '')
-            self.assertEqual(clean_tag, attach_key_from_url)
-            self.assertEqual(case_id, TEST_CASE_ID)
-            self.assertIn(attach_key_from_url, restore_attachments)
-            restore_attachments.remove(clean_tag)
-
-        self.assertEqual(0, len(restore_attachments))
-
     def testAttachInUpdate(self):
         new_attachments = ['commcare_logo_file', 'dimagi_logo_file']
 
