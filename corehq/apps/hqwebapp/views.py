@@ -28,9 +28,7 @@ from django.template import loader
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import ugettext as _, ugettext_noop, LANGUAGE_SESSION_KEY
-
-
+from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.decorators.debug import sensitive_post_parameters
 from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import TemplateView
@@ -44,7 +42,6 @@ from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_class
 from corehq.apps.hqadmin.service_checks import CHECKS, run_checks
 from corehq.apps.users.landing_pages import get_redirect_url, get_cloudcare_urlname
-from corehq.apps.users.models import CouchUser
 
 from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
@@ -70,7 +67,7 @@ from corehq.apps.hqadmin.management.commands.deploy_in_progress import DEPLOY_IN
 from corehq.apps.hqwebapp.doc_info import get_doc_info, get_object_info
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 from corehq.apps.hqwebapp.forms import EmailAuthenticationForm, CloudCareAuthenticationForm
-from corehq.apps.hqwebapp.utils import get_environment_friendly_name, update_session_language
+from corehq.apps.hqwebapp.utils import get_environment_friendly_name
 from corehq.apps.locations.permissions import location_safe
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.util import format_username
@@ -330,10 +327,6 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    if 'auth-username' in req.POST:
-        new_lang = CouchUser.get_by_username(req.POST['auth-username']).language
-        old_lang = req.session.get(LANGUAGE_SESSION_KEY)
-        update_session_language(req, old_lang, new_lang)
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -376,7 +369,9 @@ def _login(req, domain_name, template_name):
 @two_factor_exempt
 @sensitive_post_parameters('auth-password')
 def login(req):
-    # This is a wrapper around the _login view
+    # this view, and the one below, is overridden because
+    # we need to set the base template to use somewhere
+    # somewhere that the login page can access it.
 
     if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
         login_url = reverse('domain_login', kwargs={'domain': 'icds-cas'})
@@ -389,7 +384,6 @@ def login(req):
 
 @location_safe
 def domain_login(req, domain, template_name="login_and_password/login.html"):
-    # This is a wrapper around the _login view which sets a different template
     project = Domain.get_by_name(domain)
     if not project:
         raise Http404
