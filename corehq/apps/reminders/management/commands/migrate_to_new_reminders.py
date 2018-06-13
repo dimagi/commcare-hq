@@ -726,7 +726,7 @@ class Command(BaseCommand):
                     handler.start_day_of_week >= 0 and
                     handler.start_day_of_week <= 6 and
                     len(handler.events) == 1 and
-                    handler.events[0].day == 0 and
+                    handler.events[0].day_num == 0 and
                     handler.start_offset == 0 and
                     ((handler.schedule_length % 7) == 0 or handler.max_iteration_count == 1)
                 ):
