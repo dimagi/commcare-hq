@@ -148,7 +148,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             return
         try:
             # chunked processing is supported if there is only one processor
-            self.processors[0].process_changes_chunk(self, changes_chunk)
+            result = self.processors[0].process_changes_chunk(self, changes_chunk)
         except BulkPorcessingError as ex:
             notify_exception(
                 None,
@@ -161,9 +161,12 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             for change in changes_chunk:
                 self.process_with_error_handling(change, context)
         else:
-            for change in changes_chunk:
+            for change in result.succeeded_changes:
                 self._update_checkpoint(change, context)
                 self._record_change_success_in_datadog(change)
+            # fall back to processing one by one for failed changes
+            for change in result.failed_changes:
+                self.process_with_error_handling(change, context)
 
     def process_with_error_handling(self, change, context):
         timer = TimingContext()

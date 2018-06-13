@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import hashlib
-from collections import defaultdict, Counter
+from collections import defaultdict, Counter, namedtuple
 from datetime import datetime, timedelta
 
 import six
@@ -35,7 +35,8 @@ from fluff.signals import (
     reformat_alembic_diffs
 )
 from pillowtop.checkpoints.manager import KafkaPillowCheckpoint
-from pillowtop.exceptions import PillowConfigError
+from pillowtop.dao.exceptions import DocumentMismatchError
+from pillowtop.exceptions import PillowConfigError, BulkPorcessingError
 from pillowtop.logger import pillow_logging
 from pillowtop.pillow.interface import ConstructedPillow
 from pillowtop.processors import BulkPillowProcessor
@@ -206,6 +207,9 @@ class ConfigurableReportTableManagerMixin(object):
             rebuild_indicators.delay(adapter.config.get_id)
 
 
+BulkProcessingResult = namedtuple('BulkProcessingResult', ['succeeded_changes', 'failed_changes'])
+
+
 class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, BulkPillowProcessor):
 
     domain_timing_context = Counter()
@@ -223,10 +227,80 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             # remove it until the next bootstrap call
             self.table_adapters_by_domain[domain].remove(table)
 
-    def process_changes_chunk(self, pillow_instance, changes_chunk):
-        # Todo; do actual implementation
-        for change in changes_chunk:
-            self.process_change(pillow_instance, change)
+    def process_changes_chunk(self, pillow_instance, changes):
+
+        succeeded_changes = set()
+        failed_changes = set()
+
+        def get_docs(_changes, domain):
+            if not _changes:
+                return []
+            document_stores = list(set(change.document_store for change in _changes))
+            if len(document_stores) > 1:
+                # since the pillow passes changes for a particular doc-type
+                #   this should not happen
+                raise BulkPorcessingError(
+                    "Received changes of more than one doc_type from change feed for the domain".format(domain)
+                )
+
+            doc_store = document_stores[0]
+            docs = list(doc_store.iter_documents([change.id for change in _changes]))
+            docs_by_id = {doc['_id']: doc for doc in docs}
+
+            for change in _changes:
+                if change.id not in docs_by_id:
+                    # we need to capture DocumentMissingError which is not possible in bulk
+                    #   so let pillow fall back to serial mode to capture the error
+                    failed_changes.append(change)
+                try:
+                    ensure_matched_revisions(change, docs_by_id.get(change.id))
+                except DocumentMismatchError:
+                    failed_changes.append(change)
+            good_changes = set(_changes) - failed_changes
+            return [docs_by_id.get(change.id) for change in good_changes]
+
+        self.bootstrap_if_needed()
+
+        changes_by_domain = defaultdict(list)
+        for change in changes:
+            if change.metadata.domain and change.metadata.domain in self.table_adapters_by_domain:
+                # if no domain we won't save to any UCR table
+                changes_by_domain[change.metadata.domain].append(change)
+
+        for domain, changes_chunk in six.iteritems(changes_by_domain):
+            rows_to_save_by_adapter = defaultdict(list)
+            doc_ids_to_delete_by_adapter = defaultdict(set)
+            adapters = list(self.table_adapters_by_domain[domain])
+            to_delete = {change for change in changes_chunk if change.deleted}
+            to_update = set(changes_chunk) - to_delete
+            async_configs_by_doc_id = defaultdict(list)
+            docs = get_docs(to_update, domain)
+
+            for adapter in adapters:
+                doc_ids_to_delete_by_adapter[adapter] = to_delete
+                adapter.bulk_delete([change.metadata.document_id for change in to_delete])
+                for doc in docs:
+                    eval_context = EvaluationContext(doc)
+                    if adapter.config.filter(doc):
+                        if adapter.run_asynchronous:
+                            async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
+                        else:
+                            # TOdo; handle error
+                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
+                            doc_ids_to_delete_by_adapter[adapter].add(doc['_id'])
+                            eval_context.reset_iteration()
+                    elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
+                        doc_ids_to_delete_by_adapter[adapter].add(doc['_id'])
+
+            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+                try:
+                    adapter._save_rows(rows, doc_ids_to_delete_by_adapter[adapter])
+                except Exception as e:
+                    raise BulkPorcessingError('Error bulk saving calculated UCR rows {}'.format(e))
+
+            succeeded_changes.union(changes_chunk)
+            AsyncIndicator.bulk_update_records(async_configs_by_doc_id)
+            return BulkProcessingResult(succeeded_changes, failed_changes)
 
     def process_change(self, pillow_instance, change):
         self.bootstrap_if_needed()
