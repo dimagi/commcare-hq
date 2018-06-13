@@ -271,16 +271,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
 
                 if (currentIndex < lastSelectedRowIndex) {
-                    // Update UI
-                    $('.isSelectedForExport').addClass('selected-for-export-above-last');
-                    row.removeClass('selected-for-export-above-last');
-                    $('.selected-for-export-above-last:nth-child('
-                        + ($('.selected-for-export-above-last').length + 1) + ')').after(row);
-                    $('.selected-for-export-above-last').removeClass('selected-for-export-above-last');
-
-                    // Update KO
-                    var currentListItem = list().splice(currentIndex, 1)[0];
-                    list().splice(lastSelectedRowIndex, 0, currentListItem);
+                    var currentListItem = list.splice(currentIndex, 1)[0];
+                    list.splice(lastSelectedRowIndex, 0, currentListItem);
                 }
             });
 
