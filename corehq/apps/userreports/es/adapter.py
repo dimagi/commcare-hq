@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 from copy import deepcopy
 import datetime
 from elasticsearch import NotFoundError, RequestError
+
+from corehq.apps.userreports import datatypes
 from corehq.apps.userreports.util import get_table_name
 from corehq.apps.userreports.adapter import IndicatorAdapter
 from corehq.apps.es.es_query import HQESQuery
@@ -40,13 +42,14 @@ UCR_INDEX_SETTINGS = {
 }
 
 DATATYPE_MAP = {
-    'date': 'date',
-    'datetime': 'date',
-    'string': 'string',
-    'integer': 'long',
-    'decimal': 'double',
-    'array': 'string',
-    'boolean': 'long',
+    datatypes.DATA_TYPE_DATE: 'date',
+    datatypes.DATA_TYPE_DATETIME: 'date',
+    datatypes.DATA_TYPE_STRING: 'string',
+    datatypes.DATA_TYPE_INTEGER: 'long',
+    datatypes.DATA_TYPE_DECIMAL: 'double',
+    datatypes.DATA_TYPE_ARRAY: 'string',
+    datatypes.DATA_TYPE_BOOLEAN: 'long',
+    datatypes.DATA_TYPE_SMALL_INTEGER: 'short',
 }
 
 
