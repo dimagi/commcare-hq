@@ -184,8 +184,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         getList: function(valueAccessor) {
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
             var modelValue = valueAccessor(),
-                unwrappedValue = ko.utils.peekObservable(modelValue);
-            if ((!unwrappedValue) || typeof unwrappedValue.length === "number") {
+                unwrappedValue = ko.utils.peekObservable(modelValue);  // Unwrap without setting a dependency here
+            // If unwrappedValue is the array, pass in the wrapped value on its own
+            // The value will be unwrapped and tracked within the template binding
+            if ((!unwrappedValue) || _.isArray(unwrappedValue)) {
                 return modelValue;
             } else {
                 return unwrappedValue['data'];
