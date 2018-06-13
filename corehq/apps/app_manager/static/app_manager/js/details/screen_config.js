@@ -7,9 +7,6 @@ hqDefine('app_manager/js/details/screen_config', function() {
     module.CC_DETAIL_SCREEN = {
         getFieldHtml: function(field) {
             var text = field;
-            if (module.CC_DETAIL_SCREEN.isAttachmentProperty(text)) {
-                text = text.substring(text.indexOf(":") + 1);
-            }
             var parts = text.split('/');
             // wrap all parts but the last in a label style
             for (var j = 0; j < parts.length - 1; j++) {
@@ -24,9 +21,6 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     parts[j] + '</code>');
             }
             return parts.join('<span style="color: #DDD;">/</span>');
-        },
-        isAttachmentProperty: function(value) {
-            return value && value.indexOf("attachment:") === 0;
         },
         toTitleCase: function(str) {
             return (str
@@ -70,14 +64,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     return DOMPurify.sanitize(m);
                 },
                 formatResult: function(result) {
-                    var formatted = result.id;
-                    if (module.CC_DETAIL_SCREEN.isAttachmentProperty(result.id)) {
-                        formatted = (
-                            '<i class="fa fa-paperclip"></i> ' +
-                            result.id.substring(result.id.indexOf(":") + 1)
-                        );
-                    }
-                    return DOMPurify.sanitize(formatted);
+                    return DOMPurify.sanitize(result.id);
                 },
             }).on('change', function() {
                 $elem.val($elem.$edit_view.value);
@@ -274,7 +261,7 @@ hqDefine('app_manager/js/details/screen_config', function() {
 
         function getPropertyTitle(property) {
             // Strip "<prefix>:" before converting to title case.
-            // This is aimed at prefixes like ledger: and attachment:
+            // This is aimed at prefixes like ledger:
             var i = property.indexOf(":");
             return module.CC_DETAIL_SCREEN.toTitleCase(property.substring(i + 1));
         }
@@ -331,10 +318,6 @@ hqDefine('app_manager/js/details/screen_config', function() {
                     label: "Case",
                     value: "case",
                 }]).val(this.original.model);
-
-                var icon = (module.CC_DETAIL_SCREEN.isAttachmentProperty(this.original.field) ?
-                    'fa fa-paperclip' : null);
-                this.field = uiElement.input(this.original.field).setIcon(icon);
 
                 // Make it possible to observe changes to this.field
                 // note that observableVal is read only!
@@ -1154,16 +1137,6 @@ hqDefine('app_manager/js/details/screen_config', function() {
             value: "distance",
             label: gettext('Distance from current location'),
         }];
-
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('MM_CASE_PROPERTIES')) {
-            DetailScreenConfig.MENU_OPTIONS.push({
-                value: "picture",
-                label: gettext('Picture'),
-            }, {
-                value: "audio",
-                label: gettext('Audio'),
-            });
-        }
 
         var addOns = hqImport("hqwebapp/js/initial_page_data").get("add_ons");
         if (addOns.enum_image) {
