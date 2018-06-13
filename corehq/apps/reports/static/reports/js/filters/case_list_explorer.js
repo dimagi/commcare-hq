@@ -89,6 +89,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knoc
     var caseSearchXpathViewModel = function(allSuggestions){
         var self = {};
         applySuggestions.call(self, allSuggestions);
+        self.query = ko.observable();
         return self;
     };
 
