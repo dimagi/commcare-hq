@@ -106,7 +106,7 @@
                         {% if model_type == "case" %}
                         <th class="col-sm-2">{% trans 'Case Type' %}</th>
                         {% endif %}
-                        <th class="col-sm-6">{% trans 'Description' %}</th>
+                        <th class="col-sm-4">{% trans 'Description' %}</th>
                         {% if has_edit_permissions %}
                         <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
