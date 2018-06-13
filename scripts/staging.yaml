@@ -49,7 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  - np/draggable  # NP 5/10
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
   - jls/prune-auto-builds  # Jenny June 5
