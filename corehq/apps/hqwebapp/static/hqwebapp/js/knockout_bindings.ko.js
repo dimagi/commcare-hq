@@ -171,7 +171,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.multi_sortable = {
+    ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
                 if (item._sortableOrder === undefined) {
@@ -192,9 +192,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             }
         },
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             var forceUpdate = function() {
-                ko.bindingHandlers.multi_sortable.update(
+                ko.bindingHandlers.multirow_sortable.update(
                     element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
                 );
             };
@@ -205,7 +205,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
-                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort").toggleClass('success');
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
@@ -322,8 +322,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
-            ko.bindingHandlers.multi_sortable.updateSortableList(list);
+            var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
+            ko.bindingHandlers.multirow_sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
     };
