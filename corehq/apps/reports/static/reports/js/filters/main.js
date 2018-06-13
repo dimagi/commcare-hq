@@ -177,9 +177,6 @@ hqDefine("reports/js/filters/main", [
             var model = caseListExplorer.caseSearchXpath(data.suggestions);
             $el.koApplyBindings(model);
         });
-        $xpathTextarea.on('keyup', function(){
-            $('#fieldset_search_xpath').trigger('change');
-        });
 
         $('[name=selected_group]').each(function(i, el) {
             $(el).select2({
