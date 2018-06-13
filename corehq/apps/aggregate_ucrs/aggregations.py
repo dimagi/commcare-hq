@@ -49,7 +49,6 @@ class TimeAggregationWindow(six.with_metaclass(ABCMeta, object)):
         """
         return json_format_date(self.start)
 
-
     @abstractproperty
     def end(self):
         """
