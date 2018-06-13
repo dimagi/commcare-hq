@@ -236,12 +236,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort').addClass('success');
+                        next.addClass('selected-for-sort success');
                         next = next.next();
                     }
                 } else {
-                    $(this).addClass("selected-for-sort").addClass('success').addClass('last-clicked')
-                           .siblings().removeClass('selected-for-sort').removeClass('success').removeClass('last-clicked');
+                    $(this).addClass('selected-for-sort success last-clicked')
+                        .siblings().removeClass('selected-for-sort success last-clicked');
                 }
             });
 
@@ -276,8 +276,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 delay: 150,
                 helper: function (e, item) {
                     if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort').addClass('success')
-                            .siblings().removeClass('selected-for-sort').removeClass('success');
+                        item.addClass('selected-for-sort success')
+                            .siblings().removeClass('selected-for-sort success');
                     }
 
                     var elements = item.siblings('.selected-for-sort').detach();
