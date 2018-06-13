@@ -558,6 +558,26 @@ def migrate_simple_daily_schedule(handler):
     )
 
 
+def migrate_simple_weekly_schedule(handler):
+    if handler.schedule_length > 0 and (handler.schedule_length % 7) == 0:
+        repeat_every = handler.schedule_length / 7
+    elif handler.max_iteration_count == 1:
+        repeat_every = 1
+    else:
+        raise ValueError("Unable to convert schedule_length for handler %s" % handler._id)
+
+    return TimedSchedule.create_simple_weekly_schedule(
+        handler.domain,
+        get_timed_event(handler, handler.events[0]),
+        get_content(handler, handler.events[0]),
+        [handler.start_day_of_week],
+        handler.start_day_of_week,
+        total_iterations=handler.max_iteration_count,
+        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        repeat_every=repeat_every,
+    )
+
+
 def migrate_custom_daily_schedule(handler):
     return TimedSchedule.create_custom_daily_schedule(
         handler.domain,
@@ -701,6 +721,16 @@ class Command(BaseCommand):
         ):
             if handler.start_day_of_week != DAY_ANY:
                 # Weekly schedule goes here
+                if (
+                    handler.start_day_of_week >= 0 and
+                    handler.start_day_of_week <= 6 and
+                    len(handler.events) == 1 and
+                    handler.events[0].day == 0 and
+                    handler.start_offset == 0 and
+                    ((handler.schedule_length % 7) == 0 or handler.max_iteration_count == 1)
+                ):
+                    return migrate_simple_weekly_schedule
+
                 return None
             elif (
                 len(handler.events) == 1 and
