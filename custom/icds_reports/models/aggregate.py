@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date
+
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models
 
@@ -12,14 +14,14 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-)
+    AGG_INACTIVE_AWW_TABLE)
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     GrowthMonitoringFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
-)
+    InactiveAwwsAggregationHelper)
 
 
 class CcsRecordMonthly(models.Model):
@@ -891,3 +893,48 @@ class AggregateGrowthMonitoringForms(models.Model):
             cursor.execute(query, params)
             rows = fetchall_as_namedtuple(cursor)
             return [row.child_health_case_id for row in rows]
+
+
+class AggregateInactiveAWW(models.Model):
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    first_submission = models.DateField(blank=True, null=True)
+    last_submission = models.DateField(blank=True, null=True)
+
+    @property
+    def days_since_start(self):
+        if self.first_submission:
+            delta = date.today() - self.first_submission
+            return delta.days
+        return 'N/A'
+
+    @property
+    def days_inactive(self):
+        if self.last_submission:
+            delta = date.today() - self.last_submission
+            return delta.days
+        return 'N/A'
+
+    @classmethod
+    def aggregate(cls, last_sync):
+        helper = InactiveAwwsAggregationHelper(last_sync)
+        missing_location_query = helper.missing_location_query()
+        aggregation_query, agg_params = helper.aggregate_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+
+    class Meta(object):
+        managed = False
+        app_label = 'icds_reports'
+        db_table = AGG_INACTIVE_AWW_TABLE

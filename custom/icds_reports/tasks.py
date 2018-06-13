@@ -35,6 +35,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
     UcrTableNameMapping)
+from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
 from dimagi.utils.chunked import chunked
@@ -183,6 +184,10 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             no_op_task_for_celery_bug.si(),
         ))
         tasks.append(group(
+            icds_aggregation_task.si(date=date, func=_aggregate_inactive_aww),
+            no_op_task_for_celery_bug.si()
+        ))
+        tasks.append(group(
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
             no_op_task_for_celery_bug.si(),
         ))
@@ -325,6 +330,12 @@ def _aggregate_child_health_pnc_forms(state_id, day):
 @track_time
 def _aggregate_thr_forms(state_id, day):
     AggregateChildHealthTHRForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_inactive_aww(day):
+    one_day_before = day - relativedelta(days=1)
+    AggregateInactiveAWW.aggregate(one_day_before)
 
 
 @transaction.atomic

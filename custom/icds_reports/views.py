@@ -43,6 +43,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
+from custom.icds_reports.models import AggregateInactiveAWW
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -110,6 +111,9 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.shortcuts import export_response
+from io import BytesIO
+from couchexport.export import export_from_tables
 
 
 @location_safe
@@ -1649,3 +1653,23 @@ class ICDSAppTranslations(BaseDomainView):
                     messages.success(request, _('Successfully enqueued request to submit files for translations'))
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveAWW(View):
+    def get(self, request, *args, **kwargs):
+        export_file = BytesIO()
+        excel_data = AggregateInactiveAWW.objects.all()
+        columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
+            'days_since_start',
+            'days_inactive'
+        ]
+        rows = [columns]
+        for data in excel_data:
+            rows.append(
+                [getattr(data, field) or 'N/A' for field in columns]
+            )
+
+        export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+        title = "inactive_awws_%s" % date.today().strftime('%Y-%m-%d')
+        return export_response(export_file, 'csv', title)
