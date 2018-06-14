@@ -53,6 +53,11 @@ class ConvenientBaseMixIn(object):
 
     @property
     def headers(self):
+        soft_assert('czue@{}'.format('dimagi.com'))(
+            False, 'amazingly, someone ({}) is still looking at bihar reports'.format(
+                self.request.couch_user.username,
+            )
+        )
         headers = self._headers[self.mode] if isinstance(self._headers, dict) else self._headers
         return DataTablesHeader(*(DataTablesColumn(_(h)) for h in headers))
 
@@ -228,6 +233,7 @@ class SubCenterSelectionReport(ConvenientBaseMixIn, GenericTabularReport,
 
 
 class MainNavReport(BiharSummaryReport, IndicatorConfigMixIn):
+    # note: this is broken
     name = ugettext_noop("Main Menu")
     slug = "mainnav"
     description = ugettext_noop("Main navigation")
