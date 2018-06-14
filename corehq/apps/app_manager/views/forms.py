@@ -127,7 +127,7 @@ def copy_form(request, domain, app_id, form_unique_id):
     to_module = to_app.get_module(to_module_id)
     new_form = None
     try:
-        new_form = app.copy_form(module.id, form.id, to_module.id, to_app)
+        new_form = app.copy_form(module, form, to_module, rename=True)
         if module['case_type'] != to_module['case_type']:
             messages.warning(request, CASE_TYPE_CONFLICT_MSG, extra_tags="html")
         to_app.save()

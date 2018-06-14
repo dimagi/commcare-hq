@@ -236,7 +236,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         original_form = app.new_form(module.id, "Untitled Form", None)
         original_form.source = '<source>'
 
-        app._copy_form(module, original_form, module, rename=True)
+        app.copy_form(module, original_form, module, rename=True)
 
         form_count = 0
         for f in app.get_forms():
@@ -253,7 +253,7 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
         dst_app = Application.new_app('domain', "Destination Application")
         dst_module = dst_app.add_module(AdvancedModule.new_module('Destination Module', None))
 
-        src_app._copy_form(src_module, original_form, dst_module, dst_app, rename=True)
+        src_app.copy_form(src_module, original_form, dst_module, rename=True)
 
         form_count = 0
         for f in src_app.get_forms():

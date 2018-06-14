@@ -6025,21 +6025,13 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
-    def copy_form(self, module_id, form_id, to_module_id, to_app=None):
+    def copy_form(self, from_module, form, to_module, rename=False):
         """
         The case type of the two modules conflict,
         copying (confusingly) is still allowed.
         This is intentional.
 
         """
-        if to_app is None:
-            to_app = self
-        from_module = self.get_module(module_id)
-        form = from_module.get_form(form_id)
-        to_module = to_app.get_module(to_module_id)
-        return self._copy_form(from_module, form, to_module, to_app, rename=True)
-
-    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
         # only one form can be a release notes form, so set them to False explicitly when copying
         copy_source['is_release_notes_form'] = False
@@ -6047,7 +6039,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        if 'rename' in kwargs and kwargs['rename']:
+        if rename:
             for lang, name in six.iteritems(copy_source['name']):
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
