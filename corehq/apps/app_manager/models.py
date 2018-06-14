@@ -2420,13 +2420,13 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuleBase, self).__init__(*args, **kwargs)
+        self.assign_references()
+
     @property
     def is_surveys(self):
         return self.case_type == ""
-
-    def after_add(self):
-        self.get_or_create_unique_id()
-        self.assign_references()
 
     def assign_references(self):
         if hasattr(self, 'case_list'):
@@ -2439,19 +2439,17 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
         if cls is ModuleBase:
             doc_type = data['doc_type']
             if doc_type == 'Module':
-                wrapped_obj = Module.wrap(data)
+                return Module.wrap(data)
             elif doc_type == 'AdvancedModule':
-                wrapped_obj = AdvancedModule.wrap(data)
+                return AdvancedModule.wrap(data)
             elif doc_type == 'ReportModule':
-                wrapped_obj = ReportModule.wrap(data)
+                return ReportModule.wrap(data)
             elif doc_type == 'ShadowModule':
-                wrapped_obj = ShadowModule.wrap(data)
+                return ShadowModule.wrap(data)
             else:
                 raise ValueError('Unexpected doc_type for Module', doc_type)
         else:
-            wrapped_obj = super(ModuleBase, cls).wrap(data)
-        wrapped_obj.assign_references()
-        return wrapped_obj
+            return super(ModuleBase, cls).wrap(data)
 
     def get_or_create_unique_id(self):
         """
@@ -2805,7 +2803,7 @@ class Module(ModuleBase, ModuleDetailsMixin):
                 long=Detail(detail.to_json()),
             ),
         )
-        module.after_add()
+        module.get_or_create_unique_id()
         return module
 
     @classmethod
@@ -3525,7 +3523,7 @@ class AdvancedModule(ModuleBase):
                 long=Detail(),
             ),
         )
-        module.after_add()
+        module.get_or_create_unique_id()
         return module
 
     def new_form(self, name, lang, attachment=Ellipsis):
@@ -4222,7 +4220,7 @@ class ReportModule(ModuleBase):
             name={(lang or 'en'): name or ugettext("Reports")},
             case_type='',
         )
-        module.after_add()
+        module.get_or_create_unique_id()
         return module
 
     def get_details(self):
@@ -4407,7 +4405,7 @@ class ShadowModule(ModuleBase, ModuleDetailsMixin):
                 long=Detail(detail.to_json()),
             ),
         )
-        module.after_add()
+        module.get_or_create_unique_id()
         return module
 
     def validate_for_build(self):
