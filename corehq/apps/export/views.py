@@ -13,7 +13,7 @@ from django.core.exceptions import SuspiciousOperation
 from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    StreamingHttpResponse, HttpResponseServerError
+    HttpResponseServerError
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
@@ -2426,7 +2426,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
     payload = export_instance.get_payload(stream=True)
     format = Format.from_format(export_instance.export_format)
-    return get_download_response(payload, export_instance.file_length, format, export_instance.filename, request)
+    return get_download_response(payload, export_instance.file_length, format, export_instance.filename, req)
 
 
 class CopyExportView(View):
