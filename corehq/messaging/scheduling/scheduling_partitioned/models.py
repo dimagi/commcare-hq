@@ -485,6 +485,9 @@ class CaseScheduleInstanceMixin(object):
 
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_PARENT_CASE:
+            if self.case:
+                return self.case.parent
+
             return None
         elif self.recipient_type == self.RECIPIENT_TYPE_CHILD_CASE:
             return None
