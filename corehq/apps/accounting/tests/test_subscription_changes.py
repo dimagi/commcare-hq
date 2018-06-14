@@ -6,6 +6,7 @@ from mock import patch, Mock
 from corehq.apps.accounting.models import (
     Subscription, BillingAccount, DefaultProductPlan, SoftwarePlanEdition,
     Subscriber)
+from corehq.apps.accounting.exceptions import SubscriptionAdjustmentError
 from corehq.apps.accounting.subscription_changes import DomainDowngradeActionHandler
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -204,3 +205,41 @@ class TestSubscriptionChangeResourceConflict(BaseAccountingTest):
             Domain_patch.get_by_name.side_effect = lambda name: get_by_name_func(name)
             handler.get_response()
             Domain_patch.get_by_name.assert_called_with(self.domain_name)
+
+
+class TestSoftwarePlanChanges(BaseAccountingTest):
+
+    def setUp(self):
+        super(TestSoftwarePlanChanges, self).setUp()
+        self.domain = Domain(
+            name="test-plan-changes",
+            is_active=True,
+        )
+        self.domain.save()
+        self.domain2 = Domain(
+            name="other-domain",
+            is_active=True,
+        )
+        self.domain2.save()
+
+        self.admin_username = generator.create_arbitrary_web_user_name()
+        self.account = BillingAccount.get_or_create_account_by_domain(
+            self.domain.name, created_by=self.admin_username)[0]
+        self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
+        self.advanced_plan.plan.max_domains = 1
+        self.community_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.COMMUNITY)
+
+    def tearDown(self):
+        self.domain.delete()
+        self.domain2.delete()
+        super(TestSoftwarePlanChanges, self).tearDown()
+
+    def test_change_plan_blocks_on_max_domains(self):
+        Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        )
+
+        sub2 = Subscription.new_domain_subscription(
+            self.account, self.domain2.name, self.community_plan
+        )
+        self.assertRaises(SubscriptionAdjustmentError, lambda: sub2.change_plan(self.advanced_plan))

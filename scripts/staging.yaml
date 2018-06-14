@@ -49,9 +49,6 @@
 trunk: master
 name: autostaging
 branches:
-  #- vellum-staging # J$ 11/13
-  #- jls/add-js-to-sentry # Jenny April 26
-  - np/draggable  # NP 5/10
   - je/min-year # j$ Jun 1
   - mk-add-meta-drift # MK June 4
   - jls/prune-auto-builds  # Jenny June 5
@@ -59,7 +56,8 @@ branches:
   - fr/case-list-explorer-report-export # farid june 5
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
-  - np/revert # NP June 11
+  - jls/kill-mm-case-properties  # Jenny June 13
+  - np/add-case-type  # NP June 13
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

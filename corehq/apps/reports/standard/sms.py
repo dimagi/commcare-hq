@@ -209,7 +209,7 @@ class BaseCommConnectLogReport(ProjectReport, ProjectReportParametersMixin, Gene
         couch_object = None
         sql_object = None
 
-        if recipient_id:
+        if recipient_id and recipient_doc_type:
             try:
                 if recipient_doc_type.startswith('CommCareCaseGroup'):
                     couch_object = CommCareCaseGroup.get(recipient_id)

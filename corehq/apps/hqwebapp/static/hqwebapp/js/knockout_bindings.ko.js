@@ -171,6 +171,163 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
+    ko.bindingHandlers.multi_sortable = {
+        updateSortableList: function(itemList) {
+            _(itemList()).each(function(item, index) {
+                if (item._sortableOrder === undefined) {
+                    item._sortableOrder = ko.observable(index);
+                } else {
+                    item._sortableOrder(index);
+                }
+            });
+        },
+        getList: function(valueAccessor) {
+            /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
+            var modelValue = valueAccessor(),
+                unwrappedValue = ko.utils.peekObservable(modelValue);
+            if ((!unwrappedValue) || typeof unwrappedValue.length === "number") {
+                return modelValue;
+            } else {
+                return unwrappedValue['data'];
+            }
+        },
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            var forceUpdate = function() {
+                ko.bindingHandlers.multi_sortable.update(
+                    element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
+                );
+            };
+            list.subscribe(forceUpdate);
+
+            // based on https://jsfiddle.net/hQnWG/614/
+
+            $(element).on('click', 'tr', function (e) {
+                if ($(this).hasClass('moving')) {
+                    $(this).removeClass('moving');
+                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                } else if (e.ctrlKey || e.metaKey) {
+                    $(this).toggleClass("selected-for-sort").toggleClass('success');
+                    $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
+                } else if (e.shiftKey) {
+                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
+                        shiftClickedRow = $(this),
+                        lastClickedIndex = 0,
+                        lastClickedRow = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedRow = $('.last-clicked').eq(0);
+                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
+                    } else {
+                        lastClickedRow = $(this).parent().children().eq(0);
+                    }
+
+                    var firstRow = null,
+                        start = null,
+                        end = null;
+                    if (shiftSelectedIndex < lastClickedIndex) {
+                        start = shiftSelectedIndex;
+                        end = lastClickedIndex;
+                        firstRow = shiftClickedRow;
+                    } else {
+                        start = lastClickedIndex;
+                        end = shiftSelectedIndex;
+                        firstRow = lastClickedRow;
+                    }
+
+                    var next = firstRow;
+                    for (var i = start; i <= end; i++) {
+                        next.addClass('selected-for-sort').addClass('success');
+                        next = next.next();
+                    }
+                } else {
+                    $(this).addClass("selected-for-sort").addClass('success').addClass('last-clicked')
+                           .siblings().removeClass('selected-for-sort').removeClass('success').removeClass('last-clicked');
+                }
+            });
+
+            $(element).on('click', '.send-to-top', function () {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                var row = $(this).parent().parent();
+                var currentIndex = row[0].attributes['data-order'].value;
+                list.unshift(list.splice(currentIndex, 1)[0]);
+            });
+
+            $(element).on('click', '.send-to-bottom', function () {
+                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+
+                var row = $(this).parent().parent();
+                var currentIndex = row[0].attributes['data-order'].value;
+
+                var lastSelectedRowIndex = null;
+                for (var i = 0; i < list().length; i++) {
+                    if (list()[i].selected()) {
+                        lastSelectedRowIndex = i;
+                    }
+                }
+
+                if (currentIndex < lastSelectedRowIndex) {
+                    var currentListItem = list.splice(currentIndex, 1)[0];
+                    list.splice(lastSelectedRowIndex, 0, currentListItem);
+                }
+            });
+
+            $(element).sortable({
+                delay: 150,
+                helper: function (e, item) {
+                    if (!item.hasClass('selected-for-sort')) {
+                        item.addClass('selected-for-sort').addClass('success')
+                            .siblings().removeClass('selected-for-sort').removeClass('success');
+                    }
+
+                    var elements = item.siblings('.selected-for-sort').detach();
+                    $('body').append(elements);
+
+                    return item;
+                },
+                stop: function (e, ui) {
+                    ui.item.after($('.selected-for-sort'));
+
+                    // TODO - get working
+                    $('.selected-for-sort').sort(function(a, b) {
+                        var aDataOrder = parseInt(a.attributes['data-order'].value),
+                            bDataOrder = parseInt(b.attributes['data-order'].value);
+                        if (aDataOrder < bDataOrder) {
+                            return -1;
+                        } else if (bDataOrder < aDataOrder) {
+                            return 1;
+                        } else {
+                            return 0;
+                        }
+                    });
+
+                    // Reorder the data in knockout
+                    var newList = [],
+                        cur = 0,
+                        i = 0;
+                    for (cur = 0; cur < element.children.length; cur++) {
+                        i = parseInt(element.children[cur].attributes['data-order'].value);
+                        newList.push(list()[i]);
+                    }
+                    list().splice(0, list().length);
+                    for (i = 0; i < newList.length; i++) {
+                        list().push(newList[i]);
+                    }
+
+                    for (cur = 0; cur < element.children.length; cur++) {
+                        element.children[cur].attributes['data-order'].value = cur;
+                    }
+                },
+            });
+            return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        },
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            ko.bindingHandlers.multi_sortable.updateSortableList(list);
+            return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
+        },
+    };
+
     ko.bindingHandlers.saveButton = {
         init: function(element, getSaveButton) {
             getSaveButton().ui.appendTo(element);
