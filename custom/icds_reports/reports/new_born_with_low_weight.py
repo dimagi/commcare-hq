@@ -76,7 +76,9 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     'value': indian_formatted_number(low_birth_total)
                 },
                 {
-                    'indicator': 'Total Number of children born and weight in given month{}:'.format(chosen_filters),
+                    'indicator': 'Total Number of children born and weight in given month{}:'.format(
+                        chosen_filters
+                    ),
                     'value': indian_formatted_number(in_month_total)
                 },
                 {
