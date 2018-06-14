@@ -31,7 +31,7 @@ primary_table:
         datatype: small_integer
         statement: CASE WHEN lmp < :month_end and (delivery_date is null or delivery_date >= :month_start) THEN 1 ELSE 0 END
         statement_params:
-          # these '_agg' things are magic variables that let you reference the aggregation window's start/end conditions
+          # these ':agg' things are magic variables that let you reference the aggregation window's start/end conditions
           month_start: :agg_window_start
           month_end: :agg_window_end
 time_aggregation:
