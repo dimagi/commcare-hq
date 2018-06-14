@@ -141,7 +141,7 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
-                'billing_admin_emails': ', '.join(account.billing_admin_emails),
+                'billing_admin_emails': ','.join(account.billing_admin_emails),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
