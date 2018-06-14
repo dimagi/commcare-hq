@@ -89,7 +89,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    Sharing,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -657,6 +659,8 @@ class ExportInstance(BlobMixin, Document):
     last_accessed = DateTimeProperty()
 
     description = StringProperty(default='')
+
+    sharing = StringProperty(default=Sharing.EDIT_AND_EXPORT, choices=Sharing.CHOICES)
 
     class Meta(object):
         app_label = 'export'

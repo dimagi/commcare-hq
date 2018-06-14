@@ -84,6 +84,7 @@ from corehq.apps.export.const import (
     MAX_EXPORTABLE_ROWS,
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
+    Sharing,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -1800,6 +1801,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
+        result['sharing_options'] = [Sharing.PRIVATE, Sharing.EXPORT_ONLY, Sharing.EDIT_AND_EXPORT]
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
