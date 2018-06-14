@@ -715,6 +715,23 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                 messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
+    @property
+    @memoized
+    def trigger_customer_invoice_form(self):
+        if self.request.method == 'POST':
+            return TriggerCustomerInvoiceForm(self.request.POST)
+        return TriggerCustomerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_customer_form': self.trigger_customer_invoice_form,
+        }
+
 
 class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
