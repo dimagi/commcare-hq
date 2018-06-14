@@ -53,8 +53,9 @@ class AppManagerTest(TestCase):
         cls.domain = 'test-domain'
         create_domain(cls.domain)
 
-        cls.es = get_es_new()
-        initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
+        with trap_extra_setup(ConnectionError):
+            cls.es = get_es_new()
+            initialize_index_and_mapping(cls.es, APP_INDEX_INFO)
 
         with codecs.open(os.path.join(os.path.dirname(__file__), "data", "very_simple_form.xml"), encoding='utf-8') as f:
             cls.xform_str = f.read()
