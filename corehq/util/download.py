@@ -65,15 +65,10 @@ def get_download_response(payload, content_length, content_format, filename, req
         except ValueError:
             pass
 
-    if ranges is None or len(ranges.ranges) != 1:
+    if ranges and len(ranges.ranges) != 1:
         ranges = None
 
-    if ranges:
-        response_file = RangedFileWrapper(payload)
-    else:
-        response_file = FileWrapper(payload)
-
-    response = StreamingHttpResponse(response_file, content_type=content_format.mimetype)
+    response = StreamingHttpResponse(content_type=content_format.mimetype)
     if content_format.download:
         response['Content-Disposition'] = safe_filename_header(filename)
 
@@ -85,11 +80,13 @@ def get_download_response(payload, content_length, content_format, filename, req
         if stop is not None and stop > content_length:
             # requested range not satisfiable
             return HttpResponse(status=416)
-        response_file.start = start
-        if stop:
-            response_file.stop = stop
+
+        response.streaming_content = RangedFileWrapper(payload, start=start, stop=stop or float("inf"))
         end = stop or content_length
         response["Content-Range"] = "bytes %d-%d/%d" % (start, end - 1, content_length)
         response["Content-Length"] = end - start
         response.status_code = 206
+    else:
+        response.streaming_content = FileWrapper(payload)
+
     return response
