@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import itertools
 from wsgiref.util import FileWrapper
 
 from django.http import StreamingHttpResponse, HttpResponse
@@ -28,24 +29,24 @@ class RangedFileWrapper:
             self.close = filelike.close
 
     def __iter__(self):
+
+        def _partial_read(current_position, stop):
+            """Read blocks of data from current position until ``stop`` position or end of file."""
+            while current_position < stop:
+                data = self.filelike.read(min(self.block_size, stop - current_position))
+                current_position += len(data)
+                if not data:
+                    break
+
+                yield data
+
         if hasattr(self.filelike, 'seek'):
             self.filelike.seek(self.start)
         else:
-            pos_tmp = 0
-            while pos_tmp < self.start:
-                data = self.filelike.read(min(self.block_size, self.start - pos_tmp))
-                pos_tmp += len(data)
-                if not data or pos_tmp == self.start:
-                    break
+            list(itertools.dropwhile(lambda x: True, _partial_read(0, self.start)))
 
-        position = self.start
-        while position < self.stop:
-            data = self.filelike.read(min(self.block_size, self.stop - position))
-            if not data:
-                break
-
+        for data in _partial_read(self.start, self.stop):
             yield data
-            position += self.block_size
 
 
 def get_download_response(payload, content_length, content_format, filename, request=None):
