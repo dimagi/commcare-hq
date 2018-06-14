@@ -64,7 +64,11 @@ class DomainInvoiceFactory(object):
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
             try:
-                self._create_invoice_for_subscription(subscription)
+                if subscription.account.is_customer_billing_account:
+                    log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
+                                        "Billing Account." % (subscription))
+                else:
+                    self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
                     "Invoice already existed for domain %s: %s" % (self.domain.name, e),
