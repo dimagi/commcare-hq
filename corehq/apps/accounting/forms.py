@@ -1818,7 +1818,7 @@ class TriggerInvoiceForm(forms.Form):
 class TriggerCustomerInvoiceForm(forms.Form):
     month = forms.ChoiceField(label="Statement Period Month")
     year = forms.ChoiceField(label="Statement Period Year")
-    account = forms.CharField(label="Billing Account")
+    customer_account = forms.CharField(label="Billing Account")
 
     def __init__(self, *args, **kwargs):
         super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
@@ -1839,7 +1839,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
                 'Trigger Customer Invoice Details',
                 crispy.Field('month', css_class="input-large"),
                 crispy.Field('year', css_class="input-large"),
-                crispy.Field('account', css_class="input-xxlarge accounting-async-select2",
+                crispy.Field('customer_account', css_class="input-xxlarge accounting-async-select2",
                              placeholder="Search for Customer Billing Account")
             ),
             hqcrispy.FormActions(
