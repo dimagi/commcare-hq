@@ -121,7 +121,7 @@ def _export_item_to_ucr_indicator(export_item):
                         "property_name": "indices"
                     },
                     "filter_expression": {
-                       "type": "boolean_expression",
+                        "type": "boolean_expression",
                         "expression": {
                             "type": "property_name",
                             "property_name": "referenced_type"
