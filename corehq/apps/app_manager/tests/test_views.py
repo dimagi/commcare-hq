@@ -11,9 +11,11 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 
 from corehq import toggles
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import (
@@ -218,3 +220,33 @@ class TestViews(TestCase):
         expected = '/apps/view/{}/?appcues=1'.format(app_id)    # Remove get param when APPCUES_AB_TEST is over
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
+
+    def test_get_apps_modules(self, mock):
+        self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.save()
+
+        other_app = Application.new_app(self.domain.name, "OtherApp")
+        other_app.add_module(Module.new_module("Module0", "en"))
+        other_app.save()
+        self.addCleanup(lambda: Application.get_db().delete_doc(other_app.id))
+
+        linked_app = create_linked_app(self.domain.name, self.app.id, self.domain.name, 'LinkedApp')
+        self.addCleanup(lambda: Application.get_db().delete_doc(linked_app.id))
+
+        deleted_app = Application.new_app(self.domain.name, "DeletedApp")
+        deleted_app.add_module(Module.new_module("Module0", "en"))
+        deleted_app.save()
+        deleted_app.delete_app()
+        self.addCleanup(lambda: Application.get_db().delete_doc(deleted_app.id))
+
+        apps_modules = get_apps_modules(self.domain.name)
+
+        self.assertEqual(len(apps_modules), 2, 'get_apps_modules should only return normal Applications')
+        self.assertTrue(
+            all(len(app['modules']) == 1 for app in apps_modules),
+            'Each app should only have one module'
+        )
+        self.assertEqual(
+            apps_modules[0]['modules']['name'], {'en': 'Module0'},
+            'Module name should be a dictionary'
+        )
