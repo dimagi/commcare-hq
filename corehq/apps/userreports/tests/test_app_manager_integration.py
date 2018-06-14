@@ -9,7 +9,6 @@ from mock import patch
 from casexml.apps.case.models import CommCareCase
 from casexml.apps.case.sharedmodels import CommCareCaseIndex
 from corehq.apps.app_manager.tests.app_factory import AppFactory
-from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.export.dbaccessors import delete_all_export_data_schemas
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.userreports.app_manager.helpers import get_case_data_sources, get_form_data_sources
