@@ -333,13 +333,13 @@ def get_auto_generated_built_apps(domain, app_id):
     """
     from .models import Application
     results = Application.get_db().view(
-        'app_manager/is_auto_generated',
+        'saved_apps_auto_generated/view',
         startkey=[domain, app_id],
         endkey=[domain, app_id, {}],
         reduce=False,
-        include_docs=True,
+        include_docs=False,
     ).all()
-    return results
+    return [doc['value'] for doc in results]
 
 
 def get_latest_app_ids_and_versions(domain, app_id=None):
