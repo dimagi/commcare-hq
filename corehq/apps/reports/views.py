@@ -6,6 +6,8 @@ from functools import partial
 import itertools
 import json
 from wsgiref.util import FileWrapper
+
+from corehq.form_processor.utils.download import get_download_response
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -665,9 +667,8 @@ def _download_saved_export(req, domain, saved_export):
     saved_export.save()
 
     payload = saved_export.get_payload(stream=True)
-    return build_download_saved_export_response(
-        payload, saved_export.configuration.format, saved_export.configuration.filename
-    )
+    format = Format.from_format(saved_export.configuration.format)
+    return get_download_response(payload, saved_export.size, format, saved_export.configuration.filename, req)
 
 
 def build_download_saved_export_response(payload, format, filename):
