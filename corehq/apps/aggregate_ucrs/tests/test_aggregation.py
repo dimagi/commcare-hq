@@ -26,6 +26,8 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
 
 
+
+
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     domain = 'agg'
     case_type = 'agg-cases'
@@ -48,9 +50,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     def setUpClass(cls):
         super(UCRAggregationTest, cls).setUpClass()
         # cleanup any previous data
-        delete_all_cases()
-        delete_all_xforms()
-        delete_all_apps()
+        cls._cleanup_data()
 
         # setup app
         factory = AppFactory(domain=cls.domain)
@@ -90,6 +90,16 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         AggregateTableDefinition.objects.all().delete()
         cls.monthly_aggregate_table_definition = cls._get_monthly_aggregate_table_definition()
         cls.basic_aggregate_table_definition = cls._get_basic_aggregate_table_definition()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._cleanup_data()
+
+    @classmethod
+    def _cleanup_data(cls):
+        delete_all_cases()
+        delete_all_xforms()
+        delete_all_apps()
 
     def setUp(self):
         # confirm that our setupClass function properly did its job
