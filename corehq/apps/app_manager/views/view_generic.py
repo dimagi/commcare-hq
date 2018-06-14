@@ -320,10 +320,22 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
+    mobile_ux_cookie = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+
+    context.update({
+        'show_mobile_ux_warning': (
+                not request.COOKIES.get(mobile_ux_cookie)
+                and request.user_agent.is_mobile
+        ),
+    })
+
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
 
     response = render(request, template, context)
+
+    if request.user_agent.is_mobile:
+        response.set_cookie(mobile_ux_cookie, True)
 
     response.set_cookie('lang', encode_if_unicode(lang))
     return response

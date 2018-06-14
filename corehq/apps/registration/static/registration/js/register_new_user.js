@@ -2,11 +2,6 @@
 $(function () {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get;
 
-    $(window).on('resize load', function () {
-        var newHeight = $(window).height() - $('#hq-navigation').outerHeight() - $('#hq-footer').outerHeight() - 1;  // -1 for rounding errors
-        var minHeight = initial_page_data('show_number') ? 600 : 450;
-        $('.reg-form-column').css('min-height', Math.max(newHeight, minHeight) + 'px');
-    });
 
     // Link up with registration form ko model
     var reg = hqImport('registration/js/new_user.ko');
@@ -74,11 +69,4 @@ $(function () {
             return $number.intlTelInput("getNumber");
         });
     }
-
-    // Blazy for loading images asynchronously
-    // Usage: specify the b-lazy class on an element and adding the path
-    // to the image in data-src="{% static 'path/to/image.jpg' %}"
-    new Blazy({
-        container: 'body',
-    });
 });

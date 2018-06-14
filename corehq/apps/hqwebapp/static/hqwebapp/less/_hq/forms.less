@@ -538,5 +538,51 @@ table .ko-inline-edit .read-only:hover {
   }
 }
 
+.form-bubble {
+  padding: 20px;
+  margin: 10px 0;
+  .border-top-radius(5px);
+  .border-bottom-radius(5px);
+  box-sizing: content-box;
+  background-color: @cc-brand-mid;
+  color: white;
 
+  fieldset {
+    padding: 0.01em 0 0 0;
+  }
 
+  legend {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding: 0;
+    display: table;
+    text-align: center;
+    color: white;
+  }
+
+  .help-block {
+    text-align: left;
+    color: white;
+  }
+
+  a,
+  a:visited,
+  a:link {
+    color: @cc-brand-hi;
+  }
+}
+
+.form-bubble-actions {
+  text-align: center;
+  padding-bottom: 10px;
+}
+
+.form-bubble-lg {
+  input[type="text"],
+  input[type="number"],
+  input[type="password"] {
+    .input-size(@input-height-large; @padding-large-vertical; @padding-large-horizontal; @font-size-large; @line-height-large; @input-border-radius-large);
+    width: 100%;
+    color: @cc-text;
+  }
+}
