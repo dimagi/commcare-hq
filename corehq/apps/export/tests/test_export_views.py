@@ -122,14 +122,14 @@ def test_data_file_download_partial(self, start, end):
 
     resp = self.client.get(data_file_url, HTTP_RANGE='bytes={}'.format(range))
     self.assertEqual(resp.status_code, 206)
-    self.assertEqual(resp['Content-Range'], 'bytes {}-{}/{}'.format(start, end or content_length, content_length))
-    self.assertEqual(resp['Content-Length'], '{}'.format(end - start + 1 if end else content_length - start))
+    self.assertEqual(resp['Content-Range'], 'bytes {}-{}/{}'.format(start, end or (content_length - 1), content_length))
     if end:
-        self.assertEqual(resp.getvalue(), self.content[start:end + 1])
+        expected_content = self.content[start:end + 1]
     else:
-        self.assertEqual(resp.getvalue(), self.content[start:])
+        expected_content = self.content[start:]
 
-
+    self.assertEqual(resp['Content-Length'], '{}'.format(len(expected_content)))
+    self.assertEqual(resp.getvalue(), expected_content)
 
 class ExportViewTest(ViewTestCase):
 

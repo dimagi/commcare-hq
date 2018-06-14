@@ -84,8 +84,8 @@ def get_download_response(payload, content_length, content_format, filename, req
         response_file.start = start
         if stop:
             response_file.stop = stop
-        end = stop - 1 if stop else content_length
-        response["Content-Range"] = "bytes %d-%d/%d" % (start, end, content_length)
-        response["Content-Length"] = (stop or content_length) - start
+        end = stop or content_length
+        response["Content-Range"] = "bytes %d-%d/%d" % (start, end - 1, content_length)
+        response["Content-Length"] = end - start
         response.status_code = 206
     return response
