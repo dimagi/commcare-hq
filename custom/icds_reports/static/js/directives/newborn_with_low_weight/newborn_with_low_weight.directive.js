@@ -32,7 +32,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
         var chosenFilters = gender ? ' (' + gender + ') ' : '';
         var total = row ? $filter('indiaNumbers')(row.all) : 'N/A';
         var lowBirth = row ? $filter('indiaNumbers')(row.low_birth) : 'N/A';
-        var in_month_total = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
+        var inMonthTotal = row ? $filter('indiaNumbers')(row.in_month) : 'N/A';
         var percent = row ? d3.format('.2%')(row.low_birth / (row.in_month || 1)) : 'N/A';
         var percentNormal = row ? d3.format('.2%')((row.in_month - row.low_birth) / (row.in_month || 1)) : 'N/A';
         var unweighedPercent = row ? d3.format('.2%')((row.all - row.in_month) / (row.all || 1)) : 'N/A';
@@ -48,7 +48,7 @@ function NewbornWithLowBirthController($scope, $routeParams, $location, $filter,
             },
             {
                 indicator_name: 'Total Number of children born and weight in given month: ',
-                indicator_value: in_month_total,
+                indicator_value: inMonthTotal,
             },
             {
                 indicator_name: '% newborns with LBW in given month' + chosenFilters + ': ',
