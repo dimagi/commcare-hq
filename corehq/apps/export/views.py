@@ -1665,6 +1665,7 @@ class CaseExportListView(BaseExportListView):
             'isLegacy': isinstance(export, CaseExportSchema),
             'name': export.name,
             'case_type': export.case_type,
+            'description': export.description,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
