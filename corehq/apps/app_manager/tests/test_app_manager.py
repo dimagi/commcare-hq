@@ -238,7 +238,7 @@ class AppManagerTest(TestCase):
         self.assertTrue(build2.is_auto_generated)
 
         # First prune: delete nothing because the auto build is the most recent
-        prune_auto_generated_builds(self.domain, app_id)
+        prune_auto_generated_builds(self.domain, app.id)
         self.assertEqual(len(get_built_app_ids_for_app_id(app.domain, app.id)), 2)
 
         # Build #3, manually generated
@@ -249,13 +249,13 @@ class AppManagerTest(TestCase):
         # Release the auto-generated build and prune again, should still delete nothing
         build2.is_released = True
         build2.save()
-        prune_auto_generated_builds(self.domain, app_id)
+        prune_auto_generated_builds(self.domain, app.id)
         self.assertEqual(len(get_built_app_ids_for_app_id(app.domain, app.id)), 3)
 
         # Un-release the auto-generated build and prune again, which should delete it
         build2.is_released = False
         build2.save()
-        prune_auto_generated_builds(self.domain, app_id)
+        prune_auto_generated_builds(self.domain, app.id)
         build_ids = get_built_app_ids_for_app_id(app.domain, app.id)
         self.assertEqual(len(build_ids), 2)
         self.assertNotIn(build2.id, build_ids)
