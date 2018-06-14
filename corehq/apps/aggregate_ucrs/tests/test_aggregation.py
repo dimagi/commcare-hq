@@ -44,6 +44,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         datetime(2018, 4, 11),
         datetime(2018, 4, 16),
     )
+    parent_case_type = 'parent'
     parent_name = 'Mama'
 
     @classmethod
@@ -54,23 +55,27 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # setup app
         factory = AppFactory(domain=cls.domain)
-        m0, f0 = factory.new_basic_module('A Module', cls.case_type)
-        cls.reg_form = f0
-        f0.source = cls._get_xform()
-        factory.form_opens_case(f0, case_type=cls.case_type)
+        # parent case module, incl opening child cases of main type
+        m_parent, f_parent = factory.new_basic_module('Parent Module', cls.parent_case_type)
+        factory.form_opens_case(f_parent, case_type=cls.parent_case_type)
+        factory.form_opens_case(f_parent, case_type=cls.case_type, is_subcase=True)
 
+        # main module
+        m0, f0 = factory.new_basic_module('A Module', cls.case_type)
         f1 = factory.new_form(m0)
         f1.source = cls._get_xform()
         factory.form_requires_case(f1, case_type=cls.case_type, update={
             cp[0]: '/data/{}'.format(cp[0]) for cp in cls.case_properties
         })
         cls.followup_form = f1
+
         cls.app = factory.app
         cls.app.save()
 
         # create form and case ucrs
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
         cls.case_data_source = get_case_data_source(cls.app, cls.case_type)
+        cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
         # create some data - first just create the case
         cls.parent_case_id = cls._create_parent_case(cls.parent_name)
         cls.case_id = cls._create_case(cls.parent_case_id)
@@ -80,6 +85,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         # populate the UCRs with the data we just created
         cls.case_adapter = get_indicator_adapter(cls.case_data_source)
         cls.form_adapter = get_indicator_adapter(cls.form_data_source)
+        cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
 
         cls.case_adapter.rebuild_table()
         cls.form_adapter.rebuild_table()
