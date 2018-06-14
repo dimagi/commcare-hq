@@ -664,7 +664,7 @@ class BaseCustomEventFormSet(BaseFormSet):
     def non_deleted_forms(self):
         return sorted(
             [form for form in self.forms if not form.is_deleted],
-            key=lambda form: int(form['ORDER'].value())
+            key=lambda form: form.cleaned_data['ORDER']
         )
 
     def validate_alert_schedule_min_tick(self, custom_event_forms):
