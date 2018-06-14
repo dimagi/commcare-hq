@@ -51,7 +51,7 @@ def get_form_data_sources(app):
 
     for module in app.get_modules():
         for form in module.get_forms():
-            forms = {form.xmlns: get_form_data_source(app, form)}
+            forms[form.xmlns] = get_form_data_source(app, form)
 
     return forms
 
