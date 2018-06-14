@@ -152,7 +152,7 @@
 
                 {% if request|toggle_enabled:"EXPORT_MULTISORT" %}
                 <tbody data-bind="
-                    multi_sortable: {
+                    multirow_sortable: {
                         data: table.columns,
                         as: 'column',
                         name: 'ko-export-column-template'
