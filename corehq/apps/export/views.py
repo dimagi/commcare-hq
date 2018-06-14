@@ -20,6 +20,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
+from corehq.form_processor.utils.download import get_download_response
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
@@ -113,7 +114,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import SavedExportSchema
+from couchexport.models import SavedExportSchema, Format
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from memoized import memoized
@@ -1440,12 +1441,13 @@ class DataFileDownloadDetail(BaseProjectDataView):
         try:
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
-            response = StreamingHttpResponse(FileWrapper(blob), content_type=data_file.content_type)
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
-        response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
-        response['Content-Length'] = data_file.content_length
-        return response
+
+        format = Format('', data_file.content_type, '', True)
+        return get_download_response(
+            blob, data_file.content_length, format, data_file.filename, request
+        )
 
     def delete(self, request, *args, **kwargs):
         try:
@@ -2422,9 +2424,8 @@ def download_daily_saved_export(req, domain, export_instance_id):
         export_instance.save()
 
     payload = export_instance.get_payload(stream=True)
-    return build_download_saved_export_response(
-        payload, export_instance.export_format, export_instance.filename
-    )
+    format = Format.from_format(export_instance.export_format)
+    return get_download_response(payload, export_instance.file_length, format, export_instance.filename, request)
 
 
 class CopyExportView(View):
