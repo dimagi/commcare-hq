@@ -64,6 +64,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     Select2BillingInfoHandler,
     Select2InvoiceTriggerHandler,
+    Select2CustomerInvoiceTriggerHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
@@ -674,10 +675,13 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
-class TriggerCustomerInvoiceView(AccountingSectionView):
+class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     urlname = 'accounting_trigger_customer_invoice'
     page_title = 'Trigger Customer Invoice'
     template_name = 'accounting/trigger_customer_invoice.html'
+    async_handlers = [
+        Select2CustomerInvoiceTriggerHandler,
+    ]
 
     @property
     @memoized
@@ -695,6 +699,10 @@ class TriggerCustomerInvoiceView(AccountingSectionView):
         return {
             'trigger_customer_form': self.trigger_customer_invoice_form,
         }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
 
 
 class TriggerBookkeeperEmailView(AccountingSectionView):

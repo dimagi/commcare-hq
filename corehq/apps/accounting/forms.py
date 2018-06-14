@@ -1822,6 +1822,42 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
+        today = datetime.date.today()
+        one_month_ago = today - relativedelta(months=1)
+        self.fields['month'].initial = one_month_ago.month
+        self.fields['month'].choices = list(MONTHS.items())
+        self.fields['year'].initial = one_month_ago.year
+        self.fields['year'].choices = [
+            (y, y) for y in range(one_month_ago.year, 2012, -1)
+        ]
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Customer Invoice Details',
+                crispy.Field('month', css_class="input-large"),
+                crispy.Field('year', css_class="input-large"),
+                crispy.Field('account', css_class="input-xxlarge accounting-async-select2",
+                             placeholder="Search for Customer Billing Account")
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Customer Invoice",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+    # @transaction.atomic
+    # def trigger_customer_invoice(self):
+
+    # @staticmethod
+    # def clean_previous_invoices(invoice_start, invoice_end, domain_name):
+
+    # def clean(self):
 
 
 class TriggerBookkeeperEmailForm(forms.Form):
