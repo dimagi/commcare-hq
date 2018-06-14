@@ -152,7 +152,7 @@ class LocationStub(object):
         # The SQLLocation object, either an unsaved or the actual database
         # object depending on whether 'is_new' is True or not
         self.db_object = None
-        self._new_parent_stub = None
+        self.new_parent_stub = None
         # Whether the db_object needs a SQL save, either because it's
         # new or because some attributes are changed
         self.needs_save = False
@@ -191,11 +191,11 @@ class LocationStub(object):
 
     @property
     def new_parent(self):
-        if self._new_parent_stub is None:
+        if self.new_parent_stub is None:
             return None
-        assert self._new_parent_stub.db_object is not None, \
+        assert self.new_parent_stub.db_object is not None, \
             'lookup_old_collection_data not called yet?'
-        return self._new_parent_stub.db_object
+        return self.new_parent_stub.db_object
 
     def lookup_old_collection_data(self, old_collection, locs_by_code):
         """Lookup whether the location already exists or is new"""
@@ -217,14 +217,15 @@ class LocationStub(object):
         )
         if self.parent_code and self.parent_code != ROOT_LOCATION_TYPE:
             try:
-                self._new_parent_stub = locs_by_code[self.parent_code]
+                self.new_parent_stub = locs_by_code[self.parent_code]
             except KeyError:
                 # TODO require all referenced locations to be in stubs and then
                 # remove this exception handler and fake stub nonsense.
                 # Breaks test: TestBulkManagement.test_large_upload
                 class fake_stub:
                     db_object = old_collection.locations_by_site_code[self.parent_code]
-                self._new_parent_stub = fake_stub
+                    do_delete = False
+                self.new_parent_stub = fake_stub
 
         for attr in self.meta_data_attrs:
             setattr(self.db_object, attr, getattr(self, attr, None))
@@ -883,11 +884,24 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
+    def handle_delete(loc):
+        delete_locations.append(loc)
+        while True:
+            parent_stub = loc.new_parent_stub
+            if parent_stub is None or parent_stub.do_delete:
+                break
+            location_id = parent_stub.db_object.location_id
+            assert location_id, repr(parent_stub.db_object)
+            if location_id in ancestors_of_deleted_nodes:
+                break
+            ancestors_of_deleted_nodes.add(location_id)
+
     delete_locations = []
+    ancestors_of_deleted_nodes = set()
     with transaction.atomic():
         for loc in order_by_location_type():
             if loc.do_delete:
-                delete_locations.append(loc)
+                handle_delete(loc)
                 continue
             if excel_importer:
                 excel_importer.add_progress()
@@ -897,7 +911,7 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
                 loc_object.parent = loc.new_parent
                 loc_object.save()
 
-        # reverse -> delete from bottom to top
+        # reverse -> delete leaf nodes first
         # WARNING the databases may be left in an inconsistent state if
         # an exception is thrown during deletion because SQLLocation.delete()
         # deletes resources that are stored in other databases that will
@@ -906,4 +920,8 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
             if excel_importer:
                 excel_importer.add_progress()
             if not loc.is_new:
-                loc.db_object.delete()
+                loc.db_object.delete(bulk_leaf_delete=True)
+
+    if ancestors_of_deleted_nodes:
+        from . tasks import update_users_at_locations
+        update_users_at_locations.delay(list(ancestors_of_deleted_nodes))

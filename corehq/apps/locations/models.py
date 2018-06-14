@@ -430,15 +430,29 @@ class SQLLocation(AdjListModel):
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
+        """Delete this location and update users and supply point case
+
+        :param bulk_leaf_delete: Optional flag indicating a bulk delete
+        operation where locations are deleted starting at leaf nodes of
+        the tree and progressing toward the root. Users at ancestor
+        locations will not be updated (via `update_users_at_locations`)
+        when this flag is `True`. This parameter must be passed as a
+        keyword argument. The default value is `False`.
+        """
         from corehq.apps.commtrack.models import sync_supply_point
         from .document_store import publish_location_saved
-        to_delete = self.get_descendants(include_self=True)
+        bulk_leaf_delete = kwargs.pop("bulk_leaf_delete", False)
+
+        if bulk_leaf_delete:
+            to_delete = [self]
+        else:
+            to_delete = self.get_descendants(include_self=True)
 
         # This deletion should ideally happen in a transaction. It's not
         # currently possible as supply point cases are stored either in a
         # separate database or in couch. Happy Debugging!
         for loc in to_delete:
-            loc._remove_users()
+            loc._remove_users(update_ancestors=not bulk_leaf_delete)
             sync_supply_point(loc, is_deletion=True)
 
         super(SQLLocation, self).delete(*args, **kwargs)
@@ -497,7 +511,7 @@ class SQLLocation(AdjListModel):
 
         self._products = value
 
-    def _remove_users(self):
+    def _remove_users(self, update_ancestors=True):
         """
         Unassigns the users assigned to that location.
 
@@ -510,12 +524,10 @@ class SQLLocation(AdjListModel):
             user.save()
 
         _unassign_users_from_location(self.domain, self.location_id)
-        self.update_users_at_ancestor_locations()
-
-    def update_users_at_ancestor_locations(self):
-        from . tasks import update_users_at_locations
-        location_ids = list(self.get_ancestors().location_ids())
-        update_users_at_locations.delay(location_ids)
+        if update_ancestors:
+            from . tasks import update_users_at_locations
+            location_ids = list(self.get_ancestors().location_ids())
+            update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """
