@@ -43,7 +43,7 @@ from corehq.apps.accounting.forms import (
     SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
     SuppressInvoiceForm,
@@ -678,6 +678,23 @@ class TriggerCustomerInvoiceView(AccountingSectionView):
     urlname = 'accounting_trigger_customer_invoice'
     page_title = 'Trigger Customer Invoice'
     template_name = 'accounting/trigger_customer_invoice.html'
+
+    @property
+    @memoized
+    def trigger_customer_invoice_form(self):
+        if self.request.method == 'POST':
+            return TriggerCustomerInvoiceForm(self.request.POST)
+        return TriggerCustomerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_customer_form': self.trigger_customer_invoice_form,
+        }
 
 
 class TriggerBookkeeperEmailView(AccountingSectionView):

@@ -1815,6 +1815,15 @@ class TriggerInvoiceForm(forms.Form):
             raise ValidationError('Statement period must be in the past')
 
 
+class TriggerCustomerInvoiceForm(forms.Form):
+    month = forms.ChoiceField(label="Statement Period Month")
+    year = forms.ChoiceField(label="Statement Period Year")
+    account = forms.CharField(label="Billing Account")
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
+
+
 class TriggerBookkeeperEmailForm(forms.Form):
     month = forms.ChoiceField(label="Invoice Month")
     year = forms.ChoiceField(label="Invoice Year")
