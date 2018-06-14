@@ -23,6 +23,7 @@ from corehq.apps.userreports.models import ReportConfiguration
 from corehq.elastic import get_es_new, send_to_elasticsearch
 from corehq.pillows.mappings.app_mapping import APP_INDEX_INFO
 from corehq.util.test_utils import flag_enabled, trap_extra_setup
+from elasticsearch.exceptions import ConnectionError
 from pillowtop.es_utils import initialize_index_and_mapping
 
 from six.moves import zip
