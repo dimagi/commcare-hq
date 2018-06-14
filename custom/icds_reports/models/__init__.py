@@ -12,7 +12,9 @@ from custom.icds_reports.models.aggregate import (
     AggregateChildHealthPostnatalCareForms,
     AggregateCcsRecordPostnatalCareForms,
     AggregateChildHealthTHRForms,
-    AggregateGrowthMonitoringForms
+    AggregateGrowthMonitoringForms,
+    AggregateCcsRecordTHRForms,
+    AggregateBirthPreparednesForms
 )
 from custom.icds_reports.models.views import (
     AggAwcDailyView,

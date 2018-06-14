@@ -79,6 +79,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'pregnant_tasks', 'name': 'static-pregnant-tasks_cases'},
     {'type': 'thr_form', 'is_ucr': False, 'name': 'icds_dashboard_child_health_thr_forms'},
     {'type': 'child_list', 'name': 'static-child_health_cases'},
+    {'type': 'ccs_record_list', 'name': 'static-ccs_record_cases'},
 ]
 
 SQL_FUNCTION_PATHS = [

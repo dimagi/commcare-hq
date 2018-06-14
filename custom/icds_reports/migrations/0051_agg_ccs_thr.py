@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0049_icdsauditentryrecord'),
+        ('icds_reports', '0050_move_to_django'),
     ]
 
     operations = [

@@ -270,12 +270,12 @@
             "high": {
               "type": "constant",
               "constant": 2
-            }
+            },
             "not_measured": {
               "type": "constant",
               "constant": 3
             }
-          }
+          },
           "default": {
             "type": "constant",
             "constant": 0
@@ -327,7 +327,7 @@
           "boolean_property": {
             "type": "property_path",
             "property_path": ["form", "bp2", "bleeding"]
-          }
+          },
           "true_values": ["yes"],
           "false_values": ["no"]
         }
@@ -341,7 +341,7 @@
           "boolean_property": {
             "type": "property_path",
             "property_path": ["form", "bp2", "swelling"]
-          }
+          },
           "true_values": ["yes"],
           "false_values": ["no"]
         }
@@ -355,7 +355,7 @@
           "boolean_property": {
             "type": "property_path",
             "property_path": ["form", "bp2", "blurred_vision"]
-          }
+          },
           "true_values": ["yes"],
           "false_values": ["no"]
         }
@@ -369,7 +369,7 @@
           "boolean_property": {
             "type": "property_path",
             "property_path": ["form", "bp2", "convulsions"]
-          }
+          },
           "true_values": ["yes"],
           "false_values": ["no"]
         }
@@ -383,7 +383,7 @@
           "boolean_property": {
             "type": "property_path",
             "property_path": ["form", "bp2", "rupture"]
-          }
+          },
           "true_values": ["yes"],
           "false_values": ["no"]
         }
