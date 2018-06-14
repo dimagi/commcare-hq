@@ -522,7 +522,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list_form_media_image')
         )
-        module.case_list_form.set_icon(lang, new_path, app)
+        module.case_list_form.set_icon(lang, new_path)
 
     if should_edit('case_list_form_media_audio'):
         new_path = process_media_attribute(
@@ -530,7 +530,7 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list_form_media_audio')
         )
-        module.case_list_form.set_audio(lang, new_path, app)
+        module.case_list_form.set_audio(lang, new_path)
 
     if should_edit('case_list-menu_item_media_image'):
         val = process_media_attribute(
@@ -538,14 +538,14 @@ def edit_module_attr(request, domain, app_id, module_unique_id, attr):
             resp,
             request.POST.get('case_list-menu_item_media_image')
         )
-        module.case_list.set_icon(lang, val, app)
+        module.case_list.set_icon(lang, val)
     if should_edit('case_list-menu_item_media_audio'):
         val = process_media_attribute(
             'case_list-menu_item_media_audio',
             resp,
             request.POST.get('case_list-menu_item_media_audio')
         )
-        module.case_list.set_audio(lang, val, app)
+        module.case_list.set_audio(lang, val)
 
     if should_edit("name"):
         name = request.POST.get("name", None)

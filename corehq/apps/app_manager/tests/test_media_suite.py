@@ -30,15 +30,15 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
             app.create_mapping(CommCareImage(_id=num), image_path.format(num), save=False)
             app.create_mapping(CommCareAudio(_id=num), audio_path.format(num), save=False)
         app.get_module(0).case_list.show = True
-        app.get_module(0).case_list.set_icon('en', image_path.format('4'), app)
-        app.get_module(0).case_list.set_audio('en', audio_path.format('4'), app)
+        app.get_module(0).case_list.set_icon('en', image_path.format('4'))
+        app.get_module(0).case_list.set_audio('en', audio_path.format('4'))
 
         app.get_module(0).set_icon('en', image_path.format('1'))
         app.get_module(0).set_audio('en', audio_path.format('1'))
 
         app.get_module(0).case_list_form.form_id = app.get_module(0).get_form(0).unique_id
-        app.get_module(0).case_list_form.set_icon('en', image_path.format('2'), app)
-        app.get_module(0).case_list_form.set_audio('en', audio_path.format('2'), app)
+        app.get_module(0).case_list_form.set_icon('en', image_path.format('2'))
+        app.get_module(0).case_list_form.set_audio('en', audio_path.format('2'))
 
         app.get_module(0).get_form(0).set_icon('en', image_path.format('3'))
         app.get_module(0).get_form(0).set_audio('en', audio_path.format('3'))
@@ -50,12 +50,12 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
 
         # test multimedia removed
-        app.get_module(0).case_list.set_icon('en', '', app)
-        app.get_module(0).case_list.set_audio('en', '', app)
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
         app.get_module(0).set_icon('en', '')
         app.get_module(0).set_audio('en', '')
-        app.get_module(0).case_list_form.set_icon('en', '', app)
-        app.get_module(0).case_list_form.set_audio('en', '', app)
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
         app.get_module(0).get_form(0).set_icon('en', '')
         app.get_module(0).get_form(0).set_audio('en', '')
         self.assertFalse(app.multimedia_map.keys())
@@ -83,8 +83,8 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
         image_path = 'jr://file/commcare/case_list_image.jpg'
         audo_path = 'jr://file/commcare/case_list_audo.mp3'
-        app.get_module(0).case_list_form.set_icon('en', image_path, app)
-        app.get_module(0).case_list_form.set_audio('en', audo_path, app)
+        app.get_module(0).case_list_form.set_icon('en', image_path)
+        app.get_module(0).case_list_form.set_audio('en', audo_path)
 
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
         app.create_mapping(CommCareAudio(_id='456'), audo_path, save=False)
@@ -99,7 +99,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         """
         app = Application.wrap(self.get_json('app'))
         image_path = 'jr://file/commcare/case_list_image.jpg'
-        app.get_module(0).case_list_form.set_icon('en', image_path, app)
+        app.get_module(0).case_list_form.set_icon('en', image_path)
 
         app.version = 1
         app.create_mapping(CommCareImage(_id='123'), image_path, save=False)
@@ -266,8 +266,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
             "./detail[@id='m0_case_short']/action/display"
         )
 
-        app.get_module(0).case_list_form.set_icon('en', self.image_path, app)
-        app.get_module(0).case_list_form.set_audio('en', self.audio_path, app)
+        app.get_module(0).case_list_form.set_icon('en', self.image_path)
+        app.get_module(0).case_list_form.set_audio('en', self.audio_path)
 
         XML = self.makeXML("case_list_form.m0", "case_list_form.m0.icon", "case_list_form.m0.audio")
         self.assertXmlPartialEqual(XML, app.create_suite(), "./detail[@id='m0_case_short']/action/display")
@@ -289,8 +289,8 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         no_media_xml = self.XML_without_media("case_lists.m0")
         self.assertXmlPartialEqual(no_media_xml, self.app.create_suite(), "./entry/command[@id='m0-case-list']/")
 
-        self.module.case_list.set_icon('en', self.image_path, self.app)
-        self.module.case_list.set_audio('en', self.audio_path, self.app)
+        self.module.case_list.set_icon('en', self.image_path)
+        self.module.case_list.set_audio('en', self.audio_path)
 
         XML = self.makeXML(
             "case_lists.m0",
