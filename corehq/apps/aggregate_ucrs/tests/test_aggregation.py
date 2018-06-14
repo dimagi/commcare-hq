@@ -26,8 +26,6 @@ from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
 
 
-
-
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     domain = 'agg'
     case_type = 'agg-cases'
