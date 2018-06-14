@@ -179,6 +179,16 @@ class BillingAccountBasicForm(forms.Form):
                     data_bind="checked: is_customer_billing_account",
                 ),
             ))
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'billing_admin_emails',
+                        css_class='input-xxlarge accounting-email-select2',
+                        data_bind='attr: {required: is_customer_billing_account}'
+                    ),
+                    data_bind='visible: is_customer_billing_account'
+                )
+            )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
                     crispy.Field(
@@ -228,18 +238,6 @@ class BillingAccountBasicForm(forms.Form):
                 'pre_or_post_pay',
                 'account_basic',
                 crispy.Div(*additional_fields),
-                crispy.Field('billing_admin_emails', css_class='input-xxlarge accounting-email-select2'),
-                crispy.Div(
-                    crispy.Div(
-                        css_class='col-sm-3 col-md-2'
-                    ),
-                    crispy.Div(
-                        crispy.HTML(self.initial['billing_admin_emails']),
-                        css_class='col-sm-9 col-md-8 col-lg-6'
-                    ),
-                    css_id='emails-text',
-                    css_class='collapse form-group'
-                ) if self.initial.get('is_customer_billing_account') else crispy.Div(),
             ),
             hqcrispy.FormActions(
                 crispy.Submit(
