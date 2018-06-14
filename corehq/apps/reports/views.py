@@ -7,7 +7,7 @@ import itertools
 import json
 from wsgiref.util import FileWrapper
 
-from corehq.form_processor.utils.download import get_download_response
+from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper

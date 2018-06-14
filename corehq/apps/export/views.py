@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from datetime import datetime, date, timedelta
-from wsgiref.util import FileWrapper
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -20,7 +19,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
-from corehq.form_processor.utils.download import get_download_response
+from corehq.util.download import get_download_response
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
@@ -31,7 +30,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.views import should_update_export, build_download_saved_export_response
+from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
