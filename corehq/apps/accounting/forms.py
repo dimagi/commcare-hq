@@ -705,6 +705,13 @@ class SubscriptionForm(forms.Form):
         if transfer_account and transfer_account == self.subscription.account.id:
             raise ValidationError(_("Please select an account other than the "
                                     "current account to transfer to."))
+        if transfer_account:
+            acct = BillingAccount.objects.get(id=transfer_account)
+            if acct.is_customer_billing_account != self.subscription.plan_version.plan.is_customer_software_plan:
+                if acct.is_customer_billing_account:
+                    raise ValidationError("Please select a regular Billing Account to transfer to.")
+                else:
+                    raise ValidationError("Please select a Customer Billing Account to transfer to.")
         return transfer_account
 
     def clean_domain(self):
