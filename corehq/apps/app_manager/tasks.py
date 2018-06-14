@@ -4,9 +4,8 @@ from django.utils.translation import ugettext as _
 
 from celery.task import task
 
-from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id
+from corehq.apps.app_manager.dbaccessors import get_app, get_latest_build_id, get_auto_generated_built_apps
 from corehq.apps.app_manager.exceptions import SavedAppBuildException
-from corehq.apps.es import AppES
 from corehq.apps.users.models import CommCareUser
 from corehq.util.decorators import serial_task
 
@@ -49,18 +48,12 @@ def create_build_files_for_all_app_profiles(domain, build_id):
 @task(queue='background_queue')
 def prune_auto_generated_builds(domain, app_id):
     last_build_id = get_latest_build_id(domain, app_id)
-    build_ids = (AppES()
-             .domain(domain)
-             .is_build()
-             .is_released(False)
-             .term('is_auto_generated', True)
-             .term('copy_of', app_id)
-             .values_list('_id', flat=True))
+    saved_builds = get_auto_generated_built_apps(domain, app_id)
 
-    for build_id in build_ids:
-        if build_id == last_build_id:
+    for doc in saved_builds:
+        app = get_app(domain, doc['_id'])
+        if app.id == last_build_id or app.is_released:
             continue
-        app = get_app(domain, build_id)
         if not app.is_auto_generated or app.copy_of != app_id or app.id == last_build_id:
             raise SavedAppBuildException("Attempted to delete build that should not be deleted")
         app.delete()
