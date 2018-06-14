@@ -898,29 +898,32 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
     delete_locations = []
     ancestors_of_deleted_nodes = set()
-    with transaction.atomic():
-        for loc in order_by_location_type():
-            if loc.do_delete:
-                handle_delete(loc)
-                continue
-            if excel_importer:
-                excel_importer.add_progress()
-            if loc.needs_save:
-                loc_object = loc.db_object
-                loc_object.location_type = types_by_code.get(loc.location_type)
-                loc_object.parent = loc.new_parent
-                loc_object.save()
+    for stubs in chunked(order_by_location_type(), chunk_size):
+        with transaction.atomic():
+            for loc in stubs:
+                if loc.do_delete:
+                    handle_delete(loc)
+                    continue
+                if excel_importer:
+                    excel_importer.add_progress()
+                if loc.needs_save:
+                    loc_object = loc.db_object
+                    loc_object.location_type = types_by_code.get(loc.location_type)
+                    loc_object.parent = loc.new_parent
+                    loc_object.save()
 
-        # reverse -> delete leaf nodes first
-        # WARNING the databases may be left in an inconsistent state if
-        # an exception is thrown during deletion because SQLLocation.delete()
-        # deletes resources that are stored in other databases that will
-        # not be reverted on transaction rollback.
-        for loc in reversed(delete_locations):
-            if excel_importer:
-                excel_importer.add_progress()
-            if not loc.is_new:
-                loc.db_object.delete(bulk_leaf_delete=True)
+    # reverse -> delete leaf nodes first
+    # WARNING the databases may be left in an inconsistent state if
+    # an exception is thrown during deletion because SQLLocation.delete()
+    # deletes resources that are stored in other databases that will
+    # not be reverted on transaction rollback.
+    for stubs in chunked(reversed(delete_locations), chunk_size):
+        with transaction.atomic():
+            for loc in stubs:
+                if excel_importer:
+                    excel_importer.add_progress()
+                if not loc.is_new:
+                    loc.db_object.delete(bulk_leaf_delete=True)
 
     if ancestors_of_deleted_nodes:
         from . tasks import update_users_at_locations
