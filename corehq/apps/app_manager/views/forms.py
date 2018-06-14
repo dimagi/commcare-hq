@@ -35,7 +35,7 @@ from corehq import toggles, privileges
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.exceptions import (
     FormNotFoundException, XFormValidationFailed)
-from corehq.apps.app_manager.templatetags.xforms_extras import trans
+from corehq.apps.app_manager.templatetags.xforms_extras import trans, clean_trans
 from corehq.apps.programs.models import Program
 from corehq.apps.app_manager.util import (
     save_xform,
@@ -63,7 +63,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest, api_domain_view
 )
 from corehq.apps.app_manager.const import USERCASE_PREFIX, USERCASE_TYPE
-from corehq.apps.app_manager.dbaccessors import get_app
+from corehq.apps.app_manager.dbaccessors import get_app, get_apps_in_domain
 from corehq.apps.app_manager.models import (
     AdvancedForm,
     AdvancedFormActions,
@@ -511,6 +511,21 @@ def get_form_questions(request, domain, app_id):
     return json_response(xform_questions)
 
 
+def get_apps_modules(domain):
+    """
+    Returns a domain's apps and their modules
+    """
+    return [{
+        'app_id': app.id,
+        'name': app.name,
+        'modules': [{
+            'module_id': module.id,
+            'name': clean_trans(module.name, app.langs),
+        } for module in app.modules]
+    } for app in get_apps_in_domain(domain, include_remote=False)
+    if app.doc_type == 'Application']  # No linked apps, no deleted apps
+
+
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
     xform_questions = []
     xform = None
@@ -653,6 +668,12 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
 
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
+
+    if (
+            toggles.COPY_FORM_TO_APP.enabled(domain) or
+            toggles.COPY_FORM_TO_APP.enabled(request.user.username)
+    ):
+        context['apps_modules'] = get_apps_modules(domain)
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
