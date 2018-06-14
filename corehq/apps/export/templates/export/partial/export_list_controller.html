@@ -102,10 +102,11 @@
                    ng-show="!!hasLoaded && !_.isEmpty(exports)">
                 <thead>
                     <tr>
-                        <th class="col-sm-4">{% trans 'Name' %}</th>
+                        <th class="col-sm-3">{% trans 'Name' %}</th>
                         {% if model_type == "case" %}
                         <th class="col-sm-2">{% trans 'Case Type' %}</th>
                         {% endif %}
+                        <th class="col-sm-2">{% trans 'Description' %}</th>
                         {% if has_edit_permissions %}
                         <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
@@ -113,7 +114,7 @@
                         <th class="col-sm-1">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
                         {% block fourth_column_header %}{% endblock %}
                         {%  if allow_bulk_export %}
-                        <th class="col-sm-3">
+                        <th class="col-sm-2">
                             {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                             <button type="button"
                                     class="btn btn-xs btn-default"
@@ -338,6 +339,12 @@
                         </td>
                         {% endangularjs %}
                         {% endif %}
+
+                        {% angularjs %}
+                        <td>
+                            {{ export.description }}
+                        </td>
+                        {% endangularjs %}
 
                         {% if has_edit_permissions %}
                         {% angularjs %}
