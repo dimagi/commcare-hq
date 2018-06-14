@@ -5,12 +5,10 @@ from copy import copy
 import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
 from datetime import datetime, timedelta
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
-from dimagi.utils.couch.database import iter_docs
 
 from django.template.loader import render_to_string
 from django.utils.translation import ugettext_noop
 from django.utils.translation import ugettext as _
-from corehq.apps.hqcase.dbaccessors import get_case_ids_in_domain_by_owner
 from corehq.util.soft_assert import soft_assert
 from custom.bihar.utils import (get_team_members, get_all_owner_ids_from_group, SUPERVISOR_ROLES, FLW_ROLES,
     groups_for_user, get_role)
@@ -24,7 +22,6 @@ from corehq.apps.reports.dispatcher import CustomProjectReportDispatcher
 from django.utils.html import format_html
 from corehq.apps.groups.models import Group
 from memoized import memoized
-from casexml.apps.case.models import CommCareCase
 from custom.bihar.reports.indicators.mixins import IndicatorConfigMixIn
 
 
@@ -132,18 +129,6 @@ class GroupReferenceMixIn(object):
     @memoized
     def all_owner_ids(self):
         return get_all_owner_ids_from_group(self.group)
-
-    @property
-    @memoized
-    def cases(self):
-        _assert = soft_assert('@'.join(['droberts', 'dimagi.com']))
-        _assert(False, "I'm surprised GroupReferenceMixIn ever gets called!")
-        case_ids = get_case_ids_in_domain_by_owner(
-            self.domain, owner_id__in=self.all_owner_ids, closed=False)
-        # really inefficient, but can't find where it's called
-        # and this is what it was doing before
-        return [CommCareCase.wrap(doc)
-                for doc in iter_docs(CommCareCase.get_db(), case_ids)]
 
     @property
     @memoized
