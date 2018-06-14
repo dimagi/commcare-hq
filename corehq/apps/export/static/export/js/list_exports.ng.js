@@ -47,7 +47,7 @@
                         $scope.exports = data.exports;
                         _.each($scope.exports, function (exp) {
                             if (exp.emailedExport && exp.emailedExport.taskStatus.inProgress) {
-                                pollProgressBar(exp);
+                                $rootScope.pollProgressBar(exp);
                             }
                         });
                     } else {
@@ -118,7 +118,13 @@
             hqImport('analytix/js/kissmetrix').track.event("Clicked Export button");
         };
 
-        var pollProgressBar = function (exp) {
+        $rootScope.pollProgressBar = function (exp) {
+            exp.emailedExport.updatingData = false;
+            exp.emailedExport.taskStatus = {
+                'percentComplete': 0,
+                'inProgress': true,
+                'success': false,
+            };
             var tick = function () {
                 djangoRMI.get_saved_export_progress({
                     'export_instance_id': exp.id,
@@ -127,7 +133,7 @@
                     if (!data.success) {
                         // The first few ticks don't yet register the task
                         exp.emailedExport.taskStatus.inProgress = true;
-                        $timeout(tick, 3000);
+                        $timeout(tick, 1500);
                     } else {
                         exp.emailedExport.taskStatus.justFinished = true;
                     }
@@ -147,14 +153,7 @@
                     if (data.success) {
                         var exportType = hqImport('export/js/utils').capitalize(exp.exportType);
                         hqImport('analytix/js/google').track.event(exportType + " Exports", "Update Saved Export", "Saved");
-                        component.updatingData = false;
-                        component.taskInProgress = true;
-                        component.taskStatus = {
-                            'percentComplete': 0,
-                            'inProgress': true,
-                            'success': false,
-                        };
-                        pollProgressBar(exp);
+                        $rootScope.pollProgressBar(exp);
                     }
                 });
         };
@@ -267,8 +266,7 @@
                 if (data.success) {
                     self._clearSubmitError();
                     export_.emailedExport.filters = $scope.formData;
-                    export_.emailedExport.updatingData = false;
-                    export_.emailedExport.updatedDataTriggered = true;
+                    $rootScope.pollProgressBar(export_);
                     filterFormModalElement().modal('hide');
                 } else {
                     self._handleSubmitError(data);
