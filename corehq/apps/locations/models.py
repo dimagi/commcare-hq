@@ -525,9 +525,12 @@ class SQLLocation(AdjListModel):
 
         _unassign_users_from_location(self.domain, self.location_id)
         if update_ancestors:
-            from . tasks import update_users_at_locations
-            location_ids = list(self.get_ancestors().location_ids())
-            update_users_at_locations.delay(location_ids)
+            self._update_users_at_ancestor_locations()
+
+    def _update_users_at_ancestor_locations(self):
+        from . tasks import update_users_at_locations
+        location_ids = list(self.get_ancestors().location_ids())
+        update_users_at_locations.delay(location_ids)
 
     def archive(self):
         """
@@ -537,7 +540,8 @@ class SQLLocation(AdjListModel):
         for loc in self.get_descendants(include_self=True):
             loc.is_archived = True
             loc.save()
-            loc._remove_users()
+            loc._remove_users(update_ancestors=False)
+        self._update_users_at_ancestor_locations()
 
     def unarchive(self):
         """
