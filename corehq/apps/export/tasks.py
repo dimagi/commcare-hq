@@ -5,6 +5,8 @@ import logging
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
+from soil import DownloadBase
+from soil.progress import get_task_status
 
 from corehq.apps.data_dictionary.util import add_properties_to_data_dictionary
 from corehq.apps.reports.models import HQGroupExportConfiguration
@@ -29,7 +31,6 @@ from .dbaccessors import (
 from .export import get_export_file, rebuild_export, should_rebuild_export
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
-from .utils import saved_export_set_task
 
 from six.moves import filter
 
@@ -78,7 +79,8 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-def _start_export_task(export_instance_id, last_access_cutoff, filter, progress_tracker):
+@task(queue='background_queue', ignore_result=True)
+def _start_export_task(export_instance_id, last_access_cutoff):
     keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
     with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
@@ -86,19 +88,40 @@ def _start_export_task(export_instance_id, last_access_cutoff, filter, progress_
             export_instance = get_properly_wrapped_export_instance(
                 export_instance_id)
             if should_rebuild_export(export_instance, last_access_cutoff):
-                rebuild_export(export_instance, filter, progress_tracker)
+                rebuild_export(export_instance, progress_tracker=_start_export_task)
 
 
-@task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
-    _start_export_task(export_instance_id, last_access_cutoff, filter,
-                       progress_tracker=rebuild_export_task)
+def _get_saved_export_download_data(export_instance_id):
+    download_id = 'rebuild_export_tracker.{}'.format(export_instance_id)
+    download_data = DownloadBase.get(download_id)
+    if download_data is None:
+        download_data = DownloadBase(download_id=download_id)
+    return download_data
 
 
-@task(queue='export_download_queue', ignore_result=True)
-def manually_rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
-    _start_export_task(export_instance_id, last_access_cutoff, filter,
-                       progress_tracker=manually_rebuild_export_task)
+def rebuild_saved_export(export_instance_id, last_access_cutoff=None, queue='background_queue'):
+    """Kicks off a celery task to rebuild the export.
+    """
+    # associate task with the export instance
+    download_data = _get_saved_export_download_data(export_instance_id)
+    download_data.set_task(
+        _start_export_task.apply_async(
+            args=[
+                export_instance_id, last_access_cutoff
+            ],
+            queue=queue,
+        )
+    )
+
+
+def get_saved_export_task_status(export_instance_id):
+    """Get info on the ongoing rebuild task if one exists.
+
+    (This is built with the assumption that there shouldn't be multiple
+    rebuilds in progress for a single export instance)
+    """
+    download_data = _get_saved_export_download_data(export_instance_id)
+    return get_task_status(download_data.task)
 
 
 @serial_task('{domain}-{case_type}', queue='background_queue')
@@ -122,15 +145,7 @@ def saved_exports():
 
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        saved_export_set_task(rebuild_export_task.apply_async(
-            args=[
-                daily_saved_export_id, last_access_cutoff
-            ],
-            # Normally the rebuild_export_task uses the background queue,
-            # however we want to override it to use its own queue so that it does
-            # not disrupt other actions.
-            queue=SAVED_EXPORTS_QUEUE,
-        ))
+        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, queue=SAVED_EXPORTS_QUEUE)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)

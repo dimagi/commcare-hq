@@ -47,15 +47,12 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.utils import (
-    convert_saved_export_to_export_instance,
-    get_saved_export_task_status,
-    saved_export_set_task,
-)
+from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
-    manually_rebuild_export_task,
+    get_saved_export_task_status,
+    rebuild_saved_export,
 )
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -1080,12 +1077,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("Must implement generate_create_form_url")
 
-    def update_emailed_es_export_data(self, in_data):
-        export_instance_id = in_data['export']['id']
-        saved_export_set_task(manually_rebuild_export_task.delay(export_instance_id),
-                              export_instance_id)
-        return format_angular_success({})
-
     @allow_remote_invocation
     def toggle_saved_export_enabled_state(self, in_data):
         if in_data['export']['isLegacy']:
@@ -1101,14 +1092,10 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
-        if not in_data['export']['isLegacy']:
-            return self.update_emailed_es_export_data(in_data)
-
-        group_id = in_data['component']['groupId']
-        relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
-        indexes = [x[0].index for x in relevant_group.all_exports]
-        place_index = indexes.index(in_data['component']['index'])
-        manually_rebuild_export_task.delay(group_id, place_index)
+        if in_data['export']['isLegacy']:
+            raise Exception("I'm pretty sure this doesn't happen")
+        export_instance_id = in_data['export']['id']
+        rebuild_saved_export(export_instance_id, queue='export_download_queue')
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1328,8 +1315,7 @@ class DailySavedExportListView(BaseExportListView):
                 if export.filters != filters:
                     export.filters = filters
                     export.save()
-                    from corehq.apps.export.tasks import rebuild_export_task
-                    rebuild_export_task.delay(export_id)
+                    rebuild_saved_export(export_id)
                 return format_angular_success()
             else:
                 return format_angular_error(
@@ -2412,8 +2398,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if should_update_export(export_instance.last_accessed):
             try:
-                from corehq.apps.export.tasks import rebuild_export_task
-                rebuild_export_task.delay(export_instance_id)
+                rebuild_saved_export(export_instance_id)
             except Exception:
                 notify_exception(
                     req,
