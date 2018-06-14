@@ -674,6 +674,12 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerCustomerInvoiceView(AccountingSectionView):
+    urlname = 'accounting_trigger_customer_invoice'
+    page_title = 'Trigger Customer Invoice'
+    template_name = 'accounting/trigger_customer_invoice.html'
+
+
 class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
     page_title = "Trigger Bookkeeper Email"
