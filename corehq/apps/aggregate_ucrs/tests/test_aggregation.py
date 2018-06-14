@@ -10,6 +10,7 @@ from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
 
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
+from casexml.apps.case.util import post_case_blocks
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
     get_aggregation_end_period
@@ -43,6 +44,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         datetime(2018, 4, 11),
         datetime(2018, 4, 16),
     )
+    parent_name = 'Mama'
 
     @classmethod
     def setUpClass(cls):
@@ -70,7 +72,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
         cls.case_data_source = get_case_data_source(cls.app, cls.case_type)
         # create some data - first just create the case
-        cls.case_id = cls._create_case()
+        cls.parent_case_id = cls._create_parent_case(cls.parent_name)
+        cls.case_id = cls._create_case(cls.parent_case_id)
         for fu_date in cls.fu_visit_dates:
             cls._submit_followup_form(cls.case_id, received_on=fu_date)
 
@@ -118,24 +121,34 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         }
 
     @classmethod
-    def _create_case(cls):
-        form_id = uuid.uuid4().hex
+    def _create_case(cls, parent_id):
         case_id = uuid.uuid4().hex
-        properties = cls._get_case_property_values()
         caseblock = CaseBlock(
             case_id=case_id,
             case_type=cls.case_type,
             date_opened=cls.case_date_opened,
             case_name=cls.case_name,
-            update=properties,
+            update=cls._get_case_property_values(),
+            index={
+                'parent': (cls.case_type, parent_id)
+            }
         )
-        form_builder = FormSubmissionBuilder(
-            form_id=form_id,
-            case_blocks=[caseblock],
-            form_properties=properties,
-        )
-        submit_form_locally(form_builder.as_xml_string(), cls.domain)
+        post_case_blocks([caseblock.as_xml()], domain=cls.domain)
         return case_id
+
+    @classmethod
+    def _create_parent_case(cls, case_name):
+        parent_id = uuid.uuid4().hex
+        post_case_blocks(
+            [
+                CaseBlock(
+                    create=True,
+                    case_id=parent_id,
+                    case_name=case_name
+                ).as_xml()
+            ], domain=cls.domain
+        )
+        return parent_id
 
     @classmethod
     def _submit_followup_form(cls, case_id, received_on):
