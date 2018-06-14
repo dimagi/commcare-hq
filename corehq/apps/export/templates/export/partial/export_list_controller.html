@@ -102,7 +102,10 @@
                    ng-show="!!hasLoaded && !_.isEmpty(exports)">
                 <thead>
                     <tr>
-                        <th class="col-sm-6">{% trans 'Name' %}</th>
+                        <th class="col-sm-4">{% trans 'Name' %}</th>
+                        {% if model_type == "case" %}
+                        <th class="col-sm-2">{% trans 'Case Type' %}</th>
+                        {% endif %}
                         {% if has_edit_permissions %}
                         <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
                         <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
@@ -325,6 +328,17 @@
                                 </div>
                             </div>
                         </td>
+
+                        {% if model_type == "case" %}
+                        {% angularjs %}
+                        <td>
+                            <h4>
+                                {{ export.case_type }}
+                            </h4>
+                        </td>
+                        {% endangularjs %}
+                        {% endif %}
+
                         {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
