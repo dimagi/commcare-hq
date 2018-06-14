@@ -178,3 +178,35 @@ class TestSubscriptionForm(BaseAccountingTest):
         }
 
         self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
+
+    def test_customer_plan_not_added_to_regular_account(self):
+        subscription = Subscription.new_domain_subscription(
+            domain=self.domain.name,
+            plan_version=self.customer_plan,
+            account=self.customer_account
+        )
+        subscription_form = SubscriptionForm(
+            subscription=subscription,
+            account_id=self.customer_plan.id,
+            web_user=self.web_user,
+        )
+        subscription_form.cleaned_data = {
+            'active_accounts': self.account.id,
+            'start_date': datetime.date.today(),
+            'end_date': None,
+            'delay_invoice_until': None,
+            'do_not_invoice': None,
+            'no_invoice_reason': None,
+            'do_not_email_invoice': None,
+            'do_not_email_reminder': None,
+            'auto_generate_credits': None,
+            'skip_invoicing_if_no_feature_charges': None,
+            'salesforce_contract_id': None,
+            'service_type': None,
+            'pro_bono_status': None,
+            'funding_source': None,
+            'skip_auto_downgrade': None,
+            'skip_auto_downgrade_reason': None
+        }
+
+        self.assertRaises(ValidationError, lambda: subscription_form.clean_active_accounts())
