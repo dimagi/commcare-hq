@@ -671,14 +671,6 @@ def _download_saved_export(req, domain, saved_export):
     return get_download_response(payload, saved_export.size, format, saved_export.configuration.filename, req)
 
 
-def build_download_saved_export_response(payload, format, filename):
-    content_type = Format.from_format(format).mimetype
-    response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if format != 'html':
-        response['Content-Disposition'] = safe_filename_header(filename)
-    return response
-
-
 def should_update_export(last_accessed):
     cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
     return not last_accessed or last_accessed < cutoff
