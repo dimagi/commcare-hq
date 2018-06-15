@@ -222,15 +222,6 @@ require_case_view_permission = require_permission(Permissions.view_report, 'core
 require_can_view_all_reports = require_permission(Permissions.view_reports)
 
 
-def can_view_attachments(request):
-    return (
-        request.couch_user.has_permission(
-            request.domain, 'view_report',
-            data='corehq.apps.reports.standard.cases.basic.CaseListReport'
-        )
-    )
-
-
 @login_and_domain_required
 @location_safe
 def default(request, domain):
