@@ -19,7 +19,7 @@ def convert_to_bytestring_if_unicode(shared_key):
 
 
 def get_hmac_digest(shared_key, data):
-    hm = hmac.new(shared_key, data, hashlib.sha256)
+    hm = hmac.new(convert_to_bytestring_if_unicode(shared_key), data, hashlib.sha256)
     digest = base64.b64encode(hm.digest())
     return digest
 
@@ -51,7 +51,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             if not expected_digest or not shared_key:
                 return HttpResponse(status=401)
 
-            digest = get_hmac_digest(convert_to_bytestring_if_unicode(shared_key), request.body)
+            digest = get_hmac_digest(shared_key, request.body)
 
             if expected_digest != digest:
                 return HttpResponse(status=401)
