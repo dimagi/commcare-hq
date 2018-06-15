@@ -116,10 +116,6 @@ def pre_run_with_es_backend(fn, *args, **kwargs):
     fn.setUp()
 
 
-def mock_sql_backend():
-    return patch('corehq.apps.userreports.reports.data_source.get_backend_id', return_value=UCR_SQL_BACKEND)
-
-
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
                  return_value=(get_sample_data_source(), None))
