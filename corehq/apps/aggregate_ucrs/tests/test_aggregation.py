@@ -76,6 +76,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         cls.form_data_source = get_form_data_source(cls.app, cls.followup_form)
         cls.case_data_source = get_case_data_source(cls.app, cls.case_type)
         cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
+
         # create some data - first just create the case
         cls.parent_case_id = cls._create_parent_case(cls.parent_name)
         cls.case_id = cls._create_case(cls.parent_case_id)
@@ -83,18 +84,19 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             cls._submit_followup_form(cls.case_id, received_on=fu_date)
 
         # populate the UCRs with the data we just created
-        cls.case_adapter = get_indicator_adapter(cls.case_data_source)
         cls.form_adapter = get_indicator_adapter(cls.form_data_source)
-        cls.parent_case_data_source = get_case_data_source(cls.app, cls.parent_case_type)
+        cls.case_adapter = get_indicator_adapter(cls.case_data_source)
+        cls.parent_case_adapter = get_indicator_adapter(cls.parent_case_data_source)
 
-        cls.case_adapter.rebuild_table()
         cls.form_adapter.rebuild_table()
+        cls.case_adapter.rebuild_table()
+        cls.parent_case_adapter.rebuild_table()
 
-        _iteratively_build_table(cls.case_data_source)
         _iteratively_build_table(cls.form_data_source)
+        _iteratively_build_table(cls.case_data_source)
+        _iteratively_build_table(cls.parent_case_data_source)
 
-        # setup/cleanup AggregateTableDefinition
-        AggregateTableDefinition.objects.all().delete()
+        # setup AggregateTableDefinition
         cls.monthly_aggregate_table_definition = cls._get_monthly_aggregate_table_definition()
         cls.basic_aggregate_table_definition = cls._get_basic_aggregate_table_definition()
 
@@ -107,11 +109,13 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         delete_all_cases()
         delete_all_xforms()
         delete_all_apps()
+        AggregateTableDefinition.objects.all().delete()
 
     def setUp(self):
         # confirm that our setupClass function properly did its job
-        self.assertEqual(1, self.case_adapter.get_query_object().count())
         self.assertEqual(3, self.form_adapter.get_query_object().count())
+        self.assertEqual(1, self.case_adapter.get_query_object().count())
+        self.assertEqual(1, self.parent_case_adapter.get_query_object().count())
 
     @classmethod
     def _get_xform(cls):
@@ -150,7 +154,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
                 CaseBlock(
                     create=True,
                     case_id=parent_id,
-                    case_name=case_name
+                    case_name=case_name,
+                    case_type=cls.parent_case_type,
                 ).as_xml()
             ], domain=cls.domain
         )
@@ -191,6 +196,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         spec = cls.get_basic_config_spec()
         spec.primary_table.data_source_id = cls.case_data_source._id
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
+        spec.secondary_tables[1].data_source_id = cls.parent_case_data_source._id
         return import_aggregation_models_from_spec(spec)
 
     def test_aggregate_table(self):

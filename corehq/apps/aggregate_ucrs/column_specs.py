@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 import sqlalchemy
 from django.utils.translation import ugettext_lazy as _
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta, abstractmethod, abstractproperty
 
 import six
 from jsonobject.base_properties import DefaultProperty
@@ -202,9 +202,7 @@ class ReferenceColumnAdapter(PrimaryColumnAdapter):
     config_spec = ReferenceColumnProperties
 
     def get_datatype(self):
-        return self._db_column.table_definition.data_source.get_column_by_id(
-            self.properties.referenced_column
-        ).datatype
+        return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
 
     def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
         return sqlalchemy_table.c[self.properties.referenced_column]
@@ -245,8 +243,10 @@ class SqlColumnAdapter(PrimaryColumnAdapter):
 
 
 SECONDARY_COLUMN_TYPE_SUM = 'sum'
+SECONDARY_COLUMN_TYPE_MIN = 'min'
 SECONDARY_COLUMN_TYPE_CHOICES = (
     (SECONDARY_COLUMN_TYPE_SUM, _('Sum')),
+    (SECONDARY_COLUMN_TYPE_MIN, _('Min')),
     # todo: add other aggregations, count, min, max, (first? last?)
 )
 
@@ -269,6 +269,7 @@ class SecondaryColumnAdapter(ColumnAdapater):
     def from_db_column(db_column):
         type_to_class_mapping = {
             SECONDARY_COLUMN_TYPE_SUM: SumColumnAdapter,
+            SECONDARY_COLUMN_TYPE_MIN: MinColumnAdapter,
         }
         return type_to_class_mapping[db_column.aggregation_type](db_column)
 
@@ -280,15 +281,43 @@ class SingleFieldColumnProperties(jsonobject.JsonObject):
     referenced_column = jsonobject.StringProperty(required=True)
 
 
-class SumColumnAdapter(SecondaryColumnAdapter):
+class SimpleAggregationAdapater(six.with_metaclass(ABCMeta, SecondaryColumnAdapter)):
     """
-    A SecondaryColumnAdapter class that sums the values of a given column in the
-    secondary table.
+    Generic SecondaryColumnAdapter class that does a passed-in sqlalchemy aggregation.
     """
     config_spec = SingleFieldColumnProperties
+
+    @abstractproperty
+    def sqlalchemy_fn(self):
+        pass
+
+    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
+        return self.sqlalchemy_fn(sqlalchemy_table.c[self.properties.referenced_column])
+
+
+class SumColumnAdapter(SimpleAggregationAdapater):
+    """
+    A SimpleAggregationAdapater that sums the values of a given column in the secondary table.
+    """
+    @property
+    def sqlalchemy_fn(self):
+        return sqlalchemy.func.sum
 
     def get_datatype(self):
         return DATA_TYPE_INTEGER
 
-    def to_sqlalchemy_query_column(self, sqlalchemy_table, aggregation_params):
-        return sqlalchemy.func.sum(sqlalchemy_table.c[self.properties.referenced_column])
+
+class MinColumnAdapter(SimpleAggregationAdapater):
+    """
+    A SimpleAggregationAdapater that returns the min value of a given column in the secondary table.
+    """
+    @property
+    def sqlalchemy_fn(self):
+        return sqlalchemy.func.min
+
+    def get_datatype(self):
+        return _get_datatype_from_referenced_column(self._db_column, self.properties.referenced_column)
+
+
+def _get_datatype_from_referenced_column(db_column, referenced_column):
+    return db_column.table_definition.data_source.get_column_by_id(referenced_column).datatype

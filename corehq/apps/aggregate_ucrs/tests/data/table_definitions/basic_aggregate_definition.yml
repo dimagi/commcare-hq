@@ -24,3 +24,12 @@ secondary_tables:
         aggregation_type: sum
         config_params:
           referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row
+  # also join with the parent table based on the column from the main table
+  - data_source_id: 340c92112a514017b63ed66715f6f1aa
+    primary_key_column: indices.parent
+    secondary_key_column: doc_id  # how rows will get joined from primary to secondary tables
+    columns:
+      - column_id: parent_name
+        aggregation_type: min  # this is silly / hacky. must be a way to just pick the first
+        config_params:
+          referenced_column: name
