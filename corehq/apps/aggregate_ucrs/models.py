@@ -108,6 +108,7 @@ class SecondaryTableDefinition(models.Model):
     table_definition = models.ForeignKey(AggregateTableDefinition, on_delete=models.CASCADE,
                                          related_name='secondary_tables')
     data_source_id = models.UUIDField()
+    primary_key_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     secondary_key_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     time_window_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH, null=True, blank=True)
 
