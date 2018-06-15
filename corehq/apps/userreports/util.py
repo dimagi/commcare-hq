@@ -9,9 +9,6 @@ from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.userreports.const import (
     REPORT_BUILDER_EVENTS_KEY,
-    UCR_ES_BACKEND,
-    UCR_ES_PRIMARY,
-    UCR_LABORATORY_BACKEND,
     UCR_SQL_BACKEND,
 )
 from django_prbac.utils import has_privilege
@@ -131,17 +128,9 @@ def number_of_ucr_reports(domain):
 
 def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=False):
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
-    from corehq.apps.userreports.es.adapter import IndicatorESAdapter
-    from corehq.apps.userreports.laboratory.adapter import IndicatorLaboratoryAdapter
-
-    backend_id = get_backend_id(config, can_handle_laboratory)
-
-    return {
-        UCR_ES_BACKEND: IndicatorESAdapter,
-        UCR_LABORATORY_BACKEND: IndicatorLaboratoryAdapter,
-        UCR_ES_PRIMARY: IndicatorESAdapter,
-        UCR_SQL_BACKEND: ErrorRaisingIndicatorSqlAdapter if raise_errors else IndicatorSqlAdapter
-    }[backend_id](config)
+    if raise_errors:
+        return ErrorRaisingIndicatorSqlAdapter(config)
+    return IndicatorSqlAdapter
 
 
 def get_table_name(domain, table_id):
@@ -180,12 +169,7 @@ def truncate_value(value, max_length=63, from_left=True):
 
 
 def get_backend_id(config, can_handle_laboratory=False):
-    if not can_handle_laboratory and config.backend_id == UCR_LABORATORY_BACKEND:
-        return UCR_SQL_BACKEND
-
-    if settings.OVERRIDE_UCR_BACKEND:
-        return settings.OVERRIDE_UCR_BACKEND
-    return config.backend_id
+    return UCR_SQL_BACKEND
 
 
 def get_ucr_class_name(id):
