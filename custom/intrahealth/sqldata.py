@@ -836,9 +836,9 @@ class IntraHealthSqlData(SqlData):
 
     def percent_fn(self, x, y):
         return "%(p).2f%%" % \
-            {
-                "p": (100 * float(y or 0) / float(x or 1))
-            }
+               {
+                   "p": (100 * float(y or 0) / float(x or 1))
+               }
 
     def format_data_and_cast_to_float(self, value):
         return {"html": "%.2f".format(value), "sort_key": "%.2f".format(value)} if value is not None else value
@@ -2804,13 +2804,11 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             }]
         for i in range(len(self.months)):
             numerator = sum(
-                data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
-                data[loc_id][i]['pps_total_amt_owed']
+                data[loc_id][i]['pps_total_amt_paid'] for loc_id in data
             )
             denominator = sum(
                 data[loc_id][i]['delivery_amt_owed'] + data[loc_id][i]['pps_total_amt_owed'] -
-                data[loc_id][i]['delivery_amt_owed_first_visit'] for loc_id in data if
-                data[loc_id][i]['pps_total_amt_owed']
+                data[loc_id][i]['delivery_amt_owed_first_visit'] for loc_id in data
             )
             total_value = self.percent_fn(
                 numerator,
@@ -2858,7 +2856,6 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date_precise')),
             DatabaseColumn("Delivery Amount Owed", SimpleColumn('delivery_amt_owed')),
@@ -3238,7 +3235,6 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),
