@@ -132,7 +132,8 @@ def populate_aggregate_table_data_for_time_period(aggregate_table_adapter, windo
         sqlalchemy_secondary_table = IndicatorSqlAdapter(secondary_table.data_source).get_table()
         # apply join filters along with period start/end filters (if necessary) for related model
         join_conditions = [
-            primary_table.c['doc_id'] == sqlalchemy_secondary_table.c[secondary_table.secondary_key_column]
+            (primary_table.c[secondary_table.primary_key_column] ==
+             sqlalchemy_secondary_table.c[secondary_table.secondary_key_column])
         ]
         if doing_time_aggregation:
             join_conditions.extend([
