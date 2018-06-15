@@ -58,7 +58,7 @@ class CaseActionBase(object):
 
     def __init__(self, block, type=None, name=None, external_id=None,
                  user_id=None, owner_id=None, opened_on=None, 
-                 dynamic_properties=None, indices=None, attachments=None):
+                 dynamic_properties=None, indices=None):
         self.raw_block = block
         self.type = type
         self.name = name
@@ -68,8 +68,7 @@ class CaseActionBase(object):
         self.opened_on = opened_on
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
-        self.attachments = attachments or {}
-    
+
     def get_known_properties(self):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
@@ -147,29 +146,10 @@ class AbstractAction(object):
 
         self.dynamic_properties = {}
         self.indices = []
-        self.attachments = {}
         # TODO log which products were touched?
 
     def get_known_properties(self):
         return {}
-
-
-class CaseAttachment(object):
-    """
-    A class that wraps an attachment to a case
-    """
-
-    def __init__(self, identifier, attachment_src, attachment_from, attachment_name):
-        """
-        identifier: the tag name
-        attachment_src: URL of attachment
-        attachment_from: source [local, remote, inline]
-        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
-        """
-        self.identifier = identifier
-        self.attachment_src = attachment_src
-        self.attachment_from = attachment_from
-        self.attachment_name = attachment_name
 
 
 class CaseIndex(object):
