@@ -19,7 +19,9 @@ Finding the slow function
 
 This is usually pretty straightforward.
 The easiest thing to do is typically use the top-level entry point for a view call.
-In this example we are investigating the performance of commtrack location download, so the relevant function would be commtrack.views.location_export.::
+In this example we are investigating the performance of commtrack location download, so the relevant function would be commtrack.views.location_export.
+
+.. code-block:: python
 
     @login_and_domain_required
     def location_export(request, domain):
@@ -55,7 +57,9 @@ The same method can be used to profile functions in production. Obviously we wan
 turn this on and off and possibly only profile a limited number of function calls.
 
 This can be accomplished by using an environment variable to set the probability of profiling a function.
-Here's an example::
+Here's an example:
+
+.. code-block:: python
 
     @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
     def location_export(request, domain):
@@ -67,7 +71,9 @@ get profiled. The number of profiles that are done will depend on the value of t
 variable. Values closer to 1 will get more profiling.
 
 You can also limit the total number of profiles to be recorded using the `limit` keyword argument.
-You could also expose this via an environment variable or some other method to make it configurable::
+You could also expose this via an environment variable or some other method to make it configurable:
+
+.. code-block:: python
 
     @profile_prod('locations_download.prof', 1, limit=10)
     def location_export(request, domain):
@@ -263,15 +269,18 @@ Refer to these resources which provide good information on memory profiling:
 * `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
     * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
 
-* You can also use the "resident_set_size" decorator and context manager to print the amount of memory allocated to python before and after the method you think is causing memory leaks::
+* You can also use the "resident_set_size" decorator and context manager to print the amount of memory allocated to python before and after the method you think is causing memory leaks:
 
-        from dimagi.utils.decorators.profile import resident_set_size
 
-        @resident_set_size()
-        def function_that_uses_a_lot_of_memory:
-            [u'{}'.format(x) for x in range(1,100000)]
+.. code-block:: python
 
-        def somewhere_else():
-            with resident_set_size(enter_debugger=True):
-                # the enter_debugger param will enter a pdb session after your method has run so you can do more exploration
-                # do memory intensive things
+    from dimagi.utils.decorators.profile import resident_set_size
+
+    @resident_set_size()
+    def function_that_uses_a_lot_of_memory:
+        [u'{}'.format(x) for x in range(1,100000)]
+
+    def somewhere_else():
+        with resident_set_size(enter_debugger=True):
+            # the enter_debugger param will enter a pdb session after your method has run so you can do more exploration
+            # do memory intensive things
