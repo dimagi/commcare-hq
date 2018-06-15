@@ -1046,6 +1046,11 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         try:
             saved_exports = self.get_saved_exports()
+            saved_exports = [
+                export for export in saved_exports
+                if export.sharing != Sharing.PRIVATE
+                or not export.owner_id or export.owner_id == self.request.couch_user.user_id
+            ]
             if self.is_deid:
                 saved_exports = [x for x in saved_exports if x.is_safe]
             saved_exports = list(map(self.fmt_export_data, saved_exports))
