@@ -130,7 +130,7 @@ def get_indicator_adapter(config, raise_errors=False, can_handle_laboratory=Fals
     from corehq.apps.userreports.sql.adapter import IndicatorSqlAdapter, ErrorRaisingIndicatorSqlAdapter
     if raise_errors:
         return ErrorRaisingIndicatorSqlAdapter(config)
-    return IndicatorSqlAdapter
+    return IndicatorSqlAdapter(config)
 
 
 def get_table_name(domain, table_id):
