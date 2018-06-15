@@ -37,7 +37,7 @@ class ConfigImportTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, table_def.secondary_tables.count())
         secondary_table = table_def.secondary_tables.get()
         self.assertEqual(data_source._id, secondary_table.data_source_id.hex)
-        self.assertEqual('form.case.@case_id', secondary_table.data_source_key)
+        self.assertEqual('form.case.@case_id', secondary_table.secondary_key_column)
         self.assertEqual('received_on', secondary_table.time_window_column)
         self.assertEqual(1, secondary_table.columns.count())
         secondary_column = secondary_table.columns.get()
