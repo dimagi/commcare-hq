@@ -1605,7 +1605,7 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
         ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
     'TB_PERSON_CASE_FROM_VOUCHER_CASE':
         ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
@@ -1635,6 +1635,9 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+         "Abt: The case owner's location's parent location"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {

@@ -664,7 +664,7 @@ class BaseCustomEventFormSet(BaseFormSet):
     def non_deleted_forms(self):
         return sorted(
             [form for form in self.forms if not form.is_deleted],
-            key=lambda form: form['ORDER'].value()
+            key=lambda form: form.cleaned_data['ORDER']
         )
 
     def validate_alert_schedule_min_tick(self, custom_event_forms):
@@ -686,7 +686,6 @@ class BaseCustomEventFormSet(BaseFormSet):
         """
         send_time_type = schedule_form.cleaned_data['send_time_type']
         prev_form = None
-        passed_validation = True
         for form in custom_event_forms:
             if prev_form:
                 if send_time_type in (TimedSchedule.EVENT_SPECIFIC_TIME, TimedSchedule.EVENT_RANDOM_TIME):
@@ -701,7 +700,9 @@ class BaseCustomEventFormSet(BaseFormSet):
                                   "Please move this event into the correct order.")
                             )
                         )
-                        passed_validation = False
+                        # We have to return False and not check the rest because it will try to check
+                        # the 'time' field of prev_form which has been removed from cleaned_data now
+                        return False
                 elif send_time_type == TimedSchedule.EVENT_CASE_PROPERTY_TIME:
                     if form.cleaned_data['day'] < prev_form.cleaned_data['day']:
                         form.add_error(
@@ -711,20 +712,21 @@ class BaseCustomEventFormSet(BaseFormSet):
                                   "Please move this event into the correct order.")
                             )
                         )
-                        passed_validation = False
+                        # We have to return False and not check the rest because it will try to check
+                        # the 'day' field of prev_form which has been removed from cleaned_data now
+                        return False
                 else:
                     raise ValueError("Unexpected value for send_time_type: '%s'" % send_time_type)
 
             prev_form = form
 
-        return passed_validation
+        return True
 
     def validate_random_timed_events_do_not_overlap(self, schedule_form, custom_event_forms):
         if schedule_form.cleaned_data['send_time_type'] != TimedSchedule.EVENT_RANDOM_TIME:
             return True
 
         prev_form = None
-        passed_validation = True
         for form in custom_event_forms:
             if prev_form:
                 prev_window_end_time = (
@@ -753,11 +755,13 @@ class BaseCustomEventFormSet(BaseFormSet):
                               "Please adjust your events accordingly to prevent overlapping windows.")
                         )
                     )
-                    passed_validation = False
+                    # We have to return False and not check the rest because it will try to check
+                    # the 'window_length' field of prev_form which has been removed from cleaned_data now
+                    return False
 
             prev_form = form
 
-        return passed_validation
+        return True
 
     def validate_timed_schedule_min_tick(self, schedule_form, custom_event_forms):
         if schedule_form.cleaned_data['send_time_type'] not in (
@@ -767,7 +771,6 @@ class BaseCustomEventFormSet(BaseFormSet):
             return True
 
         prev_form = None
-        passed_validation = True
         for form in custom_event_forms:
             if prev_form:
                 prev_time = (
@@ -793,11 +796,13 @@ class BaseCustomEventFormSet(BaseFormSet):
                         'time',
                         ValidationError(_("Events must occur at least 5 minutes apart."))
                     )
-                    passed_validation = False
+                    # We have to return False and not check the rest because it will try to check
+                    # the 'time' field of prev_form which has been removed from cleaned_data now
+                    return False
 
             prev_form = form
 
-        return passed_validation
+        return True
 
     def validate_repeat_every_on_schedule_form(self, schedule_form, custom_event_forms):
         if schedule_form.cleaned_data_uses_alert_schedule():
@@ -2671,6 +2676,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, _("The Case")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, _("The Case's Owner")),
             (CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, _("The Case's Last Submitting User")),
+            (CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, _("The Case's Parent Case")),
         ]
         new_choices.extend(self.fields['recipient_types'].choices)
 
@@ -3184,6 +3190,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF,
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER,
             CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER,
+            CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE,
         ):
             if recipient_type_without_id in recipient_types:
                 result.append((recipient_type_without_id, None))

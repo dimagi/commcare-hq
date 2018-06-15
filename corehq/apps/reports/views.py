@@ -1574,7 +1574,7 @@ def case_property_names(request, domain, case_id):
             all_property_names.add('external_id')
         all_property_names.remove('name')
     except KeyError:
-        all_property_names = set()
+        pass
     all_property_names = list(all_property_names)
     all_property_names.sort()
 

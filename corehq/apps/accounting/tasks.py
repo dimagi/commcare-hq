@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 import csv342 as csv
 import datetime
+from datetime import date
 import io
 import json
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
@@ -96,7 +97,11 @@ def activate_subscriptions(based_on_date=None):
     if based_on_date:
         starting_subscriptions = starting_subscriptions.filter(date_start=based_on_date)
     else:
-        starting_subscriptions = starting_subscriptions.filter(date_start__lte=datetime.datetime.today())
+        today = date.today()
+        starting_subscriptions = starting_subscriptions.filter(
+            date_start__lte=today,
+            date_end__gt=today,
+        )
 
     for subscription in starting_subscriptions:
         try:
