@@ -1514,26 +1514,6 @@ def case_property_changes(request, domain, case_id, case_property_name):
     })
 
 
-@location_safe
-class CaseAttachmentsView(CaseDataView):
-    urlname = 'single_case_attachments'
-    template_name = "reports/reportdata/case_attachments.html"
-    page_title = ugettext_lazy("Case Attachments")
-    http_method_names = ['get']
-
-    @method_decorator(login_and_domain_required)
-    def dispatch(self, request, *args, **kwargs):
-        if not can_view_attachments(request):
-            return HttpResponseForbidden(_("You don't have permission to access this page."))
-        return super(CaseAttachmentsView, self).dispatch(request, *args, **kwargs)
-
-    @property
-    def page_name(self):
-        return "{} '{}'".format(
-            _("Attachments for case"), super(CaseAttachmentsView, self).page_name
-        )
-
-
 @require_case_view_permission
 @login_and_domain_required
 @require_GET
