@@ -1054,7 +1054,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPE_CASE_CREATE = 128
     TYPE_CASE_CLOSE = 256
     TYPE_CASE_INDEX = 512
-    TYPE_CASE_ATTACHMENT = 1024
     TYPE_REBUILD_FORM_REPROCESS = 2048
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
@@ -1067,7 +1066,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         (TYPE_LEDGER, 'ledger'),
         (TYPE_CASE_CREATE, 'case_create'),
         (TYPE_CASE_CLOSE, 'case_close'),
-        (TYPE_CASE_ATTACHMENT, 'case_attachment'),
         (TYPE_CASE_INDEX, 'case_index'),
     )
     TYPES_TO_PROCESS = (
@@ -1142,10 +1140,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         return bool(self.is_form_transaction and self.TYPE_CASE_INDEX & self.type)
 
     @property
-    def is_case_attachment(self):
-        return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
-
-    @property
     def is_case_rebuild(self):
         return bool(
             (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
@@ -1196,7 +1190,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             cls.TYPE_CASE_CLOSE,
             cls.TYPE_CASE_INDEX,
             cls.TYPE_CASE_CREATE,
-            cls.TYPE_CASE_ATTACHMENT,
             0,
         ]
 
@@ -1231,7 +1224,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             const.CASE_ACTION_CLOSE: cls.TYPE_CASE_CLOSE,
             const.CASE_ACTION_CREATE: cls.TYPE_CASE_CREATE,
             const.CASE_ACTION_INDEX: cls.TYPE_CASE_INDEX,
-            const.CASE_ACTION_ATTACHMENT: cls.TYPE_CASE_ATTACHMENT,
         }.get(action_type_slug, 0)
 
     @classmethod
