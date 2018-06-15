@@ -935,6 +935,5 @@ class AggregateInactiveAWW(models.Model):
             cursor.execute(aggregation_query, agg_params)
 
     class Meta(object):
-        managed = False
         app_label = 'icds_reports'
         db_table = AGG_INACTIVE_AWW_TABLE

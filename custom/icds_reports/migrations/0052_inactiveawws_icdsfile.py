@@ -8,9 +8,6 @@ from django.db import migrations, models
 from corehq.sql_db.operations import RawSQLMigration
 
 
-migrator = RawSQLMigration(('custom', 'icds_reports', 'migrations', 'sql_templates'))
-
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -18,7 +15,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrator.get_migration('update_tables24.sql'),
         migrations.CreateModel(
             name='AggregateInactiveAWW',
             fields=[
@@ -38,7 +34,18 @@ class Migration(migrations.Migration):
             ],
             options={
                 'db_table': 'icds_dashboard_inactive_aww',
-                'managed': False,
+            },
+        ),
+        migrations.CreateModel(
+            name='IcdsFile',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('blob_id', models.CharField(max_length=255)),
+                ('data_type', models.CharField(max_length=255)),
+                ('file_added', models.DateField(auto_now=True)),
+            ],
+            options={
+                'db_table': 'icds_dashboard_icds_file',
             },
         ),
     ]

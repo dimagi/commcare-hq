@@ -43,7 +43,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
-from custom.icds_reports.models import AggregateInactiveAWW
+from custom.icds_reports.models.helper import IcdsFile
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -103,7 +103,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports
+    prepare_issnip_monthly_register_reports, collect_inactive_awws
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
@@ -112,8 +112,6 @@ from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
 from couchexport.shortcuts import export_response
-from io import BytesIO
-from couchexport.export import export_from_tables
 
 
 @location_safe
@@ -1658,18 +1656,7 @@ class ICDSAppTranslations(BaseDomainView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class InactiveAWW(View):
     def get(self, request, *args, **kwargs):
-        export_file = BytesIO()
-        excel_data = AggregateInactiveAWW.objects.all()
-        columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
-            'days_since_start',
-            'days_inactive'
-        ]
-        rows = [columns]
-        for data in excel_data:
-            rows.append(
-                [getattr(data, field) or 'N/A' for field in columns]
-            )
-
-        export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
-        title = "inactive_awws_%s" % date.today().strftime('%Y-%m-%d')
-        return export_response(export_file, 'csv', title)
+        collect_inactive_awws()
+        last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % datetime.today().strftime('%Y-%m-%d')
+        return export_response(last_sync.get_file_from_blobdb(), 'csv', zip_name)

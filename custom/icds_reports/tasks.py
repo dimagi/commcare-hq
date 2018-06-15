@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
+
 from collections import namedtuple
 import csv342 as csv
 from datetime import date, datetime, timedelta
@@ -15,6 +16,8 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
+from six.moves import cStringIO
+from couchexport.export import export_from_tables
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
@@ -36,6 +39,7 @@ from custom.icds_reports.models import (
     AggregateChildHealthTHRForms,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
+from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
 from dimagi.utils.chunked import chunked
@@ -182,10 +186,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
         tasks.append(group(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
             no_op_task_for_celery_bug.si(),
-        ))
-        tasks.append(group(
-            icds_aggregation_task.si(date=date, func=_aggregate_inactive_aww),
-            no_op_task_for_celery_bug.si()
         ))
         tasks.append(group(
             email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
@@ -611,3 +611,37 @@ def _update_ucr_table_mapping():
             defaults={'table_name': table_name}
         )
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
+
+
+@periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
+def collect_inactive_awws():
+    celery_task_logger.info("Started updating the Inactive AWW")
+    filename = "inactive_awws.csv"
+    last_sync, is_created = IcdsFile.objects.get_or_create(blob_id=filename, data_type='inactive_awws')
+
+    # If last sync not exist then collect initial data
+    date = datetime(2017, 3, 1).date() if is_created else last_sync.file_added
+
+    _aggregate_inactive_aww(date)
+
+    celery_task_logger.info("Collecting inactive AWW to generate zip file")
+    excel_data = AggregateInactiveAWW.objects.all()
+
+    celery_task_logger.info("Preparing data to csv file")
+    columns = [x.name for x in AggregateInactiveAWW._meta.fields] + [
+        'days_since_start',
+        'days_inactive'
+    ]
+    rows = [columns]
+    for data in excel_data:
+        rows.append(
+            [getattr(data, field) or 'N/A' for field in columns]
+        )
+
+    celery_task_logger.info("Creating csv file")
+    export_file = cStringIO()
+    export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
+
+    celery_task_logger.info("Saving zip file in blobdb")
+    last_sync.store_file_in_blobdb(export_file, filename)
+    celery_task_logger.info("Ended updating the Inactive AWW")
