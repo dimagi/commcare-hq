@@ -143,16 +143,14 @@ class IsDistinctFromFilter(BasicFilter):
 
 
 class NumericFilterValue(FilterValue):
-    # TODO (J$): THis should get removed
-    DBSpecificFilter = namedtuple('DBSpecificFilter', ['sql', 'es'])
     operators_to_filters = {
-        '=': DBSpecificFilter(EQFilter, filters.term),
-        '!=': DBSpecificFilter(NOTEQFilter, filters.not_term),
-        'distinct from': DBSpecificFilter(IsDistinctFromFilter, filters.not_term),
-        '>=': DBSpecificFilter(GTEFilter, lambda field, val: filters.range_filter(field, gte=val)),
-        '>': DBSpecificFilter(GTFilter, lambda field, val: filters.range_filter(field, gt=val)),
-        '<=': DBSpecificFilter(LTEFilter, lambda field, val: filters.range_filter(field, lte=val)),
-        '<': DBSpecificFilter(LTFilter, lambda field, val: filters.range_filter(field, lt=val)),
+        '=': EQFilter,
+        '!=': NOTEQFilter,
+        'distinct from': IsDistinctFromFilter,
+        '>=': GTEFilter,
+        '>': GTFilter,
+        '<=': LTEFilter,
+        '<': LTFilter,
     }
 
     def __init__(self, filter, value):
@@ -166,7 +164,7 @@ class NumericFilterValue(FilterValue):
     def to_sql_filter(self):
         if self.value is None:
             return None
-        filter_class = self.operators_to_filters[self.value['operator']].sql
+        filter_class = self.operators_to_filters[self.value['operator']]
         return filter_class(self.filter['field'], self.filter['slug'])
 
     def to_sql_values(self):
