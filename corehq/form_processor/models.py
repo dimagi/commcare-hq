@@ -636,7 +636,7 @@ class SupplyPointCaseMixin(object):
 
 
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                      AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -791,14 +791,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, identifier):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
-
-    def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachments(self.case_id)
-
     @property
     @memoized
     def transactions(self):
@@ -825,11 +817,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     def non_revoked_transactions(self):
         return [t for t in self.transactions if not t.revoked]
-
-    @property
-    @memoized
-    def case_attachments(self):
-        return {attachment.identifier: attachment for attachment in self.get_attachments()}
 
     @memoized
     def get_closing_transactions(self):
