@@ -93,9 +93,9 @@ def push_translation_files_to_transifex(domain, data, email):
                                   data.get('version')).send_translation_files()
     if upload_status:
         result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
-                     "with source language '{source_lang}' and target lang '{target_lang}' " \
-                     "was completed on project {transifex_project_slug} on transifex. " \
-                     "The result is as follows:\n".format(**data)
+                      "with source language '{source_lang}' and target lang '{target_lang}' " \
+                      "was completed on project {transifex_project_slug} on transifex. " \
+                      "The result is as follows:\n".format(**data)
         email = EmailMessage(
             subject='[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT),
             body=(result_note +
