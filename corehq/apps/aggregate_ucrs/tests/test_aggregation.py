@@ -102,6 +102,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
     @classmethod
     def tearDownClass(cls):
+        super(UCRAggregationTest, cls).tearDownClass()
         cls._cleanup_data()
 
     @classmethod
