@@ -248,8 +248,15 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_weight"]
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_weight"
+          }
         }
       },
       {
@@ -259,8 +266,15 @@
         "expression": {
           "type": "switch",
           "switch_on": {
-            "type": "property_path",
-            "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_blood_pressure"]
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_blood_pressure"
+            }
           },
           "cases": {
             "normal": {
@@ -287,8 +301,15 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "bp_sys"]
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_sys"
+          }
         }
       },
       {
@@ -296,8 +317,15 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "bp_dia"]
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "bp_dias"
+          }
         }
       },
       {
@@ -305,17 +333,36 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_abnormalities"]
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "anc_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "anc_abnormalities"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
         }
       },
       {
         "column_id": "anc_hemoglobin",
-        "datatype": "small_integer",
+        "datatype": "decimal",
         "type": "expression",
         "expression": {
-          "type": "property_path",
-          "property_path": ["form", "bp1", "iteration", "item", "filter", "anc_details", "anc_hemoglobin"]
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "anc_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "anc_hemoglobin"
+          }
         }
       },
       {
@@ -395,6 +442,24 @@
         "user_id_expression": {
           "type": "property_path",
           "property_path": ["form", "meta", "userID"]
+        }
+      },
+      "anc_details": {
+        "type": "nested",
+        "argument_expression": {
+          "type": "array_index",
+          "array_expression": {
+	        "type": "property_path",
+	        "property_path": ["form", "bp1", "iteration", "item"]
+          },
+          "index_expression": {
+            "type": "constant",
+            "constant": 0
+          }
+        },
+        "value_expression": {
+          "type": "property_path",
+          "property_path": ["filter", "anc_details"]
         }
       }
     },

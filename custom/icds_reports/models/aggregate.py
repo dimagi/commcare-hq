@@ -85,7 +85,7 @@ class CcsRecordMonthly(models.Model):
     anc_blood_pressure = models.SmallIntegerField(blank=True, null=True)
     bp_sys = models.SmallIntegerField(blank=True, null=True)
     bp_dia = models.SmallIntegerField(blank=True, null=True)
-    anc_hemogloblin = models.SmallIntegerField(blank=True, null=True)
+    anc_hemogloblin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
     bleeding = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     blurred_vision = models.SmallIntegerField(blank=True, null=True)
@@ -1008,7 +1008,9 @@ class AggregateBirthPreparednesForms(models.Model):
         null=True,
         help_text="Last value of anc_details/bp_dia"
     )
-    anc_hemogloblin = models.PositiveSmallIntegerField(
+    anc_hemogloblin = models.DecimalField(
+        max_digits=64,
+        decimal_places=20,
         null=True,
         help_text="Last value of anc_details/anc_hemogloblin"
     )

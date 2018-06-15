@@ -146,11 +146,18 @@
               "items_expression": {
                 "type": "filter_items",
                 "items_expression": {
+                  "type": "property_path",
                   "property_path": ["form", "child", "breastfed_at_birth"],
                   "datatype": "array"
                 },
-                "operator": "eq",
-                "property_value": "yes"
+                "filter_expression": {
+                  "type": "boolean_expression",
+                  "expression": {
+                    "type": "identity"
+                  },
+                  "operator": "eq",
+                  "property_value": "yes"
+                }
               },
               "aggregation_fn": "count"
             },
@@ -160,11 +167,11 @@
           },
           "expression_if_true": {
             "type": "constant",
-            "constant_value": 1
+            "constant": 1
           },
           "expression_if_false": {
             "type": "constant",
-            "constant_value": 0
+            "constant": 0
           }
         }
       }
