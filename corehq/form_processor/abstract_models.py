@@ -172,9 +172,6 @@ class AbstractCommCareCase(CaseToXMLMixin):
     def soft_delete(self):
         raise NotImplementedError()
 
-    def get_attachment(self, attachment_name):
-        raise NotImplementedError()
-
     def is_deleted(self):
         raise NotImplementedError()
 
@@ -319,16 +316,3 @@ class IsImageMixin(object):
         if self.content_type is None:
             return None
         return True if self.content_type.startswith('image/') else False
-
-
-class CaseAttachmentMixin(IsImageMixin):
-
-    @property
-    def is_present(self):
-        """
-        Helper method to see if this is a delete vs. update
-        """
-        if self.identifier and (self.attachment_src == self.attachment_from is None):
-            return False
-        else:
-            return True

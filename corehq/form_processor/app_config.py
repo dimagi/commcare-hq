@@ -25,7 +25,6 @@ class FormProcessorAppConfig(AppConfig):
         CommCareCaseSQL = self.get_model('CommCareCaseSQL')
         CaseTransaction = self.get_model('CaseTransaction')
         CommCareCaseIndexSQL = self.get_model('CommCareCaseIndexSQL')
-        CaseAttachmentSQL = self.get_model('CaseAttachmentSQL')
         register_adapter(CommCareCaseSQL, case_adapter)
         register_adapter(CaseTransaction, case_transaction_adapter)
         register_adapter(CommCareCaseIndexSQL, case_index_adapter)
