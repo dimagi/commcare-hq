@@ -66,7 +66,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             transaction.type -= CaseTransaction.TYPE_LEDGER
             self.case.track_update(transaction)
 
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+    def update_from_case_update(self, case_update, xformdoc):
         self._apply_case_update(case_update, xformdoc)
         self.add_transaction_for_form(self.case, case_update, xformdoc)
 
