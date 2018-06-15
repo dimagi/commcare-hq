@@ -59,7 +59,6 @@ class ConfigurableReportTableManagerTest(SimpleTestCase):
         self.assertTrue(table_manager.needs_bootstrap())
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class IndicatorPillowTest(TestCase):
 
     @classmethod
@@ -240,11 +239,6 @@ class IndicatorPillowTest(TestCase):
         self.pillow.process_change(doc_to_change(sample_doc))
 
         self.assertIs(self.adapter.doc_exists(sample_doc), True)
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class IndicatorPillowTestES(IndicatorPillowTest):
-    pass
 
 
 @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
@@ -495,7 +489,6 @@ class AsyncIndicatorTest(TestCase):
         self.assertEqual(indicators.count(), 1)
 
 
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class StaticKafkaIndicatorPillowTest(TestCase):
 
     def setUp(self):
@@ -515,11 +508,6 @@ class StaticKafkaIndicatorPillowTest(TestCase):
         MagicMock(return_value=None))
     def test_bootstrap_can_be_called(self):
         self.pillow.bootstrap()
-
-
-@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
-class StaticKafkaIndicatorPillowTestES(StaticKafkaIndicatorPillowTest):
-    pass
 
 
 class IndicatorConfigFilterTest(SimpleTestCase):
