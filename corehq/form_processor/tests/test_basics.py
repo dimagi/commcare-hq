@@ -330,10 +330,6 @@ class FundamentalCaseTests(FundamentalBaseTests):
         self.assertTrue(form.is_error)
         self.assertTrue('InvalidCaseIndex' in form.problem)
 
-    def test_case_with_attachment(self):
-        # same as update, attachments
-        pass
-
     def test_date_opened_coercion(self):
         delete_all_users()
         self.project = Domain(name='some-domain')
