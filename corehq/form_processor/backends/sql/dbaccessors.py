@@ -43,7 +43,6 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.models import (
     XFormInstanceSQL,
     CommCareCaseIndexSQL,
-    CaseAttachmentSQL,
     CaseTransaction,
     CommCareCaseSQL,
     XFormAttachmentSQL,
@@ -915,16 +914,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_identifier(case_id, identifier):
-        try:
-            return CaseAttachmentSQL.objects.raw(
-                'select * from get_case_attachment_by_identifier(%s, %s)',
-                [case_id, identifier]
-            )[0]
-        except IndexError:
-            raise AttachmentNotFound(identifier)
-
-    @staticmethod
     def get_transactions(case_id):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
@@ -986,17 +975,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
         indices_to_save_or_update = case.get_live_tracked_models(CommCareCaseIndexSQL)
         index_ids_to_delete = [index.id for index in case.get_tracked_models_to_delete(CommCareCaseIndexSQL)]
 
-        attachments_to_save = case.get_tracked_models_to_create(CaseAttachmentSQL)
-        attachment_ids_to_delete = [att.id for att in case.get_tracked_models_to_delete(CaseAttachmentSQL)]
-        for attachment in attachments_to_save:
-            if attachment.is_saved():
-                raise CaseSaveError(
-                    """Updating attachments is not supported.
-                    case id={}, attachment id={}""".format(
-                        case.case_id, attachment.attachment_id
-                    )
-                )
-
         try:
             with transaction.atomic(using=case.db, savepoint=False):
                 case.save()
@@ -1012,13 +990,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
                     index.save(update_fields=update_fields)
 
                 CommCareCaseIndexSQL.objects.using(case.db).filter(id__in=index_ids_to_delete).delete()
-
-                for attachment in attachments_to_save:
-                    attachment.save()
-
-                CaseAttachmentSQL.objects.using(case.db).filter(id__in=attachment_ids_to_delete).delete()
-                for attachment in case.get_tracked_models_to_delete(CaseAttachmentSQL):
-                    attachment.delete_content()
 
                 case.clear_tracked_models()
         except InternalError as e:
