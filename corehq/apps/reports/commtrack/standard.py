@@ -89,6 +89,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
     ]
     exportable = True
+    exportable_all = True
     emailable = True
     ajax_pagination = True
     asynchronous = True
@@ -192,6 +193,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def rows(self):
         return [pd[0:2] + ['%.1f%%' % d for d in pd[2:]] for pd in self.product_data]
+
+    @property
+    def get_all_rows(self):
+        self.pagination.count = self.total_records
+        return self.rows
 
     def get_data_for_graph(self):
         ret = [
