@@ -18,6 +18,6 @@ class ConfigParseTest(SimpleTestCase, AggregationBaseTestMixin):
         self.assertEqual(1, len(spec.secondary_tables))
         secondary_table = spec.secondary_tables[0]
         self.assertEqual('d824a4864ecb421fb3be8bf8173a05d7', secondary_table.data_source_id)
-        self.assertEqual('form.case.@case_id', secondary_table.key_column)
+        self.assertEqual('form.case.@case_id', secondary_table.secondary_key_column)
         self.assertEqual('received_on', secondary_table.time_window_column)
         self.assertEqual(1, len(secondary_table.columns))
