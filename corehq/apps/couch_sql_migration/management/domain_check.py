@@ -1,8 +1,8 @@
+from __future__ import absolute_import, print_function
 from corehq.form_processor.interfaces import dbaccessors
 from casexml.apps.case.models import CommCareCase
 import random
 from corehq.util.log import with_progress_bar
-from corehq.form_processor.backends.couch.processor import _get_actions_from_forms
 from corehq.apps.couch_sql_migration.diff import filter_case_diffs
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
@@ -10,18 +10,18 @@ from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdate
 
 
 def check_domain(domain, num_cases=1000, randomization=100):
-    case_db = dbaccessors.CaseAccessors(domain)
     form_db = dbaccessors.FormAccessors(domain)
 
     case_iterator = CouchViewChangeProvider(
-                couch_db=CommCareCase.get_db(),
-                view_name='by_domain_doc_type_date/view',
-                view_kwargs={
-                    'startkey': [domain, 'CommCareCase'],
-                    'endkey': [domain, 'CommCareCase', {}],
-                    'include_docs': False,
-                }
-            ).iter_all_changes()
+        couch_db=CommCareCase.get_db(),
+        view_name='by_domain_doc_type_date/view',
+        view_kwargs={
+            'startkey': [domain, 'CommCareCase'],
+            'endkey': [domain, 'CommCareCase', {}],
+            'include_docs': False,
+        }
+    ).iter_all_changes()
+
     for i in with_progress_bar(range(0, num_cases), oneline=False):
         skips = random.randint(1, randomization)
         for _ in range(0, skips):
@@ -30,9 +30,10 @@ def check_domain(domain, num_cases=1000, randomization=100):
         current_case = CommCareCase(case.get_document())
         case_id, diffs = is_problem_case(current_case, form_db)
         if case_id:
-            print "%s: diffs" % case_id
+            print("%s: diffs" % case_id)
             for diff in diffs:
-                print diff
+                print(diff)
+
 
 def is_problem_case(case, form_db):
     orig_case_json = case.to_json()
@@ -50,6 +51,7 @@ def is_problem_case(case, form_db):
         if diffs:
             return (case.case_id, diffs)
     return False, None
+
 
 def rebuild_case_from_sorted_actions(case, sorted_actions):
     strategy = CouchCaseUpdateStrategy(case)
