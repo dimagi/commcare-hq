@@ -228,8 +228,6 @@ def can_view_attachments(request):
             request.domain, 'view_report',
             data='corehq.apps.reports.standard.cases.basic.CaseListReport'
         )
-        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
-        or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
     )
 
 
