@@ -120,10 +120,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
         return self.action_type == const.CASE_ACTION_INDEX
 
     @property
-    def is_case_attachment(self):
-        return self.action_type == const.CASE_ACTION_ATTACHMENT
-
-    @property
     def is_case_rebuild(self):
         return self.action_type == const.CASE_ACTION_REBUILD
 
@@ -174,8 +170,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    case_attachments = SchemaDictProperty(CommCareCaseAttachment)
-    
+
     server_modified_on = DateTimeProperty()
 
     def __unicode__(self):
@@ -316,7 +311,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             "properties": self.get_properties_in_api_format(),
             #reorganized
             "indices": self.get_index_map(),
-            "attachments": self.get_attachment_map(),
         }
         if not lite:
             ret.update({
@@ -415,9 +409,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         """
         from couchforms.dbaccessors import get_forms_by_id
         return get_forms_by_id(self.xform_ids)
-
-    def get_attachment(self, attachment_name):
-        return self.fetch_attachment(attachment_name)
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""
