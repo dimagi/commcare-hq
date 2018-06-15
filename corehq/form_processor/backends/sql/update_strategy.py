@@ -127,8 +127,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self._apply_index_action(action)
         elif action.action_type_slug == const.CASE_ACTION_CLOSE:
             self._apply_close_action(case_update)
-        elif action.action_type_slug == const.CASE_ACTION_ATTACHMENT:
-            self._apply_attachments_action(action, xform)
         else:
             raise ValueError("Can't apply action of type %s: %s" % (
                 action.action_type,
@@ -189,24 +187,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         relationship=index_update.relationship
                     )
                     self.case.track_create(index)
-
-    def _apply_attachments_action(self, attachment_action, xform):
-        current_attachments = self.case.case_attachments
-        for identifier, att in attachment_action.attachments.items():
-            new_attachment = CaseAttachmentSQL.from_case_update(att)
-            if new_attachment.is_present:
-                form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if identifier in current_attachments:
-                    existing_attachment = current_attachments[identifier]
-                    existing_attachment.from_form_attachment(form_attachment)
-                    self.case.track_update(existing_attachment)
-                else:
-                    new_attachment.from_form_attachment(form_attachment)
-                    new_attachment.case = self.case
-                    self.case.track_create(new_attachment)
-            elif identifier in current_attachments:
-                existing_attachment = current_attachments[identifier]
-                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True
