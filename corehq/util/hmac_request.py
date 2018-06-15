@@ -14,6 +14,16 @@ from corehq.util.soft_assert.api import soft_assert
 _soft_assert = soft_assert(notify_admins=True)
 
 
+def convert_to_bytestring_if_unicode(shared_key):
+    return shared_key.encode('utf-8') if isinstance(shared_key, six.text_type) else shared_key
+
+
+def get_hmac_digest(shared_key, data):
+    hm = hmac.new(convert_to_bytestring_if_unicode(shared_key), data, hashlib.sha256)
+    digest = base64.b64encode(hm.digest())
+    return digest
+
+
 def validate_request_hmac(setting_name, ignore_if_debug=False):
     """
     Decorator to validate request sender using a shared secret
@@ -41,11 +51,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             if not expected_digest or not shared_key:
                 return HttpResponse(status=401)
 
-            hm = hmac.new(
-                shared_key.encode('utf-8') if isinstance(shared_key, six.text_type) else shared_key,
-                request.body, hashlib.sha256
-            )
-            digest = base64.b64encode(hm.digest())
+            digest = get_hmac_digest(shared_key, request.body)
 
             if expected_digest != digest:
                 return HttpResponse(status=401)
