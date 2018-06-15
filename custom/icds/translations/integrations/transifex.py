@@ -4,7 +4,7 @@ import os
 import six
 import sys
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext as _
 from django.conf import settings
 from memoized import memoized
 
@@ -147,5 +147,11 @@ class Transifex(object):
         return self.client.source_lang_is(hq_lang_code)
 
     def delete_resources(self):
+        delete_status = {}
         for resource_slug in self.resource_slugs:
-            self.client.delete_resource(resource_slug)
+            response = self.client.delete_resource(resource_slug)
+            if response.status_code == 204:
+                delete_status[resource_slug] = _("Successfully Removed")
+            else:
+                delete_status[resource_slug] = response.content
+        return delete_status

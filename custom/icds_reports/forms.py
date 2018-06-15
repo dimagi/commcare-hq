@@ -15,7 +15,7 @@ from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 
 class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy("Build Number"), required=False,
+    version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
                                  help_text=ugettext_lazy("Leave blank to use current application state"))
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
