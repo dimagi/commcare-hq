@@ -661,6 +661,7 @@ class ExportInstance(BlobMixin, Document):
     description = StringProperty(default='')
 
     sharing = StringProperty(default=Sharing.EDIT_AND_EXPORT, choices=Sharing.CHOICES)
+    owner_id = StringProperty(default=None)
 
     class Meta(object):
         app_label = 'export'
