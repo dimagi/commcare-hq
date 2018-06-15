@@ -81,25 +81,7 @@ def get_expanded_column_config(data_source_configuration, column_config, lang):
             max=column_config.max_expansion,
         ))
 
-    column = _get_expanded_column(data_source_configuration, column_config, vals, lang)
+    from corehq.apps.userreports.sql.columns import expand_column
+    column = expand_column(column_config, vals, lang)
 
     return ColumnConfig(column, warnings=column_warnings)
-
-
-def _get_expanded_column(data_source_config, report_column, values, lang):
-    """
-    Given an ExpandedColumn, return a list of Column-like objects. Each column
-    is configured to show the number of occurrences of one of the given distinct_values.
-
-    :param report_column:
-    :param distinct_values:
-    :return:
-    """
-    from corehq.apps.userreports.sql.columns import expand_column as sql_expand_column
-    from corehq.apps.userreports.es.columns import expand_column as es_expand_column
-    backend_id = get_backend_id(data_source_config)
-    if backend_id == UCR_ES_BACKEND:
-        fn = es_expand_column
-    else:
-        fn = sql_expand_column
-    return fn(report_column, values, lang)
