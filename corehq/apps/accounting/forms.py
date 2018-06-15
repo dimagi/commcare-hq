@@ -1895,7 +1895,6 @@ class TriggerCustomerInvoiceForm(forms.Form):
         today = datetime.date.today()
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
-
         if (year, month) >= (today.year, today.month):
             raise ValidationError('Statement period must be in the past')
 
