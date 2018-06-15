@@ -41,7 +41,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", function () {
     $(function () {
         var $appModuleSelection = $("#app-module-selection");
         var viewModel = appsModulesModel(
-            hqImport("hqwebapp/js/initial_page_data").get("apps_modules"),
+            hqImport("hqwebapp/js/initial_page_data").get("apps_modules")
         );
         if ($appModuleSelection.length) {
             $appModuleSelection.koApplyBindings(viewModel);

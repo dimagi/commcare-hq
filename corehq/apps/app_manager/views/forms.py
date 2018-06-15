@@ -515,15 +515,18 @@ def get_apps_modules(domain):
     """
     Returns a domain's apps and their modules
     """
-    return [{
-        'app_id': app.id,
-        'name': app.name,
-        'modules': [{
-            'module_id': module.id,
-            'name': clean_trans(module.name, app.langs),
-        } for module in app.modules]
-    } for app in get_apps_in_domain(domain, include_remote=False)
-    if app.doc_type == 'Application']  # No linked apps, no deleted apps
+    return [
+        {
+            'app_id': app.id,
+            'name': app.name,
+            'modules': [{
+                'module_id': module.id,
+                'name': clean_trans(module.name, app.langs),
+            } for module in app.modules]
+        }
+        for app in get_apps_in_domain(domain, include_remote=False)
+        if app.doc_type == 'Application'  # No linked apps, no deleted apps
+    ]
 
 
 def get_form_view_context_and_template(request, domain, form, langs, messages=messages):
