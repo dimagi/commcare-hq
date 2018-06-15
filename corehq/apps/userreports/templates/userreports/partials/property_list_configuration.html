@@ -178,7 +178,7 @@ TODO:
                 attr: {disabled: !existsInCurrentVersion()}
             "/>
             <!--/ko-->
-            <label class="help-block" data-bind="if: $parent.showWarnings() && !filterValue()">
+            <label class="help-block" data-bind="if: $parent.showWarnings() && !(filterValue() || filterOperator())">
                 {% trans "Filter Value should not be blank." %}</label>
         </td>
         <!--/ko-->
