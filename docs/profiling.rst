@@ -78,7 +78,7 @@ Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The raw profile files are not human readable, and you need to use something
-like `hotshot <https://docs.python.org/2/library/hotshot.html>`_ to make them
+like `cProfile <https://docs.python.org/2/library/profile.html#module-cProfile>`_ to make them
 useful.
 A script that will generate what is typically sufficient information to analyze
 these can be found in the `commcarehq-scripts`_ repository.
@@ -195,10 +195,12 @@ Aggregating data from multiple runs
 
 In some cases it is useful to run a function a number of times and aggregate the profile data.
 To do this follow the steps above to create a set of '.prof' files (one for each run of the function) then use the
-'gather_profile_stats.py' script included with django (lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py)
-to aggregate the data.
+`gather_profile_stats.py`_ script to aggregate the data.
 
-This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
+This will produce a file which can be analysed with the `convert_profile.py`_ script.
+
+.. _gather_profile_stats.py: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/gather_profile_stats.py
+.. _convert_profile.py: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/convert_profile.py
 
 Line profiling
 ^^^^^^^^^^^^^^
