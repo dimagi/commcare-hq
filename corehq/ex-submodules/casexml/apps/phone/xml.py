@@ -98,9 +98,6 @@ def get_casedb_element(case):
         <index>
             <parent case_type="" relationship="">id</parent>
         </index>
-        <attachment>
-            <a12345 />
-        </attachment>
     </case>
     https://github.com/dimagi/commcare/wiki/casedb
     """
