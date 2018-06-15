@@ -108,12 +108,12 @@ class SecondaryTableDefinition(models.Model):
     table_definition = models.ForeignKey(AggregateTableDefinition, on_delete=models.CASCADE,
                                          related_name='secondary_tables')
     data_source_id = models.UUIDField()
-    primary_key_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
-    secondary_key_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
+    join_column_primary = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
+    join_column_secondary = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
     time_window_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH, null=True, blank=True)
 
     def __str__(self):
-        return '{} - {}:{}'.format(self.table_definition, self.data_source_id, self.secondary_key_column)
+        return '{} - {}:{}'.format(self.table_definition, self.data_source_id, self.join_column_secondary)
 
     @property
     @memoized

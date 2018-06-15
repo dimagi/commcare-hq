@@ -39,8 +39,8 @@ class SecondaryColumnSpec(jsonobject.JsonObject):
 
 class SecondaryTableSpec(jsonobject.JsonObject):
     data_source_id = jsonobject.StringProperty(required=True)
-    primary_key_column = jsonobject.StringProperty(required=True)
-    secondary_key_column = jsonobject.StringProperty(required=True)
+    join_column_primary = jsonobject.StringProperty(required=True)
+    join_column_secondary = jsonobject.StringProperty(required=True)
     time_window_column = jsonobject.StringProperty()
     columns = jsonobject.ListProperty(SecondaryColumnSpec)
 
