@@ -225,6 +225,7 @@ class LocationStub(object):
                 class fake_stub:
                     db_object = old_collection.locations_by_site_code[self.parent_code]
                     do_delete = False
+                    new_parent_stub = None
                 self.new_parent_stub = fake_stub
 
         for attr in self.meta_data_attrs:
@@ -884,16 +885,19 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
-    def handle_delete(loc):
-        delete_locations.append(loc)
-        parent_stub = loc.new_parent_stub
-        if not parent_stub.do_delete:
+    # _seen is intentionally a mutable cache of all ids seen so far
+    def iter_unprocessed_ancestor_ids(stubs, _seen=set()):
+        for loc in stubs:
+            parent_stub = loc.new_parent_stub
+            if parent_stub is None or parent_stub.do_delete:
+                continue
             while parent_stub is not None:
                 location_id = parent_stub.db_object.location_id
                 assert location_id, repr(parent_stub.db_object)
-                if location_id in ancestors_of_deleted_nodes:
+                if location_id in _seen:
                     break
-                ancestors_of_deleted_nodes.add(location_id)
+                _seen.add(location_id)
+                yield location_id
                 parent_stub = parent_stub.new_parent_stub
 
     delete_locations = []
@@ -902,7 +906,11 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
         with transaction.atomic():
             for loc in stubs:
                 if loc.do_delete:
-                    handle_delete(loc)
+                    if loc.is_new:
+                        if excel_importer:
+                            excel_importer.add_progress()
+                    else:
+                        delete_locations.append(loc)
                     continue
                 if excel_importer:
                     excel_importer.add_progress()
@@ -913,18 +921,10 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
                     loc_object.save()
 
     # reverse -> delete leaf nodes first
-    # WARNING the databases may be left in an inconsistent state if
-    # an exception is thrown during deletion because SQLLocation.delete()
-    # deletes resources that are stored in other databases that will
-    # not be reverted on transaction rollback.
     for stubs in chunked(reversed(delete_locations), chunk_size):
+        to_delete = [loc.db_object for loc in stubs]
+        ancestor_ids = list(iter_unprocessed_ancestor_ids(stubs))
         with transaction.atomic():
-            for loc in stubs:
-                if excel_importer:
-                    excel_importer.add_progress()
-                if not loc.is_new:
-                    loc.db_object.delete(bulk_leaf_delete=True)
-
-    if ancestors_of_deleted_nodes:
-        from . tasks import update_users_at_locations
-        update_users_at_locations.delay(list(ancestors_of_deleted_nodes))
+            SQLLocation.bulk_delete(to_delete, ancestor_ids)
+            if excel_importer:
+                excel_importer.add_progress(len(to_delete))

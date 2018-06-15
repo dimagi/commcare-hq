@@ -430,35 +430,56 @@ class SQLLocation(AdjListModel):
         publish_location_saved(self.domain, self.location_id)
 
     def delete(self, *args, **kwargs):
-        """Delete this location and update users and supply point case
+        """Delete this location and all descentants
 
-        :param bulk_leaf_delete: Optional flag indicating a bulk delete
-        operation where locations are deleted starting at leaf nodes of
-        the tree and progressing toward the root. Users at ancestor
-        locations will not be updated (via `update_users_at_locations`)
-        when this flag is `True`. This parameter must be passed as a
-        keyword argument. The default value is `False`.
+        Supply point cases and user updates are performed asynchronously.
         """
-        from corehq.apps.commtrack.models import sync_supply_point
+        from .tasks import update_users_at_locations
         from .document_store import publish_location_saved
-        bulk_leaf_delete = kwargs.pop("bulk_leaf_delete", False)
 
-        if bulk_leaf_delete:
-            to_delete = [self]
-        else:
-            to_delete = self.get_descendants(include_self=True)
-
-        # This deletion should ideally happen in a transaction. It's not
-        # currently possible as supply point cases are stored either in a
-        # separate database or in couch. Happy Debugging!
+        to_delete = self.get_descendants(include_self=True)
         for loc in to_delete:
-            loc._remove_users(update_ancestors=not bulk_leaf_delete)
-            sync_supply_point(loc, is_deletion=True)
+            loc._remove_user()
 
         super(SQLLocation, self).delete(*args, **kwargs)
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in to_delete],
+            [loc.supply_point_id for loc in to_delete if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
         publish_location_saved(self.domain, self.location_id, is_deletion=True)
 
     full_delete = delete
+
+    @classmethod
+    def bulk_delete(cls, locations, ancestor_location_ids):
+        """Bulk delete the given locations and update their ancestors
+
+        WARNING databases may be left in an inconsistent state if the
+        transaction in which this deletion is performed is rolled back.
+        This method mutates other databases that will not be reverted on
+        transaction rollback.
+
+        :param locations: A list of SQLLocation objects.
+        :param ancestor_location_ids: A list of ancestor `location_id`s
+        for the given `locations`.
+        """
+        from .tasks import update_users_at_locations
+        if not locations:
+            return
+        if len(set(loc.domain for loc in locations)) != 1:
+            raise ValueError("cannot bulk delete locations for multiple domains")
+        cls.objects.filter(id__in=[loc.id for loc in locations]).delete()
+        # NOTE _remove_user() not called here. No domains were using
+        # SQLLocation.user_id at the time this was written, and that
+        # field is slated for removal.
+        update_users_at_locations.delay(
+            locations[0].domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            ancestor_location_ids,
+        )
 
     def to_json(self, include_lineage=True):
         json_dict = {
@@ -511,7 +532,7 @@ class SQLLocation(AdjListModel):
 
         self._products = value
 
-    def _remove_users(self, update_ancestors=True):
+    def _remove_user(self):
         """
         Unassigns the users assigned to that location.
 
@@ -523,25 +544,24 @@ class SQLLocation(AdjListModel):
             user.active = False
             user.save()
 
-        _unassign_users_from_location(self.domain, self.location_id)
-        if update_ancestors:
-            self._update_users_at_ancestor_locations()
-
-    def _update_users_at_ancestor_locations(self):
-        from . tasks import update_users_at_locations
-        location_ids = list(self.get_ancestors().location_ids())
-        update_users_at_locations.delay(location_ids)
-
     def archive(self):
         """
         Mark a location and its descendants as archived and unassigns users
         assigned to the location.
         """
-        for loc in self.get_descendants(include_self=True):
+        from .tasks import update_users_at_locations
+        locations = self.get_descendants(include_self=True)
+        for loc in locations:
             loc.is_archived = True
             loc.save()
-            loc._remove_users(update_ancestors=False)
-        self._update_users_at_ancestor_locations()
+            loc._remove_user()
+
+        update_users_at_locations.delay(
+            self.domain,
+            [loc.location_id for loc in locations],
+            [loc.supply_point_id for loc in locations if loc.supply_point_id],
+            list(self.get_ancestors().location_ids()),
+        )
 
     def unarchive(self):
         """
