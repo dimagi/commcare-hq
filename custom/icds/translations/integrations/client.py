@@ -103,9 +103,13 @@ class TransifexApiClient(object):
 
     def project_details(self):
         url = "https://www.transifex.com/api/2/project/{}/?details".format(self.project)
-        return requests.get(
+        response = requests.get(
             url, auth=self._auth,
         )
+        if response.status_code == 404:
+            raise ResourceMissing("Project not found with slug {}".format(self.project))
+        else:
+            return response
 
     def _resource_details(self, resource_slug, lang):
         """

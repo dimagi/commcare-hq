@@ -1639,17 +1639,13 @@ class ICDSAppTranslations(BaseDomainView):
 
     @staticmethod
     def resources_translated(request, transifex):
-        try:
-            resource_pending_translations = (transifex.
-                                             resources_pending_translations(break_if_true=True))
-            if resource_pending_translations:
-                messages.error(
-                    request,
-                    _("Resources yet to be completely translated, for ex: {}".format(
-                        resource_pending_translations)))
-                return False
-        except ResourceMissing as e:
-            messages.error(request, e)
+        resource_pending_translations = (transifex.
+                                         resources_pending_translations(break_if_true=True))
+        if resource_pending_translations:
+            messages.error(
+                request,
+                _("Resources yet to be completely translated, for ex: {}".format(
+                    resource_pending_translations)))
             return False
         return True
 
@@ -1692,6 +1688,10 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                if self.perform_request(request, form_data):
+                try:
+                    if self.perform_request(request, form_data):
+                        return redirect(self.urlname, domain=self.domain)
+                except ResourceMissing as e:
+                    messages.error(request, e)
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
