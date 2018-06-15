@@ -33,9 +33,6 @@ class CaseDBFixture(object):
                 <index>
                     <a12345 case_type="" relationship="" />
                 </index>
-                <attachment>
-                    <a12345 />
-                </attachment>
             </case>
             <case>
             ...
