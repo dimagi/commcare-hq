@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime, date, time
 from decimal import Decimal
-import functools
 import json
 import os
 import uuid
@@ -17,13 +16,11 @@ from six.moves import zip
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
-from corehq.util.test_utils import run_with_multiple_configs, RunConfig
 from io import open
 
 

@@ -7,14 +7,13 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.http import urlencode
 from mock import Mock
 
-import settings
 from corehq.apps.locations.util import load_locs_json, location_hierarchy_config
 from corehq.apps.locations.tests.util import LocationHierarchyTestCase
 from corehq.apps.reports_core.exceptions import FilterValueException
 from corehq.apps.reports_core.filters import DatespanFilter, ChoiceListFilter, \
     NumericFilter, DynamicChoiceListFilter, Choice, PreFilter, LocationDrilldownFilter, REQUEST_USER_KEY
 from corehq.apps.users.models import CommCareUser
-from corehq.apps.userreports.const import UCR_BACKENDS, UCR_SQL_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import BadSpecError
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from corehq.apps.userreports.reports.filters.values import SHOW_ALL_CHOICE, \
@@ -149,7 +148,6 @@ class DateFilterDBTest(ConfigurableReportTestMixin, TestCase):
         cls.adapters = {}
 
         config = DataSourceConfiguration(
-            backend_id=UCR_SQL_BACKEND,
             domain=cls.domain,
             display_name=cls.domain,
             referenced_doc_type='CommCareCase',

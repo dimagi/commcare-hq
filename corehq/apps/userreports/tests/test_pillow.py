@@ -17,7 +17,6 @@ from casexml.apps.case.util import post_case_blocks
 
 from corehq.apps.change_feed import topics
 from corehq.apps.change_feed.producer import producer
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.data_source_providers import MockDataSourceProvider
 from corehq.apps.userreports.exceptions import StaleRebuildError
 from corehq.apps.userreports.models import DataSourceConfiguration, AsyncIndicator

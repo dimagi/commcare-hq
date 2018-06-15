@@ -3,13 +3,9 @@ from __future__ import unicode_literals
 from django.utils.translation import ugettext as _
 
 from corehq.apps.reports.sqlreport import DatabaseColumn
-from corehq.apps.userreports.const import (
-    DEFAULT_MAXIMUM_EXPANSION,
-    UCR_ES_BACKEND,
-    UCR_SQL_BACKEND,
-)
+from corehq.apps.userreports.const import DEFAULT_MAXIMUM_EXPANSION
 from corehq.apps.userreports.exceptions import ColumnNotFoundError
-from corehq.apps.userreports.util import get_indicator_adapter, get_backend_id
+from corehq.apps.userreports.util import get_indicator_adapter
 import six
 
 

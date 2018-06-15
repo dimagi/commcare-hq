@@ -11,9 +11,7 @@ from alembic.autogenerate.api import compare_metadata
 from kafka.util import kafka_bytestring
 
 from corehq.apps.change_feed.consumer.feed import KafkaChangeFeed, KafkaCheckpointEventHandler
-from corehq.apps.userreports.const import (
-    KAFKA_TOPICS, UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
-)
+from corehq.apps.userreports.const import KAFKA_TOPICS
 from corehq.apps.userreports.data_source_providers import DynamicDataSourceProvider, StaticDataSourceProvider
 from corehq.apps.userreports.exceptions import (
     BadSpecError, TableRebuildError, StaleRebuildError, UserReportsWarning

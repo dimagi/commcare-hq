@@ -3,14 +3,9 @@ from __future__ import unicode_literals
 import collections
 import hashlib
 
-from django.conf import settings
-
 from corehq import privileges, toggles
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
-from corehq.apps.userreports.const import (
-    REPORT_BUILDER_EVENTS_KEY,
-    UCR_SQL_BACKEND,
-)
+from corehq.apps.userreports.const import REPORT_BUILDER_EVENTS_KEY
 from django_prbac.utils import has_privilege
 
 
@@ -42,8 +37,8 @@ def has_report_builder_add_on_privilege(request):
         has_privilege(request, p) for p in privileges.REPORT_BUILDER_ADD_ON_PRIVS
     )
 
-def has_report_builder_access(request):
 
+def has_report_builder_access(request):
     builder_enabled = toggle_enabled(request, toggles.REPORT_BUILDER)
     legacy_builder_priv = has_privilege(request, privileges.REPORT_BUILDER)
     beta_group_enabled = toggle_enabled(request, toggles.REPORT_BUILDER_BETA_GROUP)
@@ -166,10 +161,6 @@ def truncate_value(value, max_length=63, from_left=True):
         short_hash = hashlib.sha1(value).hexdigest()[:hash_length]
         return '{}_{}'.format(truncated_value, short_hash)
     return value
-
-
-def get_backend_id(config, can_handle_laboratory=False):
-    return UCR_SQL_BACKEND
 
 
 def get_ucr_class_name(id):

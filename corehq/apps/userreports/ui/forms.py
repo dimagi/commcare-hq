@@ -15,7 +15,6 @@ from corehq.apps.userreports.util import get_table_name
 from crispy_forms import bootstrap as twbscrispy
 from corehq.apps.hqwebapp import crispy as hqcrispy
 from corehq.apps.hqwebapp.widgets import BootstrapCheckboxInput
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY
 
 
 class DocumentFormBase(forms.Form):
@@ -136,14 +135,6 @@ DOC_TYPE_CHOICES = (
 )
 
 
-BACKEND_CHOICES = (
-    (UCR_SQL_BACKEND, 'Postgres'),
-    (UCR_ES_BACKEND, 'ElasticSearch'),
-    (UCR_LABORATORY_BACKEND, 'Laboratory'),
-    (UCR_ES_PRIMARY, 'ES primary'),
-)
-
-
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
     _id = forms.CharField(disabled=True, label=_('Data Source ID'),
@@ -169,11 +160,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
     named_filters = JsonField(required=False, expected_type=dict,
                               label=_("Named filters (optional)"),
                               help_text=help_text.NAMED_FILTER)
-    backend_id = forms.ChoiceField(
-        choices=BACKEND_CHOICES,
-        label=_("Backend"),
-        initial=UCR_SQL_BACKEND
-    )
     asynchronous = forms.BooleanField(
         initial=False,
         required=False,
@@ -212,7 +198,6 @@ class ConfigurableDataSourceEditForm(DocumentFormBase):
             'configured_indicators',
             'named_expressions',
             'named_filters',
-            'backend_id',
             'asynchronous',
         ]
         if data_source_config.get_id:

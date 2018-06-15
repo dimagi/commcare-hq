@@ -123,7 +123,7 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     domain = StringProperty(required=True)
     engine_id = StringProperty(default=UCR_ENGINE_ID)
     es_index_settings = SchemaProperty(ElasticSearchIndexSettings)
-    backend_id = StringProperty(default=UCR_SQL_BACKEND)
+    backend_id = StringProperty(default=UCR_SQL_BACKEND)  # no longer used
     referenced_doc_type = StringProperty(required=True)
     table_id = StringProperty(required=True)
     display_name = StringProperty()
