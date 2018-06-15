@@ -1095,7 +1095,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         if in_data['export']['isLegacy']:
             raise Exception("I'm pretty sure this doesn't happen")
         export_instance_id = in_data['export']['id']
-        rebuild_saved_export(export_instance_id, queue='export_download_queue')
+        rebuild_saved_export(export_instance_id, manual=True)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1315,7 +1315,7 @@ class DailySavedExportListView(BaseExportListView):
                 if export.filters != filters:
                     export.filters = filters
                     export.save()
-                    rebuild_saved_export(export_id)
+                    rebuild_saved_export(export_id, manual=True)
                 return format_angular_success()
             else:
                 return format_angular_error(
@@ -2398,7 +2398,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if should_update_export(export_instance.last_accessed):
             try:
-                rebuild_saved_export(export_instance_id)
+                rebuild_saved_export(export_instance_id, manual=False)
             except Exception:
                 notify_exception(
                     req,

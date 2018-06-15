@@ -22,7 +22,7 @@ from couchexport.models import Format
 from dimagi.utils.couch import CriticalSection
 from soil.util import expose_blob_download, process_email_request
 
-from .const import SAVED_EXPORTS_QUEUE
+from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
 from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
@@ -37,7 +37,7 @@ from six.moves import filter
 logger = logging.getLogger('export_migration')
 
 
-@task(queue='export_download_queue')
+@task(queue=EXPORT_DOWNLOAD_QUEUE)
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
@@ -79,7 +79,7 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(queue='background_queue', ignore_result=True)
+@task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def _start_export_task(export_instance_id, last_access_cutoff):
     keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
@@ -99,9 +99,10 @@ def _get_saved_export_download_data(export_instance_id):
     return download_data
 
 
-def rebuild_saved_export(export_instance_id, last_access_cutoff=None, queue='background_queue'):
+def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=False):
     """Kicks off a celery task to rebuild the export.
     """
+    queue = EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE
     # associate task with the export instance
     download_data = _get_saved_export_download_data(export_instance_id)
     download_data.set_task(
@@ -145,7 +146,7 @@ def saved_exports():
 
     for daily_saved_export_id in get_all_daily_saved_export_instance_ids():
         last_access_cutoff = datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF)
-        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, queue=SAVED_EXPORTS_QUEUE)
+        rebuild_saved_export(daily_saved_export_id, last_access_cutoff, manual=False)
 
 
 @quickcache(['sender', 'domain', 'case_type', 'properties'], timeout=60 * 60)
