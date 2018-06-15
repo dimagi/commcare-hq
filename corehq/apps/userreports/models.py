@@ -449,7 +449,7 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     columns = ListProperty()
     configured_charts = ListProperty()
     sort_expression = ListProperty()
-    soft_rollout = DecimalProperty(default=0)
+    soft_rollout = DecimalProperty(default=0)  # no longer used
     report_meta = SchemaProperty(ReportMeta)
     custom_query_provider = StringProperty(required=False)
 

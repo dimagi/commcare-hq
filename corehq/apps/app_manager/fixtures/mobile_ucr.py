@@ -93,9 +93,6 @@ class BaseReportFixturesProvider(FixtureProvider):
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
         data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
-        if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            if random.random() < report.soft_rollout:
-                data_source.override_backend_id(UCR_ES_BACKEND)
         return report, data_source
 
     @staticmethod
