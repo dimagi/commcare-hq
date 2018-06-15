@@ -357,6 +357,28 @@ class DomainWireInvoiceFactory(object):
         )
 
 
+class CustomerAccountInvoiceFactory(object):
+    """
+        This generates an invoice for a Customer Billing Account.
+    """
+    def __init__(self, date_start, date_end, account, recipients=None):
+        """
+        The Invoice generated will always be for the month preceding the
+        invoicing_date.
+        For example, if today is July 5, 2014 then the invoice will be from
+        June 1, 2014 to June 30, 2014.
+        """
+        self.date_start = date_start
+        self.date_end = date_end
+        self.account = account
+        self.recipients = recipients
+        self.logged_throttle_error = False
+        self.is_community_invoice = False
+
+    def create_invoices(self):
+        raise NotImplementedError
+
+
 class LineItemFactory(object):
     """
     This generates a line item based on what type of Feature or Product rate triggers it.

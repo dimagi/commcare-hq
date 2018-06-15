@@ -37,7 +37,7 @@ from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     InvoiceError,
 )
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -1851,13 +1851,31 @@ class TriggerCustomerInvoiceForm(forms.Form):
             )
         )
 
-    # @transaction.atomic
-    # def trigger_customer_invoice(self):
+    @transaction.atomic
+    def trigger_customer_invoice(self):
+        import ipdb; ipdb.set_trace()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+        invoice_start, invoice_end = get_first_last_days(year, month)
+        account = BillingAccount.objects.filter(name=self.cleaned_data['customer_account'])
+        invoice_factory = CustomerAccountInvoiceFactory(
+            date_start=invoice_start,
+            date_end=invoice_end,
+            account=account
+        )
+        invoice_factory.create_invoices()
 
+    # TODO: Do I need to implement this?
     # @staticmethod
     # def clean_previous_invoices(invoice_start, invoice_end, domain_name):
 
-    # def clean(self):
+    def clean(self):
+        today = datetime.date.today()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+
+        if (year, month) >= (today.year, today.month):
+            raise ValidationError('Statement period must be in the past')
 
 
 class TriggerBookkeeperEmailForm(forms.Form):

@@ -703,6 +703,18 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
     def post(self, request, *args, **kwargs):
         if self.async_response is not None:
             return self.async_response
+        if self.trigger_customer_invoice_form.is_valid():
+            try:
+                self.trigger_customer_invoice_form.trigger_customer_invoice()
+                messages.success(
+                    request,
+                    "Successfully triggered invoices for Customer Billing Account %s."
+                    % self.trigger_customer_invoice_form.cleaned_data['account']
+                )
+            # TODO: Catch other errors
+            except NotImplementedError as e:
+                messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
+        return self.get(request, *args, **kwargs)
 
 
 class TriggerBookkeeperEmailView(AccountingSectionView):
