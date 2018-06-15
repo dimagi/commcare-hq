@@ -30,7 +30,7 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchforms.models import XFormInstance
 from corehq.form_processor.exceptions import CaseNotFound
-from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
+from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
@@ -64,7 +64,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    attachments = SchemaDictProperty(CommCareCaseAttachment)
 
     deprecated = False
 
@@ -84,8 +83,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
         ret.updated_unknown_properties = action.dynamic_properties
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
-        ret.attachments = dict((attach_id, CommCareCaseAttachment.from_case_index_update(attach))
-                               for attach_id, attach in action.attachments.items())
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
