@@ -886,15 +886,15 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
     def handle_delete(loc):
         delete_locations.append(loc)
-        while True:
-            parent_stub = loc.new_parent_stub
-            if parent_stub is None or parent_stub.do_delete:
-                break
-            location_id = parent_stub.db_object.location_id
-            assert location_id, repr(parent_stub.db_object)
-            if location_id in ancestors_of_deleted_nodes:
-                break
-            ancestors_of_deleted_nodes.add(location_id)
+        parent_stub = loc.new_parent_stub
+        if not parent_stub.do_delete:
+            while parent_stub is not None:
+                location_id = parent_stub.db_object.location_id
+                assert location_id, repr(parent_stub.db_object)
+                if location_id in ancestors_of_deleted_nodes:
+                    break
+                ancestors_of_deleted_nodes.add(location_id)
+                parent_stub = parent_stub.new_parent_stub
 
     delete_locations = []
     ancestors_of_deleted_nodes = set()
