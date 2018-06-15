@@ -145,6 +145,8 @@ Here is a sample start to that file::
           289    0.002    0.000    0.185    0.001 /home/czue/src/commcare-hq/corehq/apps/locations/models.py:31(__init__)
             6    0.000    0.000    0.176    0.029 /home/czue/.virtualenvs/commcare-hq/local/lib/python2.7/site-packages/couchdbkit/client.py:1024(_fetch_if_needed)
 
+.. seealso:: `Description of columns <https://docs.python.org/2/library/profile.html#instant-user-s-manual>`_
+
 The most important thing to look at is the cumtime (cumulative time) column.
 In this example we can see that the vast majority of the time (over 8 of the 8.9 total seconds) is spent in the cached_open_doc function (and likely the library calls below are called by that function).
 This would be the first place to start when looking at improving profile performance.
