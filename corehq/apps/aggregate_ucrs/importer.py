@@ -71,8 +71,8 @@ def _update_secondary_tables(spec, table_definition):
                 table_definition=table_definition,
                 data_source_id=secondary_table_spec.data_source_id
             )
-        db_secondary_table.primary_key_column = secondary_table_spec.primary_key_column
-        db_secondary_table.secondary_key_column = secondary_table_spec.secondary_key_column
+        db_secondary_table.join_column_primary = secondary_table_spec.join_column_primary
+        db_secondary_table.join_column_secondary = secondary_table_spec.join_column_secondary
         db_secondary_table.time_window_column = secondary_table_spec.time_window_column
         db_secondary_table.save()
         _update_secondary_columns(secondary_table_spec, db_secondary_table)
