@@ -257,14 +257,6 @@ class AbstractCaseAccessor(six.with_metaclass(ABCMeta)):
         raise NotImplementedError
 
     @abstractmethod
-    def get_attachment_content(case_id, attachment_id):
-        """
-        :param attachment_id:
-        :return: AttachmentContent object
-        """
-        raise NotImplementedError
-
-    @abstractmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         raise NotImplementedError
 
@@ -391,9 +383,6 @@ class CaseAccessors(object):
     def get_reverse_indexed_cases(self, case_ids, case_types=None, is_closed=None):
         return self.db_accessor.get_reverse_indexed_cases(self.domain, case_ids, case_types, is_closed)
 
-    def get_attachment_content(self, case_id, attachment_id):
-        return self.db_accessor.get_attachment_content(case_id, attachment_id)
-
     def get_case_by_domain_hq_user_id(self, user_id, case_type):
         return self.db_accessor.get_case_by_domain_hq_user_id(self.domain, user_id, case_type)
 
@@ -426,23 +415,6 @@ class CaseAccessors(object):
 
     def get_case_owner_ids(self):
         return self.db_accessor.get_case_owner_ids(self.domain)
-
-
-def get_cached_case_attachment(domain, case_id, attachment_id, is_image=False):
-    attachment_cache_key = "%(case_id)s_%(attachment)s" % {
-        "case_id": case_id,
-        "attachment": attachment_id
-    }
-
-    from dimagi.utils.django.cached_object import CachedObject, CachedImage
-    cobject = CachedImage(attachment_cache_key) if is_image else CachedObject(attachment_cache_key)
-    if not cobject.is_cached():
-        content = CaseAccessors(domain).get_attachment_content(case_id, attachment_id)
-        stream = BytesIO(content.content_body)
-        metadata = {'content_type': content.content_type}
-        cobject.cache_put(stream, metadata)
-
-    return cobject
 
 
 class AbstractLedgerAccessor(six.with_metaclass(ABCMeta)):
