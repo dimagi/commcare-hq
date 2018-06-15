@@ -925,15 +925,6 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             raise AttachmentNotFound(identifier)
 
     @staticmethod
-    def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
-        return AttachmentContent(meta.content_type, meta.read_content(stream=True))
-
-    @staticmethod
-    def get_attachments(case_id):
-        return list(CaseAttachmentSQL.objects.raw('SELECT * from get_case_attachments(%s)', [case_id]))
-
-    @staticmethod
     def get_transactions(case_id):
         return list(CaseTransaction.objects.raw('SELECT * from get_case_transactions(%s)', [case_id]))
 
