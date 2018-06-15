@@ -116,21 +116,6 @@ def pre_run_with_es_backend(fn, *args, **kwargs):
     fn.setUp()
 
 
-run_with_all_ucr_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_SQL_BACKEND},
-            post_run=post_run_with_sql_backend
-        ),
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_ES_BACKEND},
-            pre_run=pre_run_with_es_backend,
-        ),
-    ]
-)
-
-
 def mock_sql_backend():
     return patch('corehq.apps.userreports.reports.data_source.get_backend_id', return_value=UCR_SQL_BACKEND)
 
