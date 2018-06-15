@@ -334,8 +334,7 @@ def _aggregate_thr_forms(state_id, day):
 
 @track_time
 def _aggregate_inactive_aww(day):
-    one_day_before = day - relativedelta(days=1)
-    AggregateInactiveAWW.aggregate(one_day_before)
+    AggregateInactiveAWW.aggregate(day)
 
 
 @transaction.atomic
@@ -620,9 +619,9 @@ def collect_inactive_awws():
     last_sync, is_created = IcdsFile.objects.get_or_create(blob_id=filename, data_type='inactive_awws')
 
     # If last sync not exist then collect initial data
-    date = datetime(2017, 3, 1).date() if is_created else last_sync.file_added
+    last_sync_date = datetime(2017, 3, 1).date() if is_created else last_sync.file_added
 
-    _aggregate_inactive_aww(date)
+    _aggregate_inactive_aww(last_sync_date)
 
     celery_task_logger.info("Collecting inactive AWW to generate zip file")
     excel_data = AggregateInactiveAWW.objects.all()
