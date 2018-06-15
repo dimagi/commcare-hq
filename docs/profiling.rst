@@ -73,6 +73,12 @@ You could also expose this via an environment variable or some other method to m
     def location_export(request, domain):
         ....
 
+.. warning:: In a production environment the `limit` may not apply absolutely since there are likely
+    multiple processes running in which case the limit will get applied to each one. Also, the limit will be reset
+    if the processes are restarted.
+
+    Any profiling in production should be closely monitored to ensure that
+    it does not adversely affect performance or fill up available disk space.
 
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
