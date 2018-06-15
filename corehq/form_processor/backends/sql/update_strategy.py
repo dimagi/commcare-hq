@@ -12,7 +12,7 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -235,7 +235,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._reset_case_state()
 
         original_indices = {index.identifier: index for index in self.case.indices}
-        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
 
         real_transactions = []
         for transaction in transactions:
@@ -244,7 +243,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 real_transactions.append(transaction)
 
         self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
-        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
 
         self.case.deleted = already_deleted or not bool(real_transactions)
 
