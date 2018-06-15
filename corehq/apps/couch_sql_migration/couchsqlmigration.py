@@ -271,7 +271,6 @@ class CouchSqlDomainMigrator(object):
         )
         _migrate_case_actions(couch_case, sql_case)
         _migrate_case_indices(couch_case, sql_case)
-        _migrate_case_attachments(couch_case, sql_case)
         try:
             CaseAccessorSQL.save_case(sql_case)
         except IntegrityError:
@@ -526,33 +525,12 @@ def _migrate_case_actions(couch_case, sql_case):
             transaction.type |= CaseTransaction.TYPE_CASE_CLOSE
         if action.action_type == const.CASE_ACTION_INDEX:
             transaction.type |= CaseTransaction.TYPE_CASE_INDEX
-        if action.action_type == const.CASE_ACTION_ATTACHMENT:
-            transaction.type |= CaseTransaction.TYPE_CASE_ATTACHMENT
         if action.action_type == const.CASE_ACTION_REBUILD:
             transaction.type = CaseTransaction.TYPE_REBUILD_WITH_REASON
             transaction.details = RebuildWithReason(reason="Unknown")
 
     for transaction in transactions.values():
         sql_case.track_create(transaction)
-
-
-def _migrate_case_attachments(couch_case, sql_case):
-    """Copy over attachment meta """
-    for name, attachment in six.iteritems(couch_case.case_attachments):
-        blob = couch_case.blobs[name]
-        sql_case.track_create(CaseAttachmentSQL(
-            name=name,
-            case=sql_case,
-            identifier=attachment.identifier,
-            attachment_src=attachment.attachment_src,
-            attachment_from=attachment.attachment_from,
-            content_type=attachment.server_mime,
-            content_length=attachment.content_length,
-            blob_id=blob.id,
-            blob_bucket=couch_case._blobdb_bucket(),
-            properties=attachment.attachment_properties,
-            md5=attachment.server_md5
-        ))
 
 
 def _migrate_case_indices(couch_case, sql_case):
