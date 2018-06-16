@@ -3,7 +3,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import hashlib
-from collections import defaultdict, Counter, namedtuple
+from collections import defaultdict, Counter
 from datetime import datetime, timedelta
 
 import six
@@ -27,6 +27,7 @@ from corehq.sql_db.connections import connection_manager
 from corehq.util.datadog.gauges import datadog_histogram
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timer import TimingContext
+from dimagi.utils.logging import notify_exception
 from fluff.signals import (
     migrate_tables,
     get_migration_context,
