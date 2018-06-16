@@ -90,5 +90,15 @@ class AppTranslationsForm(forms.Form):
             app_id = self.cleaned_data['app_id']
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
-                raise forms.ValidationError(ugettext_lazy('Version not available for app'))
+                self.add_error('version', ugettext_lazy('Version not available for app'))
         return version
+
+    def clean(self):
+        # ensure target lang when deleting resources or translation check requested during pull
+        # to check for translation completion
+        cleaned_data = super(AppTranslationsForm, self).clean()
+        if (not cleaned_data['target_lang']
+            and (cleaned_data['action'] == "delete"
+                 or (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check']))):
+            self.add_error('target_lang', ugettext_lazy('Target lang required to confirm translation completion'))
+        return cleaned_data
