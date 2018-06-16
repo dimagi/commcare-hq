@@ -4,13 +4,14 @@ import uuid
 
 from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
+from corehq.apps.userreports.const import UCR_ES_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import load_data_from_db
+from corehq.apps.userreports.tests.utils import load_data_from_db, run_with_all_ucr_backends
 
 
 def get_sample_config(domain=None):
@@ -92,6 +93,14 @@ class AdapterBulkSaveTest(TestCase):
 
         self.adapter.build_table()
         self.adapter.bulk_save(docs)
+        self.adapter.refresh_table()
+        self.assertEqual(self.adapter.get_query_object().count(), 10)
 
-        results = list(load_data_from_db(get_table_name(self.domain, self.config.table_id)))
-        self.assertEqual(len(results), 10)
+        self.adapter.bulk_delete([doc['_id'] for doc in docs])
+        self.adapter.refresh_table()
+        self.assertEqual(self.adapter.get_query_object().count(), 0)
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
+class AdapterBulkSaveESTest(AdapterBulkSaveTest):
+    pass

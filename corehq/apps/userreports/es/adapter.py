@@ -214,6 +214,11 @@ class IndicatorESAdapter(IndicatorAdapter):
     def doc_exists(self, doc):
         return self.es.exists(self.table_name, 'indicator', doc['_id'])
 
+    def bulk_delete(self, doc_ids):
+        # construct valid query for delete_by_query
+        query = {'query': self.get_query_object().es.doc_id(doc_ids).raw_query['query']}
+        self.es.delete_by_query(index=self.table_name, doc_type='indicator', body=query)
+
     def delete(self, doc):
         try:
             self.es.delete(index=self.table_name, doc_type='indicator', id=doc['_id'])

@@ -167,6 +167,12 @@ class IndicatorSqlAdapter(IndicatorAdapter):
             session.execute(delete)
             session.execute(insert)
 
+    def bulk_delete(self, doc_ids):
+        table = self.get_table()
+        delete = table.delete(table.c.doc_id.in_(doc_ids))
+        with self.session_helper.session_context() as session:
+            session.execute(delete)
+
     def delete(self, doc):
         table = self.get_table()
         delete = table.delete(table.c.doc_id == doc['_id'])

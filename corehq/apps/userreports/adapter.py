@@ -97,6 +97,10 @@ class IndicatorAdapter(object):
         """
         raise NotImplementedError
 
+    def bulk_delete(self, doc_ids):
+        for _id in doc_ids:
+            self.delete({'_id': _id})
+
     def delete(self, doc):
         raise NotImplementedError
 

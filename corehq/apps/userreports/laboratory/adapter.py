@@ -58,6 +58,10 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
         self.es_adapter.save_rows(rows)
         self.sql_adapter.save_rows(rows)
 
+    def bulk_delete(self, doc_ids):
+        self.es_adapter.bulk_delete(doc_ids)
+        self.sql_adapter.bulk_delete(doc_ids)
+
     def delete(self, doc):
         self.es_adapter.delete(doc)
         self.sql_adapter.delete(doc)
