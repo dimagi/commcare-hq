@@ -1664,7 +1664,7 @@ class ICDSAppTranslations(BaseDomainView):
                 return False
         if form_data['lock_translations']:
             if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-                messages.error(request, _('Resources yet to be completed translated for all languages. '
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
                                           'Hence, the request for locking resources can not be performed.'))
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
@@ -1676,7 +1676,7 @@ class ICDSAppTranslations(BaseDomainView):
         if not self.ensure_resources_present(request):
             return False
         if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
-            messages.error(request, _('Resources yet to be completed translated for all languages. '
+            messages.error(request, _('Resources yet to be completely translated for all languages. '
                                       'Hence, the request for deleting resources can not be performed.'))
             return False
         delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
