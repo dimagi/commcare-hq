@@ -11,6 +11,7 @@ from custom.icds.translations.integrations.const import (
     SOURCE_LANGUAGE_MAPPING,
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
+from memoized import memoized
 
 
 class TransifexApiClient(object):
@@ -111,27 +112,34 @@ class TransifexApiClient(object):
         else:
             return response
 
-    def _resource_details(self, resource_slug, lang):
+    @memoized
+    def _resource_details(self, resource_slug):
         """
         get details for a resource corresponding to a lang
         :param resource_slug: resource slug
-        :param lang: lang code on transifex
         """
-        url = "https://www.transifex.com/api/2/project/{}/resource/{}/stats/{}".format(
-            self.project, resource_slug, lang)
+        url = "https://www.transifex.com/api/2/project/{}/resource/{}/stats/".format(
+            self.project, resource_slug)
         response = requests.get(url, auth=self._auth)
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:
-            raise ResourceMissing("Resource {} not found for lang {}".format(resource_slug, lang))
+            raise ResourceMissing("Resource {} not found".format(resource_slug, lang))
         raise Exception(response.content)
 
-    def translation_completed(self, resource_slug, hq_lang_code):
+    def translation_completed(self, resource_slug, hq_lang_code=None):
         """
-        check if a resource has been completely translated for the target lang
+        check if a resource has been completely translated for
+        all langs or a specific target lang
         """
-        lang = self.transifex_lang_code(hq_lang_code)
-        return self._resource_details(resource_slug, lang)['completed'] == "100%"
+        if hq_lang_code:
+            lang = self.transifex_lang_code(hq_lang_code)
+            return self._resource_details(resource_slug).get(lang, {}).get('completed') == "100%"
+        else:
+            for lang, detail in self._resource_details(resource_slug).items():
+                if detail.get('completed') != "100%":
+                    return False
+            return True
 
     def get_translation(self, resource_slug, hq_lang_code, lock_resource):
         """
