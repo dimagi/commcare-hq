@@ -110,7 +110,8 @@ class TestBulkUpdate(TestCase):
 
         with self.assertNumQueries(3):
             # 3 queries, 1 for query, 1 for update, 1 for create
-            AsyncIndicator.bulk_update_records(updated_data, domain, doc_type)
+            doc_type_by_ids = {i: doc_type for i in ['d1', 'd2', 'd3', 'd4', 'd5']}
+            AsyncIndicator.bulk_update_records(updated_data, domain, doc_type_by_ids)
 
         self.assertEqual(
             self._get_indicator_data(),

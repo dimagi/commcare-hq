@@ -884,7 +884,7 @@ class AsyncIndicator(models.Model):
         ])
 
     @classmethod
-    def bulk_update_records(cls, configs_by_docs, domain, doc_type):
+    def bulk_update_records(cls, configs_by_docs, domain, doc_type_by_id):
         # configs_by_docs should be a dict of doc_id -> list of config_ids
         if not configs_by_docs:
             return
@@ -902,7 +902,7 @@ class AsyncIndicator(models.Model):
 
         new_doc_ids = set(doc_ids) - set([i.doc_id for i in old_indicators])
         AsyncIndicator.objects.bulk_create([
-            AsyncIndicator(doc_id=doc_id, doc_type=doc_type, domain=domain, indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain, indicator_config_ids=sorted(configs_by_docs[doc_id]))
             for doc_id in new_doc_ids
         ])
 
