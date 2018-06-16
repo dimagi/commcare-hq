@@ -139,12 +139,6 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         except Exception as e:
             self.handle_exception(doc, e)
 
-    def bulk_save(self, docs):
-        rows = []
-        for doc in docs:
-            rows.extend(self.get_all_values(doc))
-        self.save_rows(rows)
-
     def save_rows(self, rows):
         # transform format from ColumnValue to dict
         formatted_rows = [
