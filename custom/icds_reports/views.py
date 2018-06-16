@@ -1708,5 +1708,4 @@ class ICDSAppTranslations(BaseDomainView):
                         return redirect(self.urlname, domain=self.domain)
                 except ResourceMissing as e:
                     messages.error(request, e)
-                    return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)
