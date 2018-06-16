@@ -227,7 +227,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
 
     def process_changes_chunk(self, pillow_instance, changes):
 
-        succeeded_changes = set()
         failed_changes = set()
 
         def get_docs(_changes, domain):
@@ -265,7 +264,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 changes_by_domain[change.metadata.domain].append(change)
 
         for domain, changes_chunk in six.iteritems(changes_by_domain):
-            rows_to_save_by_adapter = defaultdict(list)
+            docs_to_save_by_adapter = defaultdict(list)
             doc_ids_to_delete_by_adapter = defaultdict(set)
             adapters = list(self.table_adapters_by_domain[domain])
             to_delete = {change for change in changes_chunk if change.deleted}
@@ -274,27 +273,29 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             docs = get_docs(to_update, domain)
 
             for adapter in adapters:
-                doc_ids_to_delete_by_adapter[adapter] = to_delete
+                try:
+                    adapter.bulk_delete([c.id for c in to_delete])
+                except Exception as e:
+                    failed_changes.union(to_delete)
+                    raise BulkPorcessingError('Error bulk deleting deleted changes from UCR table {}'.format(e))
                 for doc in docs:
-                    eval_context = EvaluationContext(doc)
                     if adapter.config.filter(doc):
                         if adapter.run_asynchronous:
                             async_configs_by_doc_id[doc['_id']].append(adapter.config._id)
                         else:
                             # TOdo; handle error
-                            rows_to_save_by_adapter[adapter].extend(adapter.get_all_values(doc, eval_context))
-                            doc_ids_to_delete_by_adapter[adapter].add(doc['_id'])
-                            eval_context.reset_iteration()
+                            docs_to_save_by_adapter[adapter].extend(doc)
                     elif adapter.config.deleted_filter(doc) or adapter.doc_exists(doc):
                         doc_ids_to_delete_by_adapter[adapter].add(doc['_id'])
 
-            for adapter, rows in six.iteritems(rows_to_save_by_adapter):
+            for adapter, docs in six.iteritems(docs_to_save_by_adapter):
                 try:
-                    adapter._save_rows(rows, doc_ids_to_delete_by_adapter[adapter])
+                    adapter.bulk_save(docs)
                 except Exception as e:
+                    failed_changes.union(to_update)
                     raise BulkPorcessingError('Error bulk saving calculated UCR rows {}'.format(e))
 
-            succeeded_changes.union(changes_chunk)
+            succeeded_changes = set(changes_chunk) - failed_changes
             if async_configs_by_doc_id:
                 # Todo; handle multiple doc-types
                 AsyncIndicator.bulk_update_records(async_configs_by_doc_id, domain, docs[0].doc_type)

@@ -82,8 +82,10 @@ class IndicatorAdapter(object):
         Evalutes UCR rows for given docs and saves the result in bulk.
         Override this to support bulk. Currently supported in SQL version
         """
+        rows = []
         for doc in docs:
-            self.save(doc)
+            rows.extend(self.get_all_values(doc))
+        self.save_rows(rows)
 
     def get_all_values(self, doc, eval_context=None):
         "Gets all the values from a document to save"
