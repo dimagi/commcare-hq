@@ -1633,7 +1633,7 @@ class ICDSAppTranslations(BaseDomainView):
 
     @staticmethod
     def perform_push_request(request, form_data):
-        push_translation_files_to_transifex.delay(request.domain, form_data)
+        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return True
 
