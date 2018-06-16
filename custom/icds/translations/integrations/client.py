@@ -124,7 +124,7 @@ class TransifexApiClient(object):
         if response.status_code == 200:
             return response.json()
         elif response.status_code == 404:
-            raise ResourceMissing("Resource {} not found".format(resource_slug, lang))
+            raise ResourceMissing("Resource {} not found".format(resource_slug))
         raise Exception(response.content)
 
     def translation_completed(self, resource_slug, hq_lang_code=None):
