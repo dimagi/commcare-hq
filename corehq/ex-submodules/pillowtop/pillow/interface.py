@@ -14,7 +14,7 @@ from kafka.common import TopicAndPartition
 from pillowtop.const import CHECKPOINT_MIN_WAIT
 from pillowtop.dao.exceptions import DocumentMissingError
 from pillowtop.utils import force_seq_int
-from pillowtop.exceptions import PillowtopCheckpointReset, BulkPorcessingError
+from pillowtop.exceptions import PillowtopCheckpointReset
 from pillowtop.logger import pillow_logging
 import six
 
@@ -148,8 +148,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             return
         try:
             # chunked processing is supported if there is only one processor
-            result = self.processors[0].process_changes_chunk(self, changes_chunk)
-        except BulkPorcessingError as ex:
+            failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
+        except Exception as ex:
             notify_exception(
                 None,
                 "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
@@ -161,11 +161,11 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             for change in changes_chunk:
                 self.process_with_error_handling(change, context)
         else:
-            for change in result.succeeded_changes:
+            for change in set(changes_chunk) - set(failed_changes):
                 self._update_checkpoint(change, context)
                 self._record_change_success_in_datadog(change)
             # fall back to processing one by one for failed changes
-            for change in result.failed_changes:
+            for change in failed_changes:
                 self.process_with_error_handling(change, context)
 
     def process_with_error_handling(self, change, context):

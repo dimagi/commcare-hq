@@ -12,9 +12,5 @@ class PillowtopIndexingError(Exception):
     pass
 
 
-class BulkPorcessingError(Exception):
-    pass
-
-
 class PillowConfigError(Exception):
     pass

@@ -22,9 +22,3 @@ class BulkPillowProcessor(PillowProcessor):
     @abstractmethod
     def process_changes_chunk(self, pillow_instance, changes_chunk):
         pass
-
-
-class BulkProcessingResult(object):
-    def __init__(self, succeeded_changes, failed_changes):
-        self.succeeded_changes = succeeded_changes
-        self.failed_changes = failed_changes
