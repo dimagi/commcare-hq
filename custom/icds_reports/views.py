@@ -1662,6 +1662,11 @@ class ICDSAppTranslations(BaseDomainView):
         if form_data['perform_translated_check']:
             if not self.resources_translated(request):
                 return False
+        if form_data['lock_translations']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completed translated for all languages. '
+                                          'Hence, the request for locking resources can not be performed.'))
+                return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                     'You should receive an email shortly'))
