@@ -1631,8 +1631,10 @@ class ICDSAppTranslations(BaseDomainView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'])
 
-    @staticmethod
-    def perform_push_request(request, form_data):
+    def perform_push_request(self, request, form_data, transifex):
+        if form_data['target_lang']:
+            if not self.ensure_resources_present(request, transifex):
+                return False
         push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return True
@@ -1649,7 +1651,16 @@ class ICDSAppTranslations(BaseDomainView):
             return False
         return True
 
+    @staticmethod
+    def ensure_resources_present(request, transifex):
+        if not transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        return True
+
     def perform_pull_request(self, request, form_data, transifex):
+        if not self.ensure_resources_present(request, transifex):
+            return False
         if form_data['perform_translated_check']:
             if not self.resources_translated(request, transifex):
                 return False
@@ -1659,8 +1670,7 @@ class ICDSAppTranslations(BaseDomainView):
         return True
 
     def perform_delete_request(self, request, form_data, transifex):
-        if not transifex.resource_slugs:
-            messages.error(request, _('Resources not found for this project and version.'))
+        if not self.ensure_resources_present(request, transifex):
             return False
         if not self.resources_translated(request, transifex):
             return False
@@ -1675,7 +1685,7 @@ class ICDSAppTranslations(BaseDomainView):
             return False
         else:
             if form_data['action'] == 'push':
-                return self.perform_push_request(request, form_data)
+                return self.perform_push_request(request, form_data, transifex)
             elif form_data['action'] == 'pull':
                 return self.perform_pull_request(request, form_data, transifex)
             elif form_data['action'] == 'delete':
