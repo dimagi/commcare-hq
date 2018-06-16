@@ -1631,17 +1631,16 @@ class ICDSAppTranslations(BaseDomainView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'])
 
-    def perform_push_request(self, request, form_data, transifex):
+    def perform_push_request(self, request, form_data):
         if form_data['target_lang']:
-            if not self.ensure_resources_present(request, transifex):
+            if not self.ensure_resources_present(request):
                 return False
         push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return True
 
-    @staticmethod
-    def resources_translated(request, transifex):
-        resource_pending_translations = (transifex.
+    def resources_translated(self, request):
+        resource_pending_translations = (self._transifex.
                                          resources_pending_translations(break_if_true=True))
         if resource_pending_translations:
             messages.error(
@@ -1651,45 +1650,44 @@ class ICDSAppTranslations(BaseDomainView):
             return False
         return True
 
-    @staticmethod
-    def ensure_resources_present(request, transifex):
-        if not transifex.resource_slugs:
+    def ensure_resources_present(self, request):
+        if not self._transifex.resource_slugs:
             messages.error(request, _('Resources not found for this project and version.'))
             return False
         return True
 
-    def perform_pull_request(self, request, form_data, transifex):
-        if not self.ensure_resources_present(request, transifex):
+    def perform_pull_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
             return False
         if form_data['perform_translated_check']:
-            if not self.resources_translated(request, transifex):
+            if not self.resources_translated(request):
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                     'You should receive an email shortly'))
         return True
 
-    def perform_delete_request(self, request, form_data, transifex):
-        if not self.ensure_resources_present(request, transifex):
+    def perform_delete_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
             return False
-        if not self.resources_translated(request, transifex):
+        if not self.resources_translated(request):
             return False
         delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
     def perform_request(self, request, form_data):
-        transifex = self.transifex(request.domain, form_data)
-        if not transifex.source_lang_is(form_data.get('source_lang')):
+        self._transifex = self.transifex(request.domain, form_data)
+        if not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
             if form_data['action'] == 'push':
-                return self.perform_push_request(request, form_data, transifex)
+                return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
-                return self.perform_pull_request(request, form_data, transifex)
+                return self.perform_pull_request(request, form_data)
             elif form_data['action'] == 'delete':
-                return self.perform_delete_request(request, form_data, transifex)
+                return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
