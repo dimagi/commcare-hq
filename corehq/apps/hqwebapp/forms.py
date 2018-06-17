@@ -69,25 +69,35 @@ class CloudCareAuthenticationForm(EmailAuthenticationForm):
 
 class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
+    verify = forms.BooleanField(label="Verify Upload", required=False, initial=False)
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, plural_noun, action, form_id, *args, **kwargs):
+    def __init__(self, plural_noun, action, context_key, context, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
+        form_id = context_key + "_form"
         self.helper = FormHelper()
         self.helper.form_id = form_id
         self.helper.form_method = 'post'
         if action:
             self.helper.form_action = action
+        fields = [
+            "",
+            crispy.Field(
+                'bulk_upload_file',
+                data_bind="value: file",
+            )
+        ]
+        if (context_key == "bulk_app_translation_upload" and
+                context['bulk_app_translation_upload']['verify_app_translations']):
+            fields.append(crispy.Field(
+                'verify',
+            ))
+        fields.append(crispy.Field(
+            'action',
+        ))
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                "",
-                crispy.Field(
-                    'bulk_upload_file',
-                    data_bind="value: file",
-                ),
-                crispy.Field(
-                    'action',
-                ),
+                *fields
             ),
             StrictButton(
                 ('<i class="fa fa-cloud-upload"></i> Upload %s'

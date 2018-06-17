@@ -1576,3 +1576,10 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+
+VERIFY_APP_TRANSLATIONS = StaticToggle(
+    'verify_app_translations',
+    'Verify app translations before uploading them',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
