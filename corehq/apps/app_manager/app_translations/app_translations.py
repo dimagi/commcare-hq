@@ -49,6 +49,25 @@ def get_unicode_dicts(iterable):
     return rows
 
 
+def read_uploaded_app_translation_file(f, msgs):
+    try:
+        workbook = WorkbookJSONReader(f)
+    # todo: HeaderValueError does not belong here
+    except (HeaderValueError, InvalidExcelFileException) as e:
+        msgs.append(
+            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
+        )
+        return False
+    except JSONReaderError as e:
+        msgs.append(
+            (messages.error, _(
+                "App Translation Failed! There is an issue with excel columns. Error details: {}."
+            ).format(e))
+        )
+        return False
+    return workbook
+
+
 def process_bulk_app_translation_upload(app, f):
     """
     Process the bulk upload file for the given app.
@@ -66,20 +85,8 @@ def process_bulk_app_translation_upload(app, f):
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
 
-    try:
-        workbook = WorkbookJSONReader(f)
-    # todo: HeaderValueError does not belong here
-    except (HeaderValueError, InvalidExcelFileException) as e:
-        msgs.append(
-            (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
-        )
-        return msgs
-    except JSONReaderError as e:
-        msgs.append(
-            (messages.error, _(
-                "App Translation Failed! There is an issue with excel columns. Error details: {}."
-            ).format(e))
-        )
+    workbook = read_uploaded_app_translation_file(f, msgs)
+    if not workbook:
         return msgs
 
     for sheet in workbook.worksheets:
