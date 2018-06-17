@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
+from corehq.apps.app_manager.app_translations.app_translations import validate_bulk_app_translation_upload
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -99,13 +100,17 @@ def download_bulk_app_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
+    verify = request.POST.get('verify')
     app = get_app(domain, app_id)
-    msgs = process_bulk_app_translation_upload(app, request.file)
-    app.save()
+    if verify:
+        msgs = validate_bulk_app_translation_upload(app, request.file)
+    else:
+        msgs = process_bulk_app_translation_upload(app, request.file)
+        app.save()
     for msg in msgs:
         # Add the messages to the request object.
         # msg[0] should be a function like django.contrib.messages.error .
-        # mes[1] should be a string.
+        # msg[1] should be a string.
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page

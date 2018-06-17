@@ -190,6 +190,25 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
+def validate_bulk_app_translation_upload(app, f):
+    from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
+    msgs = []
+    workbook = read_uploaded_app_translation_file(f, msgs)
+    if not workbook:
+        return msgs
+    msgs = UploadedTranslationsValidator(app, workbook).compare()
+    if msgs:
+        return [
+            (messages.error,
+             "{}: {}".format(sheet_name, ' '.join(msgs[sheet_name]))
+             )
+            for sheet_name in msgs
+            if msgs[sheet_name]
+        ]
+    else:
+        return [(messages.success, "Uploaded file looks good to process.")]
+
+
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
                                 media_image, media_audio, unique_id):
     """
