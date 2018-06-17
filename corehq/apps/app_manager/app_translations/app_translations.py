@@ -68,7 +68,7 @@ def read_uploaded_app_translation_file(f, msgs):
     return workbook
 
 
-def process_bulk_app_translation_upload(app, f):
+def process_bulk_app_translation_upload(app, workbook):
     """
     Process the bulk upload file for the given app.
     We return these message tuples instead of calling them now to allow this
@@ -84,10 +84,6 @@ def process_bulk_app_translation_upload(app, f):
     headers = expected_bulk_app_sheet_headers(app)
     expected_sheets = {h[0]: h[1] for h in headers}
     processed_sheets = set()
-
-    workbook = read_uploaded_app_translation_file(f, msgs)
-    if not workbook:
-        return msgs
 
     for sheet in workbook.worksheets:
         # sheet.__iter__ can only be called once, so cache the result
@@ -190,12 +186,8 @@ def process_bulk_app_translation_upload(app, f):
     return msgs
 
 
-def validate_bulk_app_translation_upload(app, f):
+def validate_bulk_app_translation_upload(app, workbook):
     from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
-    msgs = []
-    workbook = read_uploaded_app_translation_file(f, msgs)
-    if not workbook:
-        return msgs
     msgs = UploadedTranslationsValidator(app, workbook).compare()
     if msgs:
         return [

@@ -9,14 +9,17 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
 from corehq import toggles
-from corehq.apps.app_manager.app_translations.app_translations import validate_bulk_app_translation_upload
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
     require_can_edit_apps
-from corehq.apps.app_manager.app_translations import \
-    expected_bulk_app_sheet_headers, expected_bulk_app_sheet_rows, \
-    process_bulk_app_translation_upload
+from corehq.apps.app_manager.app_translations import (
+    expected_bulk_app_sheet_headers,
+    expected_bulk_app_sheet_rows,
+    process_bulk_app_translation_upload,
+    validate_bulk_app_translation_upload,
+    read_uploaded_app_translation_file,
+)
 from corehq.apps.app_manager.ui_translations import process_ui_translation_upload, \
     build_ui_translation_download_file
 from corehq.util.workbook_json.excel import InvalidExcelFileException
@@ -102,11 +105,14 @@ def download_bulk_app_translations(request, domain, app_id):
 def upload_bulk_app_translations(request, domain, app_id):
     verify = request.POST.get('verify')
     app = get_app(domain, app_id)
-    if verify:
-        msgs = validate_bulk_app_translation_upload(app, request.file)
-    else:
-        msgs = process_bulk_app_translation_upload(app, request.file)
-        app.save()
+    msgs = []
+    workbook = read_uploaded_app_translation_file(request.file, msgs)
+    if workbook:
+        if verify:
+            msgs = validate_bulk_app_translation_upload(app, workbook)
+        else:
+            msgs = process_bulk_app_translation_upload(app, workbook)
+            app.save()
     for msg in msgs:
         # Add the messages to the request object.
         # msg[0] should be a function like django.contrib.messages.error .
