@@ -80,23 +80,24 @@ class BulkUploadForm(forms.Form):
         self.helper.form_method = 'post'
         if action:
             self.helper.form_action = action
-        fields = [
-            "",
+        fields = []
+        if (context_key == "bulk_app_translation_upload" and
+                context['bulk_app_translation_upload']['can_verify_app_translations']):
+            fields.append(crispy.Field(
+                'verify',
+            ))
+        fields.extend([
+            crispy.Field(
+                'action',
+            ),
             crispy.Field(
                 'bulk_upload_file',
                 data_bind="value: file",
             )
-        ]
-        if (context_key == "bulk_app_translation_upload" and
-                context['bulk_app_translation_upload']['verify_app_translations']):
-            fields.append(crispy.Field(
-                'verify',
-            ))
-        fields.append(crispy.Field(
-            'action',
-        ))
+        ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
+                "",
                 *fields
             ),
             StrictButton(
