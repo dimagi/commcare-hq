@@ -226,7 +226,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
             self.table_adapters_by_domain[domain].remove(table)
 
     def process_changes_chunk(self, pillow_instance, changes):
-
         failed_changes = set()
 
         def get_docs(_changes, domain):
@@ -249,11 +248,11 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                 if change.id not in docs_by_id:
                     # we need to capture DocumentMissingError which is not possible in bulk
                     #   so let pillow fall back to serial mode to capture the error for missing docs
-                    failed_changes.append(change)
+                    failed_changes.add(change)
                 try:
                     ensure_matched_revisions(change, docs_by_id.get(change.id))
                 except DocumentMismatchError:
-                    failed_changes.append(change)
+                    failed_changes.add(change)
             good_changes = set(_changes) - failed_changes
             return [docs_by_id.get(change.id) for change in good_changes]
 
