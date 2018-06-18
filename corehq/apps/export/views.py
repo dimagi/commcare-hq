@@ -1136,8 +1136,9 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     @allow_remote_invocation
     def get_saved_export_progress(self, in_data):
-        return format_angular_success(
-            self._get_task_status_json(in_data['export_instance_id']))
+        return format_angular_success({
+            'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
+        })
 
 
 @location_safe

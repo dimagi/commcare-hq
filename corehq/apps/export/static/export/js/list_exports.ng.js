@@ -129,8 +129,8 @@
                 djangoRMI.get_saved_export_progress({
                     'export_instance_id': exp.id,
                 }).success(function (data) {
-                    exp.emailedExport.taskStatus = data;
-                    if (!data.success) {
+                    exp.emailedExport.taskStatus = data.taskStatus;
+                    if (!data.taskStatus.success) {
                         // The first few ticks don't yet register the task
                         exp.emailedExport.taskStatus.inProgress = true;
                         $timeout(tick, 1500);
