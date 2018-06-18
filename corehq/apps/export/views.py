@@ -2473,6 +2473,7 @@ class CopyExportView(View):
         else:
             new_export = export.copy_export()
             new_export.owner_id = self.request.couch_user.user_id
+            new_export.sharing = Sharing.PRIVATE
             new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
