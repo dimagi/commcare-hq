@@ -1518,17 +1518,20 @@ class FormExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
+            is_legacy = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
+            is_legacy = False
+
         return {
             'id': export.get_id,
-            'isLegacy': isinstance(export, FormExportSchema),
+            'isLegacy': is_legacy,
             'isDeid': export.is_safe,
             'name': export.name,
-            'description': export.description,
+            'description': export.description if not is_legacy else '',
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1657,19 +1660,21 @@ class CaseExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
+            is_legacy = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
+            is_legacy = False
 
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
-            'isLegacy': isinstance(export, CaseExportSchema),
+            'isLegacy': is_legacy,
             'name': export.name,
             'case_type': export.case_type,
-            'description': export.description,
+            'description': export.description if not is_legacy else '',
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
