@@ -30,6 +30,7 @@ from corehq.apps.export.views import (
 )
 from corehq.blobs import _db
 from corehq.util.test_utils import generate_cases
+from io import open
 
 
 class FakeDB(object):

@@ -58,7 +58,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).case_list_form.set_audio('en', '')
         app.get_module(0).get_form(0).set_icon('en', '')
         app.get_module(0).get_form(0).set_audio('en', '')
-        self.assertFalse(app.multimedia_map.keys())
+        self.assertFalse(list(app.multimedia_map.keys()))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):

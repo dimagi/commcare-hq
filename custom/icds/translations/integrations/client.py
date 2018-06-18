@@ -11,6 +11,7 @@ from custom.icds.translations.integrations.const import (
     SOURCE_LANGUAGE_MAPPING,
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
+from io import open
 
 
 class TransifexApiClient(object):

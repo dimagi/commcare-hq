@@ -1,4 +1,5 @@
 from __future__ import absolute_import, print_function
+from __future__ import unicode_literals
 from corehq.form_processor.interfaces import dbaccessors
 from casexml.apps.case.models import CommCareCase
 import random
@@ -7,6 +8,7 @@ from corehq.apps.couch_sql_migration.diff import filter_case_diffs
 from corehq.apps.tzmigration.timezonemigration import json_diff
 from pillowtop.reindexer.change_providers.couch import CouchViewChangeProvider
 from corehq.form_processor.backends.couch.update_strategy import CouchCaseUpdateStrategy
+from six.moves import range
 
 
 def check_domain(domain, num_cases=1000, randomization=100):
@@ -25,7 +27,7 @@ def check_domain(domain, num_cases=1000, randomization=100):
     for i in with_progress_bar(range(0, num_cases), oneline=False):
         skips = random.randint(1, randomization)
         for _ in range(0, skips):
-            case = case_iterator.next()
+            case = next(case_iterator)
 
         current_case = CommCareCase(case.get_document())
         case_id, diffs = is_problem_case(current_case, form_db)
