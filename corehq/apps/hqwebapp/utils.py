@@ -54,12 +54,12 @@ def send_confirmation_email(invitation):
                                 text_content=text_content)
 
 
-def get_bulk_upload_form(context, context_key="bulk_upload"):
-    return BulkUploadForm(
+def get_bulk_upload_form(context, context_key="bulk_upload", form_class=BulkUploadForm):
+    return form_class(
         context[context_key]['plural_noun'],
         context[context_key].get('action'),
-        context_key,
-        context
+        context_key + "_form",
+        context.get(context_key)
     )
 
 

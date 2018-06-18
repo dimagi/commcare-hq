@@ -69,37 +69,19 @@ class CloudCareAuthenticationForm(EmailAuthenticationForm):
 
 class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
-    verify = forms.BooleanField(label="Just validate and not update translations", required=False,
-                                initial=False)
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
-    def __init__(self, plural_noun, action, context_key, context, *args, **kwargs):
+    def __init__(self, plural_noun, action, form_id, context, *args, **kwargs):
         super(BulkUploadForm, self).__init__(*args, **kwargs)
-        form_id = context_key + "_form"
         self.helper = FormHelper()
         self.helper.form_id = form_id
         self.helper.form_method = 'post'
         if action:
             self.helper.form_action = action
-        fields = []
-        if (context_key == "bulk_app_translation_upload" and
-                context['bulk_app_translation_upload']['can_verify_app_translations']):
-            fields.append(crispy.Field(
-                'verify',
-            ))
-        fields.extend([
-            crispy.Field(
-                'action',
-            ),
-            crispy.Field(
-                'bulk_upload_file',
-                data_bind="value: file",
-            )
-        ])
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
                 "",
-                *fields
+                *self.crispy_form_fields(context)
             ),
             StrictButton(
                 ('<i class="fa fa-cloud-upload"></i> Upload %s'
@@ -110,6 +92,28 @@ class BulkUploadForm(forms.Form):
                 type='submit',
             ),
         )
+
+    def crispy_form_fields(self, context):
+        return [
+            crispy.Field(
+                'action',
+            ),
+            crispy.Field(
+                'bulk_upload_file',
+                data_bind="value: file",
+            )
+        ]
+
+
+class AppTranslationsBulkUploadForm(BulkUploadForm):
+    verify = forms.BooleanField(label="Just validate and not update translations", required=False,
+                                initial=False)
+
+    def crispy_form_fields(self, context):
+        crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
+        if context.get('can_verify_app_translations'):
+            crispy_form_fields.append(crispy.Field('verify'))
+        return crispy_form_fields
 
 
 class FormListForm(object):
