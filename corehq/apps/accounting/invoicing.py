@@ -68,7 +68,11 @@ class DomainInvoiceFactory(object):
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
                                         "Billing Account." % (subscription))
+<<<<<<< HEAD
                 elif should_create_invoice(subscription, self.domain, self.date_start, self.date_end):
+=======
+                elif should_create_invoice(subscription, self.domain):
+>>>>>>> User general should_create_invoice
                     self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
@@ -129,8 +133,24 @@ class DomainInvoiceFactory(object):
             subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
+<<<<<<< HEAD
         invoice_start = get_invoice_start(subscription, self.date_start)
         invoice_end = get_invoice_end(subscription, self.date_end)
+=======
+        def _get_invoice_start(sub, date_start):
+            return max(sub.date_start, date_start)
+
+        def _get_invoice_end(sub, date_end):
+            if sub.date_end is not None and sub.date_end <= date_end:
+                # Since the Subscription is actually terminated on date_end
+                # have the invoice period be until the day before date_end.
+                return sub.date_end - datetime.timedelta(days=1)
+            else:
+                return date_end
+
+        invoice_start = _get_invoice_start(subscription, self.date_start)
+        invoice_end = _get_invoice_end(subscription, self.date_end)
+>>>>>>> User general should_create_invoice
 
         with transaction.atomic():
             invoice = generate_invoice(subscription, invoice_start, invoice_end)
@@ -475,6 +495,20 @@ def generate_line_items(invoice, subscription):
         )
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
+
+
+def should_create_invoice(subscription, domain):
+    if subscription.is_trial:
+        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+        return False
+    if subscription.skip_invoicing_if_no_feature_charges and not \
+            subscription.plan_version.feature_charges_exist_for_domain(domain):
+        log_accounting_info(
+            "Skipping invoicing for Subscription %s because there are no feature charges."
+            % subscription.pk
+        )
+        return False
+    return True
 
 
 class LineItemFactory(object):
