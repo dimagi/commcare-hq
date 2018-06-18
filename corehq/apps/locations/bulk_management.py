@@ -901,7 +901,6 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
                 parent_stub = parent_stub.new_parent_stub
 
     delete_locations = []
-    ancestors_of_deleted_nodes = set()
     for stubs in chunked(order_by_location_type(), chunk_size):
         with transaction.atomic():
             for loc in stubs:
