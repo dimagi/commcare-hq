@@ -1249,6 +1249,9 @@ class DailySavedExportListView(BaseExportListView):
             'isLegacy': False,
             'name': export.name,
             'description': export.description,
+            'my_export': export.owner_id == self.request.couch_user.user_id,
+            'sharing': export.sharing,
+            'owner_username': WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown',
             'can_edit': export.can_edit(self.request.couch_user.user_id),
             'formname': formname,
             'addedToBulk': False,
@@ -1526,6 +1529,10 @@ class FormExportListView(BaseExportListView):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
             can_edit = True
+            description = ''
+            my_export = None
+            sharing = None
+            owner_username = 'unknown'
         else:
             # New export
             emailed_export = None
@@ -1533,13 +1540,20 @@ class FormExportListView(BaseExportListView):
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
             can_edit = export.can_edit(self.request.couch_user.user_id)
+            description = export.description
+            my_export = export.owner_id == self.request.couch_user.user_id
+            sharing = export.sharing
+            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
 
         return {
             'id': export.get_id,
             'isLegacy': is_legacy,
             'isDeid': export.is_safe,
             'name': export.name,
-            'description': export.description if not is_legacy else '',
+            'description': description,
+            'my_export': my_export,
+            'sharing': sharing,
+            'owner_username': owner_username,
             'can_edit': can_edit,
             'formname': export.formname,
             'addedToBulk': False,
@@ -1547,7 +1561,7 @@ class FormExportListView(BaseExportListView):
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
+            'downloadUrl': self._get_download_url(export.get_id, is_legacy),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
@@ -1671,6 +1685,10 @@ class CaseExportListView(BaseExportListView):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
             can_edit = True
+            description = ''
+            my_export = None
+            sharing = None
+            owner_username = 'unknown'
         else:
             # New export
             emailed_export = None
@@ -1678,6 +1696,10 @@ class CaseExportListView(BaseExportListView):
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
             can_edit = export.can_edit(self.request.couch_user.user_id)
+            description = export.description
+            my_export = export.owner_id == self.request.couch_user.user_id
+            sharing = export.sharing
+            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
 
         return {
             'id': export.get_id,
@@ -1685,16 +1707,16 @@ class CaseExportListView(BaseExportListView):
             'isLegacy': is_legacy,
             'name': export.name,
             'case_type': export.case_type,
-            'description': export.description if not is_legacy else '',
-            'my_export': export.owner_id == self.request.couch_user.user_id,
-            'sharing': export.sharing,
-            'owner_username': WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown',
+            'description': description,
+            'my_export': my_export,
+            'sharing': sharing,
+            'owner_username': owner_username,
             'can_edit': can_edit,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomCaseExportView.urlname, args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
+            'downloadUrl': self._get_download_url(export._id, is_legacy),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
