@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
+from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -78,8 +79,8 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
-                Q(date_end__gt=self.date_start)
-                & Q(date_end__gt=F('date_start'))
+                    Q(date_end__gt=self.date_start)
+                    & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end
@@ -372,11 +373,131 @@ class CustomerAccountInvoiceFactory(object):
         self.date_end = date_end
         self.account = account
         self.recipients = recipients
-        self.logged_throttle_error = False
-        self.is_community_invoice = False
+        self.customer_invoice = None
 
-    def create_invoices(self):
+    def create_invoice(self):
+        invoices = []
+        for subscription in self.account.subscription_set.all():
+            if self._should_create_invoice_for_subscription(subscription):
+                try:
+                    invoices.append(self._create_invoice_for_subscription(subscription))
+                except InvoiceAlreadyCreatedError as e:
+                    log_accounting_error(
+                        "Invoice already existed for domain %s: %s." % (subscription.subscriber.domain, e),
+                        show_stack_trace=True
+                    )
+
+        self.customer_invoice = invoices.pop()
+        self._consolidate_customer_invoice(invoices)
+        record = BillingRecord.generate_record(self.customer_invoice)
+        # TODO: Send the invoice via email:  all the nonsense surrounding record.send_email
         raise NotImplementedError
+
+    @staticmethod
+    def _should_create_invoice_for_subscription(subscription):
+        if subscription.is_trial:
+            log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+            return False
+        if subscription.skip_invoicing_if_no_feature_charges and not \
+                subscription.plan_version.feature_charges_exist_for_domain(subscription.subscriber.domain):
+            log_accounting_info(
+                "Skipping invoicing for Subscription %s because there are no feature charges."
+                % subscription.pk
+            )
+            return False
+        return True
+
+    def _create_invoice_for_subscription(self, subscription):
+        def _get_invoice_start(sub, date_start):
+            return max(sub.date_start, date_start)
+
+        def _get_invoice_end(sub, date_end):
+            if sub.date_end is not None and sub.date_end <= date_end:
+                # A Subscription is terminated on date_end, so the invoice period lasts until the day before
+                return sub.date_end - datetime.timedelta(days=1)
+            else:
+                return date_end
+
+        invoice_start = _get_invoice_start(subscription, self.date_start)
+        invoice_end = _get_invoice_end(subscription, self.date_end)
+        with transaction.atomic():
+            invoice = self._generate_invoice(subscription, invoice_start, invoice_end)
+        return invoice
+
+    def _generate_invoice(self, subscription, invoice_start, invoice_end):
+        invoice, is_new_invoice = Invoice.objects.get_or_create(
+            subscription=subscription,
+            date_start=invoice_start,
+            date_end=invoice_end,
+            is_hidden=subscription.do_not_invoice,
+        )
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+        if subscription.subscriptionadjustment_set.count() == 0:
+            SubscriptionAdjustment.record_adjustment(
+                subscription,
+                method=SubscriptionAdjustmentMethod.TASK,
+                invoice=invoice,
+            )
+        self._generate_line_items(invoice, subscription)
+        invoice.calculate_credit_adjustments()
+        invoice.update_balance()
+        invoice.save()
+        visible_domain_invoices = Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=invoice.get_domain(),
+        )
+        total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
+        should_set_date_due = (
+            total_balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+        )
+        if should_set_date_due:
+            days_until_due = DEFAULT_DAYS_UNTIL_DUE
+            if subscription.date_delay_invoicing is not None:
+                td = subscription.date_delay_invoicing - self.date_end
+                days_until_due = max(days_until_due, td.days)
+            invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
+        invoice.save()
+        return invoice
+
+    @staticmethod
+    def _generate_line_items(invoice, subscription):
+        product_rate = subscription.plan_version.product_rate
+        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+        product_factory.create()
+
+        for feature_rate in subscription.plan_version.feature_rates.all():
+            feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+                feature_rate.feature.feature_type
+            )
+            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+            feature_factory.create()
+
+    def _consolidate_customer_invoice(self, invoices):
+        invoiced_plans = [self.customer_invoice.subscription.plan_version]
+        for invoice in invoices:
+            if invoice.subscription.plan_version in invoiced_plans:
+                # The plan has already been added to the invoice, so update the line items
+                for line_item in invoice.lineitem_set.all():
+                    if line_item.product_rate:
+                        continue
+                    else:
+                        self._update_line_item_to_include(line_item)
+            else:
+                line_item_set = self.customer_invoice.lineitem_set.union(invoice.lineitem_set.all(), all=True)
+                self.customer_invoice.lineitem_set.set(line_item_set)
+                self.customer_invoice.save()
+        self.customer_invoice.calculate_credit_adjustments()
+        self.customer_invoice.update_balance()
+        self.customer_invoice.save()
+
+    def _update_line_item_to_include(self, line_item):
+        try:
+            line_item_to_update = self.customer_invoice.lineitem_set.get(feature_rate=line_item.feature_rate)
+            line_item_to_update.quantity = line_item_to_update.quantity + line_item.quantity
+        except ObjectDoesNotExist:
+            self.customer_invoice.lineitem_set.add(line_item)
 
 
 class LineItemFactory(object):

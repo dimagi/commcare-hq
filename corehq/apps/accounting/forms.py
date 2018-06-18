@@ -1853,17 +1853,16 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     @transaction.atomic
     def trigger_customer_invoice(self):
-        import ipdb; ipdb.set_trace()
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
-        account = BillingAccount.objects.filter(name=self.cleaned_data['customer_account'])
+        account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
         invoice_factory = CustomerAccountInvoiceFactory(
             date_start=invoice_start,
             date_end=invoice_end,
             account=account
         )
-        invoice_factory.create_invoices()
+        invoice_factory.create_invoice()
 
     # TODO: Do I need to implement this?
     # @staticmethod

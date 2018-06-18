@@ -709,7 +709,7 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                 messages.success(
                     request,
                     "Successfully triggered invoices for Customer Billing Account %s."
-                    % self.trigger_customer_invoice_form.cleaned_data['account']
+                    % self.trigger_customer_invoice_form.cleaned_data['customer_account']
                 )
             # TODO: Catch other errors
             except NotImplementedError as e:
