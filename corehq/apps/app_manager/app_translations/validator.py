@@ -38,13 +38,15 @@ class UploadedTranslationsValidator(object):
             if _column_name == header:
                 return index
 
-    def _compare_sheet(self, sheet_name, uploaded_rows, expected_rows, columns_to_compare):
+    def _compare_sheet(self, sheet_name, uploaded_rows, for_type):
         """
         :param uploaded_rows: dict
-        :param expected_rows: row
-        :param columns_to_compare: columns to compare
-        :return:
+        :param for_type: type of sheet, module_and_forms, module, form
+        :return: list of errors messages if any
         """
+        columns_to_compare = COLUMNS_TO_COMPARE[for_type]
+        columns_to_compare.append(self.default_language_column)
+        expected_rows = self.expected_rows[sheet_name]
         msg = []
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
@@ -66,18 +68,6 @@ class UploadedTranslationsValidator(object):
                     ))
         return msg
 
-    def _compare_module_and_form_sheet(self, sheet_name, uploaded_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
-                                   COLUMNS_TO_COMPARE['module_and_form'] + [self.default_language_column])
-
-    def _compare_module_sheet(self, sheet_name, uploaded_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
-                                   COLUMNS_TO_COMPARE['module'] + [self.default_language_column])
-
-    def _compare_form_sheet(self, sheet_name, uploaded_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
-                                   COLUMNS_TO_COMPARE['form'] + [self.default_language_column])
-
     def compare(self):
         msgs = {}
         self._generate_expected_headers_and_rows()
@@ -85,11 +75,11 @@ class UploadedTranslationsValidator(object):
             rows = get_unicode_dicts(sheet)
             sheet_name = sheet.worksheet.title
             if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
-                error_msgs = self._compare_module_and_form_sheet(sheet_name, rows)
+                error_msgs = self._compare_sheet(sheet_name, rows, 'module_and_form')
             elif 'module' in sheet_name and 'form' not in sheet_name:
-                error_msgs = self._compare_module_sheet(sheet_name, rows)
+                error_msgs = self._compare_sheet(sheet_name, rows, 'module')
             elif 'module' in sheet_name and 'form' in sheet_name:
-                error_msgs = self._compare_form_sheet(sheet_name, rows)
+                error_msgs = self._compare_sheet(sheet_name, rows, 'form')
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
             if error_msgs:
