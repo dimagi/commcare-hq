@@ -188,6 +188,52 @@ class DomainInvoiceFactory(object):
                     )
             return community_ranges
 
+<<<<<<< HEAD
+=======
+    def _generate_invoice(self, subscription, invoice_start, invoice_end):
+        invoice, is_new_invoice = Invoice.objects.get_or_create(
+            subscription=subscription,
+            date_start=invoice_start,
+            date_end=invoice_end,
+            is_hidden=subscription.do_not_invoice,
+        )
+
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+
+        if subscription.subscriptionadjustment_set.count() == 0:
+            # record that the subscription was created
+            SubscriptionAdjustment.record_adjustment(
+                subscription,
+                method=SubscriptionAdjustmentMethod.TASK,
+                invoice=invoice,
+            )
+
+        generate_line_items(invoice, subscription)
+        invoice.calculate_credit_adjustments()
+        invoice.update_balance()
+        invoice.save()
+        visible_domain_invoices = Invoice.objects.filter(
+            is_hidden=False,
+            subscription__subscriber__domain=invoice.get_domain(),
+        )
+        total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
+
+        should_set_date_due = (
+            total_balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+        )
+        if should_set_date_due:
+            days_until_due = DEFAULT_DAYS_UNTIL_DUE
+            if subscription.date_delay_invoicing is not None:
+                td = subscription.date_delay_invoicing - self.date_end
+                days_until_due = max(days_until_due, td.days)
+            invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
+        invoice.save()
+
+        return invoice
+
+>>>>>>> Use general generate_line_items
     @property
     def subscriber(self):
         return Subscriber.objects.get_or_create(domain=self.domain.name)[0]
@@ -416,6 +462,19 @@ def update_invoice_due_date(invoice, subscription, factory_date_end):
         invoice.date_due = factory_date_end + datetime.timedelta(days_until_due)
 
     invoice.save()
+
+
+def generate_line_items(invoice, subscription):
+    product_rate = subscription.plan_version.product_rate
+    product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+    product_factory.create()
+
+    for feature_rate in subscription.plan_version.feature_rates.all():
+        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+            feature_rate.feature.feature_type
+        )
+        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+        feature_factory.create()
 
 
 class LineItemFactory(object):
