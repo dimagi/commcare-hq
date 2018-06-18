@@ -39,7 +39,7 @@ describe('ListExportsController Unit Tests', function() {
                         'DjNg-Remote-Method': 'get_saved_export_progress',
                     },
                     method: 'auto',
-                }
+                },
             });
         }]);
         listExportsTestApp.constant('bulk_download_url', "/fake/bulk/download/url");
