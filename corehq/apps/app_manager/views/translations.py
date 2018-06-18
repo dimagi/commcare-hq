@@ -103,12 +103,12 @@ def download_bulk_app_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    verify = request.POST.get('verify')
+    validate = request.POST.get('validate')
     app = get_app(domain, app_id)
     msgs = []
     workbook = read_uploaded_app_translation_file(request.file, msgs)
     if workbook:
-        if verify:
+        if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook)
         else:
             msgs = process_bulk_app_translation_upload(app, workbook)

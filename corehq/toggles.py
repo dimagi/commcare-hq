@@ -1577,9 +1577,9 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
 )
 
 
-VERIFY_APP_TRANSLATIONS = StaticToggle(
-    'verify_app_translations',
-    'Verify app translations before uploading them',
+VALIDATE_APP_TRANSLATIONS = StaticToggle(
+    'validate_app_translations',
+    'Validate app translations before uploading them',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_USER]
 )

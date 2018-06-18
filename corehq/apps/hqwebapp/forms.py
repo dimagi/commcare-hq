@@ -106,13 +106,13 @@ class BulkUploadForm(forms.Form):
 
 
 class AppTranslationsBulkUploadForm(BulkUploadForm):
-    verify = forms.BooleanField(label="Just validate and not update translations", required=False,
-                                initial=False)
+    validate = forms.BooleanField(label="Just validate and not update translations", required=False,
+                                  initial=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
-        if context.get('can_verify_app_translations'):
-            crispy_form_fields.append(crispy.Field('verify'))
+        if context.get('can_validate_app_translations'):
+            crispy_form_fields.append(crispy.Field('validate'))
         return crispy_form_fields
 
 
