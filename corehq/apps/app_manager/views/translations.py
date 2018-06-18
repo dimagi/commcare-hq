@@ -109,7 +109,8 @@ def upload_bulk_app_translations(request, domain, app_id):
     workbook = read_uploaded_app_translation_file(request.file, msgs)
     if workbook:
         if validate:
-            msgs = validate_bulk_app_translation_upload(app, workbook)
+            msgs = validate_bulk_app_translation_upload(app, workbook, request.POST.get('send_email'),
+                                                        request.user.email)
         else:
             msgs = process_bulk_app_translation_upload(app, workbook)
             app.save()

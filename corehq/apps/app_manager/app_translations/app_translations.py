@@ -4,12 +4,15 @@ from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 
 import itertools
+from django.conf import settings
+from django.core.mail.message import EmailMessage
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
 import copy
 import re
 from lxml.etree import XMLSyntaxError, Element
+from celery.task import task
 
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
@@ -186,19 +189,38 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def validate_bulk_app_translation_upload(app, workbook):
+def validate_bulk_app_translation_upload(app, workbook, send_email, email):
     from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
     if msgs:
-        return [
-            (messages.error,
-             "{}: {}".format(sheet_name, ' '.join(msgs[sheet_name]))
-             )
-            for sheet_name in msgs
-            if msgs[sheet_name]
-        ]
+        if send_email:
+            _email_app_translations_discrepancies(msgs, email, app.name)
+            return [(messages.error, _("Issues found. You should receive an email shortly."))]
+        else:
+            message = ["Sheet {}: {}".format(sheet_name, ' '.join(msgs[sheet_name]))
+                       for sheet_name in msgs
+                       if msgs.get(sheet_name)]
+            return [
+                (messages.error, ' '.join(message))
+            ]
     else:
-        return [(messages.success, "Uploaded file looks good to process.")]
+        return [(messages.success, "No issues found.")]
+
+
+@task(queue="email_queue")
+def _email_app_translations_discrepancies(msgs, email, app_name):
+    message = '<br/><br/>'.join([
+        "Sheet {}:<br/> {}".format(sheet_name, '<br/> '.join(msgs[sheet_name]))
+        for sheet_name in msgs
+        if msgs.get(sheet_name)])
+
+    email = EmailMessage(
+        subject="App Translations Discrepancies for {}".format(app_name),
+        body="Hi,<br/>Following discrepancies were found for app translations. <br/><br/>" + message,
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    email.send()
 
 
 def _make_modules_and_forms_row(row_type, sheet_name, languages,
