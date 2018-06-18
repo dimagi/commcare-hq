@@ -672,10 +672,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
     if toggles.CUSTOM_ICON_BADGES.enabled(domain):
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
-    if (
-            toggles.COPY_FORM_TO_APP.enabled(domain) or
-            toggles.COPY_FORM_TO_APP.enabled(request.user.username)
-    ):
+    if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
         context['apps_modules'] = get_apps_modules(domain)
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):

@@ -3573,7 +3573,7 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    from_app = from_module.get_app()
+                    from_app = from_module.get_app()  # A form can be copied from a module in a different app.
                     select_chain = get_select_chain(from_app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link

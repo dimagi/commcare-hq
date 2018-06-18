@@ -255,14 +255,10 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
 
         src_app.copy_form(src_module, original_form, dst_module, rename=True)
 
-        form_count = 0
-        for f in src_app.get_forms():
-            form_count += 1
-        self.assertEqual(form_count, 1, 'Form copied to the wrong app')
-        form_count = 0
-        for f in dst_app.get_forms():
-            form_count += 1
-        self.assertEqual(form_count, 1)
+        self.assertEqual(len(list(src_app.get_forms())), 1, 'Form copied to the wrong app')
+        dst_app_forms = list(dst_app.get_forms())
+        self.assertEqual(len(dst_app_forms), 1)
+        self.assertEqual(dst_app_forms[0].name['en'], 'Copy of Untitled Form')
 
     def test_owner_name(self):
         self._test_generic_suite('owner-name')

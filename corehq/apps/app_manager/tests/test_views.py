@@ -237,6 +237,7 @@ class TestViews(TestCase):
         deleted_app.add_module(Module.new_module("Module0", "en"))
         deleted_app.save()
         deleted_app.delete_app()
+        deleted_app.save()
         self.addCleanup(lambda: Application.get_db().delete_doc(deleted_app.id))
 
         apps_modules = get_apps_modules(self.domain.name)
@@ -247,6 +248,6 @@ class TestViews(TestCase):
             'Each app should only have one module'
         )
         self.assertEqual(
-            apps_modules[0]['modules']['name'], {'en': 'Module0'},
-            'Module name should be a dictionary'
+            apps_modules[0]['modules'][0]['name'], 'Module0',
+            'Module name should be translated'
         )

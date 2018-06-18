@@ -19,7 +19,7 @@ hqDefine("app_manager/js/forms/copy_form_to_app", function () {
             })
         );
         return self;
-    }
+    };
 
     var appsModulesModel = function (appsModules) {
         var self = {};
@@ -30,10 +30,9 @@ hqDefine("app_manager/js/forms/copy_form_to_app", function () {
         );
         self.selectedAppId = ko.observable(self.apps()[0].id);
         self.selectedApp = ko.computed(function () {
-            var selected = _.filter(self.apps(), function (app) {
+            return _.find(self.apps(), function (app) {
                 return app.id === self.selectedAppId();
             });
-            return selected.length ? selected[0] : undefined;
         });
         return self;
     };
