@@ -45,7 +45,7 @@ class UploadedTranslationsValidator(object):
         :param for_type: type of sheet, module_and_forms, module, form
         :return: list of errors messages if any
         """
-        columns_to_compare = COLUMNS_TO_COMPARE[for_type] + self.default_language_column
+        columns_to_compare = COLUMNS_TO_COMPARE[for_type] + [self.default_language_column]
         expected_rows = self.expected_rows[sheet_name]
         msg = []
         number_of_uploaded_rows = len(uploaded_rows)
