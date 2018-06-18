@@ -1686,6 +1686,7 @@ class CaseExportListView(BaseExportListView):
             'name': export.name,
             'case_type': export.case_type,
             'description': export.description if not is_legacy else '',
+            'my_export': export.owner_id == self.request.couch_user.user_id,
             'can_edit': can_edit,
             'addedToBulk': False,
             'exportType': export.type,

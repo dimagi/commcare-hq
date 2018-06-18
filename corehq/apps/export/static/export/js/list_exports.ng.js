@@ -40,10 +40,21 @@
         self._getExportsList = function () {
             // The method below lives in the subclasses of
             // BaseExportListView.
+
+            var filterMyExports = function (val) {
+                return !!val.my_export;
+            };
+
+            var filterNotMyExports = function (val) {
+                return !val.my_export;
+            };
+
             djangoRMI.get_exports_list({})
                 .success(function (data) {
                     if (data.success) {
                         $scope.exports = data.exports;
+                        $scope.myExports = data.exports.filter(filterMyExports);
+                        $scope.notMyExports = data.exports.filter(filterNotMyExports);
                     } else {
                         $scope.exportsListError = data.error;
                     }
