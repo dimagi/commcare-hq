@@ -12,6 +12,7 @@ from custom.icds.translations.integrations.const import (
 )
 from custom.icds.translations.integrations.exceptions import ResourceMissing
 from memoized import memoized
+from io import open
 
 
 class TransifexApiClient(object):
