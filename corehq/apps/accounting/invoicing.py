@@ -68,7 +68,7 @@ class DomainInvoiceFactory(object):
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
                                         "Billing Account." % (subscription))
-                else:
+                elif should_create_invoice(subscription, self.domain):
                     self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
@@ -139,24 +139,6 @@ class DomainInvoiceFactory(object):
                 return sub.date_end - datetime.timedelta(days=1)
             else:
                 return date_end
-
-        if subscription.is_trial:
-            # Don't create invoices for trial subscriptions
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because it's a trial."
-                % subscription.pk
-            )
-            return
-
-        if (
-            subscription.skip_invoicing_if_no_feature_charges
-            and not subscription.plan_version.feature_charges_exist_for_domain(self.domain)
-        ):
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because there are no feature charges."
-                % subscription.pk
-            )
-            return
 
         invoice_start = _get_invoice_start(subscription, self.date_start)
         invoice_end = _get_invoice_end(subscription, self.date_end)
@@ -365,7 +347,7 @@ class CustomerAccountInvoiceFactory(object):
     def create_invoice(self):
         invoices = []
         for subscription in self.account.subscription_set.all():
-            if self._should_create_invoice_for_subscription(subscription):
+            if should_create_invoice(subscription, subscription.subscriber.domain):
                 try:
                     invoices.append(self._create_invoice_for_subscription(subscription))
                 except InvoiceAlreadyCreatedError as e:
@@ -375,20 +357,6 @@ class CustomerAccountInvoiceFactory(object):
                     )
         self._consolidate_customer_invoice(invoices)
         self._email_invoice()
-
-    @staticmethod
-    def _should_create_invoice_for_subscription(subscription):
-        if subscription.is_trial:
-            log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
-            return False
-        if subscription.skip_invoicing_if_no_feature_charges and not \
-                subscription.plan_version.feature_charges_exist_for_domain(subscription.subscriber.domain):
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because there are no feature charges."
-                % subscription.pk
-            )
-            return False
-        return True
 
     def _create_invoice_for_subscription(self, subscription):
         def _get_invoice_start(sub, date_start):
@@ -496,6 +464,20 @@ def generate_line_items(invoice, subscription):
         )
         feature_factory = feature_factory_class(subscription, feature_rate, invoice)
         feature_factory.create()
+
+
+def should_create_invoice(subscription, domain):
+    if subscription.is_trial:
+        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+        return False
+    if subscription.skip_invoicing_if_no_feature_charges and not \
+            subscription.plan_version.feature_charges_exist_for_domain(domain):
+        log_accounting_info(
+            "Skipping invoicing for Subscription %s because there are no feature charges."
+            % subscription.pk
+        )
+        return False
+    return True
 
 
 class LineItemFactory(object):
