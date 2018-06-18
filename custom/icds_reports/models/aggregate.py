@@ -14,7 +14,7 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-    AGG_INACTIVE_AWW_TABLE)
+)
 from custom.icds_reports.utils.aggregation import (
     ComplementaryFormsAggregationHelper,
     GrowthMonitoringFormsAggregationHelper,
@@ -936,4 +936,3 @@ class AggregateInactiveAWW(models.Model):
 
     class Meta(object):
         app_label = 'icds_reports'
-        db_table = AGG_INACTIVE_AWW_TABLE

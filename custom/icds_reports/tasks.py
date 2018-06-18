@@ -16,7 +16,7 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
-from six.moves import cStringIO
+from io import BytesIO
 from couchexport.export import export_from_tables
 
 from corehq.apps.locations.models import SQLLocation
@@ -615,11 +615,15 @@ def _update_ucr_table_mapping():
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
-    filename = "inactive_awws.csv"
-    last_sync, is_created = IcdsFile.objects.get_or_create(blob_id=filename, data_type='inactive_awws')
+    filename = "inactive_awws_%s.csv" % date.today().strftime('%Y-%m-%d')
+    last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
 
     # If last sync not exist then collect initial data
-    last_sync_date = datetime(2017, 3, 1).date() if is_created else last_sync.file_added
+    if not last_sync:
+        last_sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
+        last_sync_date = datetime(2017, 3, 1).date()
+    else:
+        last_sync_date = last_sync.file_added
 
     _aggregate_inactive_aww(last_sync_date)
 
@@ -638,7 +642,7 @@ def collect_inactive_awws():
         )
 
     celery_task_logger.info("Creating csv file")
-    export_file = cStringIO()
+    export_file = BytesIO()
     export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
 
     celery_task_logger.info("Saving zip file in blobdb")

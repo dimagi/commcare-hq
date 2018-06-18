@@ -30,9 +30,6 @@ class Migration(migrations.Migration):
                 ('first_submission', models.DateField(blank=True, null=True)),
                 ('last_submission', models.DateField(blank=True, null=True)),
             ],
-            options={
-                'db_table': 'icds_dashboard_inactive_aww',
-            },
         ),
         migrations.CreateModel(
             name='IcdsFile',
@@ -42,8 +39,5 @@ class Migration(migrations.Migration):
                 ('data_type', models.CharField(max_length=255)),
                 ('file_added', models.DateField(auto_now=True)),
             ],
-            options={
-                'db_table': 'icds_dashboard_icds_file',
-            },
         ),
     ]

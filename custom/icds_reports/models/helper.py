@@ -6,7 +6,7 @@ from django.db import models
 from corehq.blobs import get_blob_db
 
 ICDS_BUCKET = 'icds_blobdb'
-EXPIRED = 60 * 60 * 24
+EXPIRED = 60 * 60 * 24 * 7  # 7 days
 
 
 class IcdsMonths(models.Model):
@@ -34,5 +34,4 @@ class IcdsFile(models.Model):
         return blob_db.get(self.blob_id, ICDS_BUCKET)
 
     class Meta:
-        app_label = 'icds_model'
-        db_table = 'icds_dashboard_icds_file'
+        app_label = 'icds_reports'

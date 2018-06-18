@@ -1656,7 +1656,10 @@ class ICDSAppTranslations(BaseDomainView):
 @method_decorator([login_and_domain_required], name='dispatch')
 class InactiveAWW(View):
     def get(self, request, *args, **kwargs):
-        collect_inactive_awws()
-        last_sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
-        zip_name = 'inactive_awws_%s' % datetime.today().strftime('%Y-%m-%d')
-        return export_response(last_sync.get_file_from_blobdb(), 'csv', zip_name)
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
+        return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)

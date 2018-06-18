@@ -15,9 +15,10 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
     DASHBOARD_DOMAIN,
-    AGG_INACTIVE_AWW_TABLE)
+)
 from six.moves import range
 
+from django.utils.functional import cached_property
 
 def transform_day_to_month(day):
     return day.replace(day=1)
@@ -674,10 +675,14 @@ def recalculate_aggregate_table(model_class):
 
 class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
     ucr_data_source_id = 'static-usage_forms'
-    aggregate_parent_table = AGG_INACTIVE_AWW_TABLE
 
     def __init__(self, last_sync):
         self.last_sync = last_sync
+
+    @cached_property
+    def aggregate_parent_table(self):
+        from custom.icds_reports.models import AggregateInactiveAWW
+        return AggregateInactiveAWW._meta.db_table
 
     def data_from_ucr_query(self):
         return """
