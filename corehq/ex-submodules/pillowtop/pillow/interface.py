@@ -146,6 +146,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         """
         if not changes_chunk:
             return
+        failed_changes = set()
         try:
             # chunked processing is supported if there is only one processor
             failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
@@ -159,16 +160,20 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 ))
             # fall back to processing one by one
             for change in changes_chunk:
-                self.process_with_error_handling(change, context)
+                self.process_with_error_handling(change, context, chunked_fallback=True)
         else:
-            for change in set(changes_chunk) - set(failed_changes):
+            succeeded_changes = set(changes_chunk) - set(failed_changes)
+            for change in succeeded_changes:
                 self._update_checkpoint(change, context)
-                self._record_change_success_in_datadog(change)
             # fall back to processing one by one for failed changes
             for change in failed_changes:
-                self.process_with_error_handling(change, context)
+                self.process_with_error_handling(change, context, chunked_fallback=True)
+        tags = ["pillow_name:{}".format(self.get_name())]
+        datadog_counter('commcare.change_feed.chunked.changes.exception', len(changes_chunk), tags=tags)
+        datadog_counter('commcare.change_feed.chunked.changes', len(changes_chunk), tags=tags)
+        datadog_counter('commcare.change_feed.chunked.changes.suceess', len(succeeded_changes), tags=tags)
 
-    def process_with_error_handling(self, change, context):
+    def process_with_error_handling(self, change, context, chunked_fallback=False):
         timer = TimingContext()
         try:
             with timer:
@@ -229,21 +234,25 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 _topic_for_ddog(topic),
             ])
 
-    def _record_change_in_datadog(self, change, timer):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
+    def _record_change_in_datadog(self, change, timer, chunked_fallback=False):
+        self.__record_change_metric_in_datadog(
+            'commcare.change_feed.changes.count', change, timer, chunked_fallback=chunked_fallback)
 
-    def _record_change_success_in_datadog(self, change):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
+    def _record_change_success_in_datadog(self, change, chunked_fallback=False):
+        self.__record_change_metric_in_datadog(
+            'commcare.change_feed.changes.success', change, chunked_fallback=chunked_fallback)
 
-    def _record_change_exception_in_datadog(self, change):
-        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
+    def _record_change_exception_in_datadog(self, change, chunked_fallback=False):
+        self.__record_change_metric_in_datadog(
+            'commcare.change_feed.changes.exceptions', change, chunked_fallback=chunked_fallback)
 
-    def __record_change_metric_in_datadog(self, metric, change, timer=None):
+    def __record_change_metric_in_datadog(self, metric, change, timer=None, chunked_fallback=False):
         if change.metadata is not None:
             tags = [
                 'datasource:{}'.format(change.metadata.data_source_name),
                 'is_deletion:{}'.format(change.metadata.is_deletion),
                 'pillow_name:{}'.format(self.get_name()),
+                'chunked_fallback:{}'.format(chunked_fallback)
             ]
             datadog_counter(metric, tags=tags)
 
