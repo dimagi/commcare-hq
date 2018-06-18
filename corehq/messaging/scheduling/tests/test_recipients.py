@@ -21,7 +21,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     ScheduleInstance,
 )
 from corehq.messaging.scheduling.tests.util import delete_timed_schedules
-from corehq.util.test_utils import create_test_case
+from corehq.util.test_utils import create_test_case, set_parent_case
 from datetime import time
 from mock import patch
 
@@ -229,6 +229,18 @@ class SchedulingRecipientTest(TestCase):
             instance = CaseTimedScheduleInstance(domain=self.domain, case_id=case.case_id,
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER)
             self.assertIsNone(instance.recipient)
+
+    @run_with_all_backends
+    def test_parent_case_recipient(self):
+        with create_case(self.domain, 'person') as child, create_case(self.domain, 'person') as parent:
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=child.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
+            self.assertIsNone(instance.recipient)
+
+            set_parent_case(self.domain, child, parent, relationship='child', identifier='parent')
+            instance = CaseTimedScheduleInstance(domain=self.domain, case_id=child.case_id,
+                recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
+            self.assertEqual(instance.recipient.case_id, parent.case_id)
 
     def test_expand_location_recipients_without_descendants(self):
         schedule = TimedSchedule.create_simple_daily_schedule(

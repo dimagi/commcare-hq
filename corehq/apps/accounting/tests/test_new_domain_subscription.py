@@ -150,3 +150,15 @@ class TestNewDomainSubscription(BaseAccountingTest):
         self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
             self.account, self.domain2.name, self.advanced_plan
         ))
+
+    def test_customer_plan_not_added_to_regular_account(self):
+        self.advanced_plan.plan.is_customer_software_plan = True
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        ))
+
+    def test_regular_plan_not_added_to_customer_account(self):
+        self.account.is_customer_billing_account = True
+        self.assertRaises(NewSubscriptionError, lambda: Subscription.new_domain_subscription(
+            self.account, self.domain.name, self.advanced_plan
+        ))

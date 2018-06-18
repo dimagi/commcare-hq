@@ -348,6 +348,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False)
+    billing_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -1603,6 +1604,18 @@ class Subscription(models.Model):
                     'plan_version': plan_version,
                 }
             )
+
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
+            if plan_version.plan.is_customer_software_plan:
+                raise NewSubscriptionError(
+                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+            else:
+                raise NewSubscriptionError(
+                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
 
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         today = datetime.date.today()

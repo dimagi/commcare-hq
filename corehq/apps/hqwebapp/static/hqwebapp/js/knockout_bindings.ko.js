@@ -171,7 +171,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         },
     };
 
-    ko.bindingHandlers.multi_sortable = {
+    ko.bindingHandlers.multirow_sortable = {
         updateSortableList: function(itemList) {
             _(itemList()).each(function(item, index) {
                 if (item._sortableOrder === undefined) {
@@ -184,17 +184,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
         getList: function(valueAccessor) {
             /* this function's logic follows that of ko.bindingHandlers.foreach.makeTemplateValueAccessor */
             var modelValue = valueAccessor(),
-                unwrappedValue = ko.utils.peekObservable(modelValue);
-            if ((!unwrappedValue) || typeof unwrappedValue.length === "number") {
+                unwrappedValue = ko.utils.peekObservable(modelValue);  // Unwrap without setting a dependency here
+            // If unwrappedValue is the array, pass in the wrapped value on its own
+            // The value will be unwrapped and tracked within the template binding
+            if ((!unwrappedValue) || _.isArray(unwrappedValue)) {
                 return modelValue;
             } else {
                 return unwrappedValue['data'];
             }
         },
         init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
+            var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
             var forceUpdate = function() {
-                ko.bindingHandlers.multi_sortable.update(
+                ko.bindingHandlers.multirow_sortable.update(
                     element, valueAccessor, allBindingsAccessor, viewModel, bindingContext
                 );
             };
@@ -205,7 +207,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).on('click', 'tr', function (e) {
                 if ($(this).hasClass('moving')) {
                     $(this).removeClass('moving');
-                    ko.bindingHandlers.multi_sortable.updateSortableList(list);
+                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort").toggleClass('success');
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
@@ -236,12 +238,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort').addClass('success');
+                        next.addClass('selected-for-sort success');
                         next = next.next();
                     }
                 } else {
-                    $(this).addClass("selected-for-sort").addClass('success').addClass('last-clicked')
-                           .siblings().removeClass('selected-for-sort').removeClass('success').removeClass('last-clicked');
+                    $(this).addClass('selected-for-sort success last-clicked')
+                        .siblings().removeClass('selected-for-sort success last-clicked');
                 }
             });
 
@@ -276,8 +278,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 delay: 150,
                 helper: function (e, item) {
                     if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort').addClass('success')
-                            .siblings().removeClass('selected-for-sort').removeClass('success');
+                        item.addClass('selected-for-sort success')
+                            .siblings().removeClass('selected-for-sort success');
                     }
 
                     var elements = item.siblings('.selected-for-sort').detach();
@@ -322,8 +324,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
         update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
-            var list = ko.bindingHandlers.multi_sortable.getList(valueAccessor);
-            ko.bindingHandlers.multi_sortable.updateSortableList(list);
+            var list = ko.bindingHandlers.multirow_sortable.getList(valueAccessor);
+            ko.bindingHandlers.multirow_sortable.updateSortableList(list);
             return ko.bindingHandlers.foreach.update(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
         },
     };

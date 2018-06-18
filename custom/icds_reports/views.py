@@ -1638,31 +1638,33 @@ class ICDSAppTranslations(BaseDomainView):
         return True
 
     @staticmethod
-    def perform_pull_request(request, form_data, transifex):
+    def resources_translated(request, transifex):
+        resource_pending_translations = (transifex.
+                                         resources_pending_translations(break_if_true=True))
+        if resource_pending_translations:
+            messages.error(
+                request,
+                _("Resources yet to be completely translated, for ex: {}".format(
+                    resource_pending_translations)))
+            return False
+        return True
+
+    def perform_pull_request(self, request, form_data, transifex):
         if form_data['perform_translated_check']:
-            try:
-                resource_pending_translations = (transifex.
-                                                 resources_pending_translations(break_if_true=True))
-                if resource_pending_translations:
-                    messages.error(
-                        request,
-                        _("Resources yet to be completely translated, for ex: {}".format(
-                            resource_pending_translations)))
-                    return False
-            except ResourceMissing as e:
-                messages.error(request, e)
+            if not self.resources_translated(request, transifex):
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                     'You should receive an email shortly'))
         return True
 
-    @staticmethod
-    def perform_delete_request(request, form_data, transifex):
+    def perform_delete_request(self, request, form_data, transifex):
         if not transifex.resource_slugs:
             messages.error(request, _('Resources not found for this project and version.'))
             return False
-        delete_resources_on_transifex.delay(request.domain, form_data)
+        if not self.resources_translated(request, transifex):
+            return False
+        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
@@ -1686,6 +1688,10 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                if self.perform_request(request, form_data):
+                try:
+                    if self.perform_request(request, form_data):
+                        return redirect(self.urlname, domain=self.domain)
+                except ResourceMissing as e:
+                    messages.error(request, e)
                     return redirect(self.urlname, domain=self.domain)
         return self.get(request, *args, **kwargs)

@@ -77,6 +77,9 @@ from time import sleep
 from io import open
 
 
+ABT_CUSTOM_RECIPIENT = 'CASE_OWNER_LOCATION_PARENT'
+
+
 def log(message):
     print(message)
     with open('new_reminders_migration.log', 'a', encoding='utf-8') as f:
@@ -447,8 +450,12 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None)]
     elif handler.recipient == RECIPIENT_USER:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
+    elif handler.recipient == RECIPIENT_PARENT_CASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
+    elif handler.recipient == ABT_CUSTOM_RECIPIENT:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, ABT_CUSTOM_RECIPIENT)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -686,6 +693,8 @@ class Command(BaseCommand):
             RECIPIENT_CASE,
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
+            RECIPIENT_PARENT_CASE,
+            ABT_CUSTOM_RECIPIENT,
         ):
             return None
 

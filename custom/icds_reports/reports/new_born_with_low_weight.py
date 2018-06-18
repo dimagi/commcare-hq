@@ -76,14 +76,22 @@ def get_newborn_with_low_birth_weight_map(domain, config, loc_level, show_test=F
                     'value': indian_formatted_number(low_birth_total)
                 },
                 {
+                    'indicator': 'Total Number of children born and weight in given month{}:'.format(
+                        chosen_filters
+                    ),
+                    'value': indian_formatted_number(in_month_total)
+                },
+                {
                     'indicator': '% newborns with LBW in given month{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (
-                        low_birth_total * 100 / float(in_month_total or 1))
+                    'value': '%.2f%%' % (low_birth_total * 100 / float(in_month_total or 1))
+                },
+                {
+                    'indicator': '% of children with weight in normal{}:'.format(chosen_filters),
+                    'value': '%.2f%%' % ((in_month_total - low_birth_total) * 100 / float(in_month_total or 1))
                 },
                 {
                     'indicator': '% Unweighted{}:'.format(chosen_filters),
-                    'value': '%.2f%%' % (
-                        in_month_total * 100 / float(total or 1))
+                    'value': '%.2f%%' % ((total - in_month_total) * 100 / float(total or 1))
                 }
             ]
 

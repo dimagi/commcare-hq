@@ -11,7 +11,7 @@ from corehq.apps.userreports.const import UCR_ES_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
-from corehq.apps.userreports.tests.utils import load_data_from_db, run_with_all_ucr_backends
+from six.moves import range
 
 
 def get_sample_config(domain=None):
