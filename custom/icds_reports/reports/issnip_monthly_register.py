@@ -187,6 +187,76 @@ class ISSNIPMonthlyReport(object):
                 'days_ration_given_child__gt': 21,
                 'minority': 'yes'
             }, 'case_id', None)),
+            pre_sc_boys_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_sc_girls_48_72=Count(self.filter_by({
+                'caste': 'sc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_st_boys_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_st_girls_48_72=Count(self.filter_by({
+                'caste': 'st',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_obc_boys_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_obc_girls_48_72=Count(self.filter_by({
+                'caste': 'obc',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_general_boys_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_general_girls_48_72=Count(self.filter_by({
+                'caste': 'other',
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_total_boys_48_72=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_total_girls_48_72=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_minority_boys_48_72=Count(self.filter_by({
+                'sex': 'M',
+                'age_tranche__in': ['48', '60', '72'],
+                'minority': 'yes',
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
+            pre_minority_girls_48_72=Count(self.filter_by({
+                'sex': 'F',
+                'age_tranche__in': ['48', '60', '72'],
+                'minority': 'yes',
+                'pse_days_attended__gte': 21
+            }, 'case_id', None)),
         )
         return {row['awc_id']: row for row in data}
 
@@ -359,65 +429,6 @@ class ISSNIPMonthlyReport(object):
                 'age_tranche__in': ['6', '12', '24', '36'],
                 'minority': 'yes'
             }, 'rations_21_plus_distributed')),
-            pre_sc_boys_36_72=Sum(self.filter_by({
-                'caste': 'sc',
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_sc_girls_36_72=Sum(self.filter_by({
-                'caste': 'sc',
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_st_boys_36_72=Sum(self.filter_by({
-                'caste': 'st',
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_st_girls_36_72=Sum(self.filter_by({
-                'caste': 'st',
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_obc_boys_36_72=Sum(self.filter_by({
-                'caste': 'obc',
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_obc_girls_36_72=Sum(self.filter_by({
-                'caste': 'obc',
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_general_boys_36_72=Sum(self.filter_by({
-                'caste': 'other',
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_general_girls_36_72=Sum(self.filter_by({
-                'caste': 'other',
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_total_boys_36_72=Sum(self.filter_by({
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_total_girls_36_72=Sum(self.filter_by({
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72']
-            }, 'rations_21_plus_distributed')),
-            pre_minority_boys_36_72=Sum(self.filter_by({
-                'gender': 'M',
-                'age_tranche__in': ['48', '60', '72'],
-                'minority': 'yes'
-            }, 'rations_21_plus_distributed')),
-            pre_minority_girls_36_72=Sum(self.filter_by({
-                'gender': 'F',
-                'age_tranche__in': ['48', '60', '72'],
-                'minority': 'yes'
-            }, 'rations_21_plus_distributed')),
-
         )
         return {row['awc_id']: row for row in data}
 
@@ -430,50 +441,48 @@ class ISSNIPMonthlyReport(object):
         ).values('awc_id').annotate(
             sc_pregnant=Sum(self.filter_by({
                 'caste': 'sc',
-                'pregnant': 1
+                'ccs_status': 'pregnant'
             }, 'rations_21_plus_distributed')),
             st_pregnant=Sum(self.filter_by({
                 'caste': 'st',
-                'pregnant': 1
+                'ccs_status': 'pregnant'
             }, 'rations_21_plus_distributed')),
             obc_pregnant=Sum(self.filter_by({
                 'caste': 'obc',
-                'pregnant': 1
+                'ccs_status': 'pregnant'
             }, 'rations_21_plus_distributed')),
             general_pregnant=Sum(self.filter_by({
                 'caste': 'general',
-                'pregnant': 1
+                'ccs_status': 'pregnant'
             }, 'rations_21_plus_distributed')),
             total_pregnant=Sum(self.filter_by({
-                'pregnant': 1
+                'ccs_status': 'pregnant'
             }, 'rations_21_plus_distributed')),
             sc_lactating=Sum(self.filter_by({
                 'caste': 'sc',
-                'lactating': 1
+                'ccs_status': 'lactating'
             }, 'rations_21_plus_distributed')),
             st_lactating=Sum(self.filter_by({
                 'caste': 'st',
-                'lactating': 1
+                'ccs_status': 'lactating'
             }, 'rations_21_plus_distributed')),
             obc_lactating=Sum(self.filter_by({
                 'caste': 'obc',
-                'lactating': 1
+                'ccs_status': 'lactating'
             }, 'rations_21_plus_distributed')),
             general_lactating=Sum(self.filter_by({
                 'caste': 'general',
-                'lactating': 1
+                'ccs_status': 'lactating'
             }, 'rations_21_plus_distributed')),
             total_lactating=Sum(self.filter_by({
-                'lactating': 1
+                'ccs_status': 'lactating'
             }, 'rations_21_plus_distributed')),
             minority_pregnant=Sum(self.filter_by({
-                'caste': 'sc',
-                'pregnant': 1,
+                'ccs_status': 'pregnant',
                 'minority': 'yes'
             }, 'rations_21_plus_distributed')),
             minority_lactating=Sum(self.filter_by({
-                'caste': 'sc',
-                'lactating': 1,
+                'ccs_status': 'lactating',
                 'minority': 'yes'
             }, 'rations_21_plus_distributed')),
         )
