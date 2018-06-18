@@ -81,14 +81,9 @@ def populate_export_download_task(export_instances, filters, download_id, filena
 
 @task(queue=SAVED_EXPORTS_QUEUE, ignore_result=True)
 def _start_export_task(export_instance_id, last_access_cutoff):
-    keys = ['rebuild_export_task_%s' % export_instance_id]
-    timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
-    with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
-        if locked_section.success():
-            export_instance = get_properly_wrapped_export_instance(
-                export_instance_id)
-            if should_rebuild_export(export_instance, last_access_cutoff):
-                rebuild_export(export_instance, progress_tracker=_start_export_task)
+    export_instance = get_properly_wrapped_export_instance(export_instance_id)
+    if should_rebuild_export(export_instance, last_access_cutoff):
+        rebuild_export(export_instance, progress_tracker=_start_export_task)
 
 
 def _get_saved_export_download_data(export_instance_id):
@@ -101,16 +96,29 @@ def _get_saved_export_download_data(export_instance_id):
 
 def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=False):
     """Kicks off a celery task to rebuild the export.
+
+    If this is called while another one is already running for the same export
+    instance, it will just noop.
     """
-    queue = EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE
-    # associate task with the export instance
     download_data = _get_saved_export_download_data(export_instance_id)
+    status = get_task_status(download_data.task)
+    if manual:
+        if status.not_started() or status.missing():
+            # cancel pending task before kicking off a new one
+            download_data.task.revoke()
+        if status.started():
+            return  # noop - make the user wait before starting a new one
+    else:
+        if status.not_started() or status.started():
+            return  # noop - one's already on the way
+
+    # associate task with the export instance
     download_data.set_task(
         _start_export_task.apply_async(
             args=[
                 export_instance_id, last_access_cutoff
             ],
-            queue=queue,
+            queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
         )
     )
 
