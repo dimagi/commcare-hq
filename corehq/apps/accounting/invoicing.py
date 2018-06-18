@@ -386,12 +386,8 @@ class CustomerAccountInvoiceFactory(object):
                         "Invoice already existed for domain %s: %s." % (subscription.subscriber.domain, e),
                         show_stack_trace=True
                     )
-
-        self.customer_invoice = invoices.pop()
         self._consolidate_customer_invoice(invoices)
-        record = BillingRecord.generate_record(self.customer_invoice)
-        # TODO: Send the invoice via email:  all the nonsense surrounding record.send_email
-        raise NotImplementedError
+        self._email_invoice()
 
     @staticmethod
     def _should_create_invoice_for_subscription(subscription):
@@ -475,6 +471,7 @@ class CustomerAccountInvoiceFactory(object):
             feature_factory.create()
 
     def _consolidate_customer_invoice(self, invoices):
+        self.customer_invoice = invoices.pop()
         invoiced_plans = [self.customer_invoice.subscription.plan_version]
         for invoice in invoices:
             if invoice.subscription.plan_version in invoiced_plans:
@@ -498,6 +495,20 @@ class CustomerAccountInvoiceFactory(object):
             line_item_to_update.quantity = line_item_to_update.quantity + line_item.quantity
         except ObjectDoesNotExist:
             self.customer_invoice.lineitem_set.add(line_item)
+
+    def _email_invoice(self):
+        record = BillingRecord.generate_record(self.customer_invoice)
+        try:
+            if self.recipients:
+                for email in self.recipients:
+                    record.send_email(contact_email=email)
+            elif self.account.dimagi_contact:
+                record.send_email(contact_email=self.account.dimagi_contact,
+                                  cc_emails=[settings.ACCOUNTS_EMAIL])
+            else:
+                record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
+        except InvoiceEmailThrottledError as e:
+            log_accounting_error(e.message)
 
 
 class LineItemFactory(object):
