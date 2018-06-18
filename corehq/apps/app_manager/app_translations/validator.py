@@ -13,6 +13,7 @@ COLUMNS_TO_COMPARE = {
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }
+ROW_COUNT_MISMATCH_MESSAGE = "We found {} rows than expected. Confirming what was uploaded."
 
 
 class UploadedTranslationsValidator(object):
@@ -50,10 +51,10 @@ class UploadedTranslationsValidator(object):
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msg.append("We found less rows than expected. Confirming what was uploaded.")
+            msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("less"))
             iterate_on = zip(uploaded_rows, expected_rows)
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msg.append("We found more rows than expected. Confirming what was uploaded.")
+            msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("more"))
             iterate_on = zip(expected_rows, uploaded_rows)
         else:
             iterate_on = zip(expected_rows, uploaded_rows)
