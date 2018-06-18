@@ -511,17 +511,22 @@ def get_form_questions(request, domain, app_id):
     return json_response(xform_questions)
 
 
-def get_apps_modules(domain):
+def get_apps_modules(domain, current_app_id=None, current_module_id=None):
     """
-    Returns a domain's apps and their modules
+    Returns a domain's apps and their modules.
+
+    If current_app_id and current_module_id are given, "is_current" is
+    set to True for them.
     """
     return [
         {
             'app_id': app.id,
             'name': app.name,
+            'is_current': app.id == current_app_id,
             'modules': [{
                 'module_id': module.id,
                 'name': clean_trans(module.name, app.langs),
+                'is_current': module.unique_id == current_module_id,
             } for module in app.modules]
         }
         for app in get_apps_in_domain(domain, include_remote=False)
@@ -673,7 +678,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         context['form_icon'] = form.custom_icon if form.custom_icon else CustomIcon()
 
     if toggles.COPY_FORM_TO_APP.enabled_for_request(request):
-        context['apps_modules'] = get_apps_modules(domain)
+        context['apps_modules'] = get_apps_modules(domain, app.id, module.unique_id)
 
     if context['allow_form_workflow'] and toggles.FORM_LINK_WORKFLOW.enabled(domain):
         def qualified_form_name(form, auto_link):
