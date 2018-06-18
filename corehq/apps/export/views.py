@@ -1048,8 +1048,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             saved_exports = self.get_saved_exports()
             saved_exports = [
                 export for export in saved_exports
-                if export.sharing != Sharing.PRIVATE
-                or not export.owner_id or export.owner_id == self.request.couch_user.user_id
+                if export.can_view(self.request.couch_user.user_id)
             ]
             if self.is_deid:
                 saved_exports = [x for x in saved_exports if x.is_safe]
@@ -1250,6 +1249,7 @@ class DailySavedExportListView(BaseExportListView):
             'isLegacy': False,
             'name': export.name,
             'description': export.description,
+            'can_edit': export.can_edit(self.request.couch_user.user_id),
             'formname': formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1525,12 +1525,14 @@ class FormExportListView(BaseExportListView):
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
+            can_edit = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
+            can_edit = export.can_edit(self.request.couch_user.user_id)
 
         return {
             'id': export.get_id,
@@ -1538,6 +1540,7 @@ class FormExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'name': export.name,
             'description': export.description if not is_legacy else '',
+            'can_edit': can_edit,
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1667,12 +1670,14 @@ class CaseExportListView(BaseExportListView):
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
+            can_edit = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
+            can_edit = export.can_edit(self.request.couch_user.user_id)
 
         return {
             'id': export.get_id,
@@ -1681,7 +1686,7 @@ class CaseExportListView(BaseExportListView):
             'name': export.name,
             'case_type': export.case_type,
             'description': export.description if not is_legacy else '',
-            'sharing': export.sharing if not is_legacy else None,
+            'can_edit': can_edit,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
@@ -2464,6 +2469,7 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
+            new_export.owner_id = self.request.couch_user.user_id
             new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
