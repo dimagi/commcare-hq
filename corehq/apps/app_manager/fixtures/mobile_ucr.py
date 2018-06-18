@@ -154,7 +154,7 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
     def _v1_fixture(self, restore_user, report_configs):
         user_id = restore_user.user_id
         root = E.fixture(id=self.id, user_id=user_id)
-        reports_elem = E.reports(last_sync=_last_sync_time(self.domain, user_id))
+        reports_elem = E.reports(last_sync=_last_sync_time(restore_user.domain, user_id))
         for report_config in report_configs:
             try:
                 reports_elem.append(self.report_config_to_v1_fixture(report_config, restore_user))
