@@ -19,7 +19,7 @@
             <th class="col-sm-1">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
             {% block fourth_column_header %}{% endblock %}
             {%  if allow_bulk_export %}
-            <th class="col-sm-3">
+            <th class="col-sm-2">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
                 <button type="button"
                         class="btn btn-xs btn-default"
@@ -33,6 +33,7 @@
                 </button>
             </th>
             {% endif %}
+            <th class="col-sm-1">{% trans 'Share' %}</th>
         </tr>
     </thead>
     <tbody>
@@ -332,6 +333,12 @@
             </td>
             {% endangularjs %}
             {% endif %}
+
+            {% angularjs %}
+            <td>
+                {{ export.sharing }}
+            </td>
+            {% endangularjs %}
         </tr>
     </tbody>
 </table>

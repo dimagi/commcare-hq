@@ -108,7 +108,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_angular_js)
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions, CouchUser
+from corehq.apps.users.models import Permissions, CouchUser, WebUser
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.apps.analytics.tasks import track_workflow
@@ -1687,6 +1687,8 @@ class CaseExportListView(BaseExportListView):
             'case_type': export.case_type,
             'description': export.description if not is_legacy else '',
             'my_export': export.owner_id == self.request.couch_user.user_id,
+            'sharing': export.sharing,
+            'owner_username': WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown',
             'can_edit': can_edit,
             'addedToBulk': False,
             'exportType': export.type,
