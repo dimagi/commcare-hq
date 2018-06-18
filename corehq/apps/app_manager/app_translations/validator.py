@@ -4,7 +4,8 @@ from memoized import memoized
 from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
     expected_bulk_app_sheet_rows,
-    get_unicode_dicts)
+    get_unicode_dicts,
+)
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
 COLUMNS_TO_COMPARE = {
@@ -25,8 +26,7 @@ class UploadedTranslationsValidator(object):
         self.headers = None
         self.expected_rows = None
         self.lang_prefix = lang_prefix
-        self.default_language = self.app.default_language
-        self.default_language_column = self.lang_prefix + self.default_language
+        self.default_language_column = self.lang_prefix + self.app.default_language
 
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in expected_bulk_app_sheet_headers(self.app)}
@@ -66,16 +66,16 @@ class UploadedTranslationsValidator(object):
                     ))
         return msg
 
-    def _compare_module_and_form_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+    def _compare_module_and_form_sheet(self, sheet_name, uploaded_rows):
+        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
                                    COLUMNS_TO_COMPARE['module_and_form'] + [self.default_language_column])
 
-    def _compare_module_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+    def _compare_module_sheet(self, sheet_name, uploaded_rows):
+        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
                                    COLUMNS_TO_COMPARE['module'] + [self.default_language_column])
 
-    def _compare_form_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+    def _compare_form_sheet(self, sheet_name, uploaded_rows):
+        return self._compare_sheet(sheet_name, uploaded_rows, self.expected_rows[sheet_name],
                                    COLUMNS_TO_COMPARE['form'] + [self.default_language_column])
 
     def compare(self):
@@ -85,12 +85,11 @@ class UploadedTranslationsValidator(object):
             rows = get_unicode_dicts(sheet)
             sheet_name = sheet.worksheet.title
             if sheet_name == MODULES_AND_FORMS_SHEET_NAME:
-                error_msgs = self._compare_module_and_form_sheet(sheet_name, rows,
-                                                                 self.expected_rows[sheet_name])
+                error_msgs = self._compare_module_and_form_sheet(sheet_name, rows)
             elif 'module' in sheet_name and 'form' not in sheet_name:
-                error_msgs = self._compare_module_sheet(sheet_name, rows, self.expected_rows[sheet_name])
+                error_msgs = self._compare_module_sheet(sheet_name, rows)
             elif 'module' in sheet_name and 'form' in sheet_name:
-                error_msgs = self._compare_form_sheet(sheet_name, rows, self.expected_rows[sheet_name])
+                error_msgs = self._compare_form_sheet(sheet_name, rows)
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
             if error_msgs:
