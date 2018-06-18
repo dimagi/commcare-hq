@@ -147,45 +147,46 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         if not changes_chunk:
             return
         failed_changes = set()
-        try:
-            # chunked processing is supported if there is only one processor
-            failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
-        except Exception as ex:
-            notify_exception(
-                None,
-                "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
-                    pillow_name=self.get_name(),
-                    change_ids=[c.id for c in changes_chunk],
-                    ex=ex
-                ))
-            # fall back to processing one by one
-            for change in changes_chunk:
-                self.process_with_error_handling(change, context, chunked_fallback=True)
-        else:
-            succeeded_changes = set(changes_chunk) - set(failed_changes)
-            for change in succeeded_changes:
-                self._update_checkpoint(change, context)
-            # fall back to processing one by one for failed changes
-            for change in failed_changes:
-                self.process_with_error_handling(change, context, chunked_fallback=True)
-        self._record_datadog_metrics(changes_chunk, failed_changes)
+        timer = TimingContext()
+        with timer:
+            try:
+                # chunked processing is supported if there is only one processor
+                failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
+            except Exception as ex:
+                notify_exception(
+                    None,
+                    "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
+                        pillow_name=self.get_name(),
+                        change_ids=[c.id for c in changes_chunk],
+                        ex=ex
+                    ))
+                # fall back to processing one by one
+                for change in changes_chunk:
+                    self.process_with_error_handling(change, context, chunked_fallback=True)
+            else:
+                succeeded_changes = set(changes_chunk) - set(failed_changes)
+                for change in succeeded_changes:
+                    self._update_checkpoint(change, context)
+                # fall back to processing one by one for failed changes
+                for change in failed_changes:
+                    self.process_with_error_handling(change, context, chunked_fallback=True)
+        self._record_datadog_metrics(changes_chunk, failed_changes, timer)
 
-    def _record_datadog_metrics(self, changes_chunk, failed_changes):
+    def _record_datadog_metrics(self, changes_chunk, failed_changes, timer):
         tags = ["pillow_name:{}".format(self.get_name())]
-        datadog_counter('commcare.change_feed.chunked.changes', len(changes_chunk), tags=tags)
+        datadog_counter('commcare.change_feed.chunked.changes.count', len(changes_chunk), tags=tags)
         datadog_counter('commcare.change_feed.chunked.changes.exception', len(changes_chunk), tags=tags)
         datadog_counter('commcare.change_feed.chunked.changes.suceess', len(set(changes_chunk) - set(failed_changes)), tags=tags)
 
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
         perceived_lag = (max_change_lag - min_change_lag) / 2
-        datadog_gauge('commcare.change_feed.chunked.perceived_change_lag', perceived_lag, tags=[
-            'pillow_name:{}'.format(self.get_name())
-        ])
+        datadog_gauge('commcare.change_feed.chunked.perceived_change_lag', perceived_lag, tags=tags)
         actual_lag = perceived_lag / self.processors[0].processor_chunk_size
-        datadog_gauge('commcare.change_feed.chunked.actual_change_lag', actual_lag, tags=[
-            'pillow_name:{}'.format(self.get_name())
-        ])
+        datadog_gauge('commcare.change_feed.chunked.actual_change_lag', actual_lag, tags=tags)
+
+        datadog_histogram('commcare.change_feed.chunked.processing_time', timer.duration, tags=tags)
+
 
     def process_with_error_handling(self, change, context, chunked_fallback=False):
         timer = TimingContext()
