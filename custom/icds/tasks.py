@@ -14,6 +14,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
 from django.core.mail.message import EmailMessage
 from custom.icds.translations.integrations.transifex import Transifex
+from io import open
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))

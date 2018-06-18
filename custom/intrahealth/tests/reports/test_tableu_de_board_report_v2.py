@@ -90,15 +90,15 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
         self.assertEqual(
             headers,
             ['PPS', 'ACT Adulte', 'ACT Grand Enfant', 'ACT Nourisson', 'ACT Petit Enfant',
-             'Amoxicilline 250mg SP', 'Ampiciline 1G Amp', 'CU', u'Calcium 100mg',
-             'Cefixime 100MG/5ML SUSP.BUV', 'Ceftriaxone 1G', 'Collier', 'DIU', u'Depo-Provera',
+             'Amoxicilline 250mg SP', 'Ampiciline 1G Amp', 'CU', 'Calcium 100mg',
+             'Cefixime 100MG/5ML SUSP.BUV', 'Ceftriaxone 1G', 'Collier', 'DIU', 'Depo-Provera',
              'Dexamethasone 4mg', 'Diazepam 10MG/2ML AMP. INJ.', 'Epinephrine 1MG/1ML AMP. INJ.',
              'Fer 0.68% SP', 'Gentamicin INJ 80mg/2ml', 'Hydrocortisone 100MG AMP. INJ.', 'IMPLANON',
              'Jadelle', 'Kit de depistage Rapide du VIH B/30', 'Mebendazole 100MG SP', 'Mebendazole 500MG CP.',
              'Microgynon/Lof.', 'Microlut/Ovrette', 'Oxytocine 5 UI', 'Paracetamol 120MG/5ML SP',
              'Paracetamol 1G/100ML INJ.', 'Phytomenadione 10mg', 'Preservatif Feminin', 'Preservatif Masculin',
              'Recto caps 200 mg', 'Recto caps 50 mg', 'S.R.O. Faible osmolarite', 'Sayana Press',
-             'Sulfate de Magnesium 20 ml', 'Test depistage rapide Palu', u'Zinc 20mg']
+             'Sulfate de Magnesium 20 ml', 'Test depistage rapide Palu', 'Zinc 20mg']
         )
         self.assertEqual(
             sorted(rows, key=lambda x: x[0]),
@@ -135,7 +135,7 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
             [
                 'Quantity', 'ACT Adulte', 'ACT Grand Enfant', 'ACT Nourisson', 'ACT Petit Enfant',
                 'ASAQ Adulte', 'ASAQ Grand Enfant', 'ASAQ Petit Enfant', 'Amoxicillin 250mg',
-                'Ampiciline 1G Amp', 'Bo\xeete de s\xe9curit\xe9', 'CU', u'Calcium 100mg',
+                'Ampiciline 1G Amp', 'Bo\xeete de s\xe9curit\xe9', 'CU', 'Calcium 100mg',
                 'Cefixime 100MG/5ML SUSP.BUV', 'Ceftriaxone 1G', 'Chlorexedine', 'Collier', 'DIU',
                 'Depo-Provera', 'Dexamethasone 4mg', 'Diazepam 10MG/2ML AMP. INJ.', 'Diluant BCG',
                 'Diluant Fi\xe8vre Jaune (VAA)', 'Diluant Rougeole (RR)', 'EFAVIRENZ 600MG CP.',
@@ -152,7 +152,7 @@ class TestTableuDeBoardReportV2(YeksiTestCase):
                 'Rota', 'S.R.O. Faible osmolarite', 'STREPTOMYCINE 1G AMP. INJ.', 'Sayana Press',
                 'Seringue Autobloquante 0,05 ml', 'Seringue Autobloquante 0,5 ml', 'Seringue de dilution 2 ML',
                 'Seringue de dilution 5 ML (SD)', 'TENOFOVIR 300 LAMIVUDINE 300 EFAVIRENZ  600 MG CP.',
-                'TENOFOVIR 300 LAMIVUDINE 300MG CP.', 'Test depistage rapide Palu', u'Tubercoline', 'Vaccin BCG',
+                'TENOFOVIR 300 LAMIVUDINE 300MG CP.', 'Test depistage rapide Palu', 'Tubercoline', 'Vaccin BCG',
                 'Vaccin DIPH - T\xe9tanique (Td)', 'Vaccin Fi\xe8vre Jaune (VAA)', 'Vaccin H\xe9patite B',
                 'Vaccin Penta', 'Vaccin Rougeole (RR)', 'Vaccin VPI', 'Vaccin VPO',
                 'ZIDOVUDINE 300 LAMIVUDINE 150MG CP', 'Zinc 20mg'
