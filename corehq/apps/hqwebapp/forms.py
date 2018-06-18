@@ -69,7 +69,8 @@ class CloudCareAuthenticationForm(EmailAuthenticationForm):
 
 class BulkUploadForm(forms.Form):
     bulk_upload_file = forms.FileField(label="")
-    verify = forms.BooleanField(label="Verify Upload", required=False, initial=False)
+    verify = forms.BooleanField(label="Just validate and not update translations", required=False,
+                                initial=False)
     action = forms.CharField(widget=forms.HiddenInput(), initial='bulk_upload')
 
     def __init__(self, plural_noun, action, context_key, context, *args, **kwargs):

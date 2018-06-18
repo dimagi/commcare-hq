@@ -7,6 +7,12 @@ from corehq.apps.app_manager.app_translations import (
     get_unicode_dicts)
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 
+COLUMNS_TO_COMPARE = {
+    'module_and_form': ['Type', 'sheet_name'],
+    'module': ['case_property', 'list_or_detail'],
+    'form': ['label'],
+}
+
 
 class UploadedTranslationsValidator(object):
     """
@@ -20,13 +26,14 @@ class UploadedTranslationsValidator(object):
         self.expected_rows = None
         self.lang_prefix = lang_prefix
         self.default_language = self.app.default_language
+        self.default_language_column = self.lang_prefix + self.default_language
 
     def _generate_expected_headers_and_rows(self):
         self.headers = {h[0]: h[1] for h in expected_bulk_app_sheet_headers(self.app)}
         self.expected_rows = expected_bulk_app_sheet_rows(self.app)
 
     @memoized
-    def get_header_index(self, sheet_name, header):
+    def _get_header_index(self, sheet_name, header):
         for index, _column_name in enumerate(self.headers[sheet_name]):
             if _column_name == header:
                 return index
@@ -52,7 +59,7 @@ class UploadedTranslationsValidator(object):
         for i, (expected_row, uploaded_row) in enumerate(iterate_on):
             for column_name in columns_to_compare:
                 uploaded_value = uploaded_row.get(column_name)
-                expected_value = expected_row[self.get_header_index(sheet_name, column_name)]
+                expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
                 if expected_value != uploaded_value:
                     msg.append("Discrepancy found at row {}, uploaded '{}' but expected '{}' for {}.".format(
                         i + 1, uploaded_value, expected_value, column_name
@@ -60,16 +67,16 @@ class UploadedTranslationsValidator(object):
         return msg
 
     def _compare_module_and_form_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        columns_to_compare = ['Type', 'sheet_name', self.lang_prefix + self.default_language]
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows, columns_to_compare)
+        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+                                   COLUMNS_TO_COMPARE['module_and_form'] + [self.default_language_column])
 
     def _compare_module_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        columns_to_compare = ['case_property', 'list_or_detail', self.lang_prefix + self.default_language]
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows, columns_to_compare)
+        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+                                   COLUMNS_TO_COMPARE['module'] + [self.default_language_column])
 
     def _compare_form_sheet(self, sheet_name, uploaded_rows, expected_rows):
-        columns_to_compare = ['label', self.lang_prefix + self.default_language]
-        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows, columns_to_compare)
+        return self._compare_sheet(sheet_name, uploaded_rows, expected_rows,
+                                   COLUMNS_TO_COMPARE['form'] + [self.default_language_column])
 
     def compare(self):
         msgs = {}
@@ -81,11 +88,9 @@ class UploadedTranslationsValidator(object):
                 error_msgs = self._compare_module_and_form_sheet(sheet_name, rows,
                                                                  self.expected_rows[sheet_name])
             elif 'module' in sheet_name and 'form' not in sheet_name:
-                error_msgs = self._compare_module_sheet(sheet_name, rows,
-                                                        self.expected_rows[sheet_name])
+                error_msgs = self._compare_module_sheet(sheet_name, rows, self.expected_rows[sheet_name])
             elif 'module' in sheet_name and 'form' in sheet_name:
-                error_msgs = self._compare_form_sheet(sheet_name, rows,
-                                                      self.expected_rows[sheet_name])
+                error_msgs = self._compare_form_sheet(sheet_name, rows, self.expected_rows[sheet_name])
             else:
                 raise Exception("Got unexpected sheet name %s" % sheet_name)
             if error_msgs:
