@@ -279,7 +279,7 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
                 .format(type(iterable))
             )
 
-    granularity = min(50, length)
+    granularity = min(50, length or 50)
     start = datetime.now()
 
     def draw(position, done=False):
