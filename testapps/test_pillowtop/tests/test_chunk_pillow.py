@@ -61,7 +61,7 @@ class ChunkedPorcessingTest(TestCase):
         self._produce_changes(2)
         # if process_changes_chunk raises exception, pillow should use process_change
         processor.process_change = original_process_change
-        self.process_changes_chunk = MagicMock(side_effect=Exception('_'))
+        processor.process_changes_chunk = MagicMock(side_effect=Exception('_'))
         pillow.process_changes(since=pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(processor.count, 4)
 
