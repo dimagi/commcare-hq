@@ -168,10 +168,24 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             # fall back to processing one by one for failed changes
             for change in failed_changes:
                 self.process_with_error_handling(change, context, chunked_fallback=True)
+        self._record_datadog_metrics(changes_chunk, failed_changes)
+
+    def _record_datadog_metrics(self, changes_chunk, failed_changes):
         tags = ["pillow_name:{}".format(self.get_name())]
-        datadog_counter('commcare.change_feed.chunked.changes.exception', len(changes_chunk), tags=tags)
         datadog_counter('commcare.change_feed.chunked.changes', len(changes_chunk), tags=tags)
-        datadog_counter('commcare.change_feed.chunked.changes.suceess', len(succeeded_changes), tags=tags)
+        datadog_counter('commcare.change_feed.chunked.changes.exception', len(changes_chunk), tags=tags)
+        datadog_counter('commcare.change_feed.chunked.changes.suceess', len(set(changes_chunk) - set(failed_changes)), tags=tags)
+
+        max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
+        min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
+        perceived_lag = (max_change_lag - min_change_lag) / 2
+        datadog_gauge('commcare.change_feed.chunked.perceived_change_lag', perceived_lag, tags=[
+            'pillow_name:{}'.format(self.get_name())
+        ])
+        actual_lag = perceived_lag / self.processors[0].processor_chunk_size
+        datadog_gauge('commcare.change_feed.chunked.actual_change_lag', actual_lag, tags=[
+            'pillow_name:{}'.format(self.get_name())
+        ])
 
     def process_with_error_handling(self, change, context, chunked_fallback=False):
         timer = TimingContext()
