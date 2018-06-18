@@ -235,7 +235,7 @@ class DomainInvoiceFactory(object):
                 invoice=invoice,
             )
 
-        DomainInvoiceFactory._generate_line_items(invoice, subscription)
+        generate_line_items(invoice, subscription)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
@@ -258,19 +258,6 @@ class DomainInvoiceFactory(object):
         invoice.save()
 
         return invoice
-
-    @staticmethod
-    def _generate_line_items(invoice, subscription):
-        product_rate = subscription.plan_version.product_rate
-        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-        product_factory.create()
-
-        for feature_rate in subscription.plan_version.feature_rates.all():
-            feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-                feature_rate.feature.feature_type
-            )
-            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-            feature_factory.create()
 
     @property
     def subscriber(self):
@@ -435,7 +422,7 @@ class CustomerAccountInvoiceFactory(object):
                 method=SubscriptionAdjustmentMethod.TASK,
                 invoice=invoice,
             )
-        self._generate_line_items(invoice, subscription)
+        generate_line_items(invoice, subscription)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()
@@ -456,19 +443,6 @@ class CustomerAccountInvoiceFactory(object):
             invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
         invoice.save()
         return invoice
-
-    @staticmethod
-    def _generate_line_items(invoice, subscription):
-        product_rate = subscription.plan_version.product_rate
-        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-        product_factory.create()
-
-        for feature_rate in subscription.plan_version.feature_rates.all():
-            feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-                feature_rate.feature.feature_type
-            )
-            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-            feature_factory.create()
 
     def _consolidate_customer_invoice(self, invoices):
         self.customer_invoice = invoices.pop()
@@ -509,6 +483,19 @@ class CustomerAccountInvoiceFactory(object):
                 record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
         except InvoiceEmailThrottledError as e:
             log_accounting_error(e.message)
+
+
+def generate_line_items(invoice, subscription):
+    product_rate = subscription.plan_version.product_rate
+    product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+    product_factory.create()
+
+    for feature_rate in subscription.plan_version.feature_rates.all():
+        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+            feature_rate.feature.feature_type
+        )
+        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+        feature_factory.create()
 
 
 class LineItemFactory(object):
