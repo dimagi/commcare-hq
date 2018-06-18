@@ -773,10 +773,10 @@ class ExportInstance(BlobMixin, Document):
         return instance
 
     def can_view(self, user_id):
-        return self.sharing != Sharing.PRIVATE or not self.owner_id or self.owner_id == user_id
+        return self.owner_id is None or self.sharing != Sharing.PRIVATE or self.owner_id == user_id
 
     def can_edit(self, user_id):
-        return self.sharing == Sharing.EDIT_AND_EXPORT or self.owner_id == user_id
+        return self.owner_id is None or self.sharing == Sharing.EDIT_AND_EXPORT or self.owner_id == user_id
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
