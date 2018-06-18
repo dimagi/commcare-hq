@@ -13,7 +13,7 @@ COLUMNS_TO_COMPARE = {
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }
-ROW_COUNT_MISMATCH_MESSAGE = "We found {} rows than expected. Confirming what was uploaded."
+ROW_COUNT_MISMATCH_MESSAGE = "We found {} rows than expected. Validating what was uploaded."
 
 
 class UploadedTranslationsValidator(object):
@@ -63,8 +63,9 @@ class UploadedTranslationsValidator(object):
                 uploaded_value = uploaded_row.get(column_name)
                 expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
                 if expected_value != uploaded_value:
-                    msg.append("Discrepancy found at row {}, uploaded '{}' but expected '{}' for {}.".format(
-                        i + 1, uploaded_value, expected_value, column_name
+                    # i + 2 to account for the sheet header as well
+                    msg.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
+                        i + 2, column_name, uploaded_value, expected_value
                     ))
         return msg
 
