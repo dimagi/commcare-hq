@@ -330,12 +330,6 @@ def csrf_failure(request, reason=None, template_name="csrf_failure.html"):
 @sensitive_post_parameters('auth-password')
 def _login(req, domain_name, template_name):
 
-    if 'auth-username' in req.POST:
-        couch_user = CouchUser.get_by_username(req.POST['auth-username'])
-        if couch_user:
-            new_lang = couch_user.language
-            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
-            update_session_language(req, old_lang, new_lang)
     if req.user.is_authenticated and req.method == "GET":
         redirect_to = req.GET.get('next', '')
         if redirect_to:
@@ -349,6 +343,12 @@ def _login(req, domain_name, template_name):
         req.POST._mutable = True
         req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
+    if 'auth-username' in req.POST:
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'])
+        if couch_user:
+            new_lang = couch_user.language
+            old_lang = req.session.get(LANGUAGE_SESSION_KEY)
+            update_session_language(req, old_lang, new_lang)
 
     req.base_template = settings.BASE_TEMPLATE
 
