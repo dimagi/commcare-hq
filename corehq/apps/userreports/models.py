@@ -5,6 +5,7 @@ from copy import copy, deepcopy
 from datetime import datetime
 import json
 
+from bulk_update.helper import bulk_update as bulk_update_helper
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -892,7 +893,7 @@ class AsyncIndicator(models.Model):
 
         old_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
         to_update = []
-        from bulk_update.helper import bulk_update as bulk_update_helper
+
         for indicator in old_indicators:
             if set(indicator.indicator_config_ids) != set(configs_by_docs[indicator.doc_id]):
                 indicator.indicator_config_ids = sorted(configs_by_docs[indicator.doc_id])
