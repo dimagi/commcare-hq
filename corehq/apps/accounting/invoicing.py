@@ -9,6 +9,7 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
+from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
@@ -78,8 +79,8 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
-                Q(date_end__gt=self.date_start)
-                & Q(date_end__gt=F('date_start'))
+                    Q(date_end__gt=self.date_start)
+                    & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end
