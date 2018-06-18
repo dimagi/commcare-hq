@@ -249,6 +249,7 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     # we need to capture DocumentMissingError which is not possible in bulk
                     #   so let pillow fall back to serial mode to capture the error for missing docs
                     failed_changes.add(change)
+                    continue
                 try:
                     ensure_matched_revisions(change, docs_by_id.get(change.id))
                 except DocumentMismatchError:
