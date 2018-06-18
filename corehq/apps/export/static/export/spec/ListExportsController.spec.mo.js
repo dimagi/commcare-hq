@@ -5,6 +5,7 @@ describe('ListExportsController Unit Tests', function() {
         GET_EXPORTS_LIST: '/fake/exports/list',
         UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data',
         TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled',
+        GET_SAVED_EXPORT_PROGRESS: '/fake/exports/get_progress',
     };
 
     beforeEach(function () {
@@ -32,6 +33,13 @@ describe('ListExportsController Unit Tests', function() {
                     },
                     method: 'auto',
                 },
+                get_saved_export_progress: {
+                    url: mockBackendUrls.GET_SAVED_EXPORT_PROGRESS,
+                    headers: {
+                        'DjNg-Remote-Method': 'get_saved_export_progress',
+                    },
+                    method: 'auto',
+                }
             });
         }]);
         listExportsTestApp.constant('bulk_download_url', "/fake/bulk/download/url");
@@ -119,6 +127,16 @@ describe('ListExportsController Unit Tests', function() {
                         ListExportsTestData.exportDeId,
                         ListExportsTestData.exportSimple,
                     ],
+                });
+            $httpBackend
+                .when('POST', mockBackendUrls.GET_SAVED_EXPORT_PROGRESS)
+                .respond({
+                    success: true,
+                    taskStatus: {
+                        percentComplete: 20,
+                        inProgress: true,
+                        success: false,
+                    },
                 });
         });
 
