@@ -1681,6 +1681,7 @@ class CaseExportListView(BaseExportListView):
             'name': export.name,
             'case_type': export.case_type,
             'description': export.description if not is_legacy else '',
+            'sharing': export.sharing if not is_legacy else None,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,

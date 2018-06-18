@@ -349,13 +349,25 @@
                         {% if has_edit_permissions %}
                         {% angularjs %}
                         <td>
-                            <div ng-if="isLocationSafeForUser(export)">
-                                <a href="{{ export.editUrl }}" class="btn btn-default">
-                                    <i class="fa fa-pencil"></i>
-                                    <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
-                                    <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+                            <div ng-if="export.sharing != 'export_only'">
+                                <div ng-if="isLocationSafeForUser(export)">
+                                    <a href="{{ export.editUrl }}" class="btn btn-default">
+                                        <i class="fa fa-pencil"></i>
+                                        <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                        <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
 
-                                </a>
+                                    </a>
+                                </div>
+                            </div>
+                            <div ng-if="export.sharing == 'export_only'">
+                                <div ng-if="isLocationSafeForUser(export)">
+                                    <a class="btn btn-default disabled">
+                                        <i class="fa fa-pencil"></i>
+                                        <span ng-show="!export.isDailySaved">{% trans 'Edit' %}</span>
+                                        <span ng-show="export.isDailySaved">{% trans 'Edit Columns' %}</span>
+
+                                    </a>
+                                </div>
                             </div>
                         </td>
                         <td>
