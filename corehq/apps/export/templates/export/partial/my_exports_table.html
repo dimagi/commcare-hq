@@ -13,11 +13,27 @@
             <th class="col-sm-2">{% trans 'Case Type' %}</th>
             {% endif %}
             {% if has_edit_permissions %}
-            <th class="col-sm-1">{% block second_column_header %}{% trans 'Edit' %}{% endblock %}</th>
+            <th class="col-sm-1">
+                {% if is_daily_saved_export %}
+                    {% trans "Edit Columns" %}
+                {% else %}
+                    {% trans 'Edit' %}
+                {% endif %}
+            </th>
             <th ng-if="!export.isLegacy" class="col-sm-1">{% trans 'Copy' %}</th>
             {% endif %}
-            <th class="col-sm-1">{% block third_column_header %}{{ export_type_caps }}{% endblock %}</th>
-            {% block fourth_column_header %}{% endblock %}
+            <th class="col-sm-1">
+                {% if is_daily_saved_export %}
+                    {% if has_edit_permissions %}
+                        {% trans "Edit Filters" %}
+                    {% endif %}
+                {% else %}
+                    {{ export_type_caps }}
+                {% endif %}
+            </th>
+            {% if is_daily_saved_export %}
+            <th class="col-sm-1">{% trans "Enable/Disable" %}</th>
+            {% endif %}
             {%  if allow_bulk_export %}
             <th class="col-sm-2">
                 {% blocktrans %}Bulk {{ export_type_caps }}:{% endblocktrans %}
