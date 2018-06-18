@@ -1945,9 +1945,26 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            new_export_instance = self.new_export_instance
+        except ResourceNotFound:
+            new_export_instance = None
+        if (
+            new_export_instance and new_export_instance.sharing in [Sharing.EXPORT_ONLY, Sharing.PRIVATE]
+            and new_export_instance.owner_id != request.couch_user.user_id
+        ):
+            raise Http404
+        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        return self.export_instance_cls.get(self.export_id)
 
     @property
     def page_url(self):
@@ -1956,7 +1973,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
     def get(self, request, *args, **kwargs):
         auto_select = True
         try:
-            export_instance = self.export_instance_cls.get(self.export_id)
+            export_instance = self.new_export_instance
             # if the export exists we don't want to automatically select new columns
             auto_select = False
         except ResourceNotFound:
