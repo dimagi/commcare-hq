@@ -420,7 +420,8 @@ class ConfigurableReportKafkaPillow(ConstructedPillow):
 
 def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
                          include_ucrs=None, exclude_ucrs=None, topics=None,
-                         num_processes=1, process_num=0, **kwargs):
+                         num_processes=1, process_num=0,
+                         processor_chunk_size=100, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -430,7 +431,7 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            processor_chunk_size=100,
+            processor_chunk_size=processor_chunk_size,
         ),
         pillow_name=pillow_id,
         topics=topics,
@@ -441,7 +442,8 @@ def get_kafka_ucr_pillow(pillow_id='kafka-ucr-main', ucr_division=None,
 
 def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
                                 include_ucrs=None, exclude_ucrs=None, topics=None,
-                                num_processes=1, process_num=0, **kwargs):
+                                num_processes=1, process_num=0,
+                                processor_chunk_size=100, **kwargs):
     topics = topics or KAFKA_TOPICS
     topics = [kafka_bytestring(t) for t in topics]
     return ConfigurableReportKafkaPillow(
@@ -451,7 +453,7 @@ def get_kafka_ucr_static_pillow(pillow_id='kafka-ucr-static', ucr_division=None,
             ucr_division=ucr_division,
             include_ucrs=include_ucrs,
             exclude_ucrs=exclude_ucrs,
-            processor_chunk_size=100,
+            processor_chunk_size=processor_chunk_size,
             bootstrap_interval=7 * 24 * 60 * 60  # 1 week
         ),
         pillow_name=pillow_id,

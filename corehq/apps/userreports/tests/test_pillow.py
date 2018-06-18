@@ -70,7 +70,7 @@ class IndicatorPillowTest(TestCase):
         cls.adapter = get_indicator_adapter(cls.config)
         cls.adapter.build_table()
         cls.fake_time_now = datetime(2015, 4, 24, 12, 30, 8, 24886)
-        cls.pillow = get_kafka_ucr_pillow()
+        cls.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
 
     @classmethod
     def tearDownClass(cls):
@@ -154,7 +154,16 @@ class IndicatorPillowTest(TestCase):
         self.assertEqual(0, self.adapter.get_query_object().count())
 
     @patch('corehq.apps.userreports.specs.datetime')
+    def test_process_doc_from_couch_chunked(self, datetime_mock):
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        self._test_process_doc_from_couch(datetime_mock)
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+
+    @patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_couch(self, datetime_mock):
+        self._test_process_doc_from_couch(datetime_mock)
+
+    def _test_process_doc_from_couch(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
@@ -173,8 +182,17 @@ class IndicatorPillowTest(TestCase):
         case.delete()
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_doc_from_sql_chunked(self, datetime_mock):
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        self._test_process_doc_from_sql(datetime_mock)
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+
+    @patch('corehq.apps.userreports.specs.datetime')
     def test_process_doc_from_sql(self, datetime_mock):
+        self._test_process_doc_from_sql(datetime_mock)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def _test_process_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
@@ -190,8 +208,17 @@ class IndicatorPillowTest(TestCase):
         CaseAccessorSQL.hard_delete_cases(case.domain, [case.case_id])
 
     @patch('corehq.apps.userreports.specs.datetime')
-    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_process_deleted_doc_from_sql_chunked(self, datetime_mock):
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
+        self._test_process_deleted_doc_from_sql(datetime_mock)
+        self.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
+
+    @patch('corehq.apps.userreports.specs.datetime')
     def test_process_deleted_doc_from_sql(self, datetime_mock):
+        self._test_process_deleted_doc_from_sql(datetime_mock)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def _test_process_deleted_doc_from_sql(self, datetime_mock):
         datetime_mock.utcnow.return_value = self.fake_time_now
         sample_doc, expected_indicators = get_sample_doc_and_indicators(self.fake_time_now)
 
@@ -253,7 +280,7 @@ class ProcessRelatedDocTypePillowTest(TestCase):
 
     @softer_assert()
     def setUp(self):
-        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
         self.config = get_data_source_with_related_doc_type()
         self.config.save()
         self.adapter = get_indicator_adapter(self.config)
@@ -289,7 +316,15 @@ class ProcessRelatedDocTypePillowTest(TestCase):
             ], domain=self.domain
         )
 
+    def test_process_doc_from_sql_stale_chunked(self):
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
+        self._test_process_doc_from_sql_stale()
+        self.pillow = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
+
     def test_process_doc_from_sql_stale(self):
+        self._test_process_doc_from_sql_stale()
+
+    def _test_process_doc_from_sql_stale(self):
         '''
         Ensures that when you update a case that the changes are reflected in
         the UCR table.
@@ -325,8 +360,8 @@ class ReuseEvaluationContextTest(TestCase):
         self.adapters = [get_indicator_adapter(c) for c in self.configs]
 
         # one pillow that has one config, the other has both configs
-        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'])
-        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'])
+        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
+        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
         self.pillow1.bootstrap(configs=[config1])
         self.pillow2.bootstrap(configs=self.configs)
         with trap_extra_setup(KafkaUnavailableError):
@@ -365,6 +400,16 @@ class ReuseEvaluationContextTest(TestCase):
             pillow.process_changes(since=since, forever=False)
 
     def test_reuse_cache(self):
+        self._test_reuse_cache()
+
+    def test_reuse_cache_chunked(self):
+        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
+        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=100)
+        self._test_reuse_cache()
+        self.pillow1 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
+        self.pillow2 = get_kafka_ucr_pillow(topics=['case-sql'], processor_chunk_size=0)
+
+    def _test_reuse_cache(self):
         # tests that these two pillows make the same number of DB calls even
         # though pillow2 has an extra config
         since1 = self.pillow1.get_change_feed().get_latest_offsets()
@@ -388,7 +433,7 @@ class AsyncIndicatorTest(TestCase):
     @softer_assert()
     def setUpClass(cls):
         super(AsyncIndicatorTest, cls).setUpClass()
-        cls.pillow = get_kafka_ucr_pillow()
+        cls.pillow = get_kafka_ucr_pillow(processor_chunk_size=0)
         cls.config = get_data_source_with_related_doc_type()
         cls.config.asynchronous = True
         cls.config.save()
@@ -493,6 +538,15 @@ class AsyncIndicatorTest(TestCase):
         errors = PillowError.objects.filter(doc_id=child_id, pillow=self.pillow.pillow_id)
         self.assertEqual(errors.count(), 0)
         self.assertEqual(indicators.count(), 1)
+
+
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
+class ChunkedAsyncIndicatorTest(AsyncIndicatorTest):
+
+    @classmethod
+    def setUpClass(cls):
+        super(ChunkedAsyncIndicatorTest, cls).setUpClass()
+        cls.pillow = get_kafka_ucr_pillow(processor_chunk_size=100)
 
 
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
