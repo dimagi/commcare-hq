@@ -371,9 +371,14 @@ def get_prevalence_of_severe_sector_data(domain, config, loc_level, location_id,
 
     chart_data['blue'] = sorted(chart_data['blue'])
 
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
+
     return {
         "tooltips_data": dict(tooltips_data),
-        "info": _(wasting_help_text(icds_feature_flag)),
+        "info": _(wasting_help_text(icds_feature_flag, age_label)),
         "chart_data": [
             {
                 "values": chart_data['blue'],

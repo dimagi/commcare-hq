@@ -10,7 +10,7 @@ from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
     wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column, \
-    hfa_recorded_in_month_column, wfh_recorded_in_month_column
+    hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval
 
 
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
@@ -107,6 +107,11 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
     deliveries_this_month = get_data_for_deliveries(current_month, config)
     deliveries_prev_month = get_data_for_deliveries(previous_month, config)
 
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
+
     return {
         'records': [
             [
@@ -138,7 +143,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
-                    'help_text': _(wasting_help_text(icds_feature_flag)),
+                    'help_text': _(wasting_help_text(icds_feature_flag, age_label)),
                     'percent': percent_diff(
                         'wasting',
                         this_month_data,
@@ -161,7 +166,7 @@ def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=F
             [
                 {
                     'label': _('Stunting (Height-for-Age)'),
-                    'help_text': _(stunting_help_text(icds_feature_flag)),
+                    'help_text': _(stunting_help_text(icds_feature_flag, age_label)),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,

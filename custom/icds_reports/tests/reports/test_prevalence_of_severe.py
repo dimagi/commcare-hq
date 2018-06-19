@@ -501,6 +501,84 @@ class TestPrevalenceOfSevere(TestCase):
             "incidence of infectious diseases."
         )
 
+    def test_sector_data_info_age_filter_0_years(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche__in': ['0', '6']
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=False
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 0-6 months enrolled for Anganwadi Services with weight-for-height "
+            "below -3 standard deviations of the WHO Child Growth Standards median. "
+            "<br/><br/>"
+            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+            "undernutrition usually as a consequence of insufficient food intake or a high "
+            "incidence of infectious diseases."
+        )
+
+    def test_sector_data_info_age_filter_1_year(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche': '12'
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=False
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 6-12 months enrolled for Anganwadi Services with weight-for-height "
+            "below -3 standard deviations of the WHO Child Growth Standards median. "
+            "<br/><br/>"
+            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+            "undernutrition usually as a consequence of insufficient food intake or a high "
+            "incidence of infectious diseases."
+        )
+
+    def test_sector_data_info_age_filter_5_years(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche': '60'
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=False
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 48-60 months enrolled for Anganwadi Services with weight-for-height "
+            "below -3 standard deviations of the WHO Child Growth Standards median. "
+            "<br/><br/>"
+            "Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute "
+            "undernutrition usually as a consequence of insufficient food intake or a high "
+            "incidence of infectious diseases."
+        )
+
     def test_sector_data_info_icds_feature_flag_enabled(self):
         data = get_prevalence_of_severe_sector_data(
             'icds-cas',
@@ -519,6 +597,81 @@ class TestPrevalenceOfSevere(TestCase):
         self.assertEquals(
             data['info'],
             "Percentage of children between 0 - 5 years enrolled for Anganwadi Services with "
+            "weight-for-height below -2 standard deviations of the WHO Child Growth Standards"
+            " median. <br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
+            " children is a symptom of acute undernutrition usually as "
+            "a consequence of insufficient food intake or a high incidence of infectious diseases."
+        )
+
+    def test_sector_data_info_icds_feature_flag_enabled_0_years(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche__in': ['0', '6']
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 0-6 months enrolled for Anganwadi Services with "
+            "weight-for-height below -2 standard deviations of the WHO Child Growth Standards"
+            " median. <br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
+            " children is a symptom of acute undernutrition usually as "
+            "a consequence of insufficient food intake or a high incidence of infectious diseases."
+        )
+
+    def test_sector_data_info_icds_feature_flag_enabled_1_year(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche': '12'
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 6-12 months enrolled for Anganwadi Services with "
+            "weight-for-height below -2 standard deviations of the WHO Child Growth Standards"
+            " median. <br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
+            " children is a symptom of acute undernutrition usually as "
+            "a consequence of insufficient food intake or a high incidence of infectious diseases."
+        )
+
+    def test_sector_data_info_icds_feature_flag_enabled_5_years(self):
+        data = get_prevalence_of_severe_sector_data(
+            'icds-cas',
+            config={
+                'month': (2017, 5, 1),
+                'state_id': 'st1',
+                'district_id': 'd1',
+                'block_id': 'b1',
+                'aggregation_level': 4,
+                'age_tranche': '60'
+            },
+            location_id='b1',
+            loc_level='supervisor',
+            show_test=False,
+            icds_feature_flag=True
+        )
+        self.assertEquals(
+            data['info'],
+            "Percentage of children between 48-60 months enrolled for Anganwadi Services with "
             "weight-for-height below -2 standard deviations of the WHO Child Growth Standards"
             " median. <br/><br/>Severe Acute Malnutrition (SAM) or wasting in"
             " children is a symptom of acute undernutrition usually as "
