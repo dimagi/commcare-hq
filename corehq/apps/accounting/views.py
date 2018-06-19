@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import date
+from datetime import date, datetime
+import io
 import json
 
 from django.contrib import messages
@@ -8,6 +9,7 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
+from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 from django.http import (
     HttpResponse,
@@ -20,8 +22,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
 
-from dimagi.utils.csv import UnicodeWriter
-
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
 from corehq.apps.hqwebapp.decorators import (
@@ -30,6 +30,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 
+import csv342 as csv
 from memoized import memoized
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
@@ -74,6 +75,7 @@ from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
     log_accounting_error)
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
@@ -1029,9 +1031,39 @@ def enterprise_dashboard_download(request, domain, slug):
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-    writer = UnicodeWriter(response)
+    writer = csv.writer(response)
 
     writer.writerow(report.headers)
     writer.writerows(report.rows)
 
     return response
+
+
+def enterprise_dashboard_email(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+
+    message = "Report run {}\n".format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(report.headers)
+    writer.writerows(report.rows)
+    attachment = {
+        'title': report.filename,
+        'mimetype': 'text/csv',
+        'file_obj': csv_file,
+    }
+    send_html_email_async(
+        _("{title} Report for enterprise account {name}").format(**{
+            'title': report.title,
+            'name': account.name,
+        }), request.couch_user.username,
+        linebreaksbr(message), text_content=message,
+        file_attachments=[attachment],
+    )
+
+    messages.success(request, _("Generating {title} report, will email to {email} when complete.").format(**{
+        'title': report.title,
+        'email': request.couch_user.username,
+    }))
+    return enterprise_dashboard(request, domain)
