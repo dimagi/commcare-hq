@@ -11,9 +11,11 @@ from mock import patch
 from corehq.apps.app_manager.exceptions import XFormValidationError
 from corehq.apps.app_manager.tests.util import add_build
 from corehq.apps.app_manager.views import AppSummaryView
+from corehq.apps.app_manager.views.forms import get_apps_modules
 from corehq.apps.builds.models import BuildSpec
 
 from corehq import toggles
+from corehq.apps.linked_domain.applications import create_linked_app
 from corehq.apps.users.models import WebUser
 from corehq.apps.domain.models import Domain
 from corehq.apps.app_manager.models import (
@@ -34,18 +36,18 @@ class TestViews(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestViews, cls).setUpClass()
-        cls.domain = Domain(name='app-manager-testviews-domain', is_active=True)
-        cls.domain.save()
+        cls.project = Domain(name='app-manager-testviews-domain', is_active=True)
+        cls.project.save()
         cls.username = 'cornelius'
         cls.password = 'fudge'
-        cls.user = WebUser.create(cls.domain.name, cls.username, cls.password, is_active=True)
+        cls.user = WebUser.create(cls.project.name, cls.username, cls.password, is_active=True)
         cls.user.is_superuser = True
         cls.user.save()
         cls.build = add_build(version='2.7.0', build_number=20655)
-        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.domain.name), True)
+        toggles.CUSTOM_PROPERTIES.set("domain:{domain}".format(domain=cls.project.name), True)
 
     def setUp(self):
-        self.app = Application.new_app(self.domain.name, "TestApp")
+        self.app = Application.new_app(self.project.name, "TestApp")
         self.app.build_spec = BuildSpec.from_string('2.7.0/latest')
         self.client.login(username=self.username, password=self.password)
 
@@ -57,7 +59,7 @@ class TestViews(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.build.delete()
-        cls.domain.delete()
+        cls.project.delete()
         super(TestViews, cls).tearDownClass()
 
     def test_download_file_bad_xform_404(self, mock):
@@ -80,14 +82,15 @@ class TestViews(TestCase):
         self.app.save()
 
         mock.side_effect = XFormValidationError('')
-        response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.domain.name,
+        response = self.client.get(reverse('app_download_file', kwargs=dict(domain=self.project.name,
                                                                             app_id=self.app.get_id,
                                                                             path='modules-0/forms-0.xml')))
         self.assertEqual(response.status_code, 404)
 
     def test_edit_commcare_profile(self, mock):
-        app = Application.new_app(self.domain.name, "TestApp")
-        app.save()
+        app2 = Application.new_app(self.project.name, "TestApp2")
+        app2.save()
+        self.addCleanup(lambda: Application.get_db().delete_doc(app2.id))
         data = {
             "custom_properties": {
                 "random": "value",
@@ -95,7 +98,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain.name, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app2._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -111,7 +114,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.domain.name, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app2._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -136,7 +139,7 @@ class TestViews(TestCase):
         self.app.save()
 
         kwargs = {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
         }
         self._test_status_codes([
@@ -148,19 +151,19 @@ class TestViews(TestCase):
         build = self.app.make_build()
         build.save()
         content = self._json_content_from_get('current_app_version', {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
         })
         self.assertEqual(content['currentVersion'], 1)
         self.app.save()
         content = self._json_content_from_get('current_app_version', {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
         })
         self.assertEqual(content['currentVersion'], 2)
 
         content = self._json_content_from_get('paginate_releases', {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
         }, {'limit': 5})
         self.assertEqual(len(content), 1)
@@ -178,7 +181,7 @@ class TestViews(TestCase):
         module = self.app.add_module(AdvancedModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
             'module_unique_id': module.unique_id,
         })
@@ -187,7 +190,7 @@ class TestViews(TestCase):
         module = self.app.add_module(ReportModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
             'module_unique_id': module.unique_id,
         })
@@ -196,7 +199,7 @@ class TestViews(TestCase):
         module = self.app.add_module(ShadowModule.new_module("Module0", "en"))
         self.app.save()
         self._test_status_codes(['view_module'], {
-            'domain': self.domain.name,
+            'domain': self.project.name,
             'app_id': self.app.id,
             'module_unique_id': module.unique_id,
         })
@@ -204,12 +207,12 @@ class TestViews(TestCase):
     def test_dashboard(self, mock):
         # This redirects to the dashboard
         self._test_status_codes(['default_app'], {
-            'domain': self.domain.name,
+            'domain': self.project.name,
         }, True)
 
     def test_default_new_app(self, mock):
         response = self.client.get(reverse('default_new_app', kwargs={
-            'domain': self.domain.name,
+            'domain': self.project.name,
         }), follow=False)
 
         self.assertEqual(response.status_code, 302)
@@ -218,3 +221,34 @@ class TestViews(TestCase):
         expected = '/apps/view/{}/?appcues=1'.format(app_id)    # Remove get param when APPCUES_AB_TEST is over
         self.assertTrue(redirect_location.endswith(expected))
         self.addCleanup(lambda: Application.get_db().delete_doc(app_id))
+
+    def test_get_apps_modules(self, mock):
+        self.app.add_module(Module.new_module("Module0", "en"))
+        self.app.save()
+
+        other_app = Application.new_app(self.project.name, "OtherApp")
+        other_app.add_module(Module.new_module("Module0", "en"))
+        other_app.save()
+        self.addCleanup(lambda: Application.get_db().delete_doc(other_app.id))
+
+        linked_app = create_linked_app(self.project.name, self.app.id, self.project.name, 'LinkedApp')
+        self.addCleanup(lambda: Application.get_db().delete_doc(linked_app.id))
+
+        deleted_app = Application.new_app(self.project.name, "DeletedApp")
+        deleted_app.add_module(Module.new_module("Module0", "en"))
+        deleted_app.save()
+        deleted_app.delete_app()
+        deleted_app.save()
+        self.addCleanup(lambda: Application.get_db().delete_doc(deleted_app.id))
+
+        apps_modules = get_apps_modules(self.project.name)
+
+        self.assertEqual(len(apps_modules), 2, 'get_apps_modules should only return normal Applications')
+        self.assertTrue(
+            all(len(app['modules']) == 1 for app in apps_modules),
+            'Each app should only have one module'
+        )
+        self.assertEqual(
+            apps_modules[0]['modules'][0]['name'], 'Module0',
+            'Module name should be translated'
+        )
