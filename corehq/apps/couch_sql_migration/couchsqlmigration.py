@@ -645,7 +645,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
             return True
         return False
 
-    def page_end(self, e):
+    def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES
         cache_utils.clear_limit(self._cache_key)
 
