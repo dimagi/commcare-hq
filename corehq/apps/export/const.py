@@ -129,7 +129,7 @@ MAX_DATA_FILE_SIZE = 104857600  # 100 MB
 MAX_DATA_FILE_SIZE_TOTAL = 2147483648  # 2 GB
 
 
-class Sharing(object):
+class SharingOption(object):
     PRIVATE = 'private'
     EXPORT_ONLY = 'export_only'
     EDIT_AND_EXPORT = 'edit_and_export'

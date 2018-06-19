@@ -84,7 +84,7 @@ from corehq.apps.export.const import (
     MAX_EXPORTABLE_ROWS,
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
-    Sharing,
+    SharingOption,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -1843,7 +1843,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
-        result['sharing_options'] = [Sharing.PRIVATE, Sharing.EXPORT_ONLY, Sharing.EDIT_AND_EXPORT]
+        result['sharing_options'] = [SharingOption.PRIVATE, SharingOption.EXPORT_ONLY, SharingOption.EDIT_AND_EXPORT]
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -1977,7 +1977,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         except ResourceNotFound:
             new_export_instance = None
         if (
-            new_export_instance and new_export_instance.sharing in [Sharing.EXPORT_ONLY, Sharing.PRIVATE]
+            new_export_instance and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
             and new_export_instance.owner_id != request.couch_user.user_id
         ):
             raise Http404
@@ -2516,7 +2516,7 @@ class CopyExportView(View):
         else:
             new_export = export.copy_export()
             new_export.owner_id = self.request.couch_user.user_id
-            new_export.sharing = Sharing.PRIVATE
+            new_export.sharing = SharingOption.PRIVATE
             new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
