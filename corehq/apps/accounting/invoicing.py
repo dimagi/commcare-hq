@@ -417,6 +417,18 @@ def update_invoice_due_date(invoice, subscription, factory_date_end):
 
     invoice.save()
 
+    @staticmethod
+    def _get_invoice_start(sub, date_start):
+        return max(sub.date_start, date_start)
+
+    @staticmethod
+    def _get_invoice_end(sub, date_end):
+        if sub.date_end is not None and sub.date_end <= date_end:
+            # A Subscription is terminated on date_end, so the invoice period lasts until the day before
+            return sub.date_end - datetime.timedelta(days=1)
+        else:
+            return date_end
+
 
 def generate_line_items(invoice, subscription):
     product_rate = subscription.plan_version.product_rate
