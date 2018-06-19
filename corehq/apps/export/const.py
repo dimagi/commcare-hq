@@ -135,7 +135,7 @@ class SharingOption(object):
     EDIT_AND_EXPORT = 'edit_and_export'
 
     CHOICES = (
-        (PRIVATE, PRIVATE),
-        (EXPORT_ONLY, EXPORT_ONLY),
-        (EDIT_AND_EXPORT, EDIT_AND_EXPORT),
+        PRIVATE,
+        EXPORT_ONLY,
+        EDIT_AND_EXPORT,
     )
