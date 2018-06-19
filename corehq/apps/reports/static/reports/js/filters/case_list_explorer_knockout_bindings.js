@@ -25,6 +25,25 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                 viewModel.query(editor.getValue());
                 $element.parent().trigger('change');
             });
+
+            // Set placeholder
+            function update() {
+                // https://stackoverflow.com/a/26700324/2957657
+                var shouldShow = !editor.session.getValue().length,
+                    node = editor.renderer.emptyMessageNode;
+                if (!shouldShow && node) {
+                    editor.renderer.scroller.removeChild(editor.renderer.emptyMessageNode);
+                    editor.renderer.emptyMessageNode = null;
+                } else if (shouldShow && !node) {
+                    node = editor.renderer.emptyMessageNode = document.createElement("div");
+                    node.textContent = gettext("e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') ");
+                    node.className = "ace_invisible ace_emptyMessage";
+                    node.style.padding = "0 9px";
+                    editor.renderer.scroller.appendChild(node);
+                }
+            }
+            editor.on("input", update);
+            setTimeout(update, 100);
         },
         update: function(element, valueAccessor){
             var casePropertyAutocomplete = {

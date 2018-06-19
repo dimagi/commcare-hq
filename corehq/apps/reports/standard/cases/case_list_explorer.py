@@ -36,11 +36,11 @@ class CaseListExplorer(CaseListReport):
     _is_exporting = False
 
     fields = [
+        XpathCaseSearchFilter,
+        CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
         SelectOpenCloseFilter,
-        XpathCaseSearchFilter,
-        CaseListExplorerColumns,
     ]
 
     def _build_query(self, sort=True):
