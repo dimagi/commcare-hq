@@ -94,6 +94,10 @@ def setUpModule():
         adapters = [get_indicator_adapter(config) for config in configs]
 
         for adapter in adapters:
+            try:
+                adapter.drop_table()
+            except Exception:
+                pass
             adapter.build_table()
 
         engine = connection_manager.get_engine(ICDS_UCR_ENGINE_ID)
@@ -111,9 +115,13 @@ def setUpModule():
 
         try:
             move_ucr_data_into_aggregation_tables(datetime(2017, 5, 28), intervals=2)
-        except AssertionError:
-            pass
-    _call_center_domain_mock.stop()
+        except AssertionError as e:
+            # we always use soft assert to email when the aggregation has completed
+            if "Aggregation completed" not in str(e):
+                tearDownModule()
+                raise
+        finally:
+            _call_center_domain_mock.stop()
 
 
 def tearDownModule():
