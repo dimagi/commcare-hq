@@ -1845,7 +1845,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
-        result['sharing_options'] = [SharingOption.PRIVATE, SharingOption.EXPORT_ONLY, SharingOption.EDIT_AND_EXPORT]
+        result['sharing_options'] = SharingOption.CHOICES
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -1979,7 +1979,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         except ResourceNotFound:
             new_export_instance = None
         if (
-            new_export_instance and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
+            new_export_instance
+            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
             and new_export_instance.owner_id != request.couch_user.user_id
         ):
             raise Http404
