@@ -9,7 +9,6 @@ from django.contrib.auth.models import User
 from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
-from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 from django.http import (
     HttpResponse,
@@ -71,6 +70,7 @@ from corehq.apps.accounting.models import (
     Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
     SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
 )
+from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
@@ -1043,27 +1043,9 @@ def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
-    message = "Report run {}\n".format(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'))
-    csv_file = io.StringIO()
-    writer = csv.writer(csv_file)
-    writer.writerow(report.headers)
-    writer.writerows(report.rows)
-    attachment = {
-        'title': report.filename,
-        'mimetype': 'text/csv',
-        'file_obj': csv_file,
-    }
-    send_html_email_async(
-        _("{title} Report for enterprise account {name}").format(**{
-            'title': report.title,
-            'name': account.name,
-        }), request.couch_user.username,
-        linebreaksbr(message), text_content=message,
-        file_attachments=[attachment],
-    )
-
+    email_enterprise_report.delay(domain, slug, request.couch_user)
     messages.success(request, _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
     }))
-    return enterprise_dashboard(request, domain)
+    return HttpResponseRedirect(reverse('enterprise_dashboard', args=(domain,)))
