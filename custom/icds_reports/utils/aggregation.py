@@ -4,6 +4,7 @@ from datetime import date
 import hashlib
 
 from dateutil.relativedelta import relativedelta
+from django.utils.functional import cached_property
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
