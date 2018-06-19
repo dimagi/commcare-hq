@@ -3,15 +3,13 @@ from __future__ import unicode_literals
 
 import csv342 as csv
 from datetime import date, timedelta
+from io import open
 
 from django.core.management import BaseCommand
 
 from corehq.apps.es import CaseES, FormES
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
-
-from io import open
 
 
 class Command(BaseCommand):
@@ -27,7 +25,6 @@ class Command(BaseCommand):
 
     def handle(self, csv_file, **options):
         self.domain = 'icds-cas'
-        self.case_accessor = CaseAccessors(self.domain)
         with open(csv_file, "w", encoding='utf-8') as csv_file:
             field_names = ('date', 'doc_type', 'in_sql', 'in_es',)
 
@@ -48,8 +45,8 @@ class Command(BaseCommand):
                 properties = {
                     "date": current_date,
                     "doc_type": "XFormInstance",
-                    "in_sql": self._get_sql_forms_modified_on_date(current_date),
-                    "in_es": self._get_es_forms_modified_on_date(current_date),
+                    "in_sql": self._get_sql_forms_received_on_date(current_date),
+                    "in_es": self._get_es_forms_received_on_date(current_date),
                 }
                 csv_writer.writerow(properties)
 
@@ -71,7 +68,7 @@ class Command(BaseCommand):
     def _get_es_cases_modified_on_date(self, date):
         return CaseES().domain(self.domain).modified_range(gte=date, lt=date + timedelta(days=1)).count()
 
-    def _get_sql_forms_modified_on_date(self, date):
+    def _get_sql_forms_received_on_date(self, date):
         num_forms = 0
         dbs = get_db_aliases_for_partitioned_query()
         for db in dbs:
@@ -84,5 +81,5 @@ class Command(BaseCommand):
 
         return num_forms
 
-    def _get_es_forms_modified_on_date(self, date):
+    def _get_es_forms_received_on_date(self, date):
         return FormES().domain(self.domain).submitted(gte=date, lt=date + timedelta(days=1)).count()
