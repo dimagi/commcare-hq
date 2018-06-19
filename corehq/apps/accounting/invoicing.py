@@ -430,6 +430,13 @@ class CustomerAccountInvoiceFactory(object):
         self.customer_invoice.calculate_credit_adjustments()
         self.customer_invoice.update_balance()
         self.customer_invoice.save()
+        should_set_date_due = (
+            self.customer_invoice.balance > SMALL_INVOICE_THRESHOLD or
+            (self.customer_invoice.account.auto_pay_enabled and self.customer_invoice.balance > Decimal(0))
+        )
+        if should_set_date_due:
+            self.customer_invoice.date_due = self.date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+        self.customer_invoice.save()
 
     def _update_line_item_to_include(self, line_item):
         try:
