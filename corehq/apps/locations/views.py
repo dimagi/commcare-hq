@@ -485,6 +485,7 @@ class NewLocationView(BaseLocationView):
     form_tab = 'basic'
 
     @use_multiselect
+    @use_select2
     @method_decorator(check_pending_locations_import(redirect=True))
     def dispatch(self, request, *args, **kwargs):
         return super(NewLocationView, self).dispatch(request, *args, **kwargs)

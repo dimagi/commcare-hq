@@ -54,9 +54,9 @@ class IndicatorLaboratoryAdapter(IndicatorAdapter):
             self.es_adapter._best_effort_save_rows(indicator_rows, doc)
             self.sql_adapter._best_effort_save_rows(indicator_rows, doc)
 
-    def save_rows(self, rows):
-        self.es_adapter.save_rows(rows)
-        self.sql_adapter.save_rows(rows)
+    def _save_rows(self, rows, doc):
+        self.es_adapter._save_rows(rows, doc)
+        self.sql_adapter._save_rows(rows, doc)
 
     def delete(self, doc):
         self.es_adapter.delete(doc)

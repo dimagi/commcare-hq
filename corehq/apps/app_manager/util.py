@@ -670,8 +670,10 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    from corehq.apps.app_manager.models import Application
-    app = Application.get(xform.build_id)
+    app = get_app(xform.domain, xform.build_id)
+    if app.is_remote_app():
+        return None
+
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
     except KeyError:
