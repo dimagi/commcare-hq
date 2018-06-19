@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
+from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.accounting.models import BillingAccount
 
 
 COMMCARE = 'commcare'
@@ -40,8 +42,14 @@ def get_per_domain_context(project, request=None):
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
+    is_domain_billing_admin = False
     if getattr(request, 'couch_user', None) and project:
         allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
+        account = BillingAccount.get_account_by_domain(project.name)
+        if account and request.couch_user.username in account.billing_admin_emails:
+            is_domain_billing_admin = True
+        elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
+            is_domain_billing_admin = True
     elif settings.ENTERPRISE_MODE:
         if not getattr(request, 'couch_user', None):
             allow_report_an_issue = False
@@ -57,6 +65,7 @@ def get_per_domain_context(project, request=None):
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
         'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
+        'is_domain_billing_admin': is_domain_billing_admin,
     }
 
 
