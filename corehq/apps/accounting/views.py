@@ -78,6 +78,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMix
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
+from django_prbac.utils import has_privilege
 
 from six.moves.urllib.parse import urlencode
 
@@ -995,12 +996,24 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
-@require_superuser
-def enterprise_dashboard(request, domain):
+def _get_account_or_404(request, domain):
     account = BillingAccount.get_account_by_domain(domain)
 
+    if account is None:
+        raise Http404()
+
+    if request.couch_user.username not in account.billing_admin_emails:
+        if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
+            raise Http404()
+
+    return account
+
+
+def enterprise_dashboard(request, domain):
+    account = _get_account_or_404(request, domain)
     context = {
         'account': account,
+        'domain': domain,
         'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
             EnterpriseReport.WEB_USERS,
@@ -1010,9 +1023,8 @@ def enterprise_dashboard(request, domain):
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 
-@require_superuser
 def enterprise_dashboard_download(request, domain, slug):
-    account = BillingAccount.get_account_by_domain(domain)
+    account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
