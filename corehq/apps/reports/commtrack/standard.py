@@ -152,7 +152,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
             entry_ids=product_ids,
-            pagination=self.pagination,
         )
         product_grouping = {}
         domain = Domain.get_by_name(self.domain)
