@@ -996,8 +996,8 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
 
 
 @require_superuser
-def enterprise_dashboard(request, account_id):
-    account = BillingAccount.objects.get(id=account_id)
+def enterprise_dashboard(request, domain):
+    account = BillingAccount.get_account_by_domain(domain)
 
     context = {
         'account': account,
@@ -1010,10 +1010,9 @@ def enterprise_dashboard(request, account_id):
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 
-
 @require_superuser
-def enterprise_dashboard_download(request, account_id, slug):
-    account = BillingAccount.objects.get(id=account_id)
+def enterprise_dashboard_download(request, domain, slug):
+    account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
