@@ -59,7 +59,7 @@ class TestViews(TestCase):
     def tearDownClass(cls):
         cls.user.delete()
         cls.build.delete()
-        cls.domain.delete()
+        cls.project.delete()
         super(TestViews, cls).tearDownClass()
 
     def test_download_file_bad_xform_404(self, mock):
@@ -88,8 +88,9 @@ class TestViews(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_edit_commcare_profile(self, mock):
-        app = Application.new_app(self.project.name, "TestApp")
-        app.save()
+        app2 = Application.new_app(self.project.name, "TestApp2")
+        app2.save()
+        self.addCleanup(lambda: Application.get_db().delete_doc(app2.id))
         data = {
             "custom_properties": {
                 "random": "value",
@@ -97,7 +98,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app2._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
@@ -113,7 +114,7 @@ class TestViews(TestCase):
             }
         }
 
-        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app._id]),
+        response = self.client.post(reverse('edit_commcare_profile', args=[self.project.name, app2._id]),
                                     json.dumps(data),
                                     content_type='application/json')
 
