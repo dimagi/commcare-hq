@@ -703,3 +703,206 @@ def recalculate_aggregate_table(model_class):
 
         for month in range(1, date.today().month + 1):
             model_class.aggregate(state_id, date(2018, month, 1))
+
+
+class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
+    aggregate_child_table_prefix = 'icds_db_gm_form_'
+    base_tablename = 'child_health_monthly'
+
+    def __init__(self, month):
+        self.month = transform_day_to_month(month)
+
+    @property
+    def child_health_monthly_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def child_health_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def child_tasks_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def tablename(self):
+        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+
+    def drop_table_query(self):
+        return 'DELETE FROM "{}"'.format(self.tablename)
+
+    def aggregation_query(self):
+        columns = (
+            ("awc_id", "ucr.awc_id"),
+            ("case_id", "ucr.case_id"),
+            ("month", "ucr.month"),
+            ("sex", "ucr.sex"),
+            ("age_tranche", "ucr.age_tranche"),
+            ("caste", "ucr.caste"),
+            ("disabled", "ucr.disabled"),
+            ("minority", "ucr.minority"),
+            ("resident", "ucr.resident"),
+            ("dob", "ucr.dob"),
+            ("age_in_months", "ucr.age_in_months"),
+            ("open_in_month", "ucr.open_in_month"),
+            ("alive_in_month", "ucr.alive_in_month"),
+            ("pse_eligible", "ucr.pse_eligible"),
+            ("pse_days_attended", "ucr.pse_days_attended"),
+            ("born_in_month", "ucr.born_in_month"),
+            ("bf_at_birth_born_in_month", "ucr.bf_at_birth_born_in_month"),
+            ("fully_immunized_eligible", "ucr.fully_immunized_eligible"),
+            ("fully_immunized_on_time", "ucr.fully_immunized_on_time"),
+            ("fully_immunized_late", "ucr.fully_immunized_late"),
+            ("has_aadhar_id", "ucr.has_aadhar_id"),
+            ("valid_in_month", "ucr.valid_in_month"),
+            ("valid_all_registered_in_month", "ucr.valid_all_registered_in_month"),
+            ("person_name", "child_health.person_name"),
+            ("mother_name", "child_health.mother_name"),
+            # EBF Indicators
+            ("ebf_eligible", "ucr.ebf_eligible"),
+            ("ebf_in_month", "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END"),
+            ("ebf_not_breastfeeding_reason",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN pnc.not_breastfeeding ELSE NULL END"),
+            ("ebf_drinking_liquid",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) ELSE 0 END"),
+            ("ebf_eating",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.eating, 0) ELSE 0 END"),
+            ("ebf_no_bf_no_milk", "0"),
+            ("ebf_no_bf_pregnant_again", "0"),
+            ("ebf_no_bf_child_too_old", "0"),
+            ("ebf_no_bf_mother_sick", "0"),
+            ("counsel_adequate_bf",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.counsel_adequate_bf, 0) ELSE 0 END"),
+            ("ebf_no_info_recorded",
+                """CASE WHEN ucr.ebf_eligible = 1 AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s THEN 0 ELSE ucr.ebf_eligible END"""),
+            ("counsel_ebf",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END"),
+            # PNC Indicators
+            ("pnc_eligible", "ucr.pnc_eligible"),
+            ("counsel_increase_food_bf",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_increase_food_bf, 0) ELSE 0 END"),
+            ("counsel_manage_breast_problems",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_breast, 0) ELSE 0 END"),
+            ("counsel_skin_to_skin",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
+            # GM Indicators
+            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
+            ("wer_eligible", "ucr.wer_eligible"),
+            ("nutrition_status_last_recorded", "ucr.nutrition_status_last_recorded"),
+            ("current_month_nutrition_status", "ucr.current_month_nutrition_status"),
+            ("nutrition_status_weighed", "ucr.nutrition_status_weighed"),
+            ("recorded_weight", "ucr.weight_recorded_in_month"),
+            ("recorded_height",
+                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN gm.height_child ELSE NULL END, ucr.height_recorded_in_month)"),
+            ("height_measured_in_month",
+                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END, ucr.height_measured_in_month)"),
+            ("current_month_stunting", "ucr.current_month_stunting"),
+            ("stunting_last_recorded", "ucr.stunting_last_recorded"),
+            ("wasting_last_recorded", "ucr.wasting_last_recorded"),
+            ("current_month_wasting", "ucr.current_month_wasting"),
+            ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
+            ("zscore_grading_hfa_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END"),
+            ("zscore_grading_wfh", "gm.zscore_grading_wfh"),
+            ("zscore_grading_wfh_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END"),
+            ("muac_grading", "gm.muac_grading"),
+            ("muac_grading_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.muac_grading_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END"),
+            # CF Indicators
+            ("cf_eligible", "ucr.cf_eligible"),
+            ("cf_initiation_eligible", "ucr.cf_initiation_eligible"),
+            ("cf_in_month", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.comp_feeding_latest, 0) ELSE 0 END"),
+            ("cf_diet_diversity", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.diet_diversity, 0) ELSE 0 END"),
+            ("cf_diet_quantity", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.diet_quantity, 0) ELSE 0 END"),
+            ("cf_handwashing", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.hand_wash, 0) ELSE 0 END"),
+            ("cf_demo", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.demo_comp_feeding, 0) ELSE 0 END"),
+            ("counsel_pediatric_ifa",
+                "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.counselled_pediatric_ifa, 0) ELSE 0 END"),
+            ("counsel_comp_feeding_vid",
+                "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.play_comp_feeding_vid, 0) ELSE 0 END"),
+            ("cf_initiation_in_month",
+                "CASE WHEN ucr.cf_initiation_eligible = 1 THEN COALESCE(cf.comp_feeding_ever, 0) ELSE 0 END"),
+            # THR Indicators
+            ("thr_eligible", "ucr.thr_eligible"),
+            ("num_rations_distributed",
+                "CASE WHEN ucr.thr_eligible = 1 THEN COALESCE(thr.days_ration_given_child, 0) ELSE NULL END"),
+            ("days_ration_given_child", "thr.days_ration_given_child"),
+            # Tasks case Indicators
+            ("immunization_in_month", """
+                  CASE WHEN
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_dpt_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_dpt_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_dpt_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_dpt_booster) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_dpt_booster1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_7gdpt_booster_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_0g_hep_b_0) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_hep_b_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_hep_b_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_hep_b_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_ipv) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_je_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_je_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_measles_booster) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_measles) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_penta_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_penta_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_penta_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_rv_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_rv_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_rv_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_vit_a_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_vit_a_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_4) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_5) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_6) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_7) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_8) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
+                  THEN 1 ELSE NULL END
+            """),
+        )
+        return """
+        INSERT INTO "{tablename}" (
+            {columns}
+        ) (SELECT
+            {calculations}
+            FROM "{ucr_child_monthly_table}" ucr
+            LEFT OUTER JOIN "{agg_cf_table}" cf ON ucr.doc_id = cf.case_id AND ucr.month = cf.month
+            LEFT OUTER JOIN "{agg_thr_table}" thr ON ucr.doc_id = thr.case_id AND ucr.month = thr.month
+            LEFT OUTER JOIN "{agg_gm_table}" gm ON ucr.doc_id = gm.case_id AND ucr.month = gm.month
+            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON ucr.doc_id = pnc.case_id AND ucr.month = pnc.month
+            LEFT OUTER JOIN "{child_health_case_ucr}" child_health ON ucr.doc_id = child_health.doc_id
+            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON ucr.doc_id = child_tasks.child_health_case_id
+            WHERE ucr.month = %(start_date)s
+            ORDER BY ucr.awc_id, ucr.case_id
+        )
+        """.format(
+            tablename=self.tablename,
+            columns=", ".join([col[0] for col in columns]),
+            calculations=", ".join([col[1] for col in columns]),
+            ucr_child_monthly_table=self.child_health_monthly_ucr_tablename,
+            agg_cf_table=AGG_COMP_FEEDING_TABLE,
+            agg_thr_table=AGG_CHILD_HEALTH_THR_TABLE,
+            child_health_case_ucr=self.child_health_case_ucr_tablename,
+            agg_gm_table=AGG_GROWTH_MONITORING_TABLE,
+            agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
+            child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
+        ), {
+            "start_date": self.month
+        }
+
+    def indexes(self):
+        return [
+            'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
+        ]

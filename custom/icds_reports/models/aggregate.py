@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 from dateutil.relativedelta import relativedelta
-from django.db import connections, models
+from django.db import connections, models, transaction
 
 from corehq.form_processor.utils.sql import fetchall_as_namedtuple
 from corehq.sql_db.routers import db_for_read_write
@@ -14,6 +14,7 @@ from custom.icds_reports.const import (
     AGG_GROWTH_MONITORING_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
+    ChildHealthMonthlyAggregationHelper,
     ComplementaryFormsAggregationHelper,
     GrowthMonitoringFormsAggregationHelper,
     PostnatalCareFormsChildHealthAggregationHelper,
@@ -186,6 +187,19 @@ class ChildHealthMonthly(models.Model):
     class Meta:
         managed = False
         db_table = 'child_health_monthly'
+
+    @classmethod
+    def aggregate(cls, month):
+        helper = ChildHealthMonthlyAggregationHelper(month)
+        agg_query, agg_params = helper.aggregation_query()
+        index_queries = helper.indexes()
+
+        with get_cursor(cls) as cursor:
+            with transaction.atomic():
+                cursor.execute(helper.drop_table_query())
+                cursor.execute(agg_query, agg_params)
+                for query in index_queries:
+                    cursor.execute(query)
 
 
 class AggAwc(models.Model):

@@ -34,6 +34,7 @@ from custom.icds_reports.models import (
     AggregateGrowthMonitoringForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateChildHealthTHRForms,
+    ChildHealthMonthly,
     UcrTableNameMapping)
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
 from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
@@ -349,10 +350,11 @@ def _update_months_table(day):
 
 @track_time
 def _child_health_monthly_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_table_for_month('child_health_monthly', %s)",
-        "SELECT insert_into_child_health_monthly(%s)"
-    ], day)
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_table_for_month('child_health_monthly', %s)",
+        ], day)
+        ChildHealthMonthly.aggregate(force_to_date(day))
 
 
 @track_time
