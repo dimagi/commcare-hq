@@ -139,9 +139,9 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         self.account.save()
         self.invoice_factory = CustomerAccountInvoiceFactory(self.invoice_start, self.invoice_end, self.account)
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
-        self.advanced_plan.is_customer_software_plan = True
+        self.advanced_plan.plan.is_customer_software_plan = True
         self.pro_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO)
-        self.pro_plan.is_customer_software_plan = True
+        self.pro_plan.plan.is_customer_software_plan = True
         self.sub1 = Subscription.new_domain_subscription(
             self.account, self.domain1.name, self.advanced_plan, date_start=self.invoice_start
         )
