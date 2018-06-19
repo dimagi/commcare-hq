@@ -118,8 +118,13 @@ def setUpModule():
         except AssertionError as e:
             # we always use soft assert to email when the aggregation has completed
             if "Aggregation completed" not in str(e):
+                print(e)
                 tearDownModule()
                 raise
+        except Exception as e:
+            print(e)
+            tearDownModule()
+            raise
         finally:
             _call_center_domain_mock.stop()
 
