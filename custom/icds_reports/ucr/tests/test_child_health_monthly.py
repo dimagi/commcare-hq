@@ -238,7 +238,6 @@ class TestChildHealthDataSource(BaseICDSDatasourceTest):
             add_element(child_repeat2, 'zscore_grading_wfa', NUTRITION_STATUS_SEVERE)
             form.append(child_repeat2)
 
-        ElementTree.dump(form)
         self._submit_form(form)
 
     def test_demographic_data(self):
