@@ -32,11 +32,11 @@ class CaseListExplorer(CaseListReport):
     search_class = CaseSearchES
 
     fields = [
+        XpathCaseSearchFilter,
+        CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
         SelectOpenCloseFilter,
-        XpathCaseSearchFilter,
-        CaseListExplorerColumns,
     ]
 
     def get_data(self):
