@@ -242,10 +242,7 @@ class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
 
     @property
     def customer_account_response(self):
-        customer_accounts = []
-        for account in BillingAccount.objects.all():
-            if account.is_customer_billing_account:
-                customer_accounts.append(account)
+        customer_accounts = BillingAccount.objects.filter(is_customer_billing_account=True)
         customer_account_names = [account.name for account in customer_accounts]
         return [(n, n) for n in customer_account_names]
 

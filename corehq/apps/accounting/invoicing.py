@@ -408,11 +408,16 @@ class CustomerAccountInvoiceFactory(object):
                     if line_item.product_rate:
                         continue
                     else:
-                        self._update_line_item_to_include(line_item)
+                        try:
+                            new_line_item = customer_invoice.lineitem_set.get(feature_rate=line_item.feature_rate)
+                            new_line_item.quantity = new_line_item.quantity + line_item.quantity
+                        except LineItem.DoesNotExist:
+                            customer_invoice.lineitem_set.add(line_item)
             else:
                 line_item_set = customer_invoice.lineitem_set.union(invoice.lineitem_set.all(), all=True)
                 customer_invoice.lineitem_set.set(line_item_set)
                 customer_invoice.save()
+                invoiced_plans.append(invoice.subscription.plan_version)
         customer_invoice.calculate_credit_adjustments()
         customer_invoice.update_balance()
         customer_invoice.save()
@@ -424,13 +429,6 @@ class CustomerAccountInvoiceFactory(object):
             customer_invoice.date_due = self.date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
         customer_invoice.save()
         return customer_invoice
-
-    def _update_line_item_to_include(self, line_item):
-        try:
-            line_item_to_update = self.customer_invoice.lineitem_set.get(feature_rate=line_item.feature_rate)
-            line_item_to_update.quantity = line_item_to_update.quantity + line_item.quantity
-        except ObjectDoesNotExist:
-            self.customer_invoice.lineitem_set.add(line_item)
 
     def _email_invoice(self):
         record = BillingRecord.generate_record(self.customer_invoice)
@@ -444,7 +442,7 @@ class CustomerAccountInvoiceFactory(object):
             else:
                 record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
         except InvoiceEmailThrottledError as e:
-            log_accounting_info(str(e))
+            log_accounting_error(str(e))
 
     @staticmethod
     def _get_invoice_start(sub, date_start):

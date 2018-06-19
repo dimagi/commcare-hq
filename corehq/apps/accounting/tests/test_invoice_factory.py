@@ -121,10 +121,6 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
 
 class TestCustomerInvoiceFactory(BaseAccountingTest):
 
-    @classmethod
-    def setUpClass(cls):
-        super(TestCustomerInvoiceFactory, cls).setUpClass()
-
     def setUp(self):
         super(TestCustomerInvoiceFactory, self).setUp()
         self.invoice_start, self.invoice_end = get_previous_month_date_range()
@@ -154,6 +150,8 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
 
     def tearDown(self):
         self.domain1.delete()
+        self.domain2.delete()
+        self.domain3.delete()
         super(TestCustomerInvoiceFactory, self).tearDown()
 
     def test_create_invoice_for_subscription(self):
