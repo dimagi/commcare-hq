@@ -52,12 +52,10 @@ class UploadedTranslationsValidator(object):
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
             msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("less"))
-            iterate_on = [uploaded_rows, expected_rows]
         elif number_of_uploaded_rows > number_of_expected_rows:
             msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("more"))
-            iterate_on = [expected_rows, uploaded_rows]
-        else:
-            iterate_on = [expected_rows, uploaded_rows]
+
+        iterate_on = [expected_rows, uploaded_rows]
         for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on)):
             for column_name in columns_to_compare:
                 uploaded_value = uploaded_row.get(column_name)
