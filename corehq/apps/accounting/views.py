@@ -711,8 +711,7 @@ class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                     "Successfully triggered invoices for Customer Billing Account %s."
                     % self.trigger_customer_invoice_form.cleaned_data['customer_account']
                 )
-            # TODO: Catch other errors
-            except NotImplementedError as e:
+            except (CreditLineError, InvoiceError) as e:
                 messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 

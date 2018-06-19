@@ -1857,6 +1857,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
         account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
+        self.clean_previous_invoices(invoice_start, invoice_end, account)
         invoice_factory = CustomerAccountInvoiceFactory(
             date_start=invoice_start,
             date_end=invoice_end,
@@ -1864,9 +1865,26 @@ class TriggerCustomerInvoiceForm(forms.Form):
         )
         invoice_factory.create_invoice()
 
-    # TODO: Do I need to implement this?
-    # @staticmethod
-    # def clean_previous_invoices(invoice_start, invoice_end, domain_name):
+    @staticmethod
+    def clean_previous_invoices(invoice_start, invoice_end, account):
+        invoices = Invoice.objects.filter(date_start__lte=invoice_end, date_end__gte=invoice_start)
+        prev_invoices = [invoice if invoice.account == account else [] for invoice in invoices]
+        if prev_invoices:
+            from corehq.apps.accounting.views import InvoiceSummaryView
+            raise InvoiceError(
+                "Invoices exist that were already generated with this same "
+                "criteria. You must manually suppress these invoices: "
+                "{invoice_list}".format(
+                    num_invoices=len(prev_invoices),
+                    invoice_list=', '.join(
+                        ['<a href="{edit_url}">{name}</a>'.format(
+                            edit_url=reverse(InvoiceSummaryView.urlname,
+                                             args=(x.id,)),
+                            name=x.invoice_number
+                        ) for x in prev_invoices]
+                    ),
+                )
+            )
 
     def clean(self):
         today = datetime.date.today()
