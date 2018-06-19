@@ -37,7 +37,28 @@ class ExponentialBackoff(object):
         cache_key = cls._get_cache_key(key)
         return not cls._number_is_power_of_two(cache.get(cache_key) or 1)
 
+    @classmethod
+    def exponential(cls, key, base):
+        cache_key = cls._get_cache_key(key)
+        return base ** (cache.get(cache_key) or 0)
+
+    @classmethod
+    def delete_key(cls, key):
+        try:
+            cache.delete(cls._get_cache_key(key))
+        except ValueError:
+            pass
+
 
 def is_rate_limited(rate_limit_key):
     ExponentialBackoff.increment(rate_limit_key)
     return ExponentialBackoff.should_backoff(rate_limit_key)
+
+
+def get_exponential(rate_limit_key, exponential_base=2):
+    ExponentialBackoff.increment(rate_limit_key)
+    return ExponentialBackoff.exponential(rate_limit_key, exponential_base)
+
+
+def clear_limit(rate_limit_key):
+    ExponentialBackoff.delete_key(rate_limit_key)
