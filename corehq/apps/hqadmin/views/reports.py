@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import six.moves.html_parser
 import json
 from collections import defaultdict
+import csv342 as csv
 from datetime import timedelta
 
 from django.contrib import messages
@@ -41,7 +42,6 @@ from corehq.util.supervisord.api import (
     all_pillows_supervisor_status,
     pillow_supervisor_status
 )
-from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import add_months
 from dimagi.utils.decorators.datespan import datespan_in_request
 from dimagi.utils.django.management import export_as_csv_action
@@ -199,7 +199,7 @@ def _gir_csv_response(month, year):
     field_names = GIR_FIELDS
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=gir.csv'
-    writer = UnicodeWriter(response)
+    writer = csv.writer(response)
     writer.writerow(list(field_names))
     for months in domain_months.values():
         writer.writerow(months[0].export_row(months[1:]))

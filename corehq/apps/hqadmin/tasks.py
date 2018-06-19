@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import date, timedelta
 
+import csv342 as csv
 import io
 
 from celery.schedules import crontab
@@ -17,7 +18,6 @@ from corehq.apps.es.users import UserES
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.util.soft_assert import soft_assert
-from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.logging import notify_error
 from dimagi.utils.django.email import send_HTML_email
 from dimagi.utils.web import get_site_domain
@@ -115,8 +115,8 @@ def send_mass_emails(username, real_email, subject, html, text):
 
 
 def _mass_email_attachment(name, rows):
-    csv_file = io.BytesIO()
-    writer = UnicodeWriter(csv_file)
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
     writer.writerow(['Email', 'Error'])
     writer.writerows(rows)
     attachment = {
