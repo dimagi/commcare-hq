@@ -891,19 +891,23 @@ class AsyncIndicator(models.Model):
             return
         doc_ids = configs_by_docs.keys()
 
-        old_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
+        current_indicators = AsyncIndicator.objects.filter(doc_id__in=doc_ids).all()
         to_update = []
 
-        for indicator in old_indicators:
-            if set(indicator.indicator_config_ids) != set(configs_by_docs[indicator.doc_id]):
-                indicator.indicator_config_ids = sorted(configs_by_docs[indicator.doc_id])
+        for indicator in current_indicators:
+            new_configs = set(configs_by_docs[indicator.doc_id])
+            current_configs = set(indicator.indicator_config_ids)
+            if not new_configs.issubset(current_configs):
+                indicator.indicator_config_ids = sorted(current_configs.union(new_configs))
                 indicator.unsuccessful_attempts = 0
                 to_update.append(indicator)
-        bulk_update_helper(to_update)
+        if to_update:
+            bulk_update_helper(to_update)
 
-        new_doc_ids = set(doc_ids) - set([i.doc_id for i in old_indicators])
+        new_doc_ids = set(doc_ids) - set([i.doc_id for i in current_indicators])
         AsyncIndicator.objects.bulk_create([
-            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain, indicator_config_ids=sorted(configs_by_docs[doc_id]))
+            AsyncIndicator(doc_id=doc_id, doc_type=doc_type_by_id[doc_id], domain=domain,
+                indicator_config_ids=sorted(configs_by_docs[doc_id]))
             for doc_id in new_doc_ids
         ])
 

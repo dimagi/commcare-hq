@@ -118,8 +118,8 @@ class TestBulkUpdate(TestCase):
             self._get_indicator_data(),
             {
                 'd1': ['c1', 'c2'],
-                'd2': ['c2'],
-                'd3': ['c3'],
+                'd2': ['c1', 'c2'],
+                'd3': ['c2', 'c3'],
                 'd4': ['c1', 'c2'],
                 'd5': ['c4']
             }
