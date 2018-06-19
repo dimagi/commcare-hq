@@ -79,8 +79,8 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
-                    Q(date_end__gt=self.date_start)
-                    & Q(date_end__gt=F('date_start'))
+                Q(date_end__gt=self.date_start)
+                & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end
@@ -416,45 +416,6 @@ def update_invoice_due_date(invoice, subscription, factory_date_end):
         invoice.date_due = factory_date_end + datetime.timedelta(days_until_due)
 
     invoice.save()
-
-    @staticmethod
-    def _get_invoice_start(sub, date_start):
-        return max(sub.date_start, date_start)
-
-    @staticmethod
-    def _get_invoice_end(sub, date_end):
-        if sub.date_end is not None and sub.date_end <= date_end:
-            # A Subscription is terminated on date_end, so the invoice period lasts until the day before
-            return sub.date_end - datetime.timedelta(days=1)
-        else:
-            return date_end
-
-
-def generate_line_items(invoice, subscription):
-    product_rate = subscription.plan_version.product_rate
-    product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-    product_factory.create()
-
-    for feature_rate in subscription.plan_version.feature_rates.all():
-        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-            feature_rate.feature.feature_type
-        )
-        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-        feature_factory.create()
-
-
-def should_create_invoice(subscription, domain):
-    if subscription.is_trial:
-        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
-        return False
-    if subscription.skip_invoicing_if_no_feature_charges and not \
-            subscription.plan_version.feature_charges_exist_for_domain(domain):
-        log_accounting_info(
-            "Skipping invoicing for Subscription %s because there are no feature charges."
-            % subscription.pk
-        )
-        return False
-    return True
 
 
 class LineItemFactory(object):
