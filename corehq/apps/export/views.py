@@ -862,6 +862,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             "export_type": _("export"),
             "export_type_caps_plural": _("Exports"),
             "export_type_plural": _("exports"),
+            'my_export_type': _('My Exports'),
+            'shared_export_type': _('Exports Shared with Me'),
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
@@ -1375,6 +1377,8 @@ class DashboardFeedListView(DailySavedExportListView):
             "export_type": _("dashboard feed"),
             "export_type_caps_plural": _("Dashboard Feeds"),
             "export_type_plural": _("dashboard feeds"),
+            'my_export_type': _('My Dashboard Feeds'),
+            'shared_export_type': _('Dashboard Feeds Shared with Me'),
         })
         return context
 
