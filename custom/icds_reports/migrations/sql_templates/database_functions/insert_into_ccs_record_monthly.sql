@@ -28,48 +28,48 @@ BEGIN
   EXECUTE 'DELETE FROM ' || quote_ident(_tablename);
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename) || ' ' ||
     '(' ||
-    'awc_id' ||
-    'case_id' ||
-    'month' ||
-    'age_in_months' ||
-    'ccs_status' ||
-    'open_in_month' ||
-    'alive_in_month' ||
-    'trimester' ||
-    'num_rations_distributed' ||
-    'thr_eligible' ||
-    'tetanus_complete' ||
-    'delivered_in_month' ||
-    'anc1_received_at_delivery' ||
-    'anc2_received_at_delivery' ||
-    'anc3_received_at_delivery' ||
-    'anc4_received_at_delivery' ||
-    'registration_trimester_at_delivery' ||
-    'using_ifa' ||
-    'ifa_consumed_last_seven_days' ||
-    'anemic_severe' ||
-    'anemic_moderate' ||
-    'anemic_normal' ||
-    'anemic_unknown' ||
-    'extra_meal' ||
-    'resting_during_pregnancy' ||
-    'bp_visited_in_month' ||
-    'pnc_visited_in_month' ||
-    'trimester_2' ||
-    'trimester_3' ||
-    'counsel_immediate_bf' ||
-    'counsel_bp_vid' ||
-    'counsel_preparation' ||
-    'counsel_fp_vid' ||
-    'counsel_immediate_conception' ||
-    'counsel_accessible_postpartum_fp' ||
-    'bp1_complete' ||
-    'bp2_complete' ||
-    'bp3_complete' ||
-    'pnc_complete' ||
-    'postnatal' ||
-    'has_aadhar_id' ||
-    'counsel_fp_methods' ||
+    'awc_id, ' ||
+    'case_id, ' ||
+    'month, ' ||
+    'age_in_months, ' ||
+    'ccs_status, ' ||
+    'open_in_month, ' ||
+    'alive_in_month, ' ||
+    'trimester, ' ||
+    'num_rations_distributed, ' ||
+    'thr_eligible, ' ||
+    'tetanus_complete, ' ||
+    'delivered_in_month, ' ||
+    'anc1_received_at_delivery, ' ||
+    'anc2_received_at_delivery, ' ||
+    'anc3_received_at_delivery, ' ||
+    'anc4_received_at_delivery, ' ||
+    'registration_trimester_at_delivery, ' ||
+    'using_ifa, ' ||
+    'ifa_consumed_last_seven_days, ' ||
+    'anemic_severe, ' ||
+    'anemic_moderate, ' ||
+    'anemic_normal, ' ||
+    'anemic_unknown, ' ||
+    'extra_meal, ' ||
+    'resting_during_pregnancy, ' ||
+    'bp_visited_in_month, ' ||
+    'pnc_visited_in_month, ' ||
+    'trimester_2, ' ||
+    'trimester_3, ' ||
+    'counsel_immediate_bf, ' ||
+    'counsel_bp_vid, ' ||
+    'counsel_preparation, ' ||
+    'counsel_fp_vid, ' ||
+    'counsel_immediate_conception, ' ||
+    'counsel_accessible_postpartum_fp, ' ||
+    'bp1_complete, ' ||
+    'bp2_complete, ' ||
+    'bp3_complete, ' ||
+    'pnc_complete, ' ||
+    'postnatal, ' ||
+    'has_aadhar_id, ' ||
+    'counsel_fp_methods, ' ||
     'pregnant, ' ||
     'pregnant_all, ' ||
     'lactating, ' ||
@@ -79,7 +79,8 @@ BEGIN
     'caste, ' ||
     'disabled, ' ||
     'minority, ' ||
-    'resident ' ||
+    'resident, ' ||
+    'valid_in_month ' ||
     ')' ||
     '(SELECT ' ||
     'awc_id, ' ||
@@ -133,7 +134,8 @@ BEGIN
     'caste, ' ||
     'disabled, ' ||
     'minority, ' ||
-    'resident '
+    'resident, ' ||
+    'valid_in_month ' ||
     'FROM ' || quote_ident(_ucr_ccs_record_table) || ' WHERE month = ' || quote_literal(_start_date) || ')';
 
     EXECUTE 'CREATE INDEX ON ' || quote_ident(_tablename) || '(case_id)';
@@ -189,7 +191,7 @@ BEGIN
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' ccs_monthly SET ' ||
        'person_name = case_list.person_name, ' ||
-       'edd = case_list.edd ' ||
+       'edd = case_list.edd, ' ||
        'delivery_nature = case_list.delivery_nature ' ||
     'FROM ' || quote_ident(_ucr_ccs_record_cases_table) || ' case_list ' ||
     'WHERE ccs_monthly.case_id = case_list.case_id and ccs_monthly.month = ' || quote_literal(_start_date);

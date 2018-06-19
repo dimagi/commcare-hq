@@ -100,6 +100,13 @@ class CcsRecordMonthly(models.Model):
     delivery_nature = models.SmallIntegerField(blank=True, null=True)
     is_ebf = models.SmallIntegerField(blank=True, null=True)
     breastfed_at_birth = models.SmallIntegerField(blank=True, null=True)
+    anc_1 = models.DateField(blank=True, null=True)
+    anc_2 = models.DateField(blank=True, null=True)
+    anc_3 = models.DateField(blank=True, null=True)
+    anc_4 = models.DateField(blank=True, null=True)
+    tt_1 = models.DateField(blank=True, null=True)
+    tt_2 = models.DateField(blank=True, null=True)
+    valid_in_month = models.SmallIntegerField(blank=True, null=True)
 
     class Meta(object):
         managed = False
@@ -609,7 +616,6 @@ class AggregateComplementaryFeedingForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_COMP_FEEDING_TABLE
 
     @classmethod
@@ -708,7 +714,6 @@ class AggregateChildHealthPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CHILD_HEALTH_PNC_TABLE
 
     @classmethod
@@ -768,7 +773,6 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CCS_RECORD_PNC_TABLE
 
     @classmethod
@@ -815,7 +819,6 @@ class AggregateChildHealthTHRForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_CHILD_HEALTH_THR_TABLE
 
     @classmethod
@@ -935,7 +938,6 @@ class AggregateGrowthMonitoringForms(models.Model):
     )
 
     class Meta(object):
-        managed = False
         db_table = AGG_GROWTH_MONITORING_TABLE
 
     @classmethod

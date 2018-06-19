@@ -227,10 +227,12 @@ def _create_aggregate_functions(cursor):
                 sql_to_execute = sql_file.read()
                 cursor.execute(sql_to_execute)
         celery_task_logger.info("Ended icds reports create_functions")
-    except Exception:
+    except Exception as e:
         # This is likely due to a change in the UCR models or aggregation script which should be rare
         # First step would be to look through this error to find what function is causing the error
         # and look for recent changes in this folder.
+        import ipdb; ipdb.set_trace()
+
         _dashboard_team_soft_assert(False, "Unexpected occurred while creating functions in dashboard aggregation")
         raise
 
@@ -268,6 +270,8 @@ def icds_aggregation_task(self, date, func):
     try:
         func(date)
     except Error as exc:
+        import ipdb; ipdb.set_trace()
+
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
