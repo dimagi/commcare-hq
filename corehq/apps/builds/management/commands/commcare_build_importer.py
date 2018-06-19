@@ -101,8 +101,8 @@ class Command(BaseCommand):
     def _extract_version_numbers(self, build_dict, max_options=5):
         """
         - takes build_dict is of following format
-            {352167: 'http://jenkins.dimagi.com/job/commcare-mobile-2.21.0/352167/',
-             352366: 'http://jenkins.dimagi.com/job/commcare-mobile-2.21.0/352366/'}
+            {352167: 'http://jenkins.dimagi.com/job/commcare-mobile-2.21/352167/',
+             352366: 'http://jenkins.dimagi.com/job/commcare-mobile-2.21/352366/'}
         - sorts by the key and returns dict of following format with #items=max_options
             {352167: 2.19.1
              352366: 2.22.0}
