@@ -1806,7 +1806,7 @@ class BaseNewExportView(BaseExportView):
             raise BadExportConfiguration()
 
         if not export._rev:
-            if toggles.toggle_enabled(request.domain):
+            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
                 export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
