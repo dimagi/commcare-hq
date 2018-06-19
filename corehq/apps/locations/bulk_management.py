@@ -885,8 +885,9 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
-    # _seen is intentionally a mutable cache of all ids seen so far
-    def iter_unprocessed_ancestor_ids(stubs, _seen=set()):
+    _seen = set()
+
+    def iter_unprocessed_ancestor_ids(stubs):
         for loc in stubs:
             parent_stub = loc.new_parent_stub
             if parent_stub is None or parent_stub.do_delete:
