@@ -188,11 +188,3 @@ class SimpleParsingTests(SimpleTestCase):
             'index': "   "
         })
         self.assertEqual(block.get_index_action().indices, [])
-
-    def test_attachments_block_not_dict(self):
-        block = case_update_from_block({
-            '@xmlns': V2_NAMESPACE,
-            '@case_id': '123',
-            'attachment': "   "
-        })
-        self.assertEqual(block.get_attachment_action().attachments, {})

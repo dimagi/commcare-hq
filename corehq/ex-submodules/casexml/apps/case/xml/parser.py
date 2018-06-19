@@ -58,7 +58,7 @@ class CaseActionBase(object):
 
     def __init__(self, block, type=None, name=None, external_id=None,
                  user_id=None, owner_id=None, opened_on=None, 
-                 dynamic_properties=None, indices=None, attachments=None):
+                 dynamic_properties=None, indices=None):
         self.raw_block = block
         self.type = type
         self.name = name
@@ -68,8 +68,7 @@ class CaseActionBase(object):
         self.opened_on = opened_on
         self.dynamic_properties = dynamic_properties or {}
         self.indices = indices or []
-        self.attachments = attachments or {}
-    
+
     def get_known_properties(self):
         return dict((p, getattr(self, p)) for p in KNOWN_PROPERTIES.keys()
                     if getattr(self, p) is not None)
@@ -147,63 +146,10 @@ class AbstractAction(object):
 
         self.dynamic_properties = {}
         self.indices = []
-        self.attachments = {}
         # TODO log which products were touched?
 
     def get_known_properties(self):
         return {}
-
-
-class CaseAttachment(object):
-    """
-    A class that wraps an attachment to a case
-    """
-
-    def __init__(self, identifier, attachment_src, attachment_from, attachment_name):
-        """
-        identifier: the tag name
-        attachment_src: URL of attachment
-        attachment_from: source [local, remote, inline]
-        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
-        """
-        self.identifier = identifier
-        self.attachment_src = attachment_src
-        self.attachment_from = attachment_from
-        self.attachment_name = attachment_name
-
-
-class CaseAttachmentAction(CaseActionBase):
-    action_type_slug = const.CASE_ACTION_ATTACHMENT
-
-    def __init__(self, block, attachments):
-        super(CaseAttachmentAction, self).__init__(block, attachments=attachments)
-
-    @classmethod
-    def from_v1(cls, block):
-        # indices are not supported in v1
-        return cls(block, [])
-
-    @classmethod
-    def from_v2(cls, block):
-        attachments = {}
-        if not isinstance(block, dict):
-            return cls(block, attachments)
-
-        for id, data in block.items():
-            if isinstance(data, six.string_types):
-                attachment_from = None
-                attachment_src = None
-                attachment_name = None
-            else:
-                attachment_from = data.get('@from', None)
-                attachment_src = data.get('@src', None)
-                attachment_name = data.get('@name', None)
-
-            if attachment_from == attachment_src == attachment_name == None:
-                # all null, this is a deletion
-                pass
-            attachments[id] = CaseAttachment(id, attachment_src, attachment_from, attachment_name)
-        return cls(block, attachments)
 
 
 class CaseIndex(object):
@@ -269,7 +215,6 @@ class CaseUpdate(object):
         self.close_block = block.get(const.CASE_ACTION_CLOSE, {})
         self._closes_case = const.CASE_ACTION_CLOSE in block
         self.index_block = block.get(const.CASE_ACTION_INDEX, {})
-        self.attachment_block = block.get(const.CASE_ACTION_ATTACHMENT, {})
 
         # referrals? really? really???
         self.referral_block = block.get(const.REFERRAL_TAG, {})
@@ -284,8 +229,6 @@ class CaseUpdate(object):
             self.actions.append(CLOSE_ACTION_FUNCTION_MAP[self.version](self.close_block))
         if self.has_indices():
             self.actions.append(INDEX_ACTION_FUNCTION_MAP[self.version](self.index_block))
-        if self.has_attachments():
-            self.actions.append(ATTACHMENT_ACTION_FUNCTION_MAP[self.version](self.attachment_block))
 
         if not self.actions:
             self.actions.append(NOOP_ACTION_FUNCTION_MAP[self.version]({}))
@@ -313,9 +256,6 @@ class CaseUpdate(object):
     
     def has_referrals(self):
         return bool(self.referral_block)
-
-    def has_attachments(self):
-        return bool(self.attachment_block)
 
     def get_case_actions(self, xformdoc):
         """
@@ -350,9 +290,6 @@ class CaseUpdate(object):
     
     def get_index_action(self):
         return self._filtered_action(lambda a: isinstance(a, CaseIndexAction))
-
-    def get_attachment_action(self):
-        return self._filtered_action(lambda a: isinstance(a, CaseAttachmentAction))
 
     @classmethod
     def from_v1(cls, case_block):
@@ -426,9 +363,4 @@ CLOSE_ACTION_FUNCTION_MAP = {
 INDEX_ACTION_FUNCTION_MAP = {
     V1: CaseIndexAction.from_v1,
     V2: CaseIndexAction.from_v2
-}
-
-ATTACHMENT_ACTION_FUNCTION_MAP = {
-    V1: CaseAttachmentAction.from_v1,
-    V2: CaseAttachmentAction.from_v2
 }

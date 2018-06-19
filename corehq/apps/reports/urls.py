@@ -31,7 +31,6 @@ from .views import (
     AddSavedReportConfigView,
     FormDataView,
     CaseDataView,
-    CaseAttachmentsView,
     MySavedReportsView,
     ScheduledReportsView,
     ReportNotificationUnsubscribeView,
@@ -98,8 +97,6 @@ urlpatterns = [
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDataView.as_view(), name=CaseDataView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', case_forms, name="single_case_forms"),
-    url(r'^case_data/(?P<case_id>[\w\-]+)/attachments/$',
-        CaseAttachmentsView.as_view(), name=CaseAttachmentsView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/view/xml/$', case_xml, name="single_case_xml"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/properties/$', case_property_names, name="case_property_names"),
     url(r'^case_data/(?P<case_id>[\w\-]+)/edit/$', edit_case_view, name="edit_case"),

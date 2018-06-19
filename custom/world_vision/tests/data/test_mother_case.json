@@ -11,8 +11,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "bad15dec-52c0-4f44-a560-322268156666",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "पंजीकरण",
            "sync_log_id": "9c117bbe76da5a967391598d05935143",
            "server_date": "2014-07-08T04:44:17Z",
@@ -33,8 +31,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "bad15dec-52c0-4f44-a560-322268156666",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "पंजीकरण",
            "sync_log_id": "9c117bbe76da5a967391598d05935143",
            "server_date": "2014-07-08T04:44:17Z",
@@ -70,8 +66,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "52fdcb1b-335c-4bf5-9945-bd30d141c6f8",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "गर्भवती मुलाकात",
            "sync_log_id": "9c117bbe76da5a967391598d05935143",
            "server_date": "2014-07-08T04:45:47Z",
@@ -112,8 +106,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "a0d2a4d5-21ac-4237-bd52-6fa552839784",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "गर्भवती मुलाकात",
            "sync_log_id": "9c117bbe76da5a967391598d05935143",
            "server_date": "2014-07-08T04:46:47Z",
@@ -141,8 +133,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "69e89df5-571b-4a7f-8235-aba72e45c590",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "प्रसव फार्म",
            "sync_log_id": "4c97c0feda1fb25c5ff11cd87823ea5c",
            "server_date": "2014-09-25T08:59:47Z",
@@ -164,8 +154,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "69e89df5-571b-4a7f-8235-aba72e45c590",
            "user_id": "ba9515bad91d28c05d721f221313be67",
-           "attachments": {
-           },
            "xform_name": "प्रसव फार्म",
            "sync_log_id": "4c97c0feda1fb25c5ff11cd87823ea5c",
            "server_date": "2014-09-25T08:59:47Z",
@@ -188,8 +176,6 @@
    "anc2_date": "2014-01-01",
    "husband_name": "test",
    "type": "ttc_mother",
-   "case_attachments": {
-   },
    "economic_status": "bpl",
    "server_modified_on": "2014-09-25T08:59:48Z",
    "computed_modified_on_": null,

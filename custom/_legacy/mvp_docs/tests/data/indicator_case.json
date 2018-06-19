@@ -8,7 +8,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "this-is-a-form-creating-a-case-12345",
            "user_id": "techno-4-life",
-           "attachments": {},
            "xform_name": "Tag Song",
            "sync_log_id": "some-sync-log-12345",
            "server_date": "2015-01-18T07:52:16Z",
@@ -41,7 +40,6 @@
    "version": "2.0",
    "closed": false,
    "type": "song_tag",
-   "case_attachments": {},
    "xform_ids": [
        "this-is-a-form-creating-a-case-12345"
    ],

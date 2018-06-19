@@ -11,8 +11,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "365046f3-5f7f-4acb-b5ab-3e73240ba92d",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "माता एवं शिशु पंजीकरण",
            "sync_log_id": "3c92205eb5ceaac53cccbdb9311123b8",
            "server_date": "2014-02-04T06:25:23Z",
@@ -33,8 +31,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "365046f3-5f7f-4acb-b5ab-3e73240ba92d",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "माता एवं शिशु पंजीकरण",
            "sync_log_id": "3c92205eb5ceaac53cccbdb9311123b8",
            "server_date": "2014-02-04T06:25:23Z",
@@ -62,8 +58,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "365046f3-5f7f-4acb-b5ab-3e73240ba92d",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "माता एवं शिशु पंजीकरण",
            "sync_log_id": "3c92205eb5ceaac53cccbdb9311123b8",
            "server_date": "2014-02-04T06:25:23Z",
@@ -87,8 +81,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "fdb57495-5e17-41b5-a08f-cae0d4761828",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "शिशु  मुलाकात",
            "sync_log_id": "8711f2df75dd65c525cdf22248df5b0e",
            "server_date": "2014-03-07T09:03:14Z",
@@ -117,8 +109,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "594f31bc-37d6-4309-a834-77811942bf4b",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "शिशु का नाम हटाना",
            "sync_log_id": "253bf55c8682eac53c5a826e56a733ed",
            "server_date": "2014-03-14T09:23:38Z",
@@ -140,8 +130,6 @@
            "doc_type": "CommCareCaseAction",
            "xform_id": "594f31bc-37d6-4309-a834-77811942bf4b",
            "user_id": "84bb7c8f6315f93e9a28ad6033cdadc9",
-           "attachments": {
-           },
            "xform_name": "शिशु का नाम हटाना",
            "sync_log_id": "253bf55c8682eac53c5a826e56a733ed",
            "server_date": "2014-03-14T09:23:38Z",
@@ -173,8 +161,6 @@
    "closed": true,
    "num_referrals": "0",
    "type": "ttc_child",
-   "case_attachments": {
-   },
    "xform_ids": [
        "365046f3-5f7f-4acb-b5ab-3e73240ba92d",
        "fdb57495-5e17-41b5-a08f-cae0d4761828",

@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import mimetypes
 
-from corehq.form_processor.abstract_models import CaseAttachmentMixin
 from dimagi.ext.couchdbkit import StringProperty, IntegerProperty, DictProperty
 
 from dimagi.utils.mixins import UnicodeMixIn
@@ -62,40 +61,6 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
     def __repr__(self):
         return str(self)
-
-
-class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, UnicodeMixIn):
-    identifier = StringProperty()
-    attachment_src = StringProperty()
-    attachment_from = StringProperty()
-    attachment_name = StringProperty()
-    server_mime = StringProperty()  # Server detected MIME
-    server_md5 = StringProperty()  # Couch detected hash
-
-    attachment_size = IntegerProperty()  # file size
-    attachment_properties = DictProperty()  # width, height, other relevant metadata
-
-    @property
-    def content_type(self):
-        return self.server_mime
-
-    @classmethod
-    def from_case_index_update(cls, attachment):
-        if attachment.attachment_src:
-            guessed = mimetypes.guess_type(attachment.attachment_src)
-            if len(guessed) > 0 and guessed[0] is not None:
-                mime_type = guessed[0]
-            else:
-                mime_type = None
-
-            ret = cls(identifier=attachment.identifier,
-                      attachment_src=attachment.attachment_src,
-                      attachment_from=attachment.attachment_from,
-                      attachment_name=attachment.attachment_name,
-                      server_mime=mime_type)
-        else:
-            ret = cls(identifier=attachment.identifier)
-        return ret
 
 
 class IndexHoldingMixIn(object):
