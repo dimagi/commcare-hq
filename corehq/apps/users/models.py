@@ -1346,7 +1346,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
         def get(stale, raise_if_none):
             result = cls.get_db().view('users/by_username',
-                key=username.lower(),
+                key=username,
                 include_docs=True,
                 reduce=False,
                 stale=stale if not strict else None,

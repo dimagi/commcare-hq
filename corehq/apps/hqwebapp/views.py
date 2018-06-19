@@ -344,7 +344,7 @@ def _login(req, domain_name, template_name):
         req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
         req.POST._mutable = False
     if 'auth-username' in req.POST:
-        couch_user = CouchUser.get_by_username(req.POST['auth-username'])
+        couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
             new_lang = couch_user.language
             old_lang = req.session.get(LANGUAGE_SESSION_KEY)
