@@ -1187,13 +1187,8 @@
         "column_id": "rations_21_plus_distributed",
         "display_name": null,
         "filter": {
-          "type": "boolean_expression",
-          "operator": "eq",
-          "property_value": 21,
-          "expression": {
-            "type": "constant",
-            "constant": "0"
-          }
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
