@@ -146,6 +146,9 @@ class IndicatorSqlAdapter(IndicatorAdapter):
         self.save_rows(rows)
 
     def save_rows(self, rows):
+        if not rows:
+            return
+
         # transform format from ColumnValue to dict
         formatted_rows = [
             {i.column.database_column_name: i.value for i in row}
