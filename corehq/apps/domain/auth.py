@@ -5,6 +5,7 @@ import re
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
+from corehq.util.hmac_request import validate_request_hmac
 from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
@@ -13,6 +14,7 @@ ANDROID = 'android'
 BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
+FORMPLAYER = 'formplayer'
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -38,6 +40,9 @@ def determine_authtype_from_header(request, default=DIGEST):
         return DIGEST
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
+
+    if request.META.get('HTTP_X_MAC_DIGEST', None):
+        return FORMPLAYER
 
     return default
 
@@ -108,3 +113,8 @@ def basicauth(realm=''):
             return response
         return wrapper
     return real_decorator
+
+
+def formplayer_auth(view):
+    wrapper = validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)
+    return wrapper(view)

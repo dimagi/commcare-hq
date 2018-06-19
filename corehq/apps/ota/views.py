@@ -32,7 +32,7 @@ from corehq.apps.case_search.utils import CaseSearchCriteria
 from corehq.apps.domain.decorators import (
     mobile_auth,
     check_domain_migration,
-    mobile_auth,
+    mobile_auth_or_formplayer,
 )
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.case_search import flatten_result
@@ -57,7 +57,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 @location_safe
 @handle_401_response
-@mobile_auth
+@mobile_auth_or_formplayer
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
