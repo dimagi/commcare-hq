@@ -620,7 +620,6 @@ def collect_inactive_awws():
 
     # If last sync not exist then collect initial data
     if not last_sync:
-        last_sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
         last_sync_date = datetime(2017, 3, 1).date()
     else:
         last_sync_date = last_sync.file_added
@@ -645,6 +644,8 @@ def collect_inactive_awws():
     export_file = BytesIO()
     export_from_tables([['inactive AWWSs', rows]], export_file, 'csv')
 
-    celery_task_logger.info("Saving zip file in blobdb")
-    last_sync.store_file_in_blobdb(export_file, filename)
+    celery_task_logger.info("Saving csv file in blobdb")
+    sync = IcdsFile(blob_id=filename, data_type='inactive_awws')
+    sync.store_file_in_blobdb(export_file)
+    sync.save()
     celery_task_logger.info("Ended updating the Inactive AWW")

@@ -32,6 +32,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
@@ -1662,4 +1663,7 @@ class InactiveAWW(View):
         else:
             sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
         zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
-        return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404
