@@ -15,6 +15,7 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
     Http404,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
@@ -1024,6 +1025,13 @@ def enterprise_dashboard(request, domain):
         )],
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
+
+
+def enterprise_dashboard_total(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    return JsonResponse({'total': report.total})
+
 
 def enterprise_dashboard_download(request, domain, slug):
     account = _get_account_or_404(request, domain)
