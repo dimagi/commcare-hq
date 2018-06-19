@@ -241,8 +241,10 @@ class AggCcsRecordMonthly(models.Model):
     district_map_location_name = models.TextField(blank=True, null=True)
     state_map_location_name = models.TextField(blank=True, null=True)
     month = models.DateField(blank=True, null=True)
+    ccs_status = models.TextField(blank=True, null=True)
     trimester = models.TextField(blank=True, null=True)
     caste = models.TextField(blank=True, null=True)
+    disabled = models.TextField(blank=True, null=True)
     minority = models.TextField(blank=True, null=True)
     resident = models.TextField(blank=True, null=True)
     valid_in_month = models.IntegerField(blank=True, null=True)
@@ -259,14 +261,34 @@ class AggCcsRecordMonthly(models.Model):
     anc2_received_at_delivery = models.IntegerField(blank=True, null=True)
     anc3_received_at_delivery = models.IntegerField(blank=True, null=True)
     anc4_received_at_delivery = models.IntegerField(blank=True, null=True)
+    registration_trimester_at_delivery = models.DecimalField(
+        max_digits=65535,
+        decimal_places=65535,
+        blank=True,
+        null=True
+    )
     institutional_delivery_in_month = models.IntegerField(blank=True, null=True)
+    using_ifa = models.IntegerField(blank=True, null=True)
+    ifa_consumed_last_seven_days = models.IntegerField(blank=True, null=True)
+    anemic_normal = models.IntegerField(blank=True, null=True)
     anemic_moderate = models.IntegerField(blank=True, null=True)
     anemic_severe = models.IntegerField(blank=True, null=True)
+    anemic_unknown = models.IntegerField(blank=True, null=True)
     extra_meal = models.IntegerField(blank=True, null=True)
     resting_during_pregnancy = models.IntegerField(blank=True, null=True)
+    bp1_complete = models.IntegerField(blank=True, null=True)
+    bp2_complete = models.IntegerField(blank=True, null=True)
+    bp3_complete = models.IntegerField(blank=True, null=True)
+    pnc_complete = models.IntegerField(blank=True, null=True)
+    trimester_2 = models.IntegerField(blank=True, null=True)
     trimester_3 = models.IntegerField(blank=True, null=True)
     postnatal = models.IntegerField(blank=True, null=True)
+    counsel_bp_vid = models.IntegerField(blank=True, null=True)
+    counsel_preparation = models.IntegerField(blank=True, null=True)
     counsel_immediate_bf = models.IntegerField(blank=True, null=True)
+    counsel_fp_vid = models.IntegerField(blank=True, null=True)
+    counsel_immediate_conception = models.IntegerField(blank=True, null=True)
+    counsel_accessible_postpartum_fp = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'icds_model'

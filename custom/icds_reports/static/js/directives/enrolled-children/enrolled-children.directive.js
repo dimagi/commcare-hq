@@ -99,6 +99,7 @@ function EnrolledChildrenController($scope, $routeParams, $location, $filter, de
             return ["0-1 month", "1-6 months", "6-12 months", "1-3 years", "3-6 years"];
         },
     };
+    vm.chartOptions.chart.showControls = false;
 
     vm.tooltipContent = function (dataInMonth, x) {
         var average = (dataInMonth.all !== 0) ? d3.format(".2%")(dataInMonth.y / dataInMonth.all) : 0;

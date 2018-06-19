@@ -14,6 +14,7 @@ from corehq.sql_db.util import get_db_aliases_for_partitioned_query
 from corehq.util.datadog.gauges import datadog_counter
 from django.core.mail.message import EmailMessage
 from custom.icds.translations.integrations.transifex import Transifex
+from io import open
 
 if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
     @periodic_task(run_every=crontab(minute=0, hour='22'))
@@ -52,32 +53,59 @@ if settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS:
 
 
 @task
-def delete_resources_on_transifex(domain, data):
+def delete_resources_on_transifex(domain, data, email):
     version = data.get('version')
     transifex = Transifex(domain,
                           data.get('app_id'),
                           data.get('target_lang') or data.get('source_lang'),
                           data.get('transifex_project_slug'),
                           version,)
-    transifex.delete_resources()
+    delete_status = transifex.delete_resources()
+    result_note = "Hi,\nThe request to delete resources for app {app_id}(version {version}), " \
+                  "was completed on project {transifex_project_slug} on transifex. " \
+                  "The result is as follows:\n".format(**data)
+    email = EmailMessage(
+        subject='[{}] - Transifex removed translations'.format(settings.SERVER_ENVIRONMENT),
+        body=(result_note +
+              "\n".join([' '.join([sheet_name, result]) for sheet_name, result in delete_status.items()])
+              ),
+        to=[email],
+        from_email=settings.DEFAULT_FROM_EMAIL
+    )
+    email.send()
 
 
 @task
-def push_translation_files_to_transifex(domain, data):
+def push_translation_files_to_transifex(domain, data, email):
+    upload_status = None
     if data.get('target_lang'):
-        Transifex(domain,
-                  data.get('app_id'),
-                  data.get('target_lang'),
-                  data.get('transifex_project_slug'),
-                  data.get('version'),
-                  is_source_file=False,
-                  exclude_if_default=True).send_translation_files()
+        upload_status = Transifex(domain,
+                                  data.get('app_id'),
+                                  data.get('target_lang'),
+                                  data.get('transifex_project_slug'),
+                                  data.get('version'),
+                                  is_source_file=False,
+                                  exclude_if_default=True).send_translation_files()
     elif data.get('source_lang'):
-        Transifex(domain,
-                  data.get('app_id'),
-                  data.get('source_lang'),
-                  data.get('transifex_project_slug'),
-                  data.get('version')).send_translation_files()
+        upload_status = Transifex(domain,
+                                  data.get('app_id'),
+                                  data.get('source_lang'),
+                                  data.get('transifex_project_slug'),
+                                  data.get('version')).send_translation_files()
+    if upload_status:
+        result_note = "Hi,\nThe upload for app {app_id}(version {version}), " \
+                      "with source language '{source_lang}' and target lang '{target_lang}' " \
+                      "was completed on project {transifex_project_slug} on transifex. " \
+                      "The result is as follows:\n".format(**data)
+        email = EmailMessage(
+            subject='[{}] - Transifex pushed translations'.format(settings.SERVER_ENVIRONMENT),
+            body=(result_note +
+                  "\n".join([' '.join([sheet_name, result]) for sheet_name, result in upload_status.items()])
+                  ),
+            to=[email],
+            from_email=settings.DEFAULT_FROM_EMAIL
+        )
+        email.send()
 
 
 @task

@@ -4,6 +4,7 @@ from collections import namedtuple
 import copy
 import logging
 import time
+from io import open
 from six.moves.urllib.parse import unquote
 
 from dimagi.utils.chunked import chunked
@@ -13,6 +14,7 @@ from elasticsearch.exceptions import ElasticsearchException
 
 from corehq.apps.es.utils import flatten_field_dict
 from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.files import TransientTempfile
 from corehq.pillows.mappings.app_mapping import APP_INDEX
 from corehq.pillows.mappings.case_mapping import CASE_INDEX
 from corehq.pillows.mappings.case_search_mapping import CASE_SEARCH_INDEX_INFO
@@ -239,6 +241,26 @@ def iter_es_docs(index_name, ids):
         for result in mget_query(index_name, ids_chunk, source=True):
             if result['found']:
                 yield result['_source']
+
+
+def iter_es_docs_from_query(query):
+    """Returns all docs which match query
+    """
+    scroll_result = query.scroll_ids()
+
+    def iter_export_docs():
+        with TransientTempfile() as temp_path:
+            with open(temp_path, 'w', encoding='utf-8') as f:
+                for doc_id in scroll_result:
+                    f.write(doc_id + '\n')
+
+            # Stream doc ids from disk and fetch documents from ES in chunks
+            with open(temp_path, 'r', encoding='utf-8') as f:
+                doc_ids = (doc_id.strip() for doc_id in f)
+                for doc in iter_es_docs(query.index, doc_ids):
+                    yield doc
+
+    return ScanResult(scroll_result.count, iter_export_docs())
 
 
 def scroll_query(index_name, q, es_instance_alias=ES_DEFAULT_INSTANCE):

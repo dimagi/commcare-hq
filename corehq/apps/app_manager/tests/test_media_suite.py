@@ -26,6 +26,9 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         audio_path = 'jr://file/commcare/audio{}.mp3'
         app = Application.wrap(self.get_json('app'))
 
+        for num in ['1', '2', '3', '4']:
+            app.create_mapping(CommCareImage(_id=num), image_path.format(num), save=False)
+            app.create_mapping(CommCareAudio(_id=num), audio_path.format(num), save=False)
         app.get_module(0).case_list.show = True
         app.get_module(0).case_list.set_icon('en', image_path.format('4'))
         app.get_module(0).case_list.set_audio('en', audio_path.format('4'))
@@ -44,6 +47,18 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
                                [audio_path.format(num) for num in [1, 2, 3, 4]]
         self.assertTrue(app.get_module(0).uses_media())
         self.assertEqual(app.all_media_paths, set(should_contain_media))
+        self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
+
+        # test multimedia removed
+        app.get_module(0).case_list.set_icon('en', '')
+        app.get_module(0).case_list.set_audio('en', '')
+        app.get_module(0).set_icon('en', '')
+        app.get_module(0).set_audio('en', '')
+        app.get_module(0).case_list_form.set_icon('en', '')
+        app.get_module(0).case_list_form.set_audio('en', '')
+        app.get_module(0).get_form(0).set_icon('en', '')
+        app.get_module(0).get_form(0).set_audio('en', '')
+        self.assertFalse(list(app.multimedia_map.keys()))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_inline_video(self, mock):

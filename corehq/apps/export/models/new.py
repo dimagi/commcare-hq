@@ -656,6 +656,8 @@ class ExportInstance(BlobMixin, Document):
     last_updated = DateTimeProperty()
     last_accessed = DateTimeProperty()
 
+    description = StringProperty(default='')
+
     class Meta(object):
         app_label = 'export'
 

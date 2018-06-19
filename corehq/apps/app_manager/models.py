@@ -1511,6 +1511,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
+    def get_app(self):
+        raise NotImplementedError
+
     def _get_media_by_language(self, media_attr, lang, strict=False):
         """
         Return media-path for given language if one exists, else 1st path in the
@@ -1581,6 +1584,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        app = self.get_app()
+        if old_value and not media_path:
+            app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
@@ -2316,6 +2326,8 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2393,6 +2405,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
+
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
@@ -2405,9 +2420,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuleBase, self).__init__(*args, **kwargs)
+        self.assign_references()
+
     @property
     def is_surveys(self):
         return self.case_type == ""
+
+    def assign_references(self):
+        if hasattr(self, 'case_list'):
+            self.case_list._module = self
+        if hasattr(self, 'case_list_form'):
+            self.case_list_form._module = self
 
     @classmethod
     def wrap(cls, data):
