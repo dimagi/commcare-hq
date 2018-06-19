@@ -225,6 +225,8 @@ BEGIN
     'WHERE chm_monthly.case_id = agg.case_id AND chm_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
 
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' chm_monthly SET ' ||
+      'recorded_height = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.height_child_last_recorded) = ' || quote_literal(_start_date) || ') THEN agg.height_child ELSE NULL END, ' ||
+      'height_measured_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.height_child_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
       'zscore_grading_hfa = agg.zscore_grading_hfa, ' ||
       'zscore_grading_hfa_recorded_in_month = CASE WHEN (date_trunc(' || quote_literal('MONTH') || ', agg.zscore_grading_hfa_last_recorded) = ' || quote_literal(_start_date) || ') THEN 1 ELSE 0 END, ' ||
       'zscore_grading_wfh = agg.zscore_grading_wfh, ' ||

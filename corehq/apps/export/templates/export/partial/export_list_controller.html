@@ -143,6 +143,13 @@
                                 <i class="fa fa-file-o"></i> <strong>{% trans 'Form:' %}</strong> {{ export.formname }}
                             </p>
                             {% endangularjs %}
+
+                            {% angularjs %}
+                            <p>
+                                {{ export.description }}
+                            </p>
+                            {% endangularjs %}
+
                             {% angularjs %}
                             <div ng-if="!isLocationSafeForUser(export)" class="text-warning">
                                 {% blocktrans %}

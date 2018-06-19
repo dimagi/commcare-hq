@@ -49,14 +49,13 @@
 trunk: master
 name: autostaging
 branches:
-  - je/min-year # j$ Jun 1
-  - mk-add-meta-drift # MK June 4
   - jls/prune-auto-builds  # Jenny June 5
   - fr/case-list-explorer-report-export # farid june 5
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
   - jls/kill-mm-case-properties  # Jenny June 13
-  - np/export-description  # NP June 14
+  - es/progress-bar  # ES June 18
+  - nh/copy_form_to_app  # Norman June 19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
