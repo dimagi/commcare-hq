@@ -41,7 +41,7 @@ from django.views.generic import View
 
 from djangular.views.mixins import allow_remote_invocation
 import pytz
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
@@ -1806,7 +1806,8 @@ class BaseNewExportView(BaseExportView):
             raise BadExportConfiguration()
 
         if not export._rev:
-            export.owner_id = request.couch_user.user_id
+            if toggles.toggle_enabled(request.domain):
+                export.owner_id = request.couch_user.user_id
             if getattr(settings, "ENTERPRISE_MODE"):
                 # default auto rebuild to False for enterprise clusters
                 # only do this on first save to prevent disabling on every edit
@@ -2515,8 +2516,9 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
-            new_export.owner_id = self.request.couch_user.user_id
-            new_export.sharing = SharingOption.PRIVATE
+            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+                new_export.owner_id = request.couch_user.user_id
+                new_export.sharing = SharingOption.PRIVATE
             new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
