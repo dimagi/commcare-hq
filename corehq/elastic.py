@@ -4,6 +4,7 @@ from collections import namedtuple
 import copy
 import logging
 import time
+from io import open
 from six.moves.urllib.parse import unquote
 
 from dimagi.utils.chunked import chunked
@@ -249,12 +250,12 @@ def iter_es_docs_from_query(query):
 
     def iter_export_docs():
         with TransientTempfile() as temp_path:
-            with open(temp_path, 'w') as f:
+            with open(temp_path, 'w', encoding='utf-8') as f:
                 for doc_id in scroll_result:
                     f.write(doc_id + '\n')
 
             # Stream doc ids from disk and fetch documents from ES in chunks
-            with open(temp_path, 'r') as f:
+            with open(temp_path, 'r', encoding='utf-8') as f:
                 doc_ids = (doc_id.strip() for doc_id in f)
                 for doc in iter_es_docs(query.index, doc_ids):
                     yield doc
