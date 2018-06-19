@@ -31,7 +31,8 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import UserRole, Permissions
 from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
@@ -1587,6 +1588,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
+    @require_permission(Permissions.view_report,
+                        'custom.icds_reports.reports.reports.DashboardReport')
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404
