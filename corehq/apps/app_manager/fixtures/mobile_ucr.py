@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from collections import defaultdict
 from datetime import datetime, timedelta
 import logging
-import random
 
 from django.conf import settings
 from lxml.builder import E
@@ -24,18 +23,14 @@ from corehq.util.timezones.conversions import ServerTime
 from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
 
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SUPPORT_BOTH_BACKENDS
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
 from corehq.apps.userreports.models import get_report_config
 from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
-from corehq.apps.userreports.tasks import compare_ucr_dbs
 from corehq.apps.app_manager.dbaccessors import (
     get_apps_in_domain, get_brief_apps_in_domain, get_apps_by_id
 )
 from six.moves import zip
 from six.moves import map
-
-MOBILE_UCR_RANDOM_THRESHOLD = 1000
 
 
 def _should_sync(restore_state):
@@ -100,9 +95,6 @@ class BaseReportFixturesProvider(FixtureProvider):
     def _get_report_and_data_source(report_id, domain):
         report = get_report_config(report_id, domain)[0]
         data_source = ConfigurableReportDataSource.from_spec(report, include_prefilters=True)
-        if report.soft_rollout > 0 and data_source.config.backend_id == UCR_LABORATORY_BACKEND:
-            if random.random() < report.soft_rollout:
-                data_source.override_backend_id(UCR_ES_BACKEND)
         return report, data_source
 
     @staticmethod
@@ -208,10 +200,6 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         )
         filters_elem = BaseReportFixturesProvider._get_filters_elem(
             defer_filters, filter_options_by_field, restore_user._couch_user)
-
-        if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
-                random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
-            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.report(id=report_config.uuid, report_id=report_config.report_id)
         report_elem.append(filters_elem)
@@ -383,10 +371,6 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
             defer_filters, filter_options_by_field, restore_user._couch_user)
         report_filter_elem = E.fixture(id=ReportFixturesProviderV2._report_filter_id(report_config.uuid))
         report_filter_elem.append(filters_elem)
-
-        if (data_source.config.backend_id in UCR_SUPPORT_BOTH_BACKENDS and
-                random.randint(0, MOBILE_UCR_RANDOM_THRESHOLD) == MOBILE_UCR_RANDOM_THRESHOLD):
-            compare_ucr_dbs.delay(domain, report_config.report_id, filter_values)
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,

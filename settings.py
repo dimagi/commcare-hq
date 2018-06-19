@@ -871,8 +871,6 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-OVERRIDE_UCR_BACKEND = None
-
 # CommCare HQ - To indicate server
 COMMCARE_HQ_NAME = "CommCare HQ"
 # CommCare - To Indicate mobile
