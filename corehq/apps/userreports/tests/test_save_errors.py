@@ -103,6 +103,7 @@ class AdapterBulkSaveTest(TestCase):
         self.adapter.build_table()
         self.adapter.save_rows([])
 
+
 @override_settings(OVERRIDE_UCR_BACKEND=UCR_ES_BACKEND)
 class AdapterBulkSaveESTest(AdapterBulkSaveTest):
     pass
