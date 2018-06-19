@@ -185,13 +185,6 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     from corehq.apps.fixtures.models import UserFixtureType
     from dimagi.utils.couch.database import iter_docs
 
-    def has_ref(obj, location_id):
-        # obj is either a CommCareUser or DomainMembership object
-        return (
-            obj.location_id == location_id or
-            location_id in obj.assigned_location_ids
-        )
-
     # close supply point cases
     for supply_point_id in supply_point_ids:
         close_supply_point_case(domain, supply_point_id)
@@ -200,15 +193,14 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     unassign_user_ids = user_ids_at_locations(location_ids)
     for doc in iter_docs(CommCareUser.get_db(), unassign_user_ids):
         user = CommCareUser.wrap(doc)
-        membership = user.get_domain_membership(domain) if user.is_web_user() else user
         for location_id in location_ids:
-            if not has_ref(membership, location_id):
+            if location_id not in user.get_location_ids(domain):
                 continue
             if user.is_web_user():
                 user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
             elif user.is_commcare_user():
                 user.unset_location_by_id(location_id, fall_back_to_next=True)
 
-    # update users at ancestor locations
+    # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
