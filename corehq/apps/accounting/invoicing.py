@@ -79,8 +79,8 @@ class DomainInvoiceFactory(object):
     def _get_subscriptions(self):
         subscriptions = Subscription.visible_objects.filter(
             Q(date_end=None) | (
-                    Q(date_end__gt=self.date_start)
-                    & Q(date_end__gt=F('date_start'))
+                Q(date_end__gt=self.date_start)
+                & Q(date_end__gt=F('date_start'))
             ),
             subscriber=self.subscriber,
             date_start__lte=self.date_end
@@ -417,8 +417,8 @@ class CustomerAccountInvoiceFactory(object):
         customer_invoice.update_balance()
         customer_invoice.save()
         should_set_date_due = (
-                customer_invoice.balance > SMALL_INVOICE_THRESHOLD or
-                (customer_invoice.account.auto_pay_enabled and customer_invoice.balance > Decimal(0))
+            customer_invoice.balance > SMALL_INVOICE_THRESHOLD or
+            (customer_invoice.account.auto_pay_enabled and customer_invoice.balance > Decimal(0))
         )
         if should_set_date_due:
             customer_invoice.date_due = self.date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
@@ -444,7 +444,7 @@ class CustomerAccountInvoiceFactory(object):
             else:
                 record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
         except InvoiceEmailThrottledError as e:
-            log_accounting_error(e.message)
+            log_accounting_info(str(e))
 
     @staticmethod
     def _get_invoice_start(sub, date_start):

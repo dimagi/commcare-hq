@@ -135,7 +135,7 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         self.account = BillingAccount.get_or_create_account_by_domain(
             domain=self.domain1.name, created_by="TEST"
         )[0]
-        self.account.is_customer_billing_account=True
+        self.account.is_customer_billing_account = True
         self.account.save()
         self.invoice_factory = CustomerAccountInvoiceFactory(self.invoice_start, self.invoice_end, self.account)
         self.advanced_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.ADVANCED)
