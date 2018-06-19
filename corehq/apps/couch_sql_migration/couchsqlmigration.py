@@ -647,7 +647,7 @@ class MigrationPaginationEventHandler(PaginationEventHandler):
 
     def page_end(self, total_emitted, duration, *args, **kwargs):
         self.retries = self.RETRIES
-        cache_utils.clear_limit(self._cache_key)
+        cache_utils.clear_limit(self._cache_key())
 
 
 def _get_main_form_iterator(domain):
