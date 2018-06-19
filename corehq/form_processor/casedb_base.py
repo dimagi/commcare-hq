@@ -132,13 +132,6 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
     def clear_changed(self):
         self._changed = set()
 
-    def get_cached_forms(self):
-        """
-        Get any in-memory forms being processed. These are only used by the Couch backend
-        to fetch attachments which need to be attached to cases.
-        """
-        return {xform.form_id: xform for xform in self.cached_xforms}
-
     @abstractmethod
     def get_cases_for_saving(self, now):
         pass
@@ -172,7 +165,7 @@ class AbstractCaseDbCache(six.with_metaclass(ABCMeta)):
             return CaseUpdateMetadata(case, is_creation=True, previous_owner_id=None)
         else:
             previous_owner = case.owner_id
-            self.case_update_strategy(case).update_from_case_update(case_update, xform, self.get_cached_forms())
+            self.case_update_strategy(case).update_from_case_update(case_update, xform)
             return CaseUpdateMetadata(case, is_creation=False, previous_owner_id=previous_owner)
 
     def post_process_case(self, case, xform):

@@ -12,7 +12,7 @@ from corehq.form_processor.exceptions import AttachmentNotFound, CaseNotFound, C
 from corehq.form_processor.interfaces.dbaccessors import CaseIndexInfo, CaseAccessors
 from corehq.form_processor.interfaces.processor import ProcessedForms
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL, \
-    CaseTransaction, CommCareCaseIndexSQL, CaseAttachmentSQL, SupplyPointCaseMixin
+    CaseTransaction, CommCareCaseIndexSQL, SupplyPointCaseMixin
 from corehq.form_processor.tests.utils import FormProcessorTestUtils, use_sql_backend
 from corehq.form_processor.tests.test_basics import _submit_case_block
 from corehq.sql_db.routers import db_for_read_write
@@ -135,15 +135,6 @@ class CaseAccessorTestsSQL(TestCase):
             referenced_id=uuid.uuid4().hex,
             relationship_id=CommCareCaseIndexSQL.CHILD
         ))
-        case1.track_create(CaseAttachmentSQL(
-            case=case1,
-            attachment_id=uuid.uuid4().hex,
-            name='pic.jpg',
-            content_type='image/jpeg',
-            blob_id='122',
-            md5='123',
-            identifier='pic.jpg',
-        ))
         CaseAccessorSQL.save_case(case1)
 
         num_deleted = CaseAccessorSQL.hard_delete_cases(DOMAIN, [case1.case_id, case2.case_id])
@@ -152,74 +143,7 @@ class CaseAccessorTestsSQL(TestCase):
             CaseAccessorSQL.get_case(case1.case_id)
 
         self.assertEqual([], CaseAccessorSQL.get_indices(case1.domain, case1.case_id))
-        self.assertEqual([], CaseAccessorSQL.get_attachments(case1.case_id))
         self.assertEqual([], CaseAccessorSQL.get_transactions(case1.case_id))
-
-    def test_get_attachment_by_name(self):
-        case = _create_case()
-
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='pic.jpg',
-            content_type='image/jpeg',
-            blob_id='123',
-            identifier='pic1',
-            md5='123'
-        ))
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='my_doc',
-            content_type='text/xml',
-            blob_id='124',
-            identifier='doc1',
-            md5='123'
-        ))
-        CaseAccessorSQL.save_case(case)
-
-        with self.assertRaises(AttachmentNotFound):
-            CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'missing')
-
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
-            attachment_meta = CaseAccessorSQL.get_attachment_by_identifier(case.case_id, 'pic1')
-
-        self.assertEqual(case.case_id, attachment_meta.case_id)
-        self.assertEqual('pic.jpg', attachment_meta.name)
-        self.assertEqual('image/jpeg', attachment_meta.content_type)
-
-    def test_get_attachments(self):
-        case = _create_case()
-
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='pic.jpg',
-            content_type='image/jpeg',
-            blob_id='125',
-            identifier='pic1',
-            md5='123',
-        ))
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='doc',
-            content_type='text/xml',
-            blob_id='126',
-            identifier='doc1',
-            md5='123',
-        ))
-        CaseAccessorSQL.save_case(case)
-
-        with self.assertNumQueries(1, using=db_for_read_write(CaseAttachmentSQL)):
-            attachments = CaseAccessorSQL.get_attachments(case.case_id)
-
-        self.assertEqual(2, len(attachments))
-        sorted_attachments = sorted(attachments, key=lambda x: x.name)
-        for att in attachments:
-            self.assertEqual(case.case_id, att.case_id)
-        self.assertEqual('doc', sorted_attachments[0].name)
-        self.assertEqual('pic.jpg', sorted_attachments[1].name)
 
     def test_get_transactions(self):
         form_id = uuid.uuid4().hex
@@ -330,48 +254,6 @@ class CaseAccessorTestsSQL(TestCase):
         case.track_delete(index)
         CaseAccessorSQL.save_case(case)
         self.assertEqual([], CaseAccessorSQL.get_indices(case.domain, case.case_id))
-
-    def test_save_case_delete_attachment(self):
-        case = _create_case()
-
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='doc',
-            content_type='text/xml',
-            blob_id='127',
-            md5='123',
-            identifier='doc',
-        ))
-        CaseAccessorSQL.save_case(case)
-
-        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
-        case.track_delete(attachment)
-        CaseAccessorSQL.save_case(case)
-        self.assertEqual([], CaseAccessorSQL.get_attachments(case.case_id))
-
-    def test_save_case_update_attachment(self):
-        case = _create_case()
-
-        case.track_create(CaseAttachmentSQL(
-            case=case,
-            attachment_id=uuid.uuid4().hex,
-            name='doc',
-            content_type='text/xml',
-            blob_id='128',
-            md5='123',
-            identifier='doc'
-        ))
-        CaseAccessorSQL.save_case(case)
-
-        [attachment] = CaseAccessorSQL.get_attachments(case.case_id)
-        attachment.name = 'new_name'
-
-        # hack to call the sql function with an already saved attachment
-        case.track_create(attachment)
-
-        with self.assertRaises(CaseSaveError):
-            CaseAccessorSQL.save_case(case)
 
     def test_get_case_ids_by_owners(self):
         case1 = _create_case(user_id="user1")
@@ -621,7 +503,7 @@ class CaseAccessorTestsSQL(TestCase):
             case=case,
             form_id=uuid.uuid4().hex,
             server_date=datetime.utcnow(),
-            type=CaseTransaction.TYPE_FORM | CaseTransaction.TYPE_CASE_ATTACHMENT,
+            type=CaseTransaction.TYPE_FORM,
             revoked=False
         ))
         self.assertEqual(len(case.get_closing_transactions()), 2)

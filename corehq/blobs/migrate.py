@@ -487,11 +487,6 @@ class CaseUploadFileMetaReindexAccessor(PkReindexAccessor):
     blob_helper = sql_blob_helper("identifier", CASE_UPLOAD_BUCKET)
 
 
-class CaseAttachmentSQLReindexAccessor(PkReindexAccessor):
-    model_class = sql_xform.CaseAttachmentSQL
-    blob_helper = sql_blob_helper("blob_id", lambda obj: obj.blobdb_bucket())
-
-
 class XFormAttachmentSQLReindexAccessor(PkReindexAccessor):
     model_class = sql_xform.XFormAttachmentSQL
     blob_helper = sql_blob_helper("blob_id", lambda obj: obj.blobdb_bucket())
@@ -708,7 +703,6 @@ MIGRATIONS = {m.slug: m for m in [
         ],
         sql_reindexers=[
             CaseUploadFileMetaReindexAccessor,
-            CaseAttachmentSQLReindexAccessor,
             XFormAttachmentSQLReindexAccessor,
             DemoUserRestoreReindexAccessor,
         ],

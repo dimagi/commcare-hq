@@ -1209,8 +1209,6 @@ class FormBase(DocumentSchema):
             valid_paths = {}
 
         def format_key(key, path):
-            if valid_paths.get(path) == "upload":
-                return "{}{}".format(ATTACHMENT_PREFIX, key)
             return key
         return format_key
 
@@ -1377,11 +1375,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
         else:
-            no_multimedia = not self.get_app().enable_multimedia_case_property
             for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
-                elif no_multimedia and valid_paths[path] == "upload":
+                elif valid_paths[path] == "upload":
                     errors.append({'type': 'multimedia case property not supported', 'path': path})
 
         return errors

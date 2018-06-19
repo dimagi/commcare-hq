@@ -227,9 +227,6 @@ class SuiteTest(SimpleTestCase, TestXmlMixin, SuiteMixin):
     def test_no_case_assertions(self):
         self._test_generic_suite('app_no_case_sharing', 'suite-no-case-sharing')
 
-    def test_attached_picture(self):
-        self._test_generic_suite_partial('app_attached_image', "./detail", 'suite-attached-image')
-
     def test_copy_form(self):
         app = Application.new_app('domain', "Untitled Application")
         module = app.add_module(AdvancedModule.new_module('module', None))

@@ -8,7 +8,6 @@
     "actions": [
         {
             "action_type": "create",
-            "attachments": {},
             "date": "2013-03-09T06:30:09.007000Z",
             "deprecated": false,
             "doc_type": "CommCareCaseAction",
@@ -26,7 +25,6 @@
         },
         {
             "action_type": "update",
-            "attachments": {},
             "date": "2013-03-09T06:30:09.007000Z",
             "deprecated": false,
             "doc_type": "CommCareCaseAction",
@@ -48,7 +46,6 @@
             "xform_xmlns": "http://openrosa.org/formdesigner/266AD1A0-9EAE-483E-B4B2-4E85D6CA8D4B"
         }
     ],
-    "case_attachments": {},
     "closed": false,
     "closed_by": "",
     "closed_on": null,
