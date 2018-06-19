@@ -9,6 +9,7 @@ from jsonobject.properties import ListProperty, BooleanProperty
 from dimagi.ext.jsonobject import JsonObject, StringProperty, DateTimeProperty, DictProperty
 from dimagi.utils.couch.database import get_db
 import six
+from http_parser import http
 
 
 class PaginationEventHandler(object):
@@ -102,7 +103,10 @@ def paginate_function(data_function, args_provider, event_handler=None):
         event_handler.page_start(total_emitted, *args, **kwargs)
         results = data_function(*args, **kwargs)
         start_time = datetime.utcnow()
-        len_results = len(results)
+        try:
+            len_results = len(results)
+        except http.NoMoreData:
+            continue
 
         for item in results:
             yield item
