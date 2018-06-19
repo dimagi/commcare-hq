@@ -1144,12 +1144,6 @@ class TestExportData(TestCase):
         )
 
     def test_system_usage_export(self):
-        print (SystemUsageExport(
-                config={
-                    'domain': 'icds-cas',
-                    'month': datetime(2017, 5, 1)
-                }
-            ).get_excel_data('b1'))
         self.assertListEqual(
             SystemUsageExport(
                 config={
@@ -1160,7 +1154,7 @@ class TestExportData(TestCase):
             [
                 ['System Usage', [
                     [
-                        'State', 
+                        'State',
                         'Number of days AWC was open in the given month',
                         'Number of launched AWCs (ever submitted at least one HH reg form)',
                         'Number of household registration forms', 'Number of add pregnancy forms',
@@ -1181,7 +1175,7 @@ class TestExportData(TestCase):
                     ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17]
                 ]],
                 ['Export Info', [
-                    ['Generated at', '16:21:11 15 November 2017'], 
+                    ['Generated at', '16:21:11 15 November 2017'],
                     ['Block', 'b1'],
                     ['Month', 'May'],
                     ['Year', 2017]
