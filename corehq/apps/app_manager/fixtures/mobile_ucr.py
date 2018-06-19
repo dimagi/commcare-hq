@@ -19,6 +19,8 @@ from corehq.apps.app_manager.const import (
 from corehq.apps.app_manager.models import ReportModule
 from corehq.apps.app_manager.suite_xml.features.mobile_ucr import is_valid_mobile_select_filter_type
 from corehq.apps.userreports.reports.filters.factory import ReportFilterFactory
+from corehq.util.timezones.conversions import ServerTime
+from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.xml_utils import serialize
 
 from corehq.apps.userreports.exceptions import UserReportsError, ReportConfigurationNotFoundError
@@ -142,8 +144,9 @@ class ReportFixturesProvider(BaseReportFixturesProvider):
         return [E.fixture(id=self.id, user_id=restore_user.user_id)]
 
     def _v1_fixture(self, restore_user, report_configs):
-        root = E.fixture(id=self.id, user_id=restore_user.user_id)
-        reports_elem = E.reports(last_sync=_utcnow().isoformat())
+        user_id = restore_user.user_id
+        root = E.fixture(id=self.id, user_id=user_id)
+        reports_elem = E.reports(last_sync=_last_sync_time(restore_user.domain, user_id))
         for report_config in report_configs:
             try:
                 reports_elem.append(self.report_config_to_v1_fixture(report_config, restore_user))
@@ -371,7 +374,7 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
         report_elem = E.fixture(
             id=ReportFixturesProviderV2._report_fixture_id(report_config.uuid), user_id=restore_user.user_id,
-            report_id=report_config.report_id, last_sync=_utcnow().isoformat(),
+            report_id=report_config.report_id, last_sync=_last_sync_time(domain, restore_user.user_id),
             indexed='true'
         )
         report_elem.append(rows_elem)
@@ -416,6 +419,11 @@ class ReportFixturesProviderV2(BaseReportFixturesProvider):
 
 def _utcnow():
     return datetime.utcnow()
+
+
+def _last_sync_time(domain, user_id):
+    timezone = get_timezone_for_user(user_id, domain)
+    return ServerTime(_utcnow()).user_time(timezone).done().isoformat()
 
 
 report_fixture_generator = ReportFixturesProvider()

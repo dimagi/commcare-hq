@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 
 import random
 from functools import wraps
-import hotshot
+import cProfile
 import resource
 import os
 import gc
@@ -83,11 +83,11 @@ def profile_prod(log_file, probability, limit):
                 # is actually called.
                 final_log_file = '{}-{}{}'.format(base, datetime.now().isoformat(), ext)
 
-                prof = hotshot.Profile(final_log_file)
+                prof = cProfile.Profile()
                 try:
                     ret = prof.runcall(f, *args, **kwargs)
                 finally:
-                    prof.close()
+                    prof.dump_stats(final_log_file)
                 return ret
 
         return _inner

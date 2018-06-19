@@ -14,6 +14,7 @@
     {% if implement_password_obfuscation %}
         {% include "nic_compliance/password_encoder.html" %}
     {% endif %}
+    <script src="{% static 'hqwebapp/js/widgets.js' %}"></script>
     <script src="{% static 'users/js/edit_commcare_user.js' %}"></script>
 {% endblock %}
 

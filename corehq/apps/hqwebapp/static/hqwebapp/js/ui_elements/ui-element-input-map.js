@@ -73,8 +73,8 @@ hqDefine('hqwebapp/js/ui_elements/ui-element-input-map', function () {
 
                 }
                 if(map_key) {
-                    this.$noedit_view.html('<strong>' + map_key + '</strong> &rarr; ' + (
-                        map_val ? map_val : '<i class="fa fa-remove"></i>'
+                    this.$noedit_view.html('<strong>' + $('<div>').text(map_key).html() + '</strong> &rarr; ' + (
+                        map_val ? $('<div>').text(map_val).html() : '<i class="fa fa-remove"></i>'
                     ));
                 }else{
                     this.$noedit_view.text("");
