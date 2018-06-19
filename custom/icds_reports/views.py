@@ -108,7 +108,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports, collect_inactive_awws
+    prepare_issnip_monthly_register_reports
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
