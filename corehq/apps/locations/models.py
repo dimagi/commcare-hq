@@ -461,7 +461,10 @@ class SQLLocation(AdjListModel):
         This method mutates other databases that will not be reverted on
         transaction rollback.
 
-        :param locations: A list of SQLLocation objects.
+        :param locations: A list of SQLLocation objects. All locations
+        in the list are expected to be leaf nodes or parents of nodes
+        that are also in the list. Behavior of passing a non-leaf node
+        without also passing all of its descendants is undefined.
         :param ancestor_location_ids: A list of ancestor `location_id`s
         for the given `locations`.
         """
