@@ -10,7 +10,7 @@ from django.views.generic import FormView
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
-from corehq.apps.domain.decorators import domain_admin_required, mobile_auth
+from corehq.apps.domain.decorators import domain_admin_required, mobile_auth_or_formplayer
 from corehq.apps.domain.views import BaseDomainView
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
@@ -54,7 +54,7 @@ def get_case_and_descendants(domain, case_id):
             if not c.closed]
 
 
-@mobile_auth
+@mobile_auth_or_formplayer
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
 

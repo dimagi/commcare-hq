@@ -22,7 +22,7 @@ from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
-    get_username_and_password_from_request)
+    get_username_and_password_from_request, FORMPLAYER, formplayer_auth)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -227,6 +227,10 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
+    return _login_or_challenge(formplayer_auth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+
+
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         api_key(),
@@ -236,18 +240,32 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     )
 
 
-def _get_multi_auth_decorator(default, allow_token=False):
+def _get_multi_auth_decorator(default, allow_formplayer=False):
+    """
+    :param allow_formplayer: If True this will allow two additional auth mechanisms which are used
+         by Formplayer:
+
+         - token auth: this get's used by anonymous web apps. A single user in the domain
+             is selected as the 'anonymous' user and had an auth token created for it. This
+             token is then used to authenticate with HQ without requireing the user to log in.
+
+         - formplayer auth: for SMS forms there is no active user involved in the session and so
+             formplayer can not use the session cookie to auth. To allow formplayer access to the
+             endpoints we validate each formplayer request using a shared key. See the auth
+             function for more details.
+    """
     def decorator(fn):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            if authtype == TOKEN and not allow_token:
+            if authtype in (TOKEN, FORMPLAYER) and not allow_formplayer:
                 return HttpResponseForbidden()
             function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
+                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
@@ -274,10 +292,11 @@ def mobile_auth(view_func):
     return _get_multi_auth_decorator(default=BASIC)(two_factor_exempt(view_func))
 
 
-# This decorator is deprecated, it's used only for anonymous web apps
+# This decorator is used only for anonymous web apps and SMS forms
 # Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_token(view_func):
-    return _get_multi_auth_decorator(default=BASIC, allow_token=True)(two_factor_exempt(view_func))
+def mobile_auth_or_formplayer(view_func):
+    decorator = _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)
+    return decorator(two_factor_exempt(view_func))
 
 
 # Use this decorator to allow any auth type -
