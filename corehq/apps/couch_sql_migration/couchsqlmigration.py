@@ -627,19 +627,26 @@ def _save_migrated_models(sql_form, case_stock_result=None):
 
 
 class MigrationPaginationEventHandler(PaginationEventHandler):
+    RETRIES = 10
+
     def __init__(self, domain):
         self.domain = domain
+        self.retries = self.RETRIES
 
     def _cache_key(self):
         return "couchsqlmigration.%s" % self.domain
 
     def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+        self.retries -= 1
         if isinstance(e, http.NoMoreData):
             sleep(min(60, cache_utils.get_exponential(self._cache_key())))
             return True
         return False
 
     def page_end(self, e):
+        self.retries = self.RETRIES
         cache_utils.clear_limit(self._cache_key)
 
 
