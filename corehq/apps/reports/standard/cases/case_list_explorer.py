@@ -32,11 +32,11 @@ class CaseListExplorer(CaseListReport):
     search_class = CaseSearchES
 
     fields = [
+        XpathCaseSearchFilter,
+        CaseListExplorerColumns,
         CaseListFilter,
         CaseTypeFilter,
         SelectOpenCloseFilter,
-        XpathCaseSearchFilter,
-        CaseListExplorerColumns,
     ]
 
     def get_data(self):
@@ -77,23 +77,41 @@ class CaseListExplorer(CaseListReport):
     def columns(self):
         return [
             DataTablesColumn(
-                column['label'],
-                prop_name=column['name'],
-                visible=(not column.get('hidden')),
-                sortable=column['name'] not in CASE_COMPUTED_METADATA,
+                "case_name",
+                prop_name='case_name',
+                sortable=True,
+                visible=False,
+            ),
+            DataTablesColumn(
+                _("View Case"),
+                prop_name='_link',
+                sortable=False,
+            )
+        ] + [
+            DataTablesColumn(
+                column,
+                prop_name=column,
+                sortable=column not in CASE_COMPUTED_METADATA,
             )
             for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]
 
     @property
     def headers(self):
-        header = DataTablesHeader(*self.columns)
-        header.custom_sort = [[0, 'desc']]
-        return header
+        column_names = [c.prop_name for c in self.columns]
+        headers = DataTablesHeader(*self.columns)
+        # by default, sort by name, otherwise we fall back to the case_name hidden column
+        if "case_name" in column_names[1:]:
+            headers.custom_sort = [[column_names[1:].index("case_name") + 1, 'asc']]
+        elif "name" in column_names:
+            headers.custom_sort = [[column_names.index("name"), 'asc']]
+        else:
+            headers.custom_sort = [[0, 'asc']]
+        return headers
 
     @property
     def rows(self):
-        columns = CaseListExplorerColumns.get_value(self.request, self.domain)
+        columns = [c.prop_name for c in self.columns]
         for case in self.get_data():
             case_display = SafeCaseDisplay(self, case)
             yield [
