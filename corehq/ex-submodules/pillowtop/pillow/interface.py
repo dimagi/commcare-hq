@@ -120,13 +120,13 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         try:
             changes_chunk = []
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
-                context.changes_seen += 1
                 if self._should_process_in_chunks:
                     changes_chunk.append(change)
                     if len(changes_chunk) == self.processors[0].processor_chunk_size:
                         self.process_chunk_with_error_handling(changes_chunk, context)
                         changes_chunk = []
                 else:
+                    context.changes_seen += 1
                     if change:
                         self.process_with_error_handling(change, context)
                     else:
@@ -168,8 +168,6 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 # fall back to processing one by one for failed changes
                 for change in failed_changes:
                     self.process_with_error_handling(change, context, chunked_fallback=True)
-        # rewind `changes_seen` counter to update checkpoint one by one
-        context.changes_seen = context.changes_seen - len(changes_chunk)
         for change in changes_chunk:
             context.changes_seen += 1
             self._update_checkpoint(change, context)
