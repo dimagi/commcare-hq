@@ -511,7 +511,7 @@ def get_form_questions(request, domain, app_id):
     return json_response(xform_questions)
 
 
-def get_apps_modules(domain, current_app_id=None, current_module_id=None):
+def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_doc_types=('Application',)):
     """
     Returns a domain's Applications and their modules.
 
@@ -519,7 +519,9 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None):
     set to True for them. The interface uses this to select the current
     app and module by default.
 
-    Linked, deleted and remote apps are omitted.
+    Linked and remote apps are omitted. Use the app_doc_types parameter
+    to change this behaviour. (Deleted apps are not returned because the
+    underlying Couch view doesn't include them.)
     """
     return [
         {
@@ -535,7 +537,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None):
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not
         # app.get_doc_type() so that the suffix isn't dropped.)
-        if app.doc_type == 'Application'
+        if app.doc_type in app_doc_types
     ]
 
 
