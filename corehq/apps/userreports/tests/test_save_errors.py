@@ -7,7 +7,7 @@ from alembic.runtime.migration import MigrationContext
 from django.test import TestCase, override_settings
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
