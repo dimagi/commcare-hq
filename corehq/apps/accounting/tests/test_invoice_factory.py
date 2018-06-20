@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 
+from corehq.apps.accounting.invoicing import generate_invoice
 from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
@@ -155,7 +156,7 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         super(TestCustomerInvoiceFactory, self).tearDown()
 
     def test_create_invoice_for_subscription(self):
-        invoice = self.invoice_factory._generate_invoice(self.sub1, self.invoice_start, self.invoice_end)
+        invoice = generate_invoice(self.sub1, self.invoice_start, self.invoice_end, self.invoice_end)
         self.assertTrue(invoice.exists_for_domain(self.domain1))
         self.assertEqual(invoice.account, self.account)
         self.assertEqual(invoice.date_start, self.invoice_start)
@@ -164,9 +165,9 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         self.assertEqual(invoice.subscription, self.sub1)
 
     def test_consolidate_invoices(self):
-        invoice1 = self.invoice_factory._generate_invoice(self.sub1, self.invoice_start, self.invoice_end)
-        invoice2 = self.invoice_factory._generate_invoice(self.sub2, self.invoice_start, self.invoice_end)
-        invoice3 = self.invoice_factory._generate_invoice(self.sub3, self.invoice_start, self.invoice_end)
+        invoice1 = generate_invoice(self.sub1, self.invoice_start, self.invoice_end, self.invoice_end)
+        invoice2 = generate_invoice(self.sub2, self.invoice_start, self.invoice_end, self.invoice_end)
+        invoice3 = generate_invoice(self.sub3, self.invoice_start, self.invoice_end, self.invoice_end)
         invoices = [invoice1, invoice2, invoice3]
 
         invoice = self.invoice_factory._consolidate_invoices(invoices)

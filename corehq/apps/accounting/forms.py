@@ -1856,14 +1856,19 @@ class TriggerCustomerInvoiceForm(forms.Form):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
         invoice_start, invoice_end = get_first_last_days(year, month)
-        account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
-        self.clean_previous_invoices(invoice_start, invoice_end, account)
-        invoice_factory = CustomerAccountInvoiceFactory(
-            date_start=invoice_start,
-            date_end=invoice_end,
-            account=account
-        )
-        invoice_factory.create_invoice()
+        try:
+            account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
+            self.clean_previous_invoices(invoice_start, invoice_end, account)
+            invoice_factory = CustomerAccountInvoiceFactory(
+                date_start=invoice_start,
+                date_end=invoice_end,
+                account=account
+            )
+            invoice_factory.create_invoice()
+        except BillingAccount.DoesNotExist:
+            raise InvoiceError(
+                "There is no Billing Account associated with %s" % self.cleaned_data['customer_account']
+            )
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, account):
