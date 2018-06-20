@@ -4,9 +4,10 @@ import uuid
 
 from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
 from corehq.apps.userreports.app_manager.helpers import clean_table_name
+from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.exceptions import TableNotFoundWarning, MissingColumnWarning
 from corehq.apps.userreports.models import DataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -69,6 +70,7 @@ class SaveErrorsTest(TestCase):
             adapter.best_effort_save(doc)
 
 
+@override_settings(OVERRIDE_UCR_BACKEND=UCR_SQL_BACKEND)
 class AdapterBulkSaveTest(TestCase):
 
     def setUp(self):
@@ -96,3 +98,7 @@ class AdapterBulkSaveTest(TestCase):
 
         results = list(load_data_from_db(get_table_name(self.domain, self.config.table_id)))
         self.assertEqual(len(results), 10)
+
+    def test_save_rows_empty(self):
+        self.adapter.build_table()
+        self.adapter.save_rows([])
