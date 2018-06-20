@@ -24,9 +24,9 @@ class IcdsFile(models.Model):
     data_type = models.CharField(max_length=255)
     file_added = models.DateField(auto_now=True)
 
-    def store_file_in_blobdb(self, file):
+    def store_file_in_blobdb(self, file, expired=EXPIRED):
         blob_db = get_blob_db()
-        blob_db.put(file, self.blob_id, bucket=ICDS_BUCKET, timeout=EXPIRED)
+        blob_db.put(file, self.blob_id, bucket=ICDS_BUCKET, timeout=expired)
 
     def get_file_from_blobdb(self):
         blob_db = get_blob_db()

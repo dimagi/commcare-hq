@@ -1553,13 +1553,13 @@ class DownloadPDFReport(View):
     def get(self, request, *args, **kwargs):
         uuid = self.request.GET.get('uuid', None)
         format = self.request.GET.get('format', None)
-        client = get_redis_client()
+        icds_file = IcdsFile.objects.get(blob_id=uuid, data_type='issnip_monthly')
         if format == 'one':
-            response = HttpResponse(client.get(uuid), content_type='application/pdf')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/pdf')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register_cumulative.pdf"'
             return response
         else:
-            response = HttpResponse(client.get(uuid), content_type='application/zip')
+            response = HttpResponse(icds_file.get_file_from_blobdb().read(), content_type='application/zip')
             response['Content-Disposition'] = 'attachment; filename="ICDS_CAS_monthly_register.zip"'
             return response
 
