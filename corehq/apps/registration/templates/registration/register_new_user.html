@@ -35,7 +35,6 @@
         <script src="{% static 'hqwebapp/js/password_validators.ko.js' %}"></script>
         <script src="{% static 'intl-tel-input/build/js/intlTelInput.min.js' %}"></script>
         <script src="{% static 'registration/js/new_user.ko.js' %}"></script>
-        <script src="{% static 'blazy/blazy.js' %}"></script>
         <script src="{% static 'registration/js/register_new_user.js' %}"></script>
     {% endcompress %}
     {% if is_saas_environment %}
@@ -74,34 +73,6 @@
     {% endif %}
 {% endblock %}
 
-{% block stylesheets %}
-<link type="text/css"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'intl-tel-input/build/css/intlTelInput.css' %}" />
-
-{% if less_debug %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.debug.less' %}" />
-{% else %}
-{% compress css %}
-<link type="text/less"
-      rel="stylesheet"
-      media="all"
-      href="{% static 'registration/less/registration.less' %}" />
-{% endcompress %}
-{% endif %}
-{% endblock stylesheets %}
-
-{% block background_content %}
-  <div class="bg-container">
-    <div class="bg-full-cover-fixed bg-registration b-lazy"
-         data-src="{% static 'hqwebapp/images/molly.jpg' %}"></div>
-  </div>
-{% endblock %}
-
 {% block content %}
 {% initial_page_data 'hide_password_feedback' hide_password_feedback %}
 {% initial_page_data 'show_number' show_number %}
@@ -113,8 +84,9 @@
 {% registerurl 'process_registration' %}
 <div class="container">
   <div class="row">
-    <div class="col-xs-8 col-xs-offset-4 col-md-7 col-md-offset-5 reg-form-column animate-height" style="min-height: 450px">
-      <div id="registration-form-container" {% if show_number %}class="has-phonenumber"{% endif %}>
+    <div class="col-xs-12">
+      <div id="registration-form-container"
+           class="reg-form-container {% if show_number %}has-phonenumber{% endif %}">
         <ul class="form-step-progress">
           <li class="active">{% trans "Create Account" %}</li>
           <li data-bind="css: { active: currentStep() > 0 }">{% trans "Name Project" %}</li>
@@ -123,14 +95,14 @@
               action=""
               autocomplete="off"
               class="form form-with-steps form-with-steps-primary form-with-steps-centered">
-          <div class="form-step loading-form-step">
+          <div class="form-bubble form-step loading-form-step">
             <h2>{% trans 'Loading...just a second!' %}</h2>
             <p class="commcare-icon">
               <i class="fcc fcc-flower fa-spin"></i>
             </p>
           </div>
           {% crispy reg_form %}
-          <div class="form-step final-step" style="display: none;">
+          <div class="form-bubble form-step final-step" style="display: none;">
 
             {% include "registration/partials/register_new_user/submit_info.html" %}
             {% include "registration/partials/register_new_user/submit_errors.html" %}
