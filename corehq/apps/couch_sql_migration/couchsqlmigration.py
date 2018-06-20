@@ -6,6 +6,7 @@ import os
 import uuid
 from copy import deepcopy
 from datetime import datetime
+from time import time
 
 from django.db.utils import IntegrityError
 
@@ -68,12 +69,13 @@ def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
 
 
 class CouchSqlDomainMigrator(object):
-    def __init__(self, domain, with_progress=True, debug=False):
+    def __init__(self, domain, with_progress=True, debug=False, run_timestamp=None):
         from corehq.apps.tzmigration.planning import DiffDB
         self._assert_no_migration_restrictions(domain)
         self.with_progress = with_progress
         self.debug = debug
         self.domain = domain
+        self.run_timestamp = run_timestamp or int(time())
         db_filepath = get_diff_db_filepath(domain)
         self.diff_db = DiffDB.init(db_filepath)
 
@@ -91,9 +93,12 @@ class CouchSqlDomainMigrator(object):
 
     def log_info(self, message):
         _logger.info(message)
+        print('[INFO] {}'.format(message))
 
     def migrate(self):
         self.log_info('migrating domain {}'.format(self.domain))
+        self.log_info('run timestamp is {}'.format(self.run_timestamp))
+
         self.processed_docs = 0
         with TimingContext("couch_sql_migration") as timing_context:
             self.timing_context = timing_context
@@ -112,7 +117,10 @@ class CouchSqlDomainMigrator(object):
     def _process_main_forms(self):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
-        changes = _get_main_form_iterator(self.domain).iter_all_changes()
+        changes = _get_main_form_iterator(
+            self.domain).iter_all_changes(
+                resumable_key=self._get_resumable_iterator_key('main_forms'))
+
         # form_id needs to be on self to release appropriately
         self.queues = PartiallyLockingQueue("form_id", max_size=10000)
 
@@ -211,7 +219,9 @@ class CouchSqlDomainMigrator(object):
             couch_form_json['doc_type'] = 'XFormError'
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
 
-        changes = _get_unprocessed_form_iterator(self.domain).iter_all_changes()
+        changes = _get_unprocessed_form_iterator(
+            self.domain).iter_all_changes(
+                resumable_key=self._get_resumable_iterator_key('unprocessed_forms'))
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
@@ -244,7 +254,9 @@ class CouchSqlDomainMigrator(object):
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
         pool = Pool(10)
-        changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
+        changes = _get_case_iterator(
+            self.domain, doc_types=doc_types).iter_all_changes(
+                resumable_key=self._get_resumable_iterator_key('unprocessed_cases'))
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
 
@@ -302,7 +314,9 @@ class CouchSqlDomainMigrator(object):
         cases = {}
         batch_size = 100
         pool = Pool(10)
-        changes = _get_case_iterator(self.domain).iter_all_changes()
+        changes = _get_case_iterator(
+            self.domain).iter_all_changes(
+                resumable_key=self._get_resumable_iterator_key("case_diffs"))
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
             if len(cases) == batch_size:
@@ -418,6 +432,9 @@ class CouchSqlDomainMigrator(object):
 
     def _log_case_diff_count(self, throttled=False):
         self._log_objects_processed_count(['type:case_diffs'], throttled)
+
+    def _get_resumable_iterator_key(self, source):
+        return "%s.%s.%s" % (self.domain, source, self.run_timestamp)
 
     def _send_timings(self, timing_context):
         metric_name_template = "commcare.%s.count"
