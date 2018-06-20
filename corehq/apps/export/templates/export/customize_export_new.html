@@ -158,6 +158,7 @@
                     for="sharing-select"
                     class="col-sm-3 col-md-2 control-label">
                     {% trans "Sharing" %}
+                    <span data-bind="makeHqHelp: {description: getSharingHelpText}"></span>
                 </label>
                 <div class="col-sm-9 col-md-8 col-lg-6">
                     <select class="form-control" id="sharing-select" data-bind="
