@@ -31,6 +31,10 @@ def get_case_data_source(app, case_type):
     meta_properties_to_use = [property_def for property_def in meta_properties_to_use if property_def.item.transform is None]
     meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
+    # filter out any duplicately defined columns from dynamic indicators
+    meta_column_names = set([c['column_id'] for c in meta_indicators])
+    dynamic_indicators = filter(lambda indicator: indicator['column_id'] not in meta_column_names,
+                                dynamic_indicators)
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
