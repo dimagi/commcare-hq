@@ -50,6 +50,8 @@ from corehq.form_processor.utils.general import should_use_sql_backend
 from dimagi.utils.couch.cache.cache_core import get_redis_default_cache
 from dimagi.utils.couch.database import get_db
 from memoized import memoized
+
+from dimagi.utils.django.request import mutable_querydict
 from dimagi.utils.logging import notify_exception
 from dimagi.utils.parsing import string_to_datetime
 from dimagi.utils.web import get_url_base, json_response, get_site_domain
@@ -340,9 +342,9 @@ def _login(req, domain_name, template_name):
             return HttpResponseRedirect(reverse('domain_homepage', args=[domain_name]))
 
     if req.method == 'POST' and domain_name and '@' not in req.POST.get('auth-username', '@'):
-        req.POST._mutable = True
-        req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
-        req.POST._mutable = False
+        with mutable_querydict(req.POST):
+            req.POST['auth-username'] = format_username(req.POST['auth-username'], domain_name)
+
     if 'auth-username' in req.POST:
         couch_user = CouchUser.get_by_username(req.POST['auth-username'].lower())
         if couch_user:
