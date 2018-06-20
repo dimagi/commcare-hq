@@ -1,7 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import date, datetime
-import io
+from datetime import date
 import json
 
 from django.contrib import messages
@@ -76,7 +75,6 @@ from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
     log_accounting_error)
-from corehq.apps.hqwebapp.tasks import send_html_email_async
 from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMixin
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
