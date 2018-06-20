@@ -79,37 +79,37 @@ class CaseListExplorer(CaseListReport):
 
     @property
     def columns(self):
-        return [
-            DataTablesColumn(
-                "case_name",
-                prop_name='case_name',
-                sortable=True,
-                visible=False,
-            ),
-            DataTablesColumn(
-                _("View Case"),
-                prop_name='_link',
-                sortable=False,
-            )
-        ] + [
+        if self._is_exporting:
+            persistent_cols = [
+                DataTablesColumn(
+                    "@case_id",
+                    prop_name='@case_id',
+                    sortable=True,
+                )
+            ]
+        else:
+            persistent_cols = [
+                DataTablesColumn(
+                    "case_name",
+                    prop_name='case_name',
+                    sortable=True,
+                    visible=False,
+                ),
+                DataTablesColumn(
+                    _("View Case"),
+                    prop_name='_link',
+                    sortable=False,
+                )
+            ]
+
+        return persistent_cols + [
             DataTablesColumn(
                 column,
                 prop_name=column,
                 sortable=column not in CASE_COMPUTED_METADATA,
             )
-            for column in self._columns
+            for column in CaseListExplorerColumns.get_value(self.request, self.domain)
         ]
-
-    @property
-    def _columns(self):
-        """Columns from the report filter
-        """
-        if self._is_exporting:
-            return CaseListExplorerColumns.EXPORT_PERSISTENT_COLUMNS + [
-                c for c in CaseListExplorerColumns.get_value(self.request, self.domain)
-                if c['name'] not in [p['name'] for p in CaseListExplorerColumns.PERSISTENT_COLUMNS]
-            ]
-        return CaseListExplorerColumns.get_value(self.request, self.domain)
 
     @property
     def headers(self):
