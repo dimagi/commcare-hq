@@ -123,6 +123,7 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             return "users/edit_commcare_user.html"
 
+    @use_select2
     @use_multiselect
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
