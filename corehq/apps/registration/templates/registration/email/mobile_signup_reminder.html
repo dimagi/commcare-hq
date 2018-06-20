@@ -15,7 +15,7 @@
     {% endblocktrans %}
   </div>
   <div style="text-align: center; padding: 10px 0;">
-    <img src="{% static 'registration/images/commcare.png' %}" width="250" height="52" />
+    <img src="{{ url_prefix }}{% static 'registration/images/commcare.png' %}" width="250" height="52" />
   </div>
   <div style="text-align: center; margin-top: 0px;">
     <a class="btn"
@@ -49,7 +49,7 @@
   <div style="width: 100%; background-color: #004ebc; text-align: center; padding: 60px 0 65px;">
 
     <div style="text-align: center;  margin-bottom: 5px;">
-      <img src="{% static 'registration/images/commcare.png' %}" width="250" height="52" />
+      <img src="{{ url_prefix }}{% static 'registration/images/commcare.png' %}" width="250" height="52" />
     </div>
 
     <a class="btn-white"
