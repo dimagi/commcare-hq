@@ -8,6 +8,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Hash import SHA256
 from Crypto.Signature import PKCS1_PSS
 from django.templatetags.i18n import language_name
+from django.utils.translation import activate, LANGUAGE_SESSION_KEY
 
 from memoized import memoized
 from dimagi.utils.logging import notify_exception
@@ -136,3 +137,13 @@ def get_environment_friendly_name():
     except KeyError:
         env = settings.SERVER_ENVIRONMENT
     return env
+
+
+def update_session_language(req, old_lang, new_lang):
+    # Update the language for this session if the user signing in has a different language than the current
+    # session default
+    if new_lang != old_lang:
+        # update the current session's language setting
+        req.session[LANGUAGE_SESSION_KEY] = new_lang
+        # and activate it for the current thread so the response page is translated too
+        activate(new_lang)

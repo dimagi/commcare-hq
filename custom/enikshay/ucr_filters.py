@@ -6,7 +6,6 @@ from sqlagg.filters import ORFilter, EQFilter
 
 from memoized import memoized
 
-from corehq.apps.es import filters
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.reports_core.filters import DynamicChoiceListFilter
 from corehq.apps.userreports.reports.filters.choice_providers import LocationChoiceProvider
@@ -74,15 +73,6 @@ class ENikshayLocationHierarchyFilterValue(FilterValue):
         return {
             x.parameter_slug: x.filter_value for x in self.get_hierarchy(location_id)
         }
-
-    def to_es_filter(self):
-        if self.show_all:
-            return None
-        location_id = self.value[0].value
-        fs = [
-            filters.term(x.column, x.filter_value) for x in self.get_hierarchy(location_id)
-        ]
-        return filters.OR(fs)
 
 
 class EnikshayLocationHiearachyFilter(DynamicChoiceListFilter):

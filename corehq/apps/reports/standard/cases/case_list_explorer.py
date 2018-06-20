@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 from django.utils.html import escape
 from django.utils.translation import ugettext_lazy as _
-from memoized import memoized
 
 from corehq.apps.case_search.const import (
     CASE_COMPUTED_METADATA,
@@ -24,12 +23,17 @@ from corehq.apps.reports.standard.cases.filters import (
     XpathCaseSearchFilter,
 )
 from six.moves import range
+from corehq.elastic import iter_es_docs_from_query
 
 
 class CaseListExplorer(CaseListReport):
     name = _('Case List Explorer')
     slug = 'case_list_explorer'
     search_class = CaseSearchES
+
+    exportable = True
+    exportable_all = True
+    _is_exporting = False
 
     fields = [
         CaseListFilter,
@@ -39,13 +43,9 @@ class CaseListExplorer(CaseListReport):
         CaseListExplorerColumns,
     ]
 
-    def get_data(self):
-        for row in self.es_results['hits'].get('hits', []):
-            yield flatten_result(row)
-
-    def _build_query(self):
+    def _build_query(self, sort=True):
         query = super(CaseListExplorer, self)._build_query()
-        query = self._populate_sort(query)
+        query = self._populate_sort(query, sort)
         xpath = XpathCaseSearchFilter.get_value(self.request, self.domain)
         if xpath:
             try:
@@ -59,7 +59,12 @@ class CaseListExplorer(CaseListReport):
                 raise BadRequestError("{}{}".format(error, bad_part))
         return query
 
-    def _populate_sort(self, query):
+    def _populate_sort(self, query, sort):
+        if not sort:
+            # Don't sort on export
+            query = query.set_sorting_block(['_doc'])
+            return query
+
         num_sort_columns = int(self.request.GET.get('iSortingCols', 0))
         for col_num in range(num_sort_columns):
             descending = self.request.GET['sSortDir_{}'.format(col_num)] == 'desc'
@@ -73,7 +78,12 @@ class CaseListExplorer(CaseListReport):
         return query
 
     @property
-    @memoized
+    def headers(self):
+        header = DataTablesHeader(*self.columns)
+        header.custom_sort = [[0, 'desc']]
+        return header
+
+    @property
     def columns(self):
         return [
             DataTablesColumn(
@@ -82,21 +92,39 @@ class CaseListExplorer(CaseListReport):
                 visible=(not column.get('hidden')),
                 sortable=column['name'] not in CASE_COMPUTED_METADATA,
             )
-            for column in CaseListExplorerColumns.get_value(self.request, self.domain)
+            for column in self._columns
         ]
 
     @property
-    def headers(self):
-        header = DataTablesHeader(*self.columns)
-        header.custom_sort = [[0, 'desc']]
-        return header
+    def _columns(self):
+        """Columns from the report filter
+        """
+        if self._is_exporting:
+            return CaseListExplorerColumns.EXPORT_PERSISTENT_COLUMNS + [
+                c for c in CaseListExplorerColumns.get_value(self.request, self.domain)
+                if c['name'] not in [p['name'] for p in CaseListExplorerColumns.PERSISTENT_COLUMNS]
+            ]
+        return CaseListExplorerColumns.get_value(self.request, self.domain)
 
     @property
     def rows(self):
-        columns = CaseListExplorerColumns.get_value(self.request, self.domain)
-        for case in self.get_data():
+        data = (flatten_result(row) for row in self.es_results['hits'].get('hits', []))
+        return self._get_rows(data)
+
+    @property
+    def get_all_rows(self):
+        data = (flatten_result(r) for r in iter_es_docs_from_query(self._build_query(sort=False)))
+        return self._get_rows(data)
+
+    def _get_rows(self, data):
+        for case in data:
             case_display = SafeCaseDisplay(self, case)
             yield [
                 case_display.get(column)
-                for column in columns
+                for column in self._columns
             ]
+
+    @property
+    def export_table(self):
+        self._is_exporting = True
+        return super(CaseListExplorer, self).export_table

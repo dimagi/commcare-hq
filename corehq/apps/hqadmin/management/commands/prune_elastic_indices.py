@@ -5,7 +5,6 @@ from __future__ import unicode_literals
 from django.core.management import BaseCommand
 import elasticsearch
 
-from corehq.apps.userreports.util import get_ucr_es_indices
 from corehq.elastic import get_es_new
 from corehq.pillows.utils import get_all_expected_es_indices
 from six.moves import input
@@ -40,9 +39,7 @@ class Command(BaseCommand):
         # if it doesn't exist
         # fixme: this can delete real indices if a reindex is in progress
         found_indices = set(es.indices.get_aliases().keys())
-        pillow_indices = {info.index for info in get_all_expected_es_indices()}
-        ucr_indices = {index for index in get_ucr_es_indices()}
-        expected_indices = pillow_indices | ucr_indices
+        expected_indices = {info.index for info in get_all_expected_es_indices()}
         print(expected_indices)
 
         if options['verbose']:

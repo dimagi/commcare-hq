@@ -1,23 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.userreports.const import UCR_ES_BACKEND, UCR_LABORATORY_BACKEND, UCR_SQL_BACKEND, UCR_ES_PRIMARY
+from corehq.apps.userreports.const import UCR_SQL_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.custom.data_source import ConfigurableReportCustomDataSource
-from corehq.apps.userreports.es.data_source import ConfigurableReportEsDataSource
 from corehq.apps.userreports.sql.data_source import ConfigurableReportSqlDataSource
-from corehq.apps.userreports.util import get_backend_id
 import six
 
 
 class ConfigurableReportDataSource(object):
     """
     This class is a proxy class for ConfigurableReportSqlDataSource
-        and ConfigurableReportEsDataSource, which include logic to
-        query the SQL or ES datasource table.
+        which is leftover from an experiment to use elasticsearch
     """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by,
-                 backend=None, custom_query_provider=None):
+                 custom_query_provider=None):
         """
             config_or_config_id: an instance of DataSourceConfiguration or an id pointing to it
         """
@@ -35,15 +32,11 @@ class ConfigurableReportDataSource(object):
         self._order_by = order_by
         self._aggregation_columns = aggregation_columns
         self._columns = columns
-        if backend:
-            self.override_backend_id(backend)
-        else:
-            self._backend = None
 
         self._custom_query_provider = custom_query_provider
 
     @classmethod
-    def from_spec(cls, spec, include_prefilters=False, backend=None):
+    def from_spec(cls, spec, include_prefilters=False):
         order_by = [(o['field'], o['order']) for o in spec.sort_expression]
         filters = spec.filters if include_prefilters else spec.filters_without_prefilters
         return cls(
@@ -53,15 +46,12 @@ class ConfigurableReportDataSource(object):
             aggregation_columns=spec.aggregation_columns,
             columns=spec.report_columns,
             order_by=order_by,
-            backend=backend,
             custom_query_provider=spec.custom_query_provider
         )
 
     @property
     def backend(self):
-        if self._backend is None:
-            self._backend = get_backend_id(self.config)
-        return self._backend
+        return UCR_SQL_BACKEND
 
     @property
     def data_source(self):
@@ -73,11 +63,6 @@ class ConfigurableReportDataSource(object):
                     self._order_by
                 )
                 self._data_source.set_provider(self._custom_query_provider)
-            elif self.backend == UCR_ES_BACKEND:
-                self._data_source = ConfigurableReportEsDataSource(
-                    self.domain, self.config, self._filters,
-                    self._aggregation_columns, self._columns,
-                    self._order_by)
             else:
                 self._data_source = ConfigurableReportSqlDataSource(
                     self.domain, self.config, self._filters,
@@ -140,9 +125,3 @@ class ConfigurableReportDataSource(object):
 
     def get_total_row(self):
         return self.data_source.get_total_row()
-
-    def override_backend_id(self, new_backend):
-        assert get_backend_id(self.config, can_handle_laboratory=True) in (UCR_LABORATORY_BACKEND, UCR_ES_PRIMARY)
-        assert new_backend == UCR_ES_BACKEND or new_backend == UCR_SQL_BACKEND
-        self._backend = new_backend
-        self.config.backend_id = new_backend
