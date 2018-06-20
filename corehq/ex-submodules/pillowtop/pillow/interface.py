@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import sys
 
@@ -117,14 +117,18 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     def process_changes(self, since, forever):
         # Pass changes from the feed to processors
         context = PillowRuntimeContext(changes_seen=0)
+        min_wait_seconds = 10
         try:
             changes_chunk = []
+            last_process_time = datetime.utcnow()
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
                 context.changes_seen += 1
                 if change:
                     if self._should_process_in_chunks:
                         changes_chunk.append(change)
-                        if len(changes_chunk) == self.processors[0].processor_chunk_size:
+                        if (len(changes_chunk) == self.processors[0].processor_chunk_size or
+                           datetime.utcnow() - last_process_time > min_wait_seconds):
+                            last_process_time = datetime.utcnow()
                             self.process_chunk_with_error_handling(changes_chunk, context)
                             changes_chunk = []
                     else:
