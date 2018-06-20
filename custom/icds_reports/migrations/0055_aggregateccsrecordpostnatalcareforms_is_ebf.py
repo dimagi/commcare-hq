@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0052_auto_20180615_1139'),
+        ('icds_reports', '0054_agg_tables_back_in_django'),
     ]
 
     operations = [
