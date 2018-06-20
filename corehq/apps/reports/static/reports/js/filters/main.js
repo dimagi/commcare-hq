@@ -163,10 +163,14 @@ hqDefine("reports/js/filters/main", [
         });
         $fieldsetExplorerColumns.on('hidden.bs.collapse', function(e){
             $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            // this is a nested panel, so we stop propagation of this event to
+            // prevent the text from changing on the outside panel
             e.stopPropagation();
         });
         $fieldsetExplorerColumns.on('show.bs.collapse', function(e){
             $fieldsetExplorerColumns.find("#panel-chevron i").removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            // this is a nested panel, so we stop propagation of this event to
+            // prevent the text from changing on the outside panel
             e.stopPropagation();
         });
 
