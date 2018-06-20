@@ -252,6 +252,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 var row = $(this).parent().parent();
                 var currentIndex = row[0].attributes['data-order'].value;
+                row.remove();
                 list.unshift(list.splice(currentIndex, 1)[0]);
             });
 
@@ -270,6 +271,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 if (currentIndex < lastSelectedRowIndex) {
                     var currentListItem = list.splice(currentIndex, 1)[0];
+                    row.remove();
                     list.splice(lastSelectedRowIndex, 0, currentListItem);
                 }
             });
