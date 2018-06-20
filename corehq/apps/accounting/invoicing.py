@@ -9,7 +9,6 @@ from django.conf import settings
 from django.db import transaction
 from django.db.models import F, Q, Min, Max, Sum
 from django.utils.translation import ugettext as _, ungettext
-from django.core.exceptions import ObjectDoesNotExist
 
 from memoized import memoized
 
