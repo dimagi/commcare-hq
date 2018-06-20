@@ -16,21 +16,21 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='userdim',
             name='first_name',
-            field=models.CharField(max_length=150, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AlterField(
             model_name='userdim',
             name='last_name',
-            field=models.CharField(max_length=150, null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AlterField(
             model_name='userstagingtable',
             name='first_name',
-            field=models.CharField(max_length=150, null=True),
+            field=models.CharField(null=True),
         ),
         migrations.AlterField(
             model_name='userstagingtable',
             name='last_name',
-            field=models.CharField(max_length=150, null=True),
+            field=models.CharField(null=True),
         ),
     ]
