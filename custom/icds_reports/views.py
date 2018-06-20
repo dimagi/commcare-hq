@@ -31,7 +31,9 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, user_can_access_location_id
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
-from corehq.apps.users.models import UserRole
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import UserRole, Permissions
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
@@ -47,6 +49,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
+from custom.icds_reports.models.helper import IcdsFile
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -114,6 +117,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.shortcuts import export_response
 
 
 @location_safe
@@ -1584,6 +1588,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
+    @require_permission(Permissions.view_report,
+                        'custom.icds_reports.reports.reports.DashboardReport')
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404
@@ -1631,53 +1637,70 @@ class ICDSAppTranslations(BaseDomainView):
         return Transifex(domain, form_data['app_id'], source_language_code, transifex_project_slug,
                          form_data['version'])
 
-    @staticmethod
-    def perform_push_request(request, form_data):
-        push_translation_files_to_transifex.delay(request.domain, form_data)
+    def perform_push_request(self, request, form_data):
+        if form_data['target_lang']:
+            if not self.ensure_resources_present(request):
+                return False
+        push_translation_files_to_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to submit files for translations'))
         return True
 
-    @staticmethod
-    def perform_pull_request(request, form_data, transifex):
+    def resources_translated(self, request):
+        resource_pending_translations = (self._transifex.
+                                         resources_pending_translations(break_if_true=True))
+        if resource_pending_translations:
+            messages.error(
+                request,
+                _("Resources yet to be completely translated, for ex: {}".format(
+                    resource_pending_translations)))
+            return False
+        return True
+
+    def ensure_resources_present(self, request):
+        if not self._transifex.resource_slugs:
+            messages.error(request, _('Resources not found for this project and version.'))
+            return False
+        return True
+
+    def perform_pull_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
+            return False
         if form_data['perform_translated_check']:
-            try:
-                resource_pending_translations = (transifex.
-                                                 resources_pending_translations(break_if_true=True))
-                if resource_pending_translations:
-                    messages.error(
-                        request,
-                        _("Resources yet to be completely translated, for ex: {}".format(
-                            resource_pending_translations)))
-                    return False
-            except ResourceMissing as e:
-                messages.error(request, e)
+            if not self.resources_translated(request):
+                return False
+        if form_data['lock_translations']:
+            if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+                messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                          'Hence, the request for locking resources can not be performed.'))
                 return False
         pull_translation_files_from_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to pull for translations. '
                                     'You should receive an email shortly'))
         return True
 
-    @staticmethod
-    def perform_delete_request(request, form_data, transifex):
-        if not transifex.resource_slugs:
-            messages.error(request, _('Resources not found for this project and version.'))
+    def perform_delete_request(self, request, form_data):
+        if not self.ensure_resources_present(request):
             return False
-        delete_resources_on_transifex.delay(request.domain, form_data)
+        if self._transifex.resources_pending_translations(break_if_true=True, all_langs=True):
+            messages.error(request, _('Resources yet to be completely translated for all languages. '
+                                      'Hence, the request for deleting resources can not be performed.'))
+            return False
+        delete_resources_on_transifex.delay(request.domain, form_data, request.user.email)
         messages.success(request, _('Successfully enqueued request to delete resources.'))
         return True
 
     def perform_request(self, request, form_data):
-        transifex = self.transifex(request.domain, form_data)
-        if not transifex.source_lang_is(form_data.get('source_lang')):
+        self._transifex = self.transifex(request.domain, form_data)
+        if not self._transifex.source_lang_is(form_data.get('source_lang')):
             messages.error(request, _('Source lang selected not available for the project'))
             return False
         else:
             if form_data['action'] == 'push':
                 return self.perform_push_request(request, form_data)
             elif form_data['action'] == 'pull':
-                return self.perform_pull_request(request, form_data, transifex)
+                return self.perform_pull_request(request, form_data)
             elif form_data['action'] == 'delete':
-                return self.perform_delete_request(request, form_data, transifex)
+                return self.perform_delete_request(request, form_data)
 
     def post(self, request, *args, **kwargs):
         if not transifex_details_available_for_domain(self.domain):
@@ -1686,6 +1709,24 @@ class ICDSAppTranslations(BaseDomainView):
             form = self.translations_form
             if form.is_valid():
                 form_data = form.cleaned_data
-                if self.perform_request(request, form_data):
-                    return redirect(self.urlname, domain=self.domain)
+                try:
+                    if self.perform_request(request, form_data):
+                        return redirect(self.urlname, domain=self.domain)
+                except ResourceMissing as e:
+                    messages.error(request, e)
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveAWW(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404

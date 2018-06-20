@@ -59,6 +59,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'knockout': 'ko',
                 'underscore': '_',
                 'clipboard/dist/clipboard': 'Clipboard',
+                'ace-builds/src-min-noconflict/ace': 'ace',
             };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
@@ -67,6 +68,11 @@ function hqDefine(path, dependencies, moduleAccessor) {
                     args[i] = window[thirdPartyMap[dependency]];
                 } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
+                } else {
+                    var message = "Could not find module '" + dependency + "'.";
+                    message += " Verify that its script tag appears before the script tag for '" + path + "'.";
+                    message += " If this is a third-party module, verify it appears in thirdPartyMap in hqModules.js.";
+                    console.warn(message);
                 }
             }
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {

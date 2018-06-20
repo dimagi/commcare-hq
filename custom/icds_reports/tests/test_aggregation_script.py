@@ -21,7 +21,7 @@ OUTPUT_PATH = os.path.join(os.path.dirname(__file__), 'outputs')
 
 
 @override_settings(SERVER_ENVIRONMENT='icds-new')
-class AggregationScriptTest(TestCase):
+class AggregationScriptTestBase(TestCase):
     """
     Note: test setup and teardown are done at module level using
         setUpModule and tearDownModule
@@ -143,6 +143,8 @@ class AggregationScriptTest(TestCase):
                 )
             )
 
+
+class AggregationScriptTest(AggregationScriptTestBase):
     def test_icds_months(self):
         self._load_and_compare_data(
             'icds_months',
@@ -176,20 +178,6 @@ class AggregationScriptTest(TestCase):
             'daily_attendance_2017-05-01',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
             sort_key=['awc_id', 'doc_id']
-        )
-
-    def test_child_health_monthly_2017_04_01(self):
-        self._load_and_compare_data(
-            'child_health_monthly_2017-04-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
-        )
-
-    def test_child_health_monthly_2017_05_01(self):
-        self._load_and_compare_data(
-            'child_health_monthly_2017-05-01',
-            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'case_id']
         )
 
     def test_agg_awc_daily(self):
@@ -399,4 +387,20 @@ class AggregationScriptTest(TestCase):
         self._load_and_compare_data(
             'agg_ccs_record_2017-05-01_5',
             os.path.join(OUTPUT_PATH, 'agg_ccs_record_2017-05-01_5_sorted.csv'),
+        )
+
+
+class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
+    def test_child_health_monthly_2017_04_01(self):
+        self._load_and_compare_data(
+            'child_health_monthly_2017-04-01',
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-04-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
+        )
+
+    def test_child_health_monthly_2017_05_01(self):
+        self._load_and_compare_data(
+            'child_health_monthly_2017-05-01',
+            os.path.join(OUTPUT_PATH, 'child_health_monthly_2017-05-01_sorted.csv'),
+            sort_key=['awc_id', 'case_id']
         )

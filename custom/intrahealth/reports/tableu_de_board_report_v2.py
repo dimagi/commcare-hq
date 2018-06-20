@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, DatespanMixin
-from custom.intrahealth.filters import LocationFilter
+from custom.intrahealth.filters import YeksiNaaLocationFilter2
 from custom.intrahealth.reports.utils import IntraHealthLocationMixin, IntraHealthReportConfigMixin
 from custom.intrahealth.sqldata import ConventureData2, PPSAvecDonnees2, DispDesProducts2, ConsommationData2, \
-    TauxDeRuptures2, TauxConsommationData2
+    TauxDeRuptures2, TauxConsommationData2, NombreData2, GestionDeLIPMTauxDeRuptures2, DureeData2, \
+    RecouvrementDesCouts2
 from memoized import memoized
 from corehq.apps.locations.models import SQLLocation
 
@@ -92,7 +93,7 @@ class MultiReport(CustomProjectReport, IntraHealthLocationMixin, IntraHealthRepo
 
 class TableuDeBoardReport2(MultiReport):
     title = "Tableau De Bord NEW"
-    fields = [DatespanFilter, LocationFilter]
+    fields = [DatespanFilter, YeksiNaaLocationFilter2]
     name = "Tableau De Bord NEW"
     slug = 'tableu_de_board2'
     default_rows = 10
@@ -123,6 +124,9 @@ class TableuDeBoardReport2(MultiReport):
                 TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
                 TauxConsommationData2(config=config),
+                NombreData2(config=config),
+                GestionDeLIPMTauxDeRuptures2(config=config),
+                RecouvrementDesCouts2(config=config),
             ]
         else:
             return [
@@ -132,4 +136,8 @@ class TableuDeBoardReport2(MultiReport):
                 TauxDeRuptures2(config=config),
                 ConsommationData2(config=config),
                 TauxConsommationData2(config=config),
+                NombreData2(config=config),
+                GestionDeLIPMTauxDeRuptures2(config=config),
+                DureeData2(config=config),
+                RecouvrementDesCouts2(config=config),
             ]

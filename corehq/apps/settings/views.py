@@ -5,7 +5,7 @@ import re
 from base64 import b64encode
 from django.views.decorators.debug import sensitive_post_parameters
 from pygooglechart import QRChart
-from corehq.apps.hqwebapp.utils import sign
+from corehq.apps.hqwebapp.utils import sign, update_session_language
 from corehq.apps.settings.forms import (
     HQPasswordChangeForm, HQPhoneNumberMethodForm, HQDeviceValidationForm,
     HQTOTPDeviceForm, HQPhoneNumberForm, HQTwoFactorMethodForm, HQEmptyForm
@@ -23,8 +23,7 @@ import langcodes
 
 from django.http import HttpResponseRedirect, HttpResponse
 from django.utils.decorators import method_decorator
-from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy,
-    activate, LANGUAGE_SESSION_KEY)
+from django.utils.translation import (ugettext as _, ugettext_noop, ugettext_lazy)
 from corehq.apps.domain.decorators import (login_and_domain_required, require_superuser,
                                            login_required, two_factor_exempt)
 from django.urls import reverse
@@ -218,11 +217,8 @@ class MyAccountSettingsView(BaseMyAccountView):
             old_lang = self.request.couch_user.language
             self.settings_form.update_user()
             new_lang = self.request.couch_user.language
-            if new_lang != old_lang:
-                # update the current session's language setting
-                request.session[LANGUAGE_SESSION_KEY] = new_lang
-                # and activate it for the current thread so the response page is translated too
-                activate(new_lang)
+            update_session_language(request, old_lang, new_lang)
+
         return self.get(request, *args, **kwargs)
 
 

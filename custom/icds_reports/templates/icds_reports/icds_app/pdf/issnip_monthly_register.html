@@ -231,10 +231,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"sc_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"sc_boys_48_72" }}{% else %}-{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"sc_girls_48_72" }}{% else %}-{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"sc_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"sc_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_sc_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_sc_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"sc_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"sc_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_sc_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_sc_girls_48_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>ST</td>
@@ -242,10 +242,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"st_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"st_boys_48_72" }}{% else %}-{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"st_girls_48_72" }}{% else %}-{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"st_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"st_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_st_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_st_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"st_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"st_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_st_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_st_girls_48_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>OBC</td>
@@ -253,10 +253,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"obc_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"obc_boys_48_72" }}{% else %}-{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"obc_girls_48_72" }}{% else %}-{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"obc_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"obc_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_obc_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_obc_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"obc_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"obc_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_obc_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_obc_girls_48_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>General</td>
@@ -264,10 +264,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"general_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"general_boys_48_72" }}{% else %}-{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"general_girls_48_72" }}{% else %}-{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"general_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"general_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_general_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_general_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"general_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"general_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_general_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_general_girls_48_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Total</td>
@@ -275,10 +275,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"total_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"total_boys_48_72" }}{% else %}-{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"total_girls_48_72" }}{% else %}-{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"total_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"total_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_total_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_total_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"total_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"total_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_total_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_total_girls_48_72" }}</td>
                                 </tr>
                                 <tr>
                                     <td>Minority (out of total) </td>
@@ -286,10 +286,10 @@
                                     <td>{{ report.agg_child_health_monthly|icds_format_def_zero:"minority_girls_6_36_num" }} / {{ report.agg_child_health_monthly|icds_format_def_zero:"total_girls_6_36" }}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"minority_boys_48_72_num" }} / {{ report.child_health_monthly|icds_format_def_zero:"total_boys_48_72" }}{% endif %}</td>
                                     <td>{% if user_have_access_to_features %}{{ report.child_health_monthly|icds_format_def_zero:"minority_girls_48_72_num" }} / {{ report.child_health_monthly|icds_format_def_zero:"total_girls_48_72" }}{% endif %}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"minority_pregnant" }} / {{ report.ccs_record_monthly_ucr|icds_format_def_zero:"total_pregnant" }}</td>
-                                    <td>{{ report.ccs_record_monthly_ucr|icds_format_def_zero:"minority_lactating" }} / {{ report.ccs_record_monthly_ucr|icds_format_def_zero:"total_lactating" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_minority_boys_36_72" }} / {{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_total_boys_36_72" }}</td>
-                                    <td>{{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_minority_girls_36_72" }} / {{ report.child_health_monthly_ucr|icds_format_def_zero:"pre_total_girls_36_72" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"minority_pregnant" }} / {{ report.agg_ccs_record_monthly|icds_format_def_zero:"total_pregnant" }}</td>
+                                    <td>{{ report.agg_ccs_record_monthly|icds_format_def_zero:"minority_lactating" }} / {{ report.agg_ccs_record_monthly|icds_format_def_zero:"total_lactating" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_minority_boys_48_72" }} / {{ report.child_health_monthly|icds_format_def_zero:"pre_total_boys_48_72" }}</td>
+                                    <td>{{ report.child_health_monthly|icds_format_def_zero:"pre_minority_girls_48_72" }} / {{ report.child_health_monthly|icds_format_def_zero:"pre_total_girls_48_72" }}</td>
                                 </tr>
                             </tbody>
                         </table>

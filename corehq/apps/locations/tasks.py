@@ -11,7 +11,9 @@ from soil import DownloadBase
 
 from corehq.apps.locations.const import LOCK_LOCATIONS_TIMEOUT
 from corehq.apps.locations.util import dump_locations
-from corehq.apps.commtrack.models import StockState, sync_supply_point
+from corehq.apps.commtrack.models import (
+    StockState, sync_supply_point, close_supply_point_case,
+)
 from corehq.apps.es.users import UserES
 from corehq.apps.locations.bulk_management import new_locations_import
 from corehq.apps.locations.models import SQLLocation
@@ -174,13 +176,31 @@ def import_locations_async(domain, file_ref_id):
 
 
 @task
-def update_users_at_locations(location_ids):
+def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_ids):
     """
     Update location fixtures for users given locations
     """
-    from corehq.apps.users.models import update_fixture_status_for_users
+    from corehq.apps.users.models import CommCareUser, update_fixture_status_for_users
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
     from corehq.apps.fixtures.models import UserFixtureType
+    from dimagi.utils.couch.database import iter_docs
 
-    user_ids = user_ids_at_locations(location_ids)
+    # close supply point cases
+    for supply_point_id in supply_point_ids:
+        close_supply_point_case(domain, supply_point_id)
+
+    # unassign users from locations
+    unassign_user_ids = user_ids_at_locations(location_ids)
+    for doc in iter_docs(CommCareUser.get_db(), unassign_user_ids):
+        user = CommCareUser.wrap(doc)
+        for location_id in location_ids:
+            if location_id not in user.get_location_ids(domain):
+                continue
+            if user.is_web_user():
+                user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
+            elif user.is_commcare_user():
+                user.unset_location_by_id(location_id, fall_back_to_next=True)
+
+    # update fixtures for users at ancestor locations
+    user_ids = user_ids_at_locations(ancestor_ids)
     update_fixture_status_for_users(user_ids, UserFixtureType.LOCATION)
