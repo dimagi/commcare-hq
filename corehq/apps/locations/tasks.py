@@ -196,10 +196,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
         for location_id in location_ids:
             if location_id not in user.get_location_ids(domain):
                 continue
-            if user.is_web_user():
-                user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
-            elif user.is_commcare_user():
-                user.unset_location_by_id(location_id, fall_back_to_next=True)
+            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
 
     # update fixtures for users at ancestor locations
     user_ids = user_ids_at_locations(ancestor_ids)

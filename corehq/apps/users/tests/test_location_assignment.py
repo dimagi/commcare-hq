@@ -88,15 +88,15 @@ class CCUserLocationAssignmentTest(TestCase):
     def test_unset_by_location_id(self):
         # unset a primary location
         self.user.reset_locations(self.loc_ids)
-        self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
+        self.user.unset_location_by_id(self.domain, self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([self.loc2.location_id])  # loc1 should be removed
         self.assertPrimaryLocation(self.loc2.location_id)  # should fall back to loc2 as primary
         # unset a non primary location
         self.user.reset_locations(self.loc_ids)
-        self.user.unset_location_by_id(self.loc2.location_id, fall_back_to_next=True)
+        self.user.unset_location_by_id(self.domain, self.loc2.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([self.loc1.location_id])  # loc2 should be removed
         self.assertPrimaryLocation(self.loc1.location_id)  # loc1 should still be primary location
-        self.user.unset_location_by_id(self.loc1.location_id, fall_back_to_next=True)
+        self.user.unset_location_by_id(self.domain, self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([])
 
     def test_deleting_location_updates_user(self):
@@ -209,12 +209,12 @@ class WebUserLocationAssignmentTest(TestCase):
     def test_unset_by_location_id(self):
         # unset a primary location
         self.user.reset_locations(self.domain, self.loc_ids)
-        self.user.unset_location_by_id(self.domain, self.loc1.location_id, fall_back_to_next=True)
+        self.user.unset_location_by_id(self.domain, self.domain, self.loc1.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([self.loc2.location_id])  # loc1 should be removed
         self.assertPrimaryLocation(self.loc2.location_id)  # should fall back to loc2 as primary
         # unset a non primary location
         self.user.reset_locations(self.domain, self.loc_ids)
-        self.user.unset_location_by_id(self.domain, self.loc2.location_id, fall_back_to_next=True)
+        self.user.unset_location_by_id(self.domain, self.domain, self.loc2.location_id, fall_back_to_next=True)
         self.assertAssignedLocations([self.loc1.location_id])  # loc2 should be removed
         self.assertPrimaryLocation(self.loc1.location_id)  # loc1 should still be primary location
 

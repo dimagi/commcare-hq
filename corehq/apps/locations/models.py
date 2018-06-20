@@ -796,7 +796,4 @@ def _unassign_users_from_location(domain, location_id):
     user_ids = user_ids_at_locations([location_id])
     for doc in iter_docs(CommCareUser.get_db(), user_ids):
         user = CommCareUser.wrap(doc)
-        if user.is_web_user():
-            user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
-        elif user.is_commcare_user():
-            user.unset_location_by_id(location_id, fall_back_to_next=True)
+        user.unset_location_by_id(domain, location_id, fall_back_to_next=True)

@@ -1980,7 +1980,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
             self.get_sql_location.reset_cache(self)
             self.save()
 
-    def unset_location_by_id(self, location_id, fall_back_to_next=False):
+    def unset_location_by_id(self, domain, location_id, fall_back_to_next=False):
         """
         Unset a location that the user is assigned to that may or may not be primary location.
             If the location_id is primary-location, then next available location from
