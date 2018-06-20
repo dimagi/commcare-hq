@@ -102,7 +102,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
 
     def _update_checkpoint(self, change, context):
         if change and context:
-            updated = self.fire_change_processed_event(change, context)
+            updated = self.update_checkpoint(change, context)
         else:
             updated = self.checkpoint.touch(min_interval=CHECKPOINT_MIN_WAIT)
         if updated:
@@ -219,7 +219,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         pass
 
     @abstractmethod
-    def fire_change_processed_event(self, change, context):
+    def update_checkpoint(self, change, context):
         """
         :return: True if checkpoint was updated otherwise False
         """
@@ -290,9 +290,16 @@ class ChangeEventHandler(six.with_metaclass(ABCMeta, object)):
     """
 
     @abstractmethod
-    def fire_change_processed(self, change, context):
+    def update_checkpoint(self, change, context):
         """
         :return: True if checkpoint was updated otherwise False
+        """
+        pass
+
+    @abstractmethod
+    def get_new_seq(self, change):
+        """
+        :return: appropriate sequence value to update the checkpoint to
         """
         pass
 
@@ -336,9 +343,9 @@ class ConstructedPillow(PillowBase):
         for processor in self.processors:
             processor.process_change(self, change)
 
-    def fire_change_processed_event(self, change, context):
+    def update_checkpoint(self, change, context):
         if self._change_processed_event_handler is not None:
-            return self._change_processed_event_handler.fire_change_processed(change, context)
+            return self._change_processed_event_handler.update_checkpoint(change, context)
         return False
 
 
