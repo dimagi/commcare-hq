@@ -63,9 +63,14 @@ CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 UNPROCESSED_DOC_TYPES = list(all_known_formlike_doc_types() - {'XFormInstance'})
 
 
-def do_couch_to_sql_migration(domain, with_progress=True, debug=False):
+def do_couch_to_sql_migration(domain, with_progress=True, debug=False, run_timestamp=None):
     set_local_domain_sql_backend_override(domain)
-    CouchSqlDomainMigrator(domain, with_progress=with_progress, debug=debug).migrate()
+    CouchSqlDomainMigrator(
+        domain,
+        with_progress=with_progress,
+        debug=debug,
+        run_timestamp=run_timestamp
+    ).migrate()
 
 
 class CouchSqlDomainMigrator(object):

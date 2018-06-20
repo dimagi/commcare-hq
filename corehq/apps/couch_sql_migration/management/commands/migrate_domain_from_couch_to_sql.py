@@ -46,6 +46,12 @@ class Command(BaseCommand):
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument('--dry-run', action='store_true', default=False)
+        parser.add_argument(
+            '--run-timestamp',
+            type=int,
+            default=None,
+            help='use this option to continue a previous run that was started at this timestamp'
+        )
 
     @staticmethod
     def require_only_option(sole_option, options):
@@ -77,7 +83,11 @@ class Command(BaseCommand):
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
             set_couch_sql_migration_started(domain, self.dry_run)
-            do_couch_to_sql_migration(domain, with_progress=not self.no_input, debug=self.debug)
+            do_couch_to_sql_migration(
+                domain,
+                with_progress=not self.no_input,
+                debug=self.debug,
+                run_timestamp=options.get('run_timestamp'))
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
