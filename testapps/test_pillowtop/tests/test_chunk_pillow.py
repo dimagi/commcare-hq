@@ -40,6 +40,7 @@ class ChunkedPorcessingTest(TestCase):
         checkpoint = PillowCheckpoint(pillow_name, feed.sequence_format)
         processor = ChunkedCountProcessor()
         original_process_change = processor.process_change
+        original_process_changes_chunk = processor.process_changes_chunk
 
         pillow = ConstructedPillow(
             name=pillow_name,
@@ -68,5 +69,6 @@ class ChunkedPorcessingTest(TestCase):
         self._produce_changes(1)
         # offsets after full chunk should still be processed
         processor.process_change = MagicMock(side_effect=Exception('_'))
+        processor.process_changes_chunk = original_process_changes_chunk
         pillow.process_changes(since=pillow.get_last_checkpoint_sequence(), forever=False)
         self.assertEqual(processor.count, 5)

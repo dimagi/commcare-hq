@@ -195,7 +195,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
             tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
 
     def process_with_error_handling(self, change, context, chunked_fallback=False):
-        # chunked_fallback indicates whether the call com
+        # chunked_fallback indicates whether the call came from `process_chunk_with_error_handling`
         timer = TimingContext()
         try:
             with timer:
@@ -258,25 +258,21 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 _topic_for_ddog(topic),
             ])
 
-    def _record_change_in_datadog(self, change, timer, chunked_fallback=False):
-        self.__record_change_metric_in_datadog(
-            'commcare.change_feed.changes.count', change, timer, chunked_fallback=chunked_fallback)
+    def _record_change_in_datadog(self, change, timer):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.count', change, timer)
 
-    def _record_change_success_in_datadog(self, change, chunked_fallback=False):
-        self.__record_change_metric_in_datadog(
-            'commcare.change_feed.changes.success', change, chunked_fallback=chunked_fallback)
+    def _record_change_success_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.success', change)
 
-    def _record_change_exception_in_datadog(self, change, chunked_fallback=False):
-        self.__record_change_metric_in_datadog(
-            'commcare.change_feed.changes.exceptions', change, chunked_fallback=chunked_fallback)
+    def _record_change_exception_in_datadog(self, change):
+        self.__record_change_metric_in_datadog('commcare.change_feed.changes.exceptions', change)
 
-    def __record_change_metric_in_datadog(self, metric, change, timer=None, chunked_fallback=False):
+    def __record_change_metric_in_datadog(self, metric, change, timer=None):
         if change.metadata is not None:
             tags = [
                 'datasource:{}'.format(change.metadata.data_source_name),
                 'is_deletion:{}'.format(change.metadata.is_deletion),
                 'pillow_name:{}'.format(self.get_name()),
-                'chunked_fallback:{}'.format(chunked_fallback)
             ]
             datadog_counter(metric, tags=tags)
 
