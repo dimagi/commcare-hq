@@ -17,7 +17,7 @@ from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.utils import should_use_sql_backend
 from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import get_cached_case_attachment, CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.parsing import json_format_datetime
 import six
 

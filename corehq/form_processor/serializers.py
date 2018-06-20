@@ -7,7 +7,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.form_processor.models import (
     CommCareCaseIndexSQL, CommCareCaseSQL, CaseTransaction,
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL,
-    LedgerValue, CaseAttachmentSQL)
+    LedgerValue)
 import six
 
 
@@ -125,23 +125,12 @@ class CommCareCaseSQLRawDocSerializer(JsonFieldSerializerMixin, DeletableModelSe
         fields = '__all__'
 
 
-class CaseAttachmentSQLSerializer(serializers.ModelSerializer):
-    class Meta(object):
-        model = CaseAttachmentSQL
-        fields = (
-            'content_type',
-            'content_length',
-            'name',
-        )
-
-
 class CommCareCaseSQLSerializer(DeletableModelSerializer):
     _id = serializers.CharField(source='case_id')
     doc_type = serializers.CharField()
     user_id = serializers.CharField(source='modified_by')
     indices = CommCareCaseIndexSQLSerializer(many=True, read_only=True)
     actions = CaseTransactionActionSerializer(many=True, read_only=True, source='non_revoked_transactions')
-    case_attachments = serializers.JSONField(source='serialized_attachments')
     case_json = serializers.JSONField()
     xform_ids = serializers.ListField()
 
@@ -158,7 +147,6 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
     properties = serializers.JSONField(source='get_properties_in_api_format')
     server_date_modified = serializers.DateTimeField(source='server_modified_on')
     indices = serializers.JSONField(source='get_index_map')
-    attachments = serializers.JSONField(source='get_attachment_map')
     reverse_indices = serializers.JSONField(source='get_reverse_index_map')
 
     def __init__(self, *args, **kwargs):
@@ -181,7 +169,6 @@ class CommCareCaseSQLAPISerializer(serializers.ModelSerializer):
             'properties',
             'indices',
             'reverse_indices',
-            'attachments',
         )
 
 
