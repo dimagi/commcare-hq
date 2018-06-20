@@ -263,7 +263,7 @@ def display_seconds(seconds):
 
 
 def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
-                      stream=sys.stdout):
+                      stream=sys.stdout, step=None):
     """Turns 'iterable' into a generator which prints a progress bar.
 
     :param oneline: Set to False to print each update on a new line.
@@ -279,12 +279,12 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
                 .format(type(iterable))
             )
 
-    granularity = min(50, length)
+    granularity = min(50, length or 50)
     start = datetime.now()
 
-    def draw(position):
+    def draw(position, done=False):
         percent = float(position) / length if length > 0 else 1
-        dots = int(round(percent * granularity))
+        dots = int(round(min(percent, 1) * granularity))
         spaces = granularity - dots
         elapsed = (datetime.now() - start).total_seconds()
         remaining = (display_seconds((elapsed / percent) * (1 - percent))
@@ -294,23 +294,26 @@ def with_progress_bar(iterable, length=None, prefix='Processing', oneline=True,
         print("[{}{}]".format("." * dots, " " * spaces), end=' ', file=stream)
         print("{}/{}".format(position, length), end=' ', file=stream)
         print("{:.0%}".format(percent), end=' ', file=stream)
-        if position == length:
-            print("{} elapsed".format(datetime.now() - start), file=stream)
+        if position >= length or done:
+            print("{} elapsed".format(datetime.now() - start), end='', file=stream)
         else:
-            print("{} remaining".format(remaining), end=' ', file=stream)
-        print(("\r" if oneline else "\n"), end='', file=stream)
+            print("{} remaining".format(remaining), end='', file=stream)
+        print(("\r" if oneline and not done else "\n"), end='', file=stream)
         stream.flush()
 
     if oneline != "concise":
         print("Started at {:%Y-%m-%d %H:%M:%S}".format(start), file=stream)
-    checkpoints = {length * i // granularity for i in range(length)}
-    for i, x in enumerate(iterable):
-        yield x
-        if i in checkpoints:
-            draw(i)
-    draw(length)
+    if step is None:
+        step = length // granularity
+    i = -1
+    try:
+        for i, x in enumerate(iterable):
+            yield x
+            if i % step == 0:
+                draw(i)
+    finally:
+        draw(i + 1, done=True)
     if oneline != "concise":
-        print("", file=stream)
         end = datetime.now()
         print("Finished at {:%Y-%m-%d %H:%M:%S}".format(end), file=stream)
         print("Elapsed time: {}".format(display_seconds((end - start).total_seconds())), file=stream)

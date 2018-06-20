@@ -32,6 +32,7 @@ from corehq.apps.locations.permissions import location_safe, user_can_access_loc
 from corehq.apps.locations.util import location_hierarchy_config
 from corehq.apps.hqwebapp.decorators import use_daterangepicker
 from corehq.apps.users.models import UserRole
+from corehq.blobs.exceptions import NotFound
 from corehq.form_processor.exceptions import AttachmentNotFound
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from custom.icds.const import AWC_LOCATION_TYPE_CODE
@@ -47,6 +48,7 @@ from custom.icds_reports.const import LocationTypes, BHD_ROLE, ICDS_SUPPORT_EMAI
     PREGNANT_WOMEN_EXPORT, DEMOGRAPHICS_EXPORT, SYSTEM_USAGE_EXPORT, AWC_INFRASTRUCTURE_EXPORT,\
     BENEFICIARY_LIST_EXPORT, ISSNIP_MONTHLY_REGISTER_PDF
 from custom.icds_reports.forms import AppTranslationsForm
+from custom.icds_reports.models.helper import IcdsFile
 
 from custom.icds_reports.reports.adhaar import get_adhaar_data_chart, get_adhaar_data_map, get_adhaar_sector_data
 from custom.icds_reports.reports.adolescent_girls import get_adolescent_girls_data_map, \
@@ -106,7 +108,7 @@ from custom.icds_reports.sqldata.exports.demographics import DemographicsExport
 from custom.icds_reports.sqldata.exports.pregnant_women import PregnantWomenExport
 from custom.icds_reports.sqldata.exports.system_usage import SystemUsageExport
 from custom.icds_reports.tasks import move_ucr_data_into_aggregation_tables, \
-    prepare_issnip_monthly_register_reports
+    prepare_issnip_monthly_register_reports, collect_inactive_awws
 from custom.icds_reports.utils import get_age_filter, get_location_filter, \
     get_latest_issue_tracker_build_id, get_location_level, icds_pre_release_features, \
     current_month_stunting_column, current_month_wasting_column
@@ -114,6 +116,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.dates import force_to_date
 from . import const
 from .exceptions import TableauTokenException
+from couchexport.shortcuts import export_response
 
 
 @location_safe
@@ -1709,3 +1712,18 @@ class ICDSAppTranslations(BaseDomainView):
                 except ResourceMissing as e:
                     messages.error(request, e)
         return self.get(request, *args, **kwargs)
+
+
+@method_decorator([login_and_domain_required], name='dispatch')
+class InactiveAWW(View):
+    def get(self, request, *args, **kwargs):
+        sync_date = request.GET.get('date', None)
+        if sync_date:
+            sync = IcdsFile.objects.filter(file_added=sync_date).first()
+        else:
+            sync = IcdsFile.objects.filter(data_type='inactive_awws').order_by('-file_added').first()
+        zip_name = 'inactive_awws_%s' % sync.file_added.strftime('%Y-%m-%d')
+        try:
+            return export_response(sync.get_file_from_blobdb(), 'csv', zip_name)
+        except NotFound:
+            raise Http404
