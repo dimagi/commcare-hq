@@ -168,15 +168,10 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         invoice2 = self.invoice_factory._generate_invoice(self.sub2, self.invoice_start, self.invoice_end)
         invoice3 = self.invoice_factory._generate_invoice(self.sub3, self.invoice_start, self.invoice_end)
         invoices = [invoice1, invoice2, invoice3]
-        total_balance = 0
-        total_line_items = 0
-        for invoice in invoices:
-            total_balance += invoice.balance
-            total_line_items += invoice.lineitem_set.count()
 
         invoice = self.invoice_factory._consolidate_invoices(invoices)
         self.assertEqual(invoice.account, self.account)
         self.assertEqual(invoice.date_start, self.invoice_start)
         self.assertEqual(invoice.date_end, self.invoice_end)
-        self.assertEqual(invoice.lineitem_set.count(), total_line_items)
-        self.assertEqual(invoice.balance, total_balance)
+        self.assertEqual(invoice.lineitem_set.count(), 6)
+        self.assertEqual(invoice.balance, 1500)
