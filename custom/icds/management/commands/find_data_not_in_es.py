@@ -68,7 +68,7 @@ class Command(BaseCommand):
         return num_cases
 
     def _get_es_cases_modified_on_date(self, date):
-        return CaseES().domain(self.domain).modified_range(gte=date, lt=date + timedelta(days=1)).count()
+        return CaseES().domain(self.domain).server_modified_range(gte=date, lt=date + timedelta(days=1)).count()
 
     def _get_sql_forms_received_on_date(self, date):
         num_forms = 0
