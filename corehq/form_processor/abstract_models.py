@@ -172,9 +172,6 @@ class AbstractCommCareCase(CaseToXMLMixin):
     def soft_delete(self):
         raise NotImplementedError()
 
-    def get_attachment(self, attachment_name):
-        raise NotImplementedError()
-
     def is_deleted(self):
         raise NotImplementedError()
 
@@ -286,15 +283,6 @@ class AbstractCommCareCase(CaseToXMLMixin):
             # all custom properties go here
         }.items()))
 
-    @memoized
-    def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.identifier),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
-
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import cElementTree as ElementTree
         from casexml.apps.phone.xml import get_case_element
@@ -306,23 +294,6 @@ class AbstractCommCareCase(CaseToXMLMixin):
         else:
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
-
-    def get_attachment_server_url(self, identifier):
-        """
-        A server specific URL for remote clients to access case attachment resources async.
-        """
-        if identifier in self.case_attachments:
-            from dimagi.utils import web
-            from django.urls import reverse
-            return "%s%s" % (web.get_url_base(),
-                 reverse("api_case_attachment", kwargs={
-                     "domain": self.domain,
-                     "case_id": self.case_id,
-                     "attachment_id": identifier,
-                 })
-            )
-        else:
-            return None
 
 
 class AbstractSupplyInterface(six.with_metaclass(ABCMeta)):
@@ -345,16 +316,3 @@ class IsImageMixin(object):
         if self.content_type is None:
             return None
         return True if self.content_type.startswith('image/') else False
-
-
-class CaseAttachmentMixin(IsImageMixin):
-
-    @property
-    def is_present(self):
-        """
-        Helper method to see if this is a delete vs. update
-        """
-        if self.identifier and (self.attachment_src == self.attachment_from is None):
-            return False
-        else:
-            return True

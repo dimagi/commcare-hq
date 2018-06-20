@@ -31,7 +31,7 @@ class UpdateStrategy(six.with_metaclass(ABCMeta, object)):
         return case
 
     @abstractproperty
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+    def update_from_case_update(self, case_update, xformdoc):
         pass
 
     @abstractmethod

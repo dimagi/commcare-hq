@@ -245,10 +245,6 @@ class CaseAccessorCouch(AbstractCaseAccessor):
         return get_all_reverse_indices_info(domain, case_ids)
 
     @staticmethod
-    def get_attachment_content(case_id, attachment_id):
-        return _get_attachment_content(CommCareCase, case_id, attachment_id)
-
-    @staticmethod
     def get_case_by_domain_hq_user_id(domain, user_id, case_type):
         return get_case_by_domain_hq_user_id(domain, user_id, case_type)
 

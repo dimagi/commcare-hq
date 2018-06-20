@@ -585,14 +585,6 @@ class Graph(FormattedDetailColumn):
                                       locale_annotation=_locale_annotation)
 
 
-@register_type_processor(const.FIELD_TYPE_ATTACHMENT)
-class AttachmentXpathGenerator(BaseXpathGenerator):
-
-    @property
-    def xpath(self):
-        return const.FIELD_TYPE_ATTACHMENT + "/" + self.column.field_property
-
-
 @register_type_processor(const.FIELD_TYPE_PROPERTY)
 class PropertyXpathGenerator(BaseXpathGenerator):
 

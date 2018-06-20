@@ -17,8 +17,6 @@ In the codebase there are now two models for form and case data.
 +------------------------+----------------------+
 | CommCareCaseAction     | CaseTransaction      |
 +------------------------+----------------------+
-| CommCareCaseAttachment | CaseAttachmentSQL    |
-+------------------------+----------------------+
 | CommCareCaseIndex      | CommCareCaseIndexSQL |
 +------------------------+----------------------+
 | XFormInstance          | XFormInstanceSQL     |
@@ -82,8 +80,6 @@ irrespective of the type. Some examples are shown below:
 | case.is_deleted                | Replacement for doc_type check        |
 +--------------------------------+---------------------------------------+
 | case.case_name                 | Name of the case                      |
-+--------------------------------+---------------------------------------+
-| case.get_attachment            | Get attachment by name                |
 +--------------------------------+---------------------------------------+
 | case.dynamic_case_properties   | Dictionary of dynamic case properties |
 +--------------------------------+---------------------------------------+

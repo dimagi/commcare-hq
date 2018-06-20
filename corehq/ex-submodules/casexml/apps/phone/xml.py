@@ -51,7 +51,6 @@ def get_case_element(case, updates, version=V1):
     do_create = const.CASE_ACTION_CREATE in updates
     do_update = const.CASE_ACTION_UPDATE in updates
     do_index = do_update # NOTE: we may want to differentiate this eventually
-    do_attach = do_update
     do_purge = const.CASE_ACTION_PURGE in updates or const.CASE_ACTION_CLOSE in updates
     if do_create:
         # currently the below code relies on the assumption that
@@ -74,8 +73,6 @@ def get_case_element(case, updates, version=V1):
 
     if do_index:
         generator.add_indices(root)
-    if do_attach:
-        generator.add_attachments(root)
 
     if do_purge:
         purge_block = generator.get_close_element()
@@ -101,9 +98,6 @@ def get_casedb_element(case):
         <index>
             <parent case_type="" relationship="">id</parent>
         </index>
-        <attachment>
-            <a12345 />
-        </attachment>
     </case>
     https://github.com/dimagi/commcare/wiki/casedb
     """
