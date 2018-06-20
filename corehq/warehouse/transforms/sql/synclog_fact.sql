@@ -11,18 +11,18 @@ INSERT INTO {{ synclog_fact }} (
 SELECT
     synclog_table.sync_log_id,
     synclog_table.sync_date,
-    synclog_table.domain_table.domain,
-    synclog_table.domain_table.id,
-    synclog_table.user_table.id,
+    domain_table.domain,
+    domain_table.id,
+    user_table.id,
     synclog_table.build_id,
     synclog_table.duration,
     '{{ batch_id }}'
 FROM
     {{ synclog_staging }} AS synclog_table
-WHERE synclog_table.sync_date > synclog_fact.sync_date OR synclog_fact.sync_date IS NULL
 LEFT JOIN {{ domain_dim }} AS domain_table ON synclog_table.domain = domain_table.domain
 LEFT JOIN {{ user_dim }} AS user_table ON synclog_table.user_id = user_table.user_id
-LEFT JOIN {{ synclog_fact }} AS synclog_fact ON synclog_table.user_dim_id = synclog_fact.user_dim_id
+LEFT JOIN {{ synclog_fact }} AS synclog_fact ON user_table.id = synclog_fact.user_dim_id
+WHERE synclog_table.sync_date > synclog_fact.sync_date OR synclog_fact.sync_date IS NULL
 
 ON CONFLICT (user_dim_id) DO UPDATE
 SET sync_log_id = EXCLUDED.sync_log_id,
