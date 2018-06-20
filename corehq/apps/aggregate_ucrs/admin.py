@@ -22,6 +22,7 @@ class SecondaryColumnAdmin(admin.ModelAdmin):
     list_display = ['column_id', 'table_definition', 'aggregation_type']
 
 
+admin.site.register(models.TimeAggregationDefinition)
 admin.site.register(models.AggregateTableDefinition, AggregateTableDefinitionAdmin)
 admin.site.register(models.PrimaryColumn, PrimaryColumnAdmin)
 admin.site.register(models.SecondaryTableDefinition, SecondaryTableDefinitionAdmin)
