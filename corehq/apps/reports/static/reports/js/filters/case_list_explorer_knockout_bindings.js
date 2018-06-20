@@ -1,7 +1,7 @@
-hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function($, ko, atwho) {
+hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', 'knockout', 'hqwebapp/js/atwho', 'ace-builds/src-min-noconflict/ace'], function($, ko, atwho, ace) {
 
     ko.bindingHandlers.xPathAutocomplete = {
-        init: function(element, valueAccessor, allBindings, viewModel, bindingContext) {
+        init: function(element, valueAccessor, allBindings, viewModel) {
             var $element = $(element),
                 editor = ace.edit(
                     element,
@@ -61,10 +61,10 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                             meta: suggestion.case_type || suggestion.meta_type,
                         };
                     }));
-                }
+                },
             };
             ace.require("ace/ext/language_tools").setCompleters([casePropertyAutocomplete]);
-        }
+        },
     };
 
     ko.bindingHandlers.explorerColumnsAutocomplete = {
