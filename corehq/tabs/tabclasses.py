@@ -1402,6 +1402,25 @@ class ProjectUsersTab(UITab):
         return items
 
 
+class EnterpriseSettingsTab(UITab):
+    title = ugettext_noop("Enterprise Settings")
+
+    url_prefix_formats = (
+        '/a/{domain}/enterprise/',
+    )
+
+    _is_viewable = False
+
+    @property
+    def sidebar_items(self):
+        items = super(EnterpriseSettingsTab, self).sidebar_items
+        items.append((_('Manage Enterprise'), [{
+            'title': _('Enterprise Dashboard'),
+            'url': reverse('enterprise_dashboard', args=[self.domain]),
+        }]))
+        return items
+
+
 class ProjectSettingsTab(UITab):
     title = ugettext_noop("Project Settings")
     view = 'domain_settings_default'

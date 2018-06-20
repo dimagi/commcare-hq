@@ -1026,6 +1026,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.base_template',
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
