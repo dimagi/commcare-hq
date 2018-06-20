@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+import os
+
 from couchdbkit import ResourceConflict
 from distutils.version import LooseVersion
 
@@ -15,6 +17,7 @@ from iso8601 import iso8601
 
 from corehq.apps.app_manager.dbaccessors import get_app_cached
 from corehq.form_processor.utils.xform import adjust_text_to_datetime
+from dimagi.utils.decorators.profile import profile_prod
 from dimagi.utils.logging import notify_exception
 from casexml.apps.case.cleanup import claim_case, get_first_claim
 from casexml.apps.case.fixtures import CaseDBFixture
@@ -36,14 +39,20 @@ from corehq.apps.es.case_search import flatten_result
 from corehq.apps.users.models import CouchUser, DeviceAppMeta
 from corehq.apps.locations.permissions import location_safe
 from corehq.form_processor.exceptions import CaseNotFound
+from corehq.util.quickcache import quickcache
 from casexml.apps.phone.restore import RestoreConfig, RestoreParams, RestoreCacheSettings
 from dimagi.utils.parsing import string_to_utc_datetime
 
-from .models import SerialIdBucket
+from .models import SerialIdBucket, MobileRecoveryMeasure
 from .utils import (
     demo_user_restore_response, get_restore_user, is_permitted_to_restore,
     handle_401_response)
 from corehq.apps.users.util import update_device_meta, update_latest_builds, update_last_sync
+
+
+PROFILE_PROBABILITY = float(os.getenv(b'COMMCARE_PROFILE_RESTORE_PROBABILITY', 0))
+PROFILE_LIMIT = os.getenv(b'COMMCARE_PROFILE_RESTORE_LIMIT')
+PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 
 
 @location_safe
@@ -163,6 +172,7 @@ def get_restore_params(request):
     }
 
 
+@profile_prod('commcare_ota_get_restore_response.prof', probability=PROFILE_PROBABILITY, limit=PROFILE_LIMIT)
 def get_restore_response(domain, couch_user, app_id=None, since=None, version='1.0',
                          state=None, items=False, force_cache=False,
                          cache_timeout=None, overwrite_cache=False,
@@ -328,3 +338,22 @@ def get_next_id(request, domain):
     if bucket_id is None:
         return HttpResponseBadRequest("You must provide a pool_id parameter")
     return HttpResponse(SerialIdBucket.get_next(domain, bucket_id, session_id))
+
+
+@quickcache(['domain', 'app_id'], timeout=60 * 60 * 24)
+def get_recovery_measures_cached(domain, app_id):
+    return [measure.to_mobile_json() for measure in
+            MobileRecoveryMeasure.objects.filter(domain=domain, app_id=app_id)]
+
+
+# Note: this endpoint does not require authentication
+@location_safe
+@require_GET
+@toggles.MOBILE_RECOVERY_MEASURES.required_decorator()
+def recovery_measures(request, domain, build_id):
+    response = {"app_id": request.GET.get('app_id')}  # passed through unchanged
+    app_id = get_app_cached(domain, build_id).master_id
+    measures = get_recovery_measures_cached(domain, app_id)
+    if measures:
+        response["recovery_measures"] = measures
+    return JsonResponse(response)

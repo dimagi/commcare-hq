@@ -52,6 +52,8 @@ def get_case_location(case):
     primary location, return None.
     """
     case_owner = get_wrapped_owner(get_owner_id(case))
+    if not case_owner:
+        return None
     if isinstance(case_owner, SQLLocation):
         return case_owner
     location_id = case_owner.get_location_id(case.domain)

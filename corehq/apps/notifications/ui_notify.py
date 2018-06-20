@@ -97,3 +97,7 @@ MESSAGING_DASHBOARD = StaticUINotify(
     ends_on=datetime(2018, 7, 1),
     only_visible_for_users_created_before=datetime(2018, 5, 25),
 )
+
+ABILITY_TO_HIDE_TRANSLATIONS = StaticUINotify(
+    'ability_to_hide_translations',
+)

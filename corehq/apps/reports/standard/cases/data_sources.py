@@ -15,6 +15,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.users.models import CouchUser
 from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
+from corehq.util.quickcache import quickcache
 from memoized import memoized
 
 
@@ -97,11 +98,12 @@ class CaseInfo(object):
         return {'id': user_id, 'name': self._get_username(user_id)}
 
     @property
-    @memoized
+    @quickcache(['self.owner_id'])
     def location(self):
         return SQLLocation.objects.get_or_None(location_id=self.owner_id)
 
     @property
+    @quickcache(['self.owner_id', 'self.user_id'])
     def owner(self):
         if self.owning_group and self.owning_group.name:
             return ('group', {'id': self.owning_group._id, 'name': self.owning_group.name})
@@ -129,22 +131,14 @@ class CaseInfo(object):
             return ''
 
     @property
-    @memoized
+    @quickcache(['self.owner_id'])
     def owning_group(self):
-        mc = cache.caches['default']
-        cache_key = "%s.%s" % (Group.__class__.__name__, self.owner_id)
         try:
-            if cache_key in mc:
-                cached_obj = json.loads(mc.get(cache_key))
-                wrapped = Group.wrap(cached_obj)
-                return wrapped
-            else:
-                group_obj = Group.get(self.owner_id)
-                mc.set(cache_key, json.dumps(group_obj.to_json()))
-                return group_obj
+            return Group.get(self.owner_id)
         except ResourceNotFound:
             return None
 
+    @quickcache(['user_id'])
     def _get_username(self, user_id):
         if not user_id:
             return None

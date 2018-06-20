@@ -54,6 +54,7 @@ from corehq.apps.app_manager.views.download import source_files
 from corehq.apps.app_manager.views.settings import PromptSettingsUpdateView
 from corehq.apps.app_manager.views.utils import (back_to_main, encode_if_unicode, get_langs)
 from corehq.apps.builds.models import CommCareBuildConfig
+from corehq.apps.users.models import CouchUser
 import six
 
 
@@ -229,12 +230,14 @@ def save_copy(request, domain, app_id):
 
     if not errors:
         try:
+            user_id = request.couch_user.get_id
             copy = app.make_build(
                 comment=comment,
-                user_id=request.couch_user.get_id,
+                user_id=user_id,
                 previous_version=app.get_latest_app(released_only=False)
             )
             copy.save(increment_version=False)
+            CouchUser.get(user_id).set_has_built_app()
         finally:
             # To make a RemoteApp always available for building
             if app.is_remote_app():

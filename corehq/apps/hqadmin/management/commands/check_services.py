@@ -13,6 +13,7 @@ class Command(BaseCommand):
         parser.add_argument(
             'service_name',
             nargs='?',
+            choices=list(CHECKS)
         )
 
     def handle(self, service_name, **options):

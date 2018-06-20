@@ -35,21 +35,37 @@ class XpathCaseSearchFilter(BaseSimpleFilter):
         context.update({
             'placeholder': "e.g. name = 'foo' and dob <= '2017-02-12'",
             'text': self.get_value(self.request, self.domain) or '',
-            'all_case_properties': json.dumps(get_flattened_case_properties(self.domain)),
+            'suggestions': json.dumps(self.get_suggestions()),
         })
 
         return context
+
+    def get_suggestions(self):
+        case_properties = get_flattened_case_properties(self.domain)
+        special_case_properties = [
+            {'name': prop, 'case_type': None, 'meta_type': 'info'}
+            for prop in SPECIAL_CASE_PROPERTIES
+        ]
+        operators = [
+            {'name': prop, 'case_type': None, 'meta_type': 'operator'}
+            for prop in ['=', '!=', '>=', '<=', '>', '<']
+        ]
+        return case_properties + special_case_properties + operators
 
 
 class CaseListExplorerColumns(BaseSimpleFilter):
     slug = 'explorer_columns'
     label = ugettext_lazy("Columns")
     template = "reports/filters/explorer_columns.html"
-    PERSISTENT_COLUMNS = [
+    PERSISTENT_COLUMNS = [      # all of these are hidden from exports
         # hidden from view, but used for sorting when no sort column is provided
         {'name': 'last_modified', 'label': 'Last Modified Date', 'hidden': True, 'editable': False},
         # shown, but unremovable so there is always at least one column
         {'name': '_link', 'label': _('Link'), 'editable': False},
+    ]
+
+    EXPORT_PERSISTENT_COLUMNS = [  # these are always shown in exports
+        {'name': '_id', 'label': 'case_id'},
     ]
 
     DEFAULT_COLUMNS = [

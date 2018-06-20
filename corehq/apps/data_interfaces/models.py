@@ -527,6 +527,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
     MATCH_HAS_NO_VALUE = 'HAS_NO_VALUE'
+    MATCH_REGEX = 'REGEX'
 
     MATCH_CHOICES = (
         MATCH_DAYS_BEFORE,
@@ -535,6 +536,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
         MATCH_HAS_NO_VALUE,
+        MATCH_REGEX,
     )
 
     property_name = models.CharField(max_length=126)
@@ -611,6 +613,22 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_has_no_value(self, case, now):
         return not self.check_has_value(case, now)
 
+    def check_regex(self, case, now):
+        try:
+            regex = re.compile(self.property_value)
+        except (re.error, ValueError, TypeError):
+            return False
+
+        for value in self.get_case_values(case):
+            if isinstance(value, six.string_types):
+                try:
+                    if regex.match(value):
+                        return True
+                except (re.error, ValueError, TypeError):
+                    pass
+
+        return False
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_BEFORE: self.check_days_before,
@@ -619,6 +637,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
             self.MATCH_HAS_NO_VALUE: self.check_has_no_value,
+            self.MATCH_REGEX: self.check_regex,
         }.get(self.match_type)(case, now)
 
 

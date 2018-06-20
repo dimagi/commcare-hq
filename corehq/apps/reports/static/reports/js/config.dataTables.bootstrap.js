@@ -29,10 +29,10 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
         }
         self.emptyText = options.emptyText || gettext("No data available to display. " +
                                                       "Please try changing your filters.");
-        self.errorText = options.errorText || "<span class='label label-important'>" + gettext("Sorry!") + "</span> " +
+        self.errorText = options.errorText || "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
                          gettext("There was an error with your query, it has been logged, please try another query.");
         self.badRequestErrorText = options.badRequestErrorText || options.errorText ||
-                                   "<span class='label label-important'>" + gettext("Sorry!") + "</span> " +
+                                   "<span class='label label-danger'>" + gettext("Sorry!") + "</span> " +
                                    gettext("Your search query is invalid, please adjust the formatting and try again.");
         self.fixColumns = !!(options.fixColumns);
         self.fixColsNumLeft = options.fixColsNumLeft || 1;
@@ -166,7 +166,11 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
                             "error": function(jqXHR, textStatus, errorThrown) {
                                 $(".dataTables_processing").hide();
                                 if (jqXHR.status === 400) {
-                                    $(".dataTables_empty").html(self.badRequestErrorText);
+                                    var errorMessage = self.badRequestErrorText;
+                                    if (jqXHR.responseText){
+                                        errorMessage = "<p><span class='label label-danger'>" + gettext("Sorry!") + "</span> " + jqXHR.responseText + "</p>";
+                                    }
+                                    $(".dataTables_empty").html(errorMessage);
                                 } else {
                                     $(".dataTables_empty").html(self.errorText);
                                 }
@@ -279,9 +283,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
     };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sSortAsc": "header headerSortDown",
-        "sSortDesc": "header headerSortUp",
-        "sSortable": "header",
+        "sSortAsc": "header headerSortAsc",
+        "sSortDesc": "header headerSortDesc",
+        "sSortable": "header headerSort",
     } );
 
     // For sorting rows

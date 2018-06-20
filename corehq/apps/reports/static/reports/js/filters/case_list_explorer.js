@@ -1,23 +1,23 @@
-var suggestedCaseTypes = function(){
-    // Adds the required properties to filter the case type autocomplete dropdowns
-    var self = this;
-    self.currentCaseType = ko.observable('');
-    $('#report_filter_case_type').on('change', function(e){
-        self.currentCaseType(e.val);
-    });
-
-    self.suggestedProperties = ko.computed(function(){
-        if (self.currentCaseType() === ''){
-            return self.allCaseProperties;
-        }
-        return _.filter(self.allCaseProperties, function(prop){
-            return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
-        });
-    });
-};
-
-hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knockout'], function($, _, ko) {
+hqDefine("reports/js/filters/case_list_explorer", ['jquery', 'underscore', 'knockout'], function($, _, ko) {
     'use strict';
+
+    var applySuggestions = function(allSuggestions){
+        // Adds the required properties to filter the case type autocomplete dropdowns
+        var self = this;
+        self.currentCaseType = ko.observable('');
+        $('#report_filter_case_type').on('change', function(e){
+            self.currentCaseType(e.val);
+        });
+
+        self.suggestedProperties = ko.computed(function(){
+            if (self.currentCaseType() === ''){
+                return allSuggestions;
+            }
+            return _.filter(allSuggestions, function(prop){
+                return prop['case_type'] === self.currentCaseType() || prop['case_type'] === null;
+            });
+        });
+    };
 
     var Property = function ($parent, name, label, editable, hidden) {
         var self = {};
@@ -36,7 +36,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
         });
 
         self.meta_type = ko.computed(function(){
-            var value = _.find($parent.allCaseProperties, function(prop){
+            var value = _.find($parent.allSuggestions, function(prop){
                 return prop.name === self.name();
             });
             if (value){
@@ -51,10 +51,10 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
     };
 
     var casePropertyColumnsViewModel = function(initialColumns, allCaseProperties) {
-        var self = this;
-
-        self.allCaseProperties = allCaseProperties;
-        suggestedCaseTypes.apply(self);
+        var self = {
+            allSuggestions: allCaseProperties,
+        };
+        applySuggestions.call(self, allCaseProperties);
 
         self.properties = ko.observableArray();
         for (var i = 0; i < initialColumns.length; i++){
@@ -68,6 +68,7 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
 
         self.removeProperty = function (property) {
             self.properties.remove(property);
+            $('#fieldset_explorer_columns').trigger('change');
         };
 
         self.allProperties = ko.computed(function(){
@@ -77,10 +78,9 @@ hqDefine("reports/js/filters/case_list_explorer", ['jQuery', 'underscore', 'knoc
         return self;
     };
 
-    var caseSearchXpathViewModel = function(allCaseProperties){
-        var self = this;
-        self.allCaseProperties = allCaseProperties;
-        suggestedCaseTypes.apply(self);
+    var caseSearchXpathViewModel = function(allSuggestions){
+        var self = {};
+        applySuggestions.call(self, allSuggestions);
         return self;
     };
 

@@ -101,6 +101,9 @@
                 <option value="{{ form.constants.MATCH_NOT_EQUAL }}">{% trans "does not equal" %}</option>
                 <option value="{{ form.constants.MATCH_HAS_VALUE }}">{% trans "has a value" %}</option>
                 <option value="{{ form.constants.MATCH_HAS_NO_VALUE }}">{% trans "does not have a value" %}</option>
+                {% if form.allow_regex_case_property_match %}
+                <option value="{{ form.constants.MATCH_REGEX }}">{% trans "matches the regular expression" %}</option>
+                {% endif %}
             </select>
         </div>
         <div class="controls col-xs-2" data-bind="visible: show_property_value_input()">

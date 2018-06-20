@@ -126,7 +126,7 @@ class CaseSearchES(CaseES):
             return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
         except (TypeError, RuntimeError) as e:
             raise CaseFilterError(
-                _("Malformed query: {}".format(e)),
+                _("Malformed search query: {search_query}").format(search_query=e),
                 None,
             )
 
@@ -312,7 +312,11 @@ def flatten_result(hit, include_score=False):
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
-    result = hit['_source']
+    try:
+        result = hit['_source']
+    except KeyError:
+        result = hit
+
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])

@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
+from datetime import date
+
 from dateutil.relativedelta import relativedelta
 from django.db import connections, models
 
@@ -24,6 +26,7 @@ from custom.icds_reports.utils.aggregation import (
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
+    InactiveAwwsAggregationHelper
 )
 
 
@@ -490,6 +493,8 @@ class AggChildHealth(models.Model):
     stunting_normal = models.IntegerField(null=True)
     valid_all_registered_in_month = models.IntegerField(null=True)
     ebf_no_info_recorded = models.IntegerField(null=True)
+    zscore_grading_hfa_recorded_in_month = models.IntegerField(blank=True, null=True)
+    zscore_grading_wfh_recorded_in_month = models.IntegerField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -945,14 +950,13 @@ class AggregateGrowthMonitoringForms(models.Model):
         helper = GrowthMonitoringFormsAggregationHelper(state_id, month)
         prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
         curr_month_query, curr_month_params = helper.create_table_query()
-        aggregate_queries = helper.aggregation_queries()
+        agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
             cursor.execute(prev_month_query, prev_month_params)
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
-            for query, params in aggregate_queries:
-                cursor.execute(query, params)
+            cursor.execute(agg_query, agg_params)
 
     @classmethod
     def compare_with_old_data(cls, state_id, month):
@@ -1100,3 +1104,46 @@ class AggregateCcsRecordDeliveryForms(models.Model):
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
             cursor.execute(agg_query, agg_params)
+
+
+class AggregateInactiveAWW(models.Model):
+    awc_id = models.TextField(primary_key=True)
+    awc_name = models.TextField(blank=True, null=True)
+    awc_site_code = models.TextField(blank=True, null=True)
+    supervisor_id = models.TextField(blank=True, null=True)
+    supervisor_name = models.TextField(blank=True, null=True)
+    block_id = models.TextField(blank=True, null=True)
+    block_name = models.TextField(blank=True, null=True)
+    district_id = models.TextField(blank=True, null=True)
+    district_name = models.TextField(blank=True, null=True)
+    state_id = models.TextField(blank=True, null=True)
+    state_name = models.TextField(blank=True, null=True)
+    first_submission = models.DateField(blank=True, null=True)
+    last_submission = models.DateField(blank=True, null=True)
+
+    @property
+    def days_since_start(self):
+        if self.first_submission:
+            delta = date.today() - self.first_submission
+            return delta.days
+        return 'N/A'
+
+    @property
+    def days_inactive(self):
+        if self.last_submission:
+            delta = date.today() - self.last_submission
+            return delta.days
+        return 'N/A'
+
+    @classmethod
+    def aggregate(cls, last_sync):
+        helper = InactiveAwwsAggregationHelper(last_sync)
+        missing_location_query = helper.missing_location_query()
+        aggregation_query, agg_params = helper.aggregate_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(missing_location_query)
+            cursor.execute(aggregation_query, agg_params)
+
+    class Meta(object):
+        app_label = 'icds_reports'

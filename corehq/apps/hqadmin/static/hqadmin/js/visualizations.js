@@ -76,7 +76,7 @@ hqDefine("hqadmin/js/visualizations", function() {
                         params['enddate'] = enddate;
 
                         var new_url = '?' + $.param(params) + window.location.hash;
-                        History.pushState(null, "Reloaded Chart", new_url);
+                        history.pushState(null, "Reloaded Chart", new_url);
 
                         // keep the urls for the other data visualizations consistent with this datespan
                         $(".viz-url").each(function() {

@@ -13,6 +13,7 @@ hqDefine("reports/js/filters/main", [
     'reports_core/js/choice_list_utils',
     'reports/js/filters/case_list_explorer',
     'select2-3.5.2-legacy/select2',
+    'reports/js/filters/case_list_explorer_knockout_bindings',
 ], function(
     $,
     ko,
@@ -148,18 +149,29 @@ hqDefine("reports/js/filters/main", [
             var model = phoneNumberFilter.model(data.initialValue, data.groups);
             $el.koApplyBindings(model);
         });
-        $(".report-filter-case-property-columns").each(function (i, el) {
+
+        var $casePropertyColumns = $(".report-filter-case-property-columns");
+        $casePropertyColumns.each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
             var model = caseListExplorer.casePropertyColumns(data.initialvalue, data.columnsuggestions);
             $el.koApplyBindings(model);
         });
-        $(".report-filter-xpath-textarea").each(function (i, el) {
+        $casePropertyColumns.on('keyup', function(){
+            $('#fieldset_explorer_columns').trigger('change');
+        });
+
+        var $xpathTextarea = $(".report-filter-xpath-textarea");
+        $xpathTextarea.each(function (i, el) {
             var $el = $(el),
                 data = $el.data();
-            var model = caseListExplorer.caseSearchXpath(data.allcaseproperties);
+            var model = caseListExplorer.caseSearchXpath(data.suggestions);
             $el.koApplyBindings(model);
         });
+        $xpathTextarea.on('keyup', function(){
+            $('#fieldset_search_xpath').trigger('change');
+        });
+
         $('[name=selected_group]').each(function(i, el) {
             $(el).select2({
                 allowClear: true,

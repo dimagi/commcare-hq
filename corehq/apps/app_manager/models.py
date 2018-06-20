@@ -97,7 +97,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
@@ -1512,6 +1511,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
+    def get_app(self):
+        raise NotImplementedError
+
     def _get_media_by_language(self, media_attr, lang, strict=False):
         """
         Return media-path for given language if one exists, else 1st path in the
@@ -1582,6 +1584,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        app = self.get_app()
+        if old_value and not media_path:
+            app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
@@ -2317,6 +2326,8 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2394,6 +2405,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
+
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
@@ -2406,9 +2420,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuleBase, self).__init__(*args, **kwargs)
+        self.assign_references()
+
     @property
     def is_surveys(self):
         return self.case_type == ""
+
+    def assign_references(self):
+        if hasattr(self, 'case_list'):
+            self.case_list._module = self
+        if hasattr(self, 'case_list_form'):
+            self.case_list_form._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -3573,8 +3597,8 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    app = self.get_app()
-                    select_chain = get_select_chain(app, from_module, include_self=False)
+                    from_app = from_module.get_app()  # A form can be copied from a module in a different app.
+                    select_chain = get_select_chain(from_app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -5009,6 +5033,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def jar_url(self):
         return reverse('download_jar', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def recovery_measures_url(self):
+        return reverse('recovery_measures', args=[self.domain, self._id])
+
     def get_jar_path(self):
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -5294,11 +5322,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.build_comment = comment
         copy.comment_from = user_id
-        if user_id:
-            user = CouchUser.get(user_id)
-            if not user.has_built_app:
-                user.has_built_app = True
-                user.save()
         copy.is_released = False
 
         if not copy.is_remote_app():
@@ -5454,6 +5477,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
+    smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5678,6 +5702,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                 app_profile['properties'][ANDROID_LOGO_PROPERTY_MAPPING[logo_name]] = {
                     'value': self.logo_refs[logo_name]['path'],
                 }
+
+        if toggles.MOBILE_RECOVERY_MEASURES.enabled(self.domain):
+            app_profile['properties']['recovery-measures-url'] = {
+                'force': True,
+                'value': self.recovery_measures_url,
+            }
 
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
@@ -6025,33 +6055,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
-    def copy_form(self, module_id, form_id, to_module_id):
+    def copy_form(self, from_module, form, to_module, rename=False):
         """
         The case type of the two modules conflict,
         copying (confusingly) is still allowed.
         This is intentional.
 
         """
-        from_module = self.get_module(module_id)
-        form = from_module.get_form(form_id)
-        to_module = self.get_module(to_module_id)
-        return self._copy_form(from_module, form, to_module, rename=True)
-
-    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
-        # only one form can be a release notes form, so set them to False explicity when copying
+        # only one form can be a release notes form, so set them to False explicitly when copying
         copy_source['is_release_notes_form'] = False
         copy_source['enable_release_notes'] = False
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        if 'rename' in kwargs and kwargs['rename']:
+        if rename:
             for lang, name in six.iteritems(copy_source['name']):
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
-        save_xform(self, copy_form, form.source)
+        to_app = to_module.get_app()
+        save_xform(to_app, copy_form, form.source)
 
         return copy_form
 

@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from functools import wraps
 from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
+from corehq.util.decorators import ContextDecorator
 from corehq.util.soft_assert import soft_assert
 
 
@@ -79,3 +80,29 @@ def _enforce_prefix(name, prefix):
         "Did you mean to call your gauge 'commcare.{}'? "
         "If you're sure you want to forgo the prefix, you can "
         "pass enforce_prefix=None".format(name))
+
+
+class datadog_track_errors(ContextDecorator):
+    """Record when something succeeds or errors in datadog
+
+    Eg: This code will log to commcare.myfunction.succeeded when it completes
+    successfully, and to commcare.myfunction.failed when an exception is
+    raised.
+
+        @datadog_track_errors('myfunction')
+        def myfunction():
+            pass
+    """
+
+    def __init__(self, name):
+        self.succeeded_name = "commcare.{}.succeeded".format(name)
+        self.failed_name = "commcare.{}.failed".format(name)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if not exc_type:
+            datadog_counter(self.succeeded_name)
+        else:
+            datadog_counter(self.failed_name)

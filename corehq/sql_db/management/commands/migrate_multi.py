@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from copy import copy
+import sys
 
 import gevent
 from django.conf import settings
@@ -66,9 +67,14 @@ class Command(BaseCommand):
 
         gevent.joinall(jobs)
 
-        try:
-            for job in jobs:
+        migration_error_occured = False
+        for job in jobs:
+            try:
                 job.get()
-        except Exception:
-            print('\n======================= Error During Migration =======================')
-            print(get_traceback_string())
+            except Exception:
+                print('\n======================= Error During Migration =======================')
+                print(get_traceback_string())
+                migration_error_occured = True
+
+        if migration_error_occured:
+            sys.exit(1)

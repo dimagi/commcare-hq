@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import (
@@ -74,6 +75,9 @@ from django.core.management.base import BaseCommand
 from six import moves
 from time import sleep
 from io import open
+
+
+ABT_CUSTOM_RECIPIENT = 'CASE_OWNER_LOCATION_PARENT'
 
 
 def log(message):
@@ -174,16 +178,17 @@ class BaseMigrator(object):
 
 class CaseReminderHandlerMigrator(BaseMigrator):
 
-    def __init__(self, handler, rule_migration_function, schedule_migration_function):
+    def __init__(self, handler, rule_migration_function, schedule_migration_function, until_references_timestamp):
         self.handler = handler
         self.rule_migration_function = rule_migration_function
         self.schedule_migration_function = schedule_migration_function
+        self.until_references_timestamp = until_references_timestamp
         self.source_duplicate_count = 0
 
     def migrate(self):
         with transaction.atomic():
             self.schedule = self.schedule_migration_function(self.handler)
-            self.rule = self.rule_migration_function(self.handler, self.schedule)
+            self.rule = self.rule_migration_function(self.handler, self.schedule, self.until_references_timestamp)
 
     def log_migrated_reminder(self):
         obj, _ = MigratedReminder.objects.get_or_create(handler_id=self.handler._id)
@@ -443,8 +448,14 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_SELF, None)]
     elif handler.recipient == RECIPIENT_OWNER:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None)]
+    elif handler.recipient == RECIPIENT_USER:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
+    elif handler.recipient == RECIPIENT_PARENT_CASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
+    elif handler.recipient == ABT_CUSTOM_RECIPIENT:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, ABT_CUSTOM_RECIPIENT)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -462,7 +473,7 @@ def get_broadcast_recipients(handler):
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
 
-def migrate_rule(handler, schedule):
+def migrate_rule(handler, schedule, until_references_timestamp):
     rule = AutomaticUpdateRule.objects.create(
         domain=handler.domain,
         name=handler.nickname,
@@ -494,8 +505,36 @@ def migrate_rule(handler, schedule):
                 property_value=handler.start_value,
                 match_type=MatchPropertyDefinition.MATCH_EQUAL,
             )
+        elif handler.start_match_type == MATCH_REGEX:
+            if not handler.start_value:
+                raise ValueError("Expected start_value")
+
+            rule.add_criteria(
+                MatchPropertyDefinition,
+                property_name=handler.start_property,
+                property_value=handler.start_value,
+                match_type=MatchPropertyDefinition.MATCH_REGEX,
+            )
         else:
             raise ValueError("Unexpected start_match_type '%s'" % handler.start_match_type)
+
+    if handler.until:
+        if until_references_timestamp:
+            raise ValueError("Expected until_references_timestamp to be False")
+
+        # A legacy option from the original framework which only checked two values, 'ok' or 'OK'
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name=handler.until,
+            property_value='ok',
+            match_type=MatchPropertyDefinition.MATCH_NOT_EQUAL,
+        )
+        rule.add_criteria(
+            MatchPropertyDefinition,
+            property_name=handler.until,
+            property_value='OK',
+            match_type=MatchPropertyDefinition.MATCH_NOT_EQUAL,
+        )
 
     rule.add_action(
         CreateScheduleInstanceActionDefinition,
@@ -524,6 +563,26 @@ def migrate_simple_daily_schedule(handler):
         start_offset=handler.start_offset,
         extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
         repeat_every=handler.schedule_length,
+    )
+
+
+def migrate_simple_weekly_schedule(handler):
+    if handler.schedule_length > 0 and (handler.schedule_length % 7) == 0:
+        repeat_every = handler.schedule_length // 7
+    elif handler.max_iteration_count == 1:
+        repeat_every = 1
+    else:
+        raise ValueError("Unable to convert schedule_length for handler %s" % handler._id)
+
+    return TimedSchedule.create_simple_weekly_schedule(
+        handler.domain,
+        get_timed_event(handler, handler.events[0]),
+        get_content(handler, handler.events[0]),
+        [handler.start_day_of_week],
+        handler.start_day_of_week,
+        total_iterations=handler.max_iteration_count,
+        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        repeat_every=repeat_every,
     )
 
 
@@ -583,16 +642,13 @@ class Command(BaseCommand):
         if handler.start_match_type in (MATCH_EXACT, MATCH_REGEX) and not handler.start_value:
             return None
 
-        if handler.start_match_type not in (MATCH_EXACT, MATCH_ANY_VALUE):
+        if handler.start_match_type not in (MATCH_EXACT, MATCH_ANY_VALUE, MATCH_REGEX):
             return None
 
         if not handler.start_property:
             return None
 
         if handler.active and handler.uses_parent_case_property:
-            return None
-
-        if handler.until:
             return None
 
         if handler.active and handler.start_date and handler.use_today_if_start_date_is_blank:
@@ -636,6 +692,9 @@ class Command(BaseCommand):
             RECIPIENT_OWNER,
             RECIPIENT_CASE,
             RECIPIENT_USER_GROUP,
+            RECIPIENT_USER,
+            RECIPIENT_PARENT_CASE,
+            ABT_CUSTOM_RECIPIENT,
         ):
             return None
 
@@ -672,6 +731,16 @@ class Command(BaseCommand):
         ):
             if handler.start_day_of_week != DAY_ANY:
                 # Weekly schedule goes here
+                if (
+                    handler.start_day_of_week >= 0 and
+                    handler.start_day_of_week <= 6 and
+                    len(handler.events) == 1 and
+                    handler.events[0].day_num == 0 and
+                    handler.start_offset == 0 and
+                    ((handler.schedule_length % 7) == 0 or handler.max_iteration_count == 1)
+                ):
+                    return migrate_simple_weekly_schedule
+
                 return None
             elif (
                 len(handler.events) == 1 and
@@ -760,10 +829,20 @@ class Command(BaseCommand):
                 if event.fire_time and event.fire_time.second != 0:
                     return None
 
+            until_references_timestamp = False
+            if handler.until:
+                until_references_timestamp = self.confirm(
+                    "Does until property %s.%s reference a timestamp? y/n " % (handler.case_type, handler.until)
+                )
+
+            if until_references_timestamp:
+                return None
+
             rule_migration_function = self.get_rule_migration_function(handler)
             schedule_migration_function = self.get_rule_schedule_migration_function(handler)
             if rule_migration_function and schedule_migration_function:
-                return CaseReminderHandlerMigrator(handler, rule_migration_function, schedule_migration_function)
+                return CaseReminderHandlerMigrator(handler, rule_migration_function, schedule_migration_function,
+                    until_references_timestamp)
 
             return None
         elif handler.reminder_type == REMINDER_TYPE_ONE_TIME:

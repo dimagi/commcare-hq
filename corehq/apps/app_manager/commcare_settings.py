@@ -32,7 +32,7 @@ def _translate_setting(setting, prop):
         return ugettext(value)
 
 
-def _load_custom_commcare_settings(user=None):
+def _load_custom_commcare_settings():
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     settings = []
     with open(os.path.join(path, 'commcare-profile-settings.yaml'), encoding='utf-8') as f:
@@ -56,10 +56,10 @@ def _load_custom_commcare_settings(user=None):
     return settings
 
 
-def _load_commcare_settings_layout(doc_type, user):
+def _load_commcare_settings_layout(doc_type):
     settings = dict([
         ('{0}.{1}'.format(setting.get('type'), setting.get('id')), setting)
-        for setting in _load_custom_commcare_settings(user)
+        for setting in _load_custom_commcare_settings()
     ])
     path = os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json')
     with open(os.path.join(path, 'commcare-settings-layout.yaml'), encoding='utf-8') as f:
@@ -98,13 +98,12 @@ def get_custom_commcare_settings():
 
 
 @memoized
-def get_commcare_settings_layout(user):
-    layout = {
-        doc_type: _load_commcare_settings_layout(doc_type, user)
-        for doc_type in ('Application', 'RemoteApp', 'LinkedApplication')
-    }
-    layout.update({'LinkedApplication': {}})
-    return layout
+def get_commcare_settings_layout(doc_type):
+    if doc_type == "LinkedApplication":
+        return {}
+    if doc_type in ['Application', 'RemoteApp']:
+        return _load_commcare_settings_layout(doc_type)
+    raise Exception("Unexpected doc_type received: %s" % doc_type)
 
 
 @memoized

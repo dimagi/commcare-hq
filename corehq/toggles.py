@@ -469,6 +469,13 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+COPY_FORM_TO_APP = StaticToggle(
+    'copy_form_to_app',
+    'Allow copying a form from one app to another',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
@@ -1431,6 +1438,15 @@ SKIP_REMOVE_INDICES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_RECOVERY_MEASURES = StaticToggle(
+    'mobile_recovery_measures',
+    'Mobile recovery measures',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=("Used for widely deployed projects where recovery from "
+                 "large-scale failures would otherwise be next to impossible."),
+)
+
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
@@ -1537,11 +1553,25 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     randomness=0.5
 )
 
+WAREHOUSE_APP_STATUS = StaticToggle(
+    'warehouse_app_status',
+    "User warehouse backend for the app status report. Currently only for sql domains",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 TRAINING_MODULE = StaticToggle(
     'training-module',
     'Training Modules',
     TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
+
+
+EXPORT_MULTISORT = StaticToggle(
+    'export_multisort',
+    'Sort multiple rows in exports at once.',
+    TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN],
 )
 
@@ -1553,14 +1583,3 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
-
-HIDE_TRANSLATIONS_FROM_FORMS = StaticToggle(
-    'hide_translations_from_forms',
-    'Hide translations for languages from forms',
-    TAG_CUSTOM,
-    description=(
-        "Do not show translations in forms. Comes in handy when your app support multiple "
-        "languages but you want to focus just on app building."
-    ),
-    namespaces=[NAMESPACE_DOMAIN]
-)

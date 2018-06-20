@@ -19,7 +19,9 @@ Finding the slow function
 
 This is usually pretty straightforward.
 The easiest thing to do is typically use the top-level entry point for a view call.
-In this example we are investigating the performance of commtrack location download, so the relevant function would be commtrack.views.location_export.::
+In this example we are investigating the performance of commtrack location download, so the relevant function would be commtrack.views.location_export.
+
+.. code-block:: python
 
     @login_and_domain_required
     def location_export(request, domain):
@@ -49,12 +51,46 @@ These are created in /tmp/ by default, however you can change it by adding a val
 
 Note that the files created are huge; this code should only be run locally.
 
+Profiling in production
+^^^^^^^^^^^^^^^^^^^^^^^
+The same method can be used to profile functions in production. Obviously we want to be able to
+turn this on and off and possibly only profile a limited number of function calls.
+
+This can be accomplished by using an environment variable to set the probability of profiling a function.
+Here's an example:
+
+.. code-block:: python
+
+    @profile_prod('locations_download.prof', probability=float(os.getenv('PROFILE_LOCATIONS_EXPORT', 0))
+    def location_export(request, domain):
+        ....
+
+By default this wil not do any profiling but if the `PROFILE_LOCATIONS_EXPORT` environment variable
+is set to a value between 0 and 1 and the Django process is restarted then the function will
+get profiled. The number of profiles that are done will depend on the value of the environment
+variable. Values closer to 1 will get more profiling.
+
+You can also limit the total number of profiles to be recorded using the `limit` keyword argument.
+You could also expose this via an environment variable or some other method to make it configurable:
+
+.. code-block:: python
+
+    @profile_prod('locations_download.prof', 1, limit=10)
+    def location_export(request, domain):
+        ....
+
+.. warning:: In a production environment the `limit` may not apply absolutely since there are likely
+    multiple processes running in which case the limit will get applied to each one. Also, the limit will be reset
+    if the processes are restarted.
+
+    Any profiling in production should be closely monitored to ensure that
+    it does not adversely affect performance or fill up available disk space.
 
 Creating a more useful output from the dump file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The raw profile files are not human readable, and you need to use something
-like `hotshot <https://docs.python.org/2/library/hotshot.html>`_ to make them
+like `cProfile <https://docs.python.org/2/library/profile.html#module-cProfile>`_ to make them
 useful.
 A script that will generate what is typically sufficient information to analyze
 these can be found in the `commcarehq-scripts`_ repository.
@@ -115,6 +151,8 @@ Here is a sample start to that file::
           289    0.002    0.000    0.185    0.001 /home/czue/src/commcare-hq/corehq/apps/locations/models.py:31(__init__)
             6    0.000    0.000    0.176    0.029 /home/czue/.virtualenvs/commcare-hq/local/lib/python2.7/site-packages/couchdbkit/client.py:1024(_fetch_if_needed)
 
+.. seealso:: `Description of columns <https://docs.python.org/2/library/profile.html#instant-user-s-manual>`_
+
 The most important thing to look at is the cumtime (cumulative time) column.
 In this example we can see that the vast majority of the time (over 8 of the 8.9 total seconds) is spent in the cached_open_doc function (and likely the library calls below are called by that function).
 This would be the first place to start when looking at improving profile performance.
@@ -171,10 +209,12 @@ Aggregating data from multiple runs
 
 In some cases it is useful to run a function a number of times and aggregate the profile data.
 To do this follow the steps above to create a set of '.prof' files (one for each run of the function) then use the
-'gather_profile_stats.py' script included with django (lib/python2.7/site-packages/django/bin/profiling/gather_profile_stats.py)
-to aggregate the data.
+`gather_profile_stats.py`_ script to aggregate the data.
 
-This will produce a '.agg.prof' file which can be analysed with the `prof.py <https://gist.github.com/czue/4947238>`_ script.
+This will produce a file which can be analysed with the `convert_profile.py`_ script.
+
+.. _gather_profile_stats.py: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/gather_profile_stats.py
+.. _convert_profile.py: https://github.com/dimagi/commcarehq-scripts/blob/master/reusable/convert_profile.py
 
 Line profiling
 ^^^^^^^^^^^^^^
@@ -229,15 +269,18 @@ Refer to these resources which provide good information on memory profiling:
 * `Memory usage graphs with ps <http://brunogirin.blogspot.com.au/2010/09/memory-usage-graphs-with-ps-and-gnuplot.html>`_
     * `while true; do ps -C python -o etimes=,pid=,%mem=,vsz= >> mem.txt; sleep 1; done`
 
-* You can also use the "resident_set_size" decorator and context manager to print the amount of memory allocated to python before and after the method you think is causing memory leaks::
+* You can also use the "resident_set_size" decorator and context manager to print the amount of memory allocated to python before and after the method you think is causing memory leaks:
 
-        from dimagi.utils.decorators.profile import resident_set_size
 
-        @resident_set_size()
-        def function_that_uses_a_lot_of_memory:
-            [u'{}'.format(x) for x in range(1,100000)]
+.. code-block:: python
 
-        def somewhere_else():
-            with resident_set_size(enter_debugger=True):
-                # the enter_debugger param will enter a pdb session after your method has run so you can do more exploration
-                # do memory intensive things
+    from dimagi.utils.decorators.profile import resident_set_size
+
+    @resident_set_size()
+    def function_that_uses_a_lot_of_memory:
+        [u'{}'.format(x) for x in range(1,100000)]
+
+    def somewhere_else():
+        with resident_set_size(enter_debugger=True):
+            # the enter_debugger param will enter a pdb session after your method has run so you can do more exploration
+            # do memory intensive things

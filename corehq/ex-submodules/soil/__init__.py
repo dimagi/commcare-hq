@@ -18,6 +18,7 @@ from django_transfer import TransferHttpResponse
 from soil.progress import get_task_progress, get_multiple_task_progress
 from corehq.blobs import DEFAULT_BUCKET, get_blob_db
 import six
+from io import open
 
 
 GLOBAL_RW = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH

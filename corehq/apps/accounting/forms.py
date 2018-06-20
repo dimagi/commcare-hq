@@ -99,6 +99,10 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False
     )
+    billing_admin_emails = forms.CharField(
+        label="Billing Admin Emails",
+        required=False
+    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
@@ -137,6 +141,7 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
+                'billing_admin_emails': ','.join(account.billing_admin_emails),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -174,6 +179,16 @@ class BillingAccountBasicForm(forms.Form):
                     data_bind="checked: is_customer_billing_account",
                 ),
             ))
+            additional_fields.append(
+                crispy.Div(
+                    crispy.Field(
+                        'billing_admin_emails',
+                        css_class='input-xxlarge accounting-email-select2',
+                        data_bind='attr: {required: is_customer_billing_account}'
+                    ),
+                    data_bind='visible: is_customer_billing_account'
+                )
+            )
             if account.subscription_set.count() > 0:
                 additional_fields.append(crispy.Div(
                     crispy.Field(
@@ -247,6 +262,13 @@ class BillingAccountBasicForm(forms.Form):
     def clean_email_list(self):
         return self.cleaned_data['email_list'].split(',')
 
+    def clean_billing_admin_emails(self):
+        # Do not return a list with an empty string
+        if self.cleaned_data['billing_admin_emails']:
+            return self.cleaned_data['billing_admin_emails'].split(',')
+        else:
+            return []
+
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
         if (
@@ -295,6 +317,7 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
+        account.billing_admin_emails = self.cleaned_data['billing_admin_emails']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
@@ -682,6 +705,13 @@ class SubscriptionForm(forms.Form):
         if transfer_account and transfer_account == self.subscription.account.id:
             raise ValidationError(_("Please select an account other than the "
                                     "current account to transfer to."))
+        if transfer_account:
+            acct = BillingAccount.objects.get(id=transfer_account)
+            if acct.is_customer_billing_account != self.subscription.plan_version.plan.is_customer_software_plan:
+                if acct.is_customer_billing_account:
+                    raise ValidationError("Please select a regular Billing Account to transfer to.")
+                else:
+                    raise ValidationError("Please select a Customer Billing Account to transfer to.")
         return transfer_account
 
     def clean_domain(self):
@@ -981,6 +1011,8 @@ class PlanInformationForm(forms.Form):
     description = forms.CharField(required=False)
     edition = forms.ChoiceField(choices=SoftwarePlanEdition.CHOICES)
     visibility = forms.ChoiceField(choices=SoftwarePlanVisibility.CHOICES)
+    max_domains = forms.IntegerField(required=False)
+    is_customer_software_plan = forms.BooleanField(required=False)
 
     def __init__(self, plan, *args, **kwargs):
         self.plan = plan
@@ -990,6 +1022,8 @@ class PlanInformationForm(forms.Form):
                 'description': plan.description,
                 'edition': plan.edition,
                 'visibility': plan.visibility,
+                'max_domains': plan.max_domains,
+                'is_customer_software_plan': plan.is_customer_software_plan
             }
         else:
             kwargs['initial'] = {
@@ -1007,6 +1041,8 @@ class PlanInformationForm(forms.Form):
                 'description',
                 'edition',
                 'visibility',
+                'max_domains',
+                'is_customer_software_plan'
             ),
             hqcrispy.FormActions(
                 crispy.ButtonHolder(
@@ -1033,10 +1069,15 @@ class PlanInformationForm(forms.Form):
         description = self.cleaned_data['description']
         edition = self.cleaned_data['edition']
         visibility = self.cleaned_data['visibility']
+        max_domains = self.cleaned_data['max_domains']
+        is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
         plan = SoftwarePlan(name=name,
                             description=description,
                             edition=edition,
-                            visibility=visibility)
+                            visibility=visibility,
+                            max_domains=max_domains,
+                            is_customer_software_plan=is_customer_software_plan
+                            )
         plan.save()
         return plan
 
@@ -1048,6 +1089,8 @@ class PlanInformationForm(forms.Form):
             plan.description = self.cleaned_data['description']
             plan.edition = self.cleaned_data['edition']
             plan.visibility = self.cleaned_data['visibility']
+            plan.max_domains = self.cleaned_data['max_domains']
+            plan.is_customer_software_plan = self.cleaned_data['is_customer_software_plan']
             plan.save()
             messages.success(request, "The %s Software Plan was successfully updated." % self.plan.name)
 

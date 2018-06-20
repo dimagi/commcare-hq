@@ -9,6 +9,7 @@ from memoized import memoized
 
 from dimagi.utils.dates import DateSpan
 
+from couchforms.analytics import get_last_form_submission_received
 from corehq.apps.accounting.exceptions import EnterpriseReportError
 from corehq.apps.accounting.models import BillingAccount, DefaultProductPlan, Subscription
 from corehq.apps.accounting.utils import get_default_domain_url
@@ -46,7 +47,7 @@ class EnterpriseReport(object):
 
     @property
     def filename(self):
-        return "{} ({}).csv".format(self.account.name, self.slug)
+        return "{} ({}) {}.csv".format(self.account.name, self.title, datetime.utcnow().strftime('%Y%m%d %H%M%S'))
 
     @classmethod
     def create(cls, slug, account_id, couch_user):
@@ -101,7 +102,7 @@ class EnterpriseReport(object):
 
 
 class EnterpriseDomainReport(EnterpriseReport):
-    title = _('Domains')
+    title = _('Project Spaces')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseDomainReport, self).__init__(account_id, couch_user)
@@ -109,15 +110,16 @@ class EnterpriseDomainReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseDomainReport, self).headers
-        return [_('Plan'), _('# of Mobile Users'), _('# of Web Users')] + headers
+        return [_('Created On [UTC]'), _('# of Apps'), _('# of Mobile Users'),
+                _('# of Web Users'), _('Last Form Submission [UTC]')] + headers
 
     def rows_for_domain(self, domain):
-        subscription = Subscription.get_active_subscription_by_domain(domain.name)
-        plan_version = subscription.plan_version if subscription else DefaultProductPlan.get_default_plan_version()
         return [[
-            plan_version.plan.name,
+            self.format_date(domain.date_created),
+            len(domain.applications()),
             get_mobile_user_count(domain.name, include_inactive=False),
             get_web_user_count(domain.name, include_inactive=False),
+            self.format_date(get_last_form_submission_received(domain.name)),
         ] + self.domain_properties(domain)]
 
     def total_for_domain(self, domain):
@@ -133,7 +135,7 @@ class EnterpriseWebUserReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseWebUserReport, self).headers
-        return [_('Name'), _('Email Address'), _('Role'), _('Last Login')] + headers
+        return [_('Name'), _('Email Address'), _('Role'), _('Last Login [UTC]')] + headers
 
     def rows_for_domain(self, domain):
         rows = []
@@ -161,7 +163,8 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
     @property
     def headers(self):
         headers = super(EnterpriseMobileWorkerReport, self).headers
-        return [_('Username'), _('Name'), _('Last Sync'), _('Last Submission'), _('CommCare Version')] + headers
+        return [_('Username'), _('Name'), _('Created Date [UTC]'), _('Last Sync [UTC]'),
+                _('Last Submission [UTC]'), _('CommCare Version')] + headers
 
     def rows_for_domain(self, domain):
         rows = []
@@ -171,6 +174,7 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
             rows.append([
                 re.sub(r'@.*', '', user.username),
                 user.full_name,
+                self.format_date(user.created_on),
                 self.format_date(user.reporting_metadata.last_sync_for_user.sync_date),
                 self.format_date(user.reporting_metadata.last_submission_for_user.submission_date),
                 user.reporting_metadata.last_submission_for_user.commcare_version or '',
@@ -182,17 +186,17 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 
 class EnterpriseFormReport(EnterpriseReport):
-    title = _('Form Submissions')
+    title = _('Mobile Form Submissions')
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseFormReport, self).__init__(account_id, couch_user)
-        self.window = 7
+        self.window = 30
         self.subtitle = _("past {} days").format(self.window)
 
     @property
     def headers(self):
         headers = super(EnterpriseFormReport, self).headers
-        return [_('Form Name'), _('Submitted'), _('App Name'), _('Mobile User')] + headers
+        return [_('Form Name'), _('Submitted [UTC]'), _('App Name'), _('Mobile User')] + headers
 
     @quickcache(['self.account.id', 'domain_name'], timeout=60)
     def hits(self, domain_name):

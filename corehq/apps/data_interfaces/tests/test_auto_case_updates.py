@@ -688,6 +688,42 @@ class CaseRuleCriteriaTest(BaseCaseRuleTest):
             self.assertFalse(rule.criteria_match(case, datetime.utcnow()))
 
     @run_with_all_backends
+    def test_case_property_regex_match(self):
+        rule1 = _create_empty_rule(self.domain)
+        rule1.add_criteria(
+            MatchPropertyDefinition,
+            property_name='category',
+            property_value='^(a|b)$',
+            match_type=MatchPropertyDefinition.MATCH_REGEX,
+        )
+
+        rule2 = _create_empty_rule(self.domain)
+        rule2.add_criteria(
+            MatchPropertyDefinition,
+            property_name='category',
+            property_value='(',
+            match_type=MatchPropertyDefinition.MATCH_REGEX,
+        )
+
+        with _with_case(self.domain, 'person', datetime.utcnow()) as case:
+            self.assertFalse(rule1.criteria_match(case, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'a'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertTrue(rule1.criteria_match(case, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'b'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertTrue(rule1.criteria_match(case, datetime.utcnow()))
+
+            hqcase.utils.update_case(self.domain, case.case_id, case_properties={'category': 'c'})
+            case = CaseAccessors(self.domain).get_case(case.case_id)
+            self.assertFalse(rule1.criteria_match(case, datetime.utcnow()))
+
+            # Running an invalid regex just causes it to return False
+            self.assertFalse(rule2.criteria_match(case, datetime.utcnow()))
+
+    @run_with_all_backends
     def test_dates_case_properties_for_equality_inequality(self):
         """
         Date case properties are automatically converted from string to date

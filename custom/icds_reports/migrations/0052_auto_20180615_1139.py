@@ -73,5 +73,5 @@ class Migration(migrations.Migration):
             name='aggregategrowthmonitoringforms',
             options={},
         ),
-        migrator.get_migration('update_tables23.sql'),
+        migrator.get_migration('update_tables24.sql'),
     ]
