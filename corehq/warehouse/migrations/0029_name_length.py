@@ -26,11 +26,11 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='userstagingtable',
             name='first_name',
-            field=models.CharField(null=True),
+            field=models.TextField(null=True),
         ),
         migrations.AlterField(
             model_name='userstagingtable',
             name='last_name',
-            field=models.CharField(null=True),
+            field=models.TextField(null=True),
         ),
     ]
