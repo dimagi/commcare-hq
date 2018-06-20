@@ -234,6 +234,11 @@ def build_filter_from_ast(domain, node):
 
 
 def build_filter_from_xpath(domain, xpath):
+    error_message = _(
+        "We didn't understand what you were trying to do with {}. "
+        "Please try reformatting your query. "
+        "The operators we accept are: {}"
+    )
     try:
         return build_filter_from_ast(domain, parse_xpath(xpath))
     except TypeError as e:
@@ -241,28 +246,14 @@ def build_filter_from_xpath(domain, xpath):
         if text_error:
             # This often happens if there is a bad operator (e.g. a ~ b)
             bad_part = text_error.groups()[0]
-            raise CaseFilterError(
-                _("We didn't understand what you were trying to do with {}. "
-                  "Please try reformatting your query. "
-                  "The operators we accept are: {}").format(
-                      bad_part,
-                      ", ".join(ALL_OPERATORS)),
-                bad_part,
-            )
+            raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
     except RuntimeError as e:
         # eulxml passes us string errors from YACC
         lex_token_error = re.search(r"LexToken\((\w+),\w?'(.+)'", six.text_type(e))
         if lex_token_error:
             bad_part = lex_token_error.groups()[1]
-            raise CaseFilterError(
-                _("We didn't understand what you were trying to do with {}. "
-                  "Please try reformatting your query. "
-                  "The operators we accept are: {}").format(
-                      bad_part,
-                      ", ".join(ALL_OPERATORS)),
-                bad_part,
-            )
+            raise CaseFilterError(error_message.format(bad_part, ", ".join(ALL_OPERATORS)), bad_part)
         raise CaseFilterError(_("Malformed search query"), None)
 
 
