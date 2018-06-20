@@ -59,6 +59,7 @@ function hqDefine(path, dependencies, moduleAccessor) {
                 'knockout': 'ko',
                 'underscore': '_',
                 'clipboard/dist/clipboard': 'Clipboard',
+                'ace-builds/src-min-noconflict/ace': 'ace',
             };
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
