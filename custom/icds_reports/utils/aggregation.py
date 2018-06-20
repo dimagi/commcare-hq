@@ -707,8 +707,6 @@ def recalculate_aggregate_table(model_class):
 
 
 class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
-    aggregate_parent_table = AGG_GROWTH_MONITORING_TABLE
-    aggregate_child_table_prefix = 'icds_db_gm_form_'
     base_tablename = 'child_health_monthly'
 
     def __init__(self, month):
