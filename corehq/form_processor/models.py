@@ -1032,6 +1032,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPE_CASE_CREATE = 128
     TYPE_CASE_CLOSE = 256
     TYPE_CASE_INDEX = 512
+    TYPE_CASE_ATTACHMENT = 1024     # no longer supported
     TYPE_REBUILD_FORM_REPROCESS = 2048
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),

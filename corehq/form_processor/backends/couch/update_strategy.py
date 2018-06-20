@@ -184,8 +184,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             self.case.actions.extend(case_update.get_case_actions(xformdoc))
 
         # rebuild the case
-        local_forms = {xformdoc.form_id: xformdoc}
-        self.soft_rebuild_case(xforms=local_forms)
+        self.soft_rebuild_case()
 
         if case_update.version:
             self.case.version = case_update.version
@@ -264,7 +263,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
         return self
 
-    def _apply_action(self, action, xform):
+    def _apply_action(self, action):
         if action.action_type == const.CASE_ACTION_CREATE:
             self._apply_create_action(action)
         elif action.action_type == const.CASE_ACTION_UPDATE:
