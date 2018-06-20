@@ -40,9 +40,12 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 ########################################################################################################
 from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
+
 logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
+
+OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
 def load_domain(req, domain):
@@ -310,10 +313,7 @@ def two_factor_check(view_func, api_key):
                         # that use the query dict to generate dynamic filters
                         token = request.GET.pop('otp')[-1]
                 if not token:
-                    return JsonResponse(
-                        {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"},
-                        status=401
-                    )
+                    return JsonResponse(OTP_AUTH_FAIL_RESPONSE, status=401)
                 elif not match_token(request.user, token):
                     return JsonResponse({"error": "OTP token is incorrect"}, status=401)
                 else:
