@@ -1,56 +1,88 @@
-{% extends "registration/email/fancy_email.html" %}
-
+{% extends "registration/email/_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
+{% block hero %}
+  <div style="text-align: center; font-weight: 800; color: #ffffff; font-size: 30px; padding-top: 20px;">
+    {% blocktrans %}
+      Get Started With
+    {% endblocktrans %}
+  </div>
+  <div style="text-align: center; padding: 10px 0;">
+    <img src="{% static 'registration/images/commcare.png' %}" width="250" height="52" />
+  </div>
+  <div style="text-align: center; margin-top: 0px;">
+    <a class="btn"
+       href="{{ registration_link }}"
+       style="color: #ffffff; text-decoration: none; padding: 15px 20px; background-color: #004ebc; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+      {% trans "Activate My Account" %}
+    </a>
+  </div>
+{% endblock %}
 
 {% block preview_text %}
-    {% blocktrans %}
-        Dear {{ full_name }}, please activate your CommCare HQ Account!
-    {% endblocktrans %}
+  {% blocktrans %}
+    Dear {{ full_name }}, please activate your CommCare HQ Account!
+  {% endblocktrans %}
 {% endblock %}
 
 {% block content %}
-    <p>
-        {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
-    </p>
+  <h2 style="font-weight: 800; font-size: 1.5em;">
+    {% blocktrans %}
+      Welcome to CommCare!
+    {% endblocktrans %}
+  </h2>
 
+  <p>
+    {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Thank you for joining CommCare. Get started with app building for
+      "<strong>{{ domain }}</strong>" by
+      <a href="{{ registration_link }}">activating your account</a> today.
+    {% endblocktrans %}
+  </p>
+  {% if request.user_agent.is_mobile %}
+    <p style="font-weight: 800;">
+      {% blocktrans %}
+        CommCare HQ is a powerful tool, and is not optimized for a
+        mobile device. For the best experience, please activate CommCare
+        from a laptop or desktop browser.
+      {% endblocktrans %}
     <p>
-        {% blocktrans %}Welcome to CommCare!{% endblocktrans %}
-        {% blocktrans %}Please click the button below to activate your CommCare project <strong>{{ domain }}</strong>.{% endblocktrans %}
+  {% endif %}
+  <p>
+    {% blocktrans %}
+      Once you do this, our team will be in touch with some helpful tips for getting started!
+    {% endblocktrans %}
+  </p>
+  <p>
+    {% blocktrans %}
+      Cheers,<br />
+      The CommCare Team
+    {% endblocktrans %}
+  </p>
 
-        {% if request.user_agent.is_mobile %}
-            {% blocktrans %}
-                CommCare HQ is a powerful tool, and is not optimized for a mobile device.
-                For the best experience, please activate CommCare from a laptop or desktop browser.
-            {% endblocktrans %}
-        {% endif %}
-    </p>
-    <p style="text-align: center;">
-        <a class="btn"
-            href="{{ registration_link }}"
-            style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-            {% trans "Activate CommCare" %}
-        </a>
-    </p>
-    <p>
-        {% blocktrans %}
-        Once you do this, our team will be in touch with some helpful tips for getting started!
-        {% endblocktrans %}
-    </p>
-    <p>
-        {% blocktrans %}
-        Cheers,<br />
-        The CommCare Team
-        {% endblocktrans %}
-    </p>
+{% endblock %}
+
+{% block full_width_content %}
+  <div style="width: 100%; background-color: #004ebc; text-align: center; padding: 60px 0 65px;">
+
+    <div style="text-align: center;  margin-bottom: 5px;">
+      <img src="{% static 'registration/images/commcare.png' %}" width="250" height="52" />
+    </div>
+
+    <a class="btn-white" href="{{ registration_link }}" style="color: #ffffff; text-decoration: none; padding: 15px 20px; border: 2px solid #ffffff; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
+      {% trans "Activate My Account" %}
+    </a>
+
+  </div>
 {% endblock %}
 
 {% block reason_for_email %}
-        {% blocktrans %}
-        You received this message because we received a New User request
-        <br /> on <a href="http://www.commcarehq.org/"
-                     style="color: #685c53; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">
-            CommCare HQ</a> with your email address.
-        {% endblocktrans %}
+  {% blocktrans %}
+    You received this message because we received a new user request
+    <br /> on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a> with your email address.
+  {% endblocktrans %}
 {% endblock %}
