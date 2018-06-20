@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import unicode_literals
 from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime
@@ -175,19 +176,23 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         self._record_datadog_metrics(changes_chunk, failed_changes, timer)
 
     def _record_datadog_metrics(self, changes_chunk, failed_changes, timer):
-        tags = ["pillow_name:{}".format(self.get_name())]
-        datadog_counter('commcare.change_feed.chunked.changes.count', len(changes_chunk), tags=tags)
-        datadog_counter('commcare.change_feed.chunked.changes.exception', len(changes_chunk), tags=tags)
-        datadog_counter('commcare.change_feed.chunked.changes.suceess', len(set(changes_chunk) - set(failed_changes)), tags=tags)
+        tags = ["pillow_name:{}".format(self.get_name()), "chunked:True"]
+        datadog_counter('commcare.change_feed.changes.count', len(changes_chunk), tags=tags)
+        datadog_counter('commcare.change_feed.changes.exception', len(failed_changes), tags=tags)
+        datadog_counter('commcare.change_feed.changes.suceess',
+            len(set(changes_chunk) - set(failed_changes)), tags=tags)
 
         max_change_lag = (datetime.utcnow() - changes_chunk[0].metadata.publish_timestamp).seconds
         min_change_lag = (datetime.utcnow() - changes_chunk[-1].metadata.publish_timestamp).seconds
-        perceived_lag = (max_change_lag - min_change_lag) / 2
-        datadog_gauge('commcare.change_feed.chunked.perceived_change_lag', perceived_lag, tags=tags)
-        actual_lag = perceived_lag / self.processors[0].processor_chunk_size
-        datadog_gauge('commcare.change_feed.chunked.actual_change_lag', actual_lag, tags=tags)
+        datadog_gauge('commcare.change_feed.chunked.min_change_lag', min_change_lag, tags=tags)
+        datadog_gauge('commcare.change_feed.chunked.max_change_lag', max_change_lag, tags=tags)
 
-        datadog_histogram('commcare.change_feed.chunked.processing_time', timer.duration, tags=tags)
+        datadog_histogram('commcare.change_feed.chunked.processing_time_total', timer.duration,
+            tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
+        datadog_histogram(
+            'commcare.change_feed.processing_time',
+            timer.duration / len(changes_chunk),
+            tags=tags + ["chunk_size:".format(str(len(changes_chunk)))])
 
     def process_with_error_handling(self, change, context, chunked_fallback=False):
         # chunked_fallback indicates whether the call com
