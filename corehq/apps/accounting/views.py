@@ -1023,6 +1023,9 @@ def enterprise_dashboard(request, domain):
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
         )],
+        'current_page': {
+            'page_name': _('Enterprise Dashboard'),
+        }
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 

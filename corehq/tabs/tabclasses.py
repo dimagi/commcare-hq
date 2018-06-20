@@ -1403,10 +1403,10 @@ class ProjectUsersTab(UITab):
 
 
 class EnterpriseSettingsTab(UITab):
-    title = ugettext_noop("Project Settings")
+    title = ugettext_noop("Enterprise Settings")
 
     url_prefix_formats = (
-        '/hq/accounting/enterprise_dashboard/',
+        '/a/{domain}/enterprise/',
     )
 
     _is_viewable = False

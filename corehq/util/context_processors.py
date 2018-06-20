@@ -42,14 +42,8 @@ def get_per_domain_context(project, request=None):
             domain_has_privilege(project.name, privileges.CUSTOM_BRANDING)):
         custom_logo_url = reverse('logo', args=[project.name])
 
-    is_domain_billing_admin = False
     if getattr(request, 'couch_user', None) and project:
         allow_report_an_issue = request.couch_user.has_permission(project.name, 'report_an_issue')
-        account = BillingAccount.get_account_by_domain(project.name)
-        if account and request.couch_user.username in account.billing_admin_emails:
-            is_domain_billing_admin = True
-        elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
-            is_domain_billing_admin = True
     elif settings.ENTERPRISE_MODE:
         if not getattr(request, 'couch_user', None):
             allow_report_an_issue = False
@@ -65,7 +59,6 @@ def get_per_domain_context(project, request=None):
         'CUSTOM_LOGO_URL': custom_logo_url,
         'allow_report_an_issue': allow_report_an_issue,
         'EULA_COMPLIANCE': getattr(settings, 'EULA_COMPLIANCE', False),
-        'is_domain_billing_admin': is_domain_billing_admin,
     }
 
 
@@ -74,6 +67,20 @@ def domain(request):
 
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
+
+
+def domain_billing_context(request):
+    is_domain_billing_admin = False
+    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        if account:
+            if request.couch_user.username in account.billing_admin_emails:
+                is_domain_billing_admin = True
+            elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
+                is_domain_billing_admin = True
+    return {
+        'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
+    }
 
 
 def current_url_name(request):

@@ -32,7 +32,7 @@
                 </div>
             </li>
             {% if request.couch_user.is_web_user and domain and domain != 'public' and not request.project.is_snapshot %}
-                {% if is_domain_billing_admin %}
+                {% if IS_DOMAIN_BILLING_ADMIN %}
                 <li class="nav-divider divider"></li>
                 <li class="dropdown-header nav-header">{% trans 'Manage Enterprise' %}</li>
                 <li>
