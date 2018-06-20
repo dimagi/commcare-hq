@@ -10,7 +10,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('icds_reports', '0052_inactiveawws_icdsfile.py'),
+        ('icds_reports', '0052_inactiveawws_icdsfile'),
     ]
 
     operations = [
