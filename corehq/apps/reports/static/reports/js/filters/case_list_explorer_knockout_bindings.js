@@ -21,10 +21,15 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                     }
                 );
             editor.session.setMode('ace/mode/xquery'); // does reasonable syntax highlighting for XPath
-            editor.on('change', function(){
+
+            var updateKOModel = function(){
                 viewModel.query(editor.getValue());
                 $element.parent().trigger('change');
+            };
+            editor.on('change', function(){
+                updateKOModel();
             });
+            updateKOModel();
 
             // Set placeholder
             function update() {
@@ -50,7 +55,11 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
                 getCompletions: function(editor, session, pos, prefix, callback){
                     var data = ko.utils.unwrapObservable(valueAccessor());
                     callback(null, _.map(data, function(suggestion){
-                        return {name: suggestion.name, value: suggestion.name, meta: suggestion.case_type || suggestion.meta_type};
+                        return {
+                            name: suggestion.name,
+                            value: suggestion.name,
+                            meta: suggestion.case_type || suggestion.meta_type,
+                        };
                     }));
                 }
             };
