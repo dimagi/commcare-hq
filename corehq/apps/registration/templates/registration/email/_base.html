@@ -54,7 +54,7 @@
 
       /* NOTE Background Image not supported by all mail clients */
       .hero {
-        background-image: url("{% static 'registration/images/hero-bg.jpg' %}");
+        background-image: url("{{ url_prefix }}{% static 'registration/images/hero-bg.jpg' %}");
         background-position: center;
         background-repeat: no-repeat;
         background-size: cover;
@@ -87,7 +87,7 @@
       <div class="hero" style="background-color: #333333; height: 330px; width: 100%;" class="hero">
 
         <div class="logo" style="text-align: center; padding: 20px 0;">
-          <img src="{% static 'registration/images/dimagi.png' %}" width="53" height="25" />
+          <img src="{{ url_prefix }}{% static 'registration/images/dimagi.png' %}" width="53" height="25" />
         </div>{# /logo #}
 
         {% block hero %}
