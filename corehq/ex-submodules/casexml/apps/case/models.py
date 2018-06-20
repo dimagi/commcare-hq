@@ -30,7 +30,7 @@ from dimagi.utils.indicators import ComputedDocumentMixin
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from couchforms.models import XFormInstance
 from corehq.form_processor.exceptions import CaseNotFound
-from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex, CommCareCaseAttachment
+from casexml.apps.case.sharedmodels import IndexHoldingMixIn, CommCareCaseIndex
 from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch import (
     CouchDocLockableMixIn,
@@ -64,7 +64,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     updated_known_properties = DictProperty()
     updated_unknown_properties = DictProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    attachments = SchemaDictProperty(CommCareCaseAttachment)
 
     deprecated = False
 
@@ -84,8 +83,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
 
         ret.updated_unknown_properties = action.dynamic_properties
         ret.indices = [CommCareCaseIndex.from_case_index_update(i) for i in action.indices]
-        ret.attachments = dict((attach_id, CommCareCaseAttachment.from_case_index_update(attach))
-                               for attach_id, attach in action.attachments.items())
         if hasattr(xformdoc, "last_sync_token"):
             ret.sync_log_id = xformdoc.last_sync_token
         return ret
@@ -121,10 +118,6 @@ class CommCareCaseAction(LooselyEqualDocumentSchema):
     @property
     def is_case_index(self):
         return self.action_type == const.CASE_ACTION_INDEX
-
-    @property
-    def is_case_attachment(self):
-        return self.action_type == const.CASE_ACTION_ATTACHMENT
 
     @property
     def is_case_rebuild(self):
@@ -177,8 +170,7 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
     name = StringProperty()
     version = StringProperty()
     indices = SchemaListProperty(CommCareCaseIndex)
-    case_attachments = SchemaDictProperty(CommCareCaseAttachment)
-    
+
     server_modified_on = DateTimeProperty()
 
     def __unicode__(self):
@@ -319,7 +311,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
             "properties": self.get_properties_in_api_format(),
             #reorganized
             "indices": self.get_index_map(),
-            "attachments": self.get_attachment_map(),
         }
         if not lite:
             ret.update({
@@ -418,9 +409,6 @@ class CommCareCase(DeferredBlobMixin, SafeSaveDocument, IndexHoldingMixIn,
         """
         from couchforms.dbaccessors import get_forms_by_id
         return get_forms_by_id(self.xform_ids)
-
-    def get_attachment(self, attachment_name):
-        return self.fetch_attachment(attachment_name)
 
     def dynamic_case_properties(self):
         """(key, value) tuples sorted by key"""

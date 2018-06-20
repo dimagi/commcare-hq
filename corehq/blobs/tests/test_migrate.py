@@ -473,7 +473,6 @@ class TestMigrateBackend(TestCase):
     }
     sql_reindex_accessors = [
         mod.CaseUploadFileMetaReindexAccessor,
-        mod.CaseAttachmentSQLReindexAccessor,
         mod.XFormAttachmentSQLReindexAccessor,
         mod.DemoUserRestoreReindexAccessor,
     ]

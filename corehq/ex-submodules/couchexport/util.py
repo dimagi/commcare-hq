@@ -44,7 +44,7 @@ intersect_filters = intersect_functions
 
 
 def clear_attachments(schema_or_doc):
-    for noisy_property in ('_attachments', 'external_blobs', 'case_attachments'):
+    for noisy_property in ('_attachments', 'external_blobs'):
         if schema_or_doc and noisy_property in schema_or_doc:
             del schema_or_doc[noisy_property]
 
