@@ -41,6 +41,7 @@ class Command(BaseCommand):
                     "in_es": self._get_es_cases_modified_on_date(current_date),
                 }
                 csv_writer.writerow(properties)
+                print(properties)
 
                 properties = {
                     "date": current_date,
@@ -49,6 +50,7 @@ class Command(BaseCommand):
                     "in_es": self._get_es_forms_received_on_date(current_date),
                 }
                 csv_writer.writerow(properties)
+                print(properties)
 
                 current_date += timedelta(days=1)
 
@@ -59,7 +61,7 @@ class Command(BaseCommand):
             num_cases += (
                 CommCareCaseSQL.objects
                 .using(db)
-                .filter(domain=self.domain, modified_on__date=date)
+                .filter(domain=self.domain, server_modified_on__date=date)
                 .count()
             )
 
