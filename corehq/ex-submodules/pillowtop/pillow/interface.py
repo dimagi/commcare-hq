@@ -120,17 +120,17 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         try:
             changes_chunk = []
             for change in self.get_change_feed().iter_changes(since=since or None, forever=forever):
-                if self._should_process_in_chunks:
-                    changes_chunk.append(change)
-                    if len(changes_chunk) == self.processors[0].processor_chunk_size:
-                        self.process_chunk_with_error_handling(changes_chunk, context)
-                        changes_chunk = []
-                else:
-                    context.changes_seen += 1
-                    if change:
-                        self.process_with_error_handling(change, context)
+                context.changes_seen += 1
+                if change:
+                    if self._should_process_in_chunks:
+                        changes_chunk.append(change)
+                        if len(changes_chunk) == self.processors[0].processor_chunk_size:
+                            self.process_chunk_with_error_handling(changes_chunk, context)
+                            changes_chunk = []
                     else:
-                        self._update_checkpoint(None, None)
+                        self.process_with_error_handling(change, context)
+                else:
+                    self._update_checkpoint(None, None)
             self.process_chunk_with_error_handling(changes_chunk, context)
         except PillowtopCheckpointReset:
             # finish processing any ramining chunk
@@ -145,24 +145,22 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
         """
         if not changes_chunk:
             return
-        # the only thing to be done for 'None' change is to touch checkpoint
-        to_process = [change for change in changes_chunk if change]
         failed_changes = set()
         timer = TimingContext()
         with timer:
             try:
                 # chunked processing is supported if there is only one processor
-                failed_changes = self.processors[0].process_changes_chunk(self, to_process)
+                failed_changes = self.processors[0].process_changes_chunk(self, changes_chunk)
             except Exception as ex:
                 notify_exception(
                     None,
                     "{pillow_name} Error in processing changes chunk {change_ids}: {ex}".format(
                         pillow_name=self.get_name(),
-                        change_ids=[c.id for c in to_process],
+                        change_ids=[c.id for c in changes_chunk],
                         ex=ex
                     ))
                 # fall back to processing one by one
-                for change in to_process:
+                for change in changes_chunk:
                     self.process_with_error_handling(change, context, chunked_fallback=True)
             else:
                 # fall back to processing one by one for failed changes
@@ -170,7 +168,8 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                     self.process_with_error_handling(change, context, chunked_fallback=True)
         for change in changes_chunk:
             context.changes_seen += 1
-            self._update_checkpoint(change, context)
+        # update checkpoint for just the latest change
+        self._update_checkpoint(changes_chunk[-1], context)
         self._record_datadog_metrics(changes_chunk, failed_changes, timer)
 
     def _record_datadog_metrics(self, changes_chunk, failed_changes, timer):
