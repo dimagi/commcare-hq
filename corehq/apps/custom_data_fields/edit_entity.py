@@ -104,7 +104,7 @@ class CustomDataEditor(object):
                     label=field.label,
                     required=field.is_required,
                     choices=[(c, c) for c in field.choices],
-                    widget=Select2MultipleChoiceWidget
+                    widget=forms.SelectMultiple(attrs={'class': 'ko-select2'}),
                 )
             return choice_field
         else:

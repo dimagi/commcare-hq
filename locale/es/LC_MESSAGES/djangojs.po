@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-06-13 18:04+0000\n"
+"POT-Creation-Date: 2018-06-19 19:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -2639,19 +2639,19 @@ msgstr "Excel (versiones antiguas)"
 msgid "Excel 2007+"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:532
+#: corehq/apps/export/static/export/js/models.js:533
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:642
+#: corehq/apps/export/static/export/js/models.js:643
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:644
+#: corehq/apps/export/static/export/js/models.js:645
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:646
+#: corehq/apps/export/static/export/js/models.js:647
 msgid "None"
 msgstr "Ninguna"
 

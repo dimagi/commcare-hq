@@ -9,23 +9,20 @@ from corehq.apps.es import case_search as case_search_es
     q = (case_search_es.CaseSearchES()
          .domain('testproject')
 """
-from __future__ import absolute_import
-from __future__ import unicode_literals
+from __future__ import absolute_import, unicode_literals
 
 from warnings import warn
 
 import six
 from django.utils.dateparse import parse_date
-from django.utils.translation import ugettext as _
-from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
-    SPECIAL_CASE_PROPERTIES,
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
+    SPECIAL_CASE_PROPERTIES,
     SYSTEM_PROPERTIES,
     VALUE,
 )
@@ -117,18 +114,8 @@ class CaseSearchES(CaseES):
         - numeric ranges: "age >= 100 and height < 1.25"
         - related cases: "mother/first_name = 'maeve' or parent/parent/host/age = 13"
         """
-        from corehq.apps.case_search.filter_dsl import (
-            CaseFilterError,
-            build_filter_from_ast,
-        )
-
-        try:
-            return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
-        except (TypeError, RuntimeError) as e:
-            raise CaseFilterError(
-                _("Malformed search query: {search_query}").format(search_query=e),
-                None,
-            )
+        from corehq.apps.case_search.filter_dsl import build_filter_from_xpath
+        return self.filter(build_filter_from_xpath(domain, xpath))
 
     def _add_query(self, new_query, clause):
         current_query = self._query.get(queries.BOOL)
@@ -239,7 +226,13 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
 
     # if its a date, use it
     # date range
-    kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
+    kwargs = {
+        key: parse_date(value) for key, value in six.iteritems(kwargs)
+        if value is not None and parse_date(value) is not None
+    }
+    if not kwargs:
+        raise TypeError()       # Neither a date nor number was passed in
+
     return _base_property_query(
         case_property_name,
         queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
@@ -312,7 +305,11 @@ def flatten_result(hit, include_score=False):
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
-    result = hit['_source']
+    try:
+        result = hit['_source']
+    except KeyError:
+        result = hit
+
     if include_score:
         result[RELEVANCE_SCORE] = hit['_score']
     case_properties = result.pop(CASE_PROPERTIES_PATH, [])

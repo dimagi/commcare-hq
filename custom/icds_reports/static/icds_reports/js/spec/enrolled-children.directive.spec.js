@@ -190,6 +190,7 @@ describe('Enrolled Children Directive', function () {
         assert.equal(controller.chartOptions.chart.xAxis.axisLabel, '');
         assert.equal(controller.chartOptions.chart.xAxis.showMaxMin, true);
         assert.equal(controller.chartOptions.chart.yAxis.axisLabel, '');
+        assert.equal(controller.chartOptions.chart.showControls, false);
         assert.equal(controller.chartOptions.caption.enable, true);
         assert.deepEqual(controller.chartOptions.caption.css, {
             'text-align': 'center',

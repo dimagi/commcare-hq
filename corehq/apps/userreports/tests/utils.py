@@ -1,29 +1,20 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from datetime import datetime, date, time
+from datetime import datetime
 from decimal import Decimal
-import functools
 import json
 import os
 import uuid
-import re
-import six
-import sqlalchemy
-
 
 from mock import patch
-from six.moves import zip
 
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
-from corehq.sql_db.connections import connection_manager
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
-from corehq.util.test_utils import run_with_multiple_configs, RunConfig
 from io import open
 
 
@@ -116,25 +107,6 @@ def pre_run_with_es_backend(fn, *args, **kwargs):
     fn.setUp()
 
 
-run_with_all_ucr_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_SQL_BACKEND},
-            post_run=post_run_with_sql_backend
-        ),
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_ES_BACKEND},
-            pre_run=pre_run_with_es_backend,
-        ),
-    ]
-)
-
-
-def mock_sql_backend():
-    return patch('corehq.apps.userreports.reports.data_source.get_backend_id', return_value=UCR_SQL_BACKEND)
-
-
 def mock_datasource_config():
     return patch('corehq.apps.userreports.reports.data_source.get_datasource_config',
                  return_value=(get_sample_data_source(), None))
@@ -152,40 +124,3 @@ def get_simple_xform():
         'VT': 'VT',
     })
     return xform.tostring()
-
-
-def load_data_from_db(table_name):
-    def _convert_decimal_to_string(value):
-        value_str = str(value)
-        p = re.compile('0E-(?P<zeros>[0-9]+)')
-        match = p.match(value_str)
-        if match:
-            return '0.{}'.format(int(match.group('zeros')) * '0')
-        else:
-            return value_str
-
-    engine = connection_manager.get_session_helper('default').engine
-    metadata = sqlalchemy.MetaData(bind=engine)
-    metadata.reflect(bind=engine)
-    table = metadata.tables[table_name]
-    columns = [
-        column.name
-        for column in table.columns
-    ]
-    with engine.begin() as connection:
-        for row in list(connection.execute(table.select())):
-            row = list(row)
-            for idx, value in enumerate(row):
-                if isinstance(value, date):
-                    row[idx] = value.strftime('%Y-%m-%d')
-                elif isinstance(value, time):
-                    row[idx] = value.strftime("%H:%M:%S.%f").rstrip('0').rstrip('.')
-                elif isinstance(value, six.integer_types):
-                    row[idx] = str(value)
-                elif isinstance(value, (float, Decimal)):
-                    row[idx] = _convert_decimal_to_string(row[idx])
-                elif isinstance(value, six.string_types):
-                    row[idx] = value.encode('utf-8')
-                elif value is None:
-                    row[idx] = ''
-            yield dict(zip(columns, row))

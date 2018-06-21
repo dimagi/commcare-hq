@@ -31,19 +31,21 @@ class AppManagerDataSourceConfigTest(TestCase):
     def setUpClass(cls):
         super(AppManagerDataSourceConfigTest, cls).setUpClass()
         factory = AppFactory(domain=cls.domain)
-        m0, f0 = factory.new_basic_module('A Module', cls.case_type)
+        # create main form that defines case schema
+        m0, f0 = factory.new_basic_module('Main Module', cls.case_type)
         f0.source = get_simple_xform()
         f0.name = {'en': 'Main Form'}
         factory.form_requires_case(f0, case_type=cls.case_type, update={
             cp: '/data/{}'.format(cp) for cp in cls.case_properties.keys()
         })
-        cls.form = f0
+        cls.main_form = f0
+        # create another module/form to generate a parent case relationship
+        # for the main case type
         m1, f1 = factory.new_basic_module('Parent Module', cls.parent_type)
-        f1.source = get_simple_xform()
+        f1.source = get_simple_xform()  # not used, just needs to be some valid XForm
         f1.name = {'en': 'Parent Form'}
         factory.form_opens_case(f1, case_type=cls.parent_type)
         factory.form_opens_case(f1, case_type=cls.case_type, is_subcase=True)
-        cls.form2 = f1
         cls.app = factory.app
         cls.app.save()
 
@@ -159,7 +161,7 @@ class AppManagerDataSourceConfigTest(TestCase):
         app = self.app
         data_sources = get_form_data_sources(app)
         self.assertEqual(2, len(data_sources))
-        data_source = data_sources[self.form.xmlns]
+        data_source = data_sources[self.main_form.xmlns]
         form_properties = copy(self.case_properties)
         form_properties['state'] = 'string'
         meta_properties = {

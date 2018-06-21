@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import contextlib
-import os
 import time
 import sys
 from collections import Counter
@@ -16,7 +15,7 @@ from soil import DownloadBase
 
 from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
-from corehq.elastic import iter_es_docs, ScanResult
+from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
@@ -310,21 +309,7 @@ def get_export_file(export_instances, filters, temp_path, progress_tracker=None)
 def get_export_documents(export_instance, filters):
     # Pull doc ids from elasticsearch and stream to disk
     query = _get_export_query(export_instance, filters)
-    scroll_result = query.scroll_ids()
-
-    def iter_export_docs():
-        with TransientTempfile() as temp_path:
-            with open(temp_path, 'w', encoding='utf-8') as f:
-                for doc_id in scroll_result:
-                    f.write(doc_id + '\n')
-
-            # Stream doc ids from disk and fetch documents from ES in chunks
-            with open(temp_path, 'r', encoding='utf-8') as f:
-                doc_ids = (doc_id.strip() for doc_id in f)
-                for doc in iter_es_docs(query.index, doc_ids):
-                    yield doc
-
-    return ScanResult(scroll_result.count, iter_export_docs())
+    return iter_es_docs_from_query(query)
 
 
 def _get_export_query(export_instance, filters):
@@ -456,13 +441,13 @@ def _get_base_query(export_instance):
 
 
 @datadog_track_errors('rebuild_export')
-def rebuild_export(export_instance, filters=None):
+def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
     """
-    filters = filters or export_instance.get_filters()
+    filters = export_instance.get_filters()
     with TransientTempfile() as temp_path:
-        export_file = get_export_file([export_instance], filters or [], temp_path)
+        export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 

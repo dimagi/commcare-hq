@@ -18,6 +18,7 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
 # External imports
+from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
@@ -39,9 +40,12 @@ from corehq.apps.hqwebapp.signals import clear_login_attempts
 ########################################################################################################
 from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
 
+
 logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
+
+OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
 def load_domain(req, domain):
@@ -303,10 +307,15 @@ def two_factor_check(view_func, api_key):
             couch_user = _ensure_request_couch_user(request)
             if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
+                if not token and 'otp' in request.GET:
+                    with mutable_querydict(request.GET):
+                        # remove the param from the query dict so that we don't interfere with places
+                        # that use the query dict to generate dynamic filters
+                        token = request.GET.pop('otp')[-1]
                 if not token:
-                    return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
+                    return JsonResponse(OTP_AUTH_FAIL_RESPONSE, status=401)
                 elif not match_token(request.user, token):
-                    return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
+                    return JsonResponse({"error": "OTP token is incorrect"}, status=401)
                 else:
                     return fn(request, domain, *args, **kwargs)
             return fn(request, domain, *args, **kwargs)
