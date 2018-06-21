@@ -30,11 +30,11 @@ from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMet
 class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     domain = 'agg'
     case_type = 'agg-cases'
-    case_name = 'Rowena Luk'
+    case_name = 'Mama'
     case_date_opened = datetime(2017, 12, 19)
     case_properties = (
-        ('first_name', 'First Name', 'string', 'Rowena'),
-        ('last_name', 'Last Name', 'string', 'Luk'),
+        ('first_name', 'First Name', 'string', 'Mama'),
+        ('last_name', 'Last Name', 'string', 'Luck'),
         ('children', 'Children', 'int', '1'),
         ('lmp', 'Pregnancy Start Date', 'date', '2018-01-21'),
         ('delivery_date', 'Pregnancy End Date', 'date', '2018-10-27'),
