@@ -99,7 +99,6 @@ urlpatterns = [
     url(r'^account/', include('corehq.apps.settings.urls')),
     url(r'^project_store(.*)$', rewrite_url),
     url(r'^exchange/', include('corehq.apps.appstore.urls')),
-    url(r'^webforms/', include('touchforms.formplayer.urls')),
     url(r'', include('corehq.apps.hqwebapp.urls')),
     url(r'', include('corehq.apps.domain.urls')),
     url(r'^hq/accounting/', include('corehq.apps.accounting.urls')),

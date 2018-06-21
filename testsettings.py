@@ -43,10 +43,6 @@ for key, value in {
 
     'NOSE_EXCLUDE_DIRS': ';'.join([
         'scripts',
-
-        # strange error:
-        # TypeError: Attribute setup of <module 'touchforms.backend' ...> is not a python function.
-        'submodules/touchforms-src/touchforms/backend',
     ]),
 }.items():
     os.environ.setdefault(key, value)
