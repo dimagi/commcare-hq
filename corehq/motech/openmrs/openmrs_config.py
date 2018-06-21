@@ -7,7 +7,6 @@ from dimagi.ext.couchdbkit import (
     DocumentSchema,
     ListProperty,
     SchemaDictProperty,
-    SchemaListProperty,
     SchemaProperty,
     StringProperty,
 )
