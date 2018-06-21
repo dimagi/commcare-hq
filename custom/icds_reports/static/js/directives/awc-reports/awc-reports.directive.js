@@ -1872,7 +1872,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
         }
         if (heightRecorded && parseInt(heightRecorded) !== 0) {
-            if (type === 'height' && parseInt(heightRecorded) <= 35 && parseInt(heightRecorded) >= 120) {
+            if (type === 'height' && (parseInt(heightRecorded) <= 45 || parseInt(heightRecorded) >= 120)) {
                 recordedHeight = 'Data Not Valid';
             } else {
                 recordedHeight = d3.format(".2f")(heightRecorded) + ' cm';
