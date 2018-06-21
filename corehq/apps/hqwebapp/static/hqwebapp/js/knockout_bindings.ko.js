@@ -260,7 +260,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
 
                 var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
+                var currentIndex = parseInt(row[0].attributes['data-order'].value);
 
                 var lastSelectedRowIndex = null;
                 for (var i = 0; i < list().length; i++) {
