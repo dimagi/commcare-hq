@@ -34,6 +34,10 @@ class TimeAggregationDefinition(models.Model):
                 )
             )
 
+    def __str__(self):
+        return '{} {}: {}-{}'.format(self.aggregatetabledefinition,
+                                     self.aggregation_unit, self.start_column, self.end_column)
+
 
 class AggregateTableDefinition(models.Model):
     """
