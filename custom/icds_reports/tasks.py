@@ -474,7 +474,7 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
         'user_have_access_to_features': icds_pre_release_features(couch_user),
     }
 
-    pdf_files = []
+    pdf_files = {}
 
     report_data = ISSNIPMonthlyReport(config={
         'awc_id': awcs,
@@ -489,9 +489,8 @@ def prepare_issnip_monthly_register_reports(domain, awcs, pdf_format, month, yea
         for data in report_data:
             report_context['reports'] = [data]
             pdf_hash = create_pdf_file(report_context)
-            pdf_files.append({
-                'uuid': pdf_hash,
-                'location_name': data['awc_name']
+            pdf_files.update({
+                pdf_hash: data['awc_name']
             })
         cache_key = zip_folder(pdf_files)
 
