@@ -3009,8 +3009,7 @@ class ConditionalAlertScheduleForm(ScheduleForm):
             self.cleaned_data.get('start_date_type') != self.START_DATE_RULE_TRIGGER
         ):
             raise ValidationError(
-                _("This option can only be enabled when the schedule's start "
-                  "date is the date that the rule triggers.")
+                _("This option can only be enabled when the schedule's start date is set automatically.")
             )
 
         return value
