@@ -8,14 +8,14 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
-from touchforms.formplayer.api import (
+from corehq.apps.formplayer_api.smsforms.api import (
     XFormsConfig,
     DigestAuth,
     get_raw_instance,
     InvalidSessionIdException,
     TouchformsError,
 )
-from touchforms.formplayer import sms as tfsms
+from corehq.apps.formplayer_api.smsforms import sms as tfsms
 from django.conf import settings
 from xml.etree.cElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime

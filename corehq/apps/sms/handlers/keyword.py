@@ -24,7 +24,7 @@ from corehq.apps.reminders.util import create_immediate_reminder
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.groups.models import Group
-from touchforms.formplayer.api import current_question, TouchformsError
+from corehq.apps.formplayer_api.smsforms.api import current_question, TouchformsError
 from corehq.apps.app_manager.models import Form
 from corehq.form_processor.utils import is_commcarecase
 from six.moves import filter

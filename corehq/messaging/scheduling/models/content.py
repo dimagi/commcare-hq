@@ -27,7 +27,7 @@ from dimagi.utils.modules import to_function
 from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from django.db import models
-from touchforms.formplayer.api import TouchformsError
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 
 
 class SMSContent(Content):
