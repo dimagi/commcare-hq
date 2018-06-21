@@ -58,6 +58,9 @@ class AggregateTableDefinition(models.Model):
     time_aggregation = models.OneToOneField(TimeAggregationDefinition, null=True, blank=True,
                                             on_delete=models.CASCADE)
 
+    class Meta:
+        unique_together = ('domain', 'table_id')
+
     def __str__(self):
         return '{} ({})'.format(self.display_name or self.table_id, self.domain)
 
