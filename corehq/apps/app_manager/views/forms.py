@@ -488,7 +488,17 @@ def get_xform_source(request, domain, app_id, form_unique_id):
         form = app.get_form(form_unique_id)
     except IndexError:
         raise Http404()
-    return _get_xform_source(request, app, form)
+
+    lang = request.COOKIES.get('lang', app.langs[0])
+    source = form.source
+    response = HttpResponse(source)
+    response['Content-Type'] = "application/xml"
+    for lc in [lang] + app.langs:
+        if lc in form.name:
+            filename = "%s.xml" % unidecode(form.name[lc])
+            break
+    set_file_download(response, filename)
+    return response
 
 
 @require_GET
@@ -806,23 +816,6 @@ def view_form(request, domain, app_id, form_unique_id):
         request, domain, app_id,
         form_unique_id=form_unique_id
     )
-
-
-def _get_xform_source(request, app, form, filename="form.xml"):
-    download = json.loads(request.GET.get('download', 'false'))
-    lang = request.COOKIES.get('lang', app.langs[0])
-    source = form.source
-    if download:
-        response = HttpResponse(source)
-        response['Content-Type'] = "application/xml"
-        for lc in [lang] + app.langs:
-            if lc in form.name:
-                filename = "%s.xml" % unidecode(form.name[lc])
-                break
-        set_file_download(response, filename)
-        return response
-    else:
-        return json_response(source)
 
 
 @require_can_edit_apps
