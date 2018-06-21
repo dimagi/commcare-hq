@@ -36,12 +36,12 @@ def determine_authtype_from_header(request, default=DIGEST):
     client should send the initial request with an Authorization header.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith('basic '):
+    if auth_header.startswith(b'basic '):
         return BASIC
-    elif auth_header.startswith('digest '):
+    elif auth_header.startswith(b'digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif auth_header.startswith('token '):
+    elif auth_header.startswith(b'token '):
         return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
