@@ -52,7 +52,6 @@ branches:
   - jls/prune-auto-builds  # Jenny June 5
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
-  - jls/kill-mm-case-properties  # Jenny June 13
   - es/progress-bar  # ES June 18
 #  - np/export-sharing  # NP June 19
 submodules:
