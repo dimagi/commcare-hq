@@ -1340,26 +1340,18 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     @quickcache(['username'])
-    def get_by_username(cls, username, strict=True):
+    def get_by_username(cls, username):
         if not username:
             return None
 
-        def get(stale, raise_if_none):
-            result = cls.get_db().view('users/by_username',
-                key=username,
-                include_docs=True,
-                reduce=False,
-                stale=stale if not strict else None,
-            )
-            return result.one(except_all=raise_if_none)
-        try:
-            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
-            if result['doc'] is None or result['doc']['username'] != username:
-                raise NoResultFound
-        except NoResultFound:
-            result = get(stale=None, raise_if_none=False)
-
-        if result:
+        view_result = cls.get_db().view(
+            'users/by_username',
+            key=username,
+            include_docs=True,
+            reduce=False,
+        )
+        result = view_result.one()
+        if result and result['doc'] and result['doc']['username'] == username:
             return cls.wrap_correctly(result['doc'])
         else:
             return None
