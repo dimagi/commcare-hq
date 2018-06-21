@@ -939,6 +939,32 @@ class XForm(WrappedNode):
 
         return list(self.translations().keys())
 
+    def check_for_missing_translations(self, include_triggers=False, include_groups=False):
+        missing_translations = False
+
+        if not self.exists():
+            return missing_translations
+
+        control_nodes = self.get_control_nodes()
+
+        for cnode in control_nodes:
+            node = cnode.node
+
+            if not cnode.is_leaf and not include_groups:
+                continue
+
+            if node.tag_name == 'trigger' and not include_triggers:
+                continue
+
+            if cnode.items is not None:
+                for item in cnode.items:
+                    try:
+                        item.findtext('{f}value').strip()
+                    except AttributeError:
+                        missing_translations = True
+        missing_translations = True
+        return missing_translations
+
     def get_questions(self, langs, include_triggers=False,
                       include_groups=False, include_translations=False, form=None):
         """

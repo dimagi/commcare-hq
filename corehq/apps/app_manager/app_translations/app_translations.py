@@ -18,7 +18,7 @@ from corehq.apps.app_manager.exceptions import (
     ModuleNotFoundException,
     XFormException)
 from corehq.apps.app_manager.models import ReportModule, ShadowForm
-from corehq.apps.app_manager.util import save_xform
+from corehq.apps.app_manager.util import save_xform, check_for_missing_translations
 from corehq.apps.app_manager.xform import namespaces, WrappedNode, ItextValue, ItextOutput
 from corehq.util.workbook_json.excel import HeaderValueError, WorkbookJSONReader, JSONReaderError, \
     InvalidExcelFileException
@@ -174,8 +174,21 @@ def process_bulk_app_translation_upload(app, f):
             msgs.extend(ms)
         else:
             # It's a form sheet
-            ms = update_form_translations(sheet, rows, missing_cols, app)
-            msgs.extend(ms)
+
+            # CHECK FOR MISSING TRANSLATIONS
+            mod_text, form_text = sheet.worksheet.title.split("_")
+            module_index = int(mod_text.replace("module", "")) - 1
+            form_index = int(form_text.replace("form", "")) - 1
+            form = app.get_module(module_index).get_form(form_index)
+            missing_translations = check_for_missing_translations(form)
+            if missing_translations:
+                msgs.append(
+                    (messages.error, _("This is missing a translation"))
+                )
+
+            if not missing_translations:
+                ms = update_form_translations(sheet, rows, missing_cols, app)
+                msgs.extend(ms)
 
     msgs.append(
         (messages.success, _("App Translations Updated!"))

@@ -175,6 +175,12 @@ def save_xform(app, form, xml):
 
     return xml
 
+def check_for_missing_translations(form):
+    if form.is_registration_form():
+        # For registration forms, assume that the first question is the
+        # case name unless something else has been specified
+        return XForm(form.source).check_for_missing_translations()
+
 CASE_TYPE_REGEX = r'^[\w-]+$'
 _case_type_regex = re.compile(CASE_TYPE_REGEX)
 

@@ -105,7 +105,7 @@ def upload_bulk_app_translations(request, domain, app_id):
     for msg in msgs:
         # Add the messages to the request object.
         # msg[0] should be a function like django.contrib.messages.error .
-        # mes[1] should be a string.
+        # msg[1] should be a string.
         msg[0](request, msg[1])
 
     # In v2, languages is the default tab on the settings page
