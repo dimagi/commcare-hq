@@ -293,7 +293,7 @@ def post_data_helper(d, auth, content_type, url, log=False):
     return results
 
 
-def formplayer_post_data_helper(d, auth, content_type, url):
+def formplayer_post_data_helper(d, content_type, url):
     data = json.dumps(d).encode('utf-8')
     up = urlparse(url)
     headers = {}
@@ -315,16 +315,13 @@ def post_data(data, auth=None, content_type="application/json"):
     except TypeError:
         raise BadDataError('unhandleable touchforms query: %s' % data)
 
-    if auth:
-        d['hq_auth'] = auth.to_dict()
-    # just default to old server for now
     domain = d.get("domain")
 
     if not domain:
         raise ValueError("Expected domain")
 
     d = get_formplayer_session_data(d)
-    return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + d["action"])
+    return formplayer_post_data_helper(d, content_type, get_formplayer_url() + "/" + d["action"])
 
 
 def get_formplayer_session_data(data):
