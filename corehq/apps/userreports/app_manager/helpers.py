@@ -33,8 +33,8 @@ def get_case_data_source(app, case_type):
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
     # filter out any duplicately defined columns from dynamic indicators
     meta_column_names = set([c['column_id'] for c in meta_indicators])
-    dynamic_indicators = filter(lambda indicator: indicator['column_id'] not in meta_column_names,
-                                dynamic_indicators)
+    dynamic_indicators = [indicator for indicator in dynamic_indicators if
+                          indicator['column_id'] not in meta_column_names]
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
