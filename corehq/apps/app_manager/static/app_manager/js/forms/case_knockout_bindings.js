@@ -1,17 +1,11 @@
 (function () {
     var utils = {
-        getIcon: function(question) {
-            if (question.tag === 'upload') {
-                return '<i class="fa fa-paperclip"></i> ';
-            }
-            return '';
-        },
         getDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+            return utils.getLabel(question, MAXLEN)
                     + " (" + (question.hashtagValue || question.value) + ")";
         },
         getTruncatedDisplay: function (question, MAXLEN) {
-            return utils.getIcon(question) + utils.getLabel(question, MAXLEN)
+            return utils.getLabel(question, MAXLEN)
                     + " (" + utils.truncateValue(question.hashtagValue || question.value, MAXLEN) + ")";
         },
         getLabel: function (question, MAXLEN) {
@@ -84,7 +78,6 @@
 
 ko.bindingHandlers.casePropertyAutocomplete = {
     /*
-     * Strip "attachment:" prefix and show icon for attachment properties.
      * Replace any spaces in free text with underscores.
      */
     init: function (element, valueAccessor) {
@@ -101,11 +94,6 @@ ko.bindingHandlers.casePropertyAutocomplete = {
     update: function (element, valueAccessor, allBindingsAccessor) {
         function wrappedValueAccessor() {
             return _.map(ko.unwrap(valueAccessor()), function(value) {
-                if (value.indexOf("attachment:") === 0) {
-                    var text = value.substring(11),
-                        html = '<i class="fa fa-paperclip"></i> ' + text;
-                    return {name: text, content: html};
-                }
                 return {name: value, content: value};
             });
         }

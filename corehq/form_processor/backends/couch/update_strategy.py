@@ -148,7 +148,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
         return self
 
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+    def update_from_case_update(self, case_update, xformdoc):
         if case_update.has_referrals():
             logging.error('Form {} touching case {} in domain {} is still using referrals'.format(
                 xformdoc.form_id, case_update.id, getattr(xformdoc, 'domain', None))
@@ -184,9 +184,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             self.case.actions.extend(case_update.get_case_actions(xformdoc))
 
         # rebuild the case
-        local_forms = {xformdoc.form_id: xformdoc}
-        local_forms.update(other_forms or {})
-        self.soft_rebuild_case(xforms=local_forms)
+        self.soft_rebuild_case()
 
         if case_update.version:
             self.case.version = case_update.version
@@ -219,9 +217,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                         }
                     )
 
-        # Clear indices and attachments
         self.case.indices = []
-        self.case.case_attachments = {}
 
         # already deleted means it was explicitly set to "deleted",
         # as opposed to getting set to that because it has no actions
@@ -267,7 +263,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
 
         return self
 
-    def _apply_action(self, action, xform):
+    def _apply_action(self, action):
         if action.action_type == const.CASE_ACTION_CREATE:
             self._apply_create_action(action)
         elif action.action_type == const.CASE_ACTION_UPDATE:
@@ -276,8 +272,6 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             self.case.update_indices(action.indices)
         elif action.action_type == const.CASE_ACTION_CLOSE:
             self._apply_close_action(action)
-        elif action.action_type == const.CASE_ACTION_ATTACHMENT:
-            self._apply_attachments_action(action, xform)
         elif action.action_type in (const.CASE_ACTION_COMMTRACK, const.CASE_ACTION_REBUILD):
             return  # no action needed here, it's just a placeholder stub
         else:
@@ -326,54 +320,6 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
                         item, self.case.case_id, update_action.xform_id
                     ))
                     raise
-
-    def _apply_attachments_action(self, attachment_action, xform=None):
-        """
-
-        if xform is provided it will be used to fetch attachments
-        """
-        # the actions and attachment must be added before the first saves can happen
-        # todo attach cached attachment info
-        def fetch_attachment(name):
-            if fetch_attachment.form is None:
-                fetch_attachment.form = XFormInstance.get(attachment_action.xform_id)
-            return fetch_attachment.form.fetch_attachment(name)
-        fetch_attachment.form = xform
-
-        attach_dict = {}
-        # cache all attachment streams from xform
-        for k, v in attachment_action.attachments.items():
-            if v.is_present:
-                # fetch attachment, update metadata, get the stream
-                attach_data = fetch_attachment(v.attachment_src)
-                attach_dict[k] = attach_data
-                v.attachment_size = len(attach_data)
-
-                if v.is_image:
-                    img = Image.open(BytesIO(attach_data))
-                    img_size = img.size
-                    props = dict(width=img_size[0], height=img_size[1])
-                    v.attachment_properties = props
-
-        update_attachments = {}
-        for k, v in self.case.case_attachments.items():
-            if v.is_present:
-                update_attachments[k] = v
-
-        for k, v in attachment_action.attachments.items():
-            # grab xform_attachments
-            # copy over attachments from form onto case
-            update_attachments[k] = v
-            if v.is_present:
-                # add attachment from xform
-                identifier = v.identifier
-                content = attach_dict[identifier]
-                self.case.deferred_put_attachment(
-                    content, k, content_type=v.server_mime)
-            else:
-                self.case.deferred_delete_attachment(k)
-                del update_attachments[k]
-        self.case.case_attachments = update_attachments
 
     def _apply_close_action(self, close_action):
         self.case.closed = True

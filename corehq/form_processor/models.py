@@ -36,7 +36,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
 from six.moves import map
@@ -47,7 +47,6 @@ XFormOperationSQL_DB_TABLE = 'form_processor_xformoperationsql'
 
 CommCareCaseSQL_DB_TABLE = 'form_processor_commcarecasesql'
 CommCareCaseIndexSQL_DB_TABLE = 'form_processor_commcarecaseindexsql'
-CaseAttachmentSQL_DB_TABLE = 'form_processor_caseattachmentsql'
 CaseTransaction_DB_TABLE = 'form_processor_casetransaction'
 LedgerValue_DB_TABLE = 'form_processor_ledgervalue'
 LedgerTransaction_DB_TABLE = 'form_processor_ledgertransaction'
@@ -637,7 +636,7 @@ class SupplyPointCaseMixin(object):
 
 
 class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
-                      AttachmentMixin, AbstractCommCareCase, TrackRelatedChanges,
+                      AbstractCommCareCase, TrackRelatedChanges,
                       SupplyPointCaseMixin, MessagingCaseContactMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -792,14 +791,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, identifier):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
-
-    def _get_attachments_from_db(self):
-        from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachments(self.case_id)
-
     @property
     @memoized
     def transactions(self):
@@ -826,20 +817,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     def non_revoked_transactions(self):
         return [t for t in self.transactions if not t.revoked]
-
-    @property
-    @memoized
-    def case_attachments(self):
-        return {attachment.identifier: attachment for attachment in self.get_attachments()}
-
-    @property
-    @memoized
-    def serialized_attachments(self):
-        from .serializers import CaseAttachmentSQLSerializer
-        return {
-            att.name: dict(CaseAttachmentSQLSerializer(att).data)
-            for att in self.get_attachments()
-            }
 
     @memoized
     def get_closing_transactions(self):
@@ -956,82 +933,6 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
-    partition_attr = 'case_id'
-    objects = RestrictedManager()
-    _attachment_prefix = 'case'
-
-    name = models.CharField(max_length=255, default=None)
-    case = models.ForeignKey(
-        'CommCareCaseSQL', to_field='case_id', db_index=False,
-        related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
-        on_delete=models.CASCADE,
-    )
-    identifier = models.CharField(max_length=255, default=None)
-    attachment_src = models.TextField(null=True)
-    attachment_from = models.TextField(null=True)
-
-    def from_form_attachment(self, attachment):
-        """
-        Update fields in this attachment with fields from another attachment
-
-        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
-        """
-        self.content_length = attachment.content_length
-        self.blob_id = attachment.blob_id
-        self.blob_bucket = attachment.blobdb_bucket()
-        self.md5 = attachment.md5
-        self.content_type = attachment.content_type
-        self.properties = attachment.properties
-
-        if not self.content_type and self.attachment_src:
-            guessed = mimetypes.guess_type(self.attachment_src)
-            if len(guessed) > 0 and guessed[0] is not None:
-                self.content_type = guessed[0]
-
-        if isinstance(attachment, CaseAttachmentSQL):
-            assert self.identifier == attachment.identifier
-            self.attachment_src = attachment.attachment_src
-            self.attachment_from = attachment.attachment_from
-
-    @classmethod
-    def from_case_update(cls, attachment):
-        if attachment.attachment_src:
-            ret = cls(
-                attachment_id=uuid.uuid4(),
-                name=attachment.attachment_name or attachment.identifier,
-                identifier=attachment.identifier,
-                attachment_src=attachment.attachment_src,
-                attachment_from=attachment.attachment_from
-            )
-        else:
-            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
-        return ret
-
-    def __unicode__(self):
-        return six.text_type(
-            "CaseAttachmentSQL("
-            "attachment_id='{a.attachment_id}', "
-            "case_id='{a.case_id}', "
-            "name='{a.name}', "
-            "content_type='{a.content_type}', "
-            "content_length='{a.content_length}', "
-            "md5='{a.md5}', "
-            "blob_id='{a.blob_id}', "
-            "properties='{a.properties}', "
-            "identifier='{a.identifier}', "
-            "attachment_src='{a.attachment_src}', "
-            "attachment_from='{a.attachment_from}')"
-        ).format(a=self)
-
-    class Meta(object):
-        app_label = "form_processor"
-        db_table = CaseAttachmentSQL_DB_TABLE
-        index_together = [
-            ["case", "identifier"],
-        ]
-
-
 class CommCareCaseIndexSQL(PartitionedModel, models.Model, SaveStateMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
@@ -1131,7 +1032,7 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
     TYPE_CASE_CREATE = 128
     TYPE_CASE_CLOSE = 256
     TYPE_CASE_INDEX = 512
-    TYPE_CASE_ATTACHMENT = 1024
+    TYPE_CASE_ATTACHMENT = 1024     # no longer supported
     TYPE_REBUILD_FORM_REPROCESS = 2048
     TYPE_CHOICES = (
         (TYPE_FORM, 'form'),
@@ -1144,7 +1045,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         (TYPE_LEDGER, 'ledger'),
         (TYPE_CASE_CREATE, 'case_create'),
         (TYPE_CASE_CLOSE, 'case_close'),
-        (TYPE_CASE_ATTACHMENT, 'case_attachment'),
         (TYPE_CASE_INDEX, 'case_index'),
     )
     TYPES_TO_PROCESS = (
@@ -1219,10 +1119,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
         return bool(self.is_form_transaction and self.TYPE_CASE_INDEX & self.type)
 
     @property
-    def is_case_attachment(self):
-        return bool(self.is_form_transaction and self.TYPE_CASE_ATTACHMENT & self.type)
-
-    @property
     def is_case_rebuild(self):
         return bool(
             (self.TYPE_REBUILD_FORM_ARCHIVED & self.type) or
@@ -1273,7 +1169,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             cls.TYPE_CASE_CLOSE,
             cls.TYPE_CASE_INDEX,
             cls.TYPE_CASE_CREATE,
-            cls.TYPE_CASE_ATTACHMENT,
             0,
         ]
 
@@ -1308,7 +1203,6 @@ class CaseTransaction(PartitionedModel, SaveStateMixin, models.Model):
             const.CASE_ACTION_CLOSE: cls.TYPE_CASE_CLOSE,
             const.CASE_ACTION_CREATE: cls.TYPE_CASE_CREATE,
             const.CASE_ACTION_INDEX: cls.TYPE_CASE_INDEX,
-            const.CASE_ACTION_ATTACHMENT: cls.TYPE_CASE_ATTACHMENT,
         }.get(action_type_slug, 0)
 
     @classmethod

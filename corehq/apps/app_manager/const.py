@@ -17,8 +17,6 @@ SCHEDULE_UNSCHEDULED_VISIT = 'unscheduled_visit'
 SCHEDULE_MAX_DATE = (2 ** 31) - 1
 SCHEDULE_DATE_CASE_OPENED = 'date_opened'
 
-ATTACHMENT_PREFIX = 'attachment:'
-
 CASE_ID = 'case_id'
 USERCASE_TYPE = 'commcare-user'
 USERCASE_ID = 'usercase_id'

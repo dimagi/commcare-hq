@@ -1193,26 +1193,6 @@ class FormBase(DocumentSchema):
         except XFormException as e:
             raise XFormException("Error in form {}".format(self.full_path_name), e)
 
-    @memoized
-    def get_case_property_name_formatter(self):
-        """Get a function that formats case property names
-
-        The returned function requires two arguments
-        `(case_property_name, data_path)` and returns a string.
-        """
-        try:
-            valid_paths = {question['value']: question['tag']
-                           for question in self.get_questions(langs=[])}
-        except XFormException as e:
-            # punt on invalid xml (sorry, no rich attachments)
-            valid_paths = {}
-
-        def format_key(key, path):
-            if valid_paths.get(path) == "upload":
-                return "{}{}".format(ATTACHMENT_PREFIX, key)
-            return key
-        return format_key
-
     def export_json(self, dump_json=True):
         source = self.to_json()
         del source['unique_id']
@@ -1376,11 +1356,10 @@ class IndexedFormBase(FormBase, IndexedSchema, CommentMixin):
         except XFormException as e:
             errors.append({'type': 'invalid xml', 'message': six.text_type(e)})
         else:
-            no_multimedia = not self.get_app().enable_multimedia_case_property
             for path in set(paths):
                 if path not in valid_paths:
                     errors.append({'type': 'path error', 'path': path})
-                elif no_multimedia and valid_paths[path] == "upload":
+                elif valid_paths[path] == "upload":
                     errors.append({'type': 'multimedia case property not supported', 'path': path})
 
         return errors
@@ -1861,13 +1840,10 @@ class Form(IndexedFormBase, NavMenuItemMediaMixin):
         # the usercase_update action, and for normal cases, use the
         # update_case action
         case_type = self.get_module().case_type
-        format_key = self.get_case_property_name_formatter()
 
         return {
-            case_type: {
-                format_key(*item) for item in self.actions.update_case.update.items()},
-            USERCASE_TYPE: {
-                format_key(*item) for item in self.actions.usercase_update.update.items()}
+            case_type: self.actions.update_case.update,
+            USERCASE_TYPE: self.actions.usercase_update.update,
         }
 
     @memoized
@@ -3167,11 +3143,9 @@ class AdvancedForm(IndexedFormBase, NavMenuItemMediaMixin):
 
     def get_case_updates(self):
         updates_by_case_type = defaultdict(set)
-        format_key = self.get_case_property_name_formatter()
         for action in self.actions.get_all_actions():
             case_type = action.case_type
-            updates_by_case_type[case_type].update(
-                format_key(*item) for item in six.iteritems(action.case_properties))
+            updates_by_case_type[case_type].update(action.case_properties)
         if self.schedule and self.schedule.enabled and self.source:
             xform = self.wrapped_xform()
             self.add_stuff_to_xform(xform)

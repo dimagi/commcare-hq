@@ -11,7 +11,7 @@ from jsonfield.fields import JSONEncoder
 from psycopg2.extensions import adapt
 
 from corehq.form_processor.models import (
-    CommCareCaseSQL_DB_TABLE, CaseAttachmentSQL_DB_TABLE,
+    CommCareCaseSQL_DB_TABLE,
     CommCareCaseIndexSQL_DB_TABLE, CaseTransaction_DB_TABLE,
     XFormAttachmentSQL_DB_TABLE, XFormInstanceSQL_DB_TABLE,
     LedgerValue_DB_TABLE, LedgerTransaction_DB_TABLE,
@@ -117,25 +117,6 @@ def case_adapter(case):
         case.deletion_id,
     ]
     return ObjectAdapter(fields, CommCareCaseSQL_DB_TABLE)
-
-
-def case_attachment_adapter(attachment):
-    fields = [
-        attachment.id,
-        attachment.attachment_id,
-        attachment.name,
-        attachment.content_type,
-        attachment.md5,
-        attachment.case_id,
-        attachment.blob_id,
-        attachment.content_length,
-        attachment.attachment_from,
-        json.dumps(attachment.properties, cls=JSONEncoder),
-        attachment.attachment_src,
-        attachment.identifier,
-        attachment.blob_bucket,
-    ]
-    return ObjectAdapter(fields, CaseAttachmentSQL_DB_TABLE)
 
 
 def case_index_adapter(index):

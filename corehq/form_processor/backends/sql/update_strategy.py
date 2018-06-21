@@ -12,7 +12,7 @@ from casexml.apps.case.xform import get_case_updates
 from casexml.apps.case.xml import V2
 from casexml.apps.case.xml.parser import KNOWN_PROPERTIES
 from corehq.apps.couch_sql_migration.progress import couch_sql_migration_in_progress
-from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction, CaseAttachmentSQL
+from corehq.form_processor.models import CommCareCaseSQL, CommCareCaseIndexSQL, CaseTransaction
 from corehq.form_processor.update_strategy_base import UpdateStrategy
 from django.utils.translation import ugettext as _
 
@@ -66,7 +66,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             transaction.type -= CaseTransaction.TYPE_LEDGER
             self.case.track_update(transaction)
 
-    def update_from_case_update(self, case_update, xformdoc, other_forms=None):
+    def update_from_case_update(self, case_update, xformdoc):
         self._apply_case_update(case_update, xformdoc)
         self.add_transaction_for_form(self.case, case_update, xformdoc)
 
@@ -127,8 +127,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
             self._apply_index_action(action)
         elif action.action_type_slug == const.CASE_ACTION_CLOSE:
             self._apply_close_action(case_update)
-        elif action.action_type_slug == const.CASE_ACTION_ATTACHMENT:
-            self._apply_attachments_action(action, xform)
         else:
             raise ValueError("Can't apply action of type %s: %s" % (
                 action.action_type,
@@ -190,24 +188,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     )
                     self.case.track_create(index)
 
-    def _apply_attachments_action(self, attachment_action, xform):
-        current_attachments = self.case.case_attachments
-        for identifier, att in attachment_action.attachments.items():
-            new_attachment = CaseAttachmentSQL.from_case_update(att)
-            if new_attachment.is_present:
-                form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if identifier in current_attachments:
-                    existing_attachment = current_attachments[identifier]
-                    existing_attachment.from_form_attachment(form_attachment)
-                    self.case.track_update(existing_attachment)
-                else:
-                    new_attachment.from_form_attachment(form_attachment)
-                    new_attachment.case = self.case
-                    self.case.track_create(new_attachment)
-            elif identifier in current_attachments:
-                existing_attachment = current_attachments[identifier]
-                self.case.track_delete(existing_attachment)
-
     def _apply_close_action(self, case_update):
         self.case.closed = True
         self.case.closed_on = case_update.guess_modified_on()
@@ -255,7 +235,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._reset_case_state()
 
         original_indices = {index.identifier: index for index in self.case.indices}
-        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
 
         real_transactions = []
         for transaction in transactions:
@@ -264,7 +243,6 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 real_transactions.append(transaction)
 
         self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
-        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
 
         self.case.deleted = already_deleted or not bool(real_transactions)
 

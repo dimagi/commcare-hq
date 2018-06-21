@@ -64,9 +64,6 @@
                     {% if case.has_indices %}
                     <li><a href="#related" data-toggle="tab">{% trans "Related Cases" %}</a></li>
                     {% endif %}
-                {% if case.case_attachments %}
-                    <li><a href="#case-attachments" data-toggle="tab">{% trans "Attachments" %} ({{ case.case_attachments|length }})</a></li>
-                {% endif %}
                 {% if ledgers %}
                     <li><a href="#case-ledgers" data-toggle="tab">{% trans "Ledger Sections" %}</a></li>
                 {% endif %}
@@ -105,12 +102,6 @@
                     <div class="tab-pane" id="related">
                         {% include "case/partials/case_hierarchy.html" %}
                     </div>
-                    {% endif %}
-
-                    {% if case.case_attachments %}
-                    <div class="tab-pane" id="case-attachments">
-                        {% include "case/partials/case_attachments.html" %}
-                    </div> <!-- end case-attachments tab -->
                     {% endif %}
 
                     {% if repeat_records %}

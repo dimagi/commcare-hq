@@ -56,7 +56,6 @@ PARTIAL_DIFFS = {
         {'diff_type': 'type', 'path': ('opened_by',), 'old_value': Ellipsis},
         # form has case block with no actions
         {'diff_type': 'set_mismatch', 'path': ('xform_ids', '[*]'), 'old_value': ''},
-        {'diff_type': 'missing', 'path': ('case_attachments',), 'old_value': Ellipsis, 'new_value': {}},
         {'diff_type': 'missing', 'old_value': None, 'new_value': Ellipsis},
     ],
     'CommCareCase': [
@@ -85,16 +84,6 @@ PARTIAL_DIFFS = {
     'LedgerValue': [
         {'path': ('_id',)},  # couch only
     ],
-    'case_attachment': [
-        {'path': ('doc_type',)},  # couch only
-        {'path': ('attachment_properties',)},  # couch only
-        {'path': ('attachment_from',)},  # couch only
-        {'path': ('attachment_src',)},  # couch only
-        {'path': ('content_type',)},  # couch only
-        {'path': ('server_mime',)},  # couch only
-        {'path': ('attachment_name',)},  # couch only
-        {'path': ('server_md5',)},  # couch only
-    ]
 }
 
 
@@ -136,7 +125,6 @@ RENAMED_FIELDS = {
     'XFormInstance-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
     'CommCareCase': [('@user_id', 'user_id'), ('@date_modified', 'modified_on')],
     'CommCareCase-Deleted': [('-deletion_id', 'deletion_id'), ('-deletion_date', 'deleted_on')],
-    'case_attachment': [('attachment_size', 'content_length'), ('identifier', 'name')],
 }
 
 
@@ -166,7 +154,6 @@ def filter_case_diffs(couch_case, sql_case, diffs, forms_that_touch_cases_withou
     filtered_diffs = _filter_date_diffs(filtered_diffs)
     filtered_diffs = _filter_user_case_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_xform_id_diffs(couch_case, sql_case, filtered_diffs)
-    filtered_diffs = _filter_case_attachment_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_case_index_diffs(couch_case, sql_case, filtered_diffs)
     filtered_diffs = _filter_renamed_fields(filtered_diffs, couch_case, sql_case)
     filtered_diffs = _filter_forms_touch_case(filtered_diffs, forms_that_touch_cases_without_actions)
@@ -313,33 +300,6 @@ def _filter_xform_id_diffs(couch_case, sql_case, diffs):
         remaining_diffs.append(
             FormJsonDiff(diff_type='list_order', path=('xform_ids', '[*]'), old_value=None, new_value=None)
         )
-
-    return remaining_diffs
-
-
-def _filter_case_attachment_diffs(couch_case, sql_case, diffs):
-    """Attachment JSON format is different between Couch and SQL"""
-    remaining_diffs = [diff for diff in diffs if diff.path[0] != 'case_attachments']
-    if len(remaining_diffs) != len(diffs):
-        couch_attachments = couch_case.get('case_attachments', {})
-        sql_attachments = sql_case.get('case_attachments', {})
-
-        for name, couch_att in couch_attachments.items():
-            sql_att = sql_attachments.get(name, Ellipsis)
-            if sql_att == Ellipsis:
-                remaining_diffs.append(FormJsonDiff(
-                    diff_type='missing', path=('case_attachments', name),
-                    old_value=couch_att, new_value=sql_att
-                ))
-            else:
-                att_diffs = json_diff(couch_att, sql_att)
-                filtered = _filter_partial_matches(att_diffs, PARTIAL_DIFFS['case_attachment'])
-                filtered = _filter_renamed_fields(filtered, couch_att, sql_att, 'case_attachment')
-                for diff in filtered:
-                    diff_dict = diff._asdict()
-                    # convert the path back to what it should be
-                    diff_dict['path'] = tuple(['case_attachments', name] + list(diff.path))
-                    remaining_diffs.append(FormJsonDiff(**diff_dict))
 
     return remaining_diffs
 
