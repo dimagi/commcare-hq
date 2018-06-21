@@ -2,32 +2,49 @@
 // Registration form styles
 // --------------------------------
 
-@reg-form-width: 380px;
+@reg-form-width: 480px;
 @reg-form-height: 375px;
 
-#registration-form-container {
-  position: absolute;
-  left: 50%;
-  margin-left: -@reg-form-width/2;
-  width: @reg-form-width;
-  top: 50%;
-  margin-top: -@reg-form-height/2 - 40px;
-  height: @reg-form-height;
+
+.reg-form-container {
+  width: 100%;
+  max-width: @reg-form-width;
+  margin: 0 auto;
+  margin-top: 10vh;
+  transition: margin-top .5s ease-in-out;
+
+  @media(max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media(max-height: 602px) {
+    margin-top: 0;
+  }
 }
 
-#registration-form-container.has-phonenumber {
-  margin-top: -@reg-form-height/2 - 80px;
-}
-
-.reg-form-column {
-  position: relative;
-  min-height: 400px;
+@media (min-width: @screen-md-min) {
+  .reg-form-container {
+    width: @reg-form-width;
+  }
 }
 
 ul.form-step-progress li {
   width: 50%;
   &:before {
     width: 80%;
+  }
+}
+
+.sign-in-container {
+  margin-top: 2vh;
+  margin-bottom: 2vh;
+
+  @media(max-height: 685px) {
+    margin-top: 5vh;
+  }
+
+  @media(max-height: 602px) {
+    margin-top: 0;
   }
 }
 
@@ -125,10 +142,6 @@ p.validation-message-block {
   text-align: left;
 }
 
-.animate-height {
-  .transition(min-height .3s ease-in-out);
-}
-
 .initial-padding {
   padding-top: 20px;
 }
@@ -205,4 +218,8 @@ p.validation-message-block {
 .radio-select_label-placeholder {
   height: @input-height-large;
   line-height: @input-height-large - 2px;
+}
+
+.sign-up-bubble {
+  margin: 10px 0;
 }
