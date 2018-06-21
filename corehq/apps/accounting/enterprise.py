@@ -32,7 +32,6 @@ class EnterpriseReport(object):
     MOBILE_USERS = 'mobile_users'
     FORM_SUBMISSIONS = 'form_submissions'
 
-    async = False
     title = _('Enterprise Report')
     subtitle = ''
 
@@ -188,7 +187,6 @@ class EnterpriseMobileWorkerReport(EnterpriseReport):
 
 class EnterpriseFormReport(EnterpriseReport):
     title = _('Mobile Form Submissions')
-    async = True
 
     def __init__(self, account_id, couch_user):
         super(EnterpriseFormReport, self).__init__(account_id, couch_user)
