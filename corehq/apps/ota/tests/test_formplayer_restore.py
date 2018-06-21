@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from urllib import urlencode
 
+import mock
+from django.http.response import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -21,29 +23,50 @@ class FormplayerRestoreTest(TestCase):
     wrong_domain = 'test-wrong-domain'
     username = "testota"
 
-    def setUp(self):
-        create_domain(self.domain)
-        create_domain(self.wrong_domain)
-        self.commcare_user = CommCareUser.create(self.domain, self.username, '123')
-        self.uri = reverse('ota_restore', args=[self.domain])
-        self.uri_wrong_domain = reverse('ota_restore', args=[self.wrong_domain])
+    @classmethod
+    def setUpClass(cls):
+        super(FormplayerRestoreTest, cls).setUpClass()
+        create_domain(cls.domain)
+        create_domain(cls.wrong_domain)
+        cls.commcare_user = CommCareUser.create(cls.domain, cls.username, '123')
+        cls.uri = reverse('ota_restore', args=[cls.domain])
+        cls.uri_wrong_domain = reverse('ota_restore', args=[cls.wrong_domain])
 
-    def tearDown(self):
-        self.commcare_user.delete()
+    @classmethod
+    def tearDownClass(cls):
+        cls.commcare_user.delete()
         delete_all_domains()
+        super(FormplayerRestoreTest, cls).tearDownClass()
 
-    def test_commcare_user_restore(self):
-        print(self.commcare_user.username, CommCareUser.get_by_username(self.commcare_user.username))
+    @mock.patch('corehq.apps.ota.views.get_restore_response')
+    def test_commcare_user_restore(self, mock_restore):
+        # mock for the sake for fast running test
+        mock_restore.return_value = (HttpResponse('Success', status=200), None)
         resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username})
         self.assertEqual(resp.status_code, 200)
-        content = list(resp.streaming_content)[0]
-        self.assertTrue("Successfully restored account {}!".format(self.username) in content)
+        self.assertEqual(resp.content, "Success")
 
-    def _do_post(self, data):
+    def test_missing_as_user_param(self):
+        resp = self._do_post({'version': 2.0})
+        self.assertEqual(resp.status_code, 401)
+
+    def test_bad_user(self):
+        resp = self._do_post({'version': 2.0, 'as_user': 'non-user'})
+        self.assertEqual(resp.status_code, 401)
+
+    def test_wrong_domain(self):
+        resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username}, uri=self.uri_wrong_domain)
+        self.assertEqual(resp.status_code, 403)
+
+    def test_bad_hmac(self):
+        resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username}, hmac='bad')
+        self.assertEqual(resp.status_code, 401)
+
+    def _do_post(self, data, uri=None, hmac=None):
         request_data = urlencode(data)
-        hmac_header_value = get_hmac_digest(b'123abc', request_data)
+        hmac_header_value = hmac or get_hmac_digest(b'123abc', request_data)
         resp = self.client.post(
-            self.uri, request_data, content_type='application/x-www-form-urlencoded',
+            uri or self.uri, request_data, content_type='application/x-www-form-urlencoded',
             HTTP_X_MAC_DIGEST=hmac_header_value
         )
         return resp

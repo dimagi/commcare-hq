@@ -24,7 +24,7 @@ from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY,
     get_username_and_password_from_request, FORMPLAYER,
-    formplayer_auth, FORMPLAYER_AS_USER, formplayer_as_user_auth)
+    formplayer_auth, formplayer_as_user_auth)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -204,8 +204,8 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, as_user=False):
-    challenge = formplayer_as_user_auth if as_user else formplayer_auth
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, require_user=False):
+    challenge = formplayer_as_user_auth if require_user else formplayer_auth
     return _login_or_challenge(challenge, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
@@ -218,7 +218,7 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     )
 
 
-def _get_multi_auth_decorator(default, allow_formplayer=False):
+def _get_multi_auth_decorator(default, formplayer_auth_wrapper=None):
     """
     :param allow_formplayer: If True this will allow two additional auth mechanisms which are used
          by Formplayer:
@@ -236,15 +236,17 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            if authtype == FORMPLAYER and not allow_formplayer:
+            if authtype == FORMPLAYER and not formplayer_auth_wrapper:
                 return HttpResponseForbidden()
-            function_wrapper = {
+            function_wrappers = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True, as_user=False),
-                FORMPLAYER_AS_USER: login_or_formplayer_ex(allow_cc_users=True, as_user=True),
-            }[authtype]
+            }
+            if formplayer_auth_wrapper:
+                function_wrappers[FORMPLAYER] = formplayer_auth_wrapper
+
+            function_wrapper = function_wrappers[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -272,9 +274,12 @@ def mobile_auth(view_func):
 
 # This decorator is used only for anonymous web apps and SMS forms
 # Endpoints with this decorator will not enforce two factor authentication
-def mobile_auth_or_formplayer(view_func):
-    decorator = _get_multi_auth_decorator(default=BASIC, allow_formplayer=True)
-    return decorator(two_factor_exempt(view_func))
+def mobile_auth_or_formplayer(require_user=True):
+    def _inner(view_func):
+        formplayer_auth_wrapper = login_or_formplayer_ex(allow_cc_users=True, require_user=require_user)
+        decorator = _get_multi_auth_decorator(default=BASIC, formplayer_auth_wrapper=formplayer_auth_wrapper)
+        return decorator(two_factor_exempt(view_func))
+    return _inner
 
 
 # Use this decorator to allow any auth type -
