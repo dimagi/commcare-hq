@@ -75,6 +75,7 @@ def migration_restore(request, domain, case_id):
         raise Http404
 
     user = getattr(request, 'couch_user', None)
+    # if there is no user then the request is coming from formplayer so we trust it
     if user and not (request.can_access_all_locations or user_can_access_case(domain, user, case)):
         raise location_restricted_exception(request)
 
