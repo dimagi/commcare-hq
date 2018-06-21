@@ -10,8 +10,6 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.util.hmac_request import get_hmac_digest, convert_to_bytestring_if_unicode
 from corehq.apps.formplayer_api.smsforms.exceptions import BadDataError
-from experiments import FormplayerExperiment
-from corehq import toggles
 from corehq.apps.formplayer_api.utils import get_formplayer_url
 import requests
 """
@@ -327,12 +325,8 @@ def post_data(data, auth=None, content_type="application/json"):
     if not domain:
         raise ValueError("Expected domain")
 
-    if toggles.SMS_USE_FORMPLAYER.enabled(domain):
-        logging.info("Making request to formplayer endpoint %s in domain %s" % (d["action"], domain))
-        d = get_formplayer_session_data(d)
-        return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + d["action"])
-
-    return perform_experiment(d, auth, content_type)
+    d = get_formplayer_session_data(d)
+    return formplayer_post_data_helper(d, auth, content_type, get_formplayer_url() + "/" + d["action"])
 
 
 def get_formplayer_session_data(data):
@@ -377,27 +371,6 @@ def get_candidate_session_data(control_data):
     candidate_data["session_id"] = candidate_session_id
     candidate_data["session-id"] = candidate_session_id
     return True, candidate_data
-
-
-def perform_experiment(data, auth, content_type):
-
-    should_experiment, candidate_data = get_candidate_session_data(data)
-
-    if not should_experiment:
-        return post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL)
-
-    experiment = FormplayerExperiment(name=data["action"], context={'request': data})
-
-    with experiment.control() as c:
-        c.record(post_data_helper(data, auth, content_type, settings.XFORMS_PLAYER_URL))
-
-    with experiment.candidate() as c:
-        formplayer_url = get_formplayer_url()
-        c.record(formplayer_post_data_helper(candidate_data, auth,
-                                             content_type, formplayer_url + "/" + data["action"]))
-
-    objects = experiment.run()
-    return objects
 
 
 def get_response(data, auth=None):
