@@ -1,5 +1,3 @@
-var upcoming_table = null;  // needs to be accessible to global function delete_broadcast
-
 hqDefine("reminders/js/broadcasts_list", function() {
     $(function() {
         var past_table,
@@ -7,7 +5,7 @@ hqDefine("reminders/js/broadcasts_list", function() {
             loader_src = hqImport("hqwebapp/js/initial_page_data").get("loader_src"),
             reminders_migration_in_progress = hqImport("hqwebapp/js/initial_page_data").get("reminders_migration_in_progress");
 
-        upcoming_table = $("#upcoming-broadcasts-table").dataTable({
+        var upcoming_table = $("#upcoming-broadcasts-table").dataTable({
             "lengthChange": false,
             "filter": false,
             "sort": false,
@@ -37,7 +35,7 @@ hqDefine("reminders/js/broadcasts_list", function() {
                 {
                     "targets": [3],
                     "render": function(data) {
-                        return '<button class="btn btn-danger" onClick="delete_broadcast(\'' + data + '\');" '
+                        return '<button class="btn btn-danger delete-broadcast" data-id="' + data + '" '
                                     + (reminders_migration_in_progress ? 'disabled' : '') + '>'
                                     + gettext('Delete') + '</button>';
                     },
@@ -73,20 +71,21 @@ hqDefine("reminders/js/broadcasts_list", function() {
                 },
             ],
         });
+
+        $(document).on('click', '.delete-broadcast', function() {
+            var broadcast_id = $(this).data("id");
+            if (broadcast_id && confirm(gettext('Are you sure you want to delete this broadcast?'))) {
+                $.ajax({
+                    url: hqImport("hqwebapp/js/initial_page_data").reverse("list_broadcasts"),
+                    type: "POST",
+                    data: {
+                        action: "delete_broadcast",
+                        broadcast_id: broadcast_id,
+                    },
+                }).done(function(response, textStatus, jqXHR) {
+                    upcoming_table.fnDraw();
+                });
+            }
+        });
     });
 });
-
-function delete_broadcast(broadcast_id)  {
-    if (confirm(gettext('Are you sure you want to delete this broadcast?'))) {
-        $.ajax({
-            url: hqImport("hqwebapp/js/initial_page_data").reverse("list_broadcasts"),
-            type: "POST",
-            data: {
-                action: "delete_broadcast",
-                broadcast_id: broadcast_id,
-            },
-        }).done(function(response, textStatus, jqXHR) {
-            upcoming_table.fnDraw();
-        });
-    }
-}
