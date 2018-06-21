@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
 from django.views.generic import FormView
@@ -12,6 +13,7 @@ from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
 from corehq.apps.domain.decorators import domain_admin_required, mobile_auth_or_formplayer
 from corehq.apps.domain.views import BaseDomainView
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
 from corehq.util import reverse
@@ -63,8 +65,14 @@ def migration_restore(request, domain, case_id):
     * Registration block
     * The passed in case and its full network of cases
     """
-    with RestoreContent('Case[{}]'.format(case_id)) as content:
+    try:
         case = CaseAccessors(domain).get_case(case_id)
+        if case.domain != domain or case.is_deleted:
+            raise Http404
+    except CaseNotFound:
+        raise Http404
+
+    with RestoreContent('Case[{}]'.format(case_id)) as content:
         content.append(get_registration_element_for_case(case))
         for case in get_case_hierarchy_for_restore(case):
             # Formplayer will be creating these cases for the first time, so
