@@ -1,6 +1,5 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
-{% load humanize %}
 {% load i18n %}
 
 {% block title %}{% trans "Enterprise Dashboard" %}{% endblock %}
@@ -20,11 +19,7 @@
                 </div>
                 <div class="panel-body">
                     <h1 data-url="{% url "enterprise_dashboard_total" domain report.slug %}">
-                        {% if report.async %}
-                            <i class="fa fa-spin fa-spinner"></i>
-                        {% else %}
-                            {{ report.total|intcomma }}
-                        {% endif %}
+                        <i class="fa fa-spin fa-spinner"></i>
                     </h1>
                     <br>
                     <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_email" domain report.slug %}">
