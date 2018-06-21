@@ -120,6 +120,9 @@ SKIPPABLE_PROPERTIES = frozenset([
 ])
 
 
+# Used for manually triggered exports
+EXPORT_DOWNLOAD_QUEUE = 'export_download_queue'
+# Used for automatically triggered exports
 SAVED_EXPORTS_QUEUE = 'saved_exports_queue'
 
 # The maximum file size of one DataFile

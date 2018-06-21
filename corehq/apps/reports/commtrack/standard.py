@@ -91,7 +91,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     exportable = True
     exportable_all = True
     emailable = True
-    ajax_pagination = True
     asynchronous = True
 
     @property
@@ -153,13 +152,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
             entry_ids=product_ids,
-            pagination=self.pagination,
         )
         product_grouping = {}
+        domain = Domain.get_by_name(self.domain)
         for ledger_value in ledger_values:
-            consumption_helper = get_consumption_helper_from_ledger_value(
-                Domain.get_by_name(self.domain), ledger_value
-            )
+            consumption_helper = get_consumption_helper_from_ledger_value(domain, ledger_value)
             status = consumption_helper.get_stock_category()
             if ledger_value.entry_id in product_grouping:
                 product_grouping[ledger_value.entry_id][status] += 1

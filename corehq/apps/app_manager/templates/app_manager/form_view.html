@@ -77,6 +77,11 @@
         <script src="{% static 'app_manager/js/forms/custom_instances.js' %}"></script>
         {% endcompress %}
     {% endif %}
+    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+        {% compress js %}
+        <script src="{% static 'app_manager/js/forms/copy_form_to_app.js' %}"></script>
+        {% endcompress %}
+    {% endif %}
 {% endblock %}
 
 {% block pre_form_content %}
@@ -141,6 +146,9 @@
     {% initial_page_data 'is_allowed_to_be_release_notes_form' is_allowed_to_be_release_notes_form %}
     {% initial_page_data 'is_training_module' is_training_module %}
     {% initial_page_data 'swfURL' 'hqmedia/MediaUploader/flashuploader.swf'|static %}
+    {% if allow_form_copy and request|toggle_enabled:"COPY_FORM_TO_APP" %}
+        {% initial_page_data 'apps_modules' apps_modules %}
+    {% endif %}
     {% registerurl "validate_form_for_build" domain app.id form.unique_id %}
 
     {# End of form navigation #}

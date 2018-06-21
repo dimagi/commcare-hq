@@ -2221,10 +2221,16 @@ class TestAWCReport(TestCase):
             ['kpi', 'chart']
         )
 
+    def _get_beneficiary(self, case_id):
+        return [
+            row
+            for row in get_awc_report_beneficiary(
+                0, 100, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False)['data']
+            if row['case_id'] == case_id
+        ][0]
+
     def test_awc_report_beneficiary_645fd452_3732_44fb_a2d3_46162304807e(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][0]
+        data = self._get_beneficiary('645fd452-3732-44fb-a2d3-46162304807e')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2247,9 +2253,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_9ca36787_bed9_4af0_a13e_fca1c9cad360(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][1]
+        data = self._get_beneficiary('9ca36787-bed9-4af0-a13e-fca1c9cad360')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2272,9 +2276,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_7673a69c_29af_478c_85c6_9c3b22f6b2e4(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][2]
+        data = self._get_beneficiary('7673a69c-29af-478c-85c6-9c3b22f6b2e4')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2297,9 +2299,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_d5d3fbeb_8b6a_486b_a853_30be35589200(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][3]
+        data = self._get_beneficiary('d5d3fbeb-8b6a-486b-a853-30be35589200')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2322,9 +2322,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_b954eb28_75de_43c8_9ec0_d38b7d246ead(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][4]
+        data = self._get_beneficiary('b954eb28-75de-43c8-9ec0-d38b7d246ead')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2347,9 +2345,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_532f3754_e231_40ec_a861_abbb2a06dff5(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][5]
+        data = self._get_beneficiary('6faecfe6-cc88-4ff0-9b3d-d8ca069dd06f')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2372,9 +2368,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_3b242a3b_693e_44dd_ad4a_b713efdb0fdb(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][6]
+        data = self._get_beneficiary('3b242a3b-693e-44dd-ad4a-b713efdb0fdb')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2396,9 +2390,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_4cd07ebf_abce_4345_a930_f6db7ede8996(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][7]
+        data = self._get_beneficiary('4cd07ebf-abce-4345-a930-f6db7ede8996')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2421,9 +2413,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_0198ec4a_f5ed_4452_863c_a400f43d238a(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][8]
+        data = self._get_beneficiary('0198ec4a-f5ed-4452-863c-a400f43d238a')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
@@ -2446,9 +2436,7 @@ class TestAWCReport(TestCase):
         )
 
     def test_awc_report_beneficiary_a9dc5cac_6820_45cf_b8c9_16f2cfb0ae02(self):
-        data = get_awc_report_beneficiary(
-            0, 10, 1, 'dob', 'a18', (2017, 5, 1), (2017, 3, 1), False
-        )['data'][9]
+        data = self._get_beneficiary('a9dc5cac-6820-45cf-b8c9-16f2cfb0ae02')
         self.assertJSONEqual(
             json.dumps(data, cls=DjangoJSONEncoder),
             json.dumps(
