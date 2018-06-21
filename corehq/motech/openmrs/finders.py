@@ -297,8 +297,8 @@ class WeightedPropertyPatientFinder(PatientFinder):
                     patient_value = match.value
                     value_map = self._property_map[prop].value_map
                     case_value = case.get_case_property(prop)
-                    match_type = property_weight['match_type'] if 'match_type' in property_weight else MATCH_TYPE_DEFAULT
-                    match_params = property_weight['match_params'] if 'match_params' in property_weight else []
+                    match_type = property_weight['match_type']
+                    match_params = property_weight['match_params']
                     match_function = partial(MATCH_FUNCTIONS[match_type], *match_params)
                     is_equivalent = match_function(value_map.get(patient_value, patient_value), case_value)
                     yield weight if is_equivalent else 0
