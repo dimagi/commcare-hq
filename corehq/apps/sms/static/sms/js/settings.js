@@ -1,4 +1,14 @@
-hqDefine("sms/js/settings.ko", function() {
+hqDefine("sms/js/settings", [
+    'jquery',
+    'knockout',
+    'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/select2_handler',
+], function(
+    $,
+    ko,
+    initialPageData,
+    select2Handler,
+) {
 
     function DayTimeWindow(day, start_time, end_time, time_input_relationship) {
         'use strict';
@@ -150,7 +160,7 @@ hqDefine("sms/js/settings.ko", function() {
 
     }
 
-    var baseSelect2Handler = hqImport("hqwebapp/js/select2_handler").baseSelect2Handler;
+    var baseSelect2Handler = select2Handler.baseSelect2Handler;
     var settingsSelect2Handler = function (initialValue, fieldName) {
         /*
          * initialValue is an object like {id: ..., text: ...}
@@ -175,7 +185,7 @@ hqDefine("sms/js/settings.ko", function() {
 
     $(function() {
         var settingsViewModel = new SettingsViewModel(
-            hqImport("hqwebapp/js/initial_page_data").get("current_values")
+            initialPageData.get("current_values")
         );
         $('#sms-settings-form').koApplyBindings(settingsViewModel);
         settingsViewModel.init();
