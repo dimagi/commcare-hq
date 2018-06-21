@@ -62,11 +62,9 @@ def migration_restore(request, domain, case_id):
     * Registration block
     * The passed in case and its full network of cases
     """
-    restore_user = request.couch_user
-
-    with RestoreContent(restore_user.username) as content:
+    with RestoreContent('Case[{}]'.format(case_id)) as content:
         case = CaseAccessors(domain).get_case(case_id)
-        content.append(get_registration_element_for_case(restore_user, case_id, case.name))
+        content.append(get_registration_element_for_case(case))
         for case in get_case_and_descendants(domain, case_id):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
