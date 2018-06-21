@@ -195,7 +195,7 @@ BEGIN
        'edd = case_list.edd, ' ||
        'delivery_nature = case_list.delivery_nature, ' ||
        'mobile_number = case_list.mobile_number, ' ||
-       'preg_order = case_list.preg_order'
+       'preg_order = case_list.preg_order ' ||
     'FROM ' || quote_ident(_ucr_ccs_record_cases_table) || ' case_list ' ||
     'WHERE ccs_monthly.case_id = case_list.case_id and ccs_monthly.month = ' || quote_literal(_start_date);
 

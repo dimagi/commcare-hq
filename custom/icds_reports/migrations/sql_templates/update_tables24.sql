@@ -28,6 +28,6 @@ ALTER TABLE ccs_record_monthly ADD COLUMN anc_4 date;
 ALTER TABLE ccs_record_monthly ADD COLUMN tt_1 date;
 ALTER TABLE ccs_record_monthly ADD COLUMN tt_2 date;
 ALTER TABLE ccs_record_monthly ADD COLUMN valid_in_month smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN preg_order text;
-ALTER TABLE ccs_record_monthly ADD COLUMN mobile_number smallint;
+ALTER TABLE ccs_record_monthly ADD COLUMN preg_order smallint;
+ALTER TABLE ccs_record_monthly ADD COLUMN mobile_number text;
 ALTER TABLE ccs_record_monthly ADD COLUMN home_visit_date date;
