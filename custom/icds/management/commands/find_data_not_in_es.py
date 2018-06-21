@@ -85,4 +85,4 @@ class Command(BaseCommand):
         return num_forms
 
     def _get_es_forms_received_on_date(self, date):
-        return FormES().submitted(gte=date, lt=date + relativedelta(months=1)).count()
+        return FormES().remove_default_filter('is_xform_instance').submitted(gte=date, lt=date + relativedelta(months=1)).count()
