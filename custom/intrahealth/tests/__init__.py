@@ -10,6 +10,7 @@ from mock.mock import Mock
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.domain.shortcuts import create_domain
+from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -40,6 +41,48 @@ def setUpModule():
         location_type=region_location_type
     )
 
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='PASSY',
+        location_id='1991b4dfe166335e342f28134b85fcac',
+        location_type=region_location_type
+    )
+
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='r1',
+        location_id='0682630532ff25717176320482ff1028',
+        location_type=region_location_type
+    )
+
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='r2',
+        location_id='582c5d65a307baa7a38e7b5e651fd5fc',
+        location_type=region_location_type
+    )
+
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='r3',
+        location_id='bd0395ba4a4fbd38c90765bd04208a8f',
+        location_type=region_location_type
+    )
+
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='r4',
+        location_id='6ed1f958fccd1b8202e8e30851a2b326',
+        location_type=region_location_type
+    )
+
+    SQLLocation.objects.create(
+        domain='test-pna',
+        name='r5',
+        location_id='1991b4dfe166335e342f28134b85f516',
+        location_type=region_location_type
+    )
+
     district_location_type = LocationType.objects.create(
         domain='test-pna',
         name='District',
@@ -62,6 +105,90 @@ def setUpModule():
         name='P2',
         location_id='ccf4430f5c3f493797486d6ce1c39682',
         location_type=pps_location_type
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Collier',
+        code='product1',
+        product_id='product1'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='CU',
+        code='product2',
+        product_id='product2'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Depo-Provera',
+        code='product3',
+        product_id='product3'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='DIU',
+        code='product4',
+        product_id='product4'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Jadelle',
+        code='product5',
+        product_id='product5'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Microgynon/Lof.',
+        code='product6',
+        product_id='product6'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Microlut/Ovrette',
+        code='product7',
+        product_id='product7'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Preservatif Feminin',
+        code='product8',
+        product_id='product8'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Preservatif Masculin',
+        code='product9',
+        product_id='product9'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Sayana Press',
+        code='product10',
+        product_id='product10'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='IMPLANON',
+        code='product11',
+        product_id='product11'
+    )
+
+    SQLProduct.objects.create(
+        domain='test-pna',
+        name='Product 7',
+        code='p7',
+        product_id='p7'
     )
 
     with override_settings(SERVER_ENVIRONMENT='production'):

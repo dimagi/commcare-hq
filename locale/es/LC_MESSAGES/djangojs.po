@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-06-06 17:38+0000\n"
+"POT-Creation-Date: 2018-06-19 19:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -64,7 +64,7 @@ msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:557
 #: corehq/apps/app_manager/static/app_manager/js/settings/commcare_settings.js:412
-#: corehq/apps/reports/static/reports/js/single_form.js:85
+#: corehq/apps/reports/static/reports/js/single_form.js:103
 msgid "Copied!"
 msgstr "¡Copiado!"
 
@@ -508,7 +508,7 @@ msgstr "Tiene cambios sin guardar en su perfil de la aplicación"
 #: corehq/apps/app_manager/static/app_manager/js/releases/language_profiles.js:45
 #: corehq/apps/app_manager/static/app_manager/js/settings/linked_whitelist.js:14
 #: corehq/apps/data_dictionary/static/data_dictionary/js/data_dictionary.js:106
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:248
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:244
 msgid "There was an error saving"
 msgstr "Ocurrió un error al guardar"
 
@@ -576,23 +576,23 @@ msgstr "Tiene cambios sin guardar en sus idiomas admitidos"
 msgid "There are errors in your configuration"
 msgstr "Hay errores en su configuración"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:136
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:144
 msgid "You must have at least one language"
 msgstr "Debe tener al menos un idioma"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:148
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:156
 msgid "Please enter language"
 msgstr "Por favor ingrese un idioma"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:150
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:158
 msgid "Invalid language code"
 msgstr "Código de idioma inválido"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:158
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:166
 msgid "Language appears twice"
 msgstr "El idioma aparece dos veces"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:160
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:168
 msgid "This conflicts with a current language"
 msgstr "Esto entra en conflicto con un idioma actual"
 
@@ -639,7 +639,7 @@ msgid "Change Question Type To"
 msgstr "Cambiar el Tipo de Pregunta a"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:1
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:252
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:248
 #: corehq/apps/hqwebapp/static/hqwebapp/js/ui_elements/ui-element-input-map.js:38
 #: corehq/apps/reminders/static/reminders/js/broadcasts_list.js:42
 msgid "Delete"
@@ -1210,7 +1210,7 @@ msgstr "Agregue Expresión"
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/form_entry/entrycontrols_full.js:557
 #: corehq/apps/export/static/export/js/models.js:235
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:244
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:240
 #: corehq/apps/users/static/users/js/web_users.js:47
 msgid "Save"
 msgstr "Guardar"
@@ -2639,19 +2639,19 @@ msgstr "Excel (versiones antiguas)"
 msgid "Excel 2007+"
 msgstr ""
 
-#: corehq/apps/export/static/export/js/models.js:532
+#: corehq/apps/export/static/export/js/models.js:533
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:642
+#: corehq/apps/export/static/export/js/models.js:643
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:644
+#: corehq/apps/export/static/export/js/models.js:645
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:646
+#: corehq/apps/export/static/export/js/models.js:647
 msgid "None"
 msgstr "Ninguna"
 
@@ -2724,29 +2724,29 @@ msgstr "Borrar"
 msgid "Show All Dates"
 msgstr "Mostrar Todas las Fechas"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:245
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:241
 msgid "Saving..."
 msgstr "Guardando..."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:246
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:242
 #: corehq/apps/users/static/users/js/web_users.js:57
 msgid "Saved"
 msgstr "Guardado"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:247
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:255
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:243
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:251
 msgid "Try Again"
 msgstr "Intente otra vez"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:253
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:249
 msgid "Deleting..."
 msgstr "Borrando..."
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:254
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:250
 msgid "Deleted"
 msgstr "Eliminado"
 
-#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:256
+#: corehq/apps/hqwebapp/static/hqwebapp/js/main.js:252
 msgid "There was an error deleting"
 msgstr "Ocurrió un error al borrar"
 
@@ -2882,15 +2882,15 @@ msgstr ""
 "Ocurrió un error al eliminar su ubicación. Si el problema persiste, por "
 "favor reporte un problema"
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:9
+#: corehq/apps/locations/static/locations/js/widgets_main.js:15
 msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:11
+#: corehq/apps/locations/static/locations/js/widgets_main.js:17
 msgid "No locations set for this user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:23
+#: corehq/apps/locations/static/locations/js/widgets_main.js:29
 msgid "Select a Location"
 msgstr "Seleccione una Ubicación"
 
@@ -3016,20 +3016,20 @@ msgstr ""
 "Su consulta de búsqueda es inválida; por favor ajuste el formato e intente "
 "de nuevo."
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:93
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:104
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:10
 msgid "Select a language..."
 msgstr "Seleccionar un idioma..."
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:109
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:119
 msgid "Available Reports"
 msgstr "Reportes Disponibles"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:110
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:120
 msgid "Included Reports"
 msgstr "Reportes Incluidos"
 
-#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:111
+#: corehq/apps/reports/static/reports/js/edit_scheduled_report.js:121
 msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
@@ -3126,11 +3126,11 @@ msgstr ""
 "El reporte de Excel que solicitó será enviado al correo electrónico definido "
 "en la configuración de su cuenta."
 
-#: corehq/apps/reports/static/reports/js/single_form.js:42
+#: corehq/apps/reports/static/reports/js/single_form.js:63
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: corehq/apps/reports/static/reports/js/single_form.js:46
+#: corehq/apps/reports/static/reports/js/single_form.js:67
 msgid "Question IDs"
 msgstr "ID de Preguntas"
 
@@ -3589,15 +3589,15 @@ msgstr ""
 msgid "Failed to schedule task to import from OpenMRS."
 msgstr ""
 
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:24
+#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:32
 msgid "Success! Response is: "
 msgstr "¡Correcto! La respuesta es:"
 
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:27
+#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:35
 msgid "Failed! Response is: "
 msgstr "¡Incorrecto! La respuesta es:"
 
-#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:39
+#: corehq/motech/repeaters/static/repeaters/js/add_form_repeater.js:47
 msgid "HQ was unable to make the request: "
 msgstr "HQ no pudo hacer la solicitud:"
 

@@ -24,6 +24,11 @@ from custom.intrahealth import PRODUCT_MAPPING, PRODUCT_NAMES
 import six
 
 
+COMMANDE_COMBINED = 'commande_combined'
+LIVRAISON_COMBINED = 'livraison_combined'
+OPERATEUR_COMBINED = 'operateur_combined'
+RAPTURE_COMBINED = 'rapture_combined'
+RECOUVREMENT_COMBINED = 'recouvrement_combined'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR = 'yeksi_naa_reports_visite_de_l_operateur'
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT = "yeksi_naa_reports_visite_de_l_operateur_per_product"
 YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM = "yeksi_naa_reports_visite_de_l_operateur_per_program"

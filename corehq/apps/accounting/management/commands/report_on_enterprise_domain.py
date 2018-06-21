@@ -8,10 +8,10 @@ from django.core.management.base import CommandError
 from django.template.defaultfilters import linebreaksbr
 from django.urls import reverse
 
+import csv342 as csv
 import io
 import re
 
-from dimagi.utils.csv import UnicodeWriter
 from dimagi.utils.dates import DateSpan
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
@@ -59,8 +59,8 @@ class Command(BaseCommand):
         report = EnterpriseReport.create(slug, self.account_id, self.couch_user)
 
         row_count = 0
-        csv_file = io.BytesIO()
-        writer = UnicodeWriter(csv_file)
+        csv_file = io.StringIO()
+        writer = csv.writer(csv_file)
         writer.writerow(report.headers)
 
         rows = report.rows

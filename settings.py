@@ -705,7 +705,7 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -871,8 +871,6 @@ KAFKA_URL = 'localhost:9092'
 
 MOBILE_INTEGRATION_TEST_TOKEN = None
 
-OVERRIDE_UCR_BACKEND = None
-
 # CommCare HQ - To indicate server
 COMMCARE_HQ_NAME = "CommCare HQ"
 # CommCare - To Indicate mobile
@@ -1028,6 +1026,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.base_template',
                 'corehq.util.context_processors.current_url_name',
                 'corehq.util.context_processors.domain',
+                'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
@@ -1604,7 +1603,7 @@ AVAILABLE_CUSTOM_REMINDER_RECIPIENTS = {
         ['corehq.apps.reminders.custom_recipients.host_case_owner_location_parent',
          "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
-        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent',
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_old_framework',
          "Abt: The case owner's location's parent location"],
     'TB_PERSON_CASE_FROM_VOUCHER_CASE':
         ['custom.enikshay.messaging.custom_recipients.person_case_from_voucher_case',
@@ -1634,6 +1633,9 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'CASE_OWNER_LOCATION_PARENT':
+        ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
+         "Abt: The case owner's location's parent location"],
 }
 
 AVAILABLE_CUSTOM_RULE_CRITERIA = {
@@ -2013,6 +2015,11 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'pnlppgi', 'resources', 'malaria.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'champ_cameroon.json'),
     os.path.join('custom', 'champ', 'ucr_data_sources', 'enhanced_peer_mobilization.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'commande_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'livraison_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'operateur_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'rapture_combined.json'),
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'recouvrement_combined.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),

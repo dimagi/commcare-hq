@@ -15,7 +15,7 @@ from corehq.apps.app_manager.dbaccessors import get_available_versions_for_app
 
 class AppTranslationsForm(forms.Form):
     app_id = forms.ChoiceField(label=ugettext_lazy("App"), choices=(), required=True)
-    version = forms.IntegerField(label=ugettext_lazy("Build Number"), required=False,
+    version = forms.IntegerField(label=ugettext_lazy("Version"), required=False,
                                  help_text=ugettext_lazy("Leave blank to use current application state"))
     transifex_project_slug = forms.ChoiceField(label=ugettext_lazy("Trasifex project"), choices=(),
                                                required=True)
@@ -33,8 +33,24 @@ class AppTranslationsForm(forms.Form):
                                              ('hin', ugettext_lazy('Hindi')),
                                              ('mr', ugettext_lazy('Marathi')),
                                              ('te', ugettext_lazy('Telugu'))],
-                                    help_text=ugettext_lazy("Leave blank to skip")
+                                    help_text=ugettext_lazy("Leave blank to skip"),
+                                    required=False,
                                     )
+    action = forms.ChoiceField(label=ugettext_lazy("Action"),
+                               choices=[('push', ugettext_lazy('Push to transifex')),
+                                        ('pull', ugettext_lazy('Pull from transifex')),
+                                        ('delete', ugettext_lazy('Delete resources on transifex'))]
+                               )
+    lock_translations = forms.BooleanField(label=ugettext_lazy("Lock resources"),
+                                           help_text=ugettext_lazy(
+                                               "Lock translations for resources that are being pulled"),
+                                           required=False,
+                                           initial=False)
+    perform_translated_check = forms.BooleanField(label=ugettext_lazy("Check for completion"),
+                                                  help_text=ugettext_lazy(
+                                                      "Check for translation completion before pulling files"),
+                                                  required=False,
+                                                  initial=True)
 
     def __init__(self, domain, *args, **kwargs):
         super(AppTranslationsForm, self).__init__(*args, **kwargs)
@@ -56,20 +72,29 @@ class AppTranslationsForm(forms.Form):
             'transifex_project_slug',
             'source_lang',
             'target_lang',
+            'action',
+            'lock_translations',
+            'perform_translated_check',
             hqcrispy.FormActions(
                 twbscrispy.StrictButton(
-                    ugettext_lazy("Submit files for translation to Transifex"),
+                    ugettext_lazy("Submit"),
                     type="submit",
                     css_class="btn btn-primary btn-lg disable-on-submit",
                 )
             )
         )
 
-    def clean_version(self):
-        version = self.cleaned_data['version']
+    def clean(self):
+        # ensure target lang when translation check requested during pull
+        # to check for translation completion
+        cleaned_data = super(AppTranslationsForm, self).clean()
+        version = cleaned_data['version']
         if version:
-            app_id = self.cleaned_data['app_id']
+            app_id = cleaned_data['app_id']
             available_versions = get_available_versions_for_app(self.domain, app_id)
             if version not in available_versions:
-                raise forms.ValidationError(ugettext_lazy('Version not available for app'))
-        return version
+                self.add_error('version', ugettext_lazy('Version not available for app'))
+        if (not cleaned_data['target_lang'] and
+                (cleaned_data['action'] == "pull" and cleaned_data['perform_translated_check'])):
+            self.add_error('target_lang', ugettext_lazy('Target lang required to confirm translation completion'))
+        return cleaned_data

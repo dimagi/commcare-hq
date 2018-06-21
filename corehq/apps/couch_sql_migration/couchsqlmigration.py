@@ -54,6 +54,8 @@ from gevent import sleep
 import six
 import logging
 from collections import defaultdict, deque
+from http_parser import http
+from corehq.util import cache_utils
 _logger = logging.getLogger('main_couch_sql_datamigration')
 
 
@@ -624,12 +626,36 @@ def _save_migrated_models(sql_form, case_stock_result=None):
     )
 
 
+class MigrationPaginationEventHandler(PaginationEventHandler):
+    RETRIES = 10
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.retries = self.RETRIES
+
+    def _cache_key(self):
+        return "couchsqlmigration.%s" % self.domain
+
+    def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+        self.retries -= 1
+        if isinstance(e, http.NoMoreData):
+            sleep(min(60, cache_utils.get_exponential(self._cache_key())))
+            return True
+        return False
+
+    def page_end(self, total_emitted, duration, *args, **kwargs):
+        self.retries = self.RETRIES
+        cache_utils.clear_limit(self._cache_key())
+
+
 def _get_main_form_iterator(domain):
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=['XFormInstance'],
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 
@@ -638,7 +664,7 @@ def _get_unprocessed_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=UNPROCESSED_DOC_TYPES,
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 
@@ -648,7 +674,7 @@ def _get_case_iterator(domain, doc_types=None):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 

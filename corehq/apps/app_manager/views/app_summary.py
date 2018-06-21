@@ -282,7 +282,8 @@ FORM_SUMMARY_EXPORT_HEADER_NAMES = [
     "type",
     "repeat",
     "group",
-    "options",
+    "option_labels",
+    "option_values",
     "calculate",
     "relevant",
     "constraint",
@@ -343,10 +344,10 @@ class DownloadFormSummaryView(LoginAndDomainMixin, ApplicationViewMixin, View):
                     type=question_response.type,
                     repeat=question_response.repeat,
                     group=question_response.group,
-                    options="\n".join(
-                        ["{} - {}".format(_translate_name(option.translations, language), option.value)
-                         for option in question_response.options]
+                    option_labels="\n".join(
+                        [_translate_name(option.translations, language) for option in question_response.options]
                     ),
+                    option_values=", ".join([option.value for option in question_response.options]),
                     calculate=question_response.calculate,
                     relevant=question_response.relevant,
                     constraint=question_response.constraint,

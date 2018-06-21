@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 from corehq.apps.data_interfaces.models import (
@@ -74,6 +75,9 @@ from django.core.management.base import BaseCommand
 from six import moves
 from time import sleep
 from io import open
+
+
+ABT_CUSTOM_RECIPIENT = 'CASE_OWNER_LOCATION_PARENT'
 
 
 def log(message):
@@ -446,8 +450,12 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CASE_OWNER, None)]
     elif handler.recipient == RECIPIENT_USER:
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_LAST_SUBMITTING_USER, None)]
+    elif handler.recipient == RECIPIENT_PARENT_CASE:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
+    elif handler.recipient == ABT_CUSTOM_RECIPIENT:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, ABT_CUSTOM_RECIPIENT)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -558,6 +566,26 @@ def migrate_simple_daily_schedule(handler):
     )
 
 
+def migrate_simple_weekly_schedule(handler):
+    if handler.schedule_length > 0 and (handler.schedule_length % 7) == 0:
+        repeat_every = handler.schedule_length // 7
+    elif handler.max_iteration_count == 1:
+        repeat_every = 1
+    else:
+        raise ValueError("Unable to convert schedule_length for handler %s" % handler._id)
+
+    return TimedSchedule.create_simple_weekly_schedule(
+        handler.domain,
+        get_timed_event(handler, handler.events[0]),
+        get_content(handler, handler.events[0]),
+        [handler.start_day_of_week],
+        handler.start_day_of_week,
+        total_iterations=handler.max_iteration_count,
+        extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+        repeat_every=repeat_every,
+    )
+
+
 def migrate_custom_daily_schedule(handler):
     return TimedSchedule.create_custom_daily_schedule(
         handler.domain,
@@ -665,6 +693,8 @@ class Command(BaseCommand):
             RECIPIENT_CASE,
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
+            RECIPIENT_PARENT_CASE,
+            ABT_CUSTOM_RECIPIENT,
         ):
             return None
 
@@ -701,6 +731,16 @@ class Command(BaseCommand):
         ):
             if handler.start_day_of_week != DAY_ANY:
                 # Weekly schedule goes here
+                if (
+                    handler.start_day_of_week >= 0 and
+                    handler.start_day_of_week <= 6 and
+                    len(handler.events) == 1 and
+                    handler.events[0].day_num == 0 and
+                    handler.start_offset == 0 and
+                    ((handler.schedule_length % 7) == 0 or handler.max_iteration_count == 1)
+                ):
+                    return migrate_simple_weekly_schedule
+
                 return None
             elif (
                 len(handler.events) == 1 and

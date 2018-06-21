@@ -283,9 +283,9 @@ hqDefine("reports/js/config.dataTables.bootstrap", [
     };
 
     $.extend( $.fn.dataTableExt.oStdClasses, {
-        "sSortAsc": "header headerSortDown",
-        "sSortDesc": "header headerSortUp",
-        "sSortable": "header",
+        "sSortAsc": "header headerSortAsc",
+        "sSortDesc": "header headerSortDesc",
+        "sSortable": "header headerSort",
     } );
 
     // For sorting rows

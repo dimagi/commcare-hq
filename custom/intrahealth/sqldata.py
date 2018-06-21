@@ -4,18 +4,23 @@ from __future__ import division
 from __future__ import unicode_literals
 import sqlalchemy
 from sqlagg.base import AliasColumn, QueryMeta, CustomQueryColumn, TableNotFoundException
-from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn
+from sqlagg.columns import SumColumn, MaxColumn, SimpleColumn, CountColumn, CountUniqueColumn, MeanColumn, \
+    MonthColumn
 from collections import defaultdict
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, get_location
 from corehq.apps.products.models import SQLProduct
 
-from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader
+from corehq.apps.reports.datatables import DataTablesColumn, DataTablesHeader, DataTablesColumnGroup
 from corehq.apps.reports.sqlreport import DataFormatter, \
     TableDataFormat, calculate_total_row
 from corehq.apps.userreports.util import get_table_name
+from custom.intrahealth import PRODUCT_NAMES as INIT_PRODUCT_NAMES
+from custom.intrahealth import PRODUCT_MAPPING
+from custom.intrahealth.report_calcs import _locations_per_type
 from custom.intrahealth.utils import YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR, \
     YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PRODUCT, YEKSI_NAA_REPORTS_LOGISTICIEN, \
-    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM
+    YEKSI_NAA_REPORTS_VISITE_DE_L_OPERATOUR_PER_PROGRAM, \
+    OPERATEUR_COMBINED, COMMANDE_COMBINED, RAPTURE_COMBINED, LIVRAISON_COMBINED, RECOUVREMENT_COMBINED
 from dateutil.rrule import rrule, MONTHLY
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
@@ -45,8 +50,8 @@ PRODUCT_NAMES = {
 }
 
 
-def _locations_filter(archived_locations):
-    return NOT(IN('location_id', get_INFilter_bindparams('archived_locations', archived_locations)))
+def _locations_filter(archived_locations, location_field_name='location_id'):
+    return NOT(IN(location_field_name, get_INFilter_bindparams('archived_locations', archived_locations)))
 
 
 class BaseSqlData(SqlData):
@@ -822,6 +827,1369 @@ class SumAndAvgGCustomColumn(IntraHealthCustomColumn):
 class CountUniqueAndSumCustomColumn(IntraHealthCustomColumn):
     query_cls = CountUniqueAndSumQueryMeta
     name = 'count_unique_and_sum'
+
+
+class IntraHealthSqlData(SqlData):
+    datatables = False
+    show_charts = False
+    show_total = False
+    custom_total_calculate = False
+    no_value = {'sort_key': 0, 'html': 0}
+    fix_left_col = False
+
+    def percent_fn(self, x, y):
+        return "%(p).2f%%" % \
+               {
+                   "p": (100 * float(y or 0) / float(x or 1))
+               }
+
+    def format_data_and_cast_to_float(self, value):
+        return {"html": "{:.2f}".format(value), "sort_key": "{:.2f}".format(value)} if value is not None else value
+
+    @property
+    def engine_id(self):
+        return 'ucr'
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return []
+
+    @property
+    def rows(self):
+        formatter = DataFormatter(TableDataFormat(self.columns, no_value=self.no_value))
+        rows = list(formatter.format(self.data, keys=self.keys, group_by=self.group_by))
+        return rows
+
+    @property
+    def filter_values(self):
+        return clean_IN_filter_value(super(IntraHealthSqlData, self).filter_values, 'archived_locations')
+
+
+class RecouvrementDesCouts2(IntraHealthSqlData):
+    show_total = True
+    slug = 'recouvrement'
+    title = 'Recouvrement des côuts - Taxu de Recouvrement'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], RECOUVREMENT_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date_du", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['district_name']
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("District"), SimpleColumn('district_name'))]
+        columns.append(DatabaseColumn(_("Montant dû"), SumColumn('quantite_reale_a_payer')))
+        columns.append(DatabaseColumn(_("Montant payé"), SumColumn('montant_paye')))
+        columns.append(DatabaseColumn(_("Payé dans le 30 jours"), SumColumn('payee_trent_jour')))
+        columns.append(DatabaseColumn(_("Payé dans le 3 mois"), SumColumn('payee_trois_mois')))
+        columns.append(DatabaseColumn(_("Payé dans l`annèe"), SumColumn('payee_un_an')))
+        return columns
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        loc_names = set()
+        rows = self.get_data()
+        loc_name = 'district_name'
+
+        data = {}
+        for row in rows:
+            if row.get(loc_name):
+                loc_names.add(row[loc_name])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                data[row[loc_name]]['quantite_reale_a_payer'] += self.get_value(row['quantite_reale_a_payer'])
+                data[row[loc_name]]['montant_paye'] += self.get_value(row['montant_paye'])
+                data[row[loc_name]]['payee_trent_jour'] += self.get_value(row['payee_trent_jour'])
+                data[row[loc_name]]['payee_trois_mois'] += self.get_value(row['payee_trois_mois'])
+                data[row[loc_name]]['payee_un_an'] += self.get_value(row['payee_un_an'])
+
+        loc_names = sorted(loc_names)
+
+        rows = []
+        total_values = {
+            'quantite_reale_a_payer': 0,
+            'montant_paye': 0,
+            'payee_trent_jour': 0,
+            'payee_trois_mois': 0,
+            'payee_un_an': 0,
+        }
+        for loc_name in loc_names:
+            rows.append([
+                loc_name,
+                data[loc_name]['quantite_reale_a_payer'],
+                data[loc_name]['montant_paye'],
+                data[loc_name]['payee_trent_jour'],
+                data[loc_name]['payee_trois_mois'],
+                data[loc_name]['payee_un_an'],
+            ])
+            total_values['quantite_reale_a_payer'] += data[loc_name]['quantite_reale_a_payer']
+            total_values['montant_paye'] += data[loc_name]['montant_paye']
+            total_values['payee_trent_jour'] += data[loc_name]['payee_trent_jour']
+            total_values['payee_trois_mois'] += data[loc_name]['payee_trois_mois']
+            total_values['payee_un_an'] += data[loc_name]['payee_un_an']
+
+        total_row = [
+            'Total Region',
+            total_values['quantite_reale_a_payer'],
+            total_values['montant_paye'],
+            total_values['payee_trent_jour'],
+            total_values['payee_trois_mois'],
+            total_values['payee_un_an'],
+        ]
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('District'),
+            DataTablesColumn('Montant dû'),
+            DataTablesColumn('Montant payé'),
+            DataTablesColumn('Payé dans le 30 jours'),
+            DataTablesColumn('Payé dans le 3 mois'),
+            DataTablesColumn('Payé dans l`annèe'),
+        )
+
+
+class DureeData2(IntraHealthSqlData):
+    show_total = True
+    slug = 'duree'
+    title = 'Durée moyenne des retards de livraison'
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], LIVRAISON_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['district_name', 'date']
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("District"), SimpleColumn('district_name')),
+            DatabaseColumn(_("date"), MonthColumn('date')),
+            DatabaseColumn(_("Retards de livraison (jours)"), SumColumn('duree_moyenne_livraison')),
+        ]
+        return columns
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        loc_names = set()
+        rows = self.get_data()
+        loc_name = 'district_name'
+
+        data = defaultdict(list)
+        for row in rows:
+            if row.get(loc_name):
+                loc_names.add(row[loc_name])
+                data[row[loc_name]].append(self.get_value(row['duree_moyenne_livraison']))
+
+        loc_names = sorted(loc_names)
+
+        rows = []
+        total_sum = 0
+        total_len = 0
+        for loc_name in loc_names:
+            rows.append([
+                loc_name,
+                "{:.2f}".format(sum(data[loc_name]) / (len(data[loc_name]) or 1))
+            ])
+            total_sum += sum(data[loc_name])
+            total_len += len(data[loc_name])
+
+        total_row = [
+            'Moyenne Region',
+            "{:.2f}".format(total_sum / (total_len or 1))
+        ]
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('District'),
+            DataTablesColumn('Retards de livraison (jours)'),
+        )
+
+
+class GestionDeLIPMTauxDeRuptures2(IntraHealthSqlData):
+    show_total = True
+    title = 'Gestion de l`IPM - Taux des Ruptures de Stock'
+    product_names = {
+        "collier": None,
+        "depoprovera": None,
+        "diu": None,
+        "jadelle": None,
+        "microgynon": None,
+        "microlut": None,
+        "cu": None,
+        "preservatif_feminin": None,
+        "preservatif_masculin": None,
+        "sayana_press": None,
+        "implanon": None,
+    }
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], RAPTURE_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("date_rapportage", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = []
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("collier"), SumColumn('rupture_collier_hv')),
+            DatabaseColumn(_("depoprovera"), SumColumn('rupture_depoprovera_hv')),
+            DatabaseColumn(_("diu"), SumColumn('rupture_diu_hv')),
+            DatabaseColumn(_("jadelle"), SumColumn('rupture_jadelle_hv')),
+            DatabaseColumn(_("microgynon"), SumColumn('rupture_microgynon_hv')),
+            DatabaseColumn(_("microlut"), SumColumn('rupture_microlut_hv')),
+            DatabaseColumn(_("cu"), SumColumn('rupture_cu_hv')),
+            DatabaseColumn(_("preservatif_feminin"), SumColumn('rupture_preservatif_feminin_hv')),
+            DatabaseColumn(_("preservatif_masculin"), SumColumn('rupture_preservatif_masculin_hv')),
+            DatabaseColumn(_("sayana_press"), SumColumn('rupture_sayana_press_hv')),
+            DatabaseColumn(_("implanon"), SumColumn('rupture_implanon_hv')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+        return columns
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        loc_names = set()
+        rows = self.get_data()
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+
+        data = {}
+        product_data = defaultdict(int)
+        for row in rows:
+            if row.get(loc_name):
+                loc_names.add(row[loc_name])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                for raw_product_name in self.product_names:
+                    if self.product_names[raw_product_name] is None:
+                        product_name = INIT_PRODUCT_NAMES.get(PRODUCT_MAPPING[raw_product_name].lower())
+                        if product_name is not None:
+                            try:
+                                product = SQLProduct.active_objects.get(name__iexact=product_name,
+                                                                        domain=self.config['domain'])
+                                self.product_names[raw_product_name] = product.name
+                            except SQLProduct.DoesNotExist:
+                                self.product_names[raw_product_name] = ''
+                    product_field = self.get_value(row['rupture_{}_hv'.format(raw_product_name)])
+                    data[row[loc_name]][raw_product_name] += product_field
+                    product_data[raw_product_name] += product_field
+
+        raw_product_names = sorted(
+            product_name for product_name in self.product_names if self.product_names[product_name]
+        )
+
+        rows = []
+        loc_names = sorted(loc_names)
+        for loc_name in loc_names:
+            values = data[loc_name]
+            row = [loc_name]
+            for raw_product_name in raw_product_names:
+                row.append(values[raw_product_name])
+            rows.append(row)
+        total_row = ['Taux rupture']
+        number_of_locs = len(data) or 1
+        for raw_product_name in raw_product_names:
+            total_row.append('({0}/{1}) {2:.2f}%'.format(
+                product_data[raw_product_name], number_of_locs,
+                (product_data[raw_product_name] * 100) / number_of_locs,
+            ))
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        if 'region_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        raw_product_names = sorted(
+            product_name for product_name in self.product_names if self.product_names[product_name]
+        )
+        for raw_product_name in raw_product_names:
+            headers.add_column(
+                DataTablesColumn(self.product_names[raw_product_name])
+            )
+        return headers
+
+
+class NombreData2(IntraHealthSqlData):
+    show_total = True
+    slug = 'nombre'
+    title = 'Nombre de mois de stock disponibles et utilisables aux PPS'
+    product_names = set()
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['doc_id', 'product_name', 'display_total_stock', 'default_consumption']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Display Total Stock"), SimpleColumn('display_total_stock')),
+            DatabaseColumn(_("Default Consumption"), SimpleColumn('default_consumption')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+        return columns
+
+    @property
+    def rows(self):
+        product_names = set()
+        loc_names = set()
+        rows = self.get_data()
+
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+
+        data = {}
+        for row in rows:
+            if row.get('product_name') and row.get(loc_name):
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = {}
+                if row['product_name'] not in data[row[loc_name]]:
+                    data[row[loc_name]][row['product_name']] = defaultdict(list)
+                data[row[loc_name]][row['product_name']]['display_total_stock'].append(row['display_total_stock'])
+                data[row[loc_name]][row['product_name']]['default_consumption'].append(row['default_consumption'])
+
+        loc_names = sorted(loc_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        rows = []
+        display_total_stock_per_product = defaultdict(int)
+        default_consumption_per_product = defaultdict(int)
+        for loc_name in loc_names:
+            row = [loc_name]
+            for product_name in product_names:
+                display_total_stock = 0
+                default_consumption = 0
+                if data.get(loc_name) and data[loc_name].get(product_name):
+                    display_total_stock = [
+                        value for value in data[loc_name][product_name]['display_total_stock'] if value is not None
+                    ]
+                    default_consumption = [
+                        value for value in data[loc_name][product_name]['default_consumption'] if value is not None
+                    ]
+                if display_total_stock:
+                    display_total_stock = sum(display_total_stock) / len(display_total_stock)
+                if default_consumption:
+                    default_consumption = sum(default_consumption) / len(default_consumption)
+                row.append(self.format_data_and_cast_to_float(display_total_stock))
+                display_total_stock_per_product[product_name] += display_total_stock
+                row.append(self.format_data_and_cast_to_float(default_consumption))
+                default_consumption_per_product[product_name] += default_consumption
+                row.append("{:0.3f}".format(
+                    float(display_total_stock) /
+                    (float(default_consumption) or 1.0)
+                ))
+            rows.append(row)
+        total_row = ['']
+        for product_name in product_names:
+            total_row.append(display_total_stock_per_product[product_name])
+            total_row.append(default_consumption_per_product[product_name])
+            total_row.append("{:0.3f}".format(
+                float(display_total_stock_per_product[product_name]) /
+                (float(default_consumption_per_product[product_name]) or 1.0)
+            ))
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        if 'region_id' in self.config:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('District')))
+        else:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('PPS')))
+
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumnGroup(
+                product_name,
+                DataTablesColumn('Quantite produits entreposes au PPS'),
+                DataTablesColumn('CMM'),
+                DataTablesColumn('Nombre mois stock disponible et utilisable')
+            ))
+
+        return headers
+
+
+class TauxConsommationData2(IntraHealthSqlData):
+    show_total = True
+    slug = 'taux_consommation'
+    title = 'Taux de Consommation'
+    product_names = set()
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['doc_id', 'product_name', 'actual_consumption', 'total_stock']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Consommation reelle"), SimpleColumn('actual_consumption')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SimpleColumn('total_stock')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+        return columns
+
+    @property
+    def rows(self):
+        product_names = set()
+        loc_names = set()
+        rows = self.get_data()
+
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+
+        data = {}
+        for row in rows:
+            if row.get('product_name') and row.get(loc_name):
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = {}
+                if row['product_name'] not in data[row[loc_name]]:
+                    data[row[loc_name]][row['product_name']] = defaultdict(list)
+                data[row[loc_name]][row['product_name']]['actual_consumption'].append(row['actual_consumption'])
+                data[row[loc_name]][row['product_name']]['total_stock'].append(row['total_stock'])
+
+        loc_names = sorted(loc_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        rows = []
+        actual_consumption_per_product = defaultdict(int)
+        total_stock_per_product = defaultdict(int)
+        for loc_name in loc_names:
+            row = [loc_name]
+            for product_name in product_names:
+                actual_consumption = 0
+                total_stock = 0
+                if data.get(loc_name) and data[loc_name].get(product_name):
+                    actual_consumption = [
+                        value for value in data[loc_name][product_name]['actual_consumption'] if value is not None
+                    ]
+                    total_stock = [
+                        value for value in data[loc_name][product_name]['total_stock'] if value is not None
+                    ]
+                if actual_consumption:
+                    actual_consumption = sum(actual_consumption) / len(actual_consumption)
+                if total_stock:
+                    total_stock = sum(total_stock) / len(total_stock)
+                row.append(self.format_data_and_cast_to_float(actual_consumption))
+                actual_consumption_per_product[product_name] += actual_consumption
+                row.append(self.format_data_and_cast_to_float(total_stock))
+                total_stock_per_product[product_name] += total_stock
+                row.append(self.percent_fn(total_stock, actual_consumption))
+            rows.append(row)
+        total_row = ['']
+        for product_name in product_names:
+            total_row.append(actual_consumption_per_product[product_name])
+            total_row.append(total_stock_per_product[product_name])
+            total_row.append(self.percent_fn(
+                total_stock_per_product[product_name],
+                actual_consumption_per_product[product_name],
+            ))
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        if 'region_id' in self.config:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('District')))
+        else:
+            headers.add_column(DataTablesColumnGroup('', DataTablesColumn('PPS')))
+
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumnGroup(
+                product_name,
+                DataTablesColumn('Consommation reelle'),
+                DataTablesColumn('Stock apres derniere livraison'),
+                DataTablesColumn('Taux consommation')
+            ))
+
+        return headers
+
+
+class TauxDeRuptures2(IntraHealthSqlData):
+    show_total = True
+    slug = 'taux_de_ruptures2'
+    title = 'Disponibilité des Produits - Taux des Ruptures de Stock'
+    product_names = set()
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+        return group_by
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+
+        columns.append(DatabaseColumn(
+            _("Stock total"), CountColumn('total_stock'), format_fn=lambda x: 1 if x > 0 else 0
+        ))
+        return columns
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def rows(self):
+        loc_names = set()
+        product_names = set()
+        rows = self.get_data()
+
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+
+        data = {}
+        product_data = defaultdict(int)
+        for row in rows:
+            if row.get('product_name'):
+                loc_names.add(row[loc_name])
+                product_names.add(row['product_name'])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                data[row[loc_name]][row['product_name']] += row['total_stock']
+                product_data[row['product_name']] += row['total_stock']
+
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        rows = []
+
+        loc_names = sorted(loc_names)
+
+        for loc_name in loc_names:
+            values = data[loc_name]
+            row = [loc_name]
+            for product_name in product_names:
+                row.append(values[product_name])
+            rows.append(row)
+        row = ['Total']
+        total_row = ['Taux rupture']
+        number_of_locs = len(data) or 1
+        for product_name in product_names:
+            row.append(product_data[product_name])
+            total_row.append('({0}/{1}) {2:.2f}%'.format(
+                product_data[product_name], number_of_locs, (product_data[product_name] * 100) / number_of_locs,
+            ))
+        rows.append(row)
+        self.total_row = total_row
+
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        if 'region_id' in self.config:
+            headers.add_column(
+                DataTablesColumn('District')
+            )
+        else:
+            headers.add_column(
+                DataTablesColumn('PPS')
+            )
+        for product_name in self.product_names:
+            headers.add_column(
+                DataTablesColumn(product_name)
+            )
+        return headers
+
+
+class DateSource2(IntraHealthSqlData):
+    slug = 'dateSource2'
+    title = 'DateSource2'
+    show_total = False
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        if 'location_id' in self.config:
+            filters.append(EQ("location_id", "location_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['real_date', ]
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Date"), SimpleColumn('real_date')),
+        ]
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+        return sorted(list(
+            set(row['real_date'] for row in rows)
+        ))
+
+    @property
+    def headers(self):
+        return []
+
+
+class RecapPassageData2(IntraHealthSqlData):
+    show_total = False
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        if 'region_id' in self.config:
+            filters.append(EQ("region_id", "region_id"))
+        elif 'district_id' in self.config:
+            filters.append(EQ("district_id", "district_id"))
+        return filters
+
+    @property
+    def group_by(self):
+        return ['real_date', 'product_name']
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn(_("Designations"), SimpleColumn('product_name')),
+            DatabaseColumn(_("Stock apres derniere livraison"), SumColumn('old_stock_total')),
+            DatabaseColumn(_("Stock disponible et utilisable a la livraison"), SumColumn('total_stock')),
+            DatabaseColumn(_("Stock Total"), SumColumn('display_total_stock', alias='stock_total')),
+            DatabaseColumn(_("Precedent"), SumColumn('old_stock_pps')),
+            DatabaseColumn(_("Recu hors entrepots mobiles"), SumColumn('outside_receipts_amt')),
+            DatabaseColumn(_("Facturable"), SumColumn('billed_consumption')),
+            DatabaseColumn(_("Reelle"), SumColumn('actual_consumption')),
+            DatabaseColumn("Stock Total", AliasColumn('stock_total')),
+            DatabaseColumn("PPS Restant", SumColumn('pps_stock')),
+            DatabaseColumn("Pertes et Adjustement", SumColumn('loss_amt')),
+            DatabaseColumn(_("Livraison"), SumColumn('livraison'))
+        ]
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def slug(self):
+        return 'recap_passage_%s' % json_format_date(self.config['startdate'])
+
+    @property
+    def title(self):
+        return 'Recap Passage %s' % json_format_date(self.config['startdate'])
+
+    @property
+    def total_row(self):
+        return []
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        rows = self.get_data()
+        product_names = set()
+        data = {}
+        for row in rows:
+            product_name = row['product_name']
+            product_names.add(product_name)
+            if not data.get(product_name):
+                data[product_name] = defaultdict(int)
+            product_data = data[product_name]
+            product_data['old_stock_total'] += self.get_value(row['old_stock_total'])
+            product_data['total_stock'] += self.get_value(row['total_stock'])
+            product_data['livraison'] += self.get_value(row['livraison'])
+            product_data['stock_total'] += self.get_value(row['stock_total'])
+            product_data['old_stock_pps'] += self.get_value(row['old_stock_pps'])
+            product_data['outside_receipts_amt'] += self.get_value(row['outside_receipts_amt'])
+            product_data['billed_consumption'] += self.get_value(row['billed_consumption'])
+            product_data['actual_consumption'] += self.get_value(row['actual_consumption'])
+            product_data['pps_stock'] += self.get_value(row['pps_stock'])
+            product_data['loss_amt'] += self.get_value(row['loss_amt'])
+
+        rows = []
+        product_names = sorted(product_names)
+        for product_name in product_names:
+            product_data = data[product_name]
+            rows.append([
+                product_name,
+                product_data['old_stock_total'],
+                product_data['total_stock'],
+                product_data['livraison'],
+                product_data['stock_total'],
+                product_data['old_stock_pps'],
+                product_data['outside_receipts_amt'],
+                (product_data['actual_consumption'] or 0) - (product_data['billed_consumption'] or 0),
+                product_data['billed_consumption'],
+                product_data['actual_consumption'],
+                product_data['stock_total'],
+                product_data['pps_stock'],
+                product_data['loss_amt'],
+            ])
+        return rows
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Designations'),
+            DataTablesColumn('Stock apres derniere livraison'),
+            DataTablesColumn('Stock disponible et utilisable a la livraison'),
+            DataTablesColumn('Livraison'),
+            DataTablesColumn('Stock Total'),
+            DataTablesColumn('Precedent'),
+            DataTablesColumn('Recu hors entrepots mobiles'),
+            DataTablesColumn('Non Facturable'),
+            DataTablesColumn('Facturable'),
+            DataTablesColumn('Reelle'),
+            DataTablesColumn('Stock Total'),
+            DataTablesColumn('PPS Restant'),
+            DataTablesColumn('Pertes et Adjustement'),
+        )
+
+
+class ConsommationData2(IntraHealthSqlData):
+    slug = 'consommation2'
+    title = 'Consommation'
+    show_total = True
+    product_names = set()
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['product_name']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn(_("Product Name"), SimpleColumn('product_name')),
+        ]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+
+        columns.append(DatabaseColumn(_("Consumption"), SumColumn('actual_consumption')))
+        return columns
+
+    def get_value(self, cell):
+        if cell:
+            return cell['html']
+        return 0
+
+    @property
+    def rows(self):
+        product_names = set()
+        loc_names = set()
+        rows = self.get_data()
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+
+        data = {}
+        product_data = defaultdict(int)
+        for row in rows:
+            if row.get('product_name'):
+                product_names.add(row['product_name'])
+                loc_names.add(row[loc_name])
+                if row[loc_name] not in data:
+                    data[row[loc_name]] = defaultdict(int)
+                data[row[loc_name]][row['product_name']] += self.get_value(row['actual_consumption'])
+                product_data[row['product_name']] += self.get_value(row['actual_consumption'])
+
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        loc_names = sorted(loc_names)
+        rows = []
+        for loc_name in loc_names:
+            values = data[loc_name]
+            row = [loc_name]
+            for product_name in product_names:
+                row.append(values[product_name])
+            rows.append(row)
+        total_row = ['Total']
+        for product_name in product_names:
+            total_row.append(product_data[product_name])
+        self.total_row = total_row
+        return rows
+
+    @property
+    def headers(self):
+        if 'region_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        for product_name in self.product_names:
+            headers.add_column(
+                DataTablesColumn(product_name)
+            )
+        return headers
+
+
+class PPSAvecDonnees2(IntraHealthSqlData):
+    slug = 'pps_avec_donnees2'
+    title = 'PPS Avec Données'
+    show_total = True
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['pps_id']
+        if 'region_id' in self.config:
+            group_by.append('district_name')
+        else:
+            group_by.append('pps_name')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [DatabaseColumn(_("PPS ID"), SimpleColumn('pps_id'))]
+        if 'region_id' in self.config:
+            columns.append(DatabaseColumn(_("District"), SimpleColumn('district_name')))
+        else:
+            columns.append(DatabaseColumn(_("PPS"), SimpleColumn('pps_name')))
+        return columns
+
+    @property
+    def rows(self):
+        loc_names = set()
+        values = {}
+        if 'region_id' in self.config:
+            loc_name = 'district_name'
+        else:
+            loc_name = 'pps_name'
+        rows = self.get_data()
+        for row in rows:
+            if row.get(loc_name):
+                loc_names.add(row[loc_name])
+                if row[loc_name] not in values:
+                    values[row[loc_name]] = set()
+                values[row[loc_name]].add(row['pps_id'])
+
+        rows = []
+        loc_names = sorted(loc_names)
+        for loc_name in loc_names:
+            pps_ids = values[loc_name]
+            rows.append([loc_name, len(pps_ids)])
+        self.total_row = ['Total', sum(len(pps_ids) for pps_ids in values.values())]
+        if 'district_id' in self.config:
+            locations_included = [loc_name for loc_name in values]
+        else:
+            return rows
+
+        all_locations = SQLLocation.objects.get(
+            location_id=self.config['district_id']
+        ).get_children().exclude(is_archived=True).values_list('name', flat=True)
+        locations_not_included = set(all_locations) - set(locations_included)
+        return rows + [[location, {'sort_key': 0, 'html': 0}] for location in locations_not_included]
+
+    @property
+    def headers(self):
+        if 'district_id' in self.config:
+            headers = DataTablesHeader(
+                DataTablesColumn('District'),
+            )
+        else:
+            headers = DataTablesHeader(
+                DataTablesColumn('PPS'),
+            )
+        headers.add_column(DataTablesColumn('PPS Avec Données Soumises'))
+        return headers
+
+
+class ConventureData2(IntraHealthSqlData):
+    slug = 'conventure2'
+    title = 'Converture'
+    show_total = True
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['pps_id', 'real_date']
+        if 'district_id' in self.config:
+            group_by.append('district_id')
+        else:
+            group_by.append('region_id')
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Mois', MonthColumn('real_date')),
+            DatabaseColumn('pps_id', SimpleColumn('pps_id')),
+        ]
+        if 'district_id' in self.config:
+            columns.append(DatabaseColumn('district_id', SimpleColumn('district_id')))
+        else:
+            columns.append(DatabaseColumn('region_id', SimpleColumn('region_id')))
+        return columns
+
+    @property
+    def rows(self):
+        values = {}
+        if 'district_id' in self.config:
+            loc_name = 'district_id'
+        else:
+            loc_name = 'region_id'
+
+        registered = 0
+        rows = self.get_data()
+        for row in rows:
+            month = int(row['real_date']['html'])
+            if month not in values:
+                values[month] = {
+                    'pps_ids': set(),
+                }
+            if row.get(loc_name):
+                loc = get_location(row[loc_name], domain=self.config['domain'])
+                new_registered = _locations_per_type(self.config['domain'], 'PPS', loc)
+                if new_registered > registered:
+                    registered = new_registered
+            values[month]['pps_ids'].add(row['pps_id'])
+
+        rows = []
+        total_row_values = defaultdict(int)
+        months = sorted(set(month for month in values))
+        for month in months:
+            from custom.intrahealth.reports.utils import get_localized_months
+            pps_ids = values[month]['pps_ids']
+            unique = len(pps_ids)
+            total_row_values['registered'] += registered
+            total_row_values['unique'] += unique
+            rows.append(
+                [get_localized_months()[month - 1], registered, 0, unique, self.percent_fn(registered, unique),
+                 unique, self.percent_fn(unique, unique)])
+        self.total_row = ['', total_row_values['registered'], 0, total_row_values['unique'],
+                          self.percent_fn(total_row_values['registered'], total_row_values['unique']),
+                          total_row_values['unique'],
+                          self.percent_fn(total_row_values['unique'], total_row_values['unique'])]
+        return rows
+
+    @property
+    def headers(self):
+        return DataTablesHeader(
+            DataTablesColumn('Mois'),
+            DataTablesColumn('No de PPS (number of PPS registered in that region)'),
+            DataTablesColumn('No de PPS planifie (number of PPS planned)'),
+            DataTablesColumn('No de PPS avec livrasion cet mois (number of PPS visited this month)'),
+            DataTablesColumn('Taux de couverture (coverage ratio)'),
+            DataTablesColumn('No de PPS avec donnees soumises (number of PPS which submitted data)'),
+            DataTablesColumn('Exhaustivite des donnees'),
+        )
+
+
+class FicheData2(IntraHealthSqlData):
+    slug = 'fiche_data'
+    title = ''
+    show_total = False
+    product_names = set()
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], OPERATEUR_COMBINED)
+
+    @property
+    def filters(self):
+        filters = [BETWEEN("real_date_repeat", "startdate", "enddate")]
+        loc_name = None
+        if 'region_id' in self.config:
+            loc_name = 'region_id'
+        elif 'district_id' in self.config:
+            loc_name = 'district_id'
+        if loc_name:
+            filters.append(EQ(loc_name, loc_name))
+            if 'archived_locations' in self.config:
+                filters.append(_locations_filter(self.config['archived_locations'], loc_name))
+        return filters
+
+    @property
+    def group_by(self):
+        group_by = ['product_name', 'pps_name']
+        if 'region_id' in self.config:
+            group_by.append("region_id")
+        elif 'district_id' in self.config:
+            group_by.append("district_id")
+        return group_by
+
+    @property
+    def columns(self):
+        columns = [
+            DatabaseColumn('Product Name', SimpleColumn('product_name')),
+            DatabaseColumn('LISTE des PPS', SimpleColumn('pps_name')),
+            DatabaseColumn("Consommation Reelle", SumColumn('actual_consumption')),
+            DatabaseColumn("Consommation Facturable", SumColumn('billed_consumption'))
+        ]
+        if 'district_id' in self.config:
+            columns.append(DatabaseColumn('district_id', SimpleColumn('district_id')))
+        elif 'region_id' in self.config:
+            columns.append(DatabaseColumn('region_id', SimpleColumn('region_id')))
+        return columns
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        product_names = set()
+        pps_names = set()
+        values = {}
+
+        rows = self.get_data()
+        for row in rows:
+            pps_name = row['pps_name']
+            product_name = row['product_name']
+            pps_names.add(pps_name)
+            product_names.add(product_name)
+            if pps_name not in values:
+                values[pps_name] = {}
+            if product_name not in values[pps_name]:
+                values[pps_name][product_name] = defaultdict(int)
+            values[pps_name][product_name]['actual_consumption'] += 1
+            values[pps_name][product_name]['billed_consumption'] += 1
+
+        pps_names = sorted(pps_names)
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        rows = []
+        for pps_name in pps_names:
+            row = [pps_name]
+            for product_name in product_names:
+                values_for_product = values[pps_name][product_name] if \
+                    product_name in values[pps_name] else {
+                    'actual_consumption': 0,
+                    'billed_consumption': 0,
+                }
+                actual_consumption = values_for_product['actual_consumption']
+                billed_consumption = values_for_product['billed_consumption']
+                row.append(actual_consumption)
+                row.append(billed_consumption)
+                row.append((actual_consumption or 0) - (billed_consumption or 0))
+            rows.append(row)
+        return rows
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader()
+        headers.add_column(DataTablesColumnGroup('', DataTablesColumn('LISTE des PPS')))
+
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumnGroup(
+                product_name,
+                DataTablesColumn('Consommation Reelle'),
+                DataTablesColumn('Consommation Facturable'),
+                DataTablesColumn('Consommation Non Facturable')
+            ))
+
+        return headers
+
+
+class DispDesProducts2(IntraHealthSqlData):
+    slug = 'products'
+    title = 'Taux de satisfaction de la commande de l\'operateur'
+    show_total = False
+    product_names = set()
+
+    @property
+    def table_name(self):
+        return get_table_name(self.config['domain'], COMMANDE_COMBINED)
+
+    @property
+    def group_by(self):
+        return ['productName']
+
+    @property
+    @memoized
+    def products(self):
+        return list(SQLProduct.objects.filter(domain=self.config['domain'], is_archived=False).order_by('name'))
+
+    @property
+    def columns(self):
+        return [
+            DatabaseColumn('Product Name', SimpleColumn('productName')),
+            DatabaseColumn("Commandes", SumColumn('amountOrdered')),
+            DatabaseColumn("Recu", SumColumn('amountReceived'))
+        ]
+
+    @property
+    def total_row(self):
+        return []
+
+    @property
+    def rows(self):
+        product_names = set()
+        products = self.products
+        values = {
+            product.name: [0, 0]
+            for product in products
+        }
+
+        rows = self.get_data()
+        for row in rows:
+            productName = row['productName']
+            product_names.add(productName)
+            values[productName] = [
+                row['amountOrdered']['html'],
+                row['amountReceived']['html']
+            ]
+
+        commandes = ['Commandes']
+        raux = ['Raux']
+        taux = ['Taux']
+
+        product_names = sorted(product_names)
+        self.product_names = product_names
+        for product_name in product_names:
+            values_for_product = values[product_name]
+            amountOrdered = values_for_product[0]
+            amountReceived = values_for_product[1]
+            commandes.append(amountOrdered)
+            raux.append(amountReceived)
+            taux.append("%d%%" % (100 * amountOrdered / (amountReceived or 1)))
+        return [commandes, raux, taux]
+
+    @property
+    def headers(self):
+        headers = DataTablesHeader(DataTablesColumn('Quantity'))
+        for product_name in self.product_names:
+            headers.add_column(DataTablesColumn(product_name))
+        return headers
 
 
 class ContainsFilter(SqlFilter):
@@ -1703,13 +3071,11 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
             }]
         for i in range(len(self.months)):
             numerator = sum(
-                data[loc_id][i]['pps_total_amt_paid'] for loc_id in data if
-                data[loc_id][i]['pps_total_amt_owed']
+                data[loc_id][i]['pps_total_amt_paid'] for loc_id in data
             )
             denominator = sum(
                 data[loc_id][i]['delivery_amt_owed'] + data[loc_id][i]['pps_total_amt_owed'] -
-                data[loc_id][i]['delivery_amt_owed_first_visit'] for loc_id in data if
-                data[loc_id][i]['pps_total_amt_owed']
+                data[loc_id][i]['delivery_amt_owed_first_visit'] for loc_id in data
             )
             total_value = self.percent_fn(
                 numerator,
@@ -1757,7 +3123,6 @@ class RecoveryRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("Date", SimpleColumn('real_date_precise')),
             DatabaseColumn("Delivery Amount Owed", SimpleColumn('delivery_amt_owed')),
@@ -2137,7 +3502,6 @@ class RuptureRateByPPSData(VisiteDeLOperateurDataSource):
     @property
     def columns(self):
         columns = [
-            DatabaseColumn("DOC ID", SimpleColumn('doc_id')),
             DatabaseColumn("PPS ID", SimpleColumn('pps_id')),
             DatabaseColumn("PPS Name", SimpleColumn('pps_name')),
             DatabaseColumn("Date", SimpleColumn('real_date')),

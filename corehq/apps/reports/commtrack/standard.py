@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values
+from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_total_records
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
@@ -89,7 +89,15 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         'corehq.apps.reports.filters.commtrack.ProgramFilter',
     ]
     exportable = True
+    exportable_all = True
     emailable = True
+    asynchronous = True
+
+    @property
+    def total_records(self):
+        sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
+        product_ids = get_product_ids_for_program(self.domain, self.program_id) if self.program_id else None
+        return get_total_records(self.domain, sp_ids, STOCK_SECTION_TYPE, product_ids)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -146,10 +154,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             entry_ids=product_ids,
         )
         product_grouping = {}
+        domain = Domain.get_by_name(self.domain)
         for ledger_value in ledger_values:
-            consumption_helper = get_consumption_helper_from_ledger_value(
-                Domain.get_by_name(self.domain), ledger_value
-            )
+            consumption_helper = get_consumption_helper_from_ledger_value(domain, ledger_value)
             status = consumption_helper.get_stock_category()
             if ledger_value.entry_id in product_grouping:
                 product_grouping[ledger_value.entry_id][status] += 1
@@ -183,6 +190,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     def rows(self):
         return [pd[0:2] + ['%.1f%%' % d for d in pd[2:]] for pd in self.product_data]
+
+    @property
+    def get_all_rows(self):
+        self.pagination.count = self.total_records
+        return self.rows
 
     def get_data_for_graph(self):
         ret = [

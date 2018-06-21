@@ -14,13 +14,12 @@ from django.http import (
     HttpResponseBadRequest,
     HttpResponseRedirect,
     Http404,
+    JsonResponse,
 )
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
-
-from dimagi.utils.csv import UnicodeWriter
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -30,6 +29,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_multiselect,
 )
 
+import csv342 as csv
 from memoized import memoized
 
 from corehq.apps.accounting.enterprise import EnterpriseReport
@@ -70,6 +70,7 @@ from corehq.apps.accounting.models import (
     Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
     SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
 )
+from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
     fmt_feature_rate_dict, fmt_product_rate_dict,
     has_subscription_already_ended,
@@ -78,6 +79,7 @@ from corehq.apps.hqwebapp.views import BaseSectionPageView, CRUDPaginatedViewMix
 from corehq import privileges
 from django_prbac.decorators import requires_privilege_raise404
 from django_prbac.models import Role, Grant
+from django_prbac.utils import has_privilege
 
 from six.moves.urllib.parse import urlencode
 
@@ -995,32 +997,64 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         return HttpResponseBadRequest("Please check your query.")
 
 
-@require_superuser
-def enterprise_dashboard(request, account_id):
-    account = BillingAccount.objects.get(id=account_id)
+def _get_account_or_404(request, domain):
+    account = BillingAccount.get_account_by_domain(domain)
 
+    if account is None:
+        raise Http404()
+
+    if request.couch_user.username not in account.billing_admin_emails:
+        if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
+            raise Http404()
+
+    return account
+
+
+def enterprise_dashboard(request, domain):
+    account = _get_account_or_404(request, domain)
     context = {
         'account': account,
+        'domain': domain,
         'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
             EnterpriseReport.DOMAINS,
             EnterpriseReport.WEB_USERS,
             EnterpriseReport.MOBILE_USERS,
             EnterpriseReport.FORM_SUBMISSIONS,
         )],
+        'current_page': {
+            'page_name': _('Enterprise Dashboard'),
+        }
     }
     return render(request, "accounting/enterprise_dashboard.html", context)
 
 
-@require_superuser
-def enterprise_dashboard_download(request, account_id, slug):
-    account = BillingAccount.objects.get(id=account_id)
+def enterprise_dashboard_total(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+    return JsonResponse({'total': report.total})
+
+
+def enterprise_dashboard_download(request, domain, slug):
+    account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-    writer = UnicodeWriter(response)
+    writer = csv.writer(response)
 
     writer.writerow(report.headers)
     writer.writerows(report.rows)
 
     return response
+
+
+def enterprise_dashboard_email(request, domain, slug):
+    account = _get_account_or_404(request, domain)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+
+    email_enterprise_report.delay(domain, slug, request.couch_user)
+    messages.success(request, _("Generating {title} report, will email to {email} when complete.").format(**{
+        'title': report.title,
+        'email': request.couch_user.username,
+    }))
+    return HttpResponseRedirect(reverse('enterprise_dashboard', args=(domain,)))

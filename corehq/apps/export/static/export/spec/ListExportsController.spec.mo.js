@@ -5,6 +5,7 @@ describe('ListExportsController Unit Tests', function() {
         GET_EXPORTS_LIST: '/fake/exports/list',
         UPDATE_EMAILED_EXPORT_DATA: '/fake/exports/update/data',
         TOGGLE_SAVED_EXPORT_ENABLED_STATE: '/fake/exports/toggle_enabled',
+        GET_SAVED_EXPORT_PROGRESS: '/fake/exports/get_progress',
     };
 
     beforeEach(function () {
@@ -29,6 +30,13 @@ describe('ListExportsController Unit Tests', function() {
                     url: mockBackendUrls.TOGGLE_SAVED_EXPORT_ENABLED_STATE,
                     headers: {
                         'DjNg-Remote-Method': 'toggle_saved_export_enabled_state',
+                    },
+                    method: 'auto',
+                },
+                get_saved_export_progress: {
+                    url: mockBackendUrls.GET_SAVED_EXPORT_PROGRESS,
+                    headers: {
+                        'DjNg-Remote-Method': 'get_saved_export_progress',
                     },
                     method: 'auto',
                 },
@@ -120,6 +128,16 @@ describe('ListExportsController Unit Tests', function() {
                         ListExportsTestData.exportSimple,
                     ],
                 });
+            $httpBackend
+                .when('POST', mockBackendUrls.GET_SAVED_EXPORT_PROGRESS)
+                .respond({
+                    success: true,
+                    taskStatus: {
+                        percentComplete: 20,
+                        inProgress: true,
+                        success: false,
+                    },
+                });
         });
 
         afterEach(function() {
@@ -175,7 +193,7 @@ describe('ListExportsController Unit Tests', function() {
                 assert.isTrue(component.updatingData);
                 $httpBackend.flush();
                 assert.isFalse(component.updatingData);
-                assert.isTrue(component.updatedDataTriggered);
+                assert.isTrue(component.taskStatus.inProgress);
             });
 
             it('analytics ok', function() {

@@ -9,6 +9,8 @@ from datetime import datetime
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.humanize.templatetags.humanize import naturaltime
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404
 from django.http.response import HttpResponseServerError
@@ -97,6 +99,7 @@ BULK_MOBILE_HELP_SITE = ("https://confluence.dimagi.com/display/commcarepublic"
                          "ManageCommCareMobileWorkers-B.UseBulkUploadtocreatem"
                          "ultipleusersatonce")
 DEFAULT_USER_LIST_LIMIT = 10
+BAD_MOBILE_USERNAME_REGEX = re.compile("[^A-Za-z0-9.+-_]")
 
 
 def _can_edit_workers_location(web_user, mobile_worker):
@@ -120,6 +123,7 @@ class EditCommCareUserView(BaseEditUserView):
         else:
             return "users/edit_commcare_user.html"
 
+    @use_select2
     @use_multiselect
     @method_decorator(require_can_edit_commcare_users)
     def dispatch(self, request, *args, **kwargs):
@@ -730,19 +734,23 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             return HttpResponseBadRequest('You must specify a username')
         if username == 'admin' or username == 'demo_user' or username == ANONYMOUS_USERNAME:
             return {'error': _('Username {} is reserved.').format(username)}
-        if '@' in username:
+        try:
+            validate_email("{}@example.com".format(username))
+            if BAD_MOBILE_USERNAME_REGEX.search(username) is not None:
+                raise ValidationError("Username contained an invalid character")
+        except ValidationError:
+            if '..' in username:
+                return {
+                    'error': _("Username may not contain consecutive . (period).")
+                }
+            if username.endswith('.'):
+                return {
+                    'error': _("Username may not end with a . (period).")
+                }
             return {
-                'error': _('Username {} cannot contain "@".').format(username)
+                'error': _("Username may not contain special characters.")
             }
-        if '&' in username:
-            return {
-                'error': _('Username {} cannot contain "&".').format(username)
-            }
-        if ' ' in username:
-            return {
-                'error': _('Username {} cannot contain '
-                           'spaces.').format(username)
-            }
+
         full_username = format_username(username, self.domain)
         exists = user_exists(full_username)
         if exists.exists:

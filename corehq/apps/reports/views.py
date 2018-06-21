@@ -6,6 +6,8 @@ from functools import partial
 import itertools
 import json
 from wsgiref.util import FileWrapper
+
+from corehq.util.download import get_download_response
 from dimagi.utils.couch import CriticalSection
 
 from corehq.apps.app_manager.suite_xml.sections.entries import EntriesHelper
@@ -665,17 +667,8 @@ def _download_saved_export(req, domain, saved_export):
     saved_export.save()
 
     payload = saved_export.get_payload(stream=True)
-    return build_download_saved_export_response(
-        payload, saved_export.configuration.format, saved_export.configuration.filename
-    )
-
-
-def build_download_saved_export_response(payload, format, filename):
-    content_type = Format.from_format(format).mimetype
-    response = StreamingHttpResponse(FileWrapper(payload), content_type=content_type)
-    if format != 'html':
-        response['Content-Disposition'] = safe_filename_header(filename)
-    return response
+    format = Format.from_format(saved_export.configuration.format)
+    return get_download_response(payload, saved_export.size, format, saved_export.configuration.filename, req)
 
 
 def should_update_export(last_accessed):
@@ -1574,7 +1567,7 @@ def case_property_names(request, domain, case_id):
             all_property_names.add('external_id')
         all_property_names.remove('name')
     except KeyError:
-        all_property_names = set()
+        pass
     all_property_names = list(all_property_names)
     all_property_names.sort()
 
