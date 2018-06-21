@@ -23,7 +23,8 @@ from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
     BASIC, DIGEST, API_KEY, TOKEN,
-    get_username_and_password_from_request, FORMPLAYER, formplayer_auth)
+    get_username_and_password_from_request, FORMPLAYER,
+    formplayer_auth, FORMPLAYER_AS_USER, formplayer_as_user_auth)
 
 from tastypie.authentication import ApiKeyAuthentication
 from tastypie.http import HttpUnauthorized
@@ -231,8 +232,9 @@ def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(formplayer_auth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
+def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True, as_user=False):
+    challenge = formplayer_as_user_auth if as_user else formplayer_auth
+    return _login_or_challenge(challenge, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
@@ -269,7 +271,8 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
                 TOKEN: login_or_token_ex(allow_cc_users=True),
-                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
+                FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True, as_user=False),
+                FORMPLAYER_AS_USER: login_or_formplayer_ex(allow_cc_users=True, as_user=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner

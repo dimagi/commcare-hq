@@ -8,8 +8,11 @@ from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
+
+from corehq.apps.users.models import CouchUser
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 from corehq.util.hmac_request import validate_request_hmac
+from dimagi.utils.django.request import mutable_querydict
 from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
@@ -19,6 +22,7 @@ BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
+FORMPLAYER_AS_USER = 'formplayer_as_user'
 TOKEN = 'token'
 
 
@@ -49,7 +53,7 @@ def determine_authtype_from_header(request, default=DIGEST):
         return API_KEY
 
     if request.META.get('HTTP_X_MAC_DIGEST', None):
-        return FORMPLAYER
+        return FORMPLAYER_AS_USER if request.POST.get('as_user') else FORMPLAYER
 
     return default
 
@@ -142,5 +146,32 @@ def tokenauth(view):
 
 
 def formplayer_auth(view):
-    wrapper = validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)
-    return wrapper(view)
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(view)
+
+
+def formplayer_as_user_auth(view):
+    """Auth decorator for requests coming from Formplayer that are authenticated
+    using the shared key.
+
+    All requests with this decorator require the `as_user` param in order to simulate auth by that user.
+    This is used by SMS forms.
+    """
+
+    @wraps(view)
+    def _inner(request, *args, **kwargs):
+        with mutable_querydict(request.POST):
+            as_user = request.POST.pop('as_user', None)
+
+        if not as_user:
+            return HttpResponse('User required', status=401)
+
+        couch_user = CouchUser.get_by_username(as_user[-1])
+        if not couch_user:
+            return HttpResponse('Unknown user', status=401)
+
+        request.user = couch_user.get_django_user()
+        request.couch_user = couch_user
+
+        return view(request, *args, **kwargs)
+
+    return validate_request_hmac('FORMPLAYER_INTERNAL_AUTH_KEY', ignore_if_debug=True)(_inner)
