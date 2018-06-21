@@ -283,8 +283,16 @@ def conditionally_location_safe(conditional_function):
 
     """
     def _inner(view_fn):
-        if isinstance(view_fn, type) and issubclass(view_fn, GenericReportView):
-            CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+        if isinstance(view_fn, type):
+
+            # Django class-based views
+            if issubclass(view_fn, View):
+                view_fn.dispatch.__func__._conditionally_location_safe_function = conditional_function
+
+            # HQ report classes
+            if issubclass(view_fn, GenericReportView):
+                CONDITIONALLY_LOCATION_SAFE_HQ_REPORTS[view_fn.slug] = conditional_function
+
         else:
             view_fn._conditionally_location_safe_function = conditional_function
         return view_fn
