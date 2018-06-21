@@ -176,6 +176,9 @@ class BaseUserConfigReportsView(BaseDomainView):
             'reports': ReportConfiguration.by_domain(self.domain) + static_reports,
             'data_sources': DataSourceConfiguration.by_domain(self.domain) + static_data_sources,
         })
+        if toggle_enabled(self.request, toggles.AGGREGATE_UCRS):
+            from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+            context['aggregate_data_sources'] = AggregateTableDefinition.objects.filter(domain=self.domain)
         return context
 
     @property

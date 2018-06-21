@@ -1576,3 +1576,9 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+AGGREGATE_UCRS = StaticToggle(
+    'aggregate_ucrs',
+    'Enable experimental aggregate UCR support',
+    TAG_INTERNAL,  # this might change in the future
+    namespaces=[NAMESPACE_DOMAIN]
+)
