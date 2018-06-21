@@ -1,5 +1,5 @@
-from touchforms.formplayer.api import answer_question, next
-from touchforms.formplayer.signals import sms_form_complete
+from corehq.apps.formplayer_api.smsforms.api import answer_question, next
+from corehq.apps.formplayer_api.smsforms.signals import sms_form_complete
 
 class SessionStartInfo(object):
     session_id = None

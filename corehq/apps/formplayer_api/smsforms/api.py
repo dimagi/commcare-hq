@@ -9,7 +9,7 @@ from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.form_processor.utils.general import use_sqlite_backend
 from corehq.util.hmac_request import get_hmac_digest, convert_to_bytestring_if_unicode
-from touchforms.formplayer.exceptions import BadDataError
+from corehq.apps.formplayer_api.smsforms.exceptions import BadDataError
 from experiments import FormplayerExperiment
 from corehq import toggles
 from corehq.apps.formplayer_api.utils import get_formplayer_url
