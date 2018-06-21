@@ -16,7 +16,6 @@ from pprint import pformat
 import six
 from jsonpath_rw import Child, parse, Fields, Slice, Where
 
-from corehq.motech.openmrs.const import PERSON_UUID_IDENTIFIER_TYPE_ID
 from corehq.motech.openmrs.jsonpath import Cmp
 from corehq.motech.value_source import recurse_subclasses
 from dimagi.ext.couchdbkit import (
