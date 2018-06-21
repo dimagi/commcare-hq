@@ -4,9 +4,20 @@ from django.contrib import admin
 from . import models
 
 
+class PrimaryColumnInline(admin.TabularInline):
+    model = models.PrimaryColumn
+    extra = 0
+
+
+class SecondaryTableInline(admin.TabularInline):
+    model = models.SecondaryTableDefinition
+    extra = 0
+
+
 class AggregateTableDefinitionAdmin(admin.ModelAdmin):
     list_display = ['table_id', 'display_name', 'domain', 'date_created', 'date_modified']
     list_filter = ['domain', 'date_created', 'date_modified']
+    inlines = [PrimaryColumnInline, SecondaryTableInline]
 
 
 class PrimaryColumnAdmin(admin.ModelAdmin):
@@ -14,8 +25,14 @@ class PrimaryColumnAdmin(admin.ModelAdmin):
     list_filter = ['column_type', 'table_definition']
 
 
+class SecondaryColumnInline(admin.TabularInline):
+    model = models.SecondaryColumn
+    extra = 0
+
+
 class SecondaryTableDefinitionAdmin(admin.ModelAdmin):
     list_display = ['table_definition', 'data_source_id', 'join_column_secondary', 'time_window_column']
+    inlines = [SecondaryColumnInline]
 
 
 class SecondaryColumnAdmin(admin.ModelAdmin):
