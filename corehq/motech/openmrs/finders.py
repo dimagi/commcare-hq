@@ -154,8 +154,8 @@ class WeightedPropertyPatientFinder(PatientFinder):
     #         "match_type": "levenshtein",
     #         // levenshtein function takes edit_distance / len
     #         "match_params": [0.2]
-    #         // i.e. One edit for every 5 characters
-    #         // e.g. "Riyaz" == "Riaz" but "Riyaz" != "Riazz"
+    #         // i.e. 20% is one edit for every 5 characters
+    #         // e.g. "Riyaz" matches "Riaz" but not "Riazz"
     #     },
     #     {"case_property": "last_name", "weight": 0.025},
     #     {"case_property": "municipality", "weight": 0.2},
