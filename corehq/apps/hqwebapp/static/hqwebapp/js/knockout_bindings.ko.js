@@ -261,18 +261,23 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 var row = $(this).parent().parent();
                 var currentIndex = parseInt(row[0].attributes['data-order'].value);
-
-                var lastSelectedRowIndex = null;
-                for (var i = 0; i < list().length; i++) {
-                    if (list()[i].selected()) {
-                        lastSelectedRowIndex = i;
+                if (list()[currentIndex].selected()) {
+                    var lastSelectedRowIndex = null;
+                    for (var i = 0; i < list().length; i++) {
+                        if (list()[i].selected()) {
+                            lastSelectedRowIndex = i;
+                        }
                     }
-                }
 
-                if (currentIndex < lastSelectedRowIndex) {
+                    if (currentIndex < lastSelectedRowIndex) {
+                        var currentListItem = list.splice(currentIndex, 1)[0];
+                        row.remove();
+                        list.splice(lastSelectedRowIndex, 0, currentListItem);
+                    }
+                } else {
                     var currentListItem = list.splice(currentIndex, 1)[0];
                     row.remove();
-                    list.splice(lastSelectedRowIndex, 0, currentListItem);
+                    list.splice(list().length, 0, currentListItem);
                 }
             });
 
