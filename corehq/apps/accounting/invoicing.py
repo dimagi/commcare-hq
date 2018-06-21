@@ -67,7 +67,7 @@ class DomainInvoiceFactory(object):
                 if subscription.account.is_customer_billing_account:
                     log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
                                         "Billing Account." % (subscription))
-                elif should_create_invoice(subscription, self.domain):
+                elif should_create_invoice(subscription, self.domain, self.date_start, self.date_end):
                     self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
@@ -303,7 +303,7 @@ class CustomerAccountInvoiceFactory(object):
     def create_invoice(self):
         invoices = []
         for subscription in self.account.subscription_set.all():
-            if should_create_invoice(subscription, subscription.subscriber.domain):
+            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
                 try:
                     invoice_start = get_invoice_start(subscription, self.date_start)
                     invoice_end = get_invoice_end(subscription, self.date_end)
@@ -314,8 +314,9 @@ class CustomerAccountInvoiceFactory(object):
                         "Invoice already existed for domain %s: %s." % (subscription.subscriber.domain, e),
                         show_stack_trace=True
                     )
-        self.customer_invoice = self._consolidate_invoices(invoices)
-        self._email_invoice()
+        if invoices:
+            self.customer_invoice = self._consolidate_invoices(invoices)
+            self._email_invoice()
 
     def _consolidate_invoices(self, invoices):
         customer_invoice = invoices.pop()
@@ -364,7 +365,7 @@ class CustomerAccountInvoiceFactory(object):
             log_accounting_error(str(e))
 
 
-def should_create_invoice(subscription, domain):
+def should_create_invoice(subscription, domain, invoice_start, invoice_end):
     if subscription.is_trial:
         log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
         return False
@@ -374,6 +375,12 @@ def should_create_invoice(subscription, domain):
             "Skipping invoicing for Subscription %s because there are no feature charges."
             % subscription.pk
         )
+        return False
+    if subscription.date_start >= invoice_end:
+        # No invoice gets created if the subscription didn't start in the previous month.
+        return False
+    if subscription.date_end <= invoice_start:
+        # No invoice gets created if the subscription ended before the invoicing period.
         return False
     return True
 
