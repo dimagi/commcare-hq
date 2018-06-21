@@ -32,6 +32,7 @@ from .dbaccessors import (
     get_case_export_instances,
     get_case_inferred_schema,
     get_form_inferred_schema,
+    get_properly_wrapped_export_instance,
 )
 from .exceptions import SkipConversion
 from .const import (

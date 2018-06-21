@@ -469,6 +469,13 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+COPY_FORM_TO_APP = StaticToggle(
+    'copy_form_to_app',
+    'Allow copying a form from one app to another',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',

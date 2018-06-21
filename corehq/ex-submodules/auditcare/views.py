@@ -2,13 +2,13 @@
 #for more information see: http://code.google.com/p/django-axes/
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import csv342 as csv
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from auditcare.utils import login_template
-from dimagi.utils import csv 
 from auditcare.decorators.login import lockout_response
 from auditcare.decorators.login import log_request
 from auditcare.inspect import history_for_doc
@@ -30,8 +30,8 @@ VERBOSE = getattr(settings, 'AXES_VERBOSE', True)
 def export_all(request):
     auditEvents = AccessAudit.view("auditcare/by_date_access_events", descending=True, include_docs=True).all()
     response = HttpResponse()
-    response['Content-Disposition'] = 'attachment; filename="AuditAll.xls"'
-    writer = csv.UnicodeWriter(response)
+    response['Content-Disposition'] = 'attachment; filename="AuditAll.csv"'
+    writer = csv.writer(response)
     writer.writerow(['User', 'Access Type', 'Date'])
     for a in auditEvents:
         writer.writerow([a.user, a.access_type, a.event_date])

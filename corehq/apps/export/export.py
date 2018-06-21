@@ -441,13 +441,13 @@ def _get_base_query(export_instance):
 
 
 @datadog_track_errors('rebuild_export')
-def rebuild_export(export_instance, filters=None):
+def rebuild_export(export_instance, progress_tracker):
     """
     Rebuild the given daily saved ExportInstance
     """
-    filters = filters or export_instance.get_filters()
+    filters = export_instance.get_filters()
     with TransientTempfile() as temp_path:
-        export_file = get_export_file([export_instance], filters or [], temp_path)
+        export_file = get_export_file([export_instance], filters or [], temp_path, progress_tracker)
         with export_file as payload:
             save_export_payload(export_instance, payload)
 

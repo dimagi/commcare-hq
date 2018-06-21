@@ -252,6 +252,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 var row = $(this).parent().parent();
                 var currentIndex = row[0].attributes['data-order'].value;
+                row.remove();
                 list.unshift(list.splice(currentIndex, 1)[0]);
             });
 
@@ -270,6 +271,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 if (currentIndex < lastSelectedRowIndex) {
                     var currentListItem = list.splice(currentIndex, 1)[0];
+                    row.remove();
                     list.splice(lastSelectedRowIndex, 0, currentListItem);
                 }
             });
@@ -311,13 +313,9 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                         i = parseInt(element.children[cur].attributes['data-order'].value);
                         newList.push(list()[i]);
                     }
-                    list().splice(0, list().length);
+                    list.splice(0, list().length);
                     for (i = 0; i < newList.length; i++) {
-                        list().push(newList[i]);
-                    }
-
-                    for (cur = 0; cur < element.children.length; cur++) {
-                        element.children[cur].attributes['data-order'].value = cur;
+                        list.push(newList[i]);
                     }
                 },
             });
