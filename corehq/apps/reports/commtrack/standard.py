@@ -92,6 +92,14 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     exportable_all = True
     emailable = True
     asynchronous = True
+    ajax_pagination = True
+
+    @property
+    def shared_pagination_GET_params(self):
+        return [
+            {'name': 'location_id', 'value': self.request.GET.get('location_id')},
+            {'name': 'program', 'value': self.request.GET.get('program')},
+        ]
 
     @property
     def total_records(self):
@@ -152,6 +160,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
             entry_ids=product_ids,
+            pagination=self.pagination,
         )
         product_grouping = {}
         domain = Domain.get_by_name(self.domain)
