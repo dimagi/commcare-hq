@@ -150,8 +150,8 @@ class UserStagingTable(StagingTable, CouchToDjangoETLMixin):
 
     user_id = models.CharField(max_length=255)
     username = models.CharField(max_length=150)
-    first_name = models.CharField(max_length=30, null=True)
-    last_name = models.CharField(max_length=30, null=True)
+    first_name = models.TextField(null=True)
+    last_name = models.TextField(null=True)
     email = models.CharField(max_length=255, null=True)
     doc_type = models.CharField(max_length=100)
     base_doc = models.CharField(max_length=100)
