@@ -180,6 +180,24 @@ def get_restore_response(domain, couch_user, app_id=None, since=None, version='1
                          as_user=None, device_id=None, user_id=None,
                          openrosa_version=None,
                          case_sync=None):
+    """
+    :param domain: Domain being restored from
+    :param couch_user: User performing restore
+    :param app_id: App ID of the app making the request
+    :param since: ID of current sync log used to generate incremental sync
+    :param version: Version of the sync response required
+    :param state: Hash value of the current database of cases on the device for consistency checking
+    :param items: Include item count if True
+    :param force_cache: Force response to be cached
+    :param cache_timeout: Override the default cache timeout of 1 hour.
+    :param overwrite_cache: Ignore cached response if True
+    :param as_user: Username of user to generate restore for (if different from current user)
+    :param device_id: ID of device performing restore
+    :param user_id: ID of user performing restore (used in case of deleted user with same username)
+    :param openrosa_version:
+    :param case_sync: Override default case sync algorithm
+    :return: Tuple of (http response, timing context or None)
+    """
 
     if user_id and user_id != couch_user.user_id:
         # sync with a user that has been deleted but a new
