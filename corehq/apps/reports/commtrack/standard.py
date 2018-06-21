@@ -196,33 +196,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         self.pagination.count = self.total_records
         return self.rows
 
-    def get_data_for_graph(self):
-        ret = [
-            {"key": "stocked out", "color": "#e00707"},
-            {"key": "under stock", "color": "#ffb100"},
-            {"key": "adequate stock", "color": "#4ac925"},
-            {"key": "overstocked", "color": "#b536da"},
-            {"key": "unknown", "color": "#ABABAB"}
-        ]
-        statuses = ['stocked out', 'under stock', 'adequate stock', 'overstocked', 'no data']
-
-        for r in ret:
-            r["values"] = []
-
-        for pd in self.product_data:
-            for i, status in enumerate(statuses):
-                ret[i]['values'].append({"x": pd[0], "y": pd[i+2]})
-
-        return ret
-
-    @property
-    def charts(self):
-        # only get data if we're loading an actual report - this requires filters
-        if 'location_id' in self.request.GET:
-            chart = MultiBarChart(None, Axis(_('Products')), Axis(_('% of Facilities'), ',.1d'))
-            chart.data = self.get_data_for_graph()
-            return [chart]
-
 
 class SimplifiedInventoryReport(GenericTabularReport, CommtrackReportMixin):
     name = ugettext_noop('Inventory by Location')
