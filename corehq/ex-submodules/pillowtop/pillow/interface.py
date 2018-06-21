@@ -117,7 +117,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
     def process_changes(self, since, forever):
         # Pass changes from the feed to processors
         context = PillowRuntimeContext(changes_seen=0)
-        min_wait_seconds = 10
+        min_wait_seconds = 30
         try:
             changes_chunk = []
             last_process_time = datetime.utcnow()
@@ -126,8 +126,9 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 if change:
                     if self._should_process_in_chunks:
                         changes_chunk.append(change)
-                        if (len(changes_chunk) == self.processors[0].processor_chunk_size or
-                           datetime.utcnow() - last_process_time > min_wait_seconds):
+                        chunk_full = len(changes_chunk) == self.processors[0].processor_chunk_size
+                        time_elapsed = datetime.utcnow() - last_process_time > min_wait_seconds
+                        if chunk_full or time_elapsed:
                             last_process_time = datetime.utcnow()
                             self.process_chunk_with_error_handling(changes_chunk, context)
                             changes_chunk = []
