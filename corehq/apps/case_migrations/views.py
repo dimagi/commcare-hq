@@ -13,6 +13,7 @@ from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
 from corehq.apps.domain.decorators import domain_admin_required, mobile_auth_or_formplayer
 from corehq.apps.domain.views import BaseDomainView
+from corehq.apps.locations.permissions import user_can_access_case, location_restricted_exception, location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
@@ -57,6 +58,7 @@ def get_case_hierarchy_for_restore(case):
     ]
 
 
+@location_safe
 @mobile_auth_or_formplayer
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
@@ -71,6 +73,10 @@ def migration_restore(request, domain, case_id):
             raise Http404
     except CaseNotFound:
         raise Http404
+
+    user = getattr(request, 'couch_user', None)
+    if user and not (request.can_access_all_locations or user_can_access_case(domain, user, case)):
+        raise location_restricted_exception(request)
 
     with RestoreContent('Case[{}]'.format(case_id)) as content:
         content.append(get_registration_element_for_case(case))
