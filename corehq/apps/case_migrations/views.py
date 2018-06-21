@@ -59,7 +59,7 @@ def get_case_hierarchy_for_restore(case):
 
 
 @location_safe
-@mobile_auth_or_formplayer
+@mobile_auth_or_formplayer(require_user=False)
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
 

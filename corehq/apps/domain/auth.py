@@ -22,7 +22,6 @@ BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
-FORMPLAYER_AS_USER = 'formplayer_as_user'
 TOKEN = 'token'
 
 
@@ -53,7 +52,7 @@ def determine_authtype_from_header(request, default=DIGEST):
         return API_KEY
 
     if request.META.get('HTTP_X_MAC_DIGEST', None):
-        return FORMPLAYER_AS_USER if request.POST.get('as_user') else FORMPLAYER
+        return FORMPLAYER
 
     return default
 
