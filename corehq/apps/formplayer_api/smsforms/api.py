@@ -2,7 +2,6 @@ import json
 from django.conf import settings
 from urlparse import urlparse
 import httplib
-import logging
 import socket
 import copy
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -19,8 +18,6 @@ backend for various sets of tasks.
 This API is currently highly beta and could use some hardening. 
 """
 
-# Get an instance of a logger
-logging = logging.getLogger(__name__)
 
 class TouchformsAuth(object):
     """
@@ -334,38 +331,9 @@ def get_formplayer_session_data(data):
     else:
         return data
 
-    # See if we need to map from Touchforms to Formplayer session_id
-    cache = get_redis_client()
-    redis_key = 'touchforms-to-formplayer-session-id-%s' % session_id
-    if cache.has_key(redis_key):
-        session_id = cache.get('touchforms-to-formplayer-session-id-%s' % session_id)
-
     data["session_id"] = session_id
     data["session-id"] = session_id
     return data
-
-
-def get_candidate_session_data(control_data):
-    candidate_data = copy.deepcopy(control_data)
-    candidate_data['oneQuestionPerScreen'] = True
-    candidate_data['nav_mode'] = 'prompt'
-    if "session_id" in control_data:
-        control_session_id = control_data["session_id"]
-    elif "session-id" in control_data:
-        control_session_id = control_data["session-id"]
-    else:
-        return True, candidate_data
-
-    cache = get_redis_client()
-    candidate_session_id = cache.get('touchforms-to-formplayer-session-id-%s' % control_session_id)
-
-    if candidate_session_id is None:
-        logging.info("Could not get Formplayer session_id for Touchforms session_id %s" % control_session_id)
-        return False, None
-
-    candidate_data["session_id"] = candidate_session_id
-    candidate_data["session-id"] = candidate_session_id
-    return True, candidate_data
 
 
 def get_response(data, auth=None):
