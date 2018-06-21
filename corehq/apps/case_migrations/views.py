@@ -47,11 +47,12 @@ class MigrationView(BaseMigrationView, FormView):
         return HttpResponseRedirect(self.page_url)
 
 
-def get_case_and_descendants(domain, case_id):
+def get_case_hierarchy_for_restore(case):
     from corehq.apps.reports.view_helpers import get_case_hierarchy
-    case = CaseAccessors(domain).get_case(case_id)
-    return [c for c in get_case_hierarchy(case, {})['case_list']
-            if not c.closed]
+    return [
+        c for c in get_case_hierarchy(case, {})['case_list']
+        if not c.closed
+    ]
 
 
 @mobile_auth_or_formplayer
@@ -65,7 +66,7 @@ def migration_restore(request, domain, case_id):
     with RestoreContent('Case[{}]'.format(case_id)) as content:
         case = CaseAccessors(domain).get_case(case_id)
         content.append(get_registration_element_for_case(case))
-        for case in get_case_and_descendants(domain, case_id):
+        for case in get_case_hierarchy_for_restore(case):
             # Formplayer will be creating these cases for the first time, so
             # include create blocks
             content.append(get_case_element(case, ('create', 'update'), V2))
