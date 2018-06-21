@@ -1119,8 +1119,35 @@
             "constant": 0
           }
         }
+     },
+     {
+        "display_name": null,
+        "transform": {},
+        "datatype": "small_integer",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "preg_order",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "preg_order"
+        }
+     },
+     {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "mobile_number",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "mobile_number"
+        }
      }
-     
     ],
     "named_expressions": {
       "parent_id": {

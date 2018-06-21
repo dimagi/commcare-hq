@@ -175,7 +175,8 @@ BEGIN
     'swelling = agg.swelling, ' ||
     'blurred_vision = agg.blurred_vision, ' ||
     'convulsions = agg.convulsions, ' ||
-    'rupture = agg.rupture ' ||
+    'rupture = agg.rupture, ' ||
+    'home_visit_date = agg.latest_time_end_processed::DATE ' ||
     'FROM ' || quote_ident(_agg_bp_form_table) || ' agg ' ||
     'WHERE ccs_monthly.case_id = agg.case_id AND ccs_monthly.valid_in_month = 1 AND agg.month = ' || quote_literal(_start_date);
 
@@ -192,7 +193,9 @@ BEGIN
     EXECUTE 'UPDATE ' || quote_ident(_tablename) || ' ccs_monthly SET ' ||
        'person_name = case_list.person_name, ' ||
        'edd = case_list.edd, ' ||
-       'delivery_nature = case_list.delivery_nature ' ||
+       'delivery_nature = case_list.delivery_nature, ' ||
+       'mobile_number = case_list.mobile_number, ' ||
+       'preg_order = case_list.preg_order'
     'FROM ' || quote_ident(_ucr_ccs_record_cases_table) || ' case_list ' ||
     'WHERE ccs_monthly.case_id = case_list.case_id and ccs_monthly.month = ' || quote_literal(_start_date);
 
