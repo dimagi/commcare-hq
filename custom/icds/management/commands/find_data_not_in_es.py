@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import csv342 as csv
-from datetime import date, timedelta
+from datetime import date
 from io import open
 
 from django.core.management import BaseCommand
+from dateutil.relativedelta import relativedelta
 
 from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
@@ -52,7 +53,7 @@ class Command(BaseCommand):
                 csv_writer.writerow(properties)
                 print(properties)
 
-                current_date += timedelta(days=1)
+                current_date += relativedelta(months=1)
 
     def _get_sql_cases_modified_on_date(self, date):
         num_cases = 0
@@ -61,14 +62,14 @@ class Command(BaseCommand):
             num_cases += (
                 CommCareCaseSQL.objects
                 .using(db)
-                .filter(domain=self.domain, server_modified_on__date=date)
+                .filter(server_modified_on__gte=date, server_modified_on__lt=date + relativedelta(months=1))
                 .count()
             )
 
         return num_cases
 
     def _get_es_cases_modified_on_date(self, date):
-        return CaseES().domain(self.domain).server_modified_range(gte=date, lt=date + timedelta(days=1)).count()
+        return CaseES().server_modified_range(gte=date, lt=date + relativedelta(months=1)).count()
 
     def _get_sql_forms_received_on_date(self, date):
         num_forms = 0
@@ -77,11 +78,11 @@ class Command(BaseCommand):
             num_forms += (
                 XFormInstanceSQL.objects
                 .using(db)
-                .filter(domain=self.domain, received_on__date=date)
+                .filter(received_on__gte=date, received_on__lt=date + relativedelta(months=1))
                 .count()
             )
 
         return num_forms
 
     def _get_es_forms_received_on_date(self, date):
-        return FormES().domain(self.domain).submitted(gte=date, lt=date + timedelta(days=1)).count()
+        return FormES().submitted(gte=date, lt=date + relativedelta(months=1)).count()
