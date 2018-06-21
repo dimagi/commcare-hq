@@ -474,9 +474,13 @@ def zip_folder(pdf_files):
     icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
     in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    for pdf_file in pdf_files:
-        file = IcdsFile.objects.get(blob_id=pdf_file['uuid'], data_type='issnip_monthly').get_file_from_blobdb()
-        zip_file.writestr('ICDS_CAS_monthly_register_{}.pdf'.format(pdf_file['location_name']), file.read())
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=pdf_files.keys(), data_type='issnip_monthly')
+
+    for pdf_file in files_to_zip:
+        zip_file.writestr(
+            'ICDS_CAS_monthly_register_{}.pdf'.format(pdf_files[pdf_file.blob_id]),
+            pdf_file.get_file_from_blobdb().read()
+        )
     zip_file.close()
 
     # we need to reset buffer position to the beginning after creating zip, if not read() will return empty string
