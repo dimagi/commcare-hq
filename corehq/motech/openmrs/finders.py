@@ -26,6 +26,16 @@ from dimagi.ext.couchdbkit import (
 )
 
 
+MATCH_TYPE_EXACT = 'exact'
+MATCH_TYPE_LEVENSHTEIN = 'levenshtein'  # Useful for words translated across alphabets
+MATCH_TYPE_DAYS_DIFF = 'days_diff'  # Useful for estimated dates of birth
+MATCH_TYPES = (
+    MATCH_TYPE_EXACT,
+    MATCH_TYPE_LEVENSHTEIN,
+    MATCH_TYPE_DAYS_DIFF,
+)
+
+
 class PatientFinder(DocumentSchema):
     """
     Subclasses of the PatientFinder class implement particular
@@ -105,6 +115,8 @@ PatientScore = namedtuple('PatientScore', ['patient', 'score'])
 class PropertyWeight(DocumentSchema):
     case_property = StringProperty()
     weight = DecimalProperty()
+    match_type = StringProperty(required=False, choices=MATCH_TYPES, default=MATCH_TYPE_EXACT)
+    match_params = ListProperty(required=False)
 
 
 class WeightedPropertyPatientFinder(PatientFinder):
@@ -122,8 +134,22 @@ class WeightedPropertyPatientFinder(PatientFinder):
     # [
     #     {"case_property": "bahmni_id", "weight": 0.9},
     #     {"case_property": "household_id", "weight": 0.9},
-    #     {"case_property": "dob", "weight": 0.75},
-    #     {"case_property": "first_name", "weight": 0.025},
+    #     {
+    #         "case_property": "dob",
+    #         "weight": 0.75,
+    #         "match_type": "days_diff",
+    #         // days_diff matches based on days difference from given date
+    #         "match_params": [364]
+    #     },
+    #     {
+    #         "case_property": "first_name",
+    #         "weight": 0.025,
+    #         "match_type": "levenshtein",
+    #         // levenshtein function takes edit_distance / len
+    #         "match_params": [0.2]
+    #         // i.e. 20% is one edit for every 5 characters
+    #         // e.g. "Riyaz" matches "Riaz" but not "Riazz"
+    #     },
     #     {"case_property": "last_name", "weight": 0.025},
     #     {"case_property": "municipality", "weight": 0.2},
     # ]
