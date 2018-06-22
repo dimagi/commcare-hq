@@ -60,7 +60,6 @@ def get_case_hierarchy_for_restore(case):
     ]
 
 
-@location_safe
 @csrf_exempt
 @formplayer_auth
 def migration_restore(request, domain, case_id):
@@ -76,11 +75,6 @@ def migration_restore(request, domain, case_id):
             raise Http404
     except CaseNotFound:
         raise Http404
-
-    user = getattr(request, 'couch_user', None)
-    # if there is no user then the request is coming from formplayer so we trust it
-    if user and not (request.can_access_all_locations or user_can_access_case(domain, user, case)):
-        raise location_restricted_exception(request)
 
     with RestoreContent('Case[{}]'.format(case_id)) as content:
         content.append(get_registration_element_for_case(case))
