@@ -64,7 +64,7 @@ class Command(BaseCommand):
                 if not should_use_sql_backend(domain):
                     raise CommandError("Date filtering not supported for Couch domains")
 
-        if startdate and enddate and enddate < startdate:
+        if startdate and enddate and enddate <= startdate:
             raise CommandError("enddate must be after startdate")
 
         handlers = {
