@@ -23,6 +23,11 @@ hqDefine('export/js/const', function () {
         XLS: 'xls',
         XLSX: 'xlsx',
     };
+    var SHARING_OPTIONS = {
+        PRIVATE: 'private',
+        EXPORT_ONLY: 'export_only',
+        EDIT_AND_EXPORT: 'edit_and_export',
+    };
     var DEID_OPTIONS = {
         NONE: null,
         ID: 'deid_id',
@@ -47,6 +52,7 @@ hqDefine('export/js/const', function () {
         USER_DEFINED_SPLIT_TYPES: USER_DEFINED_SPLIT_TYPES,
         SAVE_STATES: SAVE_STATES,
         EXPORT_FORMATS: EXPORT_FORMATS,
+        SHARING_OPTIONS: SHARING_OPTIONS,
         DEID_OPTIONS: DEID_OPTIONS,
         ANALYTICS_EVENT_CATEGORIES: ANALYTICS_EVENT_CATEGORIES,
         FORM_EXPORT: FORM_EXPORT,

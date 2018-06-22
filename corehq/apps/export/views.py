@@ -41,7 +41,7 @@ from django.views.generic import View
 
 from djangular.views.mixins import allow_remote_invocation
 import pytz
-from corehq import privileges
+from corehq import privileges, toggles
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
@@ -85,6 +85,7 @@ from corehq.apps.export.const import (
     MAX_EXPORTABLE_ROWS,
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
+    SharingOption,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -108,7 +109,7 @@ from corehq.apps.hqwebapp.decorators import (
     use_angular_js)
 from corehq.apps.hqwebapp.widgets import DateRangePickerWidget
 from corehq.apps.users.decorators import get_permission_name
-from corehq.apps.users.models import Permissions, CouchUser
+from corehq.apps.users.models import Permissions, CouchUser, WebUser
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION, has_permission_to_view_report
 from corehq.apps.analytics.tasks import track_workflow
@@ -862,6 +863,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             "export_type": _("export"),
             "export_type_caps_plural": _("Exports"),
             "export_type_plural": _("exports"),
+            'my_export_type': _('My Exports'),
+            'shared_export_type': _('Exports Shared with Me'),
             "model_type": self.form_or_case,
             "static_model_type": True,
             'max_exportable_rows': MAX_EXPORTABLE_ROWS,
@@ -1033,6 +1036,11 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         try:
             saved_exports = self.get_saved_exports()
+            if toggles.EXPORT_OWNERSHIP.enabled(self.request.domain):
+                saved_exports = [
+                    export for export in saved_exports
+                    if export.can_view(self.request.couch_user.user_id)
+                ]
             if self.is_deid:
                 saved_exports = [x for x in saved_exports if x.is_safe]
             saved_exports = list(map(self.fmt_export_data, saved_exports))
@@ -1238,6 +1246,10 @@ class DailySavedExportListView(BaseExportListView):
             'isLegacy': False,
             'name': export.name,
             'description': export.description,
+            'my_export': export.owner_id == self.request.couch_user.user_id,
+            'sharing': export.sharing,
+            'owner_username': WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown',
+            'can_edit': export.can_edit(self.request.couch_user.user_id),
             'formname': formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1359,6 +1371,8 @@ class DashboardFeedListView(DailySavedExportListView):
             "export_type": _("dashboard feed"),
             "export_type_caps_plural": _("Dashboard Feeds"),
             "export_type_plural": _("dashboard feeds"),
+            'my_export_type': _('My Dashboard Feeds'),
+            'shared_export_type': _('Dashboard Feeds Shared with Me'),
         })
         return context
 
@@ -1512,26 +1526,40 @@ class FormExportListView(BaseExportListView):
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
+            can_edit = True
+            description = ''
+            my_export = None
+            sharing = None
+            owner_username = 'unknown'
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
+            can_edit = export.can_edit(self.request.couch_user.user_id)
+            description = export.description
+            my_export = export.owner_id == self.request.couch_user.user_id
+            sharing = export.sharing
+            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
 
         return {
             'id': export.get_id,
             'isLegacy': is_legacy,
             'isDeid': export.is_safe,
             'name': export.name,
-            'description': export.description if not is_legacy else '',
+            'description': description,
+            'my_export': my_export,
+            'sharing': sharing,
+            'owner_username': owner_username,
+            'can_edit': can_edit,
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomFormExportView.urlname,
                                args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export.get_id, isinstance(export, FormExportSchema)),
+            'downloadUrl': self._get_download_url(export.get_id, is_legacy),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
@@ -1654,12 +1682,22 @@ class CaseExportListView(BaseExportListView):
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
             is_legacy = True
+            can_edit = True
+            description = ''
+            my_export = None
+            sharing = None
+            owner_username = 'unknown'
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
+            can_edit = export.can_edit(self.request.couch_user.user_id)
+            description = export.description
+            my_export = export.owner_id == self.request.couch_user.user_id
+            sharing = export.sharing
+            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
 
         return {
             'id': export.get_id,
@@ -1667,12 +1705,16 @@ class CaseExportListView(BaseExportListView):
             'isLegacy': is_legacy,
             'name': export.name,
             'case_type': export.case_type,
-            'description': export.description if not is_legacy else '',
+            'description': description,
+            'my_export': my_export,
+            'sharing': sharing,
+            'owner_username': owner_username,
+            'can_edit': can_edit,
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
             'editUrl': reverse(EditNewCustomCaseExportView.urlname, args=(self.domain, export.get_id)),
-            'downloadUrl': self._get_download_url(export._id, isinstance(export, CaseExportSchema)),
+            'downloadUrl': self._get_download_url(export._id, is_legacy),
             'copyUrl': reverse(CopyExportView.urlname, args=(self.domain, export.get_id)),
         }
 
@@ -1757,10 +1799,13 @@ class BaseNewExportView(BaseExportView):
                 or (export.is_daily_saved_export and not domain_has_privilege(self.domain, DAILY_SAVED_EXPORT))):
             raise BadExportConfiguration()
 
-        if not export._rev and getattr(settings, "ENTERPRISE_MODE"):
-            # default auto rebuild to False for enterprise clusters
-            # only do this on first save to prevent disabling on every edit
-            export.auto_rebuild_enabled = False
+        if not export._rev:
+            if toggles.EXPORT_OWNERSHIP.enabled(request.domain):
+                export.owner_id = request.couch_user.user_id
+            if getattr(settings, "ENTERPRISE_MODE"):
+                # default auto rebuild to False for enterprise clusters
+                # only do this on first save to prevent disabling on every edit
+                export.auto_rebuild_enabled = False
         export.save()
         messages.success(
             request,
@@ -1793,6 +1838,7 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
+        result['sharing_options'] = SharingOption.CHOICES
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -1920,9 +1966,27 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            new_export_instance = self.new_export_instance
+        except ResourceNotFound:
+            new_export_instance = None
+        if (
+            new_export_instance
+            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
+            and new_export_instance.owner_id != request.couch_user.user_id
+        ):
+            raise Http404
+        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
+
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
+
+    @property
+    @memoized
+    def new_export_instance(self):
+        return self.export_instance_cls.get(self.export_id)
 
     @property
     def page_url(self):
@@ -1931,7 +1995,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
     def get(self, request, *args, **kwargs):
         auto_select = True
         try:
-            export_instance = self.export_instance_cls.get(self.export_id)
+            export_instance = self.new_export_instance
             # if the export exists we don't want to automatically select new columns
             auto_select = False
         except ResourceNotFound:
@@ -2446,6 +2510,9 @@ class CopyExportView(View):
             messages.error(request, _('You can only copy new exports.'))
         else:
             new_export = export.copy_export()
+            if toggles.EXPORT_OWNERSHIP.enabled(domain):
+                new_export.owner_id = request.couch_user.user_id
+                new_export.sharing = SharingOption.PRIVATE
             new_export.save()
         referer = request.META.get('HTTP_REFERER', reverse('data_interfaces_default', args=[domain]))
         return HttpResponseRedirect(referer)
