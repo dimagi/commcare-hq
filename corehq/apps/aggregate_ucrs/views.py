@@ -11,8 +11,11 @@ from corehq import toggles
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
 from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
 from corehq.apps.aggregate_ucrs.tasks import populate_aggregate_table_data_task
-from corehq.apps.domain.decorators import login_and_domain_required
-from corehq.apps.userreports.views import BaseUserConfigReportsView, swallow_programming_errors
+from corehq.apps.domain.decorators import login_and_domain_required, login_or_basic
+from corehq.apps.userreports.views import BaseUserConfigReportsView, swallow_programming_errors, \
+    export_sql_adapter_view
+from corehq.apps.users.decorators import require_permission
+from corehq.apps.users.models import Permissions
 
 
 class BaseAggregateUCRView(BaseUserConfigReportsView):
@@ -68,6 +71,18 @@ class PreviewAggregateUCRView(BaseAggregateUCRView):
             'total_rows': q.count(),
         })
         return context
+
+
+@login_or_basic
+@require_permission(Permissions.view_reports)
+@swallow_programming_errors
+def export_aggregate_ucr(request, domain, table_id):
+    table_definition = get_object_or_404(
+        AggregateTableDefinition, domain=domain, table_id=table_id
+    )
+    aggregate_table_adapter = AggregateIndicatorSqlAdapter(table_definition)
+    url = reverse('export_aggregate_ucr', args=[domain, table_definition.table_id])
+    return export_sql_adapter_view(request, domain, aggregate_table_adapter, url)
 
 
 @login_and_domain_required
