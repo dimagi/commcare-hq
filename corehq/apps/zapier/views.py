@@ -117,7 +117,7 @@ class ZapierCreateCase(View):
         user_name = request.GET.get('user')
 
         if not case_type or not owner_id or not domain or not case_name:
-            return HttpResponseForbidden('Please fill in all required fields')
+            return HttpResponseBadRequest('Please fill in all required fields')
 
         couch_user = CommCareUser.get_by_username(user_name, domain)
         if not couch_user.is_member_of(domain):
@@ -162,7 +162,7 @@ class ZapierUpdateCase(View):
         case = get_case_or_404(domain, case_id)
 
         if not case.type == case_type:
-            return HttpResponseForbidden("Case type mismatch")
+            return HttpResponseBadRequest("Case type mismatch")
 
         factory = CaseFactory(domain=domain)
         factory.update_case(
