@@ -297,13 +297,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var previousRow = ui.item.prev()[0],
                         previousIndex = null;
-                    if(!!previousRow) {
+                    if(previousRow) {
                         previousIndex = parseInt(previousRow.attributes['data-order'].value);
                     }
 
                     var movedIndices = [];
                     $('.selected-for-sort').map(function (index, element) {
-                        movedIndices.push(parseInt(element.attributes['data-order'].value))
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
                     });
                     movedIndices.sort();
 
@@ -311,7 +311,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var insertDraggedElements = function() {
                         movedIndices.map(function (movedIndex) {
-                            list.push(originalList[movedIndex])
+                            list.push(originalList[movedIndex]);
                         });
                     };
 
