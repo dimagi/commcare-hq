@@ -1,5 +1,11 @@
-hqDefine('locations/js/utils', function () {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
+hqDefine('locations/js/utils', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'select2/dist/js/select2.full.min',
+], function (
+    $,
+    initialPageData
+) {
     var show_inactive, location_search_url, locs;
 
     var enableLocationSearchSelect = function () {
