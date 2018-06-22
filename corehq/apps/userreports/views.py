@@ -1290,6 +1290,11 @@ def process_url_params(params, columns):
 def export_data_source(request, domain, config_id):
     config, _ = get_datasource_config_or_404(config_id, domain)
     adapter = IndicatorSqlAdapter(config)
+    url = reverse('export_configurable_data_source', args=[domain, config._id])
+    return export_sql_adapter_view(request, domain, adapter, url)
+
+
+def export_sql_adapter_view(request, domain, adapter, too_large_redirect_url):
     q = adapter.get_query_object()
     table = adapter.get_table()
 
@@ -1320,7 +1325,7 @@ def export_data_source(request, domain, config_id):
             del keyword_params['format']
         return HttpResponseRedirect(
             '%s?%s' % (
-                reverse('export_configurable_data_source', args=[domain, config._id]),
+                too_large_redirect_url,
                 urlencode(keyword_params)
             )
         )
@@ -1334,7 +1339,7 @@ def export_data_source(request, domain, config_id):
     fd, path = tempfile.mkstemp()
     with os.fdopen(fd, 'wb') as tmpfile:
         try:
-            tables = [[config.table_id, get_table(q)]]
+            tables = [[adapter.table_id, get_table(q)]]
             export_from_tables(tables, tmpfile, params.format)
         except exc.DataError:
             msg = ugettext_lazy(
@@ -1342,7 +1347,7 @@ def export_data_source(request, domain, config_id):
                 "please make sure your parameters are valid."
             )
             return HttpResponse(msg, status=400)
-        return export_response(Temp(path), params.format, config.display_name)
+        return export_response(Temp(path), params.format, adapter.display_name)
 
 
 @login_and_domain_required
