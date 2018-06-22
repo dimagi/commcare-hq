@@ -169,7 +169,7 @@ def get_sql_form_ids(domain, doc_type, startdate, enddate):
 def get_es_case_ids(domain, doc_type, startdate, enddate):
     datefilter = None
     if startdate or enddate:
-        datefilter = es.cases.modified_range(gte=startdate, lt=enddate)
+        datefilter = es.cases.server_modified_range(gte=startdate, lt=enddate)
     return _get_es_doc_ids(es.CaseES, domain, doc_type, datefilter)
 
 
