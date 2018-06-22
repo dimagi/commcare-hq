@@ -8,35 +8,33 @@ from django.test import SimpleTestCase, TestCase
 from mock import MagicMock
 
 from corehq.apps.domain.shortcuts import create_domain
-from corehq.apps.locations.const import ROOT_LOCATION_TYPE
-from corehq.apps.locations.models import LocationType, SQLLocation
-from corehq.apps.locations.tree_utils import TreeError, assert_no_cycles
-from corehq.apps.locations.bulk_management import (
+from corehq.apps.users.models import WebUser
+
+from ..bulk_management import (
     NewLocationImporter,
     LocationTypeStub,
     LocationStub,
     LocationTreeValidator,
     LocationCollection,
 )
+from ..const import ROOT_LOCATION_TYPE
+from ..models import LocationType, SQLLocation
+from ..tree_utils import TreeError, assert_no_cycles
+from ..util import get_location_data_model
 import six
-
+from six.moves import range
 
 # These example types and trees mirror the information available in the upload files
-from corehq.apps.locations.util import get_location_data_model
-from six.moves import range
 
 NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
 FLAT_LOCATION_TYPES = [
-    # name, code, parent_code, do_delete, shares_cases, view_descendants, index
-    # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
     ('State', 'state', '', False, False, False, 0),
     ('County', 'county', 'state', False, False, True, 0),
     ('City', 'city', 'county', False, True, False, 0),
 ]
 
 DUPLICATE_TYPE_CODES = [
-    # ('name', 'code', 'parent_code', 'shares_cases', 'view_descendants'),
     ('State', 'state', '', False, False, False, 0),
     ('County', 'county', 'state', False, False, True, 0),
     ('City', 'city', 'county', False, True, False, 0),
@@ -54,125 +52,152 @@ CYCLIC_LOCATION_TYPES = [
 ]
 
 
-# external_id, latitude, longitude, custom_data, index, location_data_model
-extra_stub_args = ('', '', '', NOT_PROVIDED, 0, None)
+def LocStub(
+    name,
+    site_code,
+    location_type,
+    parent_code,
+    location_id='',
+    do_delete=False,
+    external_id='',
+    latitude='',
+    longitude='',
+    custom_data=NOT_PROVIDED,
+    index=0,
+    data_model=None,
+    delete_uncategorized_data=False,
+):
+    stub_tuple = (
+        name,
+        site_code,
+        location_type,
+        parent_code,
+        location_id,
+        do_delete,
+        external_id,
+        latitude,
+        longitude,
+        custom_data,
+        index,
+        data_model,
+    )
+    if delete_uncategorized_data:
+        return stub_tuple + (True,)
+    return stub_tuple
+
 
 BASIC_LOCATION_TREE = [
-    # (name, site_code, location_type, parent_code, location_id,
-    # do_delete, external_id, latitude, longitude, index)
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', False) + extra_stub_args,
-    ('Boston', 'boston', 'city', 'suffolk', '2346', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Florida', 'florida', 'state', '', '5432', False) + extra_stub_args,
-    ('Duval', 'duval', 'county', 'florida', '5433', False) + extra_stub_args,
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
+    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Florida', 'florida', 'state', '', '5432'),
+    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
 ]
 
 
 MOVE_SUFFOLK_TO_FLORIDA = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
     # this is the only changed line (parent is changed to florida)
-    ('Suffolk', 'suffolk', 'county', 'florida', '2345', False) + extra_stub_args,
-    ('Boston', 'boston', 'city', 'suffolk', '2346', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Florida', 'florida', 'state', '', '5432', False) + extra_stub_args,
-    ('Duval', 'duval', 'county', 'florida', '5433', False) + extra_stub_args,
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False) + extra_stub_args,
+    LocStub('Suffolk', 'suffolk', 'county', 'florida', '2345'),
+    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Florida', 'florida', 'state', '', '5432'),
+    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
 ]
 
 DELETE_SUFFOLK = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
     # These next two are marked as 'delete'
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', True) + extra_stub_args,
-    ('Boston', 'boston', 'city', 'suffolk', '2346', True) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Florida', 'florida', 'state', '', '5432', False) + extra_stub_args,
-    ('Duval', 'duval', 'county', 'florida', '5433', False) + extra_stub_args,
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False) + extra_stub_args,
+    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345', do_delete=True),
+    LocStub('Boston', 'boston', 'city', 'suffolk', '2346', do_delete=True),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Florida', 'florida', 'state', '', '5432'),
+    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
 ]
 
 MAKE_SUFFOLK_A_STATE_INVALID = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
     # This still lists mass as a parent, which is invalid,
     # plus, Boston (a city), can't have a state as a parent
-    ('Suffolk', 'suffolk', 'state', 'mass', '2345', False) + extra_stub_args,
-    ('Boston', 'boston', 'city', 'suffolk', '2346', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Florida', 'florida', 'state', '', '5432', False) + extra_stub_args,
-    ('Duval', 'duval', 'county', 'florida', '5433', False) + extra_stub_args,
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False) + extra_stub_args,
+    LocStub('Suffolk', 'suffolk', 'state', 'mass', '2345'),
+    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Florida', 'florida', 'state', '', '5432'),
+    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
 ]
 
 MAKE_SUFFOLK_A_STATE_VALID = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
-    ('Suffolk', 'suffolk', 'state', '', '2345', False) + extra_stub_args,
-    ('Boston', 'boston', 'county', 'suffolk', '2346', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Florida', 'florida', 'state', '', '5432', False) + extra_stub_args,
-    ('Duval', 'duval', 'county', 'florida', '5433', False) + extra_stub_args,
-    ('Jacksonville', 'jacksonville', 'city', 'duval', '5434', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+    LocStub('Suffolk', 'suffolk', 'state', '', '2345'),
+    LocStub('Boston', 'boston', 'county', 'suffolk', '2346'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Florida', 'florida', 'state', '', '5432'),
+    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
 ]
 
 DUPLICATE_SITE_CODES = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
-    ('Suffolk', 'suffolk', 'county', 'mass', '2345', False) + extra_stub_args,
-    ('Boston', 'boston', 'city', 'suffolk', '2346', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('East Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
+    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('East Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
 ]
 
 SAME_NAME_SAME_PARENT = [
-    ('Massachusetts', 'mass', 'state', '', '1234', False) + extra_stub_args,
-    ('Middlesex', 'middlesex', 'county', 'mass', '3456', False) + extra_stub_args,
+    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
     # These two locations have the same name AND same parent
-    ('Cambridge', 'cambridge', 'city', 'middlesex', '3457', False) + extra_stub_args,
-    ('Cambridge', 'cambridge2', 'city', 'middlesex', '3458', False) + extra_stub_args,
+    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+    LocStub('Cambridge', 'cambridge2', 'city', 'middlesex', '3458'),
 ]
 
 BIG_LOCATION_TREE = [
-    # (name, site_code, location_type, parent_code, location_id,
-    # do_delete, external_id, latitude, longitude, index)
-    ('0', '0', 'city', 'county11', '', False) + extra_stub_args,
-    ('1', '1', 'city', 'county11', '', False) + extra_stub_args,
-    ('2', '2', 'city', 'county11', '', False) + extra_stub_args,
-    ('3', '3', 'city', 'county11', '', False) + extra_stub_args,
-    ('4', '4', 'city', 'county11', '', False) + extra_stub_args,
-    ('5', '5', 'city', 'county11', '', False) + extra_stub_args,
-    ('6', '6', 'city', 'county11', '', False) + extra_stub_args,
-    ('7', '7', 'city', 'county11', '', False) + extra_stub_args,
-    ('8', '8', 'city', 'county11', '', False) + extra_stub_args,
-    ('9', '9', 'city', 'county11', '', False) + extra_stub_args,
-    ('10', '10', 'city', 'county11', '', False) + extra_stub_args,
-    ('11', '11', 'city', 'county11', '', False) + extra_stub_args,
-    ('12', '12', 'city', 'county11', '', False) + extra_stub_args,
-    ('13', '13', 'city', 'county11', '', False) + extra_stub_args,
-    ('14', '14', 'city', 'county11', '', False) + extra_stub_args,
-    ('15', '15', 'city', 'county11', '', False) + extra_stub_args,
-    ('16', '16', 'city', 'county11', '', False) + extra_stub_args,
-    ('17', '17', 'city', 'county11', '', False) + extra_stub_args,
-    ('18', '18', 'city', 'county11', '', False) + extra_stub_args,
-    ('19', '19', 'city', 'county11', '', False) + extra_stub_args,
-    ('20', '20', 'city', 'county11', '', False) + extra_stub_args,
-    ('21', '21', 'city', 'county11', '', False) + extra_stub_args,
-    ('22', '22', 'city', 'county11', '', False) + extra_stub_args,
-    ('23', '23', 'city', 'county11', '', False) + extra_stub_args,
-    ('24', '24', 'city', 'county11', '', False) + extra_stub_args,
-    ('25', '25', 'city', 'county11', '', False) + extra_stub_args,
-    ('26', '26', 'city', 'county11', '', False) + extra_stub_args,
-    ('27', '27', 'city', 'county11', '', False) + extra_stub_args,
-    ('28', '28', 'city', 'county11', '', False) + extra_stub_args,
-    ('29', '29', 'city', 'county11', '', False) + extra_stub_args,
-    ('30', '30', 'city', 'county11', '', False) + extra_stub_args,
-    ('31', '31', 'city', 'county11', '', False) + extra_stub_args,
-    ('32', '32', 'city', 'county11', '', False) + extra_stub_args,
-    ('33', '33', 'city', 'county11', '', False) + extra_stub_args,
+    LocStub('0', '0', 'city', 'county11'),
+    LocStub('1', '1', 'city', 'county11'),
+    LocStub('2', '2', 'city', 'county11'),
+    LocStub('3', '3', 'city', 'county11'),
+    LocStub('4', '4', 'city', 'county11'),
+    LocStub('5', '5', 'city', 'county11'),
+    LocStub('6', '6', 'city', 'county11'),
+    LocStub('7', '7', 'city', 'county11'),
+    LocStub('8', '8', 'city', 'county11'),
+    LocStub('9', '9', 'city', 'county11'),
+    LocStub('10', '10', 'city', 'county11'),
+    LocStub('11', '11', 'city', 'county11'),
+    LocStub('12', '12', 'city', 'county11'),
+    LocStub('13', '13', 'city', 'county11'),
+    LocStub('14', '14', 'city', 'county11'),
+    LocStub('15', '15', 'city', 'county11'),
+    LocStub('16', '16', 'city', 'county11'),
+    LocStub('17', '17', 'city', 'county11'),
+    LocStub('18', '18', 'city', 'county11'),
+    LocStub('19', '19', 'city', 'county11'),
+    LocStub('20', '20', 'city', 'county11'),
+    LocStub('21', '21', 'city', 'county11'),
+    LocStub('22', '22', 'city', 'county11'),
+    LocStub('23', '23', 'city', 'county11'),
+    LocStub('24', '24', 'city', 'county11'),
+    LocStub('25', '25', 'city', 'county11'),
+    LocStub('26', '26', 'city', 'county11'),
+    LocStub('27', '27', 'city', 'county11'),
+    LocStub('28', '28', 'city', 'county11'),
+    LocStub('29', '29', 'city', 'county11'),
+    LocStub('30', '30', 'city', 'county11'),
+    LocStub('31', '31', 'city', 'county11'),
+    LocStub('32', '32', 'city', 'county11'),
+    LocStub('33', '33', 'city', 'county11'),
 ]
 
 
@@ -254,15 +279,15 @@ class IngoreOldLocationTreeValidator(LocationTreeValidator):
 
 def get_validator(location_types, locations, old_collection=None):
     if old_collection is None:
-        LocStub = MockLocationStub
+        StubClass = MockLocationStub
         old_collection = TestLocationCollection()
         Validator = IngoreOldLocationTreeValidator
     else:
-        LocStub = LocationStub
+        StubClass = LocationStub
         Validator = LocationTreeValidator
     return Validator(
         [LocationTypeStub(*loc_type) for loc_type in location_types],
-        [LocStub(*loc) for loc in locations],
+        [StubClass(*loc) for loc in locations],
         old_collection=old_collection
     )
 
@@ -377,7 +402,7 @@ class TestTreeValidator(SimpleTestCase):
         # not all locations need to be specified in the upload
         old_locations = (
             BASIC_LOCATION_TREE +
-            [('extra_state', 'ex_code', 'state', '', 'ex_id', False) + extra_stub_args]
+            [LocStub('extra_state', 'ex_code', 'state', '', 'ex_id')]
         )
         old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
         validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
@@ -389,7 +414,7 @@ class TestTreeValidator(SimpleTestCase):
         old_collection = make_collection(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
         new_locations = (
             BASIC_LOCATION_TREE +
-            [('extra_state', 'ex_code', 'state', '', 'ex_id', False) + extra_stub_args]
+            [LocStub('extra_state', 'ex_code', 'state', '', 'ex_id')]
         )
         validator = get_validator(FLAT_LOCATION_TYPES, new_locations, old_collection)
         assert_errors(validator, ["'id: ex_id' is not found in your domain"])
@@ -397,15 +422,13 @@ class TestTreeValidator(SimpleTestCase):
 
 class TestBulkManagement(TestCase):
     basic_tree = [
-        # (name, site_code, location_type, parent_code, location_id,
-        # do_delete, external_id, latitude, longitude, index)
-        ('S1', 's1', 'state', '', '', False) + extra_stub_args,
-        ('S2', 's2', 'state', '', '', False) + extra_stub_args,
-        ('County11', 'county11', 'county', 's1', '', False) + extra_stub_args,
-        ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
-        ('City111', 'city111', 'city', 'county11', '', False) + extra_stub_args,
-        ('City112', 'city112', 'city', 'county11', '', False) + extra_stub_args,
-        ('City211', 'city211', 'city', 'county21', '', False) + extra_stub_args,
+        LocStub('S1', 's1', 'state', ''),
+        LocStub('S2', 's2', 'state', ''),
+        LocStub('County11', 'county11', 'county', 's1'),
+        LocStub('County21', 'county21', 'county', 's2'),
+        LocStub('City111', 'city111', 'city', 'county11'),
+        LocStub('City112', 'city112', 'city', 'county11'),
+        LocStub('City211', 'city211', 'city', 'county21'),
     ]
 
     @classmethod
@@ -560,8 +583,8 @@ class TestBulkManagement(TestCase):
 
     def test_int_datatype(self):
         data = [
-            ('S1', 1, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
-            ('S2', 2, 'state', '', '', False, '12', '', '2345', NOT_PROVIDED, 0, None),
+            LocStub('S1', 1, 'state', '', external_id='12'),
+            LocStub('S2', 2, 'state', '', external_id='12'),
         ]
 
         result = self.bulk_update_locations(
@@ -574,8 +597,8 @@ class TestBulkManagement(TestCase):
 
     def test_data_format(self):
         data = [
-            ('S1', '1', 'state', '', '', False, '12', 'not-lat', '2345', NOT_PROVIDED, 0, None),
-            ('S2', '2', 'state', '', '', False, '12', '3434', '2345', NOT_PROVIDED, 0, None),
+            LocStub('S1', '1', 'state', '', external_id='12', latitude='not-lat', longitude='2345'),
+            LocStub('S2', '2', 'state', '', external_id='12', latitude='3434', longitude='2345'),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -590,18 +613,16 @@ class TestBulkManagement(TestCase):
 
         _loc_id = lambda x: locations_by_code[x].location_id
         move_county21_to_state1 = [
-            # (name, site_code, location_type, parent_code, location_id,
-            # do_delete, external_id, latitude, longitude, index)
-            ('S1', 's1', 'state', '', _loc_id('s1'), False) + extra_stub_args,
-            ('S2', 's2', 'state', '', _loc_id('s2'), False) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
+            LocStub('S2', 's2', 'state', '', _loc_id('s2')),
+            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11')),
             # change parent_code from s2 -> s1
-            ('County21', 'county21', 'county', 's1', _loc_id('county21'), False) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', _loc_id('city111'), False) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', _loc_id('city112'), False) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
+            LocStub('County21', 'county21', 'county', 's1', _loc_id('county21')),
+            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111')),
+            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112')),
+            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
             # create new city
-            ('City311', 'city311', 'city', 'county11', '', False) + extra_stub_args,
+            LocStub('City311', 'city311', 'city', 'county11', ''),
         ]
 
         result = self.bulk_update_locations(
@@ -619,13 +640,13 @@ class TestBulkManagement(TestCase):
 
         _loc_id = lambda x: locations_by_code[x].location_id
         delete_county11 = [
-            ('S1', 's1', 'state', '', _loc_id('s1'), False) + extra_stub_args,
-            ('S2', 's2', 'state', '', _loc_id('s2'), False) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', _loc_id('county11'), True) + extra_stub_args,
-            ('County21', 'county21', 'county', 's2', _loc_id('county21'), False) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', _loc_id('city111'), True) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', _loc_id('city112'), True) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
+            LocStub('S2', 's2', 'state', '', _loc_id('s2')),
+            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11'), do_delete=True),
+            LocStub('County21', 'county21', 'county', 's2', _loc_id('county21')),
+            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111'), do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112'), do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
         ]
 
         result = self.bulk_update_locations(
@@ -644,14 +665,14 @@ class TestBulkManagement(TestCase):
 
         _loc_id = lambda x: locations_by_code[x].location_id
         delete_s2 = [
-            ('S1', 's1', 'state', '', _loc_id('s1'), False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
             # delete s2, but don't delete its descendatns. This is invalid
-            ('S2', 's2', 'state', '', _loc_id('s2'), True) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
-            ('County21', 'county21', 'county', 's2', _loc_id('county21'), False) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', _loc_id('city111'), False) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', _loc_id('city112'), False) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
+            LocStub('S2', 's2', 'state', '', _loc_id('s2'), do_delete=True),
+            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11')),
+            LocStub('County21', 'county21', 'county', 's2', _loc_id('county21')),
+            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111')),
+            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112')),
+            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
         ]
 
         result = self.bulk_update_locations(
@@ -671,13 +692,13 @@ class TestBulkManagement(TestCase):
 
         _loc_id = lambda x: locations_by_code[x].location_id
         move_county21_to_state1 = [
-            ('S1', '', 'state', '', _loc_id('s1'), False) + extra_stub_args,
-            ('S2', '', 'state', '', _loc_id('s2'), False) + extra_stub_args,
-            ('County11', '', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
-            ('County21', '', 'county', 's1', _loc_id('county21'), False) + extra_stub_args,
-            ('City111', '', 'city', 'county11', _loc_id('city111'), False) + extra_stub_args,
-            ('City112', '', 'city', 'county11', _loc_id('city112'), False) + extra_stub_args,
-            ('City211', '', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
+            LocStub('S1', '', 'state', '', _loc_id('s1')),
+            LocStub('S2', '', 'state', '', _loc_id('s2')),
+            LocStub('County11', '', 'county', 's1', _loc_id('county11')),
+            LocStub('County21', '', 'county', 's1', _loc_id('county21')),
+            LocStub('City111', '', 'city', 'county11', _loc_id('city111')),
+            LocStub('City112', '', 'city', 'county11', _loc_id('city112')),
+            LocStub('City211', '', 'city', 'county21', _loc_id('city211')),
         ]
 
         result = self.bulk_update_locations(
@@ -698,14 +719,14 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         move_county21_to_state1 = [
-            ('S1', 's1', 'state', '', '', False) + extra_stub_args,
-            ('S2', 's2', 'state', '', '', False) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', '', False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', ''),
+            LocStub('S2', 's2', 'state', ''),
+            LocStub('County11', 'county11', 'county', 's1'),
             # change parent_code from s2 -> s1
-            ('County21', 'county21', 'county', 's1', '', False) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', '', False) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', '', False) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', '', False) + extra_stub_args,
+            LocStub('County21', 'county21', 'county', 's1'),
+            LocStub('City111', 'city111', 'city', 'county11'),
+            LocStub('City112', 'city112', 'city', 'county11'),
+            LocStub('City211', 'city211', 'city', 'county21'),
         ]
 
         result = self.bulk_update_locations(
@@ -728,14 +749,14 @@ class TestBulkManagement(TestCase):
             ('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
-            ('S1', 's1', 'state', '', '', False) + extra_stub_args,
-            ('S2', 's2', 'state', '', '', False) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', '', False) + extra_stub_args,
-            ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', ''),
+            LocStub('S2', 's2', 'state', ''),
+            LocStub('County11', 'county11', 'county', 's1'),
+            LocStub('County21', 'county21', 'county', 's2'),
             # delete locations of type 'city'
-            ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', '', True) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,
+            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
         ]
 
         result = self.bulk_update_locations(
@@ -758,13 +779,13 @@ class TestBulkManagement(TestCase):
             ('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
-            ('S1', 's1', 'state', '', '', True) + extra_stub_args,
-            ('S2', 's2', 'state', '', '', True) + extra_stub_args,
-            ('County11', 'county11', 'county', 's1', '', True) + extra_stub_args,
-            ('County21', 'county21', 'county', 's2', '', True) + extra_stub_args,
-            ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
-            ('City112', 'city112', 'city', 'county11', '', True) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,
+            LocStub('S1', 's1', 'state', '', do_delete=True),
+            LocStub('S2', 's2', 'state', '', do_delete=True),
+            LocStub('County11', 'county11', 'county', 's1', do_delete=True),
+            LocStub('County21', 'county21', 'county', 's2', do_delete=True),
+            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
         ]
 
         result = self.bulk_update_locations(
@@ -808,16 +829,14 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
         _loc_id = lambda x: locations_by_code[x].location_id
         change_names = [
-            # (name, site_code, location_type, parent_code, location_id,
-            # do_delete, external_id, latitude, longitude, index)
             # changing names
-            ('State 1', '', 'state', '', _loc_id('s1'), False) + extra_stub_args,
-            ('State 2', '', 'state', '', _loc_id('s2'), False) + extra_stub_args,
-            ('County 11', '', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
-            ('County 21', '', 'county', 's2', _loc_id('county21'), False) + extra_stub_args,
-            ('City 111', '', 'city', 'county11', _loc_id('city111'), False) + extra_stub_args,
-            ('City 112', '', 'city', 'county11', _loc_id('city112'), False) + extra_stub_args,
-            ('City 211', '', 'city', 'county21', _loc_id('city211'), False) + extra_stub_args,
+            LocStub('State 1', '', 'state', '', _loc_id('s1')),
+            LocStub('State 2', '', 'state', '', _loc_id('s2')),
+            LocStub('County 11', '', 'county', 's1', _loc_id('county11')),
+            LocStub('County 21', '', 'county', 's2', _loc_id('county21')),
+            LocStub('City 111', '', 'city', 'county11', _loc_id('city111')),
+            LocStub('City 112', '', 'city', 'county11', _loc_id('city112')),
+            LocStub('City 211', '', 'city', 'county21', _loc_id('city211')),
         ]
 
         result = self.bulk_update_locations(
@@ -867,16 +886,16 @@ class TestBulkManagement(TestCase):
         ]
         edit_types_of_locations = [
             # change parent from TOP to county
-            ('S1', 's1', 'state', 'county11', '', False) + extra_stub_args,
-            ('S2', 's2', 'state', 'county11', '', False) + extra_stub_args,
+            LocStub('S1', 's1', 'state', 'county11'),
+            LocStub('S2', 's2', 'state', 'county11'),
             # change parent from state to city
-            ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
-            ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
+            LocStub('County11', 'county11', 'county', 'city111'),
+            LocStub('County21', 'county21', 'county', 'city111'),
             # make these two TOP locations
-            ('City111', 'city111', 'city', '', '', False) + extra_stub_args,
-            ('City112', 'city112', 'city', '', '', False) + extra_stub_args,
+            LocStub('City111', 'city111', 'city', ''),
+            LocStub('City112', 'city112', 'city', ''),
             # delete this
-            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
         ]
 
         result = self.bulk_update_locations(
@@ -891,18 +910,18 @@ class TestBulkManagement(TestCase):
     def test_swap_parents(self):
         lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
         original = [
-            ('State 1', 's1', 'state', '', '', False) + extra_stub_args,
-            ('State 2', 's2', 'state', '', '', False) + extra_stub_args,
-            ('County 11', 'c1', 'county', 's1', '', False) + extra_stub_args,
-            ('County 21', 'c2', 'county', 's2', '', False) + extra_stub_args,
+            LocStub('State 1', 's1', 'state', ''),
+            LocStub('State 2', 's2', 'state', ''),
+            LocStub('County 11', 'c1', 'county', 's1'),
+            LocStub('County 21', 'c2', 'county', 's2'),
         ]
         self.create_locations(original, lt_by_code)
 
         swap_parents = [
-            ('State 1', 's1', 'state', '', '', False) + extra_stub_args,
-            ('State 2', 's2', 'state', '', '', False) + extra_stub_args,
-            ('County 11', 'c1', 'county', 's2', '', False) + extra_stub_args,
-            ('County 21', 'c2', 'county', 's1', '', False) + extra_stub_args,
+            LocStub('State 1', 's1', 'state', ''),
+            LocStub('State 2', 's2', 'state', ''),
+            LocStub('County 11', 'c1', 'county', 's2'),
+            LocStub('County 21', 'c2', 'county', 's1'),
         ]
 
         result = self.bulk_update_locations(
@@ -917,8 +936,10 @@ class TestBulkManagement(TestCase):
     def test_custom_data(self):
         data_model = get_location_data_model(self.domain.name)
         tree = [
-            ('省 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, False),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'国际字幕': '试验'}, 0, data_model, False),
+            LocStub('省 1', 's1', 'state', '',
+                    custom_data={'a': 1}, data_model=data_model),
+            LocStub('County 11', 'c1', 'county', 's1',
+                    custom_data={'国际字幕': '试验'}, data_model=data_model),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -937,8 +958,10 @@ class TestBulkManagement(TestCase):
 
         # setup some metadata
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, False),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {'b': 'test'}, 0, data_model, False),
+            LocStub('State 1', 's1', 'state', '',
+                    custom_data={'a': 1}, data_model=data_model),
+            LocStub('County 11', 'c1', 'county', 's1',
+                    custom_data={'b': 'test'}, data_model=data_model),
         ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -950,8 +973,11 @@ class TestBulkManagement(TestCase):
         self.assertEqual(locations["c1"].metadata, {'b': 'test'})
 
         tree = [
-            ('State 1', 's1', 'state', '', '', False, '', '', '', {'a': 1}, 0, data_model, True),
-            ('County 11', 'c1', 'county', 's1', '', False, '', '', '', {}, 0, data_model, False),
+            LocStub('State 1', 's1', 'state', '',
+                    custom_data={'a': 1}, data_model=data_model,
+                    delete_uncategorized_data=True),
+            LocStub('County 11', 'c1', 'county', 's1',
+                    custom_data={}, data_model=data_model),
         ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -965,10 +991,10 @@ class TestBulkManagement(TestCase):
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case
         upper_case = [
-            ('State 1', 'S1', 'state', '', '', False) + extra_stub_args,
-            ('State 2', 'S2', 'state', '', '', False) + extra_stub_args,
-            ('County 11', 'C1', 'county', 's1', '', False) + extra_stub_args,
-            ('County 21', 'C2', 'county', 's2', '', False) + extra_stub_args,
+            LocStub('State 1', 'S1', 'state', ''),
+            LocStub('State 2', 'S2', 'state', ''),
+            LocStub('County 11', 'C1', 'county', 's1'),
+            LocStub('County 21', 'C2', 'county', 's2'),
         ]
 
         result = self.bulk_update_locations(
@@ -977,10 +1003,10 @@ class TestBulkManagement(TestCase):
         )
 
         lower_case = [
-            ('State 1', 'S1'.lower(), 'state', '', '', False) + extra_stub_args,
-            ('State 2', 'S2'.lower(), 'state', '', '', False) + extra_stub_args,
-            ('County 11', 'C1'.lower(), 'county', 's1', '', False) + extra_stub_args,
-            ('County 21', 'C2'.lower(), 'county', 's2', '', False) + extra_stub_args,
+            LocStub('State 1', 'S1'.lower(), 'state', ''),
+            LocStub('State 2', 'S2'.lower(), 'state', ''),
+            LocStub('County 11', 'C1'.lower(), 'county', 's1'),
+            LocStub('County 21', 'C2'.lower(), 'county', 's2'),
         ]
 
         assert_errors(result, [])
@@ -995,8 +1021,8 @@ class TestBulkManagement(TestCase):
         )
 
         addition = [
-            ('State 3', 's3', 'state', '', '', False) + extra_stub_args,
-            ('County 21', 'county3', 'county', 's3', '', False) + extra_stub_args,
+            LocStub('State 3', 's3', 'state', ''),
+            LocStub('County 21', 'county3', 'county', 's3'),
         ]
 
         result = self.bulk_update_locations(
@@ -1016,8 +1042,8 @@ class TestBulkManagement(TestCase):
 
         _loc_id = lambda x: locations_by_code[x].location_id
         change_names = [
-            ('My State 1', '', 'state', '', _loc_id('s1'), False) + extra_stub_args,
-            ('My County 11', '', 'county', 's1', _loc_id('county11'), False) + extra_stub_args,
+            LocStub('My State 1', '', 'state', '', _loc_id('s1')),
+            LocStub('My County 11', '', 'county', 's1', _loc_id('county11')),
         ]
 
         result = self.bulk_update_locations(
@@ -1038,8 +1064,8 @@ class TestBulkManagement(TestCase):
         self.create_locations(self.basic_tree, lt_by_code)
 
         change_names = [
-            ('My State 1', 's1', 'state', '', '', False) + extra_stub_args,
-            ('My County 11', 'county11', 'county', 's1', '', False) + extra_stub_args,
+            LocStub('My State 1', 's1', 'state', ''),
+            LocStub('My County 11', 'county11', 'county', 's1'),
         ]
 
         result = self.bulk_update_locations(
@@ -1060,7 +1086,7 @@ class TestBulkManagement(TestCase):
             self.basic_tree
         )
         change_parents = [
-            ('County 21', 'county21', 'county', 's1', '', False) + extra_stub_args,
+            LocStub('County 21', 'county21', 'county', 's1'),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -1083,7 +1109,7 @@ class TestBulkManagement(TestCase):
         )
         change_parents = [
             # city type can't have parent of state type
-            ('City211', 'city211', 'city', 's1', '', False) + extra_stub_args,
+            LocStub('City211', 'city211', 'city', 's1'),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -1104,8 +1130,8 @@ class TestBulkManagement(TestCase):
 
         # deleting location that has children, if listing all of its children is valid
         delete = [
-            ('County 21', 'county21', 'city', 's2', '', True) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county11', '', True) + extra_stub_args,
+            LocStub('County 21', 'county21', 'city', 's2', do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county11', do_delete=True),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -1119,7 +1145,7 @@ class TestBulkManagement(TestCase):
 
         # deleting location if it doesn't have children should work
         delete = [
-            ('City111', 'city111', 'city', 'county11', '', True) + extra_stub_args,
+            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -1140,7 +1166,7 @@ class TestBulkManagement(TestCase):
 
         # deleting location that has children, without listing all of its children is invalid
         delete = [
-            ('County 21', 'county21', 'city', 's2', '', True) + extra_stub_args,
+            LocStub('County 21', 'county21', 'city', 's2', do_delete=True),
             # city211 is missing
         ]
         result = self.bulk_update_locations(
@@ -1172,13 +1198,13 @@ class TestBulkManagement(TestCase):
         )
 
         upload = [
-            ('S1', 's1', 'city', 'county11', '', False) + extra_stub_args,
-            ('S2', 's2', 'city', 'county11', '', False) + extra_stub_args,
-            ('County11', 'county11', 'county', 'city111', '', False) + extra_stub_args,
-            ('County21', 'county21', 'county', 'city111', '', False) + extra_stub_args,
-            ('City111', 'city111', 'state', '', '', False) + extra_stub_args,
-            ('City112', 'city112', 'state', '', '', False) + extra_stub_args,
-            ('City211', 'city211', 'state', '', '', False) + extra_stub_args,
+            LocStub('S1', 's1', 'city', 'county11'),
+            LocStub('S2', 's2', 'city', 'county11'),
+            LocStub('County11', 'county11', 'county', 'city111'),
+            LocStub('County21', 'county21', 'county', 'city111'),
+            LocStub('City111', 'city111', 'state', ''),
+            LocStub('City112', 'city112', 'state', ''),
+            LocStub('City211', 'city211', 'state', ''),
         ]
 
         result = self.bulk_update_locations(
@@ -1193,11 +1219,9 @@ class TestBulkManagement(TestCase):
         self.create_location_types(FLAT_LOCATION_TYPES)
 
         basic_tree = [
-            # (name, site_code, location_type, parent_code, location_id,
-            # do_delete, external_id, latitude, longitude, index)
-            ('S2', 's2', 'state', '', '', False) + extra_stub_args,
-            ('County21', 'county21', 'county', 's2', '', False) + extra_stub_args,
-            ('City211', 'city211', 'city', 'county21', '', True) + extra_stub_args,  # delete unsaved
+            LocStub('S2', 's2', 'state', ''),
+            LocStub('County21', 'county21', 'county', 's2'),
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),  # delete unsaved
         ]
 
         result = self.bulk_update_locations(
