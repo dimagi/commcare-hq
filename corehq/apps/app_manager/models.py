@@ -5482,15 +5482,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         return len(self.modules) > 0 and not self.is_remote_app()
 
     @property
-    def anonymous_cloudcare_url(self):
-        from corehq.apps.cloudcare.views import SingleAppLandingPageView
-
-        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
-            self.domain,
-            self.anonymous_cloudcare_hash
-        ])
-
-    @property
     @memoized
     def commtrack_enabled(self):
         if settings.UNIT_TESTING:

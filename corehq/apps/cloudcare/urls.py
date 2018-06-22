@@ -10,7 +10,6 @@ from corehq.apps.cloudcare.views import (
     FormplayerPreviewSingleApp,
     PreviewAppView,
     LoginAsUsers,
-    SingleAppLandingPageView,
     form_context, get_cases,
     get_fixtures, default,
 )
@@ -26,11 +25,6 @@ app_urls = [
         name=FormplayerPreviewSingleApp.urlname,
     ),
     url(r'^preview_app/(?P<app_id>[\w-]+)/$', PreviewAppView.as_view(), name=PreviewAppView.urlname),
-    url(
-        r'^home/(?P<app_hash>[\w-]+)/$',
-        SingleAppLandingPageView.as_view(),
-        name=SingleAppLandingPageView.urlname
-    ),
 ]
 
 api_urls = [
