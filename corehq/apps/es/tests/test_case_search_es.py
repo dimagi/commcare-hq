@@ -147,21 +147,16 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                                         "query": {
                                             "filtered": {
                                                 "filter": {
-                                                    "and": (
-                                                        {
-                                                            "term": {
-                                                                "case_properties.key.exact": "parrot_name"
-                                                            }
-                                                        },
-                                                        {
-                                                            "term": {
-                                                                "case_properties.value.exact": "polly"
-                                                            }
-                                                        }
-                                                    )
+                                                    "term": {
+                                                        "case_properties.key.exact": "parrot_name"
+                                                    }
                                                 },
                                                 "query": {
-                                                    "match_all": {
+                                                    "match": {
+                                                        "case_properties.value": {
+                                                            "query": "polly",
+                                                            "fuzziness": "0"
+                                                        }
                                                     }
                                                 }
                                             }
@@ -190,11 +185,15 @@ class TestCaseSearchES(ElasticTestMixin, SimpleTestCase):
                     "_source": {
                         'name': 'blah',
                         'case_properties': [
-                            {'key': '@case_id', 'value': '123'},
+                            {'key': '@case_id', 'value': 'should be removed'},
+                            {'key': 'name', 'value': 'should be removed'},
+                            {'key': 'case_name', 'value': 'should be removed'},
+                            {'key': 'last_modified', 'value': 'should be removed'},
                             {'key': 'foo', 'value': 'bar'},
                             {'key': 'baz', 'value': 'buzz'}]
                     }
-                }
+                },
+                include_score=True
             ),
             expected
         )

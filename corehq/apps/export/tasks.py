@@ -9,8 +9,9 @@ from corehq.apps.export.dbaccessors import get_case_inferred_schema, get_properl
 from corehq.apps.export.system_properties import MAIN_CASE_TABLE_PROPERTIES
 from corehq.apps.export.models.new import EmailExportWhenDoneRequest
 from corehq.apps.users.models import CouchUser
+from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
-from corehq.util.files import safe_filename_header
+from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
 from corehq.blobs import get_blob_db
 from couchexport.models import Format
@@ -24,27 +25,29 @@ logger = logging.getLogger('export_migration')
 
 @task(queue='export_download_queue')
 def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
-    export_file = get_export_file(
-        export_instances,
-        filters,
-        # We don't have a great way to calculate progress if it's a bulk download,
-        # so only track the progress for single instance exports.
-        progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
-    )
-
-    file_format = Format.from_format(export_file.format)
-    filename = filename or export_instances[0].name
-
-    with export_file as file_:
-        db = get_blob_db()
-        db.put(file_, download_id, timeout=expiry)
-
-        expose_blob_download(
-            download_id,
-            mimetype=file_format.mimetype,
-            content_disposition=safe_filename_header(filename, file_format.extension),
-            download_id=download_id,
+    with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
+        export_file = get_export_file(
+            export_instances,
+            filters,
+            temp_path,
+            # We don't have a great way to calculate progress if it's a bulk download,
+            # so only track the progress for single instance exports.
+            progress_tracker=populate_export_download_task if len(export_instances) == 1 else None
         )
+
+        file_format = Format.from_format(export_file.format)
+        filename = filename or export_instances[0].name
+
+        with export_file as file_:
+            db = get_blob_db()
+            db.put(file_, download_id, timeout=expiry)
+
+            expose_blob_download(
+                download_id,
+                mimetype=file_format.mimetype,
+                content_disposition=safe_filename_header(filename, file_format.extension),
+                download_id=download_id,
+            )
 
     domain = export_instances[0].domain
     email_requests = EmailExportWhenDoneRequest.objects.filter(
@@ -62,15 +65,25 @@ def populate_export_download_task(export_instances, filters, download_id, filena
     email_requests.delete()
 
 
-@task(queue='background_queue', ignore_result=True)
-def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+def _start_export_task(export_instance_id, last_access_cutoff=None, filter=None):
     keys = ['rebuild_export_task_%s' % export_instance_id]
     timeout = 48 * 3600  # long enough to make sure this doesn't get called while another one is running
     with CriticalSection(keys, timeout=timeout, block=False) as locked_section:
         if locked_section.success():
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+            export_instance = get_properly_wrapped_export_instance(
+                export_instance_id)
             if should_rebuild_export(export_instance, last_access_cutoff):
                 rebuild_export(export_instance, filter)
+
+
+@task(queue='background_queue', ignore_result=True)
+def rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+    _start_export_task(export_instance_id, last_access_cutoff, filter)
+
+
+@task(queue='export_download_queue', ignore_result=True)
+def manually_rebuild_export_task(export_instance_id, last_access_cutoff=None, filter=None):
+    _start_export_task(export_instance_id, last_access_cutoff, filter)
 
 
 @serial_task('{domain}-{case_type}', queue='background_queue')

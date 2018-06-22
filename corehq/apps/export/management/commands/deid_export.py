@@ -2,13 +2,14 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import csv
+import csv342 as csv
 import os
 import shutil
 import tempfile
 import zipfile
 
 from django.core.management.base import BaseCommand, CommandError
+from io import open
 
 
 class Command(BaseCommand):
@@ -106,7 +107,7 @@ def _trim_csv_columns(path, dest, cols_to_keep):
 
 
 def _get_headers(path):
-    with open(path, 'r') as sample_file:
+    with open(path, 'r', encoding='utf-8') as sample_file:
         return sample_file.readline().strip()
 
 

@@ -1,5 +1,4 @@
 {% extends "hqwebapp/base_section.html" %}
-{% load xform_tags %}
 {% load case_tags %}
 {% load timezone_tags %}
 {% load hq_shared_tags %}
@@ -9,9 +8,16 @@
     <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
+{% requirejs_main 'reports/js/form_data_main' %}
+
 {% block title %}Form: {{ form_name }}{% if form_received_on %} ({% utc_to_timezone form_received_on timezone %}){% endif %}{% endblock %}
 
 {% block page_content %}
+    {% initial_page_data 'ordered_question_values' ordered_question_values %}
+    {% initial_page_data 'question_response_map' question_response_map %}
+    {% initial_page_data 'xform_id' instance.get_id %}
+    {% registerurl "edit_form" instance.domain "---" %}
+
     {% if not instance.initial_processing_complete and request|toggle_enabled:'SUPPORT' %}
     <div class="alert alert-danger">
         {% blocktrans %}
@@ -20,5 +26,5 @@
         <strong>{{ instance.problem }}</strong>
     </div>
     {% endif %}
-    {% render_form instance domain form_render_options %}
+    {% include "reports/form/partials/single_form.html" %}
 {% endblock %}

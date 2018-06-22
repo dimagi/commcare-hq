@@ -2,9 +2,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.conf.urls import url
 from corehq.apps.ota.views import (
-    restore, search, claim, heartbeat, get_next_id,
+    restore, search, claim, heartbeat, get_next_id, recovery_measures,
 )
-from corehq.apps.hqadmin.views import DomainAdminRestoreView
+from corehq.apps.hqadmin.views.users import DomainAdminRestoreView
 
 
 urlpatterns = [
@@ -16,4 +16,5 @@ urlpatterns = [
     url(r'^claim-case/$', claim, name='claim_case'),
     url(r'^heartbeat/(?P<app_build_id>[\w-]+)/$', heartbeat, name='phone_heartbeat'),
     url(r'^get_next_id/$', get_next_id, name='get_next_id'),
+    url(r'^recovery_measures/(?P<build_id>[\w-]+)/$', recovery_measures, name='recovery_measures'),
 ]

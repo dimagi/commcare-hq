@@ -1,27 +1,4 @@
 # coding=utf-8
-"""
-Application terminology
-
-For any given application, there are a number of different documents.
-
-The primary application document is an instance of Application.  This
-document id is what you'll see in the URL on most app manager pages. Primary
-application documents should have `copy_of == None` and `is_released ==
-False`. When an application is saved, the field `version` is incremented.
-
-When a user makes a build of an application, a copy of the primary
-application document is made. These documents are the "versions" you see on
-the deploy page. Each build document will have a different id, and the
-`copy_of` field will be set to the ID of the primary application document.
-Additionally, some attachments such as `profile.xml` and `suite.xml` will be
-created and saved to the build doc (see `create_all_files`).
-
-When a build is starred, this is called "releasing" the build.  The parameter
-`is_released` will be set to True on the build document.
-
-You might also run in to remote applications and applications copied to be
-published on the exchange, but those are quite infrequent.
-"""
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
@@ -95,6 +72,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.soft_assert import soft_assert
 from corehq.util.timezones.conversions import ServerTime
 from dimagi.utils.couch import CriticalSection
+from dimagi.utils.logging import notify_exception
 from django_prbac.exceptions import PermissionDenied
 from corehq.apps.accounting.utils import domain_has_privilege
 
@@ -119,7 +97,6 @@ from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
 from corehq.apps.translations.models import TranslationMixin
-from corehq.apps.users.models import CouchUser
 from corehq.apps.users.util import cc_user_domain
 from corehq.apps.domain.models import cached_property, Domain
 from corehq.apps.app_manager import current_builds, app_strings, remote_app, \
@@ -174,6 +151,7 @@ import six
 from six.moves import filter
 from six.moves import range
 from six.moves import map
+from io import open
 
 WORKFLOW_DEFAULT = 'default'  # go to the app main screen
 WORKFLOW_ROOT = 'root'  # go to the module select screen
@@ -252,14 +230,11 @@ def _rename_key(dct, old, new):
 
 @memoized
 def load_case_reserved_words():
-    with open(os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json')) as f:
+    with open(
+        os.path.join(os.path.dirname(__file__), 'static', 'app_manager', 'json', 'case-reserved-words.json'),
+        encoding='utf-8'
+    ) as f:
         return json.load(f)
-
-
-@memoized
-def load_form_template(filename):
-    with open(os.path.join(os.path.dirname(__file__), 'data', filename)) as f:
-        return f.read()
 
 
 class IndexedSchema(DocumentSchema):
@@ -952,6 +927,8 @@ class FormBase(DocumentSchema):
     schedule_form_id = StringProperty()
     custom_instances = SchemaListProperty(CustomInstance)
     case_references_data = SchemaProperty(CaseReferences)
+    is_release_notes_form = BooleanProperty(default=False)
+    enable_release_notes = BooleanProperty(default=False)
 
     @classmethod
     def wrap(cls, data):
@@ -989,6 +966,20 @@ class FormBase(DocumentSchema):
 
     def clear_validation_cache(self):
         self.set_validation_cache(None)
+
+    def is_allowed_to_be_release_notes_form(self):
+        # checks if this form can be marked as a release_notes form
+        #   based on whether it belongs to a training_module
+        #   and if no other form is already marked as release_notes form
+        module = self.get_module()
+        if not module or not module.is_training_module:
+            return False
+
+        forms = module.get_forms()
+        for form in forms:
+            if form.is_release_notes_form and form.unique_id != self.unique_id:
+                return False
+        return True
 
     @property
     def uses_cases(self):
@@ -1065,6 +1056,9 @@ class FormBase(DocumentSchema):
                 self.clear_validation_cache()
                 return self.validate_form()
         return self
+
+    def is_a_disabled_release_form(self):
+        return self.is_release_notes_form and not self.enable_release_notes
 
     def validate_for_build(self, validate_module=True):
         errors = []
@@ -1517,6 +1511,9 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         return super(NavMenuItemMediaMixin, cls).wrap(data)
 
+    def get_app(self):
+        raise NotImplementedError
+
     def _get_media_by_language(self, media_attr, lang, strict=False):
         """
         Return media-path for given language if one exists, else 1st path in the
@@ -1587,6 +1584,13 @@ class NavMenuItemMediaMixin(DocumentSchema):
         assert media_attr in ('media_image', 'media_audio')
 
         media_dict = getattr(self, media_attr) or {}
+        old_value = media_dict.get(lang)
+        # remove the entry from app multimedia mappings if media is being removed now
+        # This does not remove the multimedia but just it's reference in mapping
+        # Added it here to ensure it's always set instead of getting it only when needed
+        app = self.get_app()
+        if old_value and not media_path:
+            app.multimedia_map.pop(old_value, None)
         media_dict[lang] = media_path or ''
         setattr(self, media_attr, media_dict)
 
@@ -2322,6 +2326,8 @@ class CaseList(IndexedSchema, NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
 
 class CaseSearchProperty(DocumentSchema):
     """
@@ -2399,6 +2405,9 @@ class CaseListForm(NavMenuItemMediaMixin):
     def rename_lang(self, old_lang, new_lang):
         _rename_key(self.label, old_lang, new_lang)
 
+    def get_app(self):
+        return self._module.get_app()
+
 
 class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     name = DictProperty(six.text_type)
@@ -2411,9 +2420,19 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
     auto_select_case = BooleanProperty(default=False)
     is_training_module = BooleanProperty(default=False)
 
+    def __init__(self, *args, **kwargs):
+        super(ModuleBase, self).__init__(*args, **kwargs)
+        self.assign_references()
+
     @property
     def is_surveys(self):
         return self.case_type == ""
+
+    def assign_references(self):
+        if hasattr(self, 'case_list'):
+            self.case_list._module = self
+        if hasattr(self, 'case_list_form'):
+            self.case_list_form._module = self
 
     @classmethod
     def wrap(cls, data):
@@ -2448,7 +2467,8 @@ class ModuleBase(IndexedSchema, NavMenuItemMediaMixin, CommentMixin):
 
     get_forms = IndexedSchema.Getter('forms')
 
-    get_suite_forms = IndexedSchema.Getter('forms')
+    def get_suite_forms(self):
+        return [f for f in self.get_forms() if not f.is_a_disabled_release_form()]
 
     @parse_int([1])
     def get_form(self, i):
@@ -3577,8 +3597,8 @@ class AdvancedModule(ModuleBase):
                 )
 
                 if from_module.parent_select.active:
-                    app = self.get_app()
-                    select_chain = get_select_chain(app, from_module, include_self=False)
+                    from_app = from_module.get_app()  # A form can be copied from a module in a different app.
+                    select_chain = get_select_chain(from_app, from_module, include_self=False)
                     for n, link in enumerate(reversed(list(enumerate(select_chain)))):
                         i, module = link
                         new_form.actions.load_update_cases.append(LoadUpdateAction(
@@ -5013,6 +5033,10 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
     def jar_url(self):
         return reverse('download_jar', args=[self.domain, self._id])
 
+    @absolute_url_property
+    def recovery_measures_url(self):
+        return reverse('recovery_measures', args=[self.domain, self._id])
+
     def get_jar_path(self):
         spec = {
             'nokia/s40': 'Nokia/S40',
@@ -5188,8 +5212,7 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
             # this is much less useful/actionable without a URL
             # so make sure to include the request
-            logging.error('Unexpected error building app', exc_info=True,
-                          extra={'request': view_utils.get_request()})
+            notify_exception(view_utils.get_request(), "Unexpected error building app")
             errors.append({'type': 'error', 'message': 'unexpected error: %s' % e})
         return errors
 
@@ -5299,11 +5322,6 @@ class ApplicationBase(VersionedDoc, SnapshotMixin,
 
         copy.build_comment = comment
         copy.comment_from = user_id
-        if user_id:
-            user = CouchUser.get(user_id)
-            if not user.has_built_app:
-                user.has_built_app = True
-                user.save()
         copy.is_released = False
 
         if not copy.is_remote_app():
@@ -5459,6 +5477,7 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     grid_form_menus = StringProperty(default='none',
                                      choices=['none', 'all', 'some'])
     add_ons = DictProperty()
+    smart_lang_display = BooleanProperty()  # null means none set so don't default to false/true
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
@@ -5684,6 +5703,12 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
                     'value': self.logo_refs[logo_name]['path'],
                 }
 
+        if toggles.MOBILE_RECOVERY_MEASURES.enabled(self.domain):
+            app_profile['properties']['recovery-measures-url'] = {
+                'force': True,
+                'value': self.recovery_measures_url,
+            }
+
         if with_media:
             profile_url = self.media_profile_url if not is_odk else (self.odk_media_profile_url + '?latest=true')
         else:
@@ -5858,7 +5883,10 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
             files["{prefix}{lang}/app_strings.txt".format(
                 prefix=prefix, lang=lang)] = self.create_app_strings(lang, build_profile_id)
         for form_stuff in self.get_forms(bare=False):
-            if not isinstance(form_stuff['form'], ShadowForm):
+            def exclude_form(form):
+                return isinstance(form, ShadowForm) or form.is_a_disabled_release_form()
+
+            if not exclude_form(form_stuff['form']):
                 filename = prefix + self.get_form_filename(**form_stuff)
                 form = form_stuff['form']
                 try:
@@ -6027,30 +6055,28 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
         source = update_form_unique_ids(source)
         return update_report_module_ids(source)
 
-    def copy_form(self, module_id, form_id, to_module_id):
+    def copy_form(self, from_module, form, to_module, rename=False):
         """
         The case type of the two modules conflict,
         copying (confusingly) is still allowed.
         This is intentional.
 
         """
-        from_module = self.get_module(module_id)
-        form = from_module.get_form(form_id)
-        to_module = self.get_module(to_module_id)
-        return self._copy_form(from_module, form, to_module, rename=True)
-
-    def _copy_form(self, from_module, form, to_module, *args, **kwargs):
         copy_source = deepcopy(form.to_json())
+        # only one form can be a release notes form, so set them to False explicitly when copying
+        copy_source['is_release_notes_form'] = False
+        copy_source['enable_release_notes'] = False
         if 'unique_id' in copy_source:
             del copy_source['unique_id']
 
-        if 'rename' in kwargs and kwargs['rename']:
+        if rename:
             for lang, name in six.iteritems(copy_source['name']):
                 with override(lang):
                     copy_source['name'][lang] = _('Copy of {name}').format(name=name)
 
         copy_form = to_module.add_insert_form(from_module, FormBase.wrap(copy_source))
-        save_xform(self, copy_form, form.source)
+        to_app = to_module.get_app()
+        save_xform(to_app, copy_form, form.source)
 
         return copy_form
 

@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.contrib.postgres.fields import ArrayField
 from django.db.models import F, Q
 from django.db.models.manager import Manager
 from django.template.loader import render_to_string
@@ -346,6 +347,8 @@ class BillingAccount(ValidateModelMixin, models.Model):
         choices=BillingAccountType.CHOICES,
     )
     is_active = models.BooleanField(default=True)
+    is_customer_billing_account = models.BooleanField(default=False)
+    billing_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -690,6 +693,8 @@ class SoftwarePlan(models.Model):
         choices=SoftwarePlanVisibility.CHOICES,
     )
     last_modified = models.DateTimeField(auto_now=True)
+    is_customer_software_plan = models.BooleanField(default=False)
+    max_domains = models.IntegerField(blank=True, null=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -700,6 +705,15 @@ class SoftwarePlan(models.Model):
             return self.softwareplanversion_set.filter(is_active=True).latest('date_created')
         except SoftwarePlanVersion.DoesNotExist:
             return None
+
+    def at_max_domains(self):
+        if not self.max_domains:
+            return False
+
+        subscription_count = 0
+        for version in self.softwareplanversion_set.all():
+            subscription_count += Subscription.visible_objects.filter(plan_version=version, is_active=True).count()
+        return subscription_count >= self.max_domains
 
 
 class DefaultProductPlan(models.Model):
@@ -1227,7 +1241,8 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None):
+                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None,
+                    auto_generate_credits=False, is_trial=False):
         """
         Changing a plan TERMINATES the current subscription and
         creates a NEW SUBSCRIPTION where the old plan left off.
@@ -1238,6 +1253,13 @@ class Subscription(models.Model):
         today = datetime.date.today()
         assert self.is_active
         assert date_end is None or date_end >= today
+
+        if new_plan_version.plan.at_max_domains():
+            raise SubscriptionAdjustmentError(
+                'The maximum number of project spaces has been reached for %(new_plan_version)s. ' % {
+                    'new_plan_version': new_plan_version,
+                }
+            )
 
         self.date_end = today
         if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
@@ -1256,6 +1278,8 @@ class Subscription(models.Model):
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
+            auto_generate_credits=auto_generate_credits,
+            is_trial=is_trial,
             service_type=(service_type or SubscriptionType.NOT_SET),
             pro_bono_status=(pro_bono_status or ProBonoStatus.NO),
             funding_source=(funding_source or FundingSource.CLIENT),
@@ -1574,6 +1598,25 @@ class Subscription(models.Model):
                                 date_start=None, date_end=None, note=None,
                                 web_user=None, adjustment_method=None, internal_change=False,
                                 **kwargs):
+        if plan_version.plan.at_max_domains():
+            raise NewSubscriptionError(
+                'The maximum number of project spaces has been reached for %(plan_version)s. ' % {
+                    'plan_version': plan_version,
+                }
+            )
+
+        if plan_version.plan.is_customer_software_plan != account.is_customer_billing_account:
+            if plan_version.plan.is_customer_software_plan:
+                raise NewSubscriptionError(
+                    'You are trying to add a Customer Software Plan to a regular Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+            else:
+                raise NewSubscriptionError(
+                    'You are trying to add a regular Software Plan to a Customer Billing Account. '
+                    'Both or neither must be customer-level.'
+                )
+
         subscriber = Subscriber.objects.get_or_create(domain=domain)[0]
         today = datetime.date.today()
         date_start = date_start or today
@@ -1753,7 +1796,7 @@ class WireInvoice(InvoiceBase):
     def email_recipients(self):
         try:
             original_record = WireBillingRecord.objects.filter(invoice=self).order_by('-date_created')[0]
-            return original_record.recipients
+            return original_record.emailed_to_list
         except IndexError:
             log_accounting_error(
                 "Strange that WireInvoice %d has no associated WireBillingRecord. "
@@ -1806,16 +1849,17 @@ class Invoice(InvoiceBase):
             from corehq.apps.accounting.views import ManageBillingAccountView
             admins = WebUser.get_admins_by_domain(self.get_domain())
             contact_emails = [admin.email if admin.email else admin.username for admin in admins]
-            _soft_assert_contact_emails_missing(
-                False,
-                "Could not find an email to send the invoice "
-                "email to for the domain %s. Sending to domain admins instead: %s."
-                " Add client contact emails here: %s" % (
-                    self.get_domain(),
-                    ', '.join(contact_emails),
-                    absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+            if not settings.UNIT_TESTING:
+                _soft_assert_contact_emails_missing(
+                    False,
+                    "Could not find an email to send the invoice "
+                    "email to for the domain %s. Sending to domain admins instead: %s."
+                    " Add client contact emails here: %s" % (
+                        self.get_domain(),
+                        ', '.join(contact_emails),
+                        absolute_reverse(ManageBillingAccountView.urlname, args=[self.account.id]),
+                    )
                 )
-            )
         return contact_emails
 
     @property
@@ -1951,7 +1995,7 @@ class BillingRecordBase(models.Model):
     This stores any interaction we have with the client in sending a physical / pdf invoice to their contact email.
     """
     date_created = models.DateTimeField(auto_now_add=True, db_index=True)
-    emailed_to = models.CharField(max_length=254, db_index=True)
+    emailed_to_list = ArrayField(models.EmailField(), default=list)
     skipped_email = models.BooleanField(default=False)
     pdf_data_id = models.CharField(max_length=48)
     last_modified = models.DateTimeField(auto_now=True)
@@ -1963,14 +2007,6 @@ class BillingRecordBase(models.Model):
         abstract = True
 
     _pdf = None
-
-    @property
-    def recipients(self):
-        return self.emailed_to.split(',') if self.emailed_to else []
-
-    @recipients.setter
-    def recipients(self, emails):
-        self.emailed_to = ','.join(emails)
 
     @property
     def pdf(self):
@@ -2075,7 +2111,9 @@ class BillingRecordBase(models.Model):
             file_attachments=[pdf_attachment],
             cc=cc_emails
         )
-        self.recipients = contact_email
+        self.emailed_to_list.extend([contact_email])
+        if cc_emails:
+            self.emailed_to_list.extend(cc_emails)
         self.save()
         log_accounting_info(
             "Sent billing statements for domain %(domain)s to %(emails)s." % {

@@ -25,6 +25,7 @@ from corehq.util.signals import SignalHandlerContext
 from couchforms.dbaccessors import get_form_ids_by_type
 from couchforms.models import doc_types, XFormInstance
 import signal
+from io import open
 
 
 class Command(BaseCommand):
@@ -43,9 +44,10 @@ class Command(BaseCommand):
 
         self.stdout.ending = "\n"
         self.stderr.ending = "\n"
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding='utf-8') as f:
             domains = [name.strip() for name in f.readlines() if name.strip()]
 
+        failed = []
         self.stdout.write("Processing {} domains".format(len(domains)))
         for domain in with_progress_bar(domains, oneline=False):
             try:
@@ -55,6 +57,15 @@ class Command(BaseCommand):
                     traceback.print_exc()
                 self.stderr.write("Error migrating domain {}: {}".format(domain, e))
                 self.abort(domain)
+                failed.append((domain, e))
+
+        if failed:
+            self.stderr.write("Errors:")
+            self.stderr.write(
+                "\n".join(
+                    ["{}: {}".format(domain, exc) for domain, exc in failed]))
+        else:
+            self.stdout.write("All migrations successful!")
 
     def migrate_domain(self, domain):
         if should_use_sql_backend(domain):

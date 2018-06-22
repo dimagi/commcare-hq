@@ -5,17 +5,22 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
 from django.urls import reverse
 from django.http import (
+    HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
     Http404,
 )
+from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
+from dimagi.utils.csv import UnicodeWriter
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -27,6 +32,7 @@ from corehq.apps.hqwebapp.decorators import (
 
 from memoized import memoized
 
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.forms import (
     BillingAccountBasicForm, BillingAccountContactForm, CreditForm,
     SubscriptionForm, CancelForm,
@@ -746,7 +752,7 @@ class InvoiceSummaryViewBase(AccountingSectionView):
             'billing_records': [
                 {
                     'date_created': billing_record.date_created,
-                    'email_recipients': ', '.join(billing_record.recipients),
+                    'email_recipients': ', '.join(billing_record.emailed_to_list),
                     'invoice': billing_record.invoice,
                     'pdf_data_id': billing_record.pdf_data_id,
                 }
@@ -900,7 +906,10 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
     def accounting_admin_queryset(self):
         return User.objects.filter(
             prbac_role__role__memberships_granted__to_role__slug=privileges.OPERATIONS_TEAM
-        ).exclude(username=self.request.user.username)
+        )
+
+    def paginated_admins(self):
+        return Paginator(self.accounting_admin_queryset, self.limit)
 
     @property
     @memoized
@@ -916,7 +925,7 @@ class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
 
     @property
     def paginated_list(self):
-        for admin in self.accounting_admin_queryset:
+        for admin in self.paginated_admins().page(self.page):
             yield {
                 'itemData': self._fmt_admin_data(admin),
                 'template': 'accounting-admin-row',
@@ -984,3 +993,34 @@ class AccountingSingleOptionResponseView(View, AsyncHandlerMixin):
         if self.async_response:
             return self.async_response
         return HttpResponseBadRequest("Please check your query.")
+
+
+@require_superuser
+def enterprise_dashboard(request, account_id):
+    account = BillingAccount.objects.get(id=account_id)
+
+    context = {
+        'account': account,
+        'reports': [EnterpriseReport.create(slug, account.id, request.couch_user) for slug in (
+            EnterpriseReport.DOMAINS,
+            EnterpriseReport.WEB_USERS,
+            EnterpriseReport.MOBILE_USERS,
+            EnterpriseReport.FORM_SUBMISSIONS,
+        )],
+    }
+    return render(request, "accounting/enterprise_dashboard.html", context)
+
+
+@require_superuser
+def enterprise_dashboard_download(request, account_id, slug):
+    account = BillingAccount.objects.get(id=account_id)
+    report = EnterpriseReport.create(slug, account.id, request.couch_user)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
+    writer = UnicodeWriter(response)
+
+    writer.writerow(report.headers)
+    writer.writerows(report.rows)
+
+    return response

@@ -22,6 +22,7 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule, CreateSchedu
 from corehq.apps.domain.models import Domain
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reminders.views import ScheduledRemindersCalendarView
+from corehq.apps.sms.filters import EventTypeFilter, EventStatusFilter
 from corehq.apps.sms.models import QueuedSMS, SMS, INCOMING, OUTGOING, MessagingEvent
 from corehq.apps.sms.tasks import time_within_windows, OutboundDailyCounter
 from corehq.apps.sms.views import BaseMessagingSectionView
@@ -30,6 +31,7 @@ from corehq.apps.hqwebapp.decorators import use_datatables, use_select2, use_jqu
 from corehq.apps.hqwebapp.views import DataTablesAJAXPaginationMixin
 from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
+from corehq.messaging.decorators import reminders_framework_permission
 from corehq.messaging.scheduling.async_handlers import MessagingRecipientHandler, ConditionalAlertAsyncHandler
 from corehq.messaging.scheduling.forms import (
     BroadcastForm,
@@ -55,6 +57,7 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from dimagi.utils.couch import CriticalSection
 import six
 from six.moves import range
+from six.moves.urllib.parse import quote_plus
 
 
 def get_broadcast_edit_critical_section(broadcast_type, broadcast_id):
@@ -92,6 +95,21 @@ class MessagingDashboardView(BaseMessagingSectionView):
     def dispatch(self, *args, **kwargs):
         return super(MessagingDashboardView, self).dispatch(*args, **kwargs)
 
+    def get_messaging_history_errors_url(self, messaging_history_url):
+        url_param_tuples = [
+            ('startdate', (self.domain_now.date() - timedelta(days=6)).strftime('%Y-%m-%d')),
+            ('enddate', self.domain_now.date().strftime('%Y-%m-%d')),
+            (EventStatusFilter.slug, MessagingEvent.STATUS_ERROR),
+        ]
+
+        for event_type, description in EventTypeFilter.options:
+            url_param_tuples.append((EventTypeFilter.slug, event_type))
+
+        url_param_list = ['%s=%s' % (quote_plus(name), quote_plus(value)) for name, value in url_param_tuples]
+        url_param_str = '&'.join(url_param_list)
+
+        return '%s?%s' % (messaging_history_url, url_param_str)
+
     @property
     def page_context(self):
         from corehq.apps.reports.standard.sms import (
@@ -106,7 +124,7 @@ class MessagingDashboardView(BaseMessagingSectionView):
         else:
             scheduled_events_url = reverse(ScheduledRemindersCalendarView.urlname, args=[self.domain])
 
-        return {
+        context = {
             'scheduled_events_url': scheduled_events_url,
             'message_log_url': reverse(
                 MessageLogReport.dispatcher.name(), args=[],
@@ -117,6 +135,12 @@ class MessagingDashboardView(BaseMessagingSectionView):
                 kwargs={'domain': self.domain, 'report_slug': MessagingEventsReport.slug}
             ),
         }
+
+        context['messaging_history_errors_url'] = self.get_messaging_history_errors_url(
+            context['messaging_history_url']
+        )
+
+        return context
 
     @cached_property
     def timezone(self):
@@ -286,8 +310,7 @@ class BroadcastListView(BaseMessagingSectionView, DataTablesAJAXPaginationMixin)
     ACTION_DELETE_SCHEDULED_BROADCAST = 'delete_scheduled_broadcast'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(BroadcastListView, self).dispatch(*args, **kwargs)
@@ -402,8 +425,7 @@ class CreateScheduleView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -545,8 +567,7 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
     ACTION_DELETE = 'delete'
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_datatables
     def dispatch(self, *args, **kwargs):
         return super(ConditionalAlertListView, self).dispatch(*args, **kwargs)
@@ -608,10 +629,15 @@ class ConditionalAlertListView(BaseMessagingSectionView, DataTablesAJAXPaginatio
         """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
-            if not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
+            if active_flag and not self.can_use_inbound_sms and schedule.memoized_uses_sms_survey:
                 return HttpResponseBadRequest(
                     "Cannot create or edit survey reminders because subscription "
                     "does not have access to inbound SMS"
+                )
+
+            if active_flag and (rule.references_parent_case or schedule.references_parent_case):
+                return HttpResponseBadRequest(
+                    "Cannot reactivate alerts that reference parent case properties"
                 )
 
             schedule.active = active_flag
@@ -651,8 +677,7 @@ class CreateConditionalAlertView(BaseMessagingSectionView, AsyncHandlerMixin):
     read_only_mode = False
 
     @method_decorator(_requires_new_reminder_framework())
-    @method_decorator(requires_privilege_with_fallback(privileges.OUTBOUND_SMS))
-    @method_decorator(require_permission(Permissions.edit_data))
+    @method_decorator(reminders_framework_permission)
     @use_jquery_ui
     @use_timepicker
     @use_select2
@@ -838,5 +863,27 @@ class EditConditionalAlertView(CreateConditionalAlertView):
                     request,
                     _("This alert is not editable because it uses an SMS survey and "
                       "your current subscription does not allow use of inbound SMS.")
+                )
+            if self.rule.references_parent_case or self.schedule.references_parent_case:
+                """
+                There are no active reminders which reference parent case properties anymore.
+                Keeping reminder rules that have parent case references up-to-date with case
+                changes is tough on performance because you have to run the rules against
+                all applicable subcases when a parent case changes, so while the framework does
+                use .resolve_case_property() to handle these lookups properly, it no longer runs
+                the rules against all subcases when a parent case changes, and therefore doesn't
+                support this use case.
+
+                The form validation doesn't allow creating parent case references so trying
+                to save will cause validation to fail, but in case one of the older, inactive,
+                reminders is being edited we display this warning.
+                """
+                messages.warning(
+                    request,
+                    _("This conditional alert references parent case properties. Note that changes "
+                      "to parent cases will not be immediately reflected by the alert and will "
+                      "only be reflected once the child case is subsequently updated. For best "
+                      "results, please update your workflow to avoid referencing parent case "
+                      "properties in this alert.")
                 )
             return super(EditConditionalAlertView, self).dispatch(request, *args, **kwargs)

@@ -23,7 +23,7 @@ class BuildErrorsTest(SimpleTestCase):
                 del error['module']['unique_id']
 
     def test_subcase_errors(self, mock):
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'subcase-details.json'), encoding='utf-8') as f:
             source = json.load(f)
 
         app = Application.wrap(source)
@@ -53,7 +53,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(subcase_path_error, errors)
 
     def test_empty_module_errors(self, mock):
-        factory = AppFactory(build_version='2.24')
+        factory = AppFactory(build_version='2.24.0')
         app = factory.app
         m1 = factory.new_basic_module('register', 'case', with_form=False)
         factory.new_advanced_module('update', 'case', with_form=False)
@@ -112,7 +112,7 @@ class BuildErrorsTest(SimpleTestCase):
             'form': {'id': 1, 'name': {'en': 'update form 1'}},
         }
 
-        factory = AppFactory(build_version='2.11')
+        factory = AppFactory(build_version='2.11.0')
         m0, m0f0 = factory.new_basic_module('register', 'person')
         factory.form_opens_case(m0f0)
 
@@ -128,7 +128,7 @@ class BuildErrorsTest(SimpleTestCase):
         self.assertIn(case_tile_error, errors)
 
     def test_training_module_as_parent(self, mock):
-        factory = AppFactory(build_version='2.43')
+        factory = AppFactory(build_version='2.43.0')
         app = factory.app
 
         training_module = Module.new_training_module('training', 'en')
@@ -142,7 +142,7 @@ class BuildErrorsTest(SimpleTestCase):
         }, app.validate_app())
 
     def test_training_module_as_child(self, mock):
-        factory = AppFactory(build_version='2.43')
+        factory = AppFactory(build_version='2.43.0')
         app = factory.app
 
         parent_module = Module.new_module('parent', 'en')

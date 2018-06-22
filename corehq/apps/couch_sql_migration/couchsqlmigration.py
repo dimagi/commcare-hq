@@ -11,7 +11,12 @@ from django.db.utils import IntegrityError
 
 import settings
 from casexml.apps.case.models import CommCareCase, CommCareCaseAction
-from casexml.apps.case.xform import get_all_extensions_to_close, CaseProcessingResult, get_case_updates
+from casexml.apps.case.xform import (
+    get_all_extensions_to_close,
+    CaseProcessingResult,
+    get_case_updates,
+    get_case_ids_from_form
+)
 from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
@@ -28,9 +33,13 @@ from corehq.form_processor.models import (
 from corehq.form_processor.submission_post import CaseStockProcessingResult
 from corehq.form_processor.utils import adjust_datetimes
 from corehq.form_processor.utils import should_use_sql_backend
-from corehq.form_processor.utils.general import set_local_domain_sql_backend_override, \
-    clear_local_domain_sql_backend_override
-from corehq.toggles import COUCH_SQL_MIGRATION_BLACKLIST, NAMESPACE_DOMAIN
+from corehq.form_processor.utils.general import (
+    set_local_domain_sql_backend_override,
+    clear_local_domain_sql_backend_override)
+from corehq.toggles import (
+    COUCH_SQL_MIGRATION_BLACKLIST,
+    REMINDERS_MIGRATION_IN_PROGRESS,
+    NAMESPACE_DOMAIN)
 from corehq.util.log import with_progress_bar
 from corehq.util.timer import TimingContext
 from corehq.util.datadog.gauges import datadog_counter
@@ -41,9 +50,14 @@ from dimagi.utils.couch.database import iter_docs
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from gevent.pool import Pool
+from gevent import sleep
 import six
 import logging
+from collections import defaultdict, deque
+from http_parser import http
+from corehq.util import cache_utils
 _logger = logging.getLogger('main_couch_sql_datamigration')
+
 
 CASE_DOC_TYPES = ['CommCareCase', 'CommCareCase-Deleted', ]
 
@@ -100,6 +114,10 @@ class CouchSqlDomainMigrator(object):
         last_received_on = datetime.min
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(self.domain).iter_all_changes()
+        # form_id needs to be on self to release appropriately
+        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
+
+        pool = Pool(15)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -110,11 +128,47 @@ class CouchSqlDomainMigrator(object):
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-            try:
-                self._migrate_form_and_associated_models(wrapped_form)
-            except Exception:
-                self.log_error("Unable to migrate form: {}".format(change.id))
-                raise
+
+            case_ids = get_case_ids_from_form(wrapped_form)
+            if case_ids:  # if this form involves a case check if we can process it
+                if self.queues.try_obj(case_ids, wrapped_form):
+                    pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+                elif self.queues.full:
+                    sleep(0.01)  # swap greenlets
+            else:  # if not, just go ahead and process it
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+
+            # regularly check if we can empty the queues
+            while True:
+                new_wrapped_form = self.queues.get_next()
+                if not new_wrapped_form:
+                    break
+                pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
+
+        # finish up the queues once all changes have been iterated through
+        while self.queues.has_next():
+            wrapped_form = self.queues.get_next()
+            if wrapped_form:
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+            else:
+                sleep(0.01)  # swap greenlets
+
+            remaining_items = self.queues.remaining_items + len(pool)
+            if remaining_items % 10 == 0:
+                self.log_info('Waiting on {} docs'.format(remaining_items))
+
+        while not pool.join(timeout=10):
+            self.log_info('Waiting on {} docs'.format(len(pool)))
+
+    def _migrate_form_and_associated_models_async(self, wrapped_form):
+        set_local_domain_sql_backend_override(self.domain)
+        try:
+            self._migrate_form_and_associated_models(wrapped_form)
+        except Exception:
+            self.log_error("Unable to migrate form: {}".format(wrapped_form.form_id))
+            raise
+        finally:
+            self.queues.release_lock_for_queue_obj(wrapped_form)
 
     def _migrate_form_and_associated_models(self, couch_form):
         sql_form = _migrate_form(self.domain, couch_form)
@@ -148,7 +202,7 @@ class CouchSqlDomainMigrator(object):
         )
 
     def _copy_unprocessed_forms(self):
-        pool = Pool(5)
+        pool = Pool(10)
         for couch_form_json in iter_docs(XFormInstance.get_db(), self.errors_with_normal_doc_type, chunksize=1000):
             assert couch_form_json['problem']
             couch_form_json['doc_type'] = 'XFormError'
@@ -181,7 +235,7 @@ class CouchSqlDomainMigrator(object):
 
     def _copy_unprocessed_cases(self):
         doc_types = ['CommCareCase-Deleted']
-        pool = Pool(5)
+        pool = Pool(10)
         changes = _get_case_iterator(self.domain, doc_types=doc_types).iter_all_changes()
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
@@ -233,11 +287,12 @@ class CouchSqlDomainMigrator(object):
 
     def _calculate_case_diffs(self):
         cases = {}
+        batch_size = 100
         pool = Pool(10)
         changes = _get_case_iterator(self.domain).iter_all_changes()
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
-            if len(cases) == 1000:
+            if len(cases) == batch_size:
                 pool.spawn(self._diff_cases, deepcopy(cases))
                 cases = {}
 
@@ -245,7 +300,7 @@ class CouchSqlDomainMigrator(object):
             pool.spawn(self._diff_cases, cases)
 
         while not pool.join(timeout=10):
-            self.log_info("Waiting on at most {} more docs".format(len(pool) * 1000))
+            self.log_info("Waiting on at most {} more docs".format(len(pool) * batch_size))
 
     def _diff_cases(self, couch_cases):
         from corehq.apps.tzmigration.timezonemigration import json_diff
@@ -308,6 +363,7 @@ class CouchSqlDomainMigrator(object):
         assert not stale_get_export_count(domain_name)
         assert not any(custom_report_domain == domain_name
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
+        assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
 
     def _with_progress(self, doc_types, iterable, progress_name='Migrating'):
         doc_count = sum([
@@ -570,12 +626,36 @@ def _save_migrated_models(sql_form, case_stock_result=None):
     )
 
 
+class MigrationPaginationEventHandler(PaginationEventHandler):
+    RETRIES = 10
+
+    def __init__(self, domain):
+        self.domain = domain
+        self.retries = self.RETRIES
+
+    def _cache_key(self):
+        return "couchsqlmigration.%s" % self.domain
+
+    def page_exception(self, e):
+        if self.retries <= 0:
+            return False
+        self.retries -= 1
+        if isinstance(e, http.NoMoreData):
+            sleep(min(60, cache_utils.get_exponential(self._cache_key())))
+            return True
+        return False
+
+    def page_end(self, total_emitted, duration, *args, **kwargs):
+        self.retries = self.RETRIES
+        cache_utils.clear_limit(self._cache_key())
+
+
 def _get_main_form_iterator(domain):
     return CouchDomainDocTypeChangeProvider(
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=['XFormInstance'],
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 
@@ -584,7 +664,7 @@ def _get_unprocessed_form_iterator(domain):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=UNPROCESSED_DOC_TYPES,
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 
@@ -594,7 +674,7 @@ def _get_case_iterator(domain, doc_types=None):
         couch_db=XFormInstance.get_db(),
         domains=[domain],
         doc_types=doc_types,
-        event_handler=PaginationEventHandler(),
+        event_handler=MigrationPaginationEventHandler(domain),
     )
 
 
@@ -631,3 +711,170 @@ def commit_migration(domain_name):
         assert should_use_sql_backend(domain_name)
     datadog_counter("commcare.couch_sql_migration.total_committed")
     _logger.info("committed migration for {}".format(domain))
+
+
+class PartiallyLockingQueue(object):
+    """ Data structure that holds a queue of objects returning them as locks become free
+
+    This is not currently thread safe
+
+    Interface:
+    `.try_obj(lock_ids, queue_obj)` use to add a new object, seeing if it can be
+        processed immediately
+    `.get_next()` use to get the next object off the queue that can be processed
+    `.has_next()` use to make sure there are still objects in the queue
+    `.release_lock_for_queue_obj(queue_obj)` use to release the locks associated
+        with an object once finished processing
+    """
+
+    def __init__(self, queue_id_param="id", max_size=-1):
+        """
+        :queue_id_param string: param of the queued objects to pull an id from
+        :max_size int: the maximum size the queue should reach. -1 means no limit
+        """
+        self.queue_by_lock_id = defaultdict(deque)
+        self.lock_ids_by_queue_id = defaultdict(list)
+        self.queue_objs_by_queue_id = dict()
+        self.currently_locked = set()
+        self.max_size = max_size
+
+        def get_queue_obj_id(queue_obj):
+            return getattr(queue_obj, queue_id_param)
+        self.get_queue_obj_id = get_queue_obj_id
+
+    def try_obj(self, lock_ids, queue_obj):
+        """ Checks if the object can acquire some locks. If not, adds item to queue
+
+        :lock_ids list<string>: list of ids that this object needs to wait on
+        :queue_obj object: whatever kind of object is being queued
+
+        First checks the current locks, then makes sure this object would be the first in each
+        queue it would sit in
+
+        Returns :boolean: True if it acquired the lock, False if it was added to queue
+        """
+        if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
+            self._add_item(lock_ids, queue_obj)
+            return False
+        for lock_id in lock_ids:  # if other objs are waiting for the same locks, it has to wait
+            queue = self.queue_by_lock_id[lock_id]
+            if queue:
+                self._add_item(lock_ids, queue_obj)
+                return False
+        self._add_item(lock_ids, queue_obj, to_queue=False)
+        self._set_lock(lock_ids)
+        return True
+
+    def get_next(self):
+        """ Returns the next object that can be processed
+
+        Iterates through the first object in each queue, then checks that that object is the
+        first in every lock queue it is in
+
+        Returns :obj: of whatever is being queued or None if nothing can acquire the lock currently
+        """
+        for lock_id, queue in six.iteritems(self.queue_by_lock_id):
+            if not queue:
+                continue
+            peeked_obj_id = queue[0]
+
+            lock_ids = self.lock_ids_by_queue_id[peeked_obj_id]
+            first_in_all_queues = True
+            for lock_id in lock_ids:
+                first_in_queue = self.queue_by_lock_id[lock_id][0]  # can assume there always will be one
+                if not first_in_queue == peeked_obj_id:
+                    first_in_all_queues = False
+                    break
+            if not first_in_all_queues:
+                continue
+
+            if self._set_lock(lock_ids):
+                return self._remove_item(peeked_obj_id)
+        return None
+
+    def has_next(self):
+        """ Makes sure there are still objects in the queue
+
+        Returns :boolean: True if there are objs left, False if not
+        """
+        for _, queue in six.iteritems(self.queue_by_lock_id):
+            if queue:
+                return True
+        return False
+
+    def release_lock_for_queue_obj(self, queue_obj):
+        """ Releases all locks for an object in the queue
+
+        :queue_obj obj: An object of the type in the queues
+
+        At some point in the future it might raise an exception if it trys
+        releasing a lock that isn't held
+        """
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
+        lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
+        if lock_ids:
+            self._release_lock(lock_ids)
+            del self.lock_ids_by_queue_id[queue_obj_id]
+            return True
+        return False
+
+    @property
+    def remaining_items(self):
+        return len(self.queue_objs_by_queue_id)
+
+    @property
+    def full(self):
+        if self.max_size == -1:
+            return False
+        return self.remaining_items >= self.max_size
+
+    def _add_item(self, lock_ids, queue_obj, to_queue=True):
+        """
+        :to_queue boolean: adds object to queues if True, just to lock tracking if not
+        """
+        queue_obj_id = self.get_queue_obj_id(queue_obj)
+        if to_queue:
+            for lock_id in lock_ids:
+                self.queue_by_lock_id[lock_id].append(queue_obj_id)
+            self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
+        self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
+
+    def _remove_item(self, queued_obj_id):
+        """ Removes a queued obj from data model
+
+        :queue_obj_id string: An id of an object of the type in the queues
+
+        Assumes the obj is the first in every queue it inhabits. This seems reasonable
+        for the intended use case, as this function should only be used by `.get_next`.
+
+        Raises UnexpectedObjectException if this assumption doesn't hold
+        """
+        lock_ids = self.lock_ids_by_queue_id.get(queued_obj_id)
+        for lock_id in lock_ids:
+            queue = self.queue_by_lock_id[lock_id]
+            if queue[0] != queued_obj_id:
+                raise UnexpectedObjectException("This object shouldn't be removed")
+        for lock_id in lock_ids:
+            queue = self.queue_by_lock_id[lock_id]
+            queue.popleft()
+        return self.queue_objs_by_queue_id.pop(queued_obj_id)
+
+    def _check_lock(self, lock_ids):
+        return any(lock_id in self.currently_locked for lock_id in lock_ids)
+
+    def _set_lock(self, lock_ids):
+        """ Trys to set locks for given lock ids
+
+        If already locked, returns false. If acquired, returns True
+        """
+        if self._check_lock(lock_ids):
+            return False
+        self.currently_locked.update(lock_ids)
+        return True
+
+    def _release_lock(self, lock_ids):
+        self.currently_locked.difference_update(lock_ids)
+
+
+class UnexpectedObjectException(Exception):
+    pass

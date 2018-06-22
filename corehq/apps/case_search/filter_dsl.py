@@ -1,12 +1,14 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
 from django.utils.translation import ugettext as _
+from eulxml.xpath import parse as parse_xpath
 from eulxml.xpath.ast import Step, serialize
 from six import integer_types, string_types
 
 from corehq.apps.es import filters
 from corehq.apps.es.case_search import (
     CaseSearchES,
+    case_property_missing,
     case_property_range_query,
     exact_case_property_text_query,
     reverse_index_case_query,
@@ -42,24 +44,25 @@ def print_ast(node):
     visit(node, 0)
 
 
+OPERATOR_MAPPING = {
+    'and': filters.AND,
+    'not': filters.NOT,
+    'or': filters.OR,
+}
+COMPARISON_MAPPING = {
+    '>': 'gt',
+    '>=': 'gte',
+    '<': 'lt',
+    '<=': 'lte',
+}
+
+EQ = "="
+NEQ = "!="
+
+
 def build_filter_from_ast(domain, node):
     """Builds an ES filter from an AST provided by eulxml.xpath.parse
     """
-
-    OPERATOR_MAPPING = {
-        'and': filters.AND,
-        'not': filters.NOT,
-        'or': filters.OR,
-    }
-    COMPARISON_MAPPING = {
-        '>': 'gt',
-        '>=': 'gte',
-        '<': 'lt',
-        '<=': 'lte',
-    }
-
-    EQ = "="
-    NEQ = "!="
 
     def _walk_related_cases(node):
         """Return a query that will fulfill the filter on the related case.
@@ -123,14 +126,57 @@ def build_filter_from_ast(domain, node):
         raise CaseFilterError(
             _("You cannot reference a case property on the right side "
               "of a boolean operation. If \"{}\" is meant to be a value, please surround it with "
-              "quotation marks.").format(serialize(node.right)),
+              "quotation marks").format(serialize(node.right)),
             serialize(node)
         )
+
+    def _equality(node):
+        """Returns the filter for an equality operation (=, !=)
+
+        """
+        if isinstance(node.left, Step) and isinstance(node.right, integer_types + (string_types, float)):
+            # This is a leaf node
+            case_property_name = serialize(node.left)
+            value = node.right
+
+            if value == '':
+                q = case_property_missing(case_property_name)
+            else:
+                q = exact_case_property_text_query(case_property_name, value)
+
+            if node.op == '!=':
+                return filters.NOT(q)
+
+            return q
+
+        if isinstance(node.right, Step):
+            _raise_step_RHS(node)
+
+        raise CaseFilterError(
+            _("We didn't understand what you were trying to do with {}").format(serialize(node)),
+            serialize(node)
+        )
+
+    def _comparison(node):
+        """Returns the filter for a comparison operation (>, <, >=, <=)
+
+        """
+        try:
+            case_property_name = serialize(node.left)
+            value = node.right
+            return case_property_range_query(case_property_name, **{COMPARISON_MAPPING[node.op]: value})
+        except TypeError:
+            raise CaseFilterError(
+                _("The right hand side of a comparison must be a number or date"),
+                serialize(node),
+            )
 
     def visit(node):
         if not hasattr(node, 'op'):
             raise CaseFilterError(
-                _("Your filter is required to have at least one boolean operator (e.g. '=', '!=')"),
+                _("Your search query is required to have at least one boolean operator ({boolean_ops})").format(
+                    boolean_ops=", ".join(list(COMPARISON_MAPPING.keys()) + [EQ, NEQ]),
+                ),
                 serialize(node)
             )
 
@@ -139,28 +185,12 @@ def build_filter_from_ast(domain, node):
             return _walk_related_cases(node)
 
         if node.op in [EQ, NEQ]:
-            if isinstance(node.left, Step) and isinstance(node.right, integer_types + (string_types, float)):
-                # This is a leaf node
-                q = exact_case_property_text_query(serialize(node.left), node.right)
-                if node.op == '!=':
-                    return filters.NOT(q)
-                return q
-            elif isinstance(node.right, Step):
-                _raise_step_RHS(node)
-            else:
-                raise CaseFilterError(
-                    _("We didn't understand what you were trying to do with {}").format(serialize(node)),
-                    serialize(node)
-                )
+            # This node is a leaf
+            return _equality(node)
 
         if node.op in list(COMPARISON_MAPPING.keys()):
-            try:
-                return case_property_range_query(serialize(node.left), **{COMPARISON_MAPPING[node.op]: node.right})
-            except TypeError:
-                raise CaseFilterError(
-                    _("The right hand side of a comparison must be a number or date"),
-                    serialize(node),
-                )
+            # This node is a leaf
+            return _comparison(node)
 
         if node.op in list(OPERATOR_MAPPING.keys()):
             # This is another branch in the tree
@@ -172,3 +202,29 @@ def build_filter_from_ast(domain, node):
         )
 
     return visit(node)
+
+
+def get_properties_from_ast(node):
+    """Returns a list of case properties referenced in the XPath expression
+
+    Skips malformed parts of the XPath expression
+    """
+    columns = set()
+
+    def visit(node):
+        if not hasattr(node, 'op'):
+            return
+
+        if node.op in ([EQ, NEQ] + list(COMPARISON_MAPPING.keys())):
+            columns.add(serialize(node.left))
+
+        if node.op in list(OPERATOR_MAPPING.keys()):
+            visit(node.left)
+            visit(node.right)
+
+    visit(node)
+    return list(columns)
+
+
+def get_properties_from_xpath(xpath):
+    return get_properties_from_ast(parse_xpath(xpath))

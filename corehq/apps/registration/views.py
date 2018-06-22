@@ -22,8 +22,9 @@ from corehq.apps.analytics.tasks import (
     track_workflow,
     track_confirmed_account_on_hubspot,
     track_clicked_signup_on_hubspot,
-    update_hubspot_properties,
-    HUBSPOT_COOKIE)
+    HUBSPOT_COOKIE,
+    track_web_user_registration_hubspot,
+)
 from corehq.apps.analytics.utils import get_meta
 from corehq.apps.app_manager.dbaccessors import domain_has_apps
 from corehq.apps.domain.decorators import login_required
@@ -106,7 +107,7 @@ class NewUserNumberAbTestMixin__Disabled(object):
         pass
 
 
-NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__NoAbEnabled
+NewUserNumberAbTestMixin = NewUserNumberAbTestMixin__Enabled
 
 
 class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View):
@@ -121,17 +122,35 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
+        web_user = WebUser.get_by_username(new_user.username)
+
         if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
-            web_user = WebUser.get_by_username(new_user.username)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
 
         email = new_user.email
 
-        if self.request.user_agent.is_mobile:
-            toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.set(email, True)
+        # registration analytics
+        persona = reg_form.cleaned_data['persona']
+        persona_other = reg_form.cleaned_data['persona_other']
+        appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
+                                                          toggles.NAMESPACE_USER)
 
-        track_workflow(email, "Requested new account")
+        track_workflow(email, "Requested New Account")
+        track_workflow(email, "Persona Field Filled Out", {
+            'personachoice': persona,
+            'personaother': persona_other,
+        })
+
+        track_web_user_registration_hubspot.delay(
+            web_user,
+            {
+                'buyer_persona': persona,
+                'buyer_persona_other': persona_other,
+                "appcues_test": "On" if appcues_ab_test else "Off",
+            }
+        )
+
         login(self.request, new_user)
 
     @allow_remote_invocation
@@ -163,12 +182,6 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
             return {
                 'success': True,
-                'is_mobile_experience': (
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER.enabled(
-                        username) and
-                    toggles.MOBILE_SIGNUP_REDIRECT_AB_TEST.enabled(
-                        username, toggles.NAMESPACE_USER)
-                ),
                 'appcues_ab_test': appcues_ab_test,
             }
         logging.error(

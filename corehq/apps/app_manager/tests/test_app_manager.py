@@ -38,7 +38,7 @@ class AppManagerTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super(AppManagerTest, cls).setUpClass()
-        cls.build1 = {'version': '1.2.dev', 'build_number': 7106}
+        cls.build1 = {'version': '1.2.0', 'build_number': 7106}
         cls.build2 = {'version': '2.7.0', 'build_number': 20655}
 
         add_build(**cls.build1)
@@ -173,7 +173,7 @@ class AppManagerTest(TestCase):
     def _yesno_source(self):
         # this app fixture uses both the (new) '_attachment'
         # and the (old) 'contents' conventions, to test that both work
-        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json')) as f:
+        with open(os.path.join(os.path.dirname(__file__), 'data', 'yesno.json'), encoding='utf-8') as f:
             return json.load(f)
 
     def _check_has_build_files(self, build, paths):

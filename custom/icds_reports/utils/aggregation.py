@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+from datetime import date
 import hashlib
 
 from dateutil.relativedelta import relativedelta
+from django.utils.functional import cached_property
 
+from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
 from corehq.apps.userreports.util import get_table_name
 from custom.icds_reports.const import (
@@ -12,8 +15,9 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
-    DASHBOARD_DOMAIN
+    DASHBOARD_DOMAIN,
 )
+from six.moves import range
 
 
 def transform_day_to_month(day):
@@ -259,7 +263,10 @@ class PostnatalCareFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
         MAX(counsel_adequate_bf) OVER w AS counsel_adequate_bf,
         LAST_VALUE(not_breastfeeding) OVER w AS not_breastfeeding
         FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND state_id = %(state_id)s
+        WHERE timeend >= %(current_month_start)s AND
+              timeend < %(next_month_start)s AND
+              state_id = %(state_id)s AND
+              child_health_case_id IS NOT NULL
         WINDOW w AS (
             PARTITION BY child_health_case_id
             ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -494,42 +501,106 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
-    def _data_from_ucr_query(self, column=None):
+    def data_from_ucr_query(self):
         current_month_start = month_formatter(self.month)
         next_month_start = month_formatter(self.month + relativedelta(months=1))
-        if column is not None:
-            select_line = ", LAST_VALUE({column}) OVER w AS {column}".format(column=column)
-            where_line = " AND {column} IS NOT NULL".format(column=column)
-        else:
-            select_line, where_line = '', ''
 
+        # We need many windows here because we want the last time changed for each of these columns
+        # Window definitions inspired by https://stackoverflow.com/a/47223416
+        # The CASE/WHEN's are needed, because time end should be NULL when a form has not changed the value,
+        # but the windows include all forms (this works because we use LAST_VALUE and NULLs are sorted to the top
         return """
-        SELECT DISTINCT child_health_case_id AS case_id,
-        LAST_VALUE(timeend) OVER w AS latest_time_end
-        {select_line}
-        FROM "{ucr_tablename}"
-        WHERE timeend >= %(current_month_start)s AND
-              timeend < %(next_month_start)s AND
-              state_id = %(state_id)s {where_line} AND
-              child_health_case_id IS NOT NULL
-        WINDOW w AS (
-            PARTITION BY child_health_case_id
-            ORDER BY timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
-        )
-        """.format(
-            ucr_tablename=self.ucr_tablename,
-            select_line=select_line,
-            where_line=where_line
-        ), {
+            SELECT
+                DISTINCT child_health_case_id AS case_id,
+                LAST_VALUE(weight_child) OVER weight_child AS weight_child,
+                CASE
+                    WHEN LAST_VALUE(weight_child) OVER weight_child IS NULL THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER weight_child
+                END AS weight_child_last_recorded,
+                LAST_VALUE(height_child) OVER height_child AS height_child,
+                CASE
+                    WHEN LAST_VALUE(height_child) OVER height_child IS NULL THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER height_child
+                END AS height_child_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfa) OVER zscore_grading_wfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfa
+                END AS zscore_grading_wfa_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_hfa) OVER zscore_grading_hfa = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_hfa
+                END AS zscore_grading_hfa_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
+                    ELSE LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh,
+                CASE
+                    WHEN LAST_VALUE(zscore_grading_wfh) OVER zscore_grading_wfh = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER zscore_grading_wfh
+                END AS zscore_grading_wfh_last_recorded,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
+                    ELSE LAST_VALUE(muac_grading) OVER muac_grading
+                END AS muac_grading,
+                CASE
+                    WHEN LAST_VALUE(muac_grading) OVER muac_grading = 0 THEN NULL
+                    ELSE LAST_VALUE(timeend) OVER muac_grading
+                END AS muac_grading_last_recorded
+            FROM "{ucr_tablename}"
+            WHERE timeend >= %(current_month_start)s AND timeend < %(next_month_start)s
+                AND state_id = %(state_id)s AND child_health_case_id IS NOT NULL
+            WINDOW
+                weight_child AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN weight_child IS NULL THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                height_child AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN height_child IS NULL THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_wfa AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_wfa = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_hfa AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_hfa = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                zscore_grading_wfh AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN zscore_grading_wfh = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                ),
+                muac_grading AS (
+                    PARTITION BY child_health_case_id
+                    ORDER BY
+                        CASE WHEN muac_grading = 0 THEN 0 ELSE 1 END ASC,
+                        timeend RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+                )
+        """.format(ucr_tablename=self.ucr_tablename), {
             "current_month_start": current_month_start,
             "next_month_start": next_month_start,
-            "state_id": self.state_id,
+            "state_id": self.state_id
         }
 
-    def data_from_ucr_query(self, column=None):
-        return self._data_from_ucr_query(column)
-
-    def _inital_aggregation_query(self):
+    def aggregation_query(self):
         month = self.month.replace(day=1)
         tablename = self.generate_child_tablename(month)
         previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
@@ -537,19 +608,48 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
         ucr_query, ucr_query_params = self.data_from_ucr_query()
         query_params = {
             "month": month_formatter(month),
-            "state_id": self.state_id,
+            "state_id": self.state_id
         }
         query_params.update(ucr_query_params)
 
+        # The '1970-01-01' is a fallback, this should never happen,
+        # but an unexpected NULL should not block other data
         return """
         INSERT INTO "{tablename}" (
-          state_id, month, case_id, latest_time_end_processed
+            state_id, month, case_id, latest_time_end_processed,
+            weight_child, weight_child_last_recorded,
+            height_child, height_child_last_recorded,
+            zscore_grading_wfa, zscore_grading_wfa_last_recorded,
+            zscore_grading_hfa, zscore_grading_hfa_last_recorded,
+            zscore_grading_wfh, zscore_grading_wfh_last_recorded,
+            muac_grading, muac_grading_last_recorded
         ) (
           SELECT
             %(state_id)s AS state_id,
             %(month)s AS month,
             COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            GREATEST(ucr.latest_time_end, prev_month.latest_time_end_processed) AS latest_time_end_processed
+            GREATEST(
+                ucr.weight_child_last_recorded,
+                ucr.height_child_last_recorded,
+                ucr.zscore_grading_wfa_last_recorded,
+                ucr.zscore_grading_hfa_last_recorded,
+                ucr.zscore_grading_wfh_last_recorded,
+                ucr.muac_grading_last_recorded,
+                prev_month.latest_time_end_processed,
+                '1970-01-01'
+            ) AS latest_time_end_processed,
+            COALESCE(ucr.weight_child, prev_month.weight_child) AS weight_child,
+            GREATEST(ucr.weight_child_last_recorded, prev_month.weight_child_last_recorded) AS weight_child_last_recorded,
+            COALESCE(ucr.height_child, prev_month.height_child) AS height_child,
+            GREATEST(ucr.height_child_last_recorded, prev_month.height_child_last_recorded) AS height_child_last_recorded,
+            COALESCE(ucr.zscore_grading_wfa, prev_month.zscore_grading_wfa) AS zscore_grading_wfa,
+            GREATEST(ucr.zscore_grading_wfa_last_recorded, prev_month.zscore_grading_wfa_last_recorded) AS zscore_grading_wfa_last_recorded,
+            COALESCE(ucr.zscore_grading_hfa, prev_month.zscore_grading_hfa) AS zscore_grading_hfa,
+            GREATEST(ucr.zscore_grading_hfa_last_recorded, prev_month.zscore_grading_hfa_last_recorded) AS zscore_grading_hfa_last_recorded,
+            COALESCE(ucr.zscore_grading_wfh, prev_month.zscore_grading_wfh) AS zscore_grading_wfh,
+            GREATEST(ucr.zscore_grading_wfh_last_recorded, prev_month.zscore_grading_wfh_last_recorded) AS zscore_grading_wfh_last_recorded,
+            COALESCE(ucr.muac_grading, prev_month.muac_grading) AS muac_grading,
+            GREATEST(ucr.muac_grading_last_recorded, prev_month.muac_grading_last_recorded) AS muac_grading_last_recorded
           FROM ({ucr_table_query}) ucr
           FULL OUTER JOIN "{previous_month_tablename}" prev_month
           ON ucr.case_id = prev_month.case_id
@@ -559,62 +659,6 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             previous_month_tablename=previous_month_tablename,
             tablename=tablename
         ), query_params
-
-    def _aggregation_query_for_column(self, column):
-        month = self.month.replace(day=1)
-        tablename = self.generate_child_tablename(month)
-        previous_month_tablename = self.generate_child_tablename(month - relativedelta(months=1))
-
-        ucr_query, ucr_query_params = self.data_from_ucr_query(column)
-        query_params = {
-            "month": month_formatter(month),
-            "state_id": self.state_id,
-        }
-        query_params.update(ucr_query_params)
-        update_line = "{column} = ut.{column}, {column}_last_recorded = ut.{column}_last_recorded".format(
-            column=column)
-
-        select_line = """
-            COALESCE(ucr.{column}, prev_month.{column}) AS {column},
-            GREATEST(ucr.latest_time_end, prev_month.{column}_last_recorded) AS {column}_last_recorded
-        """.format(column=column)
-
-        return """
-        UPDATE "{tablename}" AS agg_table SET
-            {update_line}
-        FROM (
-          SELECT
-            %(state_id)s::text AS state_id,
-            %(month)s::date AS month,
-            COALESCE(ucr.case_id, prev_month.case_id) AS case_id,
-            {select_line}
-          FROM ({ucr_table_query}) ucr
-          FULL OUTER JOIN "{previous_month_tablename}" prev_month
-          ON ucr.case_id = prev_month.case_id
-        ) ut
-        WHERE ut.state_id = agg_table.state_id AND ut.month = agg_table.month AND ut.case_id = agg_table.case_id
-        """.format(
-            ucr_table_query=ucr_query,
-            previous_month_tablename=previous_month_tablename,
-            tablename=tablename,
-            update_line=update_line,
-            select_line=select_line
-        ), query_params
-
-    def aggregation_queries(self):
-        columns = (
-            'weight_child',
-            'height_child',
-            'zscore_grading_wfa',
-            'zscore_grading_hfa',
-            'zscore_grading_wfh',
-            'muac_grading',
-        )
-
-        initial_query = self._inital_aggregation_query()
-        return [initial_query] + [
-            self._aggregation_query_for_column(column) for column in columns
-        ]
 
     def compare_with_old_data_query(self):
         # only partially implements this comparison for now
@@ -640,3 +684,303 @@ class GrowthMonitoringFormsAggregationHelper(BaseICDSAggregationHelper):
             "next_month": (month + relativedelta(month=1)).strftime('%Y-%m-%d'),
             "state_id": self.state_id
         }
+
+
+def recalculate_aggregate_table(model_class):
+    """Expects a class (not instance) of models.Model
+
+    Not expected to last past 2018 (ideally past May) so this shouldn't break in 2019
+    """
+    state_ids = (
+        SQLLocation.objects
+        .filter(domain='icds-cas', location_type__name='state')
+        .values_list('id', flat=True)
+    )
+
+    for state_id in state_ids:
+        for year in (2015, 2016, 2017):
+            for month in range(1, 13):
+                model_class.aggregate(state_id, date(year, month, 1))
+
+        for month in range(1, date.today().month + 1):
+            model_class.aggregate(state_id, date(2018, month, 1))
+
+
+class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
+    base_tablename = 'child_health_monthly'
+
+    def __init__(self, month):
+        self.month = transform_day_to_month(month)
+
+    @property
+    def child_health_monthly_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, self.child_health_monthly_ucr_id)
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def child_health_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_health_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def child_tasks_case_ucr_tablename(self):
+        doc_id = StaticDataSourceConfiguration.get_doc_id(self.domain, 'static-child_tasks_cases')
+        config, _ = get_datasource_config(doc_id, self.domain)
+        return get_table_name(self.domain, config.table_id)
+
+    @property
+    def tablename(self):
+        return "{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+
+    def drop_table_query(self):
+        return 'DELETE FROM "{}"'.format(self.tablename)
+
+    def aggregation_query(self):
+        columns = (
+            ("awc_id", "ucr.awc_id"),
+            ("case_id", "ucr.case_id"),
+            ("month", "ucr.month"),
+            ("sex", "ucr.sex"),
+            ("age_tranche", "ucr.age_tranche"),
+            ("caste", "ucr.caste"),
+            ("disabled", "ucr.disabled"),
+            ("minority", "ucr.minority"),
+            ("resident", "ucr.resident"),
+            ("dob", "ucr.dob"),
+            ("age_in_months", "ucr.age_in_months"),
+            ("open_in_month", "ucr.open_in_month"),
+            ("alive_in_month", "ucr.alive_in_month"),
+            ("pse_eligible", "ucr.pse_eligible"),
+            ("pse_days_attended", "ucr.pse_days_attended"),
+            ("born_in_month", "ucr.born_in_month"),
+            ("bf_at_birth_born_in_month", "ucr.bf_at_birth_born_in_month"),
+            ("fully_immunized_eligible", "ucr.fully_immunized_eligible"),
+            ("fully_immunized_on_time", "ucr.fully_immunized_on_time"),
+            ("fully_immunized_late", "ucr.fully_immunized_late"),
+            ("has_aadhar_id", "ucr.has_aadhar_id"),
+            ("valid_in_month", "ucr.valid_in_month"),
+            ("valid_all_registered_in_month", "ucr.valid_all_registered_in_month"),
+            ("person_name", "child_health.person_name"),
+            ("mother_name", "child_health.mother_name"),
+            # EBF Indicators
+            ("ebf_eligible", "ucr.ebf_eligible"),
+            ("ebf_in_month", "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END"),
+            ("ebf_not_breastfeeding_reason",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN pnc.not_breastfeeding ELSE NULL END"),
+            ("ebf_drinking_liquid",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.water_or_milk, pnc.other_milk_to_child, pnc.tea_other, 0) ELSE 0 END"),
+            ("ebf_eating",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.eating, 0) ELSE 0 END"),
+            ("ebf_no_bf_no_milk", "0"),
+            ("ebf_no_bf_pregnant_again", "0"),
+            ("ebf_no_bf_child_too_old", "0"),
+            ("ebf_no_bf_mother_sick", "0"),
+            ("counsel_adequate_bf",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.counsel_adequate_bf, 0) ELSE 0 END"),
+            ("ebf_no_info_recorded",
+                """CASE WHEN ucr.ebf_eligible = 1 AND date_trunc('MONTH', pnc.latest_time_end_processed) = %(start_date)s THEN 0 ELSE ucr.ebf_eligible END"""),
+            ("counsel_ebf",
+                "CASE WHEN ucr.ebf_eligible = 1 THEN GREATEST(pnc.counsel_exclusive_bf, pnc.counsel_only_milk, 0) ELSE 0 END"),
+            # PNC Indicators
+            ("pnc_eligible", "ucr.pnc_eligible"),
+            ("counsel_increase_food_bf",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_increase_food_bf, 0) ELSE 0 END"),
+            ("counsel_manage_breast_problems",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.counsel_breast, 0) ELSE 0 END"),
+            ("counsel_skin_to_skin",
+                "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
+            # GM Indicators
+            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
+            ("wer_eligible", "ucr.wer_eligible"),
+            ("nutrition_status_last_recorded", "ucr.nutrition_status_last_recorded"),
+            ("current_month_nutrition_status", "ucr.current_month_nutrition_status"),
+            ("nutrition_status_weighed", "ucr.nutrition_status_weighed"),
+            ("recorded_weight", "ucr.weight_recorded_in_month"),
+            ("recorded_height",
+                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN gm.height_child ELSE NULL END, ucr.height_recorded_in_month)"),
+            ("height_measured_in_month",
+                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END, ucr.height_measured_in_month)"),
+            ("current_month_stunting", "ucr.current_month_stunting"),
+            ("stunting_last_recorded", "ucr.stunting_last_recorded"),
+            ("wasting_last_recorded", "ucr.wasting_last_recorded"),
+            ("current_month_wasting", "ucr.current_month_wasting"),
+            ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
+            ("zscore_grading_hfa_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+            ("zscore_grading_wfh", "gm.zscore_grading_wfh"),
+            ("zscore_grading_wfh_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+            ("muac_grading", "gm.muac_grading"),
+            ("muac_grading_recorded_in_month",
+                "CASE WHEN (date_trunc('MONTH', gm.muac_grading_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
+            # CF Indicators
+            ("cf_eligible", "ucr.cf_eligible"),
+            ("cf_initiation_eligible", "ucr.cf_initiation_eligible"),
+            ("cf_in_month", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.comp_feeding_latest, 0) ELSE 0 END"),
+            ("cf_diet_diversity", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.diet_diversity, 0) ELSE 0 END"),
+            ("cf_diet_quantity", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.diet_quantity, 0) ELSE 0 END"),
+            ("cf_handwashing", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.hand_wash, 0) ELSE 0 END"),
+            ("cf_demo", "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.demo_comp_feeding, 0) ELSE 0 END"),
+            ("counsel_pediatric_ifa",
+                "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.counselled_pediatric_ifa, 0) ELSE 0 END"),
+            ("counsel_comp_feeding_vid",
+                "CASE WHEN ucr.cf_eligible = 1 THEN COALESCE(cf.play_comp_feeding_vid, 0) ELSE 0 END"),
+            ("cf_initiation_in_month",
+                "CASE WHEN ucr.cf_initiation_eligible = 1 THEN COALESCE(cf.comp_feeding_ever, 0) ELSE 0 END"),
+            # THR Indicators
+            ("thr_eligible", "ucr.thr_eligible"),
+            ("num_rations_distributed",
+                "CASE WHEN ucr.thr_eligible = 1 THEN COALESCE(thr.days_ration_given_child, 0) ELSE NULL END"),
+            ("days_ration_given_child", "thr.days_ration_given_child"),
+            # Tasks case Indicators
+            ("immunization_in_month", """
+                  CASE WHEN
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_dpt_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_dpt_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_dpt_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_dpt_booster) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_dpt_booster1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_7gdpt_booster_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_0g_hep_b_0) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_hep_b_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_hep_b_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_hep_b_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_ipv) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_je_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_je_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_measles_booster) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_measles) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_penta_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_penta_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_penta_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_1g_rv_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_2g_rv_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_3g_rv_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_4g_vit_a_1) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_5g_vit_a_2) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_3) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_4) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_5) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_6) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_7) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_6g_vit_a_8) = %(start_date)s OR
+                      date_trunc('MONTH', child_tasks.due_list_date_7g_vit_a_9) = %(start_date)s
+                  THEN 1 ELSE NULL END
+            """),
+        )
+        return """
+        INSERT INTO "{tablename}" (
+            {columns}
+        ) (SELECT
+            {calculations}
+            FROM "{ucr_child_monthly_table}" ucr
+            LEFT OUTER JOIN "{agg_cf_table}" cf ON ucr.doc_id = cf.case_id AND ucr.month = cf.month
+            LEFT OUTER JOIN "{agg_thr_table}" thr ON ucr.doc_id = thr.case_id AND ucr.month = thr.month
+            LEFT OUTER JOIN "{agg_gm_table}" gm ON ucr.doc_id = gm.case_id AND ucr.month = gm.month
+            LEFT OUTER JOIN "{agg_pnc_table}" pnc ON ucr.doc_id = pnc.case_id AND ucr.month = pnc.month
+            LEFT OUTER JOIN "{child_health_case_ucr}" child_health ON ucr.doc_id = child_health.doc_id
+            LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON ucr.doc_id = child_tasks.child_health_case_id
+            WHERE ucr.month = %(start_date)s
+            ORDER BY ucr.awc_id, ucr.case_id
+        )
+        """.format(
+            tablename=self.tablename,
+            columns=", ".join([col[0] for col in columns]),
+            calculations=", ".join([col[1] for col in columns]),
+            ucr_child_monthly_table=self.child_health_monthly_ucr_tablename,
+            agg_cf_table=AGG_COMP_FEEDING_TABLE,
+            agg_thr_table=AGG_CHILD_HEALTH_THR_TABLE,
+            child_health_case_ucr=self.child_health_case_ucr_tablename,
+            agg_gm_table=AGG_GROWTH_MONITORING_TABLE,
+            agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
+            child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
+        ), {
+            "start_date": self.month
+        }
+
+    def indexes(self):
+        return [
+            'CREATE INDEX ON "{}" (case_id)'.format(self.tablename),
+            'CREATE INDEX ON "{}" (awc_id)'.format(self.tablename),
+        ]
+
+
+class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'static-usage_forms'
+
+    def __init__(self, last_sync):
+        self.last_sync = last_sync
+
+    @cached_property
+    def aggregate_parent_table(self):
+        from custom.icds_reports.models import AggregateInactiveAWW
+        return AggregateInactiveAWW._meta.db_table
+
+    def data_from_ucr_query(self):
+        return """
+            SELECT DISTINCT awc_id as awc_id,
+                FIRST_VALUE(form_date) OVER forms as first_submission,
+                LAST_VALUE(form_date) OVER forms as last_submission
+            FROM "{ucr_tablename}"
+            WHERE inserted_at >= %(last_sync)s
+            WINDOW forms AS (
+              PARTITION BY awc_id
+              ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
+            )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+        ), {
+            "last_sync": self.last_sync
+        }
+
+    def missing_location_query(self):
+        return """
+        INSERT INTO "{table_name}" (
+            awc_id, awc_name, awc_site_code, supervisor_id, supervisor_name,
+            block_id, block_name, district_id, district_name, state_id, state_name
+        ) (
+            SELECT
+                loc.doc_id as awc_id,
+                loc.awc_name as awc_name,
+                'awc' || loc.awc_site_code as awc_site_code,
+                loc.supervisor_id as supervisor_id,
+                loc.supervisor_name as supervisor_name,
+                loc.block_id as block_id,
+                loc.block_name as block_name,
+                loc.district_id as district_id,
+                loc.district_name as district_name,
+                loc.state_id as state_id,
+                loc.state_name as state_name
+            FROM "{awc_location_table_name}" loc
+            WHERE loc.doc_id not in (
+              SELECT aww.awc_id FROM "{table_name}" aww
+            ) and loc.doc_id != 'All'
+        )
+        """.format(
+            table_name=self.aggregate_parent_table,
+            awc_location_table_name='awc_location'
+        )
+
+    def aggregate_query(self):
+        ucr_query, params = self.data_from_ucr_query()
+        return """
+            UPDATE "{table_name}" AS agg_table SET
+                first_submission = ut.first_submission,
+                last_submission = ut.last_submission
+            FROM (
+              SELECT
+                loc.doc_id as awc_id,
+                ucr.first_submission as first_submission,
+                ucr.last_submission as last_submission
+              FROM ({ucr_table_query}) ucr
+              JOIN "{awc_location_table_name}" loc
+              ON ucr.awc_id = loc.doc_id
+            ) ut
+            WHERE agg_table.awc_id = ut.awc_id
+        """.format(
+            table_name=self.aggregate_parent_table,
+            ucr_table_query=ucr_query,
+            awc_location_table_name='awc_location',
+        ), params

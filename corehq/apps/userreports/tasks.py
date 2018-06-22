@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import logging
 
 from botocore.vendored.requests.exceptions import ReadTimeout
@@ -18,14 +18,13 @@ from django.utils.translation import ugettext as _
 from elasticsearch.exceptions import ConnectionTimeout
 from restkit import RequestError
 
-from couchexport.export import export_from_tables
 from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
 from corehq import toggles
 from corehq.apps.reports.util import send_report_download_email
 from corehq.apps.userreports.const import (
-    UCR_ES_BACKEND, UCR_SQL_BACKEND, UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
+    UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
 )
 from corehq.apps.change_feed.data_sources import get_document_store_for_doc_type
@@ -37,9 +36,7 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
-    get_report_config,
 )
-from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -50,7 +47,6 @@ from corehq.util.timer import TimingContext
 from corehq.util.view_utils import reverse
 from custom.icds_reports.ucr.expressions import icds_get_related_docs_ids
 from dimagi.utils.couch import CriticalSection
-from dimagi.utils.couch.pagination import DatatablesParams
 from pillowtop.dao.couch import ID_CHUNK_SIZE
 import six
 
@@ -178,52 +174,6 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
             current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
         adapter.after_table_build()
-
-
-@task(queue=UCR_CELERY_QUEUE)
-def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
-    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
-
-    def _run_report(backend_to_use):
-        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True, backend=backend_to_use)
-        data_source.set_filter_values(filter_values)
-        if sort_column:
-            data_source.set_order_by(
-                [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
-            )
-
-        if params:
-            datatables_params = DatatablesParams.from_request_dict(params)
-            start = datatables_params.start
-            limit = datatables_params.count
-        else:
-            start, limit = None, None
-        page = list(data_source.get_data(start=start, limit=limit))
-        total_records = data_source.get_total_records()
-        json_response = {
-            'aaData': page,
-            "iTotalRecords": total_records,
-        }
-        total_row = data_source.get_total_row() if data_source.has_total_row else None
-        if total_row is not None:
-            json_response["total_row"] = total_row
-        return json_response
-
-    spec, is_static = get_report_config(report_config_id, domain)
-    experiment_context = {
-        "domain": domain,
-        "report_config_id": report_config_id,
-        "filter_values": filter_values,
-    }
-    experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
-    with experiment.control() as c:
-        c.record(_run_report(UCR_SQL_BACKEND))
-
-    with experiment.candidate() as c:
-        c.record(_run_report(UCR_ES_BACKEND))
-
-    objects = experiment.run()
-    return objects
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
@@ -490,7 +440,8 @@ def _indicator_metrics(date_created=None):
 @task
 def export_ucr_async(report_export, download_id, user):
     use_transfer = settings.SHARED_DRIVE_CONF.transfer_enabled
-    filename = '{}.xlsx'.format(report_export.title.replace('/', '?'))
+    ascii_title = report_export.title.encode('ascii', 'replace')
+    filename = '{}.xlsx'.format(ascii_title.replace('/', '?'))
     file_path = get_download_file_path(use_transfer, filename)
 
     report_export.create_export(file_path, Format.XLS_2007)

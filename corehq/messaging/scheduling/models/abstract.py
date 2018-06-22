@@ -6,7 +6,13 @@ from memoized import memoized
 from django.db import models, transaction
 from corehq.apps.reminders.util import get_one_way_number_for_recipient, get_two_way_number_for_recipient
 from corehq.apps.sms.api import MessageMetadata, send_sms, send_sms_to_verified_number
-from corehq.apps.sms.models import PhoneNumber
+from corehq.apps.sms.models import (
+    MessagingEvent,
+    PhoneNumber,
+    WORKFLOW_REMINDER,
+    WORKFLOW_KEYWORD,
+    WORKFLOW_BROADCAST,
+)
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CommCareUser
 from corehq.messaging.scheduling.exceptions import (
@@ -59,6 +65,14 @@ class Schedule(models.Model):
     # One of the UI_TYPE_* constants describing the type of UI that should be used
     # to edit this schedule.
     ui_type = models.CharField(max_length=2, default=UI_TYPE_UNKNOWN)
+
+    #   The old reminders framework would interpret times using UTC if the contact
+    # didn't have a time zone configured. The new reminders framework uses the
+    # project's time zone if the contact doesn't have a time zone configured.
+    #   There are a lot of edge cases which make it not possible to just convert
+    # times in reminders during the reminders migration. So for old reminders
+    # where this makes a difference, this option is set to True during the migration.
+    use_utc_as_default_timezone = models.BooleanField(default=False)
 
     class Meta(object):
         abstract = True
@@ -125,6 +139,10 @@ class Schedule(models.Model):
             if isinstance(event.content, SMSSurveyContent):
                 return True
 
+        return False
+
+    @property
+    def references_parent_case(self):
         return False
 
     def delete_related_events(self):
@@ -227,6 +245,20 @@ class Content(models.Model):
         if schedule_instance:
             self.schedule_instance = schedule_instance
 
+    @staticmethod
+    def get_workflow(logged_event):
+        if logged_event.source in (
+            MessagingEvent.SOURCE_IMMEDIATE_BROADCAST,
+            MessagingEvent.SOURCE_SCHEDULED_BROADCAST,
+        ):
+            return WORKFLOW_BROADCAST
+        elif logged_event.source == MessagingEvent.SOURCE_CASE_RULE:
+            return WORKFLOW_REMINDER
+        elif logged_event.source == MessagingEvent.SOURCE_KEYWORD:
+            return WORKFLOW_KEYWORD
+
+        return None
+
     @cached_property
     def case_rendering_context(self):
         """
@@ -250,11 +282,15 @@ class Content(models.Model):
         return r
 
     @classmethod
-    def get_two_way_entry_or_phone_number(cls, recipient):
+    def get_two_way_entry_or_phone_number(cls, recipient, try_user_case=True):
         """
         If recipient has a two-way number, returns it as a PhoneNumber entry.
         If recipient does not have a two-way number but has a phone number configured,
         returns the one-way phone number as a string.
+
+        If try_user_case is True and recipient is a CommCareUser who doesn't have a
+        two-way or one-way phone number, then it will try to get the two-way or
+        one-way number from the user's user case if one exists.
         """
         if use_phone_entries():
             phone_entry = get_two_way_number_for_recipient(recipient)
@@ -268,7 +304,7 @@ class Content(models.Model):
         if phone_number and len(phone_number) > 3:
             return phone_number
 
-        if isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
+        if try_user_case and isinstance(recipient, CommCareUser) and recipient.memoized_usercase:
             return cls.get_two_way_entry_or_phone_number(recipient.memoized_usercase)
 
         return None

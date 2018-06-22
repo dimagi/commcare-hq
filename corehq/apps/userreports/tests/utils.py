@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
 from decimal import Decimal
-import functools
 import json
 import os
 import uuid
@@ -12,19 +11,17 @@ from mock import patch
 from casexml.apps.case.models import CommCareCase
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.change_feed import data_sources
-from corehq.apps.userreports.const import UCR_SQL_BACKEND, UCR_ES_BACKEND
 from corehq.apps.userreports.models import DataSourceConfiguration, ReportConfiguration
 from dimagi.utils.parsing import json_format_datetime
 from pillowtop.feed.interface import Change, ChangeMeta
 
-from corehq.util.test_utils import run_with_multiple_configs, RunConfig
 from io import open
 
 
 def get_sample_report_config():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'sample_report_config.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return ReportConfiguration.wrap(structure)
 
@@ -32,7 +29,7 @@ def get_sample_report_config():
 def get_sample_data_source():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'sample_data_source.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)
 
@@ -40,7 +37,7 @@ def get_sample_data_source():
 def get_data_source_with_related_doc_type():
     folder = os.path.join(os.path.dirname(__file__), 'data', 'configs')
     sample_file = os.path.join(folder, 'parent_child_data_source.json')
-    with open(sample_file) as f:
+    with open(sample_file, encoding='utf-8') as f:
         structure = json.loads(f.read())
         return DataSourceConfiguration.wrap(structure)
 
@@ -108,25 +105,6 @@ def post_run_with_sql_backend(fn, *args, **kwargs):
 
 def pre_run_with_es_backend(fn, *args, **kwargs):
     fn.setUp()
-
-
-run_with_all_ucr_backends = functools.partial(
-    run_with_multiple_configs,
-    run_configs=[
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_SQL_BACKEND},
-            post_run=post_run_with_sql_backend
-        ),
-        RunConfig(
-            settings={'OVERRIDE_UCR_BACKEND': UCR_ES_BACKEND},
-            pre_run=pre_run_with_es_backend,
-        ),
-    ]
-)
-
-
-def mock_sql_backend():
-    return patch('corehq.apps.userreports.reports.data_source.get_backend_id', return_value=UCR_SQL_BACKEND)
 
 
 def mock_datasource_config():

@@ -14,7 +14,7 @@ class DataTablesColumn(object):
     def __init__(self, name, span=0, sort_type=None, sort_direction=None,
                  help_text=None, sortable=True, rotate=False,
                  expected=None, prop_name=None, visible=True, data_slug=None,
-                 alt_prop_name=None, width=None, css_class=None):
+                 alt_prop_name=None, width=None, css_class=None, sql_col=None):
         self.html = name
         self.css_span = span
         self.sort_type = sort_type
@@ -31,14 +31,21 @@ class DataTablesColumn(object):
         self.alt_prop_name = alt_prop_name
         self.width = width
         self.css_class = css_class
+        self.sql_col = sql_col
 
     @property
     def render_html(self):
+        css_classes = []
+        if self.css_span:
+            css_classes.append("span%d" % self.css_span)
+        if self.sortable:
+            css_classes.append("clickable")
+
         column_params = dict(
             title=self.html,
             sort=self.sortable,
             rotate=self.rotate,
-            css="span%d" % self.css_span if self.css_span > 0 else '',
+            css=" ".join(css_classes),
             rowspan=self.rowspan,
             help_text=self.help_text,
             expected=self.expected,

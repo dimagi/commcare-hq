@@ -6,6 +6,7 @@ from couchdbkit import Database
 from dimagi.utils.couch.database import get_db
 from django.core.management.base import BaseCommand
 from corehq.apps.domainsync.config import DocumentTransform, save
+from io import open
 
 
 class Command(BaseCommand):
@@ -29,7 +30,7 @@ class Command(BaseCommand):
         sourcedb = Database(sourcedb)
 
         if os.path.isfile(doc_ids_or_file):
-            with open(doc_ids_or_file) as f:
+            with open(doc_ids_or_file, encoding='utf-8') as f:
                 doc_ids = f.read().splitlines()
         else:
             doc_ids = doc_ids_or_file.split(',')

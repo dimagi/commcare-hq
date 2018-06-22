@@ -3,7 +3,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from datetime import datetime, date, timedelta
-from wsgiref.util import FileWrapper
 
 from couchdbkit import ResourceNotFound
 from django.conf import settings
@@ -13,13 +12,14 @@ from django.core.exceptions import SuspiciousOperation
 from django.db.models import Sum
 from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponseBadRequest, Http404, HttpResponse, \
-    StreamingHttpResponse, HttpResponseServerError
+    HttpResponseServerError
 from django.template.defaultfilters import filesizeformat
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET, require_POST
 
 from corehq.apps.analytics.tasks import send_hubspot_form, HUBSPOT_DOWNLOADED_EXPORT_FORM_ID
 from corehq.blobs.exceptions import NotFound
+from corehq.util.download import get_download_response
 from corehq.toggles import MESSAGE_LOG_METADATA, PAGINATED_EXPORTS
 from corehq.apps.export.export import get_export_download, get_export_size
 from corehq.apps.export.models.new import DatePeriod, DailySavedExportNotification, DataFile, \
@@ -30,7 +30,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.locations.permissions import location_safe, location_restricted_response
 from corehq.apps.reports.filters.case_list import CaseListFilter
 from corehq.apps.reports.filters.users import ExpandedMobileWorkerFilter
-from corehq.apps.reports.views import should_update_export, build_download_saved_export_response
+from corehq.apps.reports.views import should_update_export
 from corehq.privileges import EXCEL_DASHBOARD, DAILY_SAVED_EXPORT
 from django_prbac.utils import has_privilege
 from django.utils.decorators import method_decorator
@@ -49,7 +49,10 @@ from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
 from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
-from corehq.apps.export.tasks import generate_schema_for_all_builds
+from corehq.apps.export.tasks import (
+    generate_schema_for_all_builds,
+    manually_rebuild_export_task,
+)
 from corehq.apps.export.exceptions import (
     ExportNotFound,
     ExportAppException,
@@ -95,7 +98,6 @@ from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
     HQGroupExportConfiguration
 from corehq.apps.reports.util import datespan_from_beginning
-from corehq.apps.reports.tasks import rebuild_export_task
 from corehq.apps.settings.views import BaseProjectDataView
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -111,7 +113,7 @@ from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PE
 from corehq.apps.analytics.tasks import track_workflow
 from corehq.util.couch import get_document_or_404_lite
 from corehq.util.timezones.utils import get_timezone_for_user
-from couchexport.models import SavedExportSchema
+from couchexport.models import SavedExportSchema, Format
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 from memoized import memoized
@@ -1088,9 +1090,8 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         raise NotImplementedError("Must implement generate_create_form_url")
 
     def update_emailed_es_export_data(self, in_data):
-        from corehq.apps.export.tasks import rebuild_export_task
         export_instance_id = in_data['export']['id']
-        rebuild_export_task.delay(export_instance_id)
+        manually_rebuild_export_task.delay(export_instance_id)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1115,7 +1116,7 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
         indexes = [x[0].index for x in relevant_group.all_exports]
         place_index = indexes.index(in_data['component']['index'])
-        rebuild_export_task.delay(group_id, place_index)
+        manually_rebuild_export_task.delay(group_id, place_index)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1242,6 +1243,7 @@ class DailySavedExportListView(BaseExportListView):
             'isDeid': export.is_safe,
             'isLegacy': False,
             'name': export.name,
+            'description': export.description,
             'formname': formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1432,6 +1434,7 @@ class DataFileDownloadList(BaseProjectDataView):
         return HttpResponseRedirect(reverse(self.urlname, kwargs={'domain': self.domain}))
 
 
+@method_decorator(api_auth, name='dispatch')
 class DataFileDownloadDetail(BaseProjectDataView):
     urlname = 'download_data_file'
 
@@ -1439,12 +1442,13 @@ class DataFileDownloadDetail(BaseProjectDataView):
         try:
             data_file = DataFile.objects.filter(domain=self.domain).get(pk=kwargs['pk'])
             blob = data_file.get_blob()
-            response = StreamingHttpResponse(FileWrapper(blob), content_type=data_file.content_type)
         except (DataFile.DoesNotExist, NotFound):
             raise Http404
-        response['Content-Disposition'] = 'attachment; filename="' + data_file.filename + '"'
-        response['Content-Length'] = data_file.content_length
-        return response
+
+        format = Format('', data_file.content_type, '', True)
+        return get_download_response(
+            blob, data_file.content_length, format, data_file.filename, request
+        )
 
     def delete(self, request, *args, **kwargs):
         try:
@@ -1514,16 +1518,20 @@ class FormExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, FormExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
+            is_legacy = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
+            is_legacy = False
+
         return {
             'id': export.get_id,
-            'isLegacy': isinstance(export, FormExportSchema),
+            'isLegacy': is_legacy,
             'isDeid': export.is_safe,
             'name': export.name,
+            'description': export.description if not is_legacy else '',
             'formname': export.formname,
             'addedToBulk': False,
             'exportType': export.type,
@@ -1652,17 +1660,21 @@ class CaseExportListView(BaseExportListView):
     def fmt_export_data(self, export):
         if isinstance(export, CaseExportSchema):
             emailed_export = self.get_formatted_emailed_export(export)
+            is_legacy = True
         else:
             # New export
             emailed_export = None
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
+            is_legacy = False
 
         return {
             'id': export.get_id,
             'isDeid': export.is_safe,
-            'isLegacy': isinstance(export, CaseExportSchema),
+            'isLegacy': is_legacy,
             'name': export.name,
+            'case_type': export.case_type,
+            'description': export.description if not is_legacy else '',
             'addedToBulk': False,
             'exportType': export.type,
             'emailedExport': emailed_export,
@@ -2421,9 +2433,8 @@ def download_daily_saved_export(req, domain, export_instance_id):
         export_instance.save()
 
     payload = export_instance.get_payload(stream=True)
-    return build_download_saved_export_response(
-        payload, export_instance.export_format, export_instance.filename
-    )
+    format = Format.from_format(export_instance.export_format)
+    return get_download_response(payload, export_instance.file_size, format, export_instance.filename, req)
 
 
 class CopyExportView(View):

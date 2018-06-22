@@ -1861,21 +1861,25 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
         vm.getDataForStep(vm.step);
     });
 
-    vm.getPopoverContent = function (recorded_weight, recorded_height, age_in_months, type) {
+    vm.getPopoverContent = function (weightRecorded, heightRecorded, ageInMonths, type) {
         var html = '';
 
         var recordedWeight = 'Data not Entered';
         var recordedHeight = 'Data not Entered';
         var age = 'Data not Entered';
 
-        if (recorded_weight) {
-            recordedWeight = d3.format(".2f")(recorded_weight) + ' kg';
+        if (weightRecorded) {
+            recordedWeight = d3.format(".2f")(weightRecorded) + ' kg';
         }
-        if (recorded_height) {
-            recordedHeight = d3.format(".2f")(recorded_height) + ' cm';
+        if (heightRecorded && parseInt(heightRecorded) !== 0) {
+            if (type === 'height' && parseInt(heightRecorded) <= 35 && parseInt(heightRecorded) >= 120) {
+                recordedHeight = 'Data Not Valid';
+            } else {
+                recordedHeight = d3.format(".2f")(heightRecorded) + ' cm';
+            }
         }
-        if (age_in_months) {
-            age = age_in_months + ' months';
+        if (ageInMonths) {
+            age = ageInMonths + ' months';
         }
 
         if (type === 'weight' || type === 'both') {
@@ -1908,7 +1912,7 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             showValues: true,
             showControls: false,
             useInteractiveGuideline: true,
-            clipVoronoi: false,
+            showLegend: false,
             duration: 500,
             xAxis: {
                 axisLabel: '',
@@ -1923,10 +1927,13 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
             yAxis: {
                 axisLabel: '',
             },
-            tooltip: function (x, y, value) {
-                return '<strong>Total number of children between ' + y + ':</strong> ' + value;
+            interactiveLayer: {
+                tooltip: {
+                    contentGenerator: function (key) {
+                        return 'Total number of children between <strong>' + key.series[0].data[0] + ':</strong> ' + key.series[0].data[1];
+                    },
+                },
             },
-
         },
     };
 
@@ -2086,8 +2093,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
                 });
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2146,9 +2153,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Age: <strong>" + d.value + "</strong> " + month + "</p>";
                     return html;
                 });
-
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },
@@ -2206,9 +2212,8 @@ function AwcReportsController($scope, $http, $location, $routeParams, $log, DTOp
                     html += "<p>Height: <strong>" + d.value + "</strong> cm</p>";
                     return html;
                 });
-
-                window.angular.forEach(d3.selectAll('.nv-series-3 > circle')[0], function (key) {
-                    if (key.__data__.y !== null) key.classList.add('chart-dot');
+                window.angular.forEach(d3.selectAll('g.nv-series-3 > path')[0], function (key) {
+                    if (key.__data__[0].y !== null) key.classList.add('chart-dot');
                 });
                 return chart;
             },

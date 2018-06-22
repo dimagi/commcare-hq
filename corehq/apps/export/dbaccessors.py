@@ -98,9 +98,15 @@ def get_form_exports_by_domain(domain, has_deid_permissions):
 
 
 def get_export_count_by_domain(domain):
-    exports = get_form_exports_by_domain(domain, True)
-    exports += get_case_exports_by_domain(domain, True)
-    return len(exports)
+    from .models import ExportInstance
+
+    return len(ExportInstance.get_db().view(
+        'export_instances_by_domain/view',
+        startkey=[domain],
+        endkey=[domain, {}],
+        include_docs=False,
+        reduce=False,
+    ).all())
 
 
 def _get_export_instance(cls, key):

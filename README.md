@@ -39,8 +39,9 @@ Please note that these instructions are targeted toward UNIX-based systems. For 
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
 - [Python 2.7](https://www.python.org/downloads/)
+- [Pip](https://pip.pypa.io/en/stable/installing/)
 - [Virtualenv](https://virtualenv.pypa.io/en/stable/)
-- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+- [Virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/#introduction)
 
 #### Setup virtualenv
 
@@ -105,12 +106,8 @@ You should run `./manage.py migrate` frequently, but only use the environment
 variable CCHQ_IS_FRESH_INSTALL during your initial setup.  It is used to skip a
 few tricky migrations that aren't necessary for new installs.
 
-Create a superuser for your local environment. (Ignore warnings
-related to Raven for the following three commands.)
-
-    $ ./manage.py make_superuser <email>
-
-To set up elasticsearch indexes run the following:
+To set up elasticsearch indexes run the following (Ignore warnings
+related to Raven for the following two commands.):
 
     $ ./manage.py ptop_preindex
 
@@ -275,6 +272,10 @@ Then run the following separately:
     $ ./manage.py celeryd --verbosity=2 --beat --statedb=celery.db --events
     # Windows
     > manage.py celeryd --settings=settings
+
+Create a superuser for your local environment
+
+    $ ./manage.py make_superuser <email>
 
 If you want to use CloudCare you will also need to run the Touchforms server.
 

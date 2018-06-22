@@ -29,6 +29,10 @@ module.exports = {
         "d3": false,
     },
 
+    "plugins": [
+        "eslint-dimagi",
+    ],
+
     // http://eslint.org/docs/rules/
     // http://eslint.org/docs/user-guide/configuring#configuring-rules
     "rules": {
@@ -42,5 +46,8 @@ module.exports = {
         "no-new-object": ["error"],
         "no-unneeded-ternary": ["error"],
         "no-throw-literal": ["error"],
+        "no-implicit-globals": ["error"],
+
+        "eslint-dimagi/no-unblessed-new": ["error", ["Date", "Error", "RegExp", "Clipboard"]],
     }
 };

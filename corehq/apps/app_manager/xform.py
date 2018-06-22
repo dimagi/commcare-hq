@@ -13,7 +13,7 @@ from corehq.apps import formplayer_api
 from corehq.apps.app_manager.const import (
     SCHEDULE_PHASE, SCHEDULE_LAST_VISIT, SCHEDULE_LAST_VISIT_DATE,
     CASE_ID, USERCASE_ID, SCHEDULE_UNSCHEDULED_VISIT, SCHEDULE_CURRENT_VISIT_NUMBER,
-    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE)
+    SCHEDULE_GLOBAL_NEXT_VISIT_DATE, SCHEDULE_NEXT_DUE, META_DRIFT_ADDED_FROM_CC_VERSION)
 from lxml import etree as ET
 
 from corehq.apps.formplayer_api.exceptions import FormplayerAPIException
@@ -1298,7 +1298,8 @@ class XForm(WrappedNode):
 
     def add_meta_2(self, form):
         case_parent = self.data_node
-
+        app = form.get_app()
+        add_meta_drift = app.build_spec.release_greater_than_or_equal_to(META_DRIFT_ADDED_FROM_CC_VERSION)
         # Test all of the possibilities so that we don't end up with two "meta" blocks
         for meta in self.already_has_meta():
             case_parent.remove(meta.xml)
@@ -1318,6 +1319,8 @@ class XForm(WrappedNode):
             '{orx}instanceID',
             '{cc}appVersion',
         )
+        if add_meta_drift:
+            tags += ('{orx}drift',)
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
         for tag in tags:
@@ -1357,8 +1360,15 @@ class XForm(WrappedNode):
             value="instance('commcaresession')/session/context/appversion"
         )
 
+        if add_meta_drift:
+            self.add_setvalue(
+                ref="meta/drift",
+                event="xforms-revalidate",
+                value="instance('commcaresession')/session/context/drift",
+            )
+
         # never add pollsensor to a pre-2.14 app
-        if form.get_app().enable_auto_gps:
+        if app.enable_auto_gps:
             if form.get_auto_gps_capture():
                 self.add_pollsensor(ref=self.resolve_path("meta/location"))
             elif self.model_node.findall("{f}bind[@type='geopoint']"):
@@ -1927,137 +1937,127 @@ VELLUM_TYPES = {
     "AndroidIntent": {
         'tag': 'input',
         'type': 'intent',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
     },
     "Audio": {
         'tag': 'upload',
         'media': 'audio/*',
         'type': 'binary',
-        'icon': 'icon-vellum-audio-capture',
-        'icon_bs3': 'fcc fcc-fd-audio-capture',
+        'icon': 'fcc fcc-fd-audio-capture',
     },
     "Barcode": {
         'tag': 'input',
         'type': 'barcode',
-        'icon': 'icon-vellum-android-intent',
-        'icon_bs3': 'fcc fcc-fd-android-intent',
+        'icon': 'fcc fcc-fd-android-intent',
     },
     "DataBindOnly": {
-        'icon': 'icon-vellum-variable',
-        'icon_bs3': 'fcc fcc-fd-variable',
+        'icon': 'fcc fcc-fd-variable',
+        'editable': True,
     },
     "Date": {
         'tag': 'input',
         'type': 'xsd:date',
-        'icon': 'icon-calendar',
-        'icon_bs3': 'fa fa-calendar',
+        'icon': 'fa fa-calendar',
+        'editable': True,
     },
     "DateTime": {
         'tag': 'input',
         'type': 'xsd:dateTime',
-        'icon': 'icon-vellum-datetime',
-        'icon_bs3': 'fcc fcc-fd-datetime',
+        'icon': 'fcc fcc-fd-datetime',
+        'editable': True,
     },
     "Double": {
         'tag': 'input',
         'type': 'xsd:double',
-        'icon': 'icon-vellum-decimal',
-        'icon_bs3': 'fcc fcc-fd-decimal',
+        'icon': 'fcc fcc-fd-decimal',
+        'editable': True,
     },
     "FieldList": {
         'tag': 'group',
         'appearance': 'field-list',
-        'icon': 'icon-reorder',
-        'icon_bs3': 'fa fa-bars',
+        'icon': 'fa fa-bars',
     },
     "Geopoint": {
         'tag': 'input',
         'type': 'geopoint',
-        'icon': 'icon-map-marker',
-        'icon_bs3': 'fa fa-map-marker',
+        'icon': 'fa fa-map-marker',
+        'editable': True,
     },
     "Group": {
         'tag': 'group',
-        'icon': 'icon-folder-open',
-        'icon_bs3': 'fa fa-folder-open',
+        'icon': 'fa fa-folder-open',
     },
     "Image": {
         'tag': 'upload',
         'media': 'image/*',
         'type': 'binary',
-        'icon': 'icon-camera',
-        'icon_bs3': 'fa fa-camera',
+        'icon': 'fa fa-camera',
     },
     "Int": {
         'tag': 'input',
         'type': ('xsd:int', 'xsd:integer'),
-        'icon': 'icon-vellum-numeric',
-        'icon_bs3': 'fcc fcc-fd-numeric',
+        'icon': 'fcc fcc-fd-numeric',
+        'editable': True,
     },
     "Long": {
         'tag': 'input',
         'type': 'xsd:long',
-        'icon': 'icon-vellum-long',
-        'icon_bs3': 'fcc fcc-fd-long',
+        'icon': 'fcc fcc-fd-long',
+        'editable': True,
     },
     "MSelect": {
         'tag': 'select',
-        'icon': 'icon-vellum-multi-select',
-        'icon_bs3': 'fcc fcc-fd-multi-select',
+        'icon': 'fcc fcc-fd-multi-select',
+        'editable': True,
     },
     "PhoneNumber": {
         'tag': 'input',
         'type': ('xsd:string', None),
         'appearance': 'numeric',
-        'icon': 'icon-signal',
-        'icon_bs3': 'fa fa-signal',
+        'icon': 'fa fa-signal',
+        'editable': True,
     },
     "Repeat": {
         'tag': 'repeat',
-        'icon': 'icon-retweet',
-        'icon_bs3': 'fa fa-retweet',
+        'icon': 'fa fa-retweet',
     },
     "SaveToCase": {
         'tag': 'save_to_case',
-        'icon': 'icon-save',
-        'icon_bs3': 'fa fa-save',
+        'icon': 'fa fa-save',
     },
 
     "Secret": {
         'tag': 'secret',
         'type': ('xsd:string', None),
-        'icon': 'icon-key',
-        'icon_bs3': 'fa fa-key',
+        'icon': 'fa fa-key',
+        'editable': True,
     },
     "Select": {
         'tag': 'select1',
-        'icon': 'icon-vellum-single-select',
-        'icon_bs3': 'fcc fcc-fd-single-select',
+        'icon': 'fcc fcc-fd-single-select',
+        'editable': True,
     },
     "Text": {
         'tag': 'input',
         'type': ('xsd:string', None),
-        'icon': "icon-vellum-text",
-        'icon_bs3': 'fcc fcc-fd-text',
+        'icon': 'fcc fcc-fd-text',
+        'editable': True,
     },
     "Time": {
         'tag': 'input',
         'type': 'xsd:time',
-        'icon': 'icon-time',
-        'icon_bs3': 'a fa-clock-o',
+        'icon': 'fa fa-clock-o',
+        'editable': True,
     },
     "Trigger": {
         'tag': 'trigger',
-        'icon': 'icon-tag',
-        'icon_bs3': 'fa fa-tag',
+        'icon': 'fa fa-tag',
     },
     "Video": {
         'tag': 'upload',
         'media': 'video/*',
         'type': 'binary',
-        'icon': 'icon-facetime-video',
-        'icon_bs3': 'fa fa-video-camera',
+        'icon': 'fa fa-video-camera',
     },
 }
 

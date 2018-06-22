@@ -43,6 +43,7 @@ from corehq.apps.app_manager.exceptions import SuiteError
 from corehq.apps.app_manager.xpath import session_var, XPath
 from corehq import toggles
 from memoized import memoized
+from io import open
 
 
 class DetailContributor(SectionContributor):
@@ -586,7 +587,8 @@ class CaseTileHelper(object):
         Return a string suitable for building a case tile detail node
         through `String.format`.
         """
-        with open(os.path.join(
-                os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"
-        )) as f:
-            return f.read().decode('utf-8')
+        with open(
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "case_tile_templates", "tdh.txt"),
+            encoding='utf-8'
+        ) as f:
+            return f.read()

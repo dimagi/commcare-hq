@@ -297,6 +297,14 @@ class CaseLocationTests(LocationHierarchyTestCase):
         location = get_case_location(case)
         self.assertIsNone(location)
 
+    def test_no_owner(self):
+        """
+        get_case_location should return None when the case has no owner
+        """
+        form, (case, ) = _create_case(domain=self.domain, case_id=uuid.uuid4().hex, owner_id=None)
+        location = get_case_location(case)
+        self.assertIsNone(location)
+
     def test_openmrs_location_uuid_set(self):
         """
         get_openmrs_location_uuid should return the OpenMRS location UUID that corresponds to a case's location

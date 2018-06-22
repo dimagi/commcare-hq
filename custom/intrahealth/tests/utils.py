@@ -36,6 +36,9 @@ class YeksiTestCase(TestCase):
         user.is_active = True
         self.user = user
 
+    def tearDown(self):
+        self.user.delete()
+
 
 class TestDataSourceExpressions(SimpleTestCase):
 
@@ -72,7 +75,7 @@ class TestDataSourceExpressions(SimpleTestCase):
             cls.data_source_name
         )
 
-        with open(data_source_file) as f:
+        with open(data_source_file, encoding='utf-8') as f:
             cls.data_source = DataSourceConfiguration.wrap(json.loads(f.read())['config'])
             cls.named_expressions = cls.data_source.named_expression_objects
             cls.base_item_expression = cls.data_source.base_item_expression

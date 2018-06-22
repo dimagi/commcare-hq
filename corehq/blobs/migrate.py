@@ -111,6 +111,7 @@ from corehq.apps.case_importer.tracking.models import CaseUploadFileMeta
 from couchexport.models import SavedBasicExport
 import corehq.form_processor.models as sql_xform
 import six
+from io import open
 
 MIGRATION_INSTRUCTIONS = """
 There are {total} documents that may have attachments, and they must be

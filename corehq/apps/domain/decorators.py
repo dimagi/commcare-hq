@@ -18,6 +18,7 @@ from django.utils.http import urlquote
 from django.utils.translation import ugettext as _
 
 # External imports
+from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
     determine_authtype_from_request, basicauth, tokenauth,
@@ -37,11 +38,14 @@ from corehq.apps.users.models import CouchUser
 from corehq.apps.hqwebapp.signals import clear_login_attempts
 
 ########################################################################################################
-from corehq.toggles import IS_DEVELOPER, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
+from corehq.toggles import IS_CONTRACTOR, DATA_MIGRATION, PUBLISH_CUSTOM_REPORTS, TWO_FACTOR_SUPERUSER_ROLLOUT
+
 
 logger = logging.getLogger(__name__)
 
 REDIRECT_FIELD_NAME = 'next'
+
+OTP_AUTH_FAIL_RESPONSE = {"error": "must send X-COMMCAREHQ-OTP header or 'otp' URL parameter"}
 
 
 def load_domain(req, domain):
@@ -93,7 +97,11 @@ def login_and_domain_required(view_func):
             couch_user = _ensure_request_couch_user(req)
             if couch_user.is_member_of(domain):
                 # If the two factor toggle is on, require it for all users.
-                if _two_factor_required(view_func, domain, couch_user) and not user.is_verified():
+                if (
+                    _two_factor_required(view_func, domain, couch_user)
+                    and not getattr(req, 'bypass_two_factor', False)
+                    and not user.is_verified()
+                ):
                     return TemplateResponse(
                         request=req,
                         template='two_factor/core/otp_required.html',
@@ -299,10 +307,15 @@ def two_factor_check(view_func, api_key):
             couch_user = _ensure_request_couch_user(request)
             if not api_key and dom and _two_factor_required(view_func, dom, couch_user):
                 token = request.META.get('HTTP_X_COMMCAREHQ_OTP')
+                if not token and 'otp' in request.GET:
+                    with mutable_querydict(request.GET):
+                        # remove the param from the query dict so that we don't interfere with places
+                        # that use the query dict to generate dynamic filters
+                        token = request.GET.pop('otp')[-1]
                 if not token:
-                    return JsonResponse({"error": "must send X-CommcareHQ-OTP header"}, status=401)
+                    return JsonResponse(OTP_AUTH_FAIL_RESPONSE, status=401)
                 elif not match_token(request.user, token):
-                    return JsonResponse({"error": "X-CommcareHQ-OTP token is incorrect"}, status=401)
+                    return JsonResponse({"error": "OTP token is incorrect"}, status=401)
                 else:
                     return fn(request, domain, *args, **kwargs)
             return fn(request, domain, *args, **kwargs)
@@ -423,11 +436,11 @@ def domain_admin_required_ex(redirect_page_name=None):
     return _outer
 
 
-def require_superuser_or_developer(view_func):
+def require_superuser_or_contractor(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
         user = request.user
-        if IS_DEVELOPER.enabled(user.username) or user.is_superuser:
+        if IS_CONTRACTOR.enabled(user.username) or user.is_superuser:
             return view_func(request, *args, **kwargs)
         else:
             return HttpResponseRedirect(reverse("no_permissions"))
@@ -444,7 +457,7 @@ cls_domain_admin_required = cls_to_view(additional_decorator=domain_admin_requir
 require_superuser = permission_required("is_superuser", login_url='/no_permissions/')
 cls_require_superusers = cls_to_view(additional_decorator=require_superuser)
 
-cls_require_superuser_or_developer = cls_to_view(additional_decorator=require_superuser_or_developer)
+cls_require_superuser_or_contractor = cls_to_view(additional_decorator=require_superuser_or_contractor)
 
 
 def require_previewer(view_func):

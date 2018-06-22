@@ -11,6 +11,7 @@ from casexml.apps.case.xform import get_case_updates
 from corehq.apps.app_manager.dbaccessors import get_latest_released_app
 from corehq.apps.app_manager.exceptions import FormNotFoundException
 from corehq.apps.app_manager.models import AdvancedForm
+from corehq.apps.data_interfaces.utils import property_references_parent
 from corehq.apps.es.cases import CaseES
 from corehq.apps.users.util import SYSTEM_USER_ID
 from corehq.form_processor.abstract_models import DEFAULT_PARENT_IDENTIFIER
@@ -166,6 +167,38 @@ class AutomaticUpdateRule(models.Model):
                     rule.save()
 
             return rule
+
+    @property
+    def references_parent_case(self):
+        for crierion in self.memoized_criteria:
+            definition = crierion.definition
+            if isinstance(definition, ClosedParentDefinition):
+                return True
+            elif (
+                isinstance(definition, MatchPropertyDefinition) and
+                property_references_parent(definition.property_name)
+            ):
+                return True
+
+        for action in self.memoized_actions:
+            definition = action.definition
+            if isinstance(definition, UpdateCaseDefinition):
+                for property_definition in definition.get_properties_to_update():
+                    if property_references_parent(property_definition.name):
+                        return True
+                    if (
+                        property_definition.value_type == UpdateCaseDefinition.VALUE_TYPE_CASE_PROPERTY and
+                        property_references_parent(property_definition.value)
+                    ):
+                        return True
+            elif isinstance(definition, CreateScheduleInstanceActionDefinition):
+                if (
+                    property_references_parent(definition.reset_case_property_name) or
+                    property_references_parent(definition.start_date_case_property)
+                ):
+                    return True
+
+        return False
 
     @classmethod
     def by_domain(cls, domain, workflow, active_only=True):
@@ -494,6 +527,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     MATCH_NOT_EQUAL = 'NOT_EQUAL'
     MATCH_HAS_VALUE = 'HAS_VALUE'
     MATCH_HAS_NO_VALUE = 'HAS_NO_VALUE'
+    MATCH_REGEX = 'REGEX'
 
     MATCH_CHOICES = (
         MATCH_DAYS_BEFORE,
@@ -502,6 +536,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
         MATCH_NOT_EQUAL,
         MATCH_HAS_VALUE,
         MATCH_HAS_NO_VALUE,
+        MATCH_REGEX,
     )
 
     property_name = models.CharField(max_length=126)
@@ -578,6 +613,22 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
     def check_has_no_value(self, case, now):
         return not self.check_has_value(case, now)
 
+    def check_regex(self, case, now):
+        try:
+            regex = re.compile(self.property_value)
+        except (re.error, ValueError, TypeError):
+            return False
+
+        for value in self.get_case_values(case):
+            if isinstance(value, six.string_types):
+                try:
+                    if regex.match(value):
+                        return True
+                except (re.error, ValueError, TypeError):
+                    pass
+
+        return False
+
     def matches(self, case, now):
         return {
             self.MATCH_DAYS_BEFORE: self.check_days_before,
@@ -586,6 +637,7 @@ class MatchPropertyDefinition(CaseRuleCriteriaDefinition):
             self.MATCH_NOT_EQUAL: self.check_not_equal,
             self.MATCH_HAS_VALUE: self.check_has_value,
             self.MATCH_HAS_NO_VALUE: self.check_has_no_value,
+            self.MATCH_REGEX: self.check_regex,
         }.get(self.match_type)(case, now)
 
 

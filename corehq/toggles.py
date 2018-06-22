@@ -469,6 +469,13 @@ CASE_DETAIL_PRINT = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
+COPY_FORM_TO_APP = StaticToggle(
+    'copy_form_to_app',
+    'Allow copying a form from one app to another',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)
+
 DATA_FILE_DOWNLOAD = StaticToggle(
     'data_file_download',
     'UW: Offer hosting and sharing data files for downloading, e.g. cleaned and anonymised form exports',
@@ -477,6 +484,12 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
+DATA_CORRECTIONS_FORMS = StaticToggle(
+    'data_corrections_forms',
+    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
+    TAG_PRODUCT,
+    [NAMESPACE_DOMAIN],
+)
 
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
@@ -501,9 +514,9 @@ GRAPH_CREATION = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN]
 )
 
-IS_DEVELOPER = StaticToggle(
-    'is_developer',
-    'Is developer',
+IS_CONTRACTOR = StaticToggle(
+    'is_contractor',
+    'Is contractor',
     TAG_INTERNAL,
     description="Used to give non super-users access to select super-user features"
 )
@@ -623,6 +636,25 @@ SYNC_SEARCH_CASE_CLAIM = StaticToggle(
     TAG_SOLUTIONS,
     help_link='https://confluence.dimagi.com/display/ccinternal/Remote+Case+Search+and+Claim',
     namespaces=[NAMESPACE_DOMAIN]
+)
+
+
+def _enable_search_index(domain, enabled):
+    from corehq.apps.case_search.tasks import reindex_case_search_for_domain, delete_case_search_cases_for_domain
+    from corehq.pillows.case_search import domains_needing_search_index
+    domains_needing_search_index.clear()
+    if enabled:
+        reindex_case_search_for_domain.delay(domain)
+    else:
+        delete_case_search_cases_for_domain.delay(domain)
+
+
+CASE_LIST_EXPLORER = StaticToggle(
+    'case_list_explorer',
+    'Show the case list explorer report',
+    TAG_SOLUTIONS,
+    namespaces=[NAMESPACE_DOMAIN],
+    save_fn=_enable_search_index,
 )
 
 LIVEQUERY_SYNC = StaticToggle(
@@ -1141,7 +1173,8 @@ REMINDERS_MIGRATION_IN_PROGRESS = StaticToggle(
     'reminders_migration_in_progress',
     "Disables editing of reminders so that the migration to the new framework can happen.",
     TAG_INTERNAL,
-    [NAMESPACE_DOMAIN]
+    [NAMESPACE_DOMAIN],
+    always_disabled={'icds-cas'}
 )
 
 
@@ -1158,6 +1191,14 @@ INBOUND_SMS_LENIENCY = StaticToggle(
     "Inbound SMS leniency on domain-owned gateways. "
     "WARNING: This wil be rolled out slowly; do not enable on your own.",
     TAG_INTERNAL,
+    [NAMESPACE_DOMAIN]
+)
+
+
+HIDE_MESSAGING_DASHBOARD_FROM_NON_SUPERUSERS = StaticToggle(
+    'hide_messaging_dashboard',
+    "Hide messaging dashboard from users who are not superusers.",
+    TAG_CUSTOM,
     [NAMESPACE_DOMAIN]
 )
 
@@ -1397,6 +1438,15 @@ SKIP_REMOVE_INDICES = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+MOBILE_RECOVERY_MEASURES = StaticToggle(
+    'mobile_recovery_measures',
+    'Mobile recovery measures',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN],
+    description=("Used for widely deployed projects where recovery from "
+                 "large-scale failures would otherwise be next to impossible."),
+)
+
 PREVENT_MOBILE_UCR_SYNC = StaticToggle(
     'prevent_mobile_ucr_sync',
     'ICDS: Used for ICDS emergencies when UCR sync is killing the DB',
@@ -1488,30 +1538,12 @@ SUMOLOGIC_LOGS = DynamicallyPredictablyRandomToggle(
     namespaces=[NAMESPACE_OTHER],
 )
 
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST_CONTROLLER = StaticToggle(
-    'mobile_signup_redirect_ab_test_controller',
-    'Enable the ab test for telling mobile signups to use desktops. Set on the fly on registration if mobile',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER]
-)
-
 TARGET_COMMCARE_FLAVOR = StaticToggle(
     'target_commcare_flavor',
     'Target CommCare Flavor.',
     TAG_CUSTOM,
     namespaces=[NAMESPACE_DOMAIN],
 )
-
-
-MOBILE_SIGNUP_REDIRECT_AB_TEST = PredictablyRandomToggle(
-    'mobile_signup_redirect_ab_test',
-    'Randomly sorts mobile users into group 1 for new mobile experience or 0 for control',
-    TAG_PRODUCT,
-    namespaces=[NAMESPACE_USER],
-    randomness=0.5
-)
-
 
 APPCUES_AB_TEST = PredictablyRandomToggle(
     'appcues_ab_test',
@@ -1521,6 +1553,12 @@ APPCUES_AB_TEST = PredictablyRandomToggle(
     randomness=0.5
 )
 
+WAREHOUSE_APP_STATUS = StaticToggle(
+    'warehouse_app_status',
+    "User warehouse backend for the app status report. Currently only for sql domains",
+    TAG_CUSTOM,
+    [NAMESPACE_DOMAIN],
+)
 
 TRAINING_MODULE = StaticToggle(
     'training-module',
@@ -1528,3 +1566,20 @@ TRAINING_MODULE = StaticToggle(
     TAG_CUSTOM,
     [NAMESPACE_DOMAIN],
 )
+
+
+EXPORT_MULTISORT = StaticToggle(
+    'export_multisort',
+    'Sort multiple rows in exports at once.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
+
+APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
+    'app_trans_with_transifex',
+    'Translate Application Content With Transifex',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+

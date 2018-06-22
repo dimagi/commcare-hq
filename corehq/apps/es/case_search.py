@@ -20,14 +20,14 @@ from django.utils.translation import ugettext as _
 from eulxml.xpath import parse as parse_xpath
 
 from corehq.apps.case_search.const import (
+    SPECIAL_CASE_PROPERTIES,
     CASE_PROPERTIES_PATH,
     IDENTIFIER,
     INDICES_PATH,
     REFERENCED_ID,
     RELEVANCE_SCORE,
-    VALUE_DATE,
-    VALUE_NUMERIC,
-    VALUE_TEXT,
+    SYSTEM_PROPERTIES,
+    VALUE,
 )
 from corehq.apps.es.aggregations import BucketResult, TermsAggregation
 from corehq.apps.es.cases import CaseES, owner
@@ -72,8 +72,8 @@ class CaseSearchES(CaseES):
             return (
                 # fuzzy match
                 self._add_query(case_property_text_query(case_property_name, value, fuzziness='AUTO'), clause)
-                # exact match. added to improve the score of exact matches
-                ._add_query(exact_case_property_text_query(case_property_name, value),
+                # non-fuzzy match. added to improve the score of exact matches
+                ._add_query(case_property_text_query(case_property_name, value),
                             queries.SHOULD if positive_clause else clause))
         else:
             return self._add_query(exact_case_property_text_query(case_property_name, value), clause)
@@ -84,7 +84,7 @@ class CaseSearchES(CaseES):
         """
         return self._add_query(
             _base_property_query(case_property_name, queries.regexp(
-                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), regex)
+                "{}.{}".format(CASE_PROPERTIES_PATH, VALUE), regex)
             ),
             clause,
         )
@@ -126,7 +126,7 @@ class CaseSearchES(CaseES):
             return self.filter(build_filter_from_ast(domain, parse_xpath(xpath)))
         except (TypeError, RuntimeError) as e:
             raise CaseFilterError(
-                _("Malformed query: {}".format(e)),
+                _("Malformed search query: {search_query}").format(search_query=e),
                 None,
             )
 
@@ -157,6 +157,25 @@ class CaseSearchES(CaseES):
             queries.MUST,
         )
 
+    def sort_by_case_property(self, case_property_name, desc=False):
+        sort_filter = filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name)
+        return self.nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'numeric'),
+            sort_filter,
+            desc,
+            reset_sort=True
+        ).nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'date'),
+            sort_filter,
+            desc,
+            reset_sort=False
+        ).nested_sort(
+            CASE_PROPERTIES_PATH, "{}.{}".format(VALUE, 'exact'),
+            sort_filter,
+            desc,
+            reset_sort=False
+        )
+
 
 def case_property_filter(case_property_name, value):
     warn("Use the query versions of this function from the case_search module instead", DeprecationWarning)
@@ -164,7 +183,7 @@ def case_property_filter(case_property_name, value):
         CASE_PROPERTIES_PATH,
         filters.AND(
             filters.term("{}.key.exact".format(CASE_PROPERTIES_PATH), case_property_name),
-            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+            filters.term("{}.{}".format(CASE_PROPERTIES_PATH, VALUE), value),
         )
     )
 
@@ -182,7 +201,7 @@ def exact_case_property_text_query(case_property_name, value):
             queries.match_all(),
             filters.AND(
                 filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
-                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), value),
+                filters.term('{}.{}.exact'.format(CASE_PROPERTIES_PATH, VALUE), value),
             )
         )
     )
@@ -198,7 +217,7 @@ def case_property_text_query(case_property_name, value, fuzziness='0'):
     """
     return _base_property_query(
         case_property_name,
-        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE_TEXT), fuzziness=fuzziness)
+        queries.match(value, '{}.{}'.format(CASE_PROPERTIES_PATH, VALUE), fuzziness=fuzziness)
     )
 
 
@@ -213,7 +232,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
         kwargs = {key: float(value) for key, value in six.iteritems(kwargs) if value is not None}
         return _base_property_query(
             case_property_name,
-            queries.range_query("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_NUMERIC), **kwargs)
+            queries.range_query("{}.{}.numeric".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
         )
     except ValueError:
         pass
@@ -223,7 +242,7 @@ def case_property_range_query(case_property_name, gt=None, gte=None, lt=None, lt
     kwargs = {key: parse_date(value) for key, value in six.iteritems(kwargs) if value is not None}
     return _base_property_query(
         case_property_name,
-        queries.date_range("{}.{}".format(CASE_PROPERTIES_PATH, VALUE_DATE), **kwargs)
+        queries.date_range("{}.{}.date".format(CASE_PROPERTIES_PATH, VALUE), **kwargs)
     )
 
 
@@ -254,6 +273,24 @@ def reverse_index_case_query(case_ids, identifier=None):
     )
 
 
+def case_property_missing(case_property_name):
+    """case_property_name isn't set or is the empty string
+
+    """
+    return filters.OR(
+        filters.NOT(
+            queries.nested(
+                CASE_PROPERTIES_PATH,
+                queries.filtered(
+                    queries.match_all(),
+                    filters.term('{}.key.exact'.format(CASE_PROPERTIES_PATH), case_property_name),
+                )
+            )
+        ),
+        exact_case_property_text_query(case_property_name, '')
+    )
+
+
 def _base_property_query(case_property_name, query):
     return queries.nested(
         CASE_PROPERTIES_PATH,
@@ -268,21 +305,29 @@ def blacklist_owner_id(owner_id):
     return filters.NOT(owner(owner_id))
 
 
-def flatten_result(hit):
+def flatten_result(hit, include_score=False):
     """Flattens a result from CaseSearchES into the format that Case serializers
     expect
 
     i.e. instead of {'name': 'blah', 'case_properties':{'key':'foo', 'value':'bar'}} we return
     {'name': 'blah', 'foo':'bar'}
     """
-    result = hit['_source']
-    result[RELEVANCE_SCORE] = hit['_score']
-    case_properties = result.pop('case_properties', [])
+    try:
+        result = hit['_source']
+    except KeyError:
+        result = hit
+
+    if include_score:
+        result[RELEVANCE_SCORE] = hit['_score']
+    case_properties = result.pop(CASE_PROPERTIES_PATH, [])
     for case_property in case_properties:
         key = case_property.get('key')
         value = case_property.get('value')
-        if key is not None and not key.startswith("@") and value:
+        if key is not None and key not in SPECIAL_CASE_PROPERTIES and value:
             result[key] = value
+
+    for key in SYSTEM_PROPERTIES:
+        result.pop(key, None)
     return result
 
 

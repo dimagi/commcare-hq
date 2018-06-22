@@ -34,7 +34,7 @@ class ProdIndexManagementTest(SimpleTestCase):
 EXPECTED_PROD_INDICES = [
     {
         "alias": "case_search",
-        "index": "test_case_search_2018-04-27",
+        "index": "test_case_search_2018-05-29",
         "type": "case",
         "meta": {
             "settings": {
@@ -66,6 +66,7 @@ EXPECTED_PROD_INDICES = [
         "type": "app",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {
@@ -111,6 +112,7 @@ EXPECTED_PROD_INDICES = [
         "type": "hqdomain",
         "meta": {
             "settings": {
+                "number_of_replicas": 0,
                 "analysis": {
                     "analyzer": {
                         "default": {

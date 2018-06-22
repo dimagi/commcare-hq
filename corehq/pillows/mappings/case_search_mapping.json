@@ -6,8 +6,11 @@
         "comment": "",
         "created": "2016-03-29 @frener"
     },
+    "_all": {
+        "enabled": false
+    },
     "properties": {
-        "_indexed_on": {
+        "@indexed_on": {
             "format": "__DATE_FORMATS_STRING__",
             "type": "date"
         },
@@ -26,19 +29,23 @@
                 },
                 "value": {
                     "type": "string",
+                    "null_value": "",
                     "fields": {
                         "exact": {
                             "index": "not_analyzed",
-                            "type": "string"
+                            "type": "string",
+                            "null_value": ""
+                        },
+                        "numeric": {
+                            "type": "double",
+                            "ignore_malformed": true
+                        },
+                        "date": {
+                            "type": "date",
+                            "format": "__DATE_FORMATS_STRING__",
+                            "ignore_malformed": true
                         }
                     }
-                },
-                "value_numeric": {
-                    "type": "double"
-                },
-                "value_date": {
-                    "type": "date",
-                    "format": "__DATE_FORMATS_STRING__"
                 }
             }
         },
@@ -105,17 +112,13 @@
             "type": "date"
         },
         "name": {
+            "type": "string",
             "fields": {
                 "exact": {
                     "index": "not_analyzed",
                     "type": "string"
-                },
-                "name": {
-                    "index": "analyzed",
-                    "type": "string"
                 }
-            },
-            "type": "multi_field"
+            }
         },
         "opened_by": {
             "type": "string",

@@ -49,18 +49,13 @@
 trunk: master
 name: autostaging
 branches:
-  - vellum-staging # J$ 11/13
-  - jls/privacy-policy  # Jenny 3/19
-  - jls/data-corrections-forms  # Jenny 3/27
-  - je/report-builder-button # J$ 4/3
-  - ce/auto-batches # Cal April 6
-  - ce/app-status-staging # Cal April 9
-  - jr/drilldown-filters-again # jordan April 23
-  - jls/add-js-to-sentry # Jenny April 26
-  - jls/bring-back-mass-emails # Jenny April 27
-  - jr/parallelize-state-independent-parts # jordan May 3
-  - nh/motech/uncouple # Norman: May the fourth
-  - sr-training # Sravan: May 7
+  - jls/prune-auto-builds  # Jenny June 5
+  - bmb/improve-mobile-signup # biyeun june 6
+  - jls/reduce-maps-code  # Jenny June 11
+  - jls/kill-mm-case-properties  # Jenny June 13
+  - es/progress-bar  # ES June 18
+  - fr/case-list-explorer-uat-feedback # Farid June 19
+#  - np/export-sharing  # NP June 19
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

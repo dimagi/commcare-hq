@@ -53,7 +53,6 @@ from corehq.apps.app_manager.views.download import (
     download_profile,
     download_raw_jar,
     download_suite,
-    download_test_jar,
     download_xform,
     DownloadCCZ,
     validate_form_for_build,
@@ -73,7 +72,6 @@ from corehq.apps.app_manager.views.forms import (
     undo_delete_form,
     view_form_legacy,
     view_form,
-    xform_display,
     get_form_questions,
 )
 from corehq.apps.app_manager.views.modules import (

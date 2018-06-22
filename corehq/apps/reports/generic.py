@@ -8,7 +8,7 @@ import pytz
 import json
 
 from celery.utils.log import get_task_logger
-from django.http import HttpResponse, Http404, HttpResponseRedirect
+from django.http import HttpResponse, Http404, HttpResponseRedirect, JsonResponse
 from django.template.context import RequestContext
 from django.template.loader import render_to_string
 from django.shortcuts import render
@@ -102,7 +102,6 @@ class GenericReportView(object):
     description = None  # Human-readable description of the report
     report_template_path = None
     report_partial_path = None
-    js_scripts = None
 
     asynchronous = False
     hide_filters = False
@@ -280,22 +279,19 @@ class GenericReportView(object):
     @property
     @memoized
     def template_base(self):
-        return self._select_bootstrap_template(self.base_template)
+        return self.base_template
 
     @property
     @memoized
     def mobile_template_base(self):
-        return self._select_bootstrap_template(
-            self.base_template_mobile or "reports/mobile/mobile_report_base.html"
-        )
+        return self.base_template_mobile or "reports/mobile/mobile_report_base.html"
 
     @property
     @memoized
     def template_async_base(self):
-        return self._select_bootstrap_template(
-            (self.base_template_async or "reports/async/default.html")
-            if self.asynchronous else self.template_base
-        )
+        if self.asynchronous:
+            return self.base_template_async or "reports/async/default.html"
+        return self.template_base
 
     @property
     @memoized
@@ -303,20 +299,18 @@ class GenericReportView(object):
         original_template = self.report_template_path or "reports/async/basic.html"
         if self.is_rendered_as_email:
             self.context.update(original_template=original_template)
-            return self._select_bootstrap_template(self.override_template)
-        return self._select_bootstrap_template(original_template)
+            return self.override_template
+        return original_template
 
     @property
     @memoized
     def template_report_partial(self):
-        return self._select_bootstrap_template(self.report_partial_path)
+        return self.report_partial_path
 
     @property
     @memoized
     def template_filters(self):
-        return self._select_bootstrap_template(
-            self.base_template_filters or "reports/async/filters.html"
-        )
+        return self.base_template_filters or "reports/async/filters.html"
 
     @property
     @memoized
@@ -492,7 +486,6 @@ class GenericReportView(object):
                 report_title=self.report_title or self.rendered_report_title,
                 report_subtitles=self.report_subtitles,
                 export_target=self.export_target,
-                js_scripts=self.js_scripts,
                 js_options=self.js_options,
                 custom_filter_action_template=(
                     self.custom_filter_action_template
@@ -638,7 +631,7 @@ class GenericReportView(object):
             Intention: Not to be overridden in general.
             Renders the asynchronous view of the report template, returned as json.
         """
-        return HttpResponse(json.dumps(self._async_context()), content_type='application/json')
+        return JsonResponse(self._async_context())
 
     def _async_context(self):
         self.update_template_context()
@@ -654,12 +647,16 @@ class GenericReportView(object):
             self.template_report, self.context, request=self.request
         )
 
+        report_table_js_options = {}
+        if 'report_table_js_options' in self.context:
+            report_table_js_options = self.context['report_table_js_options']
         return dict(
             filters=rendered_filters,
             report=rendered_report,
+            report_table_js_options=report_table_js_options,
             title=self.rendered_report_title,
             slug=self.slug,
-            url_root=self.url_root
+            url_root=self.url_root,
         )
 
     @property
@@ -793,9 +790,6 @@ class GenericReportView(object):
         """
         pass
 
-    def _select_bootstrap_template(self, template_path):
-        return template_path
-
 
 class GenericTabularReport(GenericReportView):
     """
@@ -852,7 +846,7 @@ class GenericTabularReport(GenericReportView):
     sortable = True
 
     # override old class properties
-    report_template_path = "reports/async/tabular.html"
+    report_template_path = "reports/tabular.html"
     flush_layout = True
 
     # set to a list of functions that take in a report object
@@ -1104,12 +1098,42 @@ class GenericTabularReport(GenericReportView):
             charts=charts,
             chart_span=CHART_SPAN_MAP[self.charts_per_row]
         )
+        report_table = context['report_table']
+        pagination_on = report_table['pagination']['is_on']
+        context.update({
+            'report_table_js_options': {
+                'datatables': report_table['datatables'],
+                'default_rows': report_table['default_rows'] or 10,
+                'start_at_row': report_table['start_at_row'] or 0,
+                'show_all_rows': report_table['show_all_rows'],
+                'sortable': report_table['sortable'],
+                'headers': {
+                    'render_aoColumns': report_table['headers'].render_aoColumns,
+                    'auto_width': report_table['headers'].auto_width,
+                    'custom_sort': report_table['headers'].custom_sort,
+                },
+                'bad_request_error_text': report_table['bad_request_error_text'],
+                'pagination': {
+                    'hide': getattr(report_table['pagination'], 'hide', False),
+                    'is_on': pagination_on,
+                    'source': report_table['pagination']['source'] if pagination_on else None,
+                    'params': report_table['pagination']['params'] if pagination_on else None,
+                },
+                'left_col': {
+                    'is_fixed': report_table['left_col']['is_fixed'],
+                    'fixed': {
+                        'num': report_table['left_col']['fixed']['num'],
+                        'width': report_table['left_col']['fixed']['width'],
+                    } if report_table['left_col']['is_fixed'] else {},
+                },
+            },
+        })
         for provider_function in self.extra_context_providers:
             context.update(provider_function(self))
         return context
 
     def table_cell(self, value, html=None, zerostyle=False):
-        styled_value = '<span class="muted">0</span>' if zerostyle and value == 0 else value
+        styled_value = '<span class="text-muted">0</span>' if zerostyle and value == 0 else value
         return dict(
             sort_key=value,
             html="%s" % styled_value if html is None else html

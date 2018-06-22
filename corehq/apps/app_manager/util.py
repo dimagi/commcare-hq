@@ -37,6 +37,7 @@ from dimagi.utils.couch import CriticalSection
 from memoized import memoized
 from dimagi.utils.make_uuid import random_hex
 import six
+from io import open
 
 
 logger = logging.getLogger(__name__)
@@ -297,7 +298,7 @@ def all_apps_by_domain(domain):
 def languages_mapping():
     mapping = cache.get('__languages_mapping')
     if not mapping:
-        with open('submodules/langcodes/langs.json') as langs_file:
+        with open('submodules/langcodes/langs.json', encoding='utf-8') as langs_file:
             lang_data = json.load(langs_file)
             mapping = dict([(l["two"], l["names"]) for l in lang_data])
         mapping["default"] = ["Default Language"]
@@ -337,10 +338,12 @@ def get_commcare_versions(request_user):
 
 
 def get_commcare_builds(request_user):
+    can_view_superuser_builds = (request_user.is_superuser
+                                 or toggles.IS_CONTRACTOR.enabled(request_user.username))
     return [
         i.build
         for i in CommCareBuildConfig.fetch().menu
-        if request_user.is_superuser or not i.superuser_only
+        if can_view_superuser_builds or not i.superuser_only
     ]
 
 
@@ -456,7 +459,7 @@ def _app_callout_templates():
         'static', 'app_manager', 'json', 'vellum-app-callout-templates.yaml'
     )
     if os.path.exists(path):
-        with open(path) as f:
+        with open(path, encoding='utf-8') as f:
             data = yaml.load(f)
     else:
         logger.info("not found: %s", path)
@@ -667,8 +670,10 @@ def get_form_source_download_url(xform):
     if not xform.build_id:
         return None
 
-    from corehq.apps.app_manager.models import Application
-    app = Application.get(xform.build_id)
+    app = get_app(xform.domain, xform.build_id)
+    if app.is_remote_app():
+        return None
+
     try:
         form = app.get_forms_by_xmlns(xform.xmlns)[0]
     except KeyError:

@@ -16,7 +16,7 @@ from corehq.apps.sms.api import (
 )
 from corehq.apps.smsforms.app import start_session
 from corehq.apps.smsforms.util import form_requires_input, critical_section_for_smsforms_sessions
-from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error
+from corehq.apps.sms.util import format_message_list, touchforms_error_is_config_error, get_formplayer_exception
 from corehq.apps.users.cases import get_owner_id, get_wrapped_owner
 from corehq.apps.users.models import CouchUser, WebUser, CommCareUser
 from corehq.apps.domain.models import Domain
@@ -378,12 +378,12 @@ def fire_sms_survey_event(reminder, handler, recipients, verified_numbers, logge
                         case_for_case_submission=handler.force_surveys_to_use_triggered_case
                     )
                 except TouchformsError as e:
-                    human_readable_message = e.response_data.get('human_readable_message', None)
+                    human_readable_message = get_formplayer_exception(reminder.domain, e)
 
                     logged_subevent.error(MessagingEvent.ERROR_TOUCHFORMS_ERROR,
                         additional_error_text=human_readable_message)
 
-                    if touchforms_error_is_config_error(e):
+                    if touchforms_error_is_config_error(reminder.domain, e):
                         # Don't reraise the exception because this means there are configuration
                         # issues with the form that need to be fixed
                         continue

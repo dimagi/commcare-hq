@@ -9,6 +9,7 @@ import six
 
 import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
+from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
@@ -155,15 +156,15 @@ def convert_xform_to_json(xml_string):
     return json_form
 
 
-def adjust_text_to_datetime(text):
+def adjust_text_to_datetime(text, process_timezones=None):
     matching_datetime = iso8601.parse_date(text)
-    if phone_timezones_should_be_processed():
+    if process_timezones or phone_timezones_should_be_processed():
         return matching_datetime.astimezone(pytz.utc).replace(tzinfo=None)
     else:
         return matching_datetime.replace(tzinfo=None)
 
 
-def adjust_datetimes(data, parent=None, key=None):
+def adjust_datetimes(data, parent=None, key=None, process_timezones=None):
     """
     find all datetime-like strings within data (deserialized json)
     and format them uniformly, in place.
@@ -177,21 +178,22 @@ def adjust_datetimes(data, parent=None, key=None):
     >>> with force_phone_timezones_should_be_processed():
     >>>     adjust_datetimes(form_json)
     """
+    process_timezones = process_timezones or phone_timezones_should_be_processed()
     # this strips the timezone like we've always done
     # todo: in the future this will convert to UTC
     if isinstance(data, six.string_types) and jsonobject.re_loose_datetime.match(data):
         try:
             parent[key] = six.text_type(json_format_datetime(
-                adjust_text_to_datetime(data)
+                adjust_text_to_datetime(data, process_timezones=process_timezones)
             ))
         except iso8601.ParseError:
             pass
     elif isinstance(data, dict):
         for key, value in data.items():
-            adjust_datetimes(value, parent=data, key=key)
+            adjust_datetimes(value, parent=data, key=key, process_timezones=process_timezones)
     elif isinstance(data, list):
         for i, value in enumerate(data):
-            adjust_datetimes(value, parent=data, key=i)
+            adjust_datetimes(value, parent=data, key=i, process_timezones=process_timezones)
 
     # return data, just for convenience in testing
     # this is the original input, modified, not a new data structure
@@ -206,3 +208,19 @@ def resave_form(domain, form):
         publish_form_saved(form)
     else:
         XFormInstance.get_db().save_doc(form.to_json())
+
+
+def update_response(xml, question, response, xmlns=None):
+    '''
+    Given a form submission's xml element, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = xml
+    i = XFormQuestionValueIterator(question)
+    for (qid, index) in i:
+        node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
+    node = node.find("{{{}}}{}".format(xmlns, i.last()))
+    if node is not None and node.text != response:
+        node.text = response
+        return True
+    return False
