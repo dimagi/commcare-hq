@@ -11,6 +11,7 @@ from dateutil.relativedelta import relativedelta
 from corehq.apps.es import CaseES, FormES
 from corehq.form_processor.models import CommCareCaseSQL, XFormInstanceSQL
 from corehq.sql_db.util import get_db_aliases_for_partitioned_query
+from couchforms.const import DEVICE_LOG_XMLNS
 
 
 class Command(BaseCommand):
@@ -27,7 +28,7 @@ class Command(BaseCommand):
     def handle(self, csv_file, **options):
         self.domain = 'icds-cas'
         with open(csv_file, "w", encoding='utf-8') as csv_file:
-            field_names = ('date', 'doc_type', 'in_sql', 'in_es',)
+            field_names = ('date', 'doc_type', 'in_sql', 'in_es', 'diff')
 
             csv_writer = csv.DictWriter(csv_file, field_names, extrasaction='ignore')
             csv_writer.writeheader()
@@ -35,20 +36,26 @@ class Command(BaseCommand):
             current_date = date(2017, 1, 1)
 
             while current_date <= date.today():
+                cases_in_sql = self._get_sql_cases_modified_on_date(current_date)
+                cases_in_es = self._get_es_cases_modified_on_date(current_date)
                 properties = {
                     "date": current_date,
                     "doc_type": "CommCareCase",
-                    "in_sql": self._get_sql_cases_modified_on_date(current_date),
-                    "in_es": self._get_es_cases_modified_on_date(current_date),
+                    "in_sql": cases_in_sql,
+                    "in_es": cases_in_es,
+                    "diff": cases_in_sql - cases_in_es,
                 }
                 csv_writer.writerow(properties)
                 print(properties)
 
+                forms_in_sql = self._get_sql_forms_received_on_date(current_date)
+                forms_in_es = self._get_es_forms_received_on_date(current_date)
                 properties = {
                     "date": current_date,
                     "doc_type": "XFormInstance",
-                    "in_sql": self._get_sql_forms_received_on_date(current_date),
-                    "in_es": self._get_es_forms_received_on_date(current_date),
+                    "in_sql": forms_in_sql,
+                    "in_es": forms_in_es,
+                    "diff": forms_in_sql - forms_in_es
                 }
                 csv_writer.writerow(properties)
                 print(properties)
@@ -79,6 +86,7 @@ class Command(BaseCommand):
                 XFormInstanceSQL.objects
                 .using(db)
                 .filter(received_on__gte=date, received_on__lt=date + relativedelta(months=1))
+                .exclude(xmlns=DEVICE_LOG_XMLNS)
                 .count()
             )
 
