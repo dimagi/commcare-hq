@@ -1492,12 +1492,14 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                 try:
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
-                    couch_user.clear_quickcache_for_user()
                 except ResourceConflict:
                     if max_tries > 0:
+                        couch_user.clear_quickcache_for_user()
                         cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
                     else:
                         raise
+
+                couch_user.clear_quickcache_for_user()
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
