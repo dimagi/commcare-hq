@@ -1340,6 +1340,22 @@ LOCATION_USERS = StaticToggle(
     ),
 )
 
+LOCATION_SAFETY_EXEMPTION = StaticToggle(
+    'location_safety_exemption',
+    'Exemption from location restrictions for EWS and ILS',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "ewsghana and ilsgateway do some custom location permissions stuff. "
+        "This feature flag grants them access to the web user pages, but it does "
+        "not actually restrict their access at all. This is implemented strictly "
+        "for backwards compatibility and should not be enabled for any other "
+        "project."
+    ),
+    relevant_environments={'production'},
+    always_enabled={'ews-ghana', 'ils-gateway'},
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
