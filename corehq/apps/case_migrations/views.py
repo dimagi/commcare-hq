@@ -6,7 +6,6 @@ from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
 
 from casexml.apps.case.xml import V2
@@ -60,7 +59,6 @@ def get_case_hierarchy_for_restore(case):
     ]
 
 
-@csrf_exempt
 @formplayer_auth
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
