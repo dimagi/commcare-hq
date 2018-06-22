@@ -55,6 +55,7 @@ import six
 import logging
 from collections import defaultdict, deque
 from corehq.util import cache_utils
+from django_redis import get_redis_connection
 _logger = logging.getLogger('main_couch_sql_datamigration')
 
 
@@ -777,7 +778,7 @@ class PartiallyLockingQueue(object):
         with an object once finished processing
     """
 
-    def __init__(self, queue_id_param="id", max_size=-1):
+    def __init__(self, queue_id_param="id", max_size=-1, run_timestamp=None):
         """
         :queue_id_param string: param of the queued objects to pull an id from
         :max_size int: the maximum size the queue should reach. -1 means no limit
@@ -791,6 +792,22 @@ class PartiallyLockingQueue(object):
         def get_queue_obj_id(queue_obj):
             return getattr(queue_obj, queue_id_param)
         self.get_queue_obj_id = get_queue_obj_id
+
+        def get_cached_list_key():
+            return "partial_queues.queued_or_processing.%s" % run_timestamp
+        self.get_cached_list_key = get_cached_list_key
+
+    def add_processing_doc_id(self, doc_id):
+        client = get_redis_connection()
+        client.rpush(self.get_cached_list_key(), doc_id)
+
+    def remove_processing_doc_id(self, doc_id):
+        client = get_redis_connection()
+        client.lrem(self.get_cached_list_key(), 1, doc_id)
+
+    def get_ids_from_run_timestamp(self):
+        client = get_redis_connection()
+        return client.get(self.get_cached_list_key()) or []
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
@@ -862,6 +879,7 @@ class PartiallyLockingQueue(object):
         """
         queue_obj_id = self.get_queue_obj_id(queue_obj)
         lock_ids = self.lock_ids_by_queue_id.get(queue_obj_id)
+        self.remove_processing_doc_id(queue_obj_id)
         if lock_ids:
             self._release_lock(lock_ids)
             del self.lock_ids_by_queue_id[queue_obj_id]
@@ -888,6 +906,7 @@ class PartiallyLockingQueue(object):
                 self.queue_by_lock_id[lock_id].append(queue_obj_id)
             self.queue_objs_by_queue_id[queue_obj_id] = queue_obj
         self.lock_ids_by_queue_id[queue_obj_id] = lock_ids
+        self.add_processing_doc_id(queue_obj_id)
 
     def _remove_item(self, queued_obj_id):
         """ Removes a queued obj from data model
