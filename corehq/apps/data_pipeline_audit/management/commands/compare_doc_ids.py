@@ -76,7 +76,7 @@ class Command(BaseCommand):
         }
         handlers.update({doc_type: compare_xforms for doc_type in form_doc_types})
         try:
-            primary_only, es_only = handlers[doc_type](domain, doc_type, startdate, enddate)
+            primary_count, es_count, primary_only, es_only = handlers[doc_type](domain, doc_type, startdate, enddate)
         except KeyError:
             raise CommandError('Unsupported doc type. Use on of: {}'.format(', '.join(handlers)))
 
@@ -92,6 +92,10 @@ class Command(BaseCommand):
             date_range_output = ' (Between {} and {})'.format(start, end)
 
         print("\nDoc ID analysis for {}{}\n".format(doc_type, date_range_output))
+
+        print("Primary Count: {}".format(primary_count))
+        print("ES Count: {}\n".format(es_count))
+
         writer = SimpleTableWriter(self.stdout, row_formatter)
         writer.write_table(
             ['Only in Primary', 'Only in ES'],
@@ -136,4 +140,4 @@ def _compare_users(domain, doc_type, startdate, enddate):
 
 
 def _get_diffs(primary_ids, es_ids):
-    return primary_ids - es_ids, es_ids - primary_ids
+    return len(primary_ids), len(es_ids), primary_ids - es_ids, es_ids - primary_ids
