@@ -14,7 +14,6 @@ from casexml.apps.phone.xml import get_case_element, get_registration_element_fo
 from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
-from corehq.apps.locations.permissions import user_can_access_case, location_restricted_exception, location_safe
 from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.toggles import WEBAPPS_CASE_MIGRATION
