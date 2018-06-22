@@ -1,8 +1,47 @@
 from __future__ import absolute_import, unicode_literals
 
+from abc import ABCMeta, abstractproperty, abstractmethod
 from datetime import datetime, timedelta
 
 import attr
+import six
+
+
+class TimePeriod(six.with_metaclass(ABCMeta, object)):
+    """
+    Base class for providing a time period interface
+    """
+    @abstractproperty
+    def start(self):
+        pass
+
+    @abstractproperty
+    def end(self):
+        pass
+
+    @abstractmethod
+    def get_previous_period(self):
+        pass
+
+    @abstractmethod
+    def get_next_period(self):
+        pass
+
+    @abstractmethod
+    def from_datetime(cls, dt):
+        """
+        This is intended to be a classmethod!
+        :return: a TimePeriod object associated with the passed in date
+        """
+        pass
+
+    @abstractmethod
+    def current_period(cls):
+        """
+        This is intended to be a classmethod!
+        :return: The current TimePeriod
+        """
+        pass
 
 
 @attr.s
@@ -41,10 +80,11 @@ class Month(object):
 
 
 @attr.s
-class Week(object):
+class Week(TimePeriod):
     """
     Utility class for working with weeks.
     """
+
     year = attr.ib()
     week = attr.ib()
 
@@ -59,20 +99,20 @@ class Week(object):
         """The end of the week, non-inclusive (aka the beginning of the next week)"""
         return self.start + timedelta(days=7)
 
-    def get_previous_week(self):
-        return Week.datetime_to_week(self.start - timedelta(days=7))
+    def get_previous_period(self):
+        return Week.from_datetime(self.start - timedelta(days=7))
 
-    def get_next_week(self):
-        return Week.datetime_to_week(self.end)
+    def get_next_period(self):
+        return Week.from_datetime(self.end)
 
     @classmethod
-    def datetime_to_week(cls, dt):
+    def from_datetime(cls, dt):
         year, week, day = dt.isocalendar()
         return cls(year, week)
 
     @classmethod
-    def current_week(cls):
-        return cls.datetime_to_week(datetime.now())
+    def current_period(cls):
+        return cls.from_datetime(datetime.now())
 
 
 def iso_year_start(iso_year):
