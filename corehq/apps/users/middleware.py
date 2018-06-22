@@ -8,7 +8,7 @@ from django.utils.deprecation import MiddlewareMixin
 from corehq import toggles
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
+from corehq.toggles import PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
@@ -42,9 +42,6 @@ class UsersMiddleware(MiddlewareMixin):
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
-        if request.user.is_anonymous and 'domain' in view_kwargs:
-            if ANONYMOUS_WEB_APPS_USAGE.enabled(view_kwargs['domain']):
-                request.couch_user = CouchUser.get_anonymous_mobile_worker(request.domain)
         if request.user and request.user.is_authenticated:
             user_id = username_to_user_id(request.user.username)
             request.couch_user = CouchUser.get_by_user_id(user_id)

@@ -142,8 +142,8 @@ def _ensure_request_couch_user(request):
     if not couch_user and hasattr(request, 'user'):
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     elif couch_user and couch_user.is_anonymous and hasattr(request, 'user') and not request.user.is_anonymous:
-        # if ANONYMOUS_WEB_APPS_USAGE toggle is enabled then `request.couch_user` get's set to the anonymous
-        # mobile user in middleware which breaks this check if later authentication succeeds e.g. apikey
+        # `request.couch_user` can be set to the anonymous mobile user in middleware
+        # which breaks this check if later authentication succeeds e.g. apikey
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
 

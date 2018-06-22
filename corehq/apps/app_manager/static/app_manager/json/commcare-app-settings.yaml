@@ -91,18 +91,6 @@
   since: "2.0"
   permission: "cloudcare"
 
-- id: anonymous_cloudcare_enabled
-  name: "Anonymous Usage"
-  description: 'Allow visitors to use this application without a login.'
-  description_format: html
-  widget: share_link
-  default: false
-  requires: "{$parent.doc_type}='Application'"
-  hide_if_not_enabled: true
-  since: "2.0"
-  permission: "cloudcare"
-  toggle: ANONYMOUS_WEB_APPS_USAGE
-
 - id: use_custom_suite
   name: "Custom Suite File"
   widget: bool

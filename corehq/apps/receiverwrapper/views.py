@@ -283,8 +283,6 @@ def secure_post(request, domain, app_id=None):
         'basic': _secure_post_basic,
         'noauth': _noauth_post,
     }
-    if toggles.ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
-        authtype_map['token'] = _secure_post_token
 
     if request.GET.get('authtype'):
         authtype = request.GET['authtype']

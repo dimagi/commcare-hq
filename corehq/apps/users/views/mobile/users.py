@@ -86,7 +86,7 @@ from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
 from corehq.apps.users.exceptions import InvalidMobileWorkerRequest
 from corehq.apps.users.views import BaseUserSettingsView, BaseEditUserView, get_domain_languages
 from corehq.const import USER_DATE_FORMAT, GOOGLE_PLAY_STORE_COMMCARE_URL
-from corehq.toggles import SUPPORT, ANONYMOUS_WEB_APPS_USAGE, FILTERED_BULK_USER_DOWNLOAD
+from corehq.toggles import SUPPORT, FILTERED_BULK_USER_DOWNLOAD
 from corehq.util.workbook_json.excel import JSONReaderError, HeaderValueError, \
     WorksheetNotFound, WorkbookJSONReader, enforce_string_type, StringTypeRequiredError, \
     InvalidExcelFileException
@@ -785,15 +785,10 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         self.request.POST = form_data
 
         is_valid = lambda: self._mobile_worker_form.is_valid() and self.custom_data.is_valid()
-        if form_data.get('is_anonymous') and ANONYMOUS_WEB_APPS_USAGE.enabled(self.domain):
-            if not is_valid():
-                return {'error': _("Forms did not validate")}
-            couch_user = self._build_anonymous_commcare_user()
-        else:
-            if not is_valid():
-                return {'error': _("Forms did not validate")}
+        if not is_valid():
+            return {'error': _("Forms did not validate")}
 
-            couch_user = self._build_commcare_user()
+        couch_user = self._build_commcare_user()
 
         return {
             'success': True,
