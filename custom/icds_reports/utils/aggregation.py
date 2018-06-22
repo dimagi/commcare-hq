@@ -769,7 +769,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         LAST_VALUE(anc_blood_pressure) OVER w as anc_blood_pressure,
         LAST_VALUE(bp_sys) OVER w as bp_sys,
         LAST_VALUE(bp_dia) OVER w as bp_dia,
-        LAST_VALUE(anc_hemogloblin) OVER w as anc_hemogloblin,
+        LAST_VALUE(anc_hemoglobin) OVER w as anc_hemoglobin,
         LAST_VALUE(bleeding) OVER w as bleeding,
         LAST_VALUE(swelling) OVER w as swelling,
         LAST_VALUE(blurred_vision) OVER w as blurred_vision,
@@ -803,7 +803,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
         INSERT INTO "{tablename}" (
           state_id, month, case_id, latest_time_end_processed,
           immediate_breastfeeding, anemia, eating_extra, resting,
-          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemogloblin, 
+          anc_weight, anc_blood_pressure, bp_sys, bp_dia, anc_hemoglobin, 
           bleeding, swelling, blurred_vision, convulsions, rupture
         ) (
           SELECT
@@ -819,7 +819,7 @@ class BirthPreparednessFormsAggregationHelper(BaseICDSAggregationHelper):
             COALESCE(ucr.anc_blood_pressure, prev_month.anc_blood_pressure) as anc_blood_pressure,
             COALESCE(ucr.bp_sys, prev_month.bp_sys) as bp_sys,
             COALESCE(ucr.bp_dia, prev_month.bp_dia) as bp_dia,
-            COALESCE(ucr.anc_hemogloblin, prev_month.anc_hemogloblin) as anc_hemogloblin,
+            COALESCE(ucr.anc_hemoglobin, prev_month.anc_hemoglobin) as anc_hemoglobin,
             ucr.bleeding as bleeding,
             ucr.swelling as swelling,
             ucr.blurred_vision as blurred_vision,

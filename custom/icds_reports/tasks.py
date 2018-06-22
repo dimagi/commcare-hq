@@ -1,14 +1,14 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
-from __future__ import unicode_literals
-
-from collections import namedtuple
-import csv342 as csv
-from datetime import date, datetime, timedelta
 import io
 import logging
 import os
+from collections import namedtuple
+from datetime import date, datetime, timedelta
+from io import BytesIO, open
 
+import csv342 as csv
+import six
 from celery import chain, group
 from celery.schedules import crontab
 from celery.task import periodic_task, task
@@ -16,12 +16,12 @@ from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
-from io import BytesIO
-from couchexport.export import export_from_tables
+from six.moves import range
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
-from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
+from corehq.apps.userreports.util import (get_indicator_adapter,
+    get_table_name)
 from corehq.const import SERVER_DATE_FORMAT
 from corehq.form_processor.change_publishers import publish_case_saved
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
@@ -30,25 +30,23 @@ from corehq.util.decorators import serial_task
 from corehq.util.log import send_HTML_email
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
+from couchexport.export import export_from_tables
 from custom.icds_reports.const import DASHBOARD_DOMAIN
-from custom.icds_reports.models import (
-    AggChildHealthMonthly,
-    AggregateComplementaryFeedingForms,
-    AggregateGrowthMonitoringForms,
-    AggregateChildHealthPostnatalCareForms,
-    AggregateChildHealthTHRForms,
-    AggregateCcsRecordTHRForms,
+from custom.icds_reports.models import (AggChildHealthMonthly,
+    AggregateCcsRecordTHRForms, AggregateChildHealthPostnatalCareForms,
+    AggregateChildHealthTHRForms, AggregateComplementaryFeedingForms,
+    AggregateGrowthMonitoringForms, AggregateBirthPreparednesForms,
+    AggregateCcsRecordDeliveryForms, AggregateCcsRecordPostnatalCareForms,
     UcrTableNameMapping)
 from custom.icds_reports.models.aggregate import AggregateInactiveAWW
 from custom.icds_reports.models.helper import IcdsFile
 from custom.icds_reports.reports.issnip_monthly_register import ISSNIPMonthlyReport
-from custom.icds_reports.utils import zip_folder, create_pdf_file, icds_pre_release_features, track_time
+from custom.icds_reports.utils import (create_pdf_file,
+    icds_pre_release_features, track_time, zip_folder)
 from dimagi.utils.chunked import chunked
 from dimagi.utils.dates import force_to_date
 from dimagi.utils.logging import notify_exception
-import six
-from six.moves import range
-from io import open
+
 
 celery_task_logger = logging.getLogger('celery.task')
 
@@ -164,7 +162,17 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             ])
             stage_1_tasks.extend([
                 icds_state_aggregation_task.si(
-                    state_id=state_id, date=monthly_date, func=_aggregate_child_health_pnc_forms
+                    state_id=state_id, date=monthly_date, func=_aggregate_pnc_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_delivery_forms
+                ) for state_id in state_ids
+            ])
+            stage_1_tasks.extend([
+                icds_state_aggregation_task.si(
+                    state_id=state_id, date=monthly_date, func=_aggregate_bp_forms
                 ) for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
@@ -325,8 +333,9 @@ def _aggregate_gm_forms(state_id, day):
 
 
 @track_time
-def _aggregate_child_health_pnc_forms(state_id, day):
+def _aggregate_pnc_forms(state_id, day):
     AggregateChildHealthPostnatalCareForms.aggregate(state_id, day)
+    AggregateCcsRecordPostnatalCareForms.aggregate(state_id, day)
 
 
 @track_time
@@ -338,6 +347,16 @@ def _aggregate_thr_forms(state_id, day):
 @track_time
 def _aggregate_inactive_aww(day):
     AggregateInactiveAWW.aggregate(day)
+
+
+@track_time
+def _aggregate_delivery_forms(state_id, day):
+    AggregateCcsRecordDeliveryForms.aggregate(state_id, day)
+
+
+@track_time
+def _aggregate_bp_forms(state_id, day):
+    AggregateBirthPreparednesForms.aggregate(state_id, day)
 
 
 @transaction.atomic

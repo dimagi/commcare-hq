@@ -6,7 +6,7 @@ ALTER TABLE ccs_record_monthly ADD COLUMN anc_weight smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN anc_blood_pressure smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN bp_sys smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN bp_dia smallint;
-ALTER TABLE ccs_record_monthly ADD COLUMN anc_hemogloblin decimal;
+ALTER TABLE ccs_record_monthly ADD COLUMN anc_hemoglobin decimal;
 ALTER TABLE ccs_record_monthly ADD COLUMN bleeding smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN swelling smallint;
 ALTER TABLE ccs_record_monthly ADD COLUMN blurred_vision smallint;

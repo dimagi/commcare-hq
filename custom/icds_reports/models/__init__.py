@@ -14,6 +14,7 @@ from custom.icds_reports.models.aggregate import (
     AggregateChildHealthTHRForms,
     AggregateGrowthMonitoringForms,
     AggregateCcsRecordTHRForms,
+    AggregateCcsRecordDeliveryForms,
     AggregateBirthPreparednesForms,
     AggregateInactiveAWW
 )

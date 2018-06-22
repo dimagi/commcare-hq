@@ -26,7 +26,8 @@ from custom.icds_reports.utils.aggregation import (
     PostnatalCareFormsCcsRecordAggregationHelper,
     THRFormsChildHealthAggregationHelper,
     THRFormsCcsRecordAggregationHelper,
-    InactiveAwwsAggregationHelper
+    InactiveAwwsAggregationHelper,
+    DeliveryFormsAggregationHelper
 )
 
 
@@ -88,7 +89,7 @@ class CcsRecordMonthly(models.Model):
     anc_blood_pressure = models.SmallIntegerField(blank=True, null=True)
     bp_sys = models.SmallIntegerField(blank=True, null=True)
     bp_dia = models.SmallIntegerField(blank=True, null=True)
-    anc_hemogloblin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
+    anc_hemoglobin = models.DecimalField(max_digits=64, decimal_places=20, blank=True, null=True)
     bleeding = models.SmallIntegerField(blank=True, null=True)
     swelling = models.SmallIntegerField(blank=True, null=True)
     blurred_vision = models.SmallIntegerField(blank=True, null=True)
@@ -758,8 +759,6 @@ class AggregateCcsRecordPostnatalCareForms(models.Model):
 
     A row exists for every case that has ever had a Complementary Feeding Form
     submitted against it.
-
-    Note this is not actually used in the dashboard, so the aggreagtion is not run
     """
 
     # partitioned based on these fields
@@ -1018,11 +1017,11 @@ class AggregateBirthPreparednesForms(models.Model):
         null=True,
         help_text="Last value of anc_details/bp_dia"
     )
-    anc_hemogloblin = models.DecimalField(
+    anc_hemoglobin = models.DecimalField(
         max_digits=64,
         decimal_places=20,
         null=True,
-        help_text="Last value of anc_details/anc_hemogloblin"
+        help_text="Last value of anc_details/anc_hemoglobin"
     )
     bleeding = models.PositiveSmallIntegerField(
         null=True,
@@ -1051,10 +1050,12 @@ class AggregateBirthPreparednesForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = BirthPreparednessFormsAggregationHelper(state_id, month)
+        prev_month_query, prev_month_params = helper.create_table_query(month - relativedelta(months=1))
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
 
         with get_cursor(cls) as cursor:
+            cursor.execute(prev_month_query, prev_month_params)
             cursor.execute(helper.drop_table_query())
             cursor.execute(curr_month_query, curr_month_params)
             cursor.execute(agg_query, agg_params)

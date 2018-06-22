@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
                 ('anc_blood_pressure', models.PositiveSmallIntegerField(help_text='Last value of anc_details/anc_blood_pressure. normal=1, high=2, not_measured=3', null=True)),
                 ('bp_sys', models.PositiveSmallIntegerField(help_text='Last value of anc_details/bp_sys', null=True)),
                 ('bp_dia', models.PositiveSmallIntegerField(help_text='Last value of anc_details/bp_dia', null=True)),
-                ('anc_hemogloblin', models.DecimalField(decimal_places=20, help_text='Last value of anc_details/anc_hemogloblin', max_digits=64, null=True)),
+                ('anc_hemoglobin', models.DecimalField(decimal_places=20, help_text='Last value of anc_details/anc_hemoglobin', max_digits=64, null=True)),
                 ('bleeding', models.PositiveSmallIntegerField(help_text="Last value of /data/bp2/bleeding = 'yes'", null=True)),
                 ('swelling', models.PositiveSmallIntegerField(help_text="Last value of /data/bp2/swelling = 'yes'", null=True)),
                 ('blurred_vision', models.PositiveSmallIntegerField(help_text="Last value of /data/bp2/blurred_vision = 'yes'", null=True)),

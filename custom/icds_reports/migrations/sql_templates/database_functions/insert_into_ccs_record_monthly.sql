@@ -170,7 +170,7 @@ BEGIN
     'anc_blood_pressure = agg.anc_blood_pressure, ' ||
     'bp_sys = agg.bp_sys, ' ||
     'bp_dia = agg.bp_dia, ' ||
-    'anc_hemogloblin = agg.anc_hemogloblin, ' ||
+    'anc_hemoglobin = agg.anc_hemoglobin, ' ||
     'bleeding = agg.bleeding, ' ||
     'swelling = agg.swelling, ' ||
     'blurred_vision = agg.blurred_vision, ' ||

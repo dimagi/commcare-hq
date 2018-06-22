@@ -1151,7 +1151,7 @@
      {
         "display_name": null,
         "transform": {},
-        "datatype": "string",
+        "datatype": "small_integer",
         "type": "expression",
         "is_primary_key": false,
         "is_nullable": true,
