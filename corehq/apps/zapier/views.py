@@ -14,13 +14,12 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
+from corehq.util.view_utils import get_case_or_404
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq import privileges
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.web import json_response
 
 from .models import ZapierSubscription
@@ -160,10 +159,7 @@ class ZapierUpdateCase(View):
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
-        try:
-            case = CaseAccessors(domain).get_case(case_id)
-        except CaseNotFound:
-            return HttpResponseForbidden("Could not find case in domain")
+        case = get_case_or_404(domain, case_id)
 
         if not case.type == case_type:
             return HttpResponseForbidden("Case type mismatch")
