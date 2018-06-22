@@ -46,7 +46,7 @@ from corehq.apps.cloudcare.api import (
     get_filtered_cases,
     get_filters_from_request_params,
 )
-from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps, get_app_id_from_hash
+from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.cloudcare.esaccessors import login_as_user_query
 from corehq.apps.cloudcare.decorators import require_cloudcare_access
 from corehq.apps.cloudcare.models import ApplicationAccess

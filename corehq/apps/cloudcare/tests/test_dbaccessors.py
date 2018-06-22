@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.test import TestCase
-from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain, get_app_id_from_hash
+from corehq.apps.cloudcare.dbaccessors import get_application_access_for_domain
 from corehq.apps.cloudcare.models import ApplicationAccess
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.signals import app_post_save
