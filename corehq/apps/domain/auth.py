@@ -132,8 +132,8 @@ def formplayer_as_user_auth(view):
 
     @wraps(view)
     def _inner(request, *args, **kwargs):
-        with mutable_querydict(request.POST):
-            as_user = request.POST.pop('as_user', None)
+        with mutable_querydict(request.GET):
+            as_user = request.GET.pop('as_user', None)
 
         if not as_user:
             return HttpResponse('User required', status=401)
