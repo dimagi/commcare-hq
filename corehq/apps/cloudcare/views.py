@@ -260,40 +260,6 @@ class PreviewAppView(TemplateView):
         })
 
 
-class SingleAppLandingPageView(TemplateView):
-    '''
-    This View renders a landing page for anonymous users to
-    land on and enter Web Apps without a login.
-    '''
-
-    template_name = 'landing_page/base.html'
-    urlname = 'home'
-
-    @use_legacy_jquery
-    def get(self, request, *args, **kwargs):
-        app_id = get_app_id_from_hash(request.domain, kwargs.pop('app_hash'))
-
-        if not app_id:
-            raise Http404()
-
-        app_doc = get_latest_released_app_doc(request.domain, app_id)
-
-        if not app_doc:
-            raise Http404()
-
-        app = Application.wrap(app_doc)
-
-        if not app.anonymous_cloudcare_enabled:
-            raise Http404()
-
-        return self.render_to_response({
-            'app': app,
-            'formplayer_url': settings.FORMPLAYER_URL,
-            "maps_api_key": settings.GMAPS_API_KEY,
-            "environment": WEB_APPS_ENVIRONMENT,
-        })
-
-
 @location_safe
 class LoginAsUsers(View):
 
