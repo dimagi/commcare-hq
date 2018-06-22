@@ -58,7 +58,7 @@ PROFILE_LIMIT = int(PROFILE_LIMIT) if PROFILE_LIMIT is not None else 1
 @csrf_exempt
 @location_safe
 @handle_401_response
-@mobile_auth_or_formplayer(require_user=True)
+@mobile_auth_or_formplayer
 @check_domain_migration
 def restore(request, domain, app_id=None):
     """
