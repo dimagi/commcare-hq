@@ -27,6 +27,7 @@ from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processe
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
+from corehq.form_processor.interfaces import dbaccessors
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
     CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
@@ -122,14 +123,16 @@ class CouchSqlDomainMigrator(object):
 
     def _process_main_forms(self):
         last_received_on = datetime.min
+        # form_id needs to be on self to release appropriately
+        self.queues = PartiallyLockingQueue("form_id", max_size=10000, run_timestamp=self.run_timestamp)
+        pool = Pool(15)
+        self._rebuild_queues(pool)
+
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(
             self.domain).iter_all_changes(
                 self._get_resumable_iterator_key('main_forms'))
-        # form_id needs to be on self to release appropriately
-        self.queues = PartiallyLockingQueue("form_id", max_size=10000)
 
-        pool = Pool(15)
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
             form = change.get_document()
@@ -140,22 +143,8 @@ class CouchSqlDomainMigrator(object):
             form_received = wrapped_form.received_on
             assert last_received_on <= form_received
             last_received_on = form_received
-
-            case_ids = get_case_ids_from_form(wrapped_form)
-            if case_ids:  # if this form involves a case check if we can process it
-                if self.queues.try_obj(case_ids, wrapped_form):
-                    pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-                elif self.queues.full:
-                    sleep(0.01)  # swap greenlets
-            else:  # if not, just go ahead and process it
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-
-            # regularly check if we can empty the queues
-            while True:
-                new_wrapped_form = self.queues.get_next()
-                if not new_wrapped_form:
-                    break
-                pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
+            self._try_to_process_form(wrapped_form, pool)
+            self._try_to_process_queues(pool)
 
         # finish up the queues once all changes have been iterated through
         while self.queues.has_next():
@@ -171,6 +160,33 @@ class CouchSqlDomainMigrator(object):
 
         while not pool.join(timeout=10):
             self.log_info('Waiting on {} docs'.format(len(pool)))
+
+    def _try_to_process_form(self, wrapped_form, pool):
+        case_ids = get_case_ids_from_form(wrapped_form)
+        if case_ids:  # if this form involves a case check if we can process it
+            if self.queues.try_obj(case_ids, wrapped_form):
+                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+            elif self.queues.full:
+                sleep(0.01)  # swap greenlets
+        else:  # if not, just go ahead and process it
+            pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+
+    def _try_to_process_queues(self, pool):
+        # regularly check if we can empty the queues
+        while True:
+            new_wrapped_form = self.queues.get_next()
+            if not new_wrapped_form:
+                break
+            pool.spawn(self._migrate_form_and_associated_models_async, new_wrapped_form)
+
+    def _rebuild_queues(self, pool):
+        prev_ids = self.queues.get_ids_from_run_timestamp()
+        form_db = dbaccessors.FormAccessors(self.domain)
+        for form_id in prev_ids:
+            form = form_db.get_form(form_id)
+            self._try_to_process_form(form, pool)
+
+        self._try_to_process_queues(pool)
 
     def _migrate_form_and_associated_models_async(self, wrapped_form):
         set_local_domain_sql_backend_override(self.domain)
