@@ -27,7 +27,7 @@ def get_hmac_digest(shared_key, data):
 def validate_request_hmac(setting_name, ignore_if_debug=False):
     """
     Decorator to validate request sender using a shared secret
-    to compare the HMAC of the request body with
+    to compare the HMAC of the request body or query string with
     the value of the `X-MAC-DIGEST' header.
 
     Example requests:
@@ -41,7 +41,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
 
         params = urlencode(query_params)
         digest = base64.b64encode(hmac.new(shared_secret, params, hashlib.sha256).digest())
-        requests.post(url, params=params, headers={'X-MAC-DIGEST': digest})
+        requests.get(url, params=params, headers={'X-MAC-DIGEST': digest})
 
 
     :param setting_name: The name of the Django setting that holds the secret key
