@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 
 from django.http import HttpResponse
-from django.http.response import HttpResponseForbidden
+from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -69,7 +69,7 @@ class SubscribeView(View):
                 case_type=data['case_type'],
             )
         else:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
 
         # respond with the ID so that zapier can use it to unsubscribe
         return json_response({'id': subscription.id})
@@ -88,10 +88,10 @@ class UnsubscribeView(View):
         try:
             data = json.loads(request.body)
         except ValueError:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
         url = data.get('target_url')
         if not url:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
         delete_subscription_with_url(url)
         return HttpResponse('OK')
 
