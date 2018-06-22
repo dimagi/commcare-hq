@@ -169,13 +169,10 @@ class CouchSqlDomainMigrator(object):
 
     def _try_to_process_form(self, wrapped_form, pool):
         case_ids = get_case_ids_from_form(wrapped_form)
-        if case_ids:  # if this form involves a case check if we can process it
-            if self.queues.try_obj(case_ids, wrapped_form):
-                pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
-            elif self.queues.full:
-                sleep(0.01)  # swap greenlets
-        else:  # if not, just go ahead and process it
+        if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
+        elif self.queues.full:
+            sleep(0.01)  # swap greenlets
 
     def _try_to_process_queues(self, pool):
         # regularly check if we can empty the queues
