@@ -45,10 +45,11 @@ class TimePeriod(six.with_metaclass(ABCMeta, object)):
 
 
 @attr.s
-class Month(object):
+class Month(TimePeriod):
     """
     Utility class for working with months.
     """
+
     year = attr.ib()
     month = attr.ib()
 
@@ -63,20 +64,35 @@ class Month(object):
         day = self.start + timedelta(days=32)
         return datetime(day.year, day.month, 1)
 
-    def get_previous_month(self):
+    def get_previous_period(self):
         day = self.start - timedelta(days=1)
         return Month.datetime_to_month(day)
 
-    def get_next_month(self):
+    def get_next_period(self):
         return Month.datetime_to_month(self.end)
 
     @classmethod
-    def datetime_to_month(cls, dt):
+    def from_datetime(cls, dt):
         return cls(dt.year, dt.month)
 
     @classmethod
-    def current_month(cls):
+    def current_period(cls):
         return cls.datetime_to_month(datetime.now())
+
+    # todo: remove these legacy methods
+    def get_previous_month(self):
+        return self.get_previous_period()
+
+    def get_next_month(self):
+        return self.get_next_period()
+
+    @classmethod
+    def datetime_to_month(cls, dt):
+        return cls.from_datetime(dt)
+
+    @classmethod
+    def current_month(cls):
+        return cls.current_period()
 
 
 @attr.s
