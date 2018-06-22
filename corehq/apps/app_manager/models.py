@@ -5465,8 +5465,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
-    anonymous_cloudcare_hash = StringProperty(default=random_string)
-
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)

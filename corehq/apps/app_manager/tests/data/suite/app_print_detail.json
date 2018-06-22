@@ -1311,7 +1311,6 @@
   "created_from_template": "case_management",
   "attribution_notes": null,
   "admin_password_charset": "n",
-  "anonymous_cloudcare_hash": "OX2KKT",
   "external_blobs": {
     "files\/default\/app_strings.txt": {
       "content_length": 2070,
