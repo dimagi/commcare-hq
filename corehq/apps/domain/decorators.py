@@ -227,7 +227,7 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
 
          - token auth: this get's used by anonymous web apps. A single user in the domain
              is selected as the 'anonymous' user and had an auth token created for it. This
-             token is then used to authenticate with HQ without requireing the user to log in.
+             token is then used to authenticate with HQ without requiring the user to log in.
 
          - formplayer auth: for SMS forms there is no active user involved in the session and so
              formplayer can not use the session cookie to auth. To allow formplayer access to the
