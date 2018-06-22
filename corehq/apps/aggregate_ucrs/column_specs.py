@@ -139,6 +139,18 @@ def MonthColumnAdapter():
     )
 
 
+def WeekColumnAdapter():
+    """shortcut/convenience method to instantiate week columns"""
+    return RawColumnAdapter(
+        column_id='week',
+        datatype=DATA_TYPE_DATE,
+        is_nullable=False,
+        is_primary_key=True,
+        create_index=True,
+        query_column_provider=AggregationParamQueryColumnProvider(AGG_WINDOW_START_PARAM)
+    )
+
+
 class PrimaryColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
     """
     A base ColumnAdapter class for columns associated with the primary table.

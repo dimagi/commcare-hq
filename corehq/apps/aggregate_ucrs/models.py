@@ -5,9 +5,9 @@ from django.utils.translation import ugettext_lazy as _
 from jsonfield import JSONField
 from memoized import memoized
 
-from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONTH
+from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONTH, AGGREGATION_UNIT_CHOICE_WEEK
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
-    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter
+    SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter, WeekColumnAdapter
 from corehq.apps.userreports.models import get_datasource_config, SQLSettings
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
@@ -18,6 +18,7 @@ MAX_COLUMN_NAME_LENGTH = MAX_TABLE_NAME_LENGTH = 63
 class TimeAggregationDefinition(models.Model):
     AGGREGATION_UNIT_CHOICES = (
         (AGGREGATION_UNIT_CHOICE_MONTH, _('Month')),
+        (AGGREGATION_UNIT_CHOICE_WEEK, _('Week')),
     )
     aggregation_unit = models.CharField(max_length=10, choices=AGGREGATION_UNIT_CHOICES,
                                         default=AGGREGATION_UNIT_CHOICE_MONTH)
@@ -27,6 +28,8 @@ class TimeAggregationDefinition(models.Model):
     def get_column_adapter(self):
         if self.aggregation_unit == AGGREGATION_UNIT_CHOICE_MONTH:
             return MonthColumnAdapter()
+        if self.aggregation_unit == AGGREGATION_UNIT_CHOICE_WEEK:
+            return WeekColumnAdapter()
         else:
             raise Exception(
                 'Aggregation units apart from {} are not supported'.format(

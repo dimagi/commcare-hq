@@ -2,10 +2,11 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from functools import total_ordering
 
-from corehq.apps.aggregate_ucrs.date_utils import Month
+from corehq.apps.aggregate_ucrs.date_utils import Month, Week
 from dimagi.utils.parsing import json_format_date
 
 AGGREGATION_UNIT_CHOICE_MONTH = 'month'
+AGGREGATION_UNIT_CHOICE_WEEK = 'week'
 
 AGG_WINDOW_START_PARAM = 'agg_window_start'
 AGG_WINDOW_END_PARAM = 'agg_window_end'
@@ -13,7 +14,8 @@ AGG_WINDOW_END_PARAM = 'agg_window_end'
 
 def get_time_period_class(aggregation_unit):
     return {
-        AGGREGATION_UNIT_CHOICE_MONTH: Month
+        AGGREGATION_UNIT_CHOICE_MONTH: Month,
+        AGGREGATION_UNIT_CHOICE_WEEK: Week,
     }[aggregation_unit]
 
 

@@ -11,6 +11,7 @@ from sqlalchemy import Date, Integer, SmallInteger, UnicodeText
 from casexml.apps.case.mock import CaseBlock
 from casexml.apps.case.tests.util import delete_all_cases, delete_all_xforms
 from casexml.apps.case.util import post_case_blocks
+from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_WEEK
 from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_spec
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
     get_aggregation_end_period
@@ -42,7 +43,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     fu_visit_dates = (
         datetime(2018, 3, 16),
         datetime(2018, 4, 11),
-        datetime(2018, 4, 16),
+        datetime(2018, 4, 15),
     )
     parent_case_type = 'parent'
     parent_name = 'Mama'
@@ -98,6 +99,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
         # setup AggregateTableDefinition
         cls.monthly_aggregate_table_definition = cls._get_monthly_aggregate_table_definition()
+        cls.weekly_aggregate_table_definition = cls._get_weekly_aggregate_table_definition()
         cls.basic_aggregate_table_definition = cls._get_basic_aggregate_table_definition()
 
     @classmethod
@@ -190,6 +192,14 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         spec = cls.get_monthly_config_spec()
         spec.primary_table.data_source_id = cls.case_data_source._id
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
+        return import_aggregation_models_from_spec(spec)
+
+    @classmethod
+    def _get_weekly_aggregate_table_definition(cls):
+        spec = cls.get_monthly_config_spec()
+        spec.primary_table.data_source_id = cls.case_data_source._id
+        spec.secondary_tables[0].data_source_id = cls.form_data_source._id
+        spec.time_aggregation.unit = AGGREGATION_UNIT_CHOICE_WEEK
         return import_aggregation_models_from_spec(spec)
 
     @classmethod
@@ -316,6 +326,80 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         row = aggregate_query.filter(
             doc_id_column == self.case_id,
             month_column == '2018-04-01'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(2, row.fu_forms_in_month)
+
+    def test_weekly_aggregation(self):
+        # generate our table
+        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.weekly_aggregate_table_definition)
+        aggregate_table_adapter.rebuild_table()
+
+        populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_weekly_results()
+
+        # confirm it's also idempotent
+        populate_aggregate_table_data(aggregate_table_adapter)
+        self._check_weekly_results()
+
+    def _check_weekly_results(self):
+        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.weekly_aggregate_table_definition)
+        aggregate_table = aggregate_table_adapter.get_table()
+        aggregate_query = aggregate_table_adapter.get_query_object()
+
+        doc_id_column = aggregate_table.c['doc_id']
+        week_column = aggregate_table.c['week']
+        # before december the case should not exist
+        self.assertEqual(0, aggregate_query.filter(
+            doc_id_column == self.case_id,
+            week_column <= '2017-12-17'
+        ).count())
+
+        # from the monday in december where the case was opened, it case should exist,
+        # but should not be flagged as pregnant
+        for monday in ('2017-12-18', '2017-12-25', '2018-01-01'):
+            row = aggregate_query.filter(
+                doc_id_column == self.case_id,
+                week_column == monday
+            ).one()
+            self.assertEqual(self.case_name, row.name)
+            self.assertEqual(1, row.open_in_month)
+            self.assertEqual(0, row.pregnant_in_month)
+            self.assertEqual(None, row.fu_forms_in_month)
+
+        # from monday of the EDD the case should exist, and be flagged as pregnant
+        for monday in ('2018-01-15', '2018-01-22', '2018-01-29'):
+            row = aggregate_query.filter(
+                doc_id_column == self.case_id,
+                week_column == monday,
+            ).one()
+            self.assertEqual(1, row.open_in_month)
+            self.assertEqual(1, row.pregnant_in_month)
+            self.assertEqual(None, row.fu_forms_in_month)
+
+        # the monday of the march visit, the should exist, be flagged as pregnant, and there is a form
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            week_column == '2018-03-12'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(1, row.fu_forms_in_month)
+
+        # but the monday after there are no forms again
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            week_column == '2018-03-19'
+        ).one()
+        self.assertEqual(1, row.open_in_month)
+        self.assertEqual(1, row.pregnant_in_month)
+        self.assertEqual(None, row.fu_forms_in_month)
+
+        # the week of the april 9, the case should exist, be flagged as pregnant, and there are 2 forms
+        row = aggregate_query.filter(
+            doc_id_column == self.case_id,
+            week_column == '2018-04-09'
         ).one()
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
