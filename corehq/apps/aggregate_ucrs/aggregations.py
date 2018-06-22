@@ -86,7 +86,7 @@ class MonthAggregationWindow(six.with_metaclass(ABCMeta, TimeAggregationWindow))
 
     def __init__(self, datetime):
         super(MonthAggregationWindow, self).__init__(datetime)
-        self._month = Month.datetime_to_month(self._datetime)
+        self._month = Month.from_datetime(self._datetime)
 
     def __eq__(self, other):
         return isinstance(other, MonthAggregationWindow) and self._month == other._month

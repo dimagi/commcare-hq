@@ -66,10 +66,10 @@ class Month(TimePeriod):
 
     def get_previous_period(self):
         day = self.start - timedelta(days=1)
-        return Month.datetime_to_month(day)
+        return Month.from_datetime(day)
 
     def get_next_period(self):
-        return Month.datetime_to_month(self.end)
+        return Month.from_datetime(self.end)
 
     @classmethod
     def from_datetime(cls, dt):
@@ -77,22 +77,7 @@ class Month(TimePeriod):
 
     @classmethod
     def current_period(cls):
-        return cls.datetime_to_month(datetime.now())
-
-    # todo: remove these legacy methods
-    def get_previous_month(self):
-        return self.get_previous_period()
-
-    def get_next_month(self):
-        return self.get_next_period()
-
-    @classmethod
-    def datetime_to_month(cls, dt):
-        return cls.from_datetime(dt)
-
-    @classmethod
-    def current_month(cls):
-        return cls.current_period()
+        return cls.from_datetime(datetime.now())
 
 
 @attr.s
