@@ -97,12 +97,6 @@ class Select2Ajax(forms.TextInput):
     The url is not specified in the form class definition because in most cases the url will be dependent on the
     domain of the request.
     """
-    class Media(object):
-        css = {
-            'all': ('select2-3.5.2-legacy/select2.css', 'select2-3.5.2-legacy/select2-bootstrap.css')
-        }
-        js = ('select2-3.5.2-legacy/select2.js',)
-
     def __init__(self, attrs=None, page_size=20, multiple=False):
         self.page_size = page_size
         self.multiple = multiple
