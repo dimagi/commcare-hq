@@ -65,26 +65,26 @@ class WeekTest(SimpleTestCase):
         week = Week(2017, 52)
         self.assertEqual(datetime(2018, 1, 1), week.end)
 
-    def test_get_previous_week(self):
+    def test_get_previous_period(self):
         week = Week(2018, 3)
-        previous = week.get_previous_week()
+        previous = week.get_previous_period()
         self.assertEqual(2018, previous.year)
         self.assertEqual(2, previous.week)
 
-    def test_get_previous_week_year_crossing(self):
+    def test_get_previous_period_year_crossing(self):
         week = Week(2018, 1)
-        previous = week.get_previous_week()
+        previous = week.get_previous_period()
         self.assertEqual(2017, previous.year)
         self.assertEqual(52, previous.week)
 
-    def test_get_next_week(self):
+    def test_get_next_period(self):
         week = Week(2018, 3)
-        next = week.get_next_week()
+        next = week.get_next_period()
         self.assertEqual(2018, next.year)
         self.assertEqual(4, next.week)
 
-    def test_get_next_week_year_border(self):
+    def test_get_next_period_year_border(self):
         week = Week(2017, 52)
-        next = week.get_next_week()
+        next = week.get_next_period()
         self.assertEqual(2018, next.year)
         self.assertEqual(1, next.week)
