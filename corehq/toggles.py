@@ -1352,6 +1352,8 @@ LOCATION_SAFETY_EXEMPTION = StaticToggle(
         "for backwards compatibility and should not be enabled for any other "
         "project."
     ),
+    relevant_environments={'production'},
+    always_enabled={'ews-ghana', 'ils-gateway'},
 )
 
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
