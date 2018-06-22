@@ -120,7 +120,7 @@ class ZapierCreateCase(View):
         if not case_type or not owner_id or not domain or not case_name:
             return HttpResponseForbidden('Please fill in all required fields')
 
-        couch_user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CommCareUser.get_by_username(user_name)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
@@ -156,7 +156,7 @@ class ZapierUpdateCase(View):
 
         properties.pop('case_id')
 
-        couch_user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CommCareUser.get_by_username(user_name)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
