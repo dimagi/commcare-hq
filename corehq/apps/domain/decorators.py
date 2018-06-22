@@ -21,7 +21,7 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth, tokenauth,
+    determine_authtype_from_request, basicauth,
     BASIC, DIGEST, API_KEY, TOKEN,
     get_username_and_password_from_request)
 
@@ -227,10 +227,6 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
-
-
 def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         api_key(),
@@ -251,7 +247,6 @@ def _get_multi_auth_decorator(default, allow_token=False):
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                TOKEN: login_or_token_ex(allow_cc_users=True),
             }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
