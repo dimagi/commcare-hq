@@ -122,7 +122,7 @@ def iso_year_start(iso_year):
     Stolen from https://stackoverflow.com/a/1700069/8207
     """
     fourth_jan = datetime(iso_year, 1, 4)
-    delta = timedelta(fourth_jan.isoweekday()-1)
+    delta = timedelta(fourth_jan.isoweekday() - 1)
     return fourth_jan - delta
 
 
@@ -132,4 +132,4 @@ def iso_to_gregorian(iso_year, iso_week, iso_day):
     Stolen from https://stackoverflow.com/a/1700069/8207
     """
     year_start = iso_year_start(iso_year)
-    return year_start + timedelta(days=iso_day-1, weeks=iso_week-1)
+    return year_start + timedelta(days=iso_day - 1, weeks=iso_week - 1)
