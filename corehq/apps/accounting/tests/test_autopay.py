@@ -15,6 +15,7 @@ from corehq.apps.accounting.payment_handlers import AutoPayInvoicePaymentHandler
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.generator import FakeStripeCard, FakeStripeCustomer
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
+from corehq.apps.domain.models import Domain
 
 
 class TestBillingAutoPay(BaseInvoiceTestCase):
@@ -22,9 +23,16 @@ class TestBillingAutoPay(BaseInvoiceTestCase):
     @classmethod
     def setUpClass(cls):
         super(TestBillingAutoPay, cls).setUpClass()
+        cls.domain_obj = Domain(name=cls.domain)
+        cls.domain_obj.save()
         cls._generate_autopayable_entities()
         cls._generate_non_autopayable_entities()
         cls._generate_invoices()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.domain_obj.delete()
+        super(TestBillingAutoPay, cls).tearDownClass()
 
     @classmethod
     def _generate_autopayable_entities(cls):

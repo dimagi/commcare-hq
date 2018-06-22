@@ -20,6 +20,8 @@ from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
 from corehq.apps.accounting.tests.test_invoicing import BaseInvoiceTestCase
 from six.moves import range
 
+from corehq.apps.domain.models import Domain
+
 
 class TestCreditLines(BaseInvoiceTestCase):
     min_subscription_length = 5
@@ -38,7 +40,7 @@ class TestCreditLines(BaseInvoiceTestCase):
         self.monthly_user_fee = num_excess * self.user_rate.per_excess_fee
 
     def tearDown(self):
-        for user in self.domain.all_users():
+        for user in Domain(name=self.domain).all_users():
             user.delete()
         super(TestCreditLines, self).tearDown()
 
