@@ -1,6 +1,6 @@
 hqDefine("hqwebapp/js/select_2_ajax_widget", [
     'jquery',
-    'select2/dist/js/select2.full.min',     // TODO: this page errors with a select2 problem
+    'select2/dist/js/select2.full.min',
 ], function($) {
     $(function(){
         $(".hqwebapp-select2-ajax").each(function() {
