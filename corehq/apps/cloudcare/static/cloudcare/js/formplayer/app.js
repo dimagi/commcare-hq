@@ -155,6 +155,7 @@ FormplayerFrontend.on('startForm', function (data) {
     };
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
+            var $alert;
             if (resp.submitResponseMessage && user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
@@ -177,9 +178,21 @@ FormplayerFrontend.on('startForm', function (data) {
                         }
                     };
                 $("#cloudcare-notifications").off('click').on('click', dataFeedbackLoopAnalytics);
-                showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), 10000, true);
+                $alert = showSuccess(markdowner.render(resp.submitResponseMessage), $("#cloudcare-notifications"), undefined, true);
             } else {
-                showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"), 10000);
+                $alert = showSuccess(gettext("Form successfully saved!"), $("#cloudcare-notifications"));
+            }
+            if ($alert) {
+                // Clear the success notification the next time user changes screens
+                var clearSuccess = function() {
+                    $alert.fadeOut(500, function() {
+                        $alert.remove();
+                        FormplayerFrontend.off('navigation', clearSuccess);
+                    });
+                };
+                _.delay(function() {
+                    FormplayerFrontend.on('navigation', clearSuccess);
+                });
             }
 
             if (user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT) {
