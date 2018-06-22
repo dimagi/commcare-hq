@@ -214,11 +214,11 @@ hqDefine('locations/js/location_drilldown', [
         //warning: duplicate code with location_tree.async.js
         loc.allowed_child_types = ko.computed(function() {
             var types = [];
-            $.each(root.location_types, function(i, loc_type) {
-                $.each(loc_type.allowed_parents, function(i, parent_type) {
-                    if (loc.type() === parent_type ||
-                        (loc.type() === undefined && parent_type === null)) {
-                        types.push(loc_type.type);
+            $.each(root.location_types, function(i, locType) {
+                $.each(locType.allowed_parents, function(i, parentType) {
+                    if (loc.type() === parentType ||
+                        (loc.type() === undefined && parentType === null)) {
+                        types.push(locType.type);
                     }
                 });
             });

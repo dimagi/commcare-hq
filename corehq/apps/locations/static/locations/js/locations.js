@@ -7,7 +7,7 @@ hqDefine('locations/js/locations', [
     $,
     initialPageData,
     locationUtils,
-    LocationModels,
+    LocationModels
 ) {
     $(function() {
         var locs = initialPageData.get('locations'),

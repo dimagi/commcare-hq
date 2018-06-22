@@ -21,9 +21,9 @@ hqDefine('locations/js/import', [
         }
 
         // modify download url to pass extra options
-        function consumptionOptionsViewModel(base_url) {
+        function consumptionOptionsViewModel(baseUrl) {
             var self = {};
-            self.base_url = base_url;
+            self.base_url = baseUrl;
             self.include_consumption = ko.observable(false);
             self.url = ko.computed(function() {
                 return (
