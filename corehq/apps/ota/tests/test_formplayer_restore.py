@@ -1,9 +1,9 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from urllib import urlencode
 
 import mock
+import six
 from django.http.response import HttpResponse
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -63,7 +63,7 @@ class FormplayerRestoreTest(TestCase):
         self.assertEqual(resp.status_code, 401)
 
     def _do_post(self, data, uri=None, hmac=None):
-        params = urlencode(data)
+        params = six.moves.urllib.parse.urlencode(data)
         hmac_header_value = hmac or get_hmac_digest(b'123abc', params)
         uri = uri or self.uri
         # have to format url with params directly to ensure ordering remains unchanged
