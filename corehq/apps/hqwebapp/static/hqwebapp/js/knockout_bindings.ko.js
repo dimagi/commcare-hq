@@ -247,32 +247,38 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 }
             });
 
-            $(element).on('click', '.send-to-top', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+            var getIndexFromRow = function (row) {
+                return parseInt(row[0].attributes['data-order'].value);
+            };
 
-                var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
+            var moveRowToIndex = function (row, newIndex) {
+                var oldIndex = getIndexFromRow(row);
                 row.remove();
-                list.unshift(list.splice(currentIndex, 1)[0]);
+                var currentListItem = list.splice(oldIndex, 1)[0];
+                list.splice(newIndex, 0, currentListItem);
+            };
+
+            $(element).on('click', '.send-to-top', function () {
+                var row = $(this).parent().parent();
+                row.addClass("moving").siblings().removeClass('moving');
+
+                moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
-
                 var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
+                row.addClass("moving").siblings().removeClass('moving');
 
-                var lastSelectedRowIndex = null;
-                for (var i = 0; i < list().length; i++) {
-                    if (list()[i].selected()) {
-                        lastSelectedRowIndex = i;
+                var currentIndex = getIndexFromRow(row);
+                if (list()[currentIndex].selected()) {
+                    for (var i = list().length - 1; i > currentIndex; i--) {
+                        if (list()[i].selected()) {
+                            moveRowToIndex(row, i);
+                            break;
+                        }
                     }
-                }
-
-                if (currentIndex < lastSelectedRowIndex) {
-                    var currentListItem = list.splice(currentIndex, 1)[0];
-                    row.remove();
-                    list.splice(lastSelectedRowIndex, 0, currentListItem);
+                } else {
+                    moveRowToIndex(row, list().length - 1);
                 }
             });
 
