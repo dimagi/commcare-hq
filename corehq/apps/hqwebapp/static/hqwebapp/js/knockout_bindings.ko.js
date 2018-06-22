@@ -271,14 +271,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                 var currentIndex = getIndexFromRow(row);
                 if (list()[currentIndex].selected()) {
-                    var lastSelectedRowIndex = null;
-                    for (var i = 0; i < list().length; i++) {
+                    for (var i = list().length - 1; i > currentIndex; i--) {
                         if (list()[i].selected()) {
-                            lastSelectedRowIndex = i;
+                            moveRowToIndex(row, i);
+                            break;
                         }
-                    }
-                    if (currentIndex < lastSelectedRowIndex) {
-                        moveRowToIndex(row, lastSelectedRowIndex)
                     }
                 } else {
                     moveRowToIndex(row, list().length - 1);
