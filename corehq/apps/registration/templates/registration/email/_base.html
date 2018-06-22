@@ -1,0 +1,123 @@
+{% load i18n %}
+{% load hq_shared_tags %}
+<!doctype html>
+<html bgcolor="#f1f1f1"
+      style="background-color: #f1f1f1;
+             margin: 0; padding: 0;
+             font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
+  <head>
+    <style type="text/css">
+      /*<![CDATA[*/
+      {#      Note that we are using mostly INLINE CSS Styles here due to the varied support of CSS  #}
+      {#      in the different mail clients out there. It's really a mess!!!  #}
+      .footer a {
+        color: #004ebc;
+        -webkit-text-size-adjust: none;
+        text-decoration: underline;
+        font-weight: normal
+      }
+
+      .content a {
+        text-decoration: none;
+        color: #004ebc;
+        transition: color .25s ease-in-out;
+      }
+
+      .content p {
+        font-size: .9em;
+      }
+
+      .content a:hover {
+        color: #002c5f;
+      }
+
+      /* Hide preview text on rendering */
+      .preview-text {
+        display: none;
+      }
+      .btn {
+        transition: box-shadow .25s ease-in-out;
+      }
+      .btn-white {
+        transition: background-color .25s ease-in-out;
+      }
+      /* NOTE Hover not supported by all mail clients */
+      .btn:hover {
+        background-color: #004ebc;
+        -webkit-box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
+        -moz-box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
+        box-shadow: 0px 0px 20px rgba(255, 255, 255, .8);
+      }
+      .btn-white:hover {
+        background-color: #002c5f;
+      }
+
+      /* NOTE Background Image not supported by all mail clients */
+      .hero {
+        background-image: url("{{ url_prefix }}{% static 'registration/images/hero-bg.jpg' %}");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+      /*]]>*/
+    </style>
+    <!-- http://www.emailon@cid.com/blog/details/C13/ensure_that_your_entire_email_is_rendered_by_default_in_the_iphone_ipad -->
+    <!--                                                                                                                     -->
+    <!--                                                                                                                     -->
+    <!--                                _|_|_|    _|                                      _|                                 -->
+    <!--                                _|    _|      _|_|_|  _|_|      _|_|_|    _|_|_|                                     -->
+    <!--                                _|    _|  _|  _|    _|    _|  _|    _|  _|    _|  _|                                 -->
+    <!--                                _|    _|  _|  _|    _|    _|  _|    _|  _|    _|  _|                                 -->
+    <!--                                _|_|_|    _|  _|    _|    _|    _|_|_|    _|_|_|  _|                                 -->
+    <!--                                                                              _|                                     -->
+    <!--                                                                            _|_|                                     -->
+    <!--                                                                                                                     -->
+    <!--                                                 Extra White Space!                                                  -->
+    <!--                                                                                                                     -->
+    <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+  </head>
+  <body bgcolor="#f1f1f1" marginheight="0" marginwidth="0" topmargin="0" style="background-color: #f1f1f1; margin: 0; padding: 0; font-family: 'Helvetica Neue', 'Helvetica', 'Lucida Sans', 'Trebuchet MS', 'Arial', sans-serif;">
+
+{#  Preview Text is the text that appears right after the subject #}
+    <div class="preview-text" style="display: none !important;">
+      {% block preview_text %}{% endblock %}
+    </div>{# /preview-text #}
+
+    <div class="container" style="line-height: 1.5em; font-size: 15px; font-weight: 400; color: #181715; width: 680px; background-color: #ffffff; margin: 0 auto; overflow: hidden; ">
+      <div class="hero" style="background-color: #333333; height: 330px; width: 100%;" class="hero">
+
+        <div class="logo" style="text-align: center; padding: 20px 0;">
+          <img src="{{ url_prefix }}{% static 'registration/images/dimagi.png' %}" width="53" height="25" />
+        </div>{# /logo #}
+
+        {% block hero %}
+        {% endblock %}
+
+      </div>{# /hero #}
+
+      <div class="content" style="padding: 20px 45px 35px; line-height: 1.2em;">
+        {% block content %}{% endblock %}
+      </div>{# /content #}
+
+      {% block full_width_content %}{% endblock %}
+    </div>{# /container #}
+
+
+    <div class="footer" style="width: 680px; margin: 0 auto; font-size: 13px; text-align: center; background-color: #ffffff;">
+      <div class="footer-content" style="padding: 20px 45px; line-height: 1.2em;">
+
+        <p>
+          {% block reason_for_email %}{% endblock %}
+        </p>
+
+        <p>
+          Dimagi, Inc.
+          585 Massachusetts Ave, Ste 4,
+          Cambridge, MA 02139 United States
+        </p>
+
+      </div>{#  /footer-content #}
+    </div>{# /footer #}
+
+  </body>
+</html>
