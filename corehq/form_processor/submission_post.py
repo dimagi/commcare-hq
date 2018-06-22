@@ -250,17 +250,18 @@ class SubmissionPost(object):
 
                 # ignore temporarily till we migrate DeviceReportEntry id to bigint
                 ignore_device_logs = settings.SERVER_ENVIRONMENT in settings.ICDS_ENVS
-                if not ignore_device_logs and instance.xmlns == DEVICE_LOG_XMLNS:
+                if instance.xmlns == DEVICE_LOG_XMLNS:
                     submission_type = 'device_log'
-                    try:
-                        process_device_log(self.domain, instance)
-                    except Exception as e:
-                        notify_exception(None, "Error processing device log", details={
-                            'xml': self.instance,
-                            'domain': self.domain
-                        })
-                        e.sentry_capture = False
-                        raise
+                    if not ignore_device_logs:
+                        try:
+                            process_device_log(self.domain, instance)
+                        except Exception as e:
+                            notify_exception(None, "Error processing device log", details={
+                                'xml': self.instance,
+                                'domain': self.domain
+                            })
+                            e.sentry_capture = False
+                            raise
 
                 elif instance.is_duplicate:
                     submission_type = 'duplicate'
