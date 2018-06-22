@@ -1491,7 +1491,10 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                     couch_user.clear_quickcache_for_user()
                 except ResourceConflict:
-                    cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    if max_tries > 0:
+                        cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    else:
+                        raise
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)
