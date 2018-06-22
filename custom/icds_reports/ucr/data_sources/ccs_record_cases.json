@@ -1147,6 +1147,20 @@
           "type": "property_name",
           "property_name": "mobile_number"
         }
+     },
+     {
+        "display_name": null,
+        "transform": {},
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "is_nullable": true,
+        "column_id": "num_pnc_visits",
+        "expression": {
+          "datatype": null,
+          "type": "property_name",
+          "property_name": "num_pnc_visits"
+        }
      }
     ],
     "named_expressions": {
