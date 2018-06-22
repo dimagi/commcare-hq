@@ -63,10 +63,8 @@ class FormplayerRestoreTest(TestCase):
         self.assertEqual(resp.status_code, 401)
 
     def _do_post(self, data, uri=None, hmac=None):
-        request_data = urlencode(data)
-        hmac_header_value = hmac or get_hmac_digest(b'123abc', request_data)
-        resp = self.client.post(
-            uri or self.uri, request_data, content_type='application/x-www-form-urlencoded',
-            HTTP_X_MAC_DIGEST=hmac_header_value
-        )
-        return resp
+        params = urlencode(data)
+        hmac_header_value = hmac or get_hmac_digest(b'123abc', params)
+        uri = uri or self.uri
+        # have to format url with params directly to ensure ordering remains unchanged
+        return self.client.get('{}?{}'.format(uri, params), HTTP_X_MAC_DIGEST=hmac_header_value)
