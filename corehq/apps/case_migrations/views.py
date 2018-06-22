@@ -6,11 +6,13 @@ from django.http import HttpResponseRedirect
 from django.http.response import Http404
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
 
 from casexml.apps.case.xml import V2
 from casexml.apps.phone.restore import RestoreContent, RestoreResponse
 from casexml.apps.phone.xml import get_case_element, get_registration_element_for_case
+from corehq.apps.domain.auth import formplayer_auth
 from corehq.apps.domain.decorators import domain_admin_required, mobile_auth_or_formplayer
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.locations.permissions import user_can_access_case, location_restricted_exception, location_safe
@@ -59,7 +61,8 @@ def get_case_hierarchy_for_restore(case):
 
 
 @location_safe
-@mobile_auth_or_formplayer(require_user=False)
+@csrf_exempt
+@formplayer_auth
 def migration_restore(request, domain, case_id):
     """Restore endpoint used in bulk case migrations
 
