@@ -4,8 +4,7 @@ from __future__ import unicode_literals
 from collections import defaultdict, OrderedDict
 
 import itertools
-from django.conf import settings
-from django.core.mail.message import EmailMessage
+from django.template.defaultfilters import linebreaksbr
 from django.utils.encoding import force_text
 from django.utils.safestring import mark_safe
 from lxml import etree
@@ -30,6 +29,7 @@ from django.contrib import messages
 from django.utils.translation import ugettext as _
 import six
 from six.moves import zip
+from corehq.apps.hqwebapp.tasks import send_html_email_async
 
 
 def get_unicode_dicts(iterable):
@@ -209,18 +209,19 @@ def validate_bulk_app_translation_upload(app, workbook, send_email, email):
 
 @task(queue="email_queue")
 def _email_app_translations_discrepancies(msgs, email, app_name):
-    message = '<br/><br/>'.join([
-        "Sheet {}:<br/> {}".format(sheet_name, '<br/> '.join(msgs[sheet_name]))
+    message = '\n\n'.join([
+        """Sheet {}: 
+           {}""".format(sheet_name, '\n '.join(msgs[sheet_name]))
         for sheet_name in msgs
         if msgs.get(sheet_name)])
 
-    email = EmailMessage(
-        subject="App Translations Discrepancies for {}".format(app_name),
-        body="Hi,<br/>Following discrepancies were found for app translations. <br/><br/>" + message,
-        to=[email],
-        from_email=settings.DEFAULT_FROM_EMAIL
-    )
-    email.send()
+    subject = "App Translations Discrepancies for {}".format(app_name)
+    body = """Hi,
+    Following discrepancies were found for app translations.
+    
+    {}""".format(message)
+
+    send_html_email_async.delay(subject, email, linebreaksbr(body))
 
 
 def _make_modules_and_forms_row(row_type, sheet_name, languages,

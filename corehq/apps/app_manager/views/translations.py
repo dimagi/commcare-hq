@@ -8,7 +8,6 @@ from django.urls import reverse
 from django.http import HttpResponseRedirect
 from django.utils.translation import ugettext as _
 
-from corehq import toggles
 from corehq.apps.app_manager.const import APP_TRANSLATION_UPLOAD_FAIL_MESSAGE
 from corehq.apps.app_manager.dbaccessors import get_app
 from corehq.apps.app_manager.decorators import no_conflict_require_POST, \
@@ -28,6 +27,7 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
+from dimagi.utils.parsing import string_to_boolean
 import six
 
 
@@ -103,7 +103,7 @@ def download_bulk_app_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    validate = request.POST.get('validate')
+    validate = string_to_boolean(request.POST.get('validate'))
     app = get_app(domain, app_id)
     msgs = []
     workbook = read_uploaded_app_translation_file(request.file, msgs)

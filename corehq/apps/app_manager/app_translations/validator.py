@@ -47,25 +47,26 @@ class UploadedTranslationsValidator(object):
         """
         columns_to_compare = COLUMNS_TO_COMPARE[for_type] + [self.default_language_column]
         expected_rows = self.expected_rows[sheet_name]
-        msg = []
+        msgs = []
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("less"))
+            msgs.append(ROW_COUNT_MISMATCH_MESSAGE.format("less"))
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msg.append(ROW_COUNT_MISMATCH_MESSAGE.format("more"))
+            msgs.append(ROW_COUNT_MISMATCH_MESSAGE.format("more"))
 
         iterate_on = [expected_rows, uploaded_rows]
-        for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on)):
+        # 2 to account for the sheet header as well
+        for i, (expected_row, uploaded_row) in enumerate(zip(*iterate_on), 2):
             for column_name in columns_to_compare:
                 uploaded_value = uploaded_row.get(column_name)
                 expected_value = expected_row[self._get_header_index(sheet_name, column_name)]
                 if expected_value != uploaded_value:
-                    # i + 2 to account for the sheet header as well
-                    msg.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
+
+                    msgs.append("For {}:{}  uploaded '{}' but expected '{}'.".format(
                         i + 2, column_name, uploaded_value, expected_value
                     ))
-        return msg
+        return msgs
 
     def compare(self):
         msgs = {}

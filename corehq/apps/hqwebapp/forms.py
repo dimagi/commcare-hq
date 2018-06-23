@@ -96,12 +96,12 @@ class BulkUploadForm(forms.Form):
     def crispy_form_fields(self, context):
         return [
             crispy.Field(
-                'action',
-            ),
-            crispy.Field(
                 'bulk_upload_file',
                 data_bind="value: file",
-            )
+            ),
+            crispy.Field(
+                'action',
+            ),
         ]
 
 
