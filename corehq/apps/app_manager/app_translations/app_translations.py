@@ -189,20 +189,12 @@ def process_bulk_app_translation_upload(app, workbook):
     return msgs
 
 
-def validate_bulk_app_translation_upload(app, workbook, send_email, email):
+def validate_bulk_app_translation_upload(app, workbook, email):
     from corehq.apps.app_manager.app_translations.validator import UploadedTranslationsValidator
     msgs = UploadedTranslationsValidator(app, workbook).compare()
     if msgs:
-        if send_email:
-            _email_app_translations_discrepancies(msgs, email, app.name)
-            return [(messages.error, _("Issues found. You should receive an email shortly."))]
-        else:
-            message = ["Sheet {}: {}".format(sheet_name, ' '.join(msgs[sheet_name]))
-                       for sheet_name in msgs
-                       if msgs.get(sheet_name)]
-            return [
-                (messages.error, ' '.join(message))
-            ]
+        _email_app_translations_discrepancies(msgs, email, app.name)
+        return [(messages.error, _("Issues found. You should receive an email shortly."))]
     else:
         return [(messages.success, "No issues found.")]
 

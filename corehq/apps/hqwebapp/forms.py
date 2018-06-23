@@ -108,15 +108,12 @@ class BulkUploadForm(forms.Form):
 class AppTranslationsBulkUploadForm(BulkUploadForm):
     validate = forms.BooleanField(label="Just validate and not update translations", required=False,
                                   initial=False)
-    send_email = forms.BooleanField(label="Share issues found via email", required=False,
-                                    initial=False)
 
     def crispy_form_fields(self, context):
         crispy_form_fields = super(AppTranslationsBulkUploadForm, self).crispy_form_fields(context)
         if context.get('can_validate_app_translations'):
             crispy_form_fields.extend([
-                InlineField('validate'),
-                InlineField('send_email')
+                InlineField('validate')
             ])
         return crispy_form_fields
 
