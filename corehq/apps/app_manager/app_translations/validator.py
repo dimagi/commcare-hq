@@ -7,13 +7,16 @@ from corehq.apps.app_manager.app_translations import (
     get_unicode_dicts,
 )
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
+from django.utils.translation import ugettext as _
+
 
 COLUMNS_TO_COMPARE = {
     'module_and_form': ['Type', 'sheet_name'],
     'module': ['case_property', 'list_or_detail'],
     'form': ['label'],
 }
-ROW_COUNT_MISMATCH_MESSAGE = "We found {} rows than expected. Validating what was uploaded."
+LESS_ROW_COUNT_MISMATCH_MESSAGE = _("We found less rows than expected. Validating what was uploaded.")
+MORE_ROW_COUNT_MISMATCH_MESSAGE = _("We found more rows than expected. Validating what was uploaded.")
 
 
 class UploadedTranslationsValidator(object):
@@ -51,9 +54,9 @@ class UploadedTranslationsValidator(object):
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msgs.append(ROW_COUNT_MISMATCH_MESSAGE.format("less"))
+            msgs.append(LESS_ROW_COUNT_MISMATCH_MESSAGE)
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msgs.append(ROW_COUNT_MISMATCH_MESSAGE.format("more"))
+            msgs.append(MORE_ROW_COUNT_MISMATCH_MESSAGE)
 
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
