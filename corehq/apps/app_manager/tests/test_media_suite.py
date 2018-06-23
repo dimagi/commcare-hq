@@ -136,7 +136,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
     """
-        For CC >= 2.21.0
+        For CC >= 2.21
         Tests following for form, module, case_list_menu, case_list_form
         - suite.xml should contain correct localized media references
         - app_strings should contain all of above media references
