@@ -27,7 +27,6 @@ from couchexport.models import Format
 from couchexport.shortcuts import export_response
 from dimagi.utils.decorators.view import get_file
 from dimagi.utils.logging import notify_exception
-from dimagi.utils.parsing import string_to_boolean
 import six
 
 
@@ -103,7 +102,7 @@ def download_bulk_app_translations(request, domain, app_id):
 @require_can_edit_apps
 @get_file("bulk_upload_file")
 def upload_bulk_app_translations(request, domain, app_id):
-    validate = string_to_boolean(request.POST.get('validate'))
+    validate = request.POST.get('validate')
     app = get_app(domain, app_id)
     workbook, msgs = read_uploaded_app_translation_file(request.file)
     if workbook:
