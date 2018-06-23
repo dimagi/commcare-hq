@@ -61,8 +61,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
-            messages = []
-            workbook = read_uploaded_app_translation_file(f, messages)
+            workbook, messages = read_uploaded_app_translation_file(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 
@@ -82,8 +81,7 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             expected_messages = ["App Translations Updated!"]
 
         with codecs.open(self.get_path(name, "xlsx")) as f:
-            messages = []
-            workbook = read_uploaded_app_translation_file(f, messages)
+            workbook, messages = read_uploaded_app_translation_file(f)
             assert workbook, messages
             messages = process_bulk_app_translation_upload(self.app, workbook)
 

@@ -105,8 +105,7 @@ def download_bulk_app_translations(request, domain, app_id):
 def upload_bulk_app_translations(request, domain, app_id):
     validate = string_to_boolean(request.POST.get('validate'))
     app = get_app(domain, app_id)
-    msgs = []
-    workbook = read_uploaded_app_translation_file(request.file, msgs)
+    workbook, msgs = read_uploaded_app_translation_file(request.file)
     if workbook:
         if validate:
             msgs = validate_bulk_app_translation_upload(app, workbook, request.user.email)

@@ -52,7 +52,8 @@ def get_unicode_dicts(iterable):
     return rows
 
 
-def read_uploaded_app_translation_file(f, msgs):
+def read_uploaded_app_translation_file(f):
+    msgs = []
     try:
         workbook = WorkbookJSONReader(f)
     # todo: HeaderValueError does not belong here
@@ -68,7 +69,7 @@ def read_uploaded_app_translation_file(f, msgs):
             ).format(e))
         )
         return False
-    return workbook
+    return workbook, msgs
 
 
 def process_bulk_app_translation_upload(app, workbook):
