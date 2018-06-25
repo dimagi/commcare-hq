@@ -1,42 +1,16 @@
 {% extends 'registration/email/confirm_account.html' %}
 {% load i18n %}
 
-{% block content %}
-  <h2 style="font-weight: 800; font-size: 1.5em;">
-    {% blocktrans %}
-      Don't forget to activate!
-    {% endblocktrans %}
-  </h2>
+{% block lead_text %}
+  {% blocktrans %}
+    Don't forget to activate your account. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
 
-  <p>
-    {% blocktrans %}
-      Dear {{ full_name }},
-    {% endblocktrans %}
-  </p>
-
-  <p>
-    {% blocktrans %}
-      Welcome to CommCare.
-      We noticed that you registered for an account yesterday,
-      but it seems you haven't confirmed your email address yet.
-    {% endblocktrans %}
-  </p>
-
-  <p>
-    {% blocktrans %}
-      Please <a href="{{ registration_link }}">activate your CommCare project</a>
-      and get started with app building today!
-    {% endblocktrans %}
-  </p>
-  <p>
-    {% blocktrans %}
-      Once you do this, our team will be in touch with some helpful tips for getting started!
-    {% endblocktrans %}
-  </p>
-  <p>
-    {% blocktrans %}
-      Cheers,<br />
-      The CommCare Team
-    {% endblocktrans %}
-  </p>
+{% block secondary_text %}
+  {% blocktrans %}
+    We noticed that you registered for an account yesterday,
+    but it seems you haven't confirmed your email address yet.
+  {% endblocktrans %}
 {% endblock %}

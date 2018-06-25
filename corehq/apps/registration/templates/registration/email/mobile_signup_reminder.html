@@ -4,66 +4,42 @@
 
 {% block preview_text %}
   {% blocktrans %}
-    Dear {{ full_name }}, please visit your CommCare HQ Account!
+    Dear {{ full_name }}, please visit your CommCare HQ Account on a desktop!
   {% endblocktrans %}
 {% endblock %}
 
-{% block hero %}
-  <div style="text-align: center; font-weight: 800; color: #ffffff; font-size: 30px; padding-top: 20px;">
-    {% blocktrans %}
-      Get Started With
-    {% endblocktrans %}
-  </div>
-  <div style="text-align: center; padding: 10px 0;">
-    <img src="{{ url_prefix }}{% static 'registration/images/commcare.png' %}" width="250" height="52" />
-  </div>
-  <div style="text-align: center; margin-top: 0px;">
-    <a class="btn"
-       href="{{ url }}"
-       style="color: #ffffff; text-decoration: none; padding: 15px 20px; background-color: #004ebc; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-      {% trans "Visit CommCare HQ" %}
-    </a>
-  </div>
+{% block cta_headline %}
+  {% blocktrans %}
+    A reminder to visit on your desktop:
+  {% endblocktrans %}
 {% endblock %}
 
-{% block content %}
-  <p>
-    {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
-  </p>
+{% block cta_url %}{{ url }}{% endblock %}
 
-  <p>
-    {% blocktrans %}
-      This email has been sent as a reminder for you to visit your
-      CommCare HQ project space on a laptop or desktop computer.
-    {% endblocktrans %}
-  </p>
-  <p>
-    {% blocktrans %}
-      Cheers,<br />
-      The CommCare Team
-    {% endblocktrans %}
-  </p>
+{% block cta_text %}
+  {% blocktrans %}
+    Visit CommCare HQ
+  {% endblocktrans %}
 {% endblock %}
 
-{% block full_width_content %}
-  <div style="width: 100%; background-color: #004ebc; text-align: center; padding: 60px 0 65px;">
-
-    <div style="text-align: center;  margin-bottom: 5px;">
-      <img src="{{ url_prefix }}{% static 'registration/images/commcare.png' %}" width="250" height="52" />
-    </div>
-
-    <a class="btn-white"
-       href="{{ url }}"
-       style="color: #ffffff; text-decoration: none; padding: 15px 20px; border: 2px solid #ffffff; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-      {% trans "Visit CommCare HQ" %}
-    </a>
-  </div>
+{% block lead_text %}
+  {% blocktrans %}
+    This email has been sent as a reminder for you to visit your
+    CommCare HQ project space on a laptop or desktop computer.
+  {% endblocktrans %}
 {% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    Thanks for signing up for CommCare. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block content %}{% endblock %}
 
 {% block reason_for_email %}
   {% blocktrans %}
-    You received this message because we received a reminder request<br />
-    on <a href="http://www.commcarehq.org/" style="color: #004ebc; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
-    with your email address.
+    You received this message because we received a reminder request
   {% endblocktrans %}
 {% endblock %}
