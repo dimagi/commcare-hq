@@ -51,7 +51,6 @@ name: autostaging
 branches:
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
-  - np/export-sharing  # NP June 19
   - jls/requirejs-locations  # Jenny June 22
   - cz/aggregation  # cz June 25
 submodules:
