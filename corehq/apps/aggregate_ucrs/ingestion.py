@@ -46,7 +46,6 @@ def get_time_aggregation_windows(aggregate_table_definition, last_update):
     else:
         start_time = get_aggregation_start_period(aggregate_table_definition, last_update)
         end_time = get_aggregation_end_period(aggregate_table_definition, last_update)
-        assert end_time >= start_time
         period_class = get_time_period_class(aggregate_table_definition.time_aggregation.aggregation_unit)
         current_window = TimePeriodAggregationWindow(period_class, start_time)
         end_window = TimePeriodAggregationWindow(period_class, end_time)
