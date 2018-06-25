@@ -2052,6 +2052,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
     fogbugz_client_name = forms.CharField(
         label=ugettext_noop('Fogbugz Client Name'),
         max_length=BillingAccount._meta.get_field('name').max_length,
+        required=False,
     )
 
     emails = forms.CharField(
@@ -2060,6 +2061,7 @@ class ContractedPartnerForm(InternalSubscriptionManagementForm):
             'or SMS limits in their plan.'
         ),
         label=ugettext_noop('Partner Contact Emails'),
+        required=False,
     )
 
     start_date = forms.DateField(
