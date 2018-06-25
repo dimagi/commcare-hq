@@ -2,8 +2,15 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import datetime
 
-from corehq.apps.accounting.invoicing import generate_invoice
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
+from corehq.apps.accounting.invoicing import (
+    DomainInvoiceFactory,
+    CustomerAccountInvoiceFactory,
+    generate_invoice,
+    update_invoice_due_date,
+    should_create_invoice,
+    get_invoice_start,
+    get_invoice_end
+)
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     BillingAccount,
@@ -120,17 +127,16 @@ class TestDomainInvoiceFactory(BaseAccountingTest):
         self.assertEqual(community_ranges, [(self.invoice_start, self.invoice_end + datetime.timedelta(days=1))])
 
 
-class TestCustomerInvoiceFactory(BaseAccountingTest):
+class TestInvoicingMethods(BaseAccountingTest):
 
     def setUp(self):
-        super(TestCustomerInvoiceFactory, self).setUp()
-        self.invoice_start, self.invoice_end = get_previous_month_date_range()
+        super(TestInvoicingMethods, self).setUp()
+        self.invoice_start = datetime.date(2018, 5, 1)
+        self.invoice_end = datetime.date(2018, 5, 31)
 
-        self.domain1 = generator.arbitrary_domain()
-        self.domain2 = generator.arbitrary_domain()
-        self.domain3 = generator.arbitrary_domain()
+        self.domain = generator.arbitrary_domain()
         self.account = BillingAccount.get_or_create_account_by_domain(
-            domain=self.domain1.name, created_by="TEST"
+            domain=self.domain, created_by="TEST"
         )[0]
         self.account.is_customer_billing_account = True
         self.account.save()
@@ -139,40 +145,96 @@ class TestCustomerInvoiceFactory(BaseAccountingTest):
         self.advanced_plan.plan.is_customer_software_plan = True
         self.pro_plan = DefaultProductPlan.get_default_plan_version(edition=SoftwarePlanEdition.PRO)
         self.pro_plan.plan.is_customer_software_plan = True
-        self.sub1 = Subscription.new_domain_subscription(
-            self.account, self.domain1.name, self.advanced_plan, date_start=self.invoice_start
-        )
-        self.sub2 = Subscription.new_domain_subscription(
-            self.account, self.domain2.name, self.advanced_plan, date_start=self.invoice_start
-        )
-        self.sub3 = Subscription.new_domain_subscription(
-            self.account, self.domain3.name, self.pro_plan, date_start=self.invoice_start
+        self.subscription = Subscription.new_domain_subscription(
+            self.account,
+            self.domain.name,
+            self.advanced_plan,
+            date_start=self.invoice_start,
+            date_end=self.invoice_end
         )
 
     def tearDown(self):
-        self.domain1.delete()
-        self.domain2.delete()
-        self.domain3.delete()
-        super(TestCustomerInvoiceFactory, self).tearDown()
+        self.domain.delete()
+        super(TestInvoicingMethods, self).tearDown()
 
-    def test_create_invoice_for_subscription(self):
-        invoice = generate_invoice(self.sub1, self.invoice_start, self.invoice_end, self.invoice_end)
-        self.assertTrue(invoice.exists_for_domain(self.domain1))
+    def test_should_not_invoice_trial(self):
+        trial_domain = generator.arbitrary_domain()
+        subscription = Subscription.new_domain_subscription(
+            self.account, trial_domain.name, self.advanced_plan, date_start=self.invoice_start
+        )
+        subscription.is_trial = True
+        self.assertFalse(should_create_invoice(
+            subscription=subscription,
+            domain=subscription.subscriber.domain,
+            invoice_start=self.invoice_start,
+            invoice_end=self.invoice_end
+        ))
+        trial_domain.delete()
+
+    def test_should_not_invoice_without_subscription_charges(self):
+        feature_charge_domain = generator.arbitrary_domain()
+        subscription = Subscription.new_domain_subscription(
+            self.account, feature_charge_domain.name, self.advanced_plan, date_start=self.invoice_start
+        )
+        subscription.skip_invoicing_if_no_feature_charges = True
+        self.assertFalse(should_create_invoice(
+            subscription=subscription,
+            domain=subscription.subscriber.domain,
+            invoice_start=self.invoice_start,
+            invoice_end=self.invoice_end
+        ))
+        feature_charge_domain.delete()
+
+    def test_should_not_invoice_after_end(self):
+        invoice_start = datetime.date(2018, 4, 1)
+        invoice_end = datetime.date(2018, 4, 30)
+        self.assertFalse(should_create_invoice(
+            subscription=self.subscription,
+            domain=self.subscription.subscriber.domain,
+            invoice_start=invoice_start,
+            invoice_end=invoice_end
+        ))
+
+    def test_should_not_invoice_before_start(self):
+        invoice_start = datetime.date(2018, 6, 1)
+        invoice_end = datetime.date(2018, 6, 30)
+        self.assertFalse(should_create_invoice(
+            subscription=self.subscription,
+            domain=self.subscription.subscriber.domain,
+            invoice_start=invoice_start,
+            invoice_end=invoice_end
+        ))
+
+    def test_get_invoice_start(self):
+        self.assertEqual(get_invoice_start(self.subscription, self.invoice_start), self.invoice_start)
+
+        invoice_start = datetime.date(2018, 5, 2)
+        self.assertEqual(get_invoice_start(self.subscription, invoice_start), invoice_start)
+
+        invoice_start = datetime.date(2018, 4, 30)
+        self.assertEqual(get_invoice_start(self.subscription, invoice_start), self.subscription.date_start)
+
+    def test_get_invoice_end(self):
+        get_invoice_end(self.subscription, self.invoice_end)
+        self.assertEqual(get_invoice_end(self.subscription, self.invoice_end),
+                         self.subscription.date_end - datetime.timedelta(days=1))
+
+        self.subscription.date_end = None
+        self.assertEqual(get_invoice_end(self.subscription, self.invoice_end), self.invoice_end)
+
+    def test_create_invoice(self):
+        invoice = generate_invoice(self.subscription, self.invoice_start, self.invoice_end)
+        update_invoice_due_date(invoice, self.subscription, self.invoice_end)
+        self.assertTrue(invoice.exists_for_domain(self.domain))
         self.assertEqual(invoice.account, self.account)
         self.assertEqual(invoice.date_start, self.invoice_start)
         self.assertEqual(invoice.date_end, self.invoice_end)
         self.assertEqual(invoice.lineitem_set.count(), 3)
-        self.assertEqual(invoice.subscription, self.sub1)
+        self.assertEqual(invoice.subscription, self.subscription)
 
-    def test_consolidate_invoices(self):
-        invoice1 = generate_invoice(self.sub1, self.invoice_start, self.invoice_end, self.invoice_end)
-        invoice2 = generate_invoice(self.sub2, self.invoice_start, self.invoice_end, self.invoice_end)
-        invoice3 = generate_invoice(self.sub3, self.invoice_start, self.invoice_end, self.invoice_end)
-        invoices = [invoice1, invoice2, invoice3]
-
-        invoice = self.invoice_factory._consolidate_invoices(invoices)
-        self.assertEqual(invoice.account, self.account)
-        self.assertEqual(invoice.date_start, self.invoice_start)
-        self.assertEqual(invoice.date_end, self.invoice_end)
-        self.assertEqual(invoice.lineitem_set.count(), 6)
-        self.assertEqual(invoice.balance, 1500)
+    def test_update_invoice_due_date(self):
+        invoice = generate_invoice(self.subscription, self.invoice_start, self.invoice_end)
+        self.assertIsNone(invoice.date_due)
+        update_invoice_due_date(invoice, self.subscription, self.invoice_end)
+        date_due = datetime.date(2018, 6, 30)
+        self.assertEqual(invoice.date_due, date_due)
