@@ -35,6 +35,7 @@ def activation_24hr_reminder_email():
             "domain": request.domain,
             "registration_link": registration_link,
             "full_name": user.full_name,
+            "first_name": user.first_name,
             'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,
         }
 
