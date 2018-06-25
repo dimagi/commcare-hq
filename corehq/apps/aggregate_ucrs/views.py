@@ -18,11 +18,8 @@ from corehq.apps.users.decorators import require_permission
 from corehq.apps.users.models import Permissions
 
 
+@method_decorator(toggles.AGGREGATE_UCRS.required_decorator(), name='dispatch')
 class BaseAggregateUCRView(BaseUserConfigReportsView):
-
-    @method_decorator(toggles.AGGREGATE_UCRS.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseAggregateUCRView, self).dispatch(request, *args, **kwargs)
 
     @property
     def table_id(self):
