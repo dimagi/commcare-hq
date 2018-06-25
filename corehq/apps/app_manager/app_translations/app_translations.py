@@ -637,7 +637,20 @@ def update_form_translations(sheet, rows, missing_cols, app):
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
-
+    # skip labels that have no translation provided
+    skip_label = set()
+    for row in rows:
+        for lang in app.langs:
+            if row.get(_get_col_key('default', lang)):
+                break
+        else:  # https://stackoverflow.com/a/654002
+            skip_label.add(row['label'])
+    for label in skip_label:
+        msgs.append((
+            messages.error,
+            "You must provide at least one translation" +
+            " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+        ))
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -645,6 +658,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             label_id = row['label']
+            if label_id in skip_label:
+                continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
             if not text_node.exists():
                 msgs.append((
