@@ -89,7 +89,7 @@ class TestZapierCreateCaseAction(TestCase):
                                content_type='application/json',
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 404)
 
     def test_update_case_wrong_domain(self):
         response = self.client.post(reverse(ZapierCreateCase.urlname,
@@ -129,7 +129,7 @@ class TestZapierCreateCaseAction(TestCase):
                                content_type='application/json',
                                HTTP_AUTHORIZATION='ApiKey test:{}'.format(self.api_key))
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
 
     def test_user_does_not_have_access(self):
         fake_domain = Domain.get_or_create_with_name('fake', is_active=True)
