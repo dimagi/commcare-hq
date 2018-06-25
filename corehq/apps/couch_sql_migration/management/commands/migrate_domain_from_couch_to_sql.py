@@ -48,7 +48,12 @@ class Command(BaseCommand):
         parser.add_argument('--show-diffs', action='store_true', default=False)
         parser.add_argument('--no-input', action='store_true', default=False)
         parser.add_argument('--debug', action='store_true', default=False)
-        parser.add_argument('--run_timestamp', action='store_true', default=None)
+        parser.add_argument(
+            '--run-timestamp',
+            action='store_true',
+            default=None,
+            help='use this option to continue a previous run that was started at this timestamp'
+        )
 
     @staticmethod
     def require_only_option(sole_option, options):
