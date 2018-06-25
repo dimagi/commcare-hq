@@ -236,8 +236,7 @@ class OpenmrsRepeaterForm(CaseRepeaterForm):
                 ))
             if not location_id:
                 raise ValidationError(_(
-                    'Specify a location so that CommCare can set an owner for cases added using the Atom feed for '
-                    'patients created in OpenMRS/Bahmni.'
+                    'Specify a location so that CommCare can set an owner for cases added via the Atom feed.'
                 ))
         return cleaned_data
 
