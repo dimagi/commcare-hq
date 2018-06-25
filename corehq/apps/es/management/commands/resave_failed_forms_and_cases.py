@@ -14,6 +14,7 @@ from corehq.form_processor.interfaces.dbaccessors import (
 from corehq.form_processor.utils.xform import resave_form
 from corehq.apps.hqcase.utils import resave_case
 from corehq.util.log import with_progress_bar
+from dimagi.utils.chunked import chunked
 
 
 class Command(BaseCommand):
@@ -40,11 +41,15 @@ def perform_resave_on_xforms(domain):
         print("No changes made")
         return
     form_accessor = FormAccessors(domain)
-    for xform_id in with_progress_bar(xform_ids_missing_in_es):
-        xform = form_accessor.get_form(xform_id)
-        if xform:
+    for xform_ids in chunked(with_progress_bar(xform_ids_missing_in_es), 100):
+        xforms = form_accessor.get_forms(xform_ids)
+        found_xform_ids = set()
+
+        for xform in xforms:
             resave_form(domain, xform)
-        else:
+            found_xform_ids.add(xform.form_id)
+
+        for xform_id in xform_ids - found_xform_ids:
             print("form not found %s" % xform_id)
 
 
@@ -57,9 +62,13 @@ def perform_resave_on_cases(domain):
         print("No changes made")
         return
     case_accessor = CaseAccessors(domain)
-    for case_id in with_progress_bar(case_ids_missing_in_es):
-        case = case_accessor.get_case(case_id)
-        if case:
+    for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100):
+        cases = case_accessor.get_cases(case_ids)
+        found_case_ids = set()
+
+        for case in cases:
             resave_case(domain, case, send_post_save_signal=False)
-        else:
+            found_case_ids.add(case.case_id)
+
+        for case_id in case_ids - found_case_ids:
             print("case not found %s" % case_id)
