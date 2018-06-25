@@ -38,8 +38,9 @@ class TimeAggregationDefinition(models.Model):
             )
 
     def __str__(self):
-        return '{} {}: {}-{}'.format(self.aggregatetabledefinition,
-                                     self.aggregation_unit, self.start_column, self.end_column)
+        return '{} {}: {}-{}'.format(
+            self.aggregatetabledefinition if hasattr(self, 'aggregatetabledefinition') else _('no table'),
+            self.aggregation_unit, self.start_column, self.end_column)
 
 
 class AggregateTableDefinition(models.Model):
