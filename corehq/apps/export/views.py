@@ -86,6 +86,7 @@ from corehq.apps.export.const import (
     MAX_DATA_FILE_SIZE,
     MAX_DATA_FILE_SIZE_TOTAL,
     SharingOption,
+    UNKNOWN_EXPORT_OWNER,
 )
 from corehq.apps.export.dbaccessors import (
     get_form_export_instances,
@@ -1248,7 +1249,10 @@ class DailySavedExportListView(BaseExportListView):
             'description': export.description,
             'my_export': export.owner_id == self.request.couch_user.user_id,
             'sharing': export.sharing,
-            'owner_username': WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown',
+            'owner_username': (
+                WebUser.get_by_user_id(export.owner_id).username
+                if export.owner_id else UNKNOWN_EXPORT_OWNER
+            ),
             'can_edit': export.can_edit(self.request.couch_user.user_id),
             'formname': formname,
             'addedToBulk': False,
@@ -1530,7 +1534,7 @@ class FormExportListView(BaseExportListView):
             description = ''
             my_export = None
             sharing = None
-            owner_username = 'unknown'
+            owner_username = UNKNOWN_EXPORT_OWNER
         else:
             # New export
             emailed_export = None
@@ -1541,7 +1545,10 @@ class FormExportListView(BaseExportListView):
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
-            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
+            owner_username = (
+                WebUser.get_by_user_id(export.owner_id).username
+                if export.owner_id else UNKNOWN_EXPORT_OWNER
+            )
 
         return {
             'id': export.get_id,
@@ -1686,7 +1693,7 @@ class CaseExportListView(BaseExportListView):
             description = ''
             my_export = None
             sharing = None
-            owner_username = 'unknown'
+            owner_username = UNKNOWN_EXPORT_OWNER
         else:
             # New export
             emailed_export = None
@@ -1697,7 +1704,10 @@ class CaseExportListView(BaseExportListView):
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
-            owner_username = WebUser.get_by_user_id(export.owner_id).username if export.owner_id else 'unknown'
+            owner_username = (
+                WebUser.get_by_user_id(export.owner_id).username
+                if export.owner_id else UNKNOWN_EXPORT_OWNER
+            )
 
         return {
             'id': export.get_id,
