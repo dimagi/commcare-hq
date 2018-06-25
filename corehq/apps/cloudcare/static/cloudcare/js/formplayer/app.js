@@ -156,9 +156,8 @@ FormplayerFrontend.on('startForm', function (data) {
     data.onsubmit = function (resp) {
         if (resp.status === "success") {
             var $alert,
-                isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT,
-                isAppcuesTest = hqImport('hqwebapp/js/toggles').toggleEnabled('APPCUES_TEMPLATE_APP_AB_TEST');
-            if (resp.submitResponseMessage && (isAppPreview || isAppcuesTest)) {
+                isAppPreview = user.environment === FormplayerFrontend.Constants.PREVIEW_APP_ENVIRONMENT;
+            if (resp.submitResponseMessage && (isAppPreview || hqImport("hqwebapp/js/initial_page_data").get("appcues_test"))) {
                 var markdowner = window.markdownit(),
                     reverse = hqImport("hqwebapp/js/initial_page_data").reverse,
                     analyticsLinks = [

@@ -30,7 +30,7 @@ hqDefine("cloudcare/js/formplayer/main", function() {
             $menuToggle.text(gettext('Hide Full Menu'));
         };
 
-        if (hqImport('hqwebapp/js/toggles').toggleEnabled('APPCUES_TEMPLATE_APP_AB_TEST')) {
+        if (initialPageData("appcues_test")) {
             showMenu();
         } else {
             hideMenu();
