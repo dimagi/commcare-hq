@@ -55,7 +55,7 @@ urlpatterns = [
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
-    url(r'^dashboard/(?P<slug>[^/]*)/download/$', enterprise_dashboard_download,
+    url(r'^dashboard/(?P<slug>[^/]*)/download/(?P<export_hash>[\w\-]+)/$', enterprise_dashboard_download,
         name='enterprise_dashboard_download'),
     url(r'^dashboard/(?P<slug>[^/]*)/email/$', enterprise_dashboard_email,
         name='enterprise_dashboard_email'),
