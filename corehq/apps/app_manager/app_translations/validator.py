@@ -7,7 +7,7 @@ from corehq.apps.app_manager.app_translations import (
     get_unicode_dicts,
 )
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 
 COLUMNS_TO_COMPARE = {
