@@ -203,7 +203,7 @@ def validate_bulk_app_translation_upload(app, workbook, email):
 @task(queue="email_queue")
 def _email_app_translations_discrepancies(msgs, email, app_name):
     message = '\n\n'.join([
-        """Sheet {}: 
+        """Sheet {}:
            {}""".format(sheet_name, '\n '.join(msgs[sheet_name]))
         for sheet_name in msgs
         if msgs.get(sheet_name)])
@@ -211,7 +211,7 @@ def _email_app_translations_discrepancies(msgs, email, app_name):
     subject = "App Translations Discrepancies for {}".format(app_name)
     body = """Hi,
     Following discrepancies were found for app translations.
-    
+
     {}""".format(message)
 
     send_html_email_async.delay(subject, email, linebreaksbr(body))
