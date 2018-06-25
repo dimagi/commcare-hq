@@ -767,7 +767,7 @@ class CaseReindexAccessor(ReindexAccessor):
     """
     :param: domain: If supplied the accessor will restrict results to only that domain
     """
-    def __init__(self, domain=None, limit_db_aliases=None):
+    def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
 
@@ -789,6 +789,10 @@ class CaseReindexAccessor(ReindexAccessor):
         filters = [Q(deleted=False)]
         if self.domain:
             filters.append(Q(domain=self.domain))
+        if self.start_date is not None:
+            filters.append(Q(server_modified_on__gte=self.start_date))
+        if self.end_date is not None:
+            filters.append(Q(server_modified_on__lt=self.end_date))
         return filters
 
 
