@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import requests
+from requests import Session
+from requests.adapters import HTTPAdapter
 from django.conf import settings
 from django.db import transaction
 from corehq.apps.users.util import format_username
@@ -182,9 +183,11 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'), timeout=5)
-        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'), timeout=5)
-        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'), timeout=5)
+        with Session() as s:
+            s.mount(url, HTTPAdapter(max_retries=5))
+            s.post(url, data=self.log_subreport(), headers=self._get_header('log'), timeout=5)
+            s.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'), timeout=5)
+            s.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'), timeout=5)
 
     def _get_header(self, fmt):
         """
