@@ -52,7 +52,7 @@ from dimagi.utils.couch.undo import DELETED_SUFFIX
 from dimagi.utils.chunked import chunked
 from pillowtop.reindexer.change_providers.couch import CouchDomainDocTypeChangeProvider
 from gevent.pool import Pool
-from gevent import sleep
+import gevent
 import six
 import logging
 from collections import defaultdict, deque
@@ -156,7 +156,7 @@ class CouchSqlDomainMigrator(object):
             if wrapped_form:
                 pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
             else:
-                sleep(0.01)  # swap greenlets
+                gevent.sleep(0.01)  # swap greenlets
 
             remaining_items = self.queues.remaining_items + len(pool)
             if remaining_items % 10 == 0:
@@ -172,7 +172,7 @@ class CouchSqlDomainMigrator(object):
         if self.queues.try_obj(case_ids, wrapped_form):
             pool.spawn(self._migrate_form_and_associated_models_async, wrapped_form)
         elif self.queues.full:
-            sleep(0.01)  # swap greenlets
+            gevent.sleep(0.01)  # swap greenlets
 
     def _try_to_process_queues(self, pool):
         # regularly check if we can empty the queues
@@ -820,11 +820,11 @@ class PartiallyLockingQueue(object):
 
     def remove_processing_doc_id(self, doc_id):
         client = get_redis_connection()
-        client.lrem(self.get_cached_list_key(), 1, doc_id)
+        gevent.spawn(client.lrem, self.get_cached_list_key(), 1, doc_id)
 
     def get_ids_from_run_timestamp(self):
         client = get_redis_connection()
-        return client.get(self.get_cached_list_key()) or []
+        return client.lrange(self.get_cached_list_key(), 0, -1) or []
 
     def try_obj(self, lock_ids, queue_obj):
         """ Checks if the object can acquire some locks. If not, adds item to queue
