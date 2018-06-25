@@ -1337,6 +1337,11 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
         Generates a one-use only link for resetting password and sends to the
         user.
         """
+
+        if settings.IS_SAAS_ENVIRONMENT:
+            subject_template_name = 'registration/email/password_reset_subject_hq.txt'
+            email_template_name = 'registration/email/password_reset_email_hq.html'
+
         UserModel = get_user_model()
         email = self.cleaned_data["email"]
 
@@ -1361,6 +1366,9 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
                 site_name = domain = domain_override
 
             couch_user = CouchUser.from_django_user(user)
+            if not couch_user:
+                continue
+
             if couch_user.is_web_user():
                 user_email = user.username
             elif user.email:
@@ -1380,8 +1388,15 @@ class HQPasswordResetForm(NoAutocompleteMixin, forms.Form):
             subject = render_to_string(subject_template_name, c)
             # Email subject *must not* contain newlines
             subject = ''.join(subject.splitlines())
-            email = render_to_string(email_template_name, c)
-            send_mail_async.delay(subject, email, from_email, [user_email])
+
+            message_plaintext = render_to_string('registration/password_reset_email.html', c)
+            message_html = render_to_string(email_template_name, c)
+
+            send_html_email_async.delay(
+                subject, user_email, message_html,
+                text_content=message_plaintext,
+                email_from=settings.DEFAULT_FROM_EMAIL
+            )
 
 
 class ConfidentialPasswordResetForm(HQPasswordResetForm):
