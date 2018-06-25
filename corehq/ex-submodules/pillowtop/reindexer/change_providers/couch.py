@@ -80,7 +80,8 @@ class CouchDomainDocTypeChangeProvider(ChangeProvider):
                 data_function,
                 args_provider,
                 lambda x: x.id,
-                event_handler=event_handler)
+                event_handler=event_handler
+            )
         else:
             return paginate_function(data_function, args_provider, event_handler=event_handler)
 
