@@ -804,7 +804,7 @@ class Command(BaseCommand):
         elif (
             handler.start_date and
             handler.event_interpretation == EVENT_AS_OFFSET and
-            handler.start_day_of_week == DAY_ANY and
+            handler.start_day_of_week == DAY_ANY
         ):
             if not self.confirm(
                 "Does %s.%s reference a date and not a timestamp? " % (handler.case_type, handler.start_date)
