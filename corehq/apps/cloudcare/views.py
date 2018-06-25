@@ -20,6 +20,7 @@ from django.views.generic.base import TemplateView
 from couchdbkit import ResourceConflict
 
 from casexml.apps.phone.fixtures import generator
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.users.util import format_username
 from custom.enikshay.login_as_context import get_enikshay_login_as_context
 from dimagi.utils.parsing import string_to_boolean
@@ -88,25 +89,34 @@ class FormplayerMain(View):
     def dispatch(self, request, *args, **kwargs):
         return super(FormplayerMain, self).dispatch(request, *args, **kwargs)
 
-    def fetch_app(self, domain, app_id):
+    def fetch_app(self, domain, app_id, request=None):
         username = self.request.couch_user.username
+        in_test = appcues_template_app_test(self.request)
+        if in_test:
+            app = get_current_app_doc(domain, app_id)
+            if app['created_from_template'] == 'appcues':
+                return app
+
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
                 toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
             return get_latest_build_doc(domain, app_id)
         else:
             return get_latest_released_app_doc(domain, app_id)
 
-    def get_web_apps_available_to_user(self, domain, user):
+    def get_web_apps_available_to_user(self, request, user):
+        domain = request.domain
         app_access = ApplicationAccess.get_by_domain(domain)
         app_ids = get_app_ids_in_domain(domain)
+        in_test = appcues_template_app_test(self.request)
 
         apps = list(map(
-            lambda app_id: self.fetch_app(domain, app_id),
+            lambda app_id: self.fetch_app(domain, app_id, request=request),
             app_ids,
         ))
         apps = filter(None, apps)
         apps = filter(lambda app: app.get('cloudcare_enabled') or self.preview, apps)
-        apps = filter(lambda app: app_access.user_can_access_app(user, app), apps)
+        apps = filter(lambda app: app_access.user_can_access_app(user, app)
+                or in_test and app['created_from_template'] == 'appcues', apps)
         role = user.get_role(domain)
         if role:
             apps = [app for app in apps if role.permissions.view_web_app(app)]
@@ -149,12 +159,12 @@ class FormplayerMain(View):
 
     def get_option_apps(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        apps = self.get_web_apps_available_to_user(request, restore_as)
         return JsonResponse(apps, safe=False)
 
     def get_main(self, request, domain):
         restore_as, set_cookie = self.get_restore_as_user(request, domain)
-        apps = self.get_web_apps_available_to_user(domain, restore_as)
+        apps = self.get_web_apps_available_to_user(request, restore_as)
 
         def _default_lang():
             try:
@@ -170,6 +180,7 @@ class FormplayerMain(View):
             "domain": domain,
             "language": language,
             "apps": apps,
+            "appcues_test": appcues_template_app_test(request),
             "maps_api_key": settings.GMAPS_API_KEY,
             "username": request.couch_user.username,
             "formplayer_url": settings.FORMPLAYER_URL,
@@ -178,9 +189,8 @@ class FormplayerMain(View):
             "environment": WEB_APPS_ENVIRONMENT,
             'use_live_query': toggles.FORMPLAYER_USE_LIVEQUERY.enabled(domain),
         }
-        return set_cookie(
-            render(request, "cloudcare/formplayer_home.html", context)
-        )
+        response = render(request, "cloudcare/formplayer_home.html", context)
+        return set_cookie(response)
 
 
 class FormplayerMainPreview(FormplayerMain):

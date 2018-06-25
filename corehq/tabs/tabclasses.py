@@ -12,6 +12,7 @@ from corehq import privileges, toggles
 from corehq.apps.accounting.dispatcher import AccountingAdminInterfaceDispatcher
 from corehq.apps.accounting.models import Invoice, Subscription
 from corehq.apps.accounting.utils import domain_has_privilege, is_accounting_admin
+from corehq.apps.analytics.ab_tests import appcues_template_app_test
 from corehq.apps.app_manager.dbaccessors import domain_has_apps, get_brief_apps_in_domain
 from corehq.apps.domain.utils import user_has_custom_top_menu
 from corehq.apps.hqadmin.reports import RealProjectSpacesReport, \
@@ -822,10 +823,13 @@ class ApplicationsTab(UITab):
 
         submenu_context.append(dropdown_dict(_('My Applications'),
                                is_header=True))
+        in_appcues_test = appcues_template_app_test(self._request)
         for app in apps:
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app.name, app.doc_type)
+            if in_appcues_test and app['created_from_template'] == 'appcues':
+                url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
                 app_title,
