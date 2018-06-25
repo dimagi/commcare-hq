@@ -7,10 +7,15 @@ from . import models
 class TimeAggregationDefinitionAdmin(admin.ModelAdmin):
 
     def get_changeform_initial_data(self, request):
-        return {
+        initial_data = super(TimeAggregationDefinitionAdmin, self).get_changeform_initial_data(request)
+        defaults = {
             'start_column': 'opened_date',
             'end_column': 'closed_date',
         }
+        for k, v in  defaults.items():
+            if not initial_data.get(k):
+                initial_data[k] = v
+        return initial_data
 
 
 class PrimaryColumnInline(admin.TabularInline):
