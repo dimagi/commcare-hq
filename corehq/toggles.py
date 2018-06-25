@@ -1583,6 +1583,14 @@ EXPORT_MULTISORT = StaticToggle(
 )
 
 
+EXPORT_OWNERSHIP = StaticToggle(
+    'export_ownership',
+    'Allow exports to have ownership.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
+
 APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'app_trans_with_transifex',
     'Translate Application Content With Transifex',

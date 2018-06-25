@@ -327,6 +327,21 @@ def get_built_app_ids_with_submissions_for_app_ids_and_versions(domain, app_ids_
     return results
 
 
+def get_auto_generated_built_apps(domain, app_id):
+    """
+    Returns all the built apps that were automatically generated for an application id.
+    """
+    from .models import Application
+    results = Application.get_db().view(
+        'saved_apps_auto_generated/view',
+        startkey=[domain, app_id],
+        endkey=[domain, app_id, {}],
+        reduce=False,
+        include_docs=False,
+    ).all()
+    return [doc['value'] for doc in results]
+
+
 def get_latest_app_ids_and_versions(domain, app_id=None):
     """
     Returns all the latest app_ids and versions in a dictionary.
