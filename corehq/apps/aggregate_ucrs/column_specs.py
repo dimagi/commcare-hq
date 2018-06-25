@@ -24,6 +24,7 @@ class ColumnAdapater(six.with_metaclass(ABCMeta, object)):
     Column adapters handle both the querying side (via the to_sqlalchemy_query_column function)
     as well as the table creation/writing side.
     """
+    # most subclasses will/should override this to provide a schema for how they are configured.
     config_spec = jsonobject.JsonObject
 
     def __init__(self, db_column):
