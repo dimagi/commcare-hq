@@ -474,7 +474,7 @@ def zip_folder(pdf_files):
     icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
     in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    files_to_zip = IcdsFile.objects.filter(blob_id__in=pdf_files.keys(), data_type='issnip_monthly')
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
 
     for pdf_file in files_to_zip:
         zip_file.writestr(
