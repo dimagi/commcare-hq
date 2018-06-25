@@ -60,7 +60,8 @@ class Command(BaseCommand):
 def perform_resave_on_xforms(domain, start_date, end_date):
     _, _, xform_ids_missing_in_es, _ = compare_xforms(domain, 'XFormInstance', start_date, end_date)
     print("%s Ids found for xforms missing in ES." % len(xform_ids_missing_in_es))
-    print(xform_ids_missing_in_es)
+    if len(xform_ids_missing_in_es) < 1000:
+        print(xform_ids_missing_in_es)
     ok = input("Type 'ok' to continue: ")
     if ok != "ok":
         print("No changes made")
@@ -81,7 +82,8 @@ def perform_resave_on_xforms(domain, start_date, end_date):
 def perform_resave_on_cases(domain, start_date, end_date):
     _, _, case_ids_missing_in_es, _ = compare_cases(domain, 'CommCareCase', start_date, end_date)
     print("%s Ids found for cases missing in ES." % len(case_ids_missing_in_es))
-    print(case_ids_missing_in_es)
+    if len(case_ids_missing_in_es) < 1000:
+        print(case_ids_missing_in_es)
     ok = input("Type 'ok' to continue: ")
     if ok != "ok":
         print("No changes made")
