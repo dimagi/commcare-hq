@@ -426,11 +426,12 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows, excel_importer=None, chunk_size=100):
+    def __init__(self, domain, type_rows, location_rows, user, excel_importer=None, chunk_size=100):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.type_rows = type_rows
         self.location_rows = location_rows
+        self.user = user
         self.result = LocationUploadResult()
         self.old_collection = LocationCollection(self.domain_obj)
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
@@ -779,7 +780,7 @@ class LocationTreeValidator(object):
         return errors
 
 
-def new_locations_import(domain, excel_importer):
+def new_locations_import(domain, excel_importer, user):
     try:
         validator = LocationExcelValidator(domain, excel_importer)
         type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
@@ -788,7 +789,7 @@ def new_locations_import(domain, excel_importer):
         result.errors = [str(e)]
         return result
 
-    importer = NewLocationImporter(domain, type_rows, location_rows, excel_importer)
+    importer = NewLocationImporter(domain, type_rows, location_rows, user, excel_importer)
     return importer.run()
 
 

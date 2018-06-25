@@ -446,9 +446,11 @@ class TestBulkManagement(TestCase):
     def setUp(self):
         super(TestBulkManagement, self).setUp()
         self.domain = create_domain('location-bulk-management')
+        self.user = WebUser.create(self.domain.name, 'username', 'password')
 
     def tearDown(self):
         super(TestBulkManagement, self).tearDown()
+        self.user.delete()
         # domain delete cascades to everything else
         self.domain.delete()
 
@@ -499,6 +501,7 @@ class TestBulkManagement(TestCase):
             self.domain.name,
             [LocationTypeStub(*loc_type) for loc_type in types],
             [LocationStub(*loc) for loc in locations],
+            self.user,
             chunk_size=10
         )
         result = importer.run()

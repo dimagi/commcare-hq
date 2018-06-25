@@ -156,9 +156,9 @@ def download_locations_async(domain, download_id, include_consumption=False):
 
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
-def import_locations_async(domain, file_ref_id):
+def import_locations_async(domain, file_ref_id, user):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
-    results = new_locations_import(domain, importer)
+    results = new_locations_import(domain, importer, user)
     importer.mark_complete()
 
     if LOCATIONS_IN_UCR.enabled(domain):
