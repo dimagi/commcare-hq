@@ -81,7 +81,7 @@ PRIMARY_COLUMN_TYPE_CHOICES = (
 )
 
 
-class RawColumnAdapter(six.with_metaclass(ABCMeta, ColumnAdapater)):
+class RawColumnAdapter(ColumnAdapater):
     """
     A ColumnAdapter that is composed of all the possible fields it can have.
     """
