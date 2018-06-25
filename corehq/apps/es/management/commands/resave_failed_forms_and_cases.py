@@ -1,8 +1,13 @@
 from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
-from six.moves import input
+
+import argparse
+from datetime import datetime
+
 from django.core.management.base import BaseCommand
+from six.moves import input
+
 from corehq.apps.data_pipeline_audit.management.commands.compare_doc_ids import (
     compare_xforms,
     compare_cases,
@@ -16,24 +21,44 @@ from corehq.apps.hqcase.utils import resave_case
 from corehq.util.log import with_progress_bar
 from dimagi.utils.chunked import chunked
 
+DATE_FORMAT = "%Y-%m-%d"
+
+
+def valid_date(s):
+    try:
+        return datetime.strptime(s, DATE_FORMAT)
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(s)
+        raise argparse.ArgumentTypeError(msg)
+
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('domain')
+        parser.add_argument(
+            'start_date',
+            type=valid_date,
+            help='The start date (inclusive). format YYYY-MM-DD'
+        )
+        parser.add_argument(
+            'end_date',
+            type=valid_date,
+            help='The end date (exclusive). format YYYY-MM-DD'
+        )
         parser.add_argument('--xforms', action='store_true')
         parser.add_argument('--cases', action='store_true')
 
-    def handle(self, domain, *args, **options):
+    def handle(self, domain, start_date, end_date, *args, **options):
         resave_xforms = options.get('xforms')
         resave_cases = options.get('cases')
         if resave_xforms:
-            perform_resave_on_xforms(domain)
+            perform_resave_on_xforms(domain, start_date, end_date)
         if resave_cases:
-            perform_resave_on_cases(domain)
+            perform_resave_on_cases(domain, start_date, end_date)
 
 
-def perform_resave_on_xforms(domain):
-    xform_ids_missing_in_es, _ = compare_xforms(domain, 'XFormInstance')
+def perform_resave_on_xforms(domain, start_date, end_date):
+    _, _, xform_ids_missing_in_es, _ = compare_xforms(domain, 'XFormInstance', start_date, end_date)
     print("%s Ids found for xforms missing in ES." % len(xform_ids_missing_in_es))
     print(xform_ids_missing_in_es)
     ok = input("Type 'ok' to continue: ")
@@ -53,8 +78,8 @@ def perform_resave_on_xforms(domain):
             print("form not found %s" % xform_id)
 
 
-def perform_resave_on_cases(domain):
-    case_ids_missing_in_es, _ = compare_cases(domain, 'CommCareCase')
+def perform_resave_on_cases(domain, start_date, end_date):
+    _, _, case_ids_missing_in_es, _ = compare_cases(domain, 'CommCareCase', start_date, end_date)
     print("%s Ids found for cases missing in ES." % len(case_ids_missing_in_es))
     print(case_ids_missing_in_es)
     ok = input("Type 'ok' to continue: ")
