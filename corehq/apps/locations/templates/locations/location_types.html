@@ -2,9 +2,7 @@
 {% load hq_shared_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'locations/js/location_types.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'locations/js/location_types' %}
 
 {% block page_content %}
     {% initial_page_data 'location_types' location_types %}
