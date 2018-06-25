@@ -17,7 +17,7 @@ from corehq.apps.accounting.models import (
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
-from corehq.apps.sms.models import INCOMING, OUTGOING
+from corehq.apps.sms.models import INCOMING
 from corehq.apps.smsbillables.models import (
     SmsBillable,
     SmsGatewayFee,
@@ -151,7 +151,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         self.assertEqual(invoice.balance, Decimal('1000.0000'))
         self.assertEqual(invoice.account, self.account)
         self.assertIn(invoice.subscription, [self.sub2, self.sub3])
-        self.assertIn(invoice.subscription.subscriber.domain,[self.domain2.name, self.domain3.name])
+        self.assertIn(invoice.subscription.subscriber.domain, [self.domain2.name, self.domain3.name])
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
         self.assertEqual(num_product_line_items, 1)
