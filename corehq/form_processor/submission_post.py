@@ -43,8 +43,7 @@ from couchforms.signals import successful_form_received
 from couchforms.util import legacy_notification_assert
 from couchforms.openrosa_response import OpenRosaResponse, ResponseNature
 from dimagi.utils.logging import notify_exception, log_signal_errors
-from phonelog.utils import process_device_log
-from phonelog.tasks import send_device_logs_to_sumologic
+from phonelog.utils import process_device_log, SumoLogicLog
 
 from celery.task.control import revoke as revoke_celery_task
 import six
@@ -322,7 +321,7 @@ class SubmissionPost(object):
     def _conditionally_send_device_logs_to_sumologic(self, instance):
         url = getattr(settings, 'SUMOLOGIC_URL', None)
         if url and SUMOLOGIC_LOGS.enabled(instance.form_data.get('device_id'), NAMESPACE_OTHER):
-            send_device_logs_to_sumologic.delay(self.domain, instance, url)
+            SumoLogicLog(self.domain, instance).send_data(url)
 
     def _invalidate_caches(self, xform):
         for device_id in {None, xform.metadata.deviceID if xform.metadata else None}:
