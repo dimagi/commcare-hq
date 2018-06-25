@@ -1469,7 +1469,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             if by_username and by_username['id'] != self._id:
                 raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-            if not self.to_be_deleted():
+            if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
