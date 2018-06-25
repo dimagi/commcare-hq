@@ -25,6 +25,7 @@ def create_user(username, password, is_staff=False, is_superuser=False, is_activ
     else:
         user.password = password
 
+    user.DO_NOT_SAVE_COUCH_USER = True
     user.save()
     return user
 
