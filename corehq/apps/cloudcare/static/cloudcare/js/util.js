@@ -43,7 +43,7 @@ hqDefine('cloudcare/js/util', function () {
         if (message === undefined) {
             message = "Success";
         }
-        _show(message, $el, autoHideTime, "alert alert-success", isHTML);
+        return _show(message, $el, autoHideTime, "alert alert-success", isHTML);
     };
 
     var _show = function (message, $el, autoHideTime, classes, isHTML) {
@@ -68,6 +68,7 @@ hqDefine('cloudcare/js/util', function () {
         if (autoHideTime) {
             $container.delay(autoHideTime).fadeOut(500);
         }
+        return $container;
     };
 
     var showLoading = function (selector) {
