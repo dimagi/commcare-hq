@@ -55,7 +55,7 @@ def validate_request_hmac(setting_name, ignore_if_debug=False):
             if ignore_if_debug and settings.DEBUG:
                 return fn(request, *args, **kwargs)
 
-            data = request.META['QUERY_STRING'] if request.method == 'GET' else request.body
+            data = request.get_full_path() if request.method == 'GET' else request.body
 
             _soft_assert(shared_key, 'Missing shared auth setting: {}'.format(setting_name))
             expected_digest = request.META.get('HTTP_X_MAC_DIGEST', None)
