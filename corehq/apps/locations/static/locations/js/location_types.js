@@ -156,7 +156,7 @@ hqDefine('locations/js/location_types', [
             for (var i = 0; i < self.loc_types().length; i++) {
                 var visited = [],
                     locType = self.loc_types()[i].pk;
-                if (alreadyVisited(locTypes, visited)) {
+                if (alreadyVisited(locType, visited)) {
                     return true;
                 }
             }
@@ -300,10 +300,10 @@ hqDefine('locations/js/location_types', [
             if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID){
                 locs = self.view.loc_types();
             }
-            var locsSomeLevels = self.view.types_by_index(locs);
-            for (var level in locsSomeLevels){
+            var locsSameLevels = self.view.types_by_index(locs);
+            for (var level in locsSameLevels){
                 // Only display a single child at each level
-                var childToAdd = locsSomeLevels[level][0];
+                var childToAdd = locsSameLevels[level][0];
                 locsToReturn.push(new LocationTypeModel({
                     name: childToAdd.compiled_name(),
                     pk: childToAdd.pk,
@@ -317,11 +317,11 @@ hqDefine('locations/js/location_types', [
 
         self.include_without_expanding_options = function(){
             if (self.expand_from() !== ROOT_LOCATION_ID){
-                var typesSomeLevels = self.view.types_by_index(self.view.loc_types()),
+                var typesSameLevels = self.view.types_by_index(self.view.loc_types()),
                     levelsToReturn = [];
-                for (var level in typesSomeLevels){
+                for (var level in typesSameLevels){
                     // Only display a single child at each level
-                    var levelToAdd = typesSomeLevels[level][0];
+                    var levelToAdd = typesSameLevels[level][0];
                     levelsToReturn.push(new LocationTypeModel({
                         name: levelToAdd.compiled_name(),
                         pk: levelToAdd.pk,
