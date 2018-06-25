@@ -32,6 +32,12 @@ def render_error(request, domain, message):
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
 
+def validate_column_names(column_names, invalid_column_names):
+    for column_name in column_names:
+        if "/" in column_name:
+            invalid_column_names.add(column_name)
+
+
 @require_can_edit_data
 def excel_config(request, domain):
     """
@@ -71,9 +77,16 @@ def excel_config(request, domain):
     except ImporterError as e:
         return render_error(request, domain, get_importer_error_message(e))
 
+    invalid_column_names = set()
     with case_upload.get_spreadsheet() as spreadsheet:
         columns = spreadsheet.get_header_columns()
+        validate_column_names(columns, invalid_column_names)
         row_count = spreadsheet.max_row
+
+    if invalid_column_names:
+        error_message = _("'/' is not allowed in column names. Please update the following: {}.").format(
+            ', '.join(invalid_column_names))
+        return render_error(request, domain, error_message)
 
     if row_count == 0:
         return render_error(request, domain, _(
