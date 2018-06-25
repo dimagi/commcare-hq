@@ -1,12 +1,25 @@
-{% extends 'login_and_password/login.html' %}
+{% extends "login_and_password/login.html" %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load compress %}
 
 {% block head %}{{ block.super }}
-    {% include 'analytics/fullstory.html' %}
+  {% include 'analytics/fullstory.html' %}
 {% endblock %}
 
 {% block login-content %}
+  <div class="container-fluid">
     <div class="row">
-        {% block registration-content %}
-        {% endblock %}
+      <div class="col-xs-12">
+        <div class="reg-form-container">
+          <div class="form-bubble form-bubble-lg">
+            {% block registration-content %}{% endblock %}
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 {% endblock %}
+
+
+

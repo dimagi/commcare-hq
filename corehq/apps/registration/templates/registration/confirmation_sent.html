@@ -4,14 +4,19 @@
 {% block title %}{% trans "Confirmation Email Sent" %}{% endblock title %}
 
 {% block registration-content %}
-    <div class="alert alert-info">
-        <strong>{% blocktrans with request.user.username as username %}
-            An email was just sent to {{ username }}.
-        {% endblocktrans %}</strong>
-        {% blocktrans %}
-            Please visit the link provided in the email to activate your account,
-            so you can start using your new CommCare HQ project!
-        {% endblocktrans %}
-    </div>
-    {% include "registration/partials/confirmation_waiting_actions.html" %}
+  <h2 class="text-center">
+    {% trans "Confirmation Email Sent" %}
+  </h2>
+  <p class="lead">
+    {% blocktrans with request.user.username as username %}
+      An email was just sent to {{ username }}.
+    {% endblocktrans %}
+  </p>
+  <p class="lead">
+    {% blocktrans %}
+      Please visit the link provided in the email to activate your account,
+      so you can start using your new CommCare HQ project!
+    {% endblocktrans %}
+  </p>
+  {% include "registration/partials/confirmation_waiting_actions.html" %}
 {% endblock %}

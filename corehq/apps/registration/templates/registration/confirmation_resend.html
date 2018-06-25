@@ -4,26 +4,35 @@
 {% block title %}{% trans "Resend Confirmation Email" %}{% endblock title %}
 
 {% block registration-content %}
-<form method="post" action="{% url "registration_resend_domain_confirmation" %}" class="form-horizontal">
+  <form method="post" action="{% url "registration_resend_domain_confirmation" %}">
     {% csrf_token %}
-    <fieldset>
-        <div class="form-group">
-            <label class="col-sm-4 control-label">{% trans "Email" %}</label>
-            <div class="col-sm-4">
-                <span class="form-control">{{ request.user.username }}</span>
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="col-sm-4 control-label">{% trans "Pending Project Name" %}</label>
-            <div class="col-sm-4">
-                <span class="form-control">{{ requested_domain }}</span>
-            </div>
-        </div>
-    </fieldset>
-    <div class="form-actions">
-        <div class="col-sm-4 col-sm-offset-4">
-            <button type="submit" class="btn btn-primary">{% trans "Resend Confirmation" %}</button>
-        </div>
+    <h2 class="text-center">
+      {% trans "Resend Confirmation" %}
+    </h2>
+
+    <div class="form-group">
+      <label class="control-label has-feedback">
+        {% trans "Email" %}
+      </label>
+      <div>
+        <span class="form-control">{{ request.user.username }}</span>
+      </div>
     </div>
-</form>
+
+    <div class="form-group">
+      <label class="control-label has-feedback">
+        {% trans "Pending Project Name" %}
+      </label>
+      <div>
+        <span class="form-control">{{ requested_domain }}</span>
+      </div>
+    </div>
+
+    <div class="form-bubble-actions">
+      <button type="submit" class="btn btn-lg btn-success">
+        {% trans "Resend Confirmation" %}
+      </button>
+    </div>
+
+  </form>
 {% endblock %}
