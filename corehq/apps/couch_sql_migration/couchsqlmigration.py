@@ -179,8 +179,7 @@ class CouchSqlDomainMigrator(object):
     def _rebuild_queues(self, pool):
         prev_ids = self.queues.get_ids_from_run_timestamp()
         form_db = dbaccessors.FormAccessors(self.domain)
-        for form_id in prev_ids:
-            form = form_db.get_form(form_id)
+        for form in form_db.iter_forms(prev_ids):
             self._try_to_process_form(form, pool)
 
         self._try_to_process_queues(pool)
