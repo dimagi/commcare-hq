@@ -164,6 +164,7 @@ def swallow_programming_errors(fn):
     return decorated
 
 
+@method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator(), name='dispatch')
 class BaseUserConfigReportsView(BaseDomainView):
     section_name = ugettext_lazy("Configurable Reports")
 
@@ -188,10 +189,6 @@ class BaseUserConfigReportsView(BaseDomainView):
     @property
     def page_url(self):
         return reverse(self.urlname, args=(self.domain,))
-
-    @method_decorator(toggles.USER_CONFIGURABLE_REPORTS.required_decorator())
-    def dispatch(self, request, *args, **kwargs):
-        return super(BaseUserConfigReportsView, self).dispatch(request, *args, **kwargs)
 
 
 class UserConfigReportsHomeView(BaseUserConfigReportsView):
