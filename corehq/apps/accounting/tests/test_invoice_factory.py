@@ -15,7 +15,6 @@ from corehq.apps.accounting.models import (
     DefaultProductPlan,
     BillingAccount,
     Subscription,
-    SubscriptionAdjustment,
     SoftwarePlanEdition
 )
 from corehq.apps.accounting.tests import generator
