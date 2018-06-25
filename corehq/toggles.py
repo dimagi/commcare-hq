@@ -1363,15 +1363,6 @@ SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
-ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
-    'anonymous_web_apps_usage',
-    'Infomap: Allow anonymous users to access Web Apps applications',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'},
-    description='Users are automatically logged into Web Apps as a designated mobile worker.'
-)
-
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
     'include_metadata_in_ucr_excel_exports',
     'Include metadata in UCR excel exports',

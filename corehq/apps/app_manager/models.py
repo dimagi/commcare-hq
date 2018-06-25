@@ -5468,9 +5468,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
     custom_base_url = StringProperty()
     cloudcare_enabled = BooleanProperty(default=False)
 
-    anonymous_cloudcare_enabled = BooleanProperty(default=False)
-    anonymous_cloudcare_hash = StringProperty(default=random_string)
-
     translation_strategy = StringProperty(default='select-known',
                                           choices=list(app_strings.CHOICES.keys()))
     auto_gps_capture = BooleanProperty(default=False)
@@ -5484,15 +5481,6 @@ class Application(ApplicationBase, TranslationMixin, HQMediaMixin):
 
     def has_modules(self):
         return len(self.modules) > 0 and not self.is_remote_app()
-
-    @property
-    def anonymous_cloudcare_url(self):
-        from corehq.apps.cloudcare.views import SingleAppLandingPageView
-
-        return view_utils.absolute_reverse(SingleAppLandingPageView.urlname, args=[
-            self.domain,
-            self.anonymous_cloudcare_hash
-        ])
 
     @property
     @memoized

@@ -8,7 +8,6 @@
   "user_type": null,
   "text_input": "roman",
   "secure_submissions": true,
-  "anonymous_cloudcare_enabled": false,
   "build_broken": false,
   "has_submissions": false,
   "custom_base_url": null,
@@ -1610,7 +1609,6 @@
   },
   "attribution_notes": null,
   "admin_password_charset": "n",
-  "anonymous_cloudcare_hash": "0719NE",
   "external_blobs": {
     "5780265d2e0b18ce5b79b0bc384316632e5b1b27.xml": {
       "content_length": 1018,
