@@ -302,7 +302,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     }
 
                     var movedIndices = [];
-                    $('.selected-for-sort').map(function (index, element) {
+                    $('.selected-for-sort').each(function (index, element) {
                         movedIndices.push(parseInt(element.attributes['data-order'].value));
                     });
                     movedIndices.sort();
@@ -310,7 +310,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     var originalList = list.splice(0, list().length);
 
                     var insertDraggedElements = function() {
-                        movedIndices.map(function (movedIndex) {
+                        movedIndices.forEach(function (movedIndex) {
                             list.push(originalList[movedIndex]);
                         });
                     };
@@ -318,7 +318,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     if (previousIndex === null) {
                         insertDraggedElements();
                     }
-                    originalList.map(function(originalListElement, originalListIndex) {
+                    originalList.forEach(function(originalListElement, originalListIndex) {
                         if (!movedIndices.includes(originalListIndex)) {
                             list.push(originalListElement);
                         }
