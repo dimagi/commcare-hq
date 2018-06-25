@@ -149,7 +149,7 @@ def get_form_or_404(domain, id):
     from corehq.form_processor.interfaces.dbaccessors import FormAccessors
     try:
         form = FormAccessors(domain).get_form(id)
-        if form.domain != domain:
+        if form.domain != domain or form.is_deleted:
             raise Http404()
         return form
     except XFormNotFound:
