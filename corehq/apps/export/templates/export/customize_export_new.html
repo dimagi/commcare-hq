@@ -216,33 +216,41 @@
         </fieldset>
         <div class="form-actions">
             <div class="col-sm-offset-4 col-md-offset-3 col-lg-offset-2 col-sm-8 col-md-9 col-lg-10 controls">
-                <button type="submit" class="btn btn-lg btn-primary" data-bind="
-                    click: save,
-                    disable: (saveState() === hqImport('export/js/const').SAVE_STATES.SAVING ||
-                              saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS ||
-                              ! isValid())
-                ">
-                    <span data-bind="
-                        visible: saveState() === hqImport('export/js/const').SAVE_STATES.READY,
-                        text: getSaveText()">
-                    </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SAVING">
-                        <i class="fa fa-refresh fa-spin"></i>
-                        {% trans "Saving" %}
-                    </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.ERROR">
-                        {% trans "Try Again" %}
-                    </span>
-                    <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS">
-                        {% trans "Saved!" %}
-                    </span>
-                </button>
-                <a class="btn btn-default btn-lg" href="{{ export_home_url }}">{% trans "Cancel" %}</a>
-                {% if export_instance.get_id %}
-                <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
-                    <i class="fa fa-remove fa-white"></i>
-                    {% trans "Delete this Export" %}
+                {% if can_edit %}
+                    <button type="submit" class="btn btn-lg btn-primary" data-bind="
+                        click: save,
+                        disable: (saveState() === hqImport('export/js/const').SAVE_STATES.SAVING ||
+                                  saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS ||
+                                  ! isValid())
+                    ">
+                        <span data-bind="
+                            visible: saveState() === hqImport('export/js/const').SAVE_STATES.READY,
+                            text: getSaveText()">
+                        </span>
+                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SAVING">
+                            <i class="fa fa-refresh fa-spin"></i>
+                            {% trans "Saving" %}
+                        </span>
+                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.ERROR">
+                            {% trans "Try Again" %}
+                        </span>
+                        <span data-bind="visible: saveState() === hqImport('export/js/const').SAVE_STATES.SUCCESS">
+                            {% trans "Saved!" %}
+                        </span>
+                    </button>
+                {% endif %}
+                <a class="btn btn-default btn-lg" href="{{ export_home_url }}">
+                    {% if can_edit %}
+                        {% trans "Cancel" %}
+                    {% else %}
+                        {% trans "Back" %}
+                    {% endif %}
                 </a>
+                {% if export_instance.get_id and can_edit %}
+                    <a class="btn btn-lg btn-danger pull-right" data-toggle="modal" href="#delete-export-modal-{{ export_instance.get_id }}">
+                        <i class="fa fa-remove fa-white"></i>
+                        {% trans "Delete this Export" %}
+                    </a>
                 {% endif %}
                 <div class="text-danger" data-bind="if: !isValid()">
                     {% trans "There are errors with your configuration. Please fix them before creating the export." %}

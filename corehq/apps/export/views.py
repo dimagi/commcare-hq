@@ -1790,6 +1790,7 @@ class BaseNewExportView(BaseExportView):
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
+            'can_edit': self.export_instance.can_edit(self.request.couch_user.user_id),
         }
 
     def commit(self, request):
@@ -1966,19 +1967,6 @@ class CreateNewDailySavedFormExport(DailySavedExportMixin, CreateNewCustomFormEx
 
 class BaseEditNewCustomExportView(BaseModifyNewCustomView):
 
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            new_export_instance = self.new_export_instance
-        except ResourceNotFound:
-            new_export_instance = None
-        if (
-            new_export_instance
-            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
-            and new_export_instance.owner_id != request.couch_user.user_id
-        ):
-            raise Http404
-        return super(BaseEditNewCustomExportView, self).dispatch(request, *args, **kwargs)
-
     @property
     def export_id(self):
         return self.kwargs.get('export_id')
@@ -2052,6 +2040,20 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         for message in self.export_instance.error_messages():
             messages.error(request, message)
         return super(BaseEditNewCustomExportView, self).get(request, *args, **kwargs)
+
+    @method_decorator(login_and_domain_required)
+    def post(self, request, *args, **kwargs):
+        try:
+            new_export_instance = self.new_export_instance
+        except ResourceNotFound:
+            new_export_instance = None
+        if (
+            new_export_instance
+            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
+            and new_export_instance.owner_id != request.couch_user.user_id
+        ):
+            raise Http404
+        return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
 
 
 class EditNewCustomFormExportView(BaseEditNewCustomExportView):
