@@ -295,31 +295,37 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
 
-                    // TODO - get working
-                    $('.selected-for-sort').sort(function(a, b) {
-                        var aDataOrder = parseInt(a.attributes['data-order'].value),
-                            bDataOrder = parseInt(b.attributes['data-order'].value);
-                        if (aDataOrder < bDataOrder) {
-                            return -1;
-                        } else if (bDataOrder < aDataOrder) {
-                            return 1;
-                        } else {
-                            return 0;
+                    var previousRow = ui.item.prev()[0],
+                        previousIndex = null;
+                    if(previousRow) {
+                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
+                    }
+
+                    var movedIndices = [];
+                    $('.selected-for-sort').each(function (index, element) {
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
+                    });
+                    movedIndices.sort();
+
+                    var originalList = list.splice(0, list().length);
+
+                    var insertDraggedElements = function() {
+                        movedIndices.forEach(function (movedIndex) {
+                            list.push(originalList[movedIndex]);
+                        });
+                    };
+
+                    if (previousIndex === null) {
+                        insertDraggedElements();
+                    }
+                    originalList.forEach(function(originalListElement, originalListIndex) {
+                        if (!movedIndices.includes(originalListIndex)) {
+                            list.push(originalListElement);
+                        }
+                        if (originalListIndex === previousIndex) {
+                            insertDraggedElements();
                         }
                     });
-
-                    // Reorder the data in knockout
-                    var newList = [],
-                        cur = 0,
-                        i = 0;
-                    for (cur = 0; cur < element.children.length; cur++) {
-                        i = parseInt(element.children[cur].attributes['data-order'].value);
-                        newList.push(list()[i]);
-                    }
-                    list.splice(0, list().length);
-                    for (i = 0; i < newList.length; i++) {
-                        list.push(newList[i]);
-                    }
                 },
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);
