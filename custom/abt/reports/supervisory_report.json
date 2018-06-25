@@ -289,7 +289,29 @@
                 "field": "form_name",
                 "format": "default",
                 "transform": {
-
+                    "type": "translation",
+                    "translations": {
+                        "Spray Operator Morning Mobilization Inspection": {
+                            "en": "Spray Operator Morning Mobilization Inspection",
+                            "fra": "Inspection de mobilisation matinale des opérateurs de pulvérisation"
+                        },
+                        "Spray Operator Transportation Vehicle Inspection": {
+                            "en": "Spray Operator Transportation Vehicle Inspection",
+                            "fra": "Inspection des véhicles de transport des opérateurs"
+                        },
+                        "Homeowner Preparation and Spray Operator Performance": {
+                            "en": "Homeowner Preparation and Spray Operator Performance",
+                            "fra": "Préparation du ménage et performance d'opérateur de pulvérisation"
+                        },
+                        "Storekeeper Performance Inspection": {
+                            "en": "Storekeeper Performance Inspection",
+                            "fra": "Inspection de la performance du magasinier"
+                        },
+                        "End of Day Cleanup Inspection": {
+                            "en": "End of Day Cleanup Inspection",
+                            "fra": "Inspection de nettoyage en fin de journée"
+                        }
+                    }
                 },
                 "column_id": "form_name",
                 "alias": null,
