@@ -361,22 +361,22 @@ hqDefine('locations/js/location_types', [
             commtrackEnabled = initialPageData.get('commtrack_enabled'),
             model = new LocationSettingsViewModel(locTypes, commtrackEnabled);
 
-        var $settings = $('#settings');
-
         var warnBeforeUnload = function() {
             return gettext("You have unsaved changes.");
         };
 
-        $settings.submit(function() {
-            var valid = model.presubmit();
-            if (valid) {
-                // Don't warn if they're leaving the page due to form submission
-                window.onbeforeunload = undefined;
-            }
-            return valid;
-        });
-
-        $settings.koApplyBindings(model);
+        var $settings = $('#settings');
+        if ($settings.length) {
+            $settings.submit(function() {
+                var valid = model.presubmit();
+                if (valid) {
+                    // Don't warn if they're leaving the page due to form submission
+                    window.onbeforeunload = undefined;
+                }
+                return valid;
+            });
+            $settings.koApplyBindings(model);
+        }
 
         $("form#settings").on("change input", function() {
             $(this).find(":submit").addClass("btn-success").enable();
