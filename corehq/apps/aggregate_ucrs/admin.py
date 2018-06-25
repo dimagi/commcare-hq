@@ -12,7 +12,7 @@ class TimeAggregationDefinitionAdmin(admin.ModelAdmin):
             'start_column': 'opened_date',
             'end_column': 'closed_date',
         }
-        for k, v in  defaults.items():
+        for k, v in defaults.items():
             if not initial_data.get(k):
                 initial_data[k] = v
         return initial_data
