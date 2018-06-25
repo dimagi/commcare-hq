@@ -1,23 +1,42 @@
+{% extends 'registration/email/confirm_account.html' %}
 {% load i18n %}
-<p>{% blocktrans %}Hi!{% endblocktrans %}</p>
-<p>
+
+{% block preview_text %}
   {% blocktrans %}
-    {{ inviter }} has approved your request to join the {{ domain }} project space at CommCareHQ.
+    {{ inviter }} approved your request to join {{ domain }} on CommCare HQ!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_headline %}
+  {% blocktrans %}
+    You're approved to join {{ domain }}!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Confirm My Account
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    {{ inviter }} has approved your request to join the "{{ domain }}" project at CommCare HQ.
     This approval expires in {{ days }} day(s).
   {% endblocktrans %}
-</p>
-<p>{% blocktrans %}CommCareHQ is a tool that helps manage frontline workers around the world.{% endblocktrans %}</p>
-<p>
+{% endblock %}
+
+{% block secondary_text %}
   {% blocktrans %}
-    To confirm this approval click <a href="{{ url }}">this link</a>.
-    If you are unable to click the link, copy and paste the following url into your browser. {{url}}
+    CommCare HQ is a tool that helps manage frontline workers around the world.
   {% endblocktrans %}
-</p>
-<p>
+{% endblock %}
+
+{% block reason_for_email %}
   {% blocktrans %}
-    If you think you have received this by mistake, you can go ahead and ignore this email.
-    To find out more about CommCareHQ, visit http://www.commcarehq.org/.
+    You received this message because we received an approval from {{ inviter }}
+    for your request to join {{ domain }}
   {% endblocktrans %}
-</p>
-<p>{% blocktrans %}Thanks for using our site!{% endblocktrans %}</p>
-<p>{% blocktrans %}-The CommCareHQ team{% endblocktrans %}</p>
+{% endblock %}
