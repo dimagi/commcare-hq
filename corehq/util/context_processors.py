@@ -138,3 +138,16 @@ def commcare_hq_names(request):
             'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
         }
     }
+
+
+def mobile_experience(request):
+    if hasattr(request, 'couch_user'):
+        mobile_ux_cookie = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+        return {
+            'show_mobile_ux_warning': (
+                    not request.COOKIES.get(mobile_ux_cookie)
+                    and request.user_agent.is_mobile
+            ),
+            'mobile_ux_cookie_name': mobile_ux_cookie,
+        }
+    return {}

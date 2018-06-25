@@ -124,7 +124,6 @@ appmanager-main-container{% if formdesigner %} formdesigner-content-wrapper{% en
     {% if app.is_deleted %}
         {% include 'app_manager/partials/undo_delete_app.html' %}
     {% endif %}
-    {% include "hqwebapp/partials/mobile_ux_warning.html" %}
 {% endblock modals %}
 
 {% block page_row_classes %}appmanager-content-row{% endblock %}

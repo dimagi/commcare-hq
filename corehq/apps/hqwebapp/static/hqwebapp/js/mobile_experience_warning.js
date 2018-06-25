@@ -19,6 +19,8 @@ hqDefine('hqwebapp/js/mobile_experience_warning', function() {
             kissmetrix.track.event('Clicked mobile experience reminder');
         };
 
+        $.cookie(initialPageData.get('mobile_ux_cookie_name'), true);
+
         $("#send-mobile-reminder-button").click(sendReminder);
         kissmetrix.track.event('Saw mobile experience warning');
     });
