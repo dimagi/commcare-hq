@@ -803,6 +803,8 @@ class PartiallyLockingQueue(object):
 
         Returns :boolean: True if it acquired the lock, False if it was added to queue
         """
+        if not lock_ids:
+            self._add_item(lock_ids, queue_obj, to_queue=False)
         if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
             self._add_item(lock_ids, queue_obj)
             return False
