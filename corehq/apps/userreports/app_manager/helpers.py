@@ -31,13 +31,17 @@ def get_case_data_source(app, case_type):
     meta_properties_to_use = [property_def for property_def in meta_properties_to_use if property_def.item.transform is None]
     meta_indicators = [_export_column_to_ucr_indicator(c) for c in meta_properties_to_use]
     dynamic_indicators = _get_dynamic_indicators_from_export_schema(schema)
+    # filter out any duplicately defined columns from dynamic indicators
+    meta_column_names = set([c['column_id'] for c in meta_indicators])
+    dynamic_indicators = [indicator for indicator in dynamic_indicators if
+                          indicator['column_id'] not in meta_column_names]
     return DataSourceConfiguration(
         domain=app.domain,
         referenced_doc_type='CommCareCase',
         table_id=clean_table_name(app.domain, case_type),
         display_name=case_type,
         configured_filter=make_case_data_source_filter(case_type),
-        configured_indicators=meta_indicators + dynamic_indicators,
+        configured_indicators=meta_indicators + dynamic_indicators + _get_shared_indicators(),
     )
 
 
@@ -73,8 +77,23 @@ def get_form_data_source(app, form):
         table_id=clean_table_name(app.domain, form_name),
         display_name=form_name,
         configured_filter=make_form_data_source_filter(xform.data_node.tag_xmlns),
-        configured_indicators=meta_properties + dynamic_properties,
+        configured_indicators=meta_properties + dynamic_properties + _get_shared_indicators(),
     )
+
+
+def _get_shared_indicators():
+    return [
+        {
+            "type": "expression",
+            "column_id": 'count',
+            "display_name": 'count',
+            "datatype": 'small_integer',
+            "expression": {
+                "type": "constant",
+                'constant': 1,
+            }
+        }
+    ]
 
 
 def _get_dynamic_indicators_from_export_schema(schema):

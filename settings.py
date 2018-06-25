@@ -303,6 +303,7 @@ HQ_APPS = (
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
+    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
