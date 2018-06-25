@@ -89,7 +89,9 @@ from corehq.apps.export.const import (
     CASE_ATTRIBUTES,
     CASE_CREATE_ELEMENTS,
     UNKNOWN_INFERRED_FROM,
-    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM)
+    CASE_CLOSE_TO_BOOLEAN, CASE_NAME_TRANSFORM,
+    SharingOption,
+)
 from corehq.apps.export.dbaccessors import (
     get_latest_case_export_schema,
     get_latest_form_export_schema,
@@ -658,6 +660,9 @@ class ExportInstance(BlobMixin, Document):
 
     description = StringProperty(default='')
 
+    sharing = StringProperty(default=SharingOption.EDIT_AND_EXPORT, choices=SharingOption.CHOICES)
+    owner_id = StringProperty(default=None)
+
     class Meta(object):
         app_label = 'export'
 
@@ -766,6 +771,12 @@ class ExportInstance(BlobMixin, Document):
                 instance.tables.append(table)
 
         return instance
+
+    def can_view(self, user_id):
+        return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
+
+    def can_edit(self, user_id):
+        return self.owner_id is None or self.sharing == SharingOption.EDIT_AND_EXPORT or self.owner_id == user_id
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
