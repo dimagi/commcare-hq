@@ -64,6 +64,7 @@ from corehq.apps.domain.decorators import (
     login_or_digest,
     api_key_auth)
 from corehq.apps.domain.models import Domain
+from corehq.apps.hqwebapp.forms import AppTranslationsBulkUploadForm
 from corehq.apps.hqwebapp.templatetags.hq_shared_tags import toggle_enabled
 from corehq.apps.hqwebapp.utils import get_bulk_upload_form
 from corehq.apps.linked_domain.applications import create_linked_app
@@ -242,6 +243,7 @@ def get_app_view_context(request, app):
                                     args=(app.domain, app.get_id)),
             'adjective': _("app translation"),
             'plural_noun': _("app translations"),
+            'can_validate_app_translations': toggles.VALIDATE_APP_TRANSLATIONS.enabled_for_request(request)
         },
     })
     context.update({
@@ -251,7 +253,8 @@ def get_app_view_context(request, app):
         ),
         'bulk_app_translation_form': get_bulk_upload_form(
             context,
-            context_key="bulk_app_translation_upload"
+            context_key="bulk_app_translation_upload",
+            form_class=AppTranslationsBulkUploadForm,
         )
     })
     context.update({

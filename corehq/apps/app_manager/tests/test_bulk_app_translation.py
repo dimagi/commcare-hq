@@ -21,7 +21,9 @@ from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_rows,
     expected_bulk_app_sheet_headers,
     update_form_translations,
-    get_unicode_dicts)
+    get_unicode_dicts,
+    read_uploaded_app_translation_file,
+)
 from six.moves import zip
 
 
@@ -59,7 +61,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
 
         with tempfile.TemporaryFile(suffix='.xlsx') as f:
             f.write(file.getvalue())
-            messages = process_bulk_app_translation_upload(self.app, f)
+            workbook, messages = read_uploaded_app_translation_file(f)
+            assert workbook, messages
+            messages = process_bulk_app_translation_upload(self.app, workbook)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
@@ -77,7 +81,9 @@ class BulkAppTranslationTestBase(SimpleTestCase, TestXmlMixin):
             expected_messages = ["App Translations Updated!"]
 
         with codecs.open(self.get_path(name, "xlsx")) as f:
-            messages = process_bulk_app_translation_upload(self.app, f)
+            workbook, messages = read_uploaded_app_translation_file(f)
+            assert workbook, messages
+            messages = process_bulk_app_translation_upload(self.app, workbook)
 
         self.assertListEqual(
             [m[1] for m in messages], expected_messages
