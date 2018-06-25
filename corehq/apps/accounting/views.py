@@ -5,6 +5,7 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
@@ -12,6 +13,7 @@ from django.urls import reverse
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     Http404,
     JsonResponse,
@@ -20,6 +22,9 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
+from couchexport.export import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -1034,18 +1039,22 @@ def enterprise_dashboard_total(request, domain, slug):
     return JsonResponse({'total': report.total})
 
 
-def enterprise_dashboard_download(request, domain, slug):
+def enterprise_dashboard_download(request, domain, slug, export_hash):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-    writer = csv.writer(response)
+    redis = get_redis_client()
+    content = redis.get(export_hash)
 
-    writer.writerow(report.headers)
-    writer.writerows(report.rows)
+    if content:
+        file = ContentFile(content)
+        response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
+        return response
 
-    return response
+    return HttpResponseNotFound(_("That report was not found. Please remember that "
+                                  "download links expire after 24 hours."))
 
 
 def enterprise_dashboard_email(request, domain, slug):

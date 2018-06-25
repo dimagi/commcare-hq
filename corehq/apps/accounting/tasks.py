@@ -6,6 +6,7 @@ import datetime
 from datetime import date
 import io
 import json
+import uuid
 import six.moves.urllib.request, six.moves.urllib.error, six.moves.urllib.parse
 from six.moves.urllib.parse import urlencode
 
@@ -22,6 +23,7 @@ from celery.task import periodic_task, task
 
 from couchexport.export import export_from_tables
 from couchexport.models import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.log import send_HTML_email
 
@@ -873,21 +875,24 @@ def email_enterprise_report(domain, slug, couch_user):
     account = BillingAccount.get_account_by_domain(domain)
     report = EnterpriseReport.create(slug, account.id, couch_user)
 
-    message = _("Report run {date}\n").format(**{'date': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')})
+    # Generate file
     csv_file = io.StringIO()
     writer = csv.writer(csv_file)
     writer.writerow(report.headers)
     writer.writerows(report.rows)
-    attachment = {
-        'title': report.filename,
-        'mimetype': 'text/csv',
-        'file_obj': csv_file,
-    }
-    send_html_email_async(
-        _("{title} Report for enterprise account {name}").format(**{
-            'title': report.title,
-            'name': account.name,
-        }), couch_user.username,
-        message, text_content=message,
-        file_attachments=[attachment],
-    )
+
+    # Store file in redis
+    hash_id = uuid.uuid4().hex
+    redis = get_redis_client()
+    redis.set(hash_id, csv_file.getvalue())
+    redis.expire(hash_id, 60 * 60 * 24)
+    csv_file.close()
+
+    # Send email
+    url = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
+    link = "<a href='{}'>{}</a>".format(url, url)
+    subject = _("Enterprise Dashboard: {}").format(report.title)
+    body = "The enterprise report you requested for the account {} is ready.<br>" \
+           "You can download the data at the following link: {}<br><br>" \
+           "Please remember that this link will only be active for 24 hours.".format(account.name, link)
+    send_html_email_async(subject, couch_user.username, body)
