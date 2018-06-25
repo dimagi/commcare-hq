@@ -22,8 +22,8 @@ class TimeAggregationDefinition(models.Model):
     )
     aggregation_unit = models.CharField(max_length=10, choices=AGGREGATION_UNIT_CHOICES,
                                         default=AGGREGATION_UNIT_CHOICE_MONTH)
-    start_column = models.CharField(default='opened_date', max_length=MAX_COLUMN_NAME_LENGTH)
-    end_column = models.CharField(default='closed_date', max_length=MAX_COLUMN_NAME_LENGTH)
+    start_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
+    end_column = models.CharField(max_length=MAX_COLUMN_NAME_LENGTH)
 
     def get_column_adapter(self):
         if self.aggregation_unit == AGGREGATION_UNIT_CHOICE_MONTH:
