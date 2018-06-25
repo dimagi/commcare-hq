@@ -436,12 +436,6 @@ class NewLocationImporter(object):
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
         self.chunk_size = chunk_size
 
-    @classmethod
-    def from_excel_importer(cls, domain, excel_importer):
-        validator = LocationExcelValidator(domain, excel_importer)
-        type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
-        return cls(domain, type_rows, location_rows, excel_importer)
-
     def run(self):
         tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
         self.result.errors = tree_validator.errors
@@ -787,14 +781,15 @@ class LocationTreeValidator(object):
 
 def new_locations_import(domain, excel_importer):
     try:
-        importer = NewLocationImporter.from_excel_importer(domain, excel_importer)
+        validator = LocationExcelValidator(domain, excel_importer)
+        type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
     except LocationExcelSheetError as e:
         result = LocationUploadResult()
         result.errors = [str(e)]
         return result
 
-    result = importer.run()
-    return result
+    importer = NewLocationImporter(domain, type_rows, location_rows, excel_importer)
+    return importer.run()
 
 
 def save_types(type_stubs, excel_importer=None):
