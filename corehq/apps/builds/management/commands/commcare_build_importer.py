@@ -29,7 +29,7 @@ class Command(BaseCommand):
         # supress requests library INFO logs
         logging.getLogger("requests").setLevel(logging.WARNING)
 
-        # let user chose a project from the list ['commcare-mobile-2.21.0', ...]
+        # let user chose a project from the list ['commcare-mobile-2.21', ...]
         selected_project_key = None
         print("Jenkins has following projects. Please choose one (to end enter END)")
         print([p for p in self.jenkin_projects if 'commcare-mobile' in p])
