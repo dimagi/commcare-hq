@@ -227,7 +227,11 @@ class TestViews(TestCase):
         with apps_modules_setup(self):
             apps_modules = get_apps_modules(self.project.name)
 
-            self.assertEqual(len(apps_modules), 2, 'get_apps_modules should only return normal Applications')
+            names = sorted([a['name'] for a in apps_modules])
+            self.assertEqual(
+                names, ['OtherApp', 'TestApp'],
+                'get_apps_modules should only return normal Applications'
+            )
             self.assertTrue(
                 all(len(app['modules']) == 1 for app in apps_modules),
                 'Each app should only have one module'
@@ -258,10 +262,17 @@ def apps_modules_setup(test_case):
     test_case.other_app.add_module(Module.new_module("Module0", "en"))
     test_case.other_app.save()
 
+    test_case.deleted_app = Application.new_app(test_case.project.name, "DeletedApp")
+    test_case.deleted_app.add_module(Module.new_module("Module0", "en"))
+    test_case.deleted_app.save()
+    test_case.deleted_app.delete_app()
+    test_case.deleted_app.save()  # delete_app() changes doc_type. This save() saves that.
+
     test_case.linked_app = create_linked_app(test_case.project.name, test_case.app.id,
                                              test_case.project.name, 'LinkedApp')
     try:
         yield
     finally:
         Application.get_db().delete_doc(test_case.linked_app.id)
+        Application.get_db().delete_doc(test_case.deleted_app.id)
         Application.get_db().delete_doc(test_case.other_app.id)
