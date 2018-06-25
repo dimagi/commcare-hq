@@ -889,10 +889,10 @@ def email_enterprise_report(domain, slug, couch_user):
     csv_file.close()
 
     # Send email
-    link = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
+    url = absolute_reverse("enterprise_dashboard_download", args=[domain, report.slug, str(hash_id)])
+    link = "<a href='{}'>{}</a>".format(url, url)
     subject = _("Enterprise Dashboard: {}").format(report.title)
     body = "The enterprise report you requested for the account {} is ready.<br>" \
            "You can download the data at the following link: {}<br><br>" \
-           "Please remember that this link will only be active for 24 hours.".format(
-           account.name, "<a href='{}'>{}</a>".format(link, link))
+           "Please remember that this link will only be active for 24 hours.".format(account.name, link)
     send_html_email_async(subject, couch_user.username, body)
