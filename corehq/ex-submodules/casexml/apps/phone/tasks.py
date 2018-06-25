@@ -78,9 +78,9 @@ def update_celery_state(sender=None, body=None, **kwargs):
 )
 def prune_synclogs():
     """
-    Drops all partition tables containing data that's older than 91 days (13 weeks)
+    Drops all partition tables containing data that's older than 63 days (7 weeks)
     """
-    SYNCLOG_RETENTION_DAYS = 13 * 7  # 91 days
+    SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
     oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
     while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
         year, week, _ = oldest_synclog.isocalendar()
