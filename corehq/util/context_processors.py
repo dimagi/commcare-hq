@@ -141,13 +141,20 @@ def commcare_hq_names(request):
 
 
 def mobile_experience(request):
-    if hasattr(request, 'couch_user'):
-        mobile_ux_cookie = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
-        return {
-            'show_mobile_ux_warning': (
-                    not request.COOKIES.get(mobile_ux_cookie)
-                    and request.user_agent.is_mobile
-            ),
-            'mobile_ux_cookie_name': mobile_ux_cookie,
-        }
-    return {}
+    show_mobile_ux_warning = False
+    mobile_ux_cookie_name = ''
+    if (hasattr(request, 'couch_user')
+        and hasattr(request, 'user_agent')
+        and (settings.SERVER_ENVIRONMENT in ['production', 'staging', 'localdev'])
+    ):
+        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+        show_mobile_ux_warning = (
+            not request.COOKIES.get(mobile_ux_cookie_name)
+            and request.user_agent.is_mobile
+            and request.user.is_authenticated
+            and request.user.is_active
+        )
+    return {
+        'show_mobile_ux_warning': show_mobile_ux_warning,
+        'mobile_ux_cookie_name': mobile_ux_cookie_name,
+    }

@@ -302,6 +302,10 @@
         {# modals #}
         {% block modals %}{% endblock modals %}
 
+        {% if show_mobile_ux_warning %}
+          {% include "hqwebapp/partials/mobile_ux_warning.html" %}
+        {% endif %}
+
         {# Report Issue #}
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
@@ -323,6 +327,7 @@
             {% endcomment %}
         {% endblock %}
         {%  initial_page_data 'mobile_ux_cookie_name' mobile_ux_cookie_name %}
+        {%  initial_page_data 'show_mobile_ux_warning' show_mobile_ux_warning %}
         <div class="initial-page-data" class="hide">
         {% block initial_page_data %}
             {# do not override this block, use initial_page_data template tag to populate #}
@@ -375,6 +380,7 @@
                     'analytix/js/google',
                     'analytix/js/hubspot',
                     'analytix/js/kissmetrix',
+                    'hqwebapp/js/mobile_experience_warning',
                 ], function () {
                     requirejs(['{{ requirejs_main }}']);
                 });
@@ -392,6 +398,7 @@
                 <script src="{% static 'hqwebapp/js/toggles.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/alert_user.js' %}"></script>
                 <script src="{% static 'hqwebapp/js/main.js' %}"></script>
+                <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
             {% endcompress %}
         {% endif %}
 
@@ -510,11 +517,6 @@
         {% if request.use_ko_validation and not requirejs_main %}
           <script src="{% static 'knockout-validation/dist/knockout.validation.min.js' %}"></script>
           <script src="{% static 'hqwebapp/js/validators.ko.js' %}"></script>
-        {% endif %}
-
-        {% if request.user.is_authenticated and request.user.is_active and is_saas_environment and show_mobile_ux_warning %}
-          {% include "hqwebapp/partials/mobile_ux_warning.html" %}
-          <script src="{% static 'hqwebapp/js/mobile_experience_warning.js' %}"></script>
         {% endif %}
 
         {% if not request.user.is_authenticated and is_saas_environment and ANALYTICS_IDS.HUBSPOT_API_ID %}
