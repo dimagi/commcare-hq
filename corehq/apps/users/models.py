@@ -1371,7 +1371,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         result = view_result.one()
         if result and result['doc'] and result['doc']['username'] == username:
             couch_user = cls.wrap_correctly(result['doc'])
-            cls.get_by_user_id.set_cached_value(couch_user.get_id).to(couch_user)
+            cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)
             return couch_user
         else:
             return None
@@ -1417,7 +1417,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if domain:
             if not couch_user.is_member_of(domain):
                 return None
-        cls.get_by_username.set_cached_value(couch_user.username).to(couch_user)
+        cls.get_by_username.set_cached_value(couch_user.__class__, couch_user.username).to(couch_user)
         return couch_user
 
     @classmethod
