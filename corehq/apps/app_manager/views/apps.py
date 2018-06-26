@@ -61,6 +61,7 @@ from corehq.apps.app_manager.views.utils import back_to_main, get_langs, \
 from corehq.apps.app_manager.xform import (
     XFormException)
 from corehq.apps.builds.models import CommCareBuildConfig, BuildSpec
+from corehq.apps.cloudcare.views import FormplayerMain
 from corehq.apps.dashboard.views import DomainDashboardView
 from corehq.apps.domain.decorators import (
     login_and_domain_required,
@@ -403,13 +404,8 @@ def app_from_template(request, domain, slug):
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
-    module_id = 0
-    form_id = 0
-    try:
-        app.get_module(module_id).get_form(form_id)
-    except (ModuleNotFoundException, FormNotFoundException):
-        return HttpResponseRedirect(reverse('view_app', args=[domain, app._id]))
-    return HttpResponseRedirect(reverse('view_form_legacy', args=[domain, app._id, module_id, form_id]))
+    cloudcare_state = '{{"appId":"{}"}}'.format(app._id)
+    return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
 
 @require_can_edit_apps
