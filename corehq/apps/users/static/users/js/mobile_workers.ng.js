@@ -218,22 +218,6 @@
             );
         };
 
-        $scope.initializeAnonymousMobileWorker = function () {
-            $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
-            $scope.usernameStatusMessage = null;
-
-            $(".select2multiplechoicewidget").select2('data', null);
-            $scope.mobileWorker = new MobileWorker({
-                customFields: customFields,
-                generateStrongPasswords: true,
-                username: 'anonymous_user',
-                first_name: 'Anonymous',
-                last_name: 'User',
-                is_anonymous: true,
-            });
-            hqImport('analytix/js/google').track.event('Manage Mobile Workers', 'New Anonymous Mobile Worker', '');
-        };
-
         $scope.initializeMobileWorker = function (mobileWorker) {
             visualFormCtrl.usernameClear();
             $scope.usernameAvailabilityStatus = null;
