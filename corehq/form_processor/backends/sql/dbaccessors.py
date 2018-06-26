@@ -770,6 +770,8 @@ class CaseReindexAccessor(ReindexAccessor):
     def __init__(self, domain=None, limit_db_aliases=None, start_date=None, end_date=None):
         super(CaseReindexAccessor, self).__init__(limit_db_aliases=limit_db_aliases)
         self.domain = domain
+        self.start_date = start_date
+        self.end_date = end_date
 
     @property
     def model_class(self):
