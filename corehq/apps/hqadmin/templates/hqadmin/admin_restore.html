@@ -86,7 +86,7 @@
                         <div class="tab-content">
                             <div role="tabpanel" class="tab-pane active" id="payload-tab">
                                 {% if not hide_xml %}
-                                    <pre id="payload" data-payload="{{ payload }}"></pre>
+                                    <pre id="payload" data-payload="{% html_attr payload %}"></pre>
                                 {% else %}
                                     XML is hidden
                                 {% endif %}
