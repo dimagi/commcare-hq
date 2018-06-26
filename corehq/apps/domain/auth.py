@@ -16,7 +16,6 @@ ANDROID = 'android'
 BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
-TOKEN = 'token'
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -40,8 +39,6 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith(b'digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif auth_header.startswith(b'token '):
-        return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 
