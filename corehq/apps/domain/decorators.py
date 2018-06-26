@@ -57,11 +57,9 @@ def load_domain(req, domain):
 ########################################################################################################
 
 
-def redirect_for_login_or_domain(request, redirect_field_name=REDIRECT_FIELD_NAME, login_url=None):
-    login_url = login_url or reverse('login')
-    path = urlquote(request.get_full_path())
-    nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
-    return HttpResponseRedirect(nextURL)
+def redirect_for_login_or_domain(request, login_url=None):
+    from django.contrib.auth.views import redirect_to_login
+    return redirect_to_login(request.get_full_path(), login_url)
 
 
 def _page_is_whitelist(path, domain):
