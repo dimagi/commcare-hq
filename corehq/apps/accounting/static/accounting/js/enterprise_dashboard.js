@@ -30,7 +30,7 @@ hqDefine("accounting/js/enterprise_dashboard", [
                         alertUser.alert_user(data.message, "success");
                         $button.enableButton();
                     },
-                    error: function(data) {
+                    error: function() {
                         alertUser.alert_user(gettext("Error sending email, please try again or report an issue if this persists."), "danger");
                         $button.enableButton();
                     },
