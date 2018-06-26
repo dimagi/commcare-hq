@@ -1340,13 +1340,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][2],
             {
                 'average': {
-                    'html': 1582,
-                    'sort_key': 1582
+                    'html': 1608,
+                    'sort_key': 1608
                 },
                 'data': [
                     {'html': 'Total number of members enrolled at AWC'},
-                    {'html': 1501, 'sort_key': 1501},
-                    {'html': 1582, 'sort_key': 1582},
+                    {'html': 1525, 'sort_key': 1525},
+                    {'html': 1608, 'sort_key': 1608},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',
@@ -1360,13 +1360,13 @@ class TestFactSheetReportDemographics(TestCase):
             self.get_data()['config']['sections'][0]['rows_config'][3],
             {
                 'average': {
-                    'html': 21.554993678887485,
-                    'sort_key': 21.554993678887485
+                    'html': 21.51741293532338,
+                    'sort_key': 21.51741293532338
                 },
                 'data': [
                     {'html': 'Percent Aadhaar-seeded beneficiaries'},
-                    {'html': 19.520319786808795, 'sort_key': 19.520319786808795},
-                    {'html': 21.554993678887485, 'sort_key': 21.554993678887485},
+                    {'html': 19.540983606557376, 'sort_key': 19.540983606557376},
+                    {'html': 21.51741293532338, 'sort_key': 21.51741293532338},
                     {'html': 0}
                 ],
                 'data_source': 'AggAWCMonthlyDataSource',

@@ -1504,11 +1504,11 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
-                'color': 'green',
+                "all": 5,
+                'color': 'red',
                 "format": "percent_and_div",
-                "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "percent": -39.99999999999999,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "month",
                 "help_text": "Percentage of ICDS beneficiaries whose Aadhaar"
@@ -1762,11 +1762,11 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
+                "all": 5,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
@@ -2012,11 +2012,11 @@ class TestAWCReport(TestCase):
                 (2017, 5, 1),
             )['kpi'][0][1],
             {
-                "all": 0,
+                "all": 5,
                 'color': 'green',
                 "format": "percent_and_div",
                 "percent": "Data in the previous reporting period was 0",
-                "value": 0,
+                "value": 1,
                 "label": "Percent Aadhaar-seeded Beneficiaries",
                 "frequency": "day",
                 "help_text": (
