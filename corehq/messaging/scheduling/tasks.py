@@ -29,6 +29,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_case_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
     delete_timed_schedule_instances_for_schedule,
+    delete_schedule_instances_by_case_id,
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
@@ -484,3 +485,9 @@ def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
             return
 
         _handle_schedule_instance(instance, save_case_schedule_instance)
+
+
+@no_result_task(queue='background_queue', acks_late=True)
+def delete_schedule_instances_for_cases(domain, case_ids):
+    for case_id in case_ids:
+        delete_schedule_instances_by_case_id(domain, case_id)
