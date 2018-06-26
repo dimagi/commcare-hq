@@ -5,7 +5,6 @@ from django.http import HttpResponseBadRequest, Http404, JsonResponse
 from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.authtoken.models import Token
 from corehq.apps.hqadmin.utils import get_django_user_from_session_key
 from corehq.apps.users.models import CouchUser
 from corehq.util.hmac_request import validate_request_hmac

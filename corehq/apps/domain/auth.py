@@ -2,9 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
 import re
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
-from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication

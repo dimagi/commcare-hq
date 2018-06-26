@@ -7,7 +7,6 @@ import logging
 import re
 from uuid import uuid4
 
-from rest_framework.authtoken.models import Token
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models

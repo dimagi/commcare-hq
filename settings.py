@@ -188,7 +188,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'djcelery',
     'django_prbac',
     'djangular',
