@@ -12,6 +12,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
@@ -424,7 +425,10 @@ def _handle_schedule_instance(instance, save_function):
     """
     :return: True if the event was handled, otherwise False
     """
-    if instance.memoized_schedule.deleted:
+    if (
+        instance.memoized_schedule.deleted or
+        (isinstance(instance, CaseScheduleInstanceMixin) and (instance.case is None or instance.case.is_deleted))
+    ):
         instance.delete()
         return False
 

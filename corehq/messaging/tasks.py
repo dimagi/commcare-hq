@@ -4,9 +4,11 @@ from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.reminders import tasks as reminders_tasks
 from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.sms import tasks as sms_tasks
+from corehq.form_processor.exceptions import CaseNotFound
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from corehq.form_processor.models import CommCareCaseSQL
 from corehq.form_processor.utils import should_use_sql_backend
+from corehq.messaging.scheduling.tasks import delete_schedule_instances_for_cases
 from corehq.messaging.scheduling.util import utcnow
 from corehq.messaging.util import MessagingRuleProgressHelper, use_phone_entries
 from corehq.sql_db.util import run_query_across_partitioned_databases
@@ -46,8 +48,17 @@ def sync_case_for_messaging_rule(self, domain, case_id, rule_id):
 
 
 def _sync_case_for_messaging(domain, case_id):
-    case = CaseAccessors(domain).get_case(case_id)
-    sms_tasks.clear_case_caches(case)
+    try:
+        case = CaseAccessors(domain).get_case(case_id)
+        sms_tasks.clear_case_caches(case)
+    except CaseNotFound:
+        case = None
+
+    if case is None or case.is_deleted:
+        sms_tasks.delete_phone_numbers_for_owners([case.case_id])
+        reminders_tasks.delete_reminders_for_cases(domain, [case.case_id])
+        delete_schedule_instances_for_cases(domain, [case.case_id])
+        return
 
     if use_phone_entries():
         sms_tasks._sync_case_phone_number(case)
