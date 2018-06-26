@@ -37,6 +37,7 @@ hqDefine('analytix/js/appcues', [
                 lastName: _get("lastName"),
                 email: _get("username"),
                 createdAt: _get("dateCreated"),
+                domain: _get("domain"),
                 isDimagi: _get("userIsDimagi"),
                 instance: _get("instance"),
             });
