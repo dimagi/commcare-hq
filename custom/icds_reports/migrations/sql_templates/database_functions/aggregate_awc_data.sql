@@ -30,6 +30,7 @@ DECLARE
   _yes_text text;
   _no_text text;
   _female text;
+  _month_start_6m date;
   _month_end_6yr date;
   _month_start_11yr date;
   _month_end_11yr date;
@@ -41,6 +42,7 @@ BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
   _previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+  _month_start_6m = (_start_date + INTERVAL ' - 6 MONTHS')::DATE;
   _month_end_6yr = (_end_date + INTERVAL ' - 6 YEAR')::DATE;
   _month_start_11yr = (_start_date + INTERVAL ' - 11 YEAR')::DATE;
   _month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
@@ -496,10 +498,12 @@ BEGIN
     -- could possibly add multicol indexes to make order by faster?
 
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL';
+    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL AND ' ||
+     quote_literal(_month_start_6m) || ' < infra_last_update_date';
 
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL';
+    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL OR ' ||
+     quote_literal(_month_start_6m) || ' >= infra_last_update_date';
 
   -- Roll Up by Location
   _rollup_text =   'sum(num_awcs), ' ||
