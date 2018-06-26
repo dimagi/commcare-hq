@@ -22,7 +22,6 @@ from corehq.apps.es.users import UserES
 from corehq.apps.groups.models import Group
 from corehq.apps.locations.analytics import users_have_locations
 from corehq.apps.sms.models import Keyword
-from corehq.apps.reminders.models import CaseReminderHandler
 from corehq.apps.reports.util import get_simplified_users
 from corehq.apps.sms.verify import (
     initiate_sms_verification_workflow,
@@ -34,7 +33,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
-from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
+from corehq.messaging.scheduling.util import domain_has_reminders
 from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
 from memoized import memoized
@@ -211,10 +210,7 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         domain_has_reminders_or_keywords = (
-            AutomaticUpdateRule.domain_has_conditional_alerts(self.domain) or
-            ScheduledBroadcast.domain_has_broadcasts(self.domain) or
-            ImmediateBroadcast.domain_has_broadcasts(self.domain) or
-            CaseReminderHandler.domain_has_reminders(self.domain) or
+            domain_has_reminders(self.domain) or
             Keyword.domain_has_keywords(self.domain)
         )
         bulk_sms_verification_enabled = (
