@@ -6,13 +6,6 @@ from django.template.response import TemplateResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from corehq import toggles
-from corehq.apps.domain.auth import (
-    API_KEY,
-    BASIC,
-    DIGEST,
-    determine_authtype_from_header,
-    get_username_and_password_from_request,
-)
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
 from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
@@ -49,13 +42,6 @@ class UsersMiddleware(MiddlewareMixin):
             request.domain = view_kwargs['domain']
         if 'org' in view_kwargs:
             request.org = view_kwargs['org']
-        auth_type = determine_authtype_from_header(request, default='NONE')
-        if auth_type in (BASIC, DIGEST, API_KEY) and 'domain' in view_kwargs:
-            # User is not yet authenticated, but setting request.domain (above) and request.couch_user will allow
-            # us to check location-based permissions before we can check authentication.
-            # See LocationAccessMiddleware.process_view()
-            username, _ = get_username_and_password_from_request(request)
-            request.couch_user = CouchUser.get_by_username(username) or InvalidUser()
         if request.user and request.user.is_authenticated:
             user_id = username_to_user_id(request.user.username)
             request.couch_user = CouchUser.get_by_user_id(user_id)
