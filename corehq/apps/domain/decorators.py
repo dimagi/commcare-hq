@@ -355,6 +355,9 @@ def cls_to_view(additional_decorator=None):
 def api_domain_view(view):
     """
     Decorate this with any domain view that should be accessed via api only
+
+    Currently only required by for a single view used by 'kawok-vc-desarrollo' domain
+    See http://manage.dimagi.com/default.asp?225116#1137527
     """
     @wraps(view)
     @api_key()
