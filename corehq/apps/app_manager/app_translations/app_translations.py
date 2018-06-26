@@ -625,6 +625,11 @@ def update_form_translations(sheet, rows, missing_cols, app):
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 
+    def has_translation(row_, langs):
+        for lang_ in langs:
+            if row_.get(_get_col_key('default', lang_)):
+                return True
+
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
@@ -640,10 +645,7 @@ def update_form_translations(sheet, rows, missing_cols, app):
     # skip labels that have no translation provided
     skip_label = set()
     for row in rows:
-        for lang in app.langs:
-            if row.get(_get_col_key('default', lang)):
-                break
-        else:  # https://stackoverflow.com/a/654002
+        if not has_translation(row, app.langs):
             skip_label.add(row['label'])
     for label in skip_label:
         msgs.append((
