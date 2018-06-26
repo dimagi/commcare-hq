@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import os.path
+import lxml
+from lxml.etree import XMLSyntaxError
 from django.http import HttpResponseRedirect
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
@@ -34,7 +36,9 @@ def render_error(request, domain, message):
 
 def validate_column_names(column_names, invalid_column_names):
     for column_name in column_names:
-        if "/" in column_name:
+        try:
+            lxml.etree.fromstring('<{name}></{name}>'.format(name=column_name))
+        except XMLSyntaxError:
             invalid_column_names.add(column_name)
 
 
