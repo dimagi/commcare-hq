@@ -52,6 +52,7 @@ branches:
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
   - jls/requirejs-locations  # Jenny June 22
+  - nh/262139/basic_auth_location  # Norman June 26
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
