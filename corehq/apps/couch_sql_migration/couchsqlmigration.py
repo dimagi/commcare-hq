@@ -778,6 +778,9 @@ class PartiallyLockingQueue(object):
         def get_cached_list_key():
             return "partial_queues.queued_or_processing.%s" % run_timestamp
         self.get_cached_list_key = get_cached_list_key
+        client = get_redis_connection()
+        client.rpush(get_cached_list_key(), '')  # hack to make key exist
+        client.expire(get_cached_list_key(), 60 * 60 * 24 * 30)  # 30 days
 
     def add_processing_doc_id(self, doc_id):
         client = get_redis_connection()
