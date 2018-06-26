@@ -50,7 +50,7 @@ class Command(BaseCommand):
         parser.add_argument('--debug', action='store_true', default=False)
         parser.add_argument(
             '--run-timestamp',
-            action='store_true',
+            type=int,
             default=None,
             help='use this option to continue a previous run that was started at this timestamp'
         )
