@@ -484,13 +484,6 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
-DATA_CORRECTIONS_FORMS = StaticToggle(
-    'data_corrections_forms',
-    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
