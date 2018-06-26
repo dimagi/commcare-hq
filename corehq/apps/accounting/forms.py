@@ -184,7 +184,6 @@ class BillingAccountBasicForm(forms.Form):
                     crispy.Field(
                         'billing_admin_emails',
                         css_class='input-xxlarge accounting-email-select2',
-                        data_bind='attr: {required: is_customer_billing_account}'
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
