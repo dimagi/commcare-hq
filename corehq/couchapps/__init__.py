@@ -26,7 +26,6 @@ CouchAppsPreindexPlugin.register('couchapps', __file__, {
 
     # register just to the new apps db
     'apps_with_submissions': settings.NEW_APPS_DB,
-    'hash_to_anonymous_app': settings.NEW_APPS_DB,
     'saved_apps_auto_generated': settings.NEW_APPS_DB,
     'global_app_config_by_app_id': settings.NEW_APPS_DB,
 })
