@@ -100,8 +100,7 @@ class FormplayerMain(View):
         if (toggles.CLOUDCARE_LATEST_BUILD.enabled(domain) or
                 toggles.CLOUDCARE_LATEST_BUILD.enabled(username)):
             return get_latest_build_doc(domain, app_id)
-        else:
-            return get_latest_released_app_doc(domain, app_id)
+        return get_latest_released_app_doc(domain, app_id)
 
     def get_web_apps_available_to_user(self, request, user):
         domain = request.domain
