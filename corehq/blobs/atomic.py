@@ -12,8 +12,8 @@ class AtomicBlobs(object):
         with AtomicBlobs(get_blob_db()) as db:
             # do stuff here that puts or deletes blobs
             db.delete(old_blob_id)
-            info = db.put(content, new_blob_id)
-            save(info, deleted=old_blob_id)
+            meta = db.put(content, ...)
+            save(meta, deleted=old_blob_id)
 
     If an exception occurs inside the `AtomicBlobs` context then all
     blob write operations (puts and deletes) will be rolled back.
@@ -23,19 +23,24 @@ class AtomicBlobs(object):
         self.db = db
         self.puts = None
         self.deletes = None
+        self.old_api_puts = None
+        self.old_api_deletes = None
 
-    def put(self, content, identifier, bucket=DEFAULT_BUCKET):
+    def put(self, content, identifier=None, bucket=DEFAULT_BUCKET, **kw):
         if self.puts is None:
             raise InvalidContext("AtomicBlobs context is not active")
-        info = self.db.put(content, identifier, bucket=bucket)
-        self.puts.append((info, bucket))
-        return info
+        meta = self.db.put(content, identifier, bucket=bucket, **kw)
+        if identifier is None and bucket == DEFAULT_BUCKET:
+            self.puts.append(meta)
+        else:
+            self.old_api_puts.append((meta, bucket))
+        return meta
 
     def get(self, *args, **kw):
         return self.db.get(*args, **kw)
 
     def delete(self, *args, **kw):
-        """Delete a blob or bucket of blobs
+        """Delete a blob
 
         NOTE blobs will not actually be deleted until the context exits,
         so subsequent gets inside the context will return an object even
@@ -43,8 +48,14 @@ class AtomicBlobs(object):
         """
         if self.puts is None:
             raise InvalidContext("AtomicBlobs context is not active")
-        self.db.get_args_for_delete(*args, **kw)  # validate args
-        self.deletes.append((args, kw))
+        if "key" in kw and not args:
+            if set(kw) != {"key"}:
+                notkey = ", ".join(k for k in kw if k != "key")
+                raise TypeError("unexpected arguments: " + notkey)
+            self.deletes.append(kw["key"])
+        else:
+            assert "key" not in kw, kw
+            self.old_api_deletes.append((args, kw))
         return None  # result is unknown
 
     def copy_blob(self, *args, **kw):
@@ -53,15 +64,25 @@ class AtomicBlobs(object):
     def __enter__(self):
         self.puts = []
         self.deletes = []
+        self.old_api_puts = []
+        self.old_api_deletes = []
         return self
 
     def __exit__(self, exc_type, exc_value, tb):
         puts, deletes = self.puts, self.deletes
+        old_puts, old_deletes = self.old_api_puts, self.old_api_deletes
         self.puts = None
         self.deletes = None
+        self.old_api_puts = None
+        self.old_api_deletes = None
         if exc_type is None:
-            for args, kw in deletes:
+            for key in deletes:
+                self.db.delete(key=key)
+            for args, kw in old_deletes:
                 self.db.delete(*args, **kw)
         else:
-            for info, bucket in puts:
-                self.db.delete(info.identifier, bucket)
+            if puts:
+                self.db.bulk_delete(metas=puts)
+            if old_puts:
+                for info, bucket in old_puts:
+                    self.db.delete(info.identifier, bucket)
