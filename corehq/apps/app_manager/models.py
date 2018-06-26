@@ -93,7 +93,6 @@ from dimagi.utils.make_uuid import random_hex
 from dimagi.utils.web import get_url_base, parse_int
 from corehq.util import bitly
 from corehq.util import view_utils
-from corehq.util.string_utils import random_string
 from corehq.apps.appstore.models import SnapshotMixin
 from corehq.apps.builds.models import BuildSpec, BuildRecord
 from corehq.apps.hqmedia.models import HQMediaMixin
