@@ -245,12 +245,6 @@
             workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
         };
 
-        $scope.submitNewAnonymousMobileWorker = function () {
-            $("#newAnonymousMobileWorkerModal").modal('hide');
-            $scope.workers.push($scope.mobileWorker);
-            workerCreationFactory.stageNewMobileWorker($scope.mobileWorker);
-        };
-
         $scope.retryMobileWorker = function (worker) {
             $scope.initializeMobileWorker(worker);
             $scope.usernameAvailabilityStatus = USERNAME_STATUS.AVAILABLE;
