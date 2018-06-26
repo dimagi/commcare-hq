@@ -349,6 +349,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False)
     billing_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    system_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
