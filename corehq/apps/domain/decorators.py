@@ -144,18 +144,6 @@ def _ensure_request_couch_user(request):
     return couch_user
 
 
-def domain_required(view_func):
-    @wraps(view_func)
-    def _inner(req, domain, *args, **kwargs):
-        domain_name, domain = load_domain(req, domain)
-        if domain:
-            return view_func(req, domain_name, *args, **kwargs)
-        else:
-            msg = _('The domain "{domain}" was not found.'.format(domain=domain_name))
-            raise Http404(msg)
-    return _inner
-
-
 class LoginAndDomainMixin(object):
 
     @method_decorator(login_and_domain_required)
