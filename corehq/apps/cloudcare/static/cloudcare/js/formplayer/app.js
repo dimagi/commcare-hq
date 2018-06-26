@@ -199,6 +199,10 @@ FormplayerFrontend.on('startForm', function (data) {
                 hqImport('analytix/js/kissmetrix').track.event("[app-preview] User submitted a form");
                 hqImport('analytix/js/google').track.event("App Preview", "User submitted a form");
                 appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
+            } else if (user.environment === FormplayerFrontend.Constants.WEB_APPS_ENVIRONMENT) {
+                hqImport('analytix/js/kissmetrix').track.event("[web apps] User submitted a form");
+                hqImport('analytix/js/google').track.event("Web Apps", "User submitted a form");
+                appcues.trackEvent(appcues.EVENT_TYPES.FORM_SUBMIT, { success: true });
             }
 
             // After end of form nav, we want to clear everything except app and sesson id
