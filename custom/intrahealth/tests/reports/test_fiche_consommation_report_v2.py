@@ -30,7 +30,7 @@ class TestFicheConsommationReport2(YeksiTestCase):
         rows = fiche_consommation_report['rows']
         self.assertEqual(
             headers,
-            ['', 'CU', u' ', ' ', 'DIU', ' ', ' ', 'Depo-Provera', ' ', ' ',
+            ['', 'CU', ' ', ' ', 'DIU', ' ', ' ', 'Depo-Provera', ' ', ' ',
              'Jadelle', ' ', ' ', 'Microgynon/Lof.', ' ', ' ', 'Microlut/Ovrette', ' ', ' ',
              'Preservatif Feminin', ' ', ' ', 'Preservatif Masculin', ' ', ' ']
         )

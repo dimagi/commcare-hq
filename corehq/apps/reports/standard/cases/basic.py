@@ -316,7 +316,7 @@ class CaseListReport(CaseListMixin, ProjectInspectionReport, ReportDataSource):
     def headers(self):
         headers = DataTablesHeader(
             DataTablesColumn(_("Case Type"), prop_name="type.exact"),
-            DataTablesColumn(_("Name"), prop_name="name.exact"),
+            DataTablesColumn(_("Name"), prop_name="name.exact", css_class="case-name-link"),
             DataTablesColumn(_("Owner"), prop_name="owner_display", sortable=False),
             DataTablesColumn(_("Created Date"), prop_name="opened_on"),
             DataTablesColumn(_("Created By"), prop_name="opened_by_display", sortable=False),

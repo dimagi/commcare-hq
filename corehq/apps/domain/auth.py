@@ -8,7 +8,6 @@ from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 from python_digest import parse_digest_credentials
 
 J2ME = 'j2me'
@@ -115,22 +114,3 @@ def basicauth(realm=''):
             return response
         return wrapper
     return real_decorator
-
-
-def tokenauth(view):
-
-    @wraps(view)
-    def _inner(request, *args, **kwargs):
-        if not ANONYMOUS_WEB_APPS_USAGE.enabled(request.domain):
-            return HttpResponse(status=401)
-        try:
-            user, token = TokenAuthentication().authenticate(request)
-        except AuthenticationFailed as e:
-            return HttpResponse(e, status=401)
-
-        if user.is_active:
-            request.user = user
-            return view(request, *args, **kwargs)
-        else:
-            return HttpResponse('Inactive user', status=401)
-    return _inner

@@ -15,6 +15,7 @@ from corehq.form_processor.backends.sql.dbaccessors import get_cursor
 
 ASYNC_RESTORE_QUEUE = 'async_restore_queue'
 ASYNC_RESTORE_SENT = "SENT"
+SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
 
 
 @periodic_task(run_every=crontab(hour="2", minute="0", day_of_week="1"),
@@ -78,11 +79,10 @@ def update_celery_state(sender=None, body=None, **kwargs):
 )
 def prune_synclogs():
     """
-    Drops all partition tables containing data that's older than 91 days (13 weeks)
+    Drops all partition tables containing data that's older than 63 days (7 weeks)
     """
-    SYNCLOG_RETENTION_DAYS = 13 * 7  # 91 days
     oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
+    while oldest_synclog and (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
         year, week, _ = oldest_synclog.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,

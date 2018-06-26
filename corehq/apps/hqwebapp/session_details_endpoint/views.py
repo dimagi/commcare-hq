@@ -8,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
 from corehq.apps.hqadmin.utils import get_django_user_from_session_key
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 from corehq.util.hmac_request import validate_request_hmac
 
 
@@ -50,9 +49,6 @@ class SessionDetailsView(View):
             couch_user = CouchUser.get_by_username(user.username)
             if not couch_user:
                 raise Http404
-        elif domain and ANONYMOUS_WEB_APPS_USAGE.enabled(domain):
-            user, couch_user, auth_token = self._get_anonymous_user_details(domain)
-            anonymous = True
         else:
             raise Http404
 

@@ -14,6 +14,7 @@
 {% block page_content %}
 {% initial_page_data 'number_of_apps_to_process' number_of_apps_to_process %}
 {% initial_page_data 'format_options' format_options %}
+{% initial_page_data 'sharing_options' sharing_options %}
 {% initial_page_data 'has_daily_saved_export_access' has_daily_saved_export_access %}
 {% initial_page_data 'has_excel_dashboard_access' has_excel_dashboard_access %}
 {% initial_page_data 'full_path' request.get_full_path %}
@@ -151,6 +152,24 @@
                 {% endif %}
                 </div>
             </div>
+            {% if request|toggle_enabled:"EXPORT_OWNERSHIP" %}
+            <div class="form-group">
+                <label
+                    for="sharing-select"
+                    class="col-sm-3 col-md-2 control-label">
+                    {% trans "Sharing" %}
+                    <span data-bind="makeHqHelp: {description: getSharingHelpText}"></span>
+                </label>
+                <div class="col-sm-9 col-md-8 col-lg-6">
+                    <select class="form-control" id="sharing-select" data-bind="
+                            options: getSharingOptionValues(),
+                            optionsText: getSharingOptionText,
+                            value: sharing
+                        ">
+                    </select>
+                </div>
+            </div>
+            {% endif %}
         </fieldset>
         <fieldset data-bind="
             template: { foreach: tables, as: 'table', name: 'ko-table-configuration-template' }"

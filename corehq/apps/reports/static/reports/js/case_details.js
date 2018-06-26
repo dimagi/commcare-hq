@@ -210,6 +210,7 @@ hqDefine("reports/js/case_details", function() {
             properties: initialPageData.get('dynamic_properties'),
             propertyNamesUrl: initialPageData.reverse('case_property_names'),
             saveUrl: initialPageData.reverse("edit_case"),
+            analyticsDescriptor: 'Clean Case Data',
         });
 
         $("#history").koApplyBindings(new XFormListViewModel());

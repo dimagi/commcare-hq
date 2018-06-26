@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.conf.urls import url
+from django.conf.urls import url, include
 
 from corehq.apps.userreports.reports.view import DownloadUCRStatusView, ucr_download_job_poll
 from corehq.apps.userreports.views import (
@@ -85,4 +85,6 @@ urlpatterns = [
         choice_list_api, name='choice_list_api'),
     url(r'^expression_evaluator/$', evaluate_expression, name='expression_evaluator'),
     url(r'^data_source_evaluator/$', evaluate_data_source, name='data_source_evaluator'),
+    url(r'^aggregate/', include('corehq.apps.aggregate_ucrs.urls')),
+
 ]

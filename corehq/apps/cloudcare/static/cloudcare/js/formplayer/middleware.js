@@ -21,6 +21,9 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     var clearFormMiddleware = function(name) {
         FormplayerFrontend.trigger("clearForm");
     };
+    var navigationMiddleware = function(name) {
+        FormplayerFrontend.trigger("navigation");
+    };
     var clearVersionInfo = function(name) {
         FormplayerFrontend.trigger('setVersionInfo', '');
     };
@@ -49,6 +52,7 @@ FormplayerFrontend.module("SessionNavigate", function (SessionNavigate, Formplay
     SessionNavigate.Middleware.middlewares = [
         logRouteMiddleware,
         clearFormMiddleware,
+        navigationMiddleware,
         clearVersionInfo,
         setScrollableMaxHeight,
         clearBreadcrumbMiddleware,

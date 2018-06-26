@@ -70,10 +70,11 @@ def get_primary_db_form_counts(domain):
         return _get_couch_forms_by_doc_type(domain)
 
 
-def get_primary_db_form_ids(domain, doc_type):
+def get_primary_db_form_ids(domain, doc_type, startdate, enddate):
     if should_use_sql_backend(domain):
-        return get_sql_form_ids(domain, doc_type)
+        return get_sql_form_ids(domain, doc_type, startdate, enddate)
     else:
+        # date filtering not supported for couch
         return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
@@ -84,10 +85,11 @@ def get_primary_db_case_counts(domain):
         return _get_couch_cases_by_doc_type(domain)
 
 
-def get_primary_db_case_ids(domain, doc_type):
+def get_primary_db_case_ids(domain, doc_type, startdate, enddate):
     if should_use_sql_backend(domain):
-        return get_sql_case_ids(domain, doc_type)
+        return get_sql_case_ids(domain, doc_type, startdate, enddate)
     else:
+        # date filtering not supported for couch
         return set(get_doc_ids_in_domain_by_type(domain, doc_type, CommCareCase.get_db()))
 
 
@@ -130,44 +132,68 @@ def _get_sql_cases_by_doc_type(domain):
     return counter
 
 
-def get_sql_case_ids(domain, doc_type):
+def get_sql_case_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     deleted = doc_type == 'CommCareCase-Deleted'
     for db_alias in get_sql_db_aliases_in_use():
         queryset = CommCareCaseSQL.objects.using(db_alias) \
-            .filter(domain=domain, deleted=deleted).values_list('case_id', flat=True)
-        sql_ids.update(list(queryset))
+            .filter(domain=domain, deleted=deleted)
+
+        if startdate:
+            queryset = queryset.filter(server_modified_on__gte=startdate)
+
+        if enddate:
+            queryset = queryset.filter(server_modified_on__lt=enddate)
+
+        sql_ids.update(list(queryset.values_list('case_id', flat=True)))
     return sql_ids
 
 
-def get_sql_form_ids(domain, doc_type):
+def get_sql_form_ids(domain, doc_type, startdate, enddate):
     sql_ids = set()
     state = doc_type_to_state[doc_type]
     for db_alias in get_sql_db_aliases_in_use():
         queryset = XFormInstanceSQL.objects.using(db_alias) \
-            .filter(domain=domain, state=state).values_list('form_id', flat=True)
-        sql_ids.update(list(queryset))
+            .filter(domain=domain, state=state)
+
+        if startdate:
+            queryset = queryset.filter(received_on__gte=startdate)
+
+        if enddate:
+            queryset = queryset.filter(received_on__lt=enddate)
+
+        sql_ids.update(list(queryset.values_list('form_id', flat=True)))
     return sql_ids
 
 
-def get_es_case_ids(domain, doc_type):
-    return _get_es_doc_ids(es.CaseES, domain, doc_type)
+def get_es_case_ids(domain, doc_type, startdate, enddate):
+    datefilter = None
+    if startdate or enddate:
+        datefilter = es.cases.server_modified_range(gte=startdate, lt=enddate)
+    return _get_es_doc_ids(es.CaseES, domain, doc_type, datefilter)
 
 
-def get_es_form_ids(domain, doc_type):
-    return _get_es_doc_ids(es.FormES, domain, doc_type)
+def get_es_form_ids(domain, doc_type, startdate, enddate):
+    datefilter = None
+    if startdate or enddate:
+        datefilter = es.forms.submitted(gte=startdate, lt=enddate)
+    return _get_es_doc_ids(es.FormES, domain, doc_type, datefilter)
 
 
-def _get_es_doc_ids(es_query_class, domain, doc_type):
-    return set(
+def _get_es_doc_ids(es_query_class, domain, doc_type, datefilter=None):
+    query = (
         es_query_class()
         .remove_default_filters()
         .filter(es.filters.domain(domain))
         .filter(es.filters.OR(
             es.filters.doc_type(doc_type),
             es.filters.doc_type(doc_type.lower()),
-        )).exclude_source().scroll()
+        )).exclude_source()
     )
+    if datefilter:
+        query = query.filter(datefilter)
+
+    return set(query.scroll())
 
 
 def get_es_user_ids(domain, doc_type):

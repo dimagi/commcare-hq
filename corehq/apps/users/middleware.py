@@ -14,6 +14,7 @@ from corehq.apps.domain.auth import (
     get_username_and_password_from_request,
 )
 from corehq.apps.users.models import CouchUser, InvalidUser, AnonymousCouchUser
+from corehq.apps.users.util import username_to_user_id
 from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE, PUBLISH_CUSTOM_REPORTS
 
 SESSION_USER_KEY_PREFIX = "session_user_doc_%s"

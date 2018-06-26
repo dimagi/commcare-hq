@@ -68,6 +68,7 @@ hqDefine("reports/js/single_form", [
                 },
             ],
             saveUrl: initialPageData.reverse("edit_form", options.instance_id),
+            analyticsDescriptor: 'Clean Form Data',
         });
 
         $("#archive-form", $container).submit(function() {
