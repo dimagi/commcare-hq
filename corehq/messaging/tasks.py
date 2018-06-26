@@ -55,9 +55,9 @@ def _sync_case_for_messaging(domain, case_id):
         case = None
 
     if case is None or case.is_deleted:
-        sms_tasks.delete_phone_numbers_for_owners([case.case_id])
-        reminders_tasks.delete_reminders_for_cases(domain, [case.case_id])
-        delete_schedule_instances_for_cases(domain, [case.case_id])
+        sms_tasks.delete_phone_numbers_for_owners([case_id])
+        reminders_tasks.delete_reminders_for_cases(domain, [case_id])
+        delete_schedule_instances_for_cases(domain, [case_id])
         return
 
     if use_phone_entries():
