@@ -79,7 +79,6 @@ from corehq.apps.users.forms import (
     CommCareUserFilterForm
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
-from corehq.apps.users.const import ANONYMOUS_USERNAME, ANONYMOUS_FIRSTNAME, ANONYMOUS_LASTNAME
 from corehq.apps.users.tasks import bulk_upload_async, turn_on_demo_mode_task, reset_demo_user_restore_task, \
     bulk_download_users_async
 from corehq.apps.users.util import can_add_extra_mobile_workers, format_username
@@ -719,7 +718,7 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             username = in_data['username'].strip()
         except KeyError:
             return HttpResponseBadRequest('You must specify a username')
-        if username == 'admin' or username == 'demo_user' or username == ANONYMOUS_USERNAME:
+        if username == 'admin' or username == 'demo_user':
             return {'error': _('Username {} is reserved.').format(username)}
         try:
             validate_email("{}@example.com".format(username))
