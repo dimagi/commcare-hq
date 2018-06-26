@@ -88,7 +88,7 @@ def excel_config(request, domain):
         row_count = spreadsheet.max_row
 
     if invalid_column_names:
-        error_message = _("'/' is not allowed in column names. Please update the following: {}.").format(
+        error_message = _("Found invalid column names. Please update the following: {}.").format(
             ', '.join(invalid_column_names))
         return render_error(request, domain, error_message)
 
