@@ -649,60 +649,6 @@ class NewMobileWorkerForm(forms.Form):
         return cleaned_password
 
 
-class NewAnonymousMobileWorkerForm(forms.Form):
-    location_id = forms.CharField(
-        label=ugettext_noop("Location"),
-        required=False,
-    )
-    username = forms.CharField(
-        max_length=50,
-        label=ugettext_noop("Username"),
-        initial=ANONYMOUS_USERNAME,
-    )
-    password = forms.CharField(
-        required=True,
-        min_length=1,
-    )
-
-    def __init__(self, project, request_user, *args, **kwargs):
-        super(NewAnonymousMobileWorkerForm, self).__init__(*args, **kwargs)
-        self.project = project
-        self.request_user = request_user
-        self.can_access_all_locations = request_user.has_permission(self.project.name, 'access_all_locations')
-        if not self.can_access_all_locations:
-            self.fields['location_id'].required = True
-
-        if project.uses_locations:
-            self.fields['location_id'].widget = AngularLocationSelectWidget(
-                require=not self.can_access_all_locations)
-            location_field = crispy.Field(
-                'location_id',
-                ng_model='mobileWorker.location_id',
-            )
-        else:
-            location_field = crispy.Hidden(
-                'location_id',
-                '',
-                ng_model='mobileWorker.location_id',
-            )
-
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.label_class = 'col-sm-4'
-        self.helper.field_class = 'col-sm-8'
-        self.helper.layout = Layout(
-            Fieldset(
-                _('Basic Information'),
-                crispy.Field(
-                    'username',
-                    readonly=True,
-                ),
-                location_field,
-                crispy.Hidden('is_anonymous', 'yes'),
-            )
-        )
-
-
 class GroupMembershipForm(forms.Form):
     selected_ids = forms.Field(
         label=ugettext_lazy("Group Membership"),

@@ -75,7 +75,7 @@ from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.forms import (
     CommCareAccountForm, CommCareUserFormSet, CommtrackUserForm,
     MultipleSelectionForm, ConfirmExtraUserChargesForm, NewMobileWorkerForm,
-    SelfRegistrationForm, SetUserPasswordForm, NewAnonymousMobileWorkerForm,
+    SelfRegistrationForm, SetUserPasswordForm,
     CommCareUserFilterForm
 )
 from corehq.apps.users.models import CommCareUser, CouchUser
@@ -572,18 +572,8 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         return NewMobileWorkerForm(self.request.project, self.couch_user)
 
     @property
-    @memoized
-    def new_anonymous_mobile_worker_form(self):
-        if self.request.method == "POST":
-            return NewAnonymousMobileWorkerForm(self.request.project, self.couch_user, self.request.POST)
-        return NewAnonymousMobileWorkerForm(self.request.project, self.couch_user)
-
-    @property
     def _mobile_worker_form(self):
-        if self.request.POST.get('is_anonymous'):
-            return self.new_anonymous_mobile_worker_form
-        else:
-            return self.new_mobile_worker_form
+        return self.new_mobile_worker_form
 
     @property
     @memoized
@@ -605,7 +595,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
         return {
             'has_anonymous_user': CouchUser.get_anonymous_mobile_worker(self.domain) is not None,
             'new_mobile_worker_form': self.new_mobile_worker_form,
-            'new_anonymous_mobile_worker_form': self.new_anonymous_mobile_worker_form,
             'custom_fields_form': self.custom_data.form,
             'custom_fields': [f.slug for f in self.custom_data.fields],
             'custom_field_names': [f.label for f in self.custom_data.fields],
@@ -797,25 +786,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
                 args=[self.domain, couch_user.userID]
             )
         }
-
-    def _build_anonymous_commcare_user(self):
-        username = ANONYMOUS_USERNAME
-        password = self.new_anonymous_mobile_worker_form.cleaned_data['password']
-        first_name = ANONYMOUS_FIRSTNAME
-        last_name = ANONYMOUS_LASTNAME
-        location_id = self.new_anonymous_mobile_worker_form.cleaned_data['location_id']
-
-        return CommCareUser.create(
-            self.domain,
-            format_username(username, self.domain),
-            password,
-            device_id="Generated from HQ",
-            first_name=first_name,
-            last_name=last_name,
-            user_data=self.custom_data.get_data_to_save(),
-            is_anonymous=True,
-            location=SQLLocation.objects.get(location_id=location_id) if location_id else None,
-        )
 
     def _build_commcare_user(self):
         username = self.new_mobile_worker_form.cleaned_data['username']
