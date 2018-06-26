@@ -82,7 +82,7 @@ def prune_synclogs():
     """
     SYNCLOG_RETENTION_DAYS = 9 * 7  # 63 days
     oldest_synclog = SyncLogSQL.objects.aggregate(Min('date'))['date__min']
-    while (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
+    while oldest_synclog and (datetime.today() - oldest_synclog).days > SYNCLOG_RETENTION_DAYS:
         year, week, _ = oldest_synclog.isocalendar()
         table_name = "{base_name}_y{year}w{week}".format(
             base_name=SyncLogSQL._meta.db_table,
