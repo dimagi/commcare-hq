@@ -15,6 +15,7 @@ from corehq.apps.hqwebapp.decorators import (
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
+from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
@@ -33,6 +34,7 @@ from corehq.apps.sms.verify import (
 from corehq.apps.users.forms import GroupMembershipForm
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.views import BaseUserSettingsView
+from corehq.messaging.scheduling.models import ScheduledBroadcast, ImmediateBroadcast
 from corehq import privileges
 from corehq.util.workbook_json.excel import alphanumeric_sort_key
 from memoized import memoized
@@ -209,6 +211,9 @@ class EditGroupMembersView(BaseGroupsView):
     @property
     def page_context(self):
         domain_has_reminders_or_keywords = (
+            AutomaticUpdateRule.domain_has_conditional_alerts(self.domain) or
+            ScheduledBroadcast.domain_has_broadcasts(self.domain) or
+            ImmediateBroadcast.domain_has_broadcasts(self.domain) or
             CaseReminderHandler.domain_has_reminders(self.domain) or
             Keyword.domain_has_keywords(self.domain)
         )
