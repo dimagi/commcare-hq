@@ -1,33 +1,28 @@
 hqDefine('hqwebapp/js/mobile_experience_warning', function() {
     $(function() {
-        var cookieName = "has-seen-mobile-experience-warning";
+        var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
+            url = initialPageData.reverse('send_mobile_reminder'),
+            $modal = $("#mobile-experience-modal"),
+            $videoModal = $("#mobile-experience-video-modal"),
+            kissmetrix = hqImport('analytix/js/kissmetrix');
+        $modal.modal('show');
 
-        if (!$.cookie(cookieName)) {
-            $.cookie(cookieName, true);
+        var sendReminder = function (e) {
+            $.ajax({
+                dataType: 'json',
+                url: url,
+                type: 'post',
+            });
+            e.preventDefault();
+            $modal.modal('toggle');
+            $videoModal.modal();
+            kissmetrix.track.event('Clicked mobile experience reminder');
+        };
 
-            $('.full-screen-no-background-modal').css('width', $(window).innerWidth() + 'px');
+        $.cookie(initialPageData.get('mobile_ux_cookie_name'), true);
 
-            var initialPageData = hqImport('hqwebapp/js/initial_page_data'),
-                url = initialPageData.reverse('send_mobile_reminder'),
-                $modal = $("#mobile-experience-modal"),
-                $videoModal = $("#mobile-experience-video-modal"),
-                kissmetrix = hqImport('analytix/js/kissmetrix');
-
-            var sendReminder = function() {
-                $.ajax({
-                    dataType: 'json',
-                    url: url,
-                    type: 'post',
-                });
-                $modal.modal('toggle');
-                $videoModal.modal();
-                kissmetrix.track.event('Clicked mobile experience reminder');
-            };
-
-            $("#send-mobile-reminder-button").click(sendReminder);
-            $modal.modal();
-            kissmetrix.track.event('Saw mobile experience warning');
-        }
+        $("#send-mobile-reminder-button").click(sendReminder);
+        kissmetrix.track.event('Saw mobile experience warning');
     });
 
 });
