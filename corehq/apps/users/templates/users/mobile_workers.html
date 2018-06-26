@@ -305,10 +305,7 @@
                             {% angularjs %}
                             <td>
                                 <a href="{{ user.editUrl }}">
-
-                                     <i ng-if="user.is_anonymous" class="fa fa-users"></i>
-                                     <i ng-if="!user.is_anonymous" class="fa fa-user"></i>
-
+                                     <i class="fa fa-user"></i>
                                     <strong>{{ user.username }}</strong>
                                     <span ng-if="!!user.name">({{ user.name }})</span>
                                 </a>

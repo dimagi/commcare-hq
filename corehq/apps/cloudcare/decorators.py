@@ -20,8 +20,6 @@ def require_cloudcare_access_ex():
                 else:
                     assert request.couch_user.is_commcare_user(), \
                         "user was neither a web user or a commcare user!"
-                    if request.couch_user.is_anonymous:
-                        return domain_required(view_func)(request, domain, *args, **kwargs)
                     return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
             return login_and_domain_required(view_func)(request, domain, *args, **kwargs)
         return _inner

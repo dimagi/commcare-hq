@@ -56,14 +56,6 @@ class TestMobileWorkerListView(TestCase):
                 self.domain,
             )
         )
-        self.assertFalse(user.is_anonymous)
-
-    def test_check_username_for_anonymous(self):
-        resp = self._remote_invoke('check_username', {
-            'username': ANONYMOUS_USERNAME
-        })
-        content = json.loads(resp.content)
-        self.assertTrue('error' in content)
 
 
 @generate_cases((

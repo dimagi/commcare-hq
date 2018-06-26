@@ -165,7 +165,6 @@
         self.first_name = data.first_name || '';
         self.last_name = data.last_name || '';
         self.editUrl = data.editUrl || '';
-        self.is_anonymous = data.is_anonymous || false;
         self.location_id = data.location_id || '';
 
         self.password = data.generateStrongPasswords ? generateStrongPassword() : '';

@@ -15,7 +15,7 @@ SESSION_USER_KEY_PREFIX = "session_user_doc_%s"
 
 def is_public_reports(view_kwargs, request):
     return (
-        request.user.is_anonymous and
+        not request.user.is_authenticated and
         'domain' in view_kwargs and
         request.path.startswith('/a/{}/reports/custom'.format(view_kwargs['domain'])) and
         PUBLISH_CUSTOM_REPORTS.enabled(view_kwargs['domain'])

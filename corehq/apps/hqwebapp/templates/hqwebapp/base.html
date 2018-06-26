@@ -346,7 +346,7 @@
         {% include 'hqwebapp/includes/modal_report_issue.html' %}
 
         {% if EULA_COMPLIANCE %}
-            {% if request.couch_user and not request.couch_user.is_eula_signed and not request.couch_user.is_anonymous %}
+            {% if request.couch_user and not request.couch_user.is_eula_signed %}
                 {% registerurl 'agree_to_eula' %}
                 {% include 'hqwebapp/includes/modal_eula.html' %}
             {% endif %}

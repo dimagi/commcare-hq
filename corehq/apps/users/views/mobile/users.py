@@ -635,7 +635,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             'deactivateUrl': "#",
             'actionText': _("Deactivate") if user.is_active else _("Activate"),
             'action': 'deactivate' if user.is_active else 'activate',
-            'is_anonymous': user.is_anonymous
         }
 
     def _user_query(self, search_string, page, limit):
@@ -760,7 +759,6 @@ class MobileWorkerListView(HQJSONResponseMixin, BaseUserSettingsView):
             'first_name',
             'last_name',
             'location_id',
-            'is_anonymous',
         ]
 
         try:

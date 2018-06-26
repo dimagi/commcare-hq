@@ -1418,7 +1418,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def from_django_user_include_anonymous(cls, domain, django_user):
-        if django_user.is_anonymous:
+        if not django_user.is_authenticated:
             return cls.get_anonymous_mobile_worker(domain)
         else:
             return cls.get_by_username(django_user.username)
@@ -1590,8 +1590,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
     # with a location where location.location_type.has_user == True
     user_location_id = StringProperty()
 
-    is_anonymous = BooleanProperty(default=False)
-
     @classmethod
     def wrap(cls, data):
         # migrations from using role_id to using the domain_memberships
@@ -1671,7 +1669,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
                uuid='',
                date='',
                phone_number=None,
-               is_anonymous=False,
                location=None,
                commit=True,
                **kwargs):
@@ -1689,7 +1686,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         commcare_user.domain = domain
         commcare_user.device_ids = [device_id]
         commcare_user.registering_device_id = device_id
-        commcare_user.is_anonymous = is_anonymous
 
         commcare_user.domain_membership = DomainMembership(domain=domain, **kwargs)
 
@@ -1698,11 +1694,6 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         if commit:
             commcare_user.save(**get_safe_write_kwargs())
-
-        if is_anonymous:
-            assert commit, 'Commit must be true when creating an anonymous user'
-            django_user = commcare_user.get_django_user()
-            Token.objects.create(user=django_user)
 
         return commcare_user
 
@@ -2293,10 +2284,6 @@ class WebUser(CouchUser, MultiMembershipMixin, CommCareMobileContactMixin):
         # override this function to pass global admin rights off to django
         return self.is_superuser
 
-    @property
-    def is_anonymous(self):
-        return False
-
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='', **kwargs):
         web_user = super(WebUser, cls).create(domain, username, password, email, uuid, date, **kwargs)
@@ -2639,10 +2626,6 @@ class AnonymousCouchUser(object):
 
     @property
     def is_active(self):
-        return True
-
-    @property
-    def is_anonymous(self):
         return True
 
     def is_domain_admin(self):
