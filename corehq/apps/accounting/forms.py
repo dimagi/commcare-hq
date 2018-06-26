@@ -103,6 +103,10 @@ class BillingAccountBasicForm(forms.Form):
         label="Billing Admin Emails",
         required=False
     )
+    system_admin_emails = forms.CharField(
+        label="System Admin Emails",
+        required=False
+    )
     active_accounts = forms.IntegerField(
         label=ugettext_lazy("Transfer Subscriptions To"),
         help_text=ugettext_lazy(
@@ -142,6 +146,7 @@ class BillingAccountBasicForm(forms.Form):
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
                 'billing_admin_emails': ','.join(account.billing_admin_emails),
+                'system_admin_emails': ','.join(account.system_admin_emails),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -184,7 +189,10 @@ class BillingAccountBasicForm(forms.Form):
                     crispy.Field(
                         'billing_admin_emails',
                         css_class='input-xxlarge accounting-email-select2',
-                        data_bind='attr: {required: is_customer_billing_account}'
+                    ),
+                    crispy.Field(
+                        'system_admin_emails',
+                        css_class='input-xxlarge accounting-email-select2',
                     ),
                     data_bind='visible: is_customer_billing_account'
                 )
@@ -269,6 +277,13 @@ class BillingAccountBasicForm(forms.Form):
         else:
             return []
 
+    def clean_system_admin_emails(self):
+        # Do not return a list with an empty string
+        if self.cleaned_data['system_admin_emails']:
+            return self.cleaned_data['system_admin_emails'].split(',')
+        else:
+            return []
+
     def clean_active_accounts(self):
         transfer_subs = self.cleaned_data['active_accounts']
         if (
@@ -318,6 +333,7 @@ class BillingAccountBasicForm(forms.Form):
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
         account.billing_admin_emails = self.cleaned_data['billing_admin_emails']
+        account.system_admin_emails = self.cleaned_data['system_admin_emails']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
