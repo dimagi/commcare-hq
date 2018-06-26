@@ -21,6 +21,7 @@ from ..const import ROOT_LOCATION_TYPE
 from ..models import LocationType, SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
 from ..util import get_location_data_model
+from .util import LocationHierarchyPerTest
 import six
 from six.moves import range
 
@@ -420,7 +421,8 @@ class TestTreeValidator(SimpleTestCase):
         assert_errors(validator, ["'id: ex_id' is not found in your domain"])
 
 
-class TestBulkManagement(TestCase):
+class UploadTestUtils(object):
+    domain = 'test-bulk-management'
     basic_tree = [
         LocStub('S1', 's1', 'state', ''),
         LocStub('S2', 's2', 'state', ''),
@@ -430,7 +432,6 @@ class TestBulkManagement(TestCase):
         LocStub('City112', 'city112', 'city', 'county11'),
         LocStub('City211', 'city211', 'city', 'county21'),
     ]
-
     @classmethod
     def as_pairs(cls, tree):
         # returns list of (site_code, parent_code) tuples
@@ -443,62 +444,12 @@ class TestBulkManagement(TestCase):
                 pairs.append((code, parent_code))
         return set(pairs)
 
-    def setUp(self):
-        super(TestBulkManagement, self).setUp()
-        self.domain = create_domain('location-bulk-management')
-        self.user = WebUser.create(self.domain.name, 'username', 'password')
-
-    def tearDown(self):
-        super(TestBulkManagement, self).tearDown()
-        self.user.delete()
-        # domain delete cascades to everything else
-        self.domain.delete()
-
-    def create_location_types(self, location_types):
-        def _make_loc_type(name, code, parent_code, _delete, shares_cases, view_descendants,
-                           _i, parent_type=None):
-            return LocationType.objects.create(
-                domain=self.domain.name,
-                name=name,
-                code=code,
-                parent_type=parent_type,
-                shares_cases=shares_cases,
-                view_descendants=view_descendants
-            )
-
-        lt_by_code = {}
-        for lt in location_types:
-            code = lt[1]
-            parent_code = lt[2]
-            parent_type = lt_by_code.get(parent_code)
-            location_type = _make_loc_type(*lt, parent_type=parent_type)
-            lt_by_code[code] = location_type
-        return lt_by_code
-
-    def create_locations(self, locations, lt_by_code):
-        def _make_loc(name, site_code, location_type, parent_code, location_id,
-                      do_delete, external_id, latitude, longitude, custom_data,
-                      index, location_data_model, parent=None):
-            _type = lt_by_code.get(location_type)
-            loc = SQLLocation(
-                site_code=site_code, name=name, domain=self.domain.name, location_type=_type,
-                parent=parent,
-            )
-            loc.save()
-            return loc
-
-        locations_by_code = {}
-        for l in locations:
-            code = l[1]
-            parent_code = l[3]
-            parent = locations_by_code.get(parent_code)
-            location = _make_loc(*l, parent=parent)
-            locations_by_code[code] = location
-        return locations_by_code
+    def get_loc_id(self, name):
+        return self.locations[name].location_id
 
     def bulk_update_locations(self, types, locations):
         importer = NewLocationImporter(
-            self.domain.name,
+            self.domain,
             [LocationTypeStub(*loc_type) for loc_type in types],
             [LocationStub(*loc) for loc in locations],
             self.user,
@@ -510,7 +461,7 @@ class TestBulkManagement(TestCase):
     def assertLocationTypesMatch(self, expected_types):
         # Makes sure that the set of all location types in the domain matches
         # the passed-in location types
-        actual_types = self.domain.location_types
+        actual_types = self.domain_obj.location_types
         # covert it to the format of passed-in tuples
         actual = [
             (lt.name, lt.code,
@@ -528,7 +479,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(set(actual), set(expected))
 
     def assertLocationsMatch(self, expected_locations, check_attr='site_code'):
-        collection = LocationCollection(self.domain)
+        collection = LocationCollection(self.domain_obj)
 
         actual = []
         for l in collection.locations:
@@ -575,6 +526,19 @@ class TestBulkManagement(TestCase):
             actual = [i.site_code for i in loc.get_descendants()] if loc else []
             self.assertEqual(set(actual), set(desc))
 
+
+class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
+
+    def setUp(self):
+        super(TestBulkManagementNoInitialLocs, self).setUp()
+        self.domain_obj = create_domain(self.domain)
+        self.user = WebUser.create(self.domain, 'username', 'password')
+
+    def tearDown(self):
+        super(TestBulkManagementNoInitialLocs, self).tearDown()
+        self.user.delete()
+        self.domain_obj.delete()
+
     def test_location_creation(self):
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -609,335 +573,8 @@ class TestBulkManagement(TestCase):
         )
         assert_errors(result, ['index 0 should be valid decimal numbers'])
 
-    def test_move_county21_to_state1(self):
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-        _loc_id = lambda x: locations_by_code[x].location_id
-        move_county21_to_state1 = [
-            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
-            LocStub('S2', 's2', 'state', '', _loc_id('s2')),
-            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11')),
-            # change parent_code from s2 -> s1
-            LocStub('County21', 'county21', 'county', 's1', _loc_id('county21')),
-            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111')),
-            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112')),
-            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
-            # create new city
-            LocStub('City311', 'city311', 'city', 'county11', ''),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            move_county21_to_state1,
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
-
-    def test_delete_county11(self):
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-
-        _loc_id = lambda x: locations_by_code[x].location_id
-        delete_county11 = [
-            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
-            LocStub('S2', 's2', 'state', '', _loc_id('s2')),
-            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11'), do_delete=True),
-            LocStub('County21', 'county21', 'county', 's2', _loc_id('county21')),
-            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111'), do_delete=True),
-            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112'), do_delete=True),
-            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            delete_county11,
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(delete_county11))
-
-    def test_invalid_tree(self):
-        # Invalid location upload should not pass or affect existing location structure
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-
-        _loc_id = lambda x: locations_by_code[x].location_id
-        delete_s2 = [
-            LocStub('S1', 's1', 'state', '', _loc_id('s1')),
-            # delete s2, but don't delete its descendatns. This is invalid
-            LocStub('S2', 's2', 'state', '', _loc_id('s2'), do_delete=True),
-            LocStub('County11', 'county11', 'county', 's1', _loc_id('county11')),
-            LocStub('County21', 'county21', 'county', 's2', _loc_id('county21')),
-            LocStub('City111', 'city111', 'city', 'county11', _loc_id('city111')),
-            LocStub('City112', 'city112', 'city', 'county11', _loc_id('city112')),
-            LocStub('City211', 'city211', 'city', 'county21', _loc_id('city211')),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            delete_s2,
-        )
-
-        assert_errors(result, ["points to a location that's being deleted"])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        # Since there were errors, the location tree should be as it was
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-    def test_edit_by_location_id(self):
-        # Locations can be referred by location_id and empty site_code
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-
-        _loc_id = lambda x: locations_by_code[x].location_id
-        move_county21_to_state1 = [
-            LocStub('S1', '', 'state', '', _loc_id('s1')),
-            LocStub('S2', '', 'state', '', _loc_id('s2')),
-            LocStub('County11', '', 'county', 's1', _loc_id('county11')),
-            LocStub('County21', '', 'county', 's1', _loc_id('county21')),
-            LocStub('City111', '', 'city', 'county11', _loc_id('city111')),
-            LocStub('City112', '', 'city', 'county11', _loc_id('city112')),
-            LocStub('City211', '', 'city', 'county21', _loc_id('city211')),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,  # No change to types
-            move_county21_to_state1,  # This is the desired end result
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([
-            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
-            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
-        ]))
-
-    def test_edit_by_sitecode(self):
-        # Locations can be referred by site_code and empty location_id
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        move_county21_to_state1 = [
-            LocStub('S1', 's1', 'state', ''),
-            LocStub('S2', 's2', 'state', ''),
-            LocStub('County11', 'county11', 'county', 's1'),
-            # change parent_code from s2 -> s1
-            LocStub('County21', 'county21', 'county', 's1'),
-            LocStub('City111', 'city111', 'city', 'county11'),
-            LocStub('City112', 'city112', 'city', 'county11'),
-            LocStub('City211', 'city211', 'city', 'county21'),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,  # No change to types
-            move_county21_to_state1,  # This is the desired end result
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
-
-    def test_delete_city_type_valid(self):
-        # delete a location type and locations of that type
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        delete_city_types = [
-            ('State', 'state', '', False, False, False, 0),
-            ('County', 'county', 'state', False, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
-        ]
-        delete_cities_locations = [
-            LocStub('S1', 's1', 'state', ''),
-            LocStub('S2', 's2', 'state', ''),
-            LocStub('County11', 'county11', 'county', 's1'),
-            LocStub('County21', 'county21', 'county', 's2'),
-            # delete locations of type 'city'
-            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
-            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
-            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
-        ]
-
-        result = self.bulk_update_locations(
-            delete_city_types,  # No change to types
-            delete_cities_locations,  # This is the desired end result
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(delete_city_types)
-        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
-
-    def test_delete_everything(self):
-        # delete everything
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        delete_city_types = [
-            ('State', 'state', '', True, False, False, 0),
-            ('County', 'county', 'state', True, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
-        ]
-        delete_cities_locations = [
-            LocStub('S1', 's1', 'state', '', do_delete=True),
-            LocStub('S2', 's2', 'state', '', do_delete=True),
-            LocStub('County11', 'county11', 'county', 's1', do_delete=True),
-            LocStub('County21', 'county21', 'county', 's2', do_delete=True),
-            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
-            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
-            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
-        ]
-
-        result = self.bulk_update_locations(
-            delete_city_types,  # No change to types
-            delete_cities_locations,  # This is the desired end result
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(delete_city_types)
-        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
-
-    def test_delete_city_type_invalid(self):
-        # delete a location type but don't delete locations of that type.
-        # this is invalid upload and should not go through
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        delete_city_types = [
-            ('State', 'state', '', False, False, False, 0),
-            ('County', 'county', 'state', False, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
-        ]
-
-        result = self.bulk_update_locations(
-            delete_city_types,  # delete city type
-            self.basic_tree,  # but don't delete locations of city type
-        )
-
-        assert_errors(result, [
-            "'city111' in sheet points to a nonexistent or to be deleted location-type",
-            "'city112' in sheet points to a nonexistent or to be deleted location-type",
-            "'city211' in sheet points to a nonexistent or to be deleted location-type",
-        ])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-    def test_edit_names(self):
-        # metadata attributes like 'name' can be updated
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        _loc_id = lambda x: locations_by_code[x].location_id
-        change_names = [
-            # changing names
-            LocStub('State 1', '', 'state', '', _loc_id('s1')),
-            LocStub('State 2', '', 'state', '', _loc_id('s2')),
-            LocStub('County 11', '', 'county', 's1', _loc_id('county11')),
-            LocStub('County 21', '', 'county', 's2', _loc_id('county21')),
-            LocStub('City 111', '', 'city', 'county11', _loc_id('city111')),
-            LocStub('City 112', '', 'city', 'county11', _loc_id('city112')),
-            LocStub('City 211', '', 'city', 'county21', _loc_id('city211')),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            change_names,
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-        self.assertLocationsMatch(set([
-            ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
-            ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
-        ]), check_attr='name')
-
-    def test_partial_type_edit(self):
-        # edit a subset of types
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-        edit_types = [
-            ('State', 'state', '', False, False, False, 0),
-            # change name of this type
-            ('District', 'county', 'state', False, False, False, 0),
-            ('City', 'city', 'county', False, False, False, 0),
-        ]
-
-        result = self.bulk_update_locations(
-            edit_types,
-            self.basic_tree,
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(edit_types)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
-
-    def test_rearrange_locations(self):
-        # a total rearrangement like reversing the tree can be done
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        reverse_order = [
-            ('State', 'state', 'county', False, False, False, 0),
-            ('County', 'county', 'city', False, False, False, 0),
-            ('City', 'city', '', False, False, False, 0),
-        ]
-        edit_types_of_locations = [
-            # change parent from TOP to county
-            LocStub('S1', 's1', 'state', 'county11'),
-            LocStub('S2', 's2', 'state', 'county11'),
-            # change parent from state to city
-            LocStub('County11', 'county11', 'county', 'city111'),
-            LocStub('County21', 'county21', 'county', 'city111'),
-            # make these two TOP locations
-            LocStub('City111', 'city111', 'city', ''),
-            LocStub('City112', 'city112', 'city', ''),
-            # delete this
-            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
-        ]
-
-        result = self.bulk_update_locations(
-            reverse_order,  # No change to types
-            edit_types_of_locations,  # This is the desired end result
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(reverse_order)
-        self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
-
-    def test_swap_parents(self):
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        original = [
-            LocStub('State 1', 's1', 'state', ''),
-            LocStub('State 2', 's2', 'state', ''),
-            LocStub('County 11', 'c1', 'county', 's1'),
-            LocStub('County 21', 'c2', 'county', 's2'),
-        ]
-        self.create_locations(original, lt_by_code)
-
-        swap_parents = [
-            LocStub('State 1', 's1', 'state', ''),
-            LocStub('State 2', 's2', 'state', ''),
-            LocStub('County 11', 'c1', 'county', 's2'),
-            LocStub('County 21', 'c2', 'county', 's1'),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            swap_parents,
-        )
-
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(swap_parents))
-
     def test_custom_data(self):
-        data_model = get_location_data_model(self.domain.name)
+        data_model = get_location_data_model(self.domain)
         tree = [
             LocStub('省 1', 's1', 'state', '',
                     custom_data={'a': 1}, data_model=data_model),
@@ -957,7 +594,7 @@ class TestBulkManagement(TestCase):
         self.assertEqual(locations["c1"].metadata, {'国际字幕': '试验'})
 
     def test_custom_data_delete_uncategorized(self):
-        data_model = get_location_data_model(self.domain.name)
+        data_model = get_location_data_model(self.domain)
 
         # setup some metadata
         tree = [
@@ -1037,51 +674,6 @@ class TestBulkManagement(TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree).union({
             ('s3', None), ('county3', 's3')
         }))
-
-    def test_partial_attribute_edits_by_location_id(self):
-        # a subset of locations can be edited and can be referenced by location_id
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        locations_by_code = self.create_locations(self.basic_tree, lt_by_code)
-
-        _loc_id = lambda x: locations_by_code[x].location_id
-        change_names = [
-            LocStub('My State 1', '', 'state', '', _loc_id('s1')),
-            LocStub('My County 11', '', 'county', 's1', _loc_id('county11')),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            change_names
-        )
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch({
-            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
-            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
-            ('City211', 'county21'),
-        }, check_attr='name')
-
-    def test_partial_attribute_edits_by_site_code(self):
-        # a subset of locations can be edited and can be referenced by site_code
-        lt_by_code = self.create_location_types(FLAT_LOCATION_TYPES)
-        self.create_locations(self.basic_tree, lt_by_code)
-
-        change_names = [
-            LocStub('My State 1', 's1', 'state', ''),
-            LocStub('My County 11', 'county11', 'county', 's1'),
-        ]
-
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            change_names
-        )
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch({
-            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
-            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
-            ('City211', 'county21'),
-        }, check_attr='name')
 
     def test_partial_parent_edits(self):
         self.bulk_update_locations(
@@ -1218,19 +810,368 @@ class TestBulkManagement(TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(upload))
 
-    def test_delete_unsaved(self):
-        self.create_location_types(FLAT_LOCATION_TYPES)
 
-        basic_tree = [
-            LocStub('S2', 's2', 'state', ''),
-            LocStub('County21', 'county21', 'county', 's2'),
-            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),  # delete unsaved
+class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTest):
+    location_type_names = ['State', 'County', 'City']
+    location_structure = [
+        ('S1', [
+            ('County11', [
+                ('City111', []),
+                ('City112', []),
+            ]),
+        ]),
+        ('S2', [
+            ('County21', [
+                ('City211', []),
+            ]),
+        ])
+    ]
+
+    def setUp(self):
+        super(TestBulkManagementWithInitialLocs, self).setUp()
+        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.location_types['County'].view_descendants = True
+        self.location_types['County'].save()
+        self.location_types['City'].shares_cases = True
+        self.location_types['City'].save()
+
+    def tearDown(self):
+        super(TestBulkManagementWithInitialLocs, self).tearDown()
+        self.user.delete()
+
+    def test_move_county21_to_state1(self):
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+        move_county21_to_state1 = [
+            LocStub('S1', 's1', 'state', '', self.get_loc_id('S1')),
+            LocStub('S2', 's2', 'state', '', self.get_loc_id('S2')),
+            LocStub('County11', 'county11', 'county', 's1', self.get_loc_id('County11')),
+            # change parent_code from s2 -> s1
+            LocStub('County21', 'county21', 'county', 's1', self.get_loc_id('County21')),
+            LocStub('City111', 'city111', 'city', 'county11', self.get_loc_id('City111')),
+            LocStub('City112', 'city112', 'city', 'county11', self.get_loc_id('City112')),
+            LocStub('City211', 'city211', 'city', 'county21', self.get_loc_id('City211')),
+            # create new city
+            LocStub('City311', 'city311', 'city', 'county11', ''),
         ]
 
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
-            basic_tree
+            move_county21_to_state1,
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
+
+    def test_delete_county11(self):
+        delete_county11 = [
+            LocStub('S1', 's1', 'state', '', self.get_loc_id('S1')),
+            LocStub('S2', 's2', 'state', '', self.get_loc_id('S2')),
+            LocStub('County11', 'county11', 'county', 's1', self.get_loc_id('County11'), do_delete=True),
+            LocStub('County21', 'county21', 'county', 's2', self.get_loc_id('County21')),
+            LocStub('City111', 'city111', 'city', 'county11', self.get_loc_id('City111'), do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', self.get_loc_id('City112'), do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', self.get_loc_id('City211')),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            delete_county11,
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(delete_county11))
+
+    def test_invalid_tree(self):
+        # Invalid location upload should not pass or affect existing location structure
+        delete_s2 = [
+            LocStub('S1', 's1', 'state', '', self.get_loc_id('S1')),
+            # delete s2, but don't delete its descendatns. This is invalid
+            LocStub('S2', 's2', 'state', '', self.get_loc_id('S2'), do_delete=True),
+            LocStub('County11', 'county11', 'county', 's1', self.get_loc_id('County11')),
+            LocStub('County21', 'county21', 'county', 's2', self.get_loc_id('County21')),
+            LocStub('City111', 'city111', 'city', 'county11', self.get_loc_id('City111')),
+            LocStub('City112', 'city112', 'city', 'county11', self.get_loc_id('City112')),
+            LocStub('City211', 'city211', 'city', 'county21', self.get_loc_id('City211')),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            delete_s2,
+        )
+
+        assert_errors(result, ["points to a location that's being deleted"])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        # Since there were errors, the location tree should be as it was
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+    def test_edit_by_location_id(self):
+        # Locations can be referred by location_id and empty site_code
+        move_county21_to_state1 = [
+            LocStub('S1', '', 'state', '', self.get_loc_id('S1')),
+            LocStub('S2', '', 'state', '', self.get_loc_id('S2')),
+            LocStub('County11', '', 'county', 's1', self.get_loc_id('County11')),
+            LocStub('County21', '', 'county', 's1', self.get_loc_id('County21')),
+            LocStub('City111', '', 'city', 'county11', self.get_loc_id('City111')),
+            LocStub('City112', '', 'city', 'county11', self.get_loc_id('City112')),
+            LocStub('City211', '', 'city', 'county21', self.get_loc_id('City211')),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,  # No change to types
+            move_county21_to_state1,  # This is the desired end result
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(set([
+            ('s1', None), ('s2', None), ('county11', 's1'), ('county21', 's1'),
+            ('city111', 'county11'), ('city112', 'county11'), ('city211', 'county21')
+        ]))
+
+    def test_edit_by_sitecode(self):
+        # Locations can be referred by site_code and empty location_id
+        move_county21_to_state1 = [
+            LocStub('S1', 's1', 'state', ''),
+            LocStub('S2', 's2', 'state', ''),
+            LocStub('County11', 'county11', 'county', 's1'),
+            # change parent_code from s2 -> s1
+            LocStub('County21', 'county21', 'county', 's1'),
+            LocStub('City111', 'city111', 'city', 'county11'),
+            LocStub('City112', 'city112', 'city', 'county11'),
+            LocStub('City211', 'city211', 'city', 'county21'),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,  # No change to types
+            move_county21_to_state1,  # This is the desired end result
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(move_county21_to_state1))
+
+    def test_delete_city_type_valid(self):
+        # delete a location type and locations of that type
+        delete_city_types = [
+            ('State', 'state', '', False, False, False, 0),
+            ('County', 'county', 'state', False, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
+        ]
+        delete_cities_locations = [
+            LocStub('S1', 's1', 'state', ''),
+            LocStub('S2', 's2', 'state', ''),
+            LocStub('County11', 'county11', 'county', 's1'),
+            LocStub('County21', 'county21', 'county', 's2'),
+            # delete locations of type 'city'
+            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
+        ]
+
+        result = self.bulk_update_locations(
+            delete_city_types,  # No change to types
+            delete_cities_locations,  # This is the desired end result
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(delete_city_types)
+        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
+
+    def test_delete_everything(self):
+        # delete everything
+        delete_city_types = [
+            ('State', 'state', '', True, False, False, 0),
+            ('County', 'county', 'state', True, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
+        ]
+        delete_cities_locations = [
+            LocStub('S1', 's1', 'state', '', do_delete=True),
+            LocStub('S2', 's2', 'state', '', do_delete=True),
+            LocStub('County11', 'county11', 'county', 's1', do_delete=True),
+            LocStub('County21', 'county21', 'county', 's2', do_delete=True),
+            LocStub('City111', 'city111', 'city', 'county11', do_delete=True),
+            LocStub('City112', 'city112', 'city', 'county11', do_delete=True),
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
+        ]
+
+        result = self.bulk_update_locations(
+            delete_city_types,  # No change to types
+            delete_cities_locations,  # This is the desired end result
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(delete_city_types)
+        self.assertLocationsMatch(self.as_pairs(delete_cities_locations))
+
+    def test_delete_city_type_invalid(self):
+        # delete a location type but don't delete locations of that type.
+        # this is invalid upload and should not go through
+        delete_city_types = [
+            ('State', 'state', '', False, False, False, 0),
+            ('County', 'county', 'state', False, False, True, 0),
+            ('City', 'city', 'county', True, True, False, 0),
+        ]
+
+        result = self.bulk_update_locations(
+            delete_city_types,  # delete city type
+            self.basic_tree,  # but don't delete locations of city type
+        )
+
+        assert_errors(result, [
+            "'city111' in sheet points to a nonexistent or to be deleted location-type",
+            "'city112' in sheet points to a nonexistent or to be deleted location-type",
+            "'city211' in sheet points to a nonexistent or to be deleted location-type",
+        ])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+    def test_edit_names(self):
+        # metadata attributes like 'name' can be updated
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        change_names = [
+            # changing names
+            LocStub('State 1', '', 'state', '', self.get_loc_id('S1')),
+            LocStub('State 2', '', 'state', '', self.get_loc_id('S2')),
+            LocStub('County 11', '', 'county', 's1', self.get_loc_id('County11')),
+            LocStub('County 21', '', 'county', 's2', self.get_loc_id('County21')),
+            LocStub('City 111', '', 'city', 'county11', self.get_loc_id('City111')),
+            LocStub('City 112', '', 'city', 'county11', self.get_loc_id('City112')),
+            LocStub('City 211', '', 'city', 'county21', self.get_loc_id('City211')),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names,
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+        self.assertLocationsMatch(set([
+            ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
+            ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
+        ]), check_attr='name')
+
+    def test_partial_type_edit(self):
+        # edit a subset of types
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+        edit_types = [
+            ('State', 'state', '', False, False, False, 0),
+            # change name of this type
+            ('District', 'county', 'state', False, False, False, 0),
+            ('City', 'city', 'county', False, False, False, 0),
+        ]
+
+        result = self.bulk_update_locations(
+            edit_types,
+            self.basic_tree,
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(edit_types)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
+
+    def test_rearrange_locations(self):
+        # a total rearrangement like reversing the tree can be done
+        reverse_order = [
+            ('State', 'state', 'county', False, False, False, 0),
+            ('County', 'county', 'city', False, False, False, 0),
+            ('City', 'city', '', False, False, False, 0),
+        ]
+        edit_types_of_locations = [
+            # change parent from TOP to county
+            LocStub('S1', 's1', 'state', 'county11'),
+            LocStub('S2', 's2', 'state', 'county11'),
+            # change parent from state to city
+            LocStub('County11', 'county11', 'county', 'city111'),
+            LocStub('County21', 'county21', 'county', 'city111'),
+            # make these two TOP locations
+            LocStub('City111', 'city111', 'city', ''),
+            LocStub('City112', 'city112', 'city', ''),
+            # delete this
+            LocStub('City211', 'city211', 'city', 'county21', do_delete=True),
+        ]
+
+        result = self.bulk_update_locations(
+            reverse_order,  # No change to types
+            edit_types_of_locations,  # This is the desired end result
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(reverse_order)
+        self.assertLocationsMatch(self.as_pairs(edit_types_of_locations))
+
+    def test_swap_parents(self):
+        swap_parents = [
+            LocStub('S1', 's1', 'state', ''),
+            LocStub('S2', 's2', 'state', ''),
+            # The two counties have the parents swapped
+            LocStub('County11', 'county11', 'county', 's2'),
+            LocStub('County21', 'county21', 'county', 's1'),
+            LocStub('City111', 'city111', 'city', 'county11'),
+            LocStub('City112', 'city112', 'city', 'county11'),
+            LocStub('City211', 'city211', 'city', 'county21'),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            swap_parents,
+        )
+
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(swap_parents))
+
+    def test_partial_attribute_edits_by_location_id(self):
+        # a subset of locations can be edited and can be referenced by location_id
+        change_names = [
+            LocStub('My State 1', '', 'state', '', self.get_loc_id('S1')),
+            LocStub('My County 11', '', 'county', 's1', self.get_loc_id('County11')),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names
         )
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(basic_tree[:-1]))
+        self.assertLocationsMatch({
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
+            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
+            ('City211', 'county21'),
+        }, check_attr='name')
+
+    def test_partial_attribute_edits_by_site_code(self):
+        # a subset of locations can be edited and can be referenced by site_code
+        change_names = [
+            LocStub('My State 1', 's1', 'state', ''),
+            LocStub('My County 11', 'county11', 'county', 's1'),
+        ]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            change_names
+        )
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch({
+            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
+            ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
+            ('City211', 'county21'),
+        }, check_attr='name')
+
+    def test_delete_unsaved(self):
+        # Add a new location with delete=True
+        tree = self.basic_tree + [LocStub('NewCity', 'newcity', 'city', 'county21', do_delete=True)]
+
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            tree
+        )
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree))
