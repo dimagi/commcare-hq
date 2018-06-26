@@ -131,7 +131,7 @@ def update_tables(request, domain, data_type_id, test_patch=None):
             if is_identifier_invalid(field_name) and 'remove' not in method:
                 validation_errors.append(field_name)
         validation_errors = [_(
-            "\"%s\" cannot include special characters, end with a space, "
+            "\"%s\" cannot include special characters, begin or end with a space, "
             "or begin with \"xml\" or a number") % e for e in validation_errors
         ]
         if len(data_tag) > 31:
