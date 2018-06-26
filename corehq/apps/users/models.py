@@ -1363,12 +1363,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         else:
             return None
 
-    @classmethod
-    def get_anonymous_mobile_worker(cls, domain):
-        return cls.get_by_username(
-            format_username(ANONYMOUS_USERNAME, domain)
-        )
-
     def clear_quickcache_for_user(self):
         from corehq.apps.hqwebapp.templatetags.hq_shared_tags import _get_domain_list
         from corehq.apps.sms.util import is_user_contact_active
@@ -1415,13 +1409,6 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
     @classmethod
     def from_django_user(cls, django_user):
         return cls.get_by_username(django_user.username)
-
-    @classmethod
-    def from_django_user_include_anonymous(cls, domain, django_user):
-        if not django_user.is_authenticated:
-            return cls.get_anonymous_mobile_worker(domain)
-        else:
-            return cls.get_by_username(django_user.username)
 
     @classmethod
     def create(cls, domain, username, password, email=None, uuid='', date='',

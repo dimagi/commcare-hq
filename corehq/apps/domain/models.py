@@ -465,13 +465,6 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             return []
 
-    def get_anonymous_mobile_worker(self):
-        from corehq.apps.users.models import CouchUser
-
-        return CouchUser.get_by_username(
-            format_username(ANONYMOUS_USERNAME, self.name)
-        )
-
     @classmethod
     def field_by_prefix(cls, field, prefix=''):
         # unichr(0xfff8) is something close to the highest character available
