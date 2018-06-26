@@ -2,8 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.utils.deprecation import MiddlewareMixin
 from django.utils.translation import ugettext_lazy
+from corehq.apps.domain.auth import determine_authtype_from_header
 from corehq.apps.hqwebapp.views import no_permissions
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
+from dimagi.utils.logging import notify_exception
 from .permissions import is_location_safe, location_restricted_response
 
 RESTRICTED_USER_UNASSIGNED_MSG = ugettext_lazy("""
@@ -31,6 +33,19 @@ class LocationAccessMiddleware(MiddlewareMixin):
     def process_view(self, request, view_fn, view_args, view_kwargs):
         user = getattr(request, 'couch_user', None)
         domain = getattr(request, 'domain', None)
+
+        # Initial digest requests will not have any auth information
+        # this will be handled elsewhere - we can safely ignore
+        auth_type = determine_authtype_from_header(request, default='NONE')
+        if domain and auth_type != 'NONE':
+            # This should eventually be made into a hard requirement, but I'm
+            # not yet sure what that might break (2018-06-26)
+            notify_exception(
+                request,
+                'A request was just made with a domain but no user. Is this normal? How can we authenticate it?',
+                details={'domain': domain, 'user': user, 'auth_type': auth_type}
+            )
+
         self.apply_location_access(request)
 
         if not request.can_access_all_locations:

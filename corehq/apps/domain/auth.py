@@ -69,9 +69,6 @@ def get_username_and_password_from_request(request):
     may be null."""
     from corehq.apps.hqwebapp.utils import decode_password
 
-    if 'HTTP_AUTHORIZATION' not in request.META:
-        return None, None
-
     def _decode(string):
         try:
             return string.decode('utf-8')
@@ -79,19 +76,22 @@ def get_username_and_password_from_request(request):
             # https://sentry.io/dimagi/commcarehq/issues/391378081/
             return string.decode('latin1')
 
-    auth = request.META['HTTP_AUTHORIZATION'].split()
     username = password = None
-    if auth[0].lower() == DIGEST:
+    auth_type = determine_authtype_from_header(request, default='NONE')
+    if auth_type == DIGEST:
         try:
             digest = parse_digest_credentials(request.META['HTTP_AUTHORIZATION'])
             username = digest.username
         except UnicodeDecodeError:
             pass
-    elif auth[0].lower() == BASIC:
-        username, password = base64.b64decode(auth[1]).split(b':', 1)
+    elif auth_type == BASIC:
+        _, credentials = request.META['HTTP_AUTHORIZATION'].split()
+        username, password = base64.b64decode(credentials).split(b':', 1)
         # decode password submitted from mobile app login
         password = decode_password(password)
         username, password = _decode(username), _decode(password)
+    elif auth_type == API_KEY:
+        username, _ = ApiKeyAuthentication().extract_credentials(request)
     return username, password
 
 
