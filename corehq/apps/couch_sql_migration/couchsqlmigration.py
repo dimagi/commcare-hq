@@ -804,6 +804,7 @@ class PartiallyLockingQueue(object):
         """
         if not lock_ids:
             self._add_item(lock_ids, queue_obj, to_queue=False)
+            return True
         if self._check_lock(lock_ids):  # if it's currently locked, it can't acquire the lock
             self._add_item(lock_ids, queue_obj)
             return False
