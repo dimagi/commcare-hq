@@ -1994,8 +1994,8 @@ class TestConfigurableReportDataResource(APIResourceTest):
             self.domain.name, "123", 100, 50, 120, query_dict)
         self.assertEqual(next, "")
 
-    def test_forbidden(self):
-        user_in_wrong_domain_name = 'mallory@dvorak.commcarehq.org'
+    def test_auth(self):
+        user_in_wrong_domain_name = 'Mallory'
         user_in_wrong_domain_password = '1337haxor'
         wrong_domain = Domain.get_or_create_with_name('dvorak', is_active=True)
         self.addCleanup(wrong_domain.delete)
@@ -2007,16 +2007,6 @@ class TestConfigurableReportDataResource(APIResourceTest):
         credentials = base64.b64encode("{}:{}".format(
             user_in_wrong_domain_name, user_in_wrong_domain_password)
         )
-        response = self.client.get(
-            self.single_endpoint(self.report_configuration._id),
-            HTTP_AUTHORIZATION='Basic ' + credentials
-        )
-        self.assertEqual(response.status_code, 403)  # 403 is "Forbidden"
-
-    def test_unauthorized(self):
-        fake_username = 'mitnick@qwerty.commcarehq.org'
-        fake_password = 'c0nd0r'
-        credentials = base64.b64encode(':'.join((fake_username, fake_password)))
         response = self.client.get(
             self.single_endpoint(self.report_configuration._id),
             HTTP_AUTHORIZATION='Basic ' + credentials
