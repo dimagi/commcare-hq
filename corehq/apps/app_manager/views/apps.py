@@ -51,6 +51,7 @@ from corehq.apps.app_manager.models import (
     load_app_template,
 )
 from corehq.apps.app_manager.models import import_app as import_app_util
+from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.app_manager.util import (
     get_settings_values,
     app_doc_types,
@@ -403,7 +404,9 @@ def app_from_template(request, domain, slug):
     app = import_app_util(template, domain, {
         'created_from_template': '%s' % slug,
     })
-    cloudcare_state = '{{"appId":"{}"}}'.format(app._id)
+    comment = _("A sample application you can try out in Web Apps")
+    build = make_async_build(app, request.user.username, release=True, comment=comment)
+    cloudcare_state = '{{"appId":"{}"}}'.format(build._id)
     return HttpResponseRedirect(reverse(FormplayerMain.urlname, args=[domain]) + '#' + cloudcare_state)
 
 

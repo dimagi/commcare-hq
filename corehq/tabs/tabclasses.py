@@ -828,7 +828,7 @@ class ApplicationsTab(UITab):
             url = reverse('view_app', args=[self.domain, app.get_id]) if self.couch_user.can_edit_apps() \
                 else reverse('release_manager', args=[self.domain, app.get_id])
             app_title = self.make_app_title(app.name, app.doc_type)
-            if in_appcues_test and app['created_from_template'] == 'appcues':
+            if in_appcues_test and 'created_from_template' in app and app['created_from_template'] == 'appcues':
                 url = url + '?appcues=1'
 
             submenu_context.append(dropdown_dict(
