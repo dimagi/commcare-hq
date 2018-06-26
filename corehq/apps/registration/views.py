@@ -374,7 +374,7 @@ def resend_confirmation(request):
         try:
             send_domain_registration_email(dom_req.new_user_username,
                     dom_req.domain, dom_req.activation_guid,
-                    request.user.get_full_name())
+                    request.user.get_full_name(), request.user.first_name)
         except Exception:
             context.update({
                 'current_page': {'page_name': _('Oops!')},

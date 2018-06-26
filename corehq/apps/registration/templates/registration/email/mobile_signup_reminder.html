@@ -1,42 +1,45 @@
-{% extends "registration/email/fancy_email.html" %}
-
+{% extends "registration/email/_base.html" %}
 {% load i18n %}
 {% load hq_shared_tags %}
 
 {% block preview_text %}
-    {% blocktrans %}
-        Dear {{ full_name }}, please visit your CommCare HQ Account!
-    {% endblocktrans %}
+  {% blocktrans %}
+    Dear {{ full_name }}, please visit your CommCare HQ Account on a desktop!
+  {% endblocktrans %}
 {% endblock %}
 
-{% block content %}
-    <p>
-        {% blocktrans %}Dear {{ full_name }},{% endblocktrans %}
-    </p>
-
-    <p>
-        {% blocktrans %}
-            This email has been sent as a reminder for you to visit your
-            CommCare HQ project space on a laptop or desktop computer.
-        {% endblocktrans %} {% blocktrans %}Please click the button below to visit CommCareHQ.{% endblocktrans %}
-    </p>
-    <p style="text-align: center;">
-        <a class="btn" href="{{ url }}" style="color: #ffffff; text-decoration: none; padding: 10px 15px; background-color: #004ebc; border-radius: 5px; font-size: 20px; -moz-border-radius: 5px; -webkit-border-radius: 5px; display: inline-block; cursor: pointer;">
-            {% trans "Visit CommCareHQ" %}
-        </a>
-    </p>
-    <p>
-        {% blocktrans %}
-            Cheers,
-            <br /> The CommCare Team
-        {% endblocktrans %}
-    </p>
+{% block cta_headline %}
+  {% blocktrans %}
+    A reminder to visit on your desktop:
+  {% endblocktrans %}
 {% endblock %}
+
+{% block cta_url %}{{ url }}{% endblock %}
+
+{% block cta_text %}
+  {% blocktrans %}
+    Visit CommCare HQ
+  {% endblocktrans %}
+{% endblock %}
+
+{% block lead_text %}
+  {% blocktrans %}
+    This email has been sent as a reminder for you to visit your
+    CommCare HQ project space on a laptop or desktop computer.
+  {% endblocktrans %}
+{% endblock %}
+
+{% block secondary_text %}
+  {% blocktrans %}
+    Thanks for signing up for CommCare. Your new project space is
+    waiting for you!
+  {% endblocktrans %}
+{% endblock %}
+
+{% block content %}{% endblock %}
 
 {% block reason_for_email %}
-    {% blocktrans %}
-        You received this message because we received a reminder request<br />
-        on <a href="http://www.commcarehq.org/" style="color: #685c53; -webkit-text-size-adjust: none; text-decoration: underline; font-weight: normal">CommCare HQ</a>
-            with your email address.
-    {% endblocktrans %}
+  {% blocktrans %}
+    You received this message because we received a reminder request
+  {% endblocktrans %}
 {% endblock %}

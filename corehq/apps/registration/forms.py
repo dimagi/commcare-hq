@@ -173,7 +173,7 @@ class RegisterWebUserForm(forms.Form):
                     hqcrispy.InlineField('is_mobile'),
                     css_class="check-password",
                 ),
-                css_class="form-step step-1",
+                css_class="form-bubble form-step step-1",
                 style="display: none;"
             ),
             crispy.Div(
@@ -207,7 +207,7 @@ class RegisterWebUserForm(forms.Form):
                                   "disable: disableNextStepTwo"
                     )
                 ),
-                css_class="form-step step-2",
+                css_class="form-bubble form-step step-2",
                 style="display: none;"
             ),
         )
