@@ -14,7 +14,7 @@ from django.db import transaction
 from django.db.models import F, Q, Sum
 from django.http import HttpRequest, QueryDict
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext
+from django.utils.translation import ugettext as _
 
 from couchdbkit import ResourceConflict
 from celery.schedules import crontab
@@ -25,6 +25,7 @@ from couchexport.models import Format
 from dimagi.utils.couch.database import iter_docs
 from corehq.util.log import send_HTML_email
 
+from corehq.apps.accounting.enterprise import EnterpriseReport
 from corehq.apps.accounting.exceptions import (
     CreditLineError,
     InvoiceError,
@@ -422,7 +423,7 @@ def send_purchase_receipt(payment_record, domain,
     email_plaintext = render_to_string(template_plaintext, context)
 
     send_HTML_email(
-        ugettext("Payment Received - Thank You!"), email, email_html,
+        _("Payment Received - Thank You!"), email, email_html,
         text_content=email_plaintext,
         email_from=get_dimagi_from_email(),
     )
@@ -701,7 +702,7 @@ def _apply_downgrade_process(subscription, oldest_unpaid_invoice, total, today):
 
 def _send_downgrade_notice(invoice, context):
     send_html_email_async.delay(
-        ugettext('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
+        _('Oh no! Your CommCare subscription for {} has been downgraded'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/downgrade.html', context),
         render_to_string('accounting/email/downgrade.txt', context),
@@ -724,7 +725,7 @@ def _downgrade_domain(subscription):
 
 def _send_downgrade_warning(invoice, context):
     send_html_email_async.delay(
-        ugettext("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
+        _("CommCare Alert: {}'s subscription will be downgraded to Community Plan after tomorrow!".format(
             invoice.get_domain()
         )),
         invoice.contact_emails,
@@ -737,7 +738,7 @@ def _send_downgrade_warning(invoice, context):
 
 def _send_overdue_notice(invoice, context):
     send_html_email_async.delay(
-        ugettext('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
+        _('CommCare Billing Statement 30 days Overdue for {}'.format(invoice.get_domain())),
         invoice.contact_emails,
         render_to_string('accounting/email/30_days.html', context),
         render_to_string('accounting/email/30_days.txt', context),
@@ -747,7 +748,7 @@ def _send_overdue_notice(invoice, context):
 
 
 def _create_overdue_notification(invoice, context):
-    message = ugettext('Reminder - your {} statement is past due!'.format(
+    message = _('Reminder - your {} statement is past due!'.format(
         invoice.date_start.strftime('%B')
     ))
     note = Notification.objects.create(content=message, url=context['statements_url'],
@@ -864,4 +865,29 @@ def send_prepaid_credits_export():
         settings.ACCOUNTS_EMAIL,
         'See attached file.',
         file_attachments=[{'file_obj': file_obj, 'title': filename, 'mimetype': 'text/csv'}],
+    )
+
+
+@task(queue="email_queue")
+def email_enterprise_report(domain, slug, couch_user):
+    account = BillingAccount.get_account_by_domain(domain)
+    report = EnterpriseReport.create(slug, account.id, couch_user)
+
+    message = _("Report run {date}\n").format(**{'date': datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')})
+    csv_file = io.StringIO()
+    writer = csv.writer(csv_file)
+    writer.writerow(report.headers)
+    writer.writerows(report.rows)
+    attachment = {
+        'title': report.filename,
+        'mimetype': 'text/csv',
+        'file_obj': csv_file,
+    }
+    send_html_email_async(
+        _("{title} Report for enterprise account {name}").format(**{
+            'title': report.title,
+            'name': account.name,
+        }), couch_user.username,
+        message, text_content=message,
+        file_attachments=[attachment],
     )

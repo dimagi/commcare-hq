@@ -1,0 +1,745 @@
+{
+  "domains": [
+    "test-pna",
+    "ipm-senegal",
+    "testing-ipm-senegal",
+    "ct-apr"
+  ],
+  "config": {
+    "table_id": "operateur_combined",
+    "display_name": "Operateur Combined",
+    "referenced_doc_type": "XFormInstance",
+    "description": "",
+    "named_expressions": {
+    },
+    "named_filters": {
+      "is_v1": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "xmlns"
+          }
+        },
+        "comment": null,
+        "property_value": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be"
+      }
+    },
+    "engine_id": "ucr",
+    "disable_destructive_rebuild": false,
+    "base_item_expression": {
+      "test": {
+        "comment": null,
+        "type": "named",
+        "name": "is_v1"
+      },
+      "expression_if_true": {
+        "datatype": null,
+        "type": "property_path",
+        "property_path": [
+          "form",
+          "products"
+        ]
+      },
+      "type": "conditional",
+      "expression_if_false": {
+        "datatype": null,
+        "type": "property_path",
+        "property_path": [
+          "form",
+          "products",
+          "item"
+        ]
+      }
+    },
+    "configured_filter": {
+      "operator": "in",
+      "type": "boolean_expression",
+      "expression": {
+        "datatype": null,
+        "type": "property_name",
+        "property_name": "xmlns"
+      },
+      "comment": null,
+      "property_value": [
+        "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be",
+        "http://openrosa.org/formdesigner/EF8B5DB8-4FB2-4CFB-B0A2-CDD26ADDAE3D"
+      ]
+    },
+    "configured_indicators": [
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "region_name"
+            ]
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "region_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "PPS_name"
+            ]
+          },
+          "type": "root_doc"
+        },
+        "column_id": "pps_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "string",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "district_name"
+            ]
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "district_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "PPS ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "location_id"
+            ]
+          }
+        },
+        "column_id": "pps_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "District ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "District",
+              "type": "constant"
+            }
+          }
+        },
+        "column_id": "district_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "_id"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "R\u00e9gion",
+              "type": "constant"
+            }
+          }
+        },
+        "column_id": "region_id"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "string",
+        "type": "expression",
+        "is_primary_key": false,
+        "transform": {},
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "product_name"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "product_name"
+            ]
+          }
+        },
+        "column_id": "product_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "real_date_repeat"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "real_date_repeat"
+            ]
+          }
+        },
+        "column_id": "real_date_repeat"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "old_stock_total"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "old_stock_total"
+            ]
+          }
+        },
+        "column_id": "old_stock_total"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "total_stock"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "question1",
+              "total_stock"
+            ]
+          }
+        },
+        "column_id": "total_stock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "display_total_stock"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "display_total_stock"
+            ]
+          }
+        },
+        "column_id": "display_total_stock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "default_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "default_consumption"
+            ]
+          }
+        },
+        "column_id": "default_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "old_stock_pps"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "old_stock_pps"
+            ]
+          }
+        },
+        "column_id": "old_stock_pps"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "outside_receipts_amt"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "question1",
+              "outside_receipts_amt"
+            ]
+          }
+        },
+        "column_id": "outside_receipts_amt"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "actual_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "actual_consumption"
+            ]
+          }
+        },
+        "column_id": "actual_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "billed_consumption"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "billed_consumption"
+            ]
+          }
+        },
+        "column_id": "billed_consumption"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "pps_stock"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "pps_stock"
+            ]
+          }
+        },
+        "column_id": "pps_stock"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "loss_amt"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "is-relevant",
+              "question1",
+              "loss_amt"
+            ]
+          }
+        },
+        "column_id": "loss_amt"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "test": {
+            "comment": null,
+            "type": "named",
+            "name": "is_v1"
+          },
+          "expression_if_true": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "top_up",
+              "transfer",
+              "entry",
+              "value",
+              "@quantity"
+            ]
+          },
+          "type": "conditional",
+          "expression_if_false": {
+            "datatype": null,
+            "type": "evaluator",
+            "statement": "stock_total - total_stock",
+            "context_variables": {
+              "stock_total": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is-relevant",
+                  "display_total_stock"
+                ]
+              },
+              "total_stock": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "is-relevant",
+                  "question1",
+                  "total_stock"
+                ]
+              }
+            }
+          }
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "livraison"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_name",
+            "property_name": "received_on"
+          }
+        },
+        "column_id": "received_on"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "date",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": "date",
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "real_date"
+            ]
+          }
+        },
+        "column_id": "real_date"
+      }
+    ]
+  }
+}

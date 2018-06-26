@@ -230,10 +230,6 @@ class BaseUserInfoForm(forms.Form):
 
 
 class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
-    email_opt_out = forms.BooleanField(
-        required=False,
-        label=ugettext_lazy("Opt out of emails about CommCare updates."),
-    )
     analytics_enabled = forms.BooleanField(
         required=False,
         label=ugettext_lazy("Enable Tracking"),
@@ -289,8 +285,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         ]
         if self.set_analytics_enabled:
             basic_fields.append(twbscrispy.PrependedText('analytics_enabled', ''),)
-        if self.set_email_opt_out:
-            basic_fields.append(twbscrispy.PrependedText('email_opt_out', ''))
 
         self.new_helper.layout = cb3_layout.Layout(
             cb3_layout.Fieldset(
@@ -316,10 +310,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         return not settings.ENTERPRISE_MODE
 
     @property
-    def set_email_opt_out(self):
-        return self.user.is_web_user() and not settings.ENTERPRISE_MODE
-
-    @property
     def collapse_other_options(self):
         return self.user.is_commcare_user()
 
@@ -328,8 +318,6 @@ class UpdateMyAccountInfoForm(BaseUpdateUserForm, BaseUserInfoForm):
         result = list(self.fields)
         if not self.set_analytics_enabled:
             result.remove('analytics_enabled')
-        if not self.set_email_opt_out:
-            result.remove('email_opt_out')
         return result
 
     def update_user(self, save=True, **kwargs):

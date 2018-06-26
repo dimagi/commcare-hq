@@ -1,13 +1,13 @@
 {
   "domains": [
-    "test-pna",
     "ipm-senegal",
+    "test-pna",
     "testing-ipm-senegal",
     "ct-apr"
   ],
   "config": {
-    "table_id": "operateur_v1",
-    "display_name": "Operateur v1",
+    "table_id": "rapture_combined",
+    "display_name": "Rapture Combined",
     "referenced_doc_type": "XFormInstance",
     "description": "",
     "named_expressions": {
@@ -16,24 +16,20 @@
     },
     "engine_id": "ucr",
     "disable_destructive_rebuild": false,
-    "base_item_expression": {
-      "datatype": null,
-      "type": "property_path",
-      "property_path": [
-        "form",
-        "products"
-      ]
-    },
+    "base_item_expression": {},
     "configured_filter": {
-      "operator": "eq",
-      "type": "boolean_expression",
+      "operator": "in",
       "expression": {
         "datatype": null,
         "type": "property_name",
         "property_name": "xmlns"
       },
+      "type": "boolean_expression",
       "comment": null,
-      "property_value": "http://openrosa.org/formdesigner/7330597b92db84b1a33c7596bb7b1813502879be"
+      "property_value": [
+        "http://openrosa.org/formdesigner/AD88DE3E-6AFC-48A5-8BEC-092419C1D45A",
+        "http://openrosa.org/formdesigner/6EB9B915-2560-4B93-B1DF-EA778322F418"
+      ]
     },
     "configured_indicators": [
       {
@@ -41,22 +37,19 @@
         "create_index": false,
         "display_name": null,
         "datatype": "string",
-        "type": "expression",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pps_name"
+          ]
+        },
         "transform": {},
         "is_primary_key": false,
         "is_nullable": true,
-        "expression": {
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "region_name"
-            ]
-          },
-          "type": "root_doc"
-        },
-        "column_id": "region_name"
+        "type": "expression",
+        "column_id": "pps_name"
       },
       {
         "comment": null,
@@ -64,59 +57,12 @@
         "display_name": null,
         "datatype": "string",
         "expression": {
-          "type": "root_doc",
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "PPS_name"
-            ]
-          }
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "PPS_name"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "string",
-        "type": "expression",
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "expression": {
-          "expression": {
-            "datatype": "string",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "district_name"
-            ]
-          },
-          "type": "root_doc"
-        },
-        "column_id": "district_name"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": "PPS ID",
-        "datatype": "string",
-        "expression": {
-          "expression": {
-            "datatype": null,
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "location_id"
-            ]
-          },
-          "type": "root_doc"
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "location_id"
+          ]
         },
         "transform": {},
         "is_primary_key": false,
@@ -129,6 +75,10 @@
         "create_index": false,
         "display_name": "District ID",
         "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -137,9 +87,8 @@
           },
           "type": "nested",
           "argument_expression": {
-            "type": "ancestor_location",
-            "location_property": null,
             "location_id": {
+              "type": "root_doc",
               "expression": {
                 "datatype": null,
                 "type": "property_path",
@@ -147,19 +96,16 @@
                   "form",
                   "location_id"
                 ]
-              },
-              "type": "root_doc"
+              }
             },
+            "location_property": null,
+            "type": "ancestor_location",
             "location_type": {
-              "type": "constant",
-              "constant": "District"
+              "constant": "District",
+              "type": "constant"
             }
           }
         },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
         "column_id": "district_id"
       },
       {
@@ -167,6 +113,10 @@
         "create_index": false,
         "display_name": "Region ID",
         "datatype": "string",
+        "type": "expression",
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
         "expression": {
           "value_expression": {
             "datatype": null,
@@ -175,9 +125,8 @@
           },
           "type": "nested",
           "argument_expression": {
-            "type": "ancestor_location",
-            "location_property": null,
             "location_id": {
+              "type": "root_doc",
               "expression": {
                 "datatype": null,
                 "type": "property_path",
@@ -185,277 +134,93 @@
                   "form",
                   "location_id"
                 ]
-              },
-              "type": "root_doc"
+              }
             },
+            "location_property": null,
+            "type": "ancestor_location",
             "location_type": {
-              "type": "constant",
-              "constant": "R\u00e9gion"
+              "constant": "R\u00e9gion",
+              "type": "constant"
             }
           }
         },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
         "column_id": "region_id"
       },
       {
         "comment": null,
         "create_index": false,
-        "display_name": null,
+        "display_name": "District ID",
         "datatype": "string",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "product_name"
-          ]
-        },
+        "type": "expression",
         "transform": {},
         "is_primary_key": false,
         "is_nullable": true,
-        "type": "expression",
-        "column_id": "product_name"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "date",
         "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "real_date_repeat"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "real_date_repeat"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "old_stock_total"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "old_stock_total"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "total_stock"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "total_stock"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "display_total_stock"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "display_total_stock"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "default_consumption"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "default_consumption"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "old_stock_pps"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "old_stock_pps"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "outside_receipts_amt"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "outside_receipts_amt"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "actual_consumption"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "actual_consumption"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "billed_consumption"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "billed_consumption"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "pps_stock"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "pps_stock"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "loss_amt"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "loss_amt"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "integer",
-        "expression": {
-          "datatype": null,
-          "type": "property_path",
-          "property_path": [
-            "top_up",
-            "transfer",
-            "entry",
-            "value",
-            "@quantity"
-          ]
-        },
-        "transform": {},
-        "is_primary_key": false,
-        "is_nullable": true,
-        "type": "expression",
-        "column_id": "quantity"
-      },
-      {
-        "comment": null,
-        "create_index": false,
-        "display_name": null,
-        "datatype": "date",
-        "expression": {
-          "expression": {
-            "datatype": "date",
+          "value_expression": {
+            "datatype": null,
             "type": "property_name",
-            "property_name": "received_on"
+            "property_name": "name"
           },
-          "type": "root_doc"
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "District",
+              "type": "constant"
+            }
+          }
         },
+        "column_id": "district_name"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": "Region ID",
+        "datatype": "string",
+        "type": "expression",
         "transform": {},
         "is_primary_key": false,
         "is_nullable": true,
-        "type": "expression",
-        "column_id": "received_on"
+        "expression": {
+          "value_expression": {
+            "datatype": null,
+            "type": "property_name",
+            "property_name": "name"
+          },
+          "type": "nested",
+          "argument_expression": {
+            "location_id": {
+              "type": "root_doc",
+              "expression": {
+                "datatype": null,
+                "type": "property_path",
+                "property_path": [
+                  "form",
+                  "location_id"
+                ]
+              }
+            },
+            "location_property": null,
+            "type": "ancestor_location",
+            "location_type": {
+              "constant": "R\u00e9gion",
+              "type": "constant"
+            }
+          }
+        },
+        "column_id": "region_name"
       },
       {
         "comment": null,
@@ -463,21 +228,246 @@
         "display_name": null,
         "datatype": "date",
         "expression": {
-          "expression": {
-            "datatype": "date",
-            "type": "property_path",
-            "property_path": [
-              "form",
-              "real_date"
-            ]
-          },
-          "type": "root_doc"
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "date_rapportage"
+          ]
         },
         "transform": {},
         "is_primary_key": false,
         "is_nullable": true,
         "type": "expression",
-        "column_id": "real_date"
+        "column_id": "date_rapportage"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "pps_stocked_out"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "pps_stocked_out"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_collier_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_collier_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_depoprovera_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_depoprovera_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_diu_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_diu_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_jadelle_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_jadelle_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_microgynon_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_microgynon_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_microlut_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_microlut_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_cu_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_cu_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_preservatif_feminin_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_preservatif_feminin_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_preservatif_masculin_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_preservatif_masculin_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_sayana_press_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_sayana_press_hv"
+      },
+      {
+        "comment": null,
+        "create_index": false,
+        "display_name": null,
+        "datatype": "integer",
+        "expression": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "rupture_implanon_hv"
+          ]
+        },
+        "transform": {},
+        "is_primary_key": false,
+        "is_nullable": true,
+        "type": "expression",
+        "column_id": "rupture_implanon_hv"
       }
     ]
   }

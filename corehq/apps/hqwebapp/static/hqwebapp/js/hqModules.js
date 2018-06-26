@@ -54,19 +54,30 @@ function hqDefine(path, dependencies, moduleAccessor) {
         if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
             define(path, dependencies, factory);
         } else {
-            var thirdPartyMap = {
-                'jquery': '$',
-                'knockout': 'ko',
-                'underscore': '_',
-                'clipboard/dist/clipboard': 'Clipboard',
-            };
+            var thirdPartyGlobals = {
+                    'jquery': '$',
+                    'knockout': 'ko',
+                    'underscore': '_',
+                    'clipboard/dist/clipboard': 'Clipboard',
+                    'ace-builds/src-min-noconflict/ace': 'ace',
+                },
+                thirdPartyPlugins = [
+                    'jquery-form/dist/jquery.form.min',
+                    'jquery.rmi/jquery.rmi',
+                    'jquery-ui/ui/sortable',
+                ];
             var args = [];
             for (var i = 0; i < dependencies.length; i++) {
                 var dependency = dependencies[i];
-                if (thirdPartyMap.hasOwnProperty(dependency)) {
-                    args[i] = window[thirdPartyMap[dependency]];
-                } else if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
+                if (COMMCAREHQ_MODULES.hasOwnProperty(dependency)) {
                     args[i] = hqImport(dependency);
+                } else if (thirdPartyGlobals.hasOwnProperty(dependency)) {
+                    args[i] = window[thirdPartyGlobals[dependency]];
+                } else if (!_.contains(thirdPartyPlugins, dependency)) {
+                    var message = "Could not find module '" + dependency + "'.";
+                    message += " Verify that its script tag appears before the script tag for '" + path + "'.";
+                    message += " If this is a third-party module, verify it appears in thirdPartyGlobals in hqModules.js.";
+                    console.warn(message);
                 }
             }
             if (!COMMCAREHQ_MODULES.hasOwnProperty(path)) {

@@ -1,10 +1,12 @@
 {% extends "hqwebapp/base_section.html" %}
-{% load humanize %}
+{% load hq_shared_tags %}
 {% load i18n %}
 
 {% block title %}{% trans "Enterprise Dashboard" %}{% endblock %}
 
 {% block page_title %}{{ account.name }}{% endblock %}
+
+{% requirejs_main 'accounting/js/enterprise_dashboard' %}
 
 {% block page_content %}
     <div class="row">
@@ -16,11 +18,13 @@
                     <small>{{ report.subtitle|default:"&nbsp;" }}</small>
                 </div>
                 <div class="panel-body">
-                    <h1>{{ report.total|intcomma }}</h1>
+                    <h1 data-url="{% url "enterprise_dashboard_total" domain report.slug %}">
+                        <i class="fa fa-spin fa-spinner"></i>
+                    </h1>
                     <br>
-                    <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_download" account.id report.slug %}">
-                        <i class="fa fa-download"></i>
-                        {% trans "Download" %}
+                    <a class="btn btn-success btn-lg" href="{% url "enterprise_dashboard_email" domain report.slug %}">
+                        <i class="fa fa-envelope"></i>
+                        {% trans "Email Report" %}
                     </a>
                 </div>
             </div>

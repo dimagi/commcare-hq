@@ -51,7 +51,8 @@ from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
-    manually_rebuild_export_task,
+    get_saved_export_task_status,
+    rebuild_saved_export,
 )
 from corehq.apps.export.exceptions import (
     ExportNotFound,
@@ -912,37 +913,41 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("must implement fmt_export_data")
 
-    def fmt_emailed_export_data(self, group_id=None, index=None,
-                                has_file=False, file_id=None, size=0,
-                                last_updated=None, last_accessed=None,
-                                download_url=None, filters=None, export_type=None):
+    def _get_daily_saved_export_metadata(self, export):
         """
         Return a dictionary containing details about an emailed export.
         This will eventually be passed to an Angular controller.
         """
+
+        has_file = export.has_file()
         file_data = {}
         if has_file:
+            download_url = self.request.build_absolute_uri(
+                reverse('download_daily_saved_export', args=[self.domain, export._id]))
             file_data = self._fmt_emailed_export_fileData(
-                has_file, file_id, size, last_updated, last_accessed, download_url
+                export._id, export.file_size, export.last_updated,
+                export.last_accessed, download_url
             )
 
         location_restrictions = []
         locations = []
+        filters = export.filters
         if filters.accessible_location_ids:
             locations = SQLLocation.objects.filter(location_id__in=filters.accessible_location_ids)
         for location in locations:
             location_restrictions.append(location.display_name)
 
         return {
-            'groupId': group_id,  # This can be removed when we're off legacy exports
+            'groupId': None,  # This can be removed when we're off legacy exports
             'hasFile': has_file,
-            'index': index,  # This can be removed when we're off legacy exports
+            'index': None,  # This can be removed when we're off legacy exports
             'fileData': file_data,
             'filters': DashboardFeedFilterForm.get_form_data_from_export_instance_filters(
-                filters, self.domain, export_type
+                filters, self.domain, type(export)
             ),
             'isLocationSafeForUser': filters.is_location_safe_for_user(self.request),
-            "locationRestrictions": location_restrictions,
+            'locationRestrictions': location_restrictions,
+            'taskStatus': self._get_task_status_json(export._id),
         }
 
     def fmt_legacy_emailed_export_data(self, group_id=None, index=None,
@@ -980,26 +985,24 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             'isLocationSafeForUser': self.request.can_access_all_locations,
         }
 
-    def _fmt_emailed_export_fileData(self, has_file, fileId, size, last_updated,
+    def _fmt_emailed_export_fileData(self, fileId, size, last_updated,
                                      last_accessed, download_url):
         """
         Return a dictionary containing details about an emailed export file.
         This will eventually be passed to an Angular controller.
         """
-        if has_file:
-            return {
-                'fileId': fileId,
-                'size': filesizeformat(size),
-                'lastUpdated': naturaltime(last_updated),
-                'lastAccessed': naturaltime(last_accessed),
-                'showExpiredWarning': (
-                    last_accessed and
-                    last_accessed <
-                    (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
-                ),
-                'downloadUrl': download_url,
-            }
-        return {}
+        return {
+            'fileId': fileId,
+            'size': filesizeformat(size),
+            'lastUpdated': naturaltime(last_updated),
+            'lastAccessed': naturaltime(last_accessed),
+            'showExpiredWarning': (
+                last_accessed and
+                last_accessed <
+                (datetime.utcnow() - timedelta(days=settings.SAVED_EXPORT_ACCESS_CUTOFF))
+            ),
+            'downloadUrl': download_url,
+        }
 
     def get_formatted_emailed_export(self, export):
 
@@ -1016,21 +1019,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             has_file=emailed_export.saved_version is not None and emailed_export.saved_version.has_file(),
             saved_basic_export=emailed_export.saved_version,
             is_safe=export.is_safe,
-        )
-
-    def _get_daily_saved_export_metadata(self, export):
-
-        return self.fmt_emailed_export_data(
-            filters=export.filters,
-            has_file=export.has_file(),
-            file_id=export._id,
-            size=export.file_size,
-            last_updated=export.last_updated,
-            last_accessed=export.last_accessed,
-            download_url=self.request.build_absolute_uri(reverse(
-                'download_daily_saved_export', args=[self.domain, export._id]
-            )),
-            export_type=type(export),
         )
 
     @allow_remote_invocation
@@ -1089,11 +1077,6 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
         """
         raise NotImplementedError("Must implement generate_create_form_url")
 
-    def update_emailed_es_export_data(self, in_data):
-        export_instance_id = in_data['export']['id']
-        manually_rebuild_export_task.delay(export_instance_id)
-        return format_angular_success({})
-
     @allow_remote_invocation
     def toggle_saved_export_enabled_state(self, in_data):
         if in_data['export']['isLegacy']:
@@ -1109,14 +1092,10 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
 
     @allow_remote_invocation
     def update_emailed_export_data(self, in_data):
-        if not in_data['export']['isLegacy']:
-            return self.update_emailed_es_export_data(in_data)
-
-        group_id = in_data['component']['groupId']
-        relevant_group = filter(lambda g: g.get_id, self.emailed_export_groups)[0]
-        indexes = [x[0].index for x in relevant_group.all_exports]
-        place_index = indexes.index(in_data['component']['index'])
-        manually_rebuild_export_task.delay(group_id, place_index)
+        if in_data['export']['isLegacy']:
+            raise Exception("I'm pretty sure this doesn't happen")
+        export_instance_id = in_data['export']['id']
+        rebuild_saved_export(export_instance_id, manual=True)
         return format_angular_success({})
 
     @allow_remote_invocation
@@ -1144,6 +1123,21 @@ class BaseExportListView(ExportsPermissionsMixin, HQJSONResponseMixin, BaseProje
             )
         return format_angular_success({
             'url': create_url,
+        })
+
+    @staticmethod
+    def _get_task_status_json(export_instance_id):
+        status = get_saved_export_task_status(export_instance_id)
+        return {
+            'percentComplete': status.progress.percent or 0,
+            'inProgress': status.started(),
+            'success': status.success(),
+        }
+
+    @allow_remote_invocation
+    def get_saved_export_progress(self, in_data):
+        return format_angular_success({
+            'taskStatus': self._get_task_status_json(in_data['export_instance_id']),
         })
 
 
@@ -1323,8 +1317,7 @@ class DailySavedExportListView(BaseExportListView):
                 if export.filters != filters:
                     export.filters = filters
                     export.save()
-                    from corehq.apps.export.tasks import rebuild_export_task
-                    rebuild_export_task.delay(export_id)
+                    rebuild_saved_export(export_id, manual=True)
                 return format_angular_success()
             else:
                 return format_angular_error(
@@ -2417,8 +2410,7 @@ def download_daily_saved_export(req, domain, export_instance_id):
 
         if should_update_export(export_instance.last_accessed):
             try:
-                from corehq.apps.export.tasks import rebuild_export_task
-                rebuild_export_task.delay(export_instance_id)
+                rebuild_saved_export(export_instance_id, manual=False)
             except Exception:
                 notify_exception(
                     req,

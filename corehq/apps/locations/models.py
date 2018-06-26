@@ -790,12 +790,12 @@ def _unassign_users_from_location(domain, location_id):
     Unset location for all users assigned to that location.
     """
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
-    from corehq.apps.users.models import CommCareUser
+    from corehq.apps.users.models import CouchUser
     from dimagi.utils.couch.database import iter_docs
 
     user_ids = user_ids_at_locations([location_id])
-    for doc in iter_docs(CommCareUser.get_db(), user_ids):
-        user = CommCareUser.wrap(doc)
+    for doc in iter_docs(CouchUser.get_db(), user_ids):
+        user = CouchUser.wrap_correctly(doc)
         if user.is_web_user():
             user.unset_location_by_id(domain, location_id, fall_back_to_next=True)
         elif user.is_commcare_user():

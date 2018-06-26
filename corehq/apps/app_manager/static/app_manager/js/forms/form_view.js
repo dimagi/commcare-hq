@@ -1,4 +1,3 @@
-/* globals SyntaxHighlighter */
 hqDefine("app_manager/js/forms/form_view", function() {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         appManagerUtils = hqImport('app_manager/js/app_manager');
@@ -155,30 +154,5 @@ hqDefine("app_manager/js/forms/form_view", function() {
                 $("#xform_file_submit").hide();
             }
         }).trigger('change');
-
-        // Advanced > XForm > View
-        $("#xform-source-opener").click(function(evt){
-            if (evt.shiftKey) {
-                // Shift+click: edit form source
-                $(".source-readonly").hide();
-                $(".source-edit").show();
-                $.get($(this).data('href'), function (data) {
-                    $("#xform-source-edit").text(data).blur();
-                }, 'json');
-            } else {
-                // Plain click: view form source
-                $(".source-edit").hide();
-                $(".source-readonly").show();
-                $("#xform-source").text("Loading...");
-                $.get($(this).data('href'), function (data) {
-                    var brush = new SyntaxHighlighter.brushes.Xml();    // eslint-disable-line eslint-dimagi/no-unblessed-new
-                    brush.init({ toolbar: false });
-                    // brush.getDiv seems to escape inconsistently, so I'm helping it out
-                    data = data.replace(/&/g, '&amp;');
-                    $("#xform-source").html(brush.getDiv(data));
-                }, 'json');
-            }
-            $(".xml-source").modal();
-        });
     });
 });

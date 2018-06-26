@@ -49,13 +49,10 @@
 trunk: master
 name: autostaging
 branches:
-  - jls/prune-auto-builds  # Jenny June 5
   - bmb/improve-mobile-signup # biyeun june 6
   - jls/reduce-maps-code  # Jenny June 11
-  - jls/kill-mm-case-properties  # Jenny June 13
-  - es/progress-bar  # ES June 18
-  - fr/case-list-explorer-uat-feedback # Farid June 19
-#  - np/export-sharing  # NP June 19
+  - np/export-sharing  # NP June 19
+  - jls/requirejs-locations  # Jenny June 22
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty

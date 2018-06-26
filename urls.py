@@ -32,6 +32,7 @@ handler500 = 'corehq.apps.hqwebapp.views.server_error'
 handler404 = 'corehq.apps.hqwebapp.views.not_found'
 handler403 = 'corehq.apps.hqwebapp.views.no_permissions'
 
+from corehq.apps.accounting.urls import domain_specific as accounting_domain_specific
 from corehq.apps.hqwebapp.urls import domain_specific as hqwebapp_domain_specific
 from corehq.apps.settings.urls import domain_specific as settings_domain_specific
 from corehq.apps.settings.urls import users_redirect, domain_redirect
@@ -46,6 +47,7 @@ domain_specific = [
     # not have a slash, so don't include it at the root urlconf
     url(r'^receiver/', include('corehq.apps.receiverwrapper.urls')),
     url(r'^settings/', include(settings_domain_specific)),
+    url(r'^enterprise/', include(accounting_domain_specific)),
     url(r'^users/', include(users_redirect)),
     url(r'^domain/', include(domain_redirect)),
     url(r'^groups/', include('corehq.apps.groups.urls')),

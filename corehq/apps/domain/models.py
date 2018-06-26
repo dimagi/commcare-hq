@@ -441,20 +441,18 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         return domain and domain.secure_sessions
 
     @staticmethod
-    @quickcache(['couch_user._id', 'is_active'],
-                skip_arg='strict', timeout=5*60, memoize_timeout=10)
-    def active_for_couch_user(couch_user, is_active=True, strict=False):
+    @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
+    def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
         return Domain.view(
             "domain/by_status",
             keys=[[is_active, d] for d in domain_names],
             reduce=False,
             include_docs=True,
-            stale=settings.COUCH_STALE_QUERY if not strict else None,
         ).all()
 
     @staticmethod
-    def active_for_user(user, is_active=True, strict=False):
+    def active_for_user(user, is_active=True):
         if isinstance(user, AnonymousUser):
             return []
         from corehq.apps.users.models import CouchUser
@@ -463,8 +461,7 @@ class Domain(QuickCachedDocumentMixin, Document, SnapshotMixin):
         else:
             couch_user = CouchUser.from_django_user(user)
         if couch_user:
-            return Domain.active_for_couch_user(
-                couch_user, is_active=is_active, strict=strict)
+            return Domain.active_for_couch_user(couch_user, is_active=is_active)
         else:
             return []
 

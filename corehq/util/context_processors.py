@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.urls import resolve, reverse
 from django.http import Http404
+from django_prbac.utils import has_privilege
 from ws4redis.context_processors import default
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq import privileges
 from corehq.apps.hqwebapp.utils import get_environment_friendly_name
+from corehq.apps.accounting.models import BillingAccount
 
 
 COMMCARE = 'commcare'
@@ -65,6 +67,20 @@ def domain(request):
 
     project = getattr(request, 'project', None)
     return get_per_domain_context(project, request=request)
+
+
+def domain_billing_context(request):
+    is_domain_billing_admin = False
+    if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
+        account = BillingAccount.get_account_by_domain(request.domain)
+        if account:
+            if request.couch_user.username in account.billing_admin_emails:
+                is_domain_billing_admin = True
+            elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
+                is_domain_billing_admin = True
+    return {
+        'IS_DOMAIN_BILLING_ADMIN': is_domain_billing_admin,
+    }
 
 
 def current_url_name(request):

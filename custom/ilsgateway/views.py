@@ -16,6 +16,7 @@ from corehq.apps.commtrack.models import StockState
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.domain.views import BaseDomainView, DomainViewMixin
 from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.permissions import location_safe
 from corehq.apps.sms.models import SMS, INCOMING, OUTGOING
 from corehq.apps.hqwebapp.decorators import use_datatables
 from corehq.apps.users.models import CommCareUser, WebUser, UserRole
@@ -39,6 +40,7 @@ from custom.ilsgateway.tasks import report_run
 from custom.logistics.views import BaseConfigView
 
 
+@location_safe
 class GlobalStats(BaseDomainView):
     section_name = 'Global Stats'
     section_url = ""
@@ -101,6 +103,7 @@ class GlobalStats(BaseDomainView):
         return main_context
 
 
+@location_safe
 class ILSConfigView(BaseConfigView):
     config = ILSGatewayConfig
     urlname = 'ils_config'
@@ -138,6 +141,7 @@ class ILSConfigView(BaseConfigView):
         return self.get(request, *args, **kwargs)
 
 
+@location_safe
 class SupervisionDocumentListView(BaseDomainView):
     section_name = 'Supervision Documents'
     section_url = ""
@@ -202,6 +206,7 @@ class SupervisionDocumentListView(BaseDomainView):
         return main_context
 
 
+@location_safe
 class SupervisionDocumentView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
@@ -221,6 +226,7 @@ class SupervisionDocumentView(TemplateView):
         return response
 
 
+@location_safe
 class SupervisionDocumentDeleteView(TemplateView, DomainViewMixin):
 
     @method_decorator(domain_admin_required)
@@ -260,6 +266,7 @@ def end_report_run(request, domain):
 
 
 @require_POST
+@location_safe
 def save_ils_note(request, domain):
     post_data = request.POST
     user = request.couch_user
@@ -286,6 +293,7 @@ def save_ils_note(request, domain):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
+@location_safe
 class ReportRunListView(ListView, DomainViewMixin):
     context_object_name = 'runs'
     template_name = 'ilsgateway/report_run_list.html'
@@ -299,6 +307,7 @@ class ReportRunListView(ListView, DomainViewMixin):
         return ReportRun.objects.filter(domain=self.domain).order_by('pk')
 
 
+@location_safe
 class PendingRecalculationsListView(ListView, DomainViewMixin):
     context_object_name = 'recalculations'
     template_name = 'ilsgateway/pending_recalculations.html'
@@ -313,6 +322,7 @@ class PendingRecalculationsListView(ListView, DomainViewMixin):
         return PendingReportingDataRecalculation.objects.filter(domain=self.domain).order_by('pk')
 
 
+@location_safe
 class ReportRunDeleteView(DeleteView, DomainViewMixin):
     model = ReportRun
     template_name = 'ilsgateway/confirm_delete.html'
@@ -326,6 +336,7 @@ class ReportRunDeleteView(DeleteView, DomainViewMixin):
         return reverse_lazy('report_run_list', args=[self.domain])
 
 
+@location_safe
 class DashboardPageRedirect(RedirectView):
 
     @method_decorator(login_and_domain_required)
