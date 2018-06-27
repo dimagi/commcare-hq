@@ -8,7 +8,7 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -41,79 +41,57 @@ class LocationUploadResult(object):
         return not self.errors
 
 
+# read-only representation of location type attributes specified in an upload
+LocationTypeData = namedtuple(
+    'LocationTypeData',
+    'name code parent_code do_delete shares_cases view_descendants index'
+)
+
+
 class LocationTypeStub(object):
     """
     A representation of location type excel row
     """
-    titles = LOCATION_TYPE_SHEET_HEADERS
     meta_data_attrs = ['name', 'code', 'shares_cases', 'view_descendants']
 
-    def __init__(self, name, code, parent_code, do_delete, shares_cases,
-                 view_descendants, index):
-        self.name = name
-        self.code = code
-        # if parent_code is '', it must be top location type
-        self.parent_code = parent_code or ROOT_LOCATION_TYPE
-        self.do_delete = do_delete
-        self.shares_cases = shares_cases
-        self.view_descendants = view_descendants
-        self.index = index
-        # These can be set by passing information of existing location data latter.
-        # Whether the type already exists in domain or is new
-        self.is_new = False
-        # The SQL LocationType object, either an unsaved or the actual
-        # database object depending on whether 'is_new' is True or not
-        self.db_object = None
-        # Whether the db_object needs a SQL save, either because it's
-        # new or because some attributes are changed
-        self.needs_save = False
+    def __init__(self, new_data, old_collection):
+        self.new_data = new_data
+        self.code = new_data.code
+        self.parent_code = new_data.parent_code
+        self.do_delete = new_data.do_delete
+        self.old_collection = old_collection
+        self.domain = old_collection.domain_name
+        self.old_version = self.old_collection.types_by_code.get(self.code)
+        self.is_new = self.old_version is None
 
-    @classmethod
-    def from_excel_row(cls, row, index):
-        name = row.get(cls.titles['name'])
-        code = row.get(cls.titles['code'])
-        parent_code = row.get(cls.titles['parent_code'])
-        do_delete = row.get(cls.titles['do_delete'], 'N').lower() in ['y', 'yes']
-        shares_cases = row.get(cls.titles['shares_cases'], 'N').lower() in ['y', 'yes']
-        view_descendants = row.get(cls.titles['view_descendants'], 'N').lower() in ['y', 'yes']
-        index = index
-        return cls(name, code, parent_code, do_delete, shares_cases,
-                   view_descendants, index)
-
-    def _is_new(self, old_collection):
-        return self.code not in old_collection.types_by_code
-
-    def lookup_old_collection_data(self, old_collection):
-        # Lookup whether the type already exists in old_collection or is new. Depending on that
-        # set attributes like 'is_new', 'needs_save', 'db_obect'
-        self.is_new = self._is_new(old_collection)
-
+    @property
+    @memoized
+    def db_object(self):
         if self.is_new:
-            self.db_object = LocationType(domain=old_collection.domain_name)
+            obj = LocationType(domain=self.domain)
         else:
-            self.db_object = copy.copy(old_collection.types_by_code[self.code])
-
-        self.needs_save = self._needs_save()
-
+            obj = copy.copy(self.old_version)
         for attr in self.meta_data_attrs:
-            setattr(self.db_object, attr, getattr(self, attr, None))
+            setattr(obj, attr, getattr(self.new_data, attr, None))
+        return obj
 
-    def _needs_save(self):
-        # returns True if this should be saved
+    @property
+    @memoized
+    def needs_save(self):
         if self.is_new or self.do_delete:
             return True
 
-        old_version = self.db_object
         # check if any attributes are being updated
         for attr in self.meta_data_attrs:
-            if getattr(old_version, attr, None) != getattr(self, attr, None):
+            if getattr(self.old_version, attr, None) != getattr(self.new_data, attr, None):
                 return True
 
         # check if the parent is being updated
-        old_parent_code = old_version.parent_type.code \
-            if old_version.parent_type else ROOT_LOCATION_TYPE
+        old_parent_code = self.old_version.parent_type.code \
+            if self.old_version.parent_type else ROOT_LOCATION_TYPE
         if old_parent_code != self.parent_code:
             return True
+
         return False
 
 
@@ -361,7 +339,7 @@ class LocationExcelValidator(object):
         self.excel_importer = excel_importer
         self.data_model = get_location_data_model(self.domain)
 
-    def validate_and_parse_stubs_from_excel(self):
+    def validate_and_parse_data_from_excel(self):
         # This validates format of the uploaded excel file and coverts excel rows into stubs
         sheets_by_title = {ws.title: ws for ws in self.excel_importer.worksheets}
 
@@ -384,7 +362,8 @@ class LocationExcelValidator(object):
                 extra=", ".join(actual - expected),
             ))
 
-        type_stubs = self._get_types(type_sheet_reader)
+        type_data = [self._get_type_data(index, row)
+                      for index, row in enumerate(type_sheet_reader)]
 
         # all locations sheets should have correct headers
         location_stubs = []
@@ -403,14 +382,19 @@ class LocationExcelValidator(object):
                             missing=", ".join(expected - actual))
                     )
                 location_stubs.extend(self._get_locations(sheet_reader, sheet_name))
-        return type_stubs, location_stubs
+        return type_data, location_stubs
 
-    def _get_types(self, rows):
-        # takes raw excel row dicts and converts them to list of LocationTypeStub objects
-        return [
-            LocationTypeStub.from_excel_row(row, index)
-            for index, row in enumerate(rows)
-        ]
+    @staticmethod
+    def _get_type_data(index, row):
+        titles = LOCATION_TYPE_SHEET_HEADERS
+        name = row.get(titles['name'])
+        code = row.get(titles['code'])
+        parent_code = row.get(titles['parent_code']) or ROOT_LOCATION_TYPE
+        do_delete = row.get(titles['do_delete'], 'N').lower() in ['y', 'yes']
+        shares_cases = row.get(titles['shares_cases'], 'N').lower() in ['y', 'yes']
+        view_descendants = row.get(titles['view_descendants'], 'N').lower() in ['y', 'yes']
+        return LocationTypeData(name, code, parent_code, do_delete, shares_cases,
+                                view_descendants, index)
 
     def _get_locations(self, rows, location_type):
         # takes raw excel row dicts and converts them to list of LocationStub objects
@@ -426,25 +410,26 @@ class NewLocationImporter(object):
     and saves the changes in a transaction.
     """
 
-    def __init__(self, domain, type_rows, location_rows, user, excel_importer=None, chunk_size=100):
+    def __init__(self, domain, type_data, location_rows, user, excel_importer=None, chunk_size=100):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
-        self.type_rows = type_rows
+        self.old_collection = LocationCollection(self.domain_obj)
+        self.type_stubs = [LocationTypeStub(data, self.old_collection) for data in type_data]
         self.location_rows = location_rows
         self.user = user
         self.result = LocationUploadResult()
-        self.old_collection = LocationCollection(self.domain_obj)
         self.excel_importer = excel_importer  # excel_importer is used for providing progress feedback
         self.chunk_size = chunk_size
 
     def run(self):
-        tree_validator = LocationTreeValidator(self.type_rows, self.location_rows, self.old_collection)
+        tree_validator = LocationTreeValidator(self.type_stubs, self.location_rows,
+                                               self.old_collection, self.user)
         self.result.errors = tree_validator.errors
         self.result.warnings = tree_validator.warnings
         if self.result.errors:
             return self.result
 
-        self.bulk_commit(self.type_rows, self.location_rows)
+        self.bulk_commit(self.type_stubs, self.location_rows)
 
         return self.result
 
@@ -484,19 +469,20 @@ class LocationTreeValidator(object):
     db_object, locations also get a parent object (new_parent), by
     the time validation is complete if/when there are no errors.
 
-    :param type_rows: List of `LocationTypeStub` objects.
+    :param type_stubs: List of `LocationTypeStub` objects.
     :param location_rows: List of `LocationStub` objects.
     :param old_collection: `LocationCollection`.
     """
 
-    def __init__(self, type_rows, location_rows, old_collection):
+    def __init__(self, type_stubs, location_rows, old_collection, user):
 
         _to_be_deleted = lambda items: [i for i in items if i.do_delete]
         _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
 
-        self.all_listed_types = type_rows
-        self.location_types = _not_to_be_deleted(type_rows)
-        self.types_to_be_deleted = _to_be_deleted(type_rows)
+        self.user = user
+        self.all_listed_types = type_stubs
+        self.location_types = _not_to_be_deleted(type_stubs)
+        self.types_to_be_deleted = _to_be_deleted(type_stubs)
 
         self.all_listed_locations = location_rows
         self.locations = _not_to_be_deleted(location_rows)
@@ -511,9 +497,6 @@ class LocationTreeValidator(object):
 
         self.errors = self._get_errors()
         self.warnings = self._get_warnings()
-
-        for lt in type_rows:
-            lt.lookup_old_collection_data(old_collection)
 
         # `lookup_old_collection_data()` is called for items in
         # `self.locations` by `_check_model_validation()`, the
@@ -783,13 +766,13 @@ class LocationTreeValidator(object):
 def new_locations_import(domain, excel_importer, user):
     try:
         validator = LocationExcelValidator(domain, excel_importer)
-        type_rows, location_rows = validator.validate_and_parse_stubs_from_excel()
+        type_data, location_rows = validator.validate_and_parse_data_from_excel()
     except LocationExcelSheetError as e:
         result = LocationUploadResult()
         result.errors = [str(e)]
         return result
 
-    importer = NewLocationImporter(domain, type_rows, location_rows, user, excel_importer)
+    importer = NewLocationImporter(domain, type_data, location_rows, user, excel_importer)
     return importer.run()
 
 

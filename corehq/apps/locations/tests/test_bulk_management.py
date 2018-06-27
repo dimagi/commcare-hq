@@ -12,7 +12,7 @@ from corehq.apps.users.models import WebUser
 
 from ..bulk_management import (
     NewLocationImporter,
-    LocationTypeStub,
+    LocationTypeData,
     LocationStub,
     LocationTreeValidator,
     LocationCollection,
@@ -30,26 +30,26 @@ from six.moves import range
 NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
 FLAT_LOCATION_TYPES = [
-    ('State', 'state', '', False, False, False, 0),
-    ('County', 'county', 'state', False, False, True, 0),
-    ('City', 'city', 'county', False, True, False, 0),
+    LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
+    LocationTypeData('County', 'county', 'state', False, False, True, 0),
+    LocationTypeData('City', 'city', 'county', False, True, False, 0),
 ]
 
 DUPLICATE_TYPE_CODES = [
-    ('State', 'state', '', False, False, False, 0),
-    ('County', 'county', 'state', False, False, True, 0),
-    ('City', 'city', 'county', False, True, False, 0),
-    ('Other County', 'county', 'state', False, False, True, 0),
+    LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
+    LocationTypeData('County', 'county', 'state', False, False, True, 0),
+    LocationTypeData('City', 'city', 'county', False, True, False, 0),
+    LocationTypeData('Other County', 'county', 'state', False, False, True, 0),
 ]
 
 CYCLIC_LOCATION_TYPES = [
-    ('State', 'state', '', False, False, False, 0),
-    ('County', 'county', 'state', False, False, True, 0),
-    ('City', 'city', 'county', False, True, False, 0),
+    LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
+    LocationTypeData('County', 'county', 'state', False, False, True, 0),
+    LocationTypeData('City', 'city', 'county', False, True, False, 0),
     # These three cycle:
-    ('Region', 'region', 'village', False, False, False, 0),
-    ('District', 'district', 'region', False, False, True, 0),
-    ('Village', 'village', 'district', False, True, False, 0),
+    LocationTypeData('Region', 'region', 'village', False, False, False, 0),
+    LocationTypeData('District', 'district', 'region', False, False, True, 0),
+    LocationTypeData('Village', 'village', 'district', False, True, False, 0),
 ]
 
 
@@ -287,22 +287,16 @@ def get_validator(location_types, locations, old_collection=None):
         StubClass = LocationStub
         Validator = LocationTreeValidator
     return Validator(
-        [LocationTypeStub(*loc_type) for loc_type in location_types],
+        location_types,
         [StubClass(*loc) for loc in locations],
-        old_collection=old_collection
+        old_collection=old_collection,
+        user=None,  # TODO pass in a real user
     )
 
 
 def make_collection(types, locations):
-    types = [LocationTypeStub(*loc_type) for loc_type in types]
     types_by_code = {t.code: t for t in types}
     # make LocationTypeStub more like a real LocationType
-    for loc_type in types:
-        if loc_type.parent_code == ROOT_LOCATION_TYPE:
-            loc_type.parent_type = None
-        else:
-            loc_type.parent_type = types_by_code[loc_type.parent_code]
-
     locations = [LocationStub(*loc) for loc in locations]
     locations_by_code = {loc.site_code: loc for loc in locations}
     idgen = iter(range(len(locations)))
@@ -393,7 +387,7 @@ class TestTreeValidator(SimpleTestCase):
 
     def test_missing_types(self):
         # all types in the domain should be listed in given excel
-        old_types = FLAT_LOCATION_TYPES + [('Galaxy', 'galaxy', '', False, False, False, 0)]
+        old_types = FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', ROOT_LOCATION_TYPE, False, False, False, 0)]
 
         old_collection = make_collection(old_types, BASIC_LOCATION_TREE)
         validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
@@ -450,7 +444,7 @@ class UploadTestUtils(object):
     def bulk_update_locations(self, types, locations):
         importer = NewLocationImporter(
             self.domain,
-            [LocationTypeStub(*loc_type) for loc_type in types],
+            types,
             [LocationStub(*loc) for loc in locations],
             self.user,
             chunk_size=10
@@ -463,12 +457,14 @@ class UploadTestUtils(object):
         # the passed-in location types
         actual_types = self.domain_obj.location_types
         # covert it to the format of passed-in tuples
-        actual = [
-            (lt.name, lt.code,
-             lt.parent_type.code if lt.parent_type else '', False, lt.shares_cases or False,
-             lt.view_descendants)
-            for lt in actual_types
-        ]
+        actual = [(
+            lt.name,
+            lt.code,
+            lt.parent_type.code if lt.parent_type else ROOT_LOCATION_TYPE,
+            False,
+            lt.shares_cases or False,
+            lt.view_descendants
+        ) for lt in actual_types]
         expected = []
         for lt in expected_types:
             do_delete = lt[3]
@@ -956,9 +952,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_delete_city_type_valid(self):
         # delete a location type and locations of that type
         delete_city_types = [
-            ('State', 'state', '', False, False, False, 0),
-            ('County', 'county', 'state', False, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
+            LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
+            LocationTypeData('County', 'county', 'state', False, False, True, 0),
+            LocationTypeData('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
             LocStub('S1', 's1', 'state', ''),
@@ -983,9 +979,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_delete_everything(self):
         # delete everything
         delete_city_types = [
-            ('State', 'state', '', True, False, False, 0),
-            ('County', 'county', 'state', True, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
+            LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, True, False, False, 0),
+            LocationTypeData('County', 'county', 'state', True, False, True, 0),
+            LocationTypeData('City', 'city', 'county', True, True, False, 0),
         ]
         delete_cities_locations = [
             LocStub('S1', 's1', 'state', '', do_delete=True),
@@ -1010,9 +1006,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         # delete a location type but don't delete locations of that type.
         # this is invalid upload and should not go through
         delete_city_types = [
-            ('State', 'state', '', False, False, False, 0),
-            ('County', 'county', 'state', False, False, True, 0),
-            ('City', 'city', 'county', True, True, False, 0),
+            LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
+            LocationTypeData('County', 'county', 'state', False, False, True, 0),
+            LocationTypeData('City', 'city', 'county', True, True, False, 0),
         ]
 
         result = self.bulk_update_locations(
@@ -1060,10 +1056,10 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
         edit_types = [
-            ('State', 'state', '', False, False, False, 0),
+            LocationTypeData('State', 'state', ROOT_LOCATION_TYPE, False, False, False, 0),
             # change name of this type
-            ('District', 'county', 'state', False, False, False, 0),
-            ('City', 'city', 'county', False, False, False, 0),
+            LocationTypeData('District', 'county', 'state', False, False, False, 0),
+            LocationTypeData('City', 'city', 'county', False, False, False, 0),
         ]
 
         result = self.bulk_update_locations(
@@ -1078,9 +1074,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
         reverse_order = [
-            ('State', 'state', 'county', False, False, False, 0),
-            ('County', 'county', 'city', False, False, False, 0),
-            ('City', 'city', '', False, False, False, 0),
+            LocationTypeData('State', 'state', 'county', False, False, False, 0),
+            LocationTypeData('County', 'county', 'city', False, False, False, 0),
+            LocationTypeData('City', 'city', ROOT_LOCATION_TYPE, False, False, False, 0),
         ]
         edit_types_of_locations = [
             # change parent from TOP to county
