@@ -202,7 +202,8 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
             if domain.uses_new_reminders:
                 _deactivate_schedules(domain, survey_only=True)
             else:
-                surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
+                surveys = [x for x in _active_reminders(domain)
+                           if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
                 for survey in surveys:
                     survey.active = False
                     survey.save()
@@ -534,7 +535,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         if domain.uses_new_reminders:
-            num_active = (
+            num_survey = (
                 len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
                 len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
                 len(_get_active_scheduling_rules(domain, survey_only=True))

@@ -15,7 +15,6 @@ from corehq.apps.hqwebapp.decorators import (
 from django_prbac.utils import has_privilege
 from corehq.apps.accounting.decorators import requires_privilege_with_fallback
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.domain.models import Domain
 from corehq.apps.es.users import UserES
