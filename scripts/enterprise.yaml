@@ -1,5 +1,4 @@
 trunk: 2018-06-25_19.44-production-deploy
 name: enterprise
 pull_requests:
-  - '20964'
   - '21025'
