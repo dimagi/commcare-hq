@@ -24,6 +24,14 @@ from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
 from corehq.apps.userreports.exceptions import DataSourceConfigurationNotFoundError
 from corehq.const import USER_DATE_FORMAT
+from corehq.messaging.scheduling.models import (
+    ImmediateBroadcast,
+    ScheduledBroadcast,
+    AlertSchedule,
+    TimedSchedule,
+)
+from corehq.messaging.scheduling.tasks import refresh_alert_schedule_instances, refresh_timed_schedule_instances
+from django.db import transaction
 
 
 class BaseModifySubscriptionHandler(object):
@@ -68,9 +76,65 @@ class BaseModifySubscriptionActionHandler(BaseModifySubscriptionHandler):
         return all(response)
 
 
-# TODO - cache
 def _active_reminders(domain):
     return get_active_reminders_by_domain_name(domain.name)
+
+
+def _get_active_immediate_broadcasts(domain, survey_only=False):
+    result = list(ImmediateBroadcast.objects.filter(domain=domain.name, deleted=False, schedule__active=True))
+    if survey_only:
+        result = [broadcast for broadcast in result if broadcast.schedule.memoized_uses_sms_survey]
+
+    return result
+
+
+def _get_active_scheduled_broadcasts(domain, survey_only=False):
+    result = list(ScheduledBroadcast.objects.filter(domain=domain.name, deleted=False, schedule__active=True))
+    if survey_only:
+        result = [broadcast for broadcast in result if broadcast.schedule.memoized_uses_sms_survey]
+
+    return result
+
+
+def _get_active_scheduling_rules(domain, survey_only=False):
+    result = list(
+        AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_SCHEDULING, active_only=False)
+    )
+    if survey_only:
+        result = [rule for rule in result if rule.get_messaging_rule_schedule().memoized_uses_sms_survey]
+
+    return result
+
+
+def _deactivate_schedules(domain, survey_only=False):
+    from corehq.messaging.tasks import initiate_messaging_rule_run
+
+    for broadcast in _get_active_immediate_broadcasts(domain, survey_only=survey_only):
+        AlertSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
+        refresh_alert_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+        )
+
+    for broadcast in _get_active_scheduled_broadcasts(domain, survey_only=survey_only):
+        TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
+        refresh_timed_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+            start_date=broadcast.start_date
+        )
+
+    for rule in _get_active_scheduling_rules(domain, survey_only=survey_only):
+        with transaction.atomic():
+            schedule = rule.get_messaging_rule_schedule()
+            if isinstance(schedule, AlertSchedule):
+                AlertSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
+            elif isinstance(schedule, TimedSchedule):
+                TimedSchedule.objects.filter(schedule_id=schedule.schedule_id).update(active=False)
+            else:
+                raise TypeError("Expected AlertSchedule or TimedSchedule")
+
+            initiate_messaging_rule_run(domain.name, rule.pk)
 
 
 class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
@@ -110,9 +174,12 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         Reminder rules will be deactivated.
         """
         try:
-            for reminder in _active_reminders(domain):
-                reminder.active = False
-                reminder.save()
+            if domain.uses_new_reminders:
+                _deactivate_schedules(domain)
+            else:
+                for reminder in _active_reminders(domain):
+                    reminder.active = False
+                    reminder.save()
         except Exception:
             log_accounting_error(
                 "Failed to downgrade outbound sms for domain %s."
@@ -127,10 +194,13 @@ class DomainDowngradeActionHandler(BaseModifySubscriptionActionHandler):
         All Reminder rules utilizing "survey" will be deactivated.
         """
         try:
-            surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-            for survey in surveys:
-                survey.active = False
-                survey.save()
+            if domain.uses_new_reminders:
+                _deactivate_schedules(domain, survey_only=True)
+            else:
+                surveys = [x for x in _active_reminders(domain) if x.method in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
+                for survey in surveys:
+                    survey.active = False
+                    survey.save()
         except Exception:
             log_accounting_error(
                 "Failed to downgrade inbound sms for domain %s."
@@ -309,7 +379,6 @@ class DomainUpgradeActionHandler(BaseModifySubscriptionActionHandler):
         return True
 
 
-# TODO - cache
 def _active_reminder_methods(domain):
     reminder_rules = get_active_reminders_by_domain_name(domain.name)
     return [reminder.method for reminder in reminder_rules]
@@ -433,14 +502,21 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         Reminder rules will be deactivated.
         """
-        num_active = len(_active_reminder_methods(domain))
+        if domain.uses_new_reminders:
+            num_active = (
+                len(_get_active_immediate_broadcasts(domain)) +
+                len(_get_active_scheduled_broadcasts(domain)) +
+                len(_get_active_scheduling_rules(domain))
+            )
+        else:
+            num_active = len(_active_reminder_methods(domain))
         if num_active > 0:
             return _fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule. Selecting "
-                    "this plan will deactivate this rule.",
-                    "You have %(num_active)d active Reminder Rules. Selecting "
-                    "this plan will deactivate these rules.",
+                    "You have %(num_active)d active Reminder Rule or Broadcast. Selecting "
+                    "this plan will deactivate it.",
+                    "You have %(num_active)d active Reminder Rules and Broadcasts. Selecting "
+                    "this plan will deactivate them.",
                     num_active
                 ) % {
                     'num_active': num_active,
@@ -452,15 +528,22 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         All Reminder rules utilizing "survey" will be deactivated.
         """
-        surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
-        num_survey = len(surveys)
+        if domain.uses_new_reminders:
+            num_active = (
+                len(_get_active_immediate_broadcasts(domain, survey_only=True)) +
+                len(_get_active_scheduled_broadcasts(domain, survey_only=True)) +
+                len(_get_active_scheduling_rules(domain, survey_only=True))
+            )
+        else:
+            surveys = [x for x in _active_reminder_methods(domain) if x in [METHOD_IVR_SURVEY, METHOD_SMS_SURVEY]]
+            num_survey = len(surveys)
         if num_survey > 0:
             return _fmt_alert(
                 ungettext(
-                    "You have %(num_active)d active Reminder Rule for a Survey. "
-                    "Selecting this plan will deactivate this rule.",
-                    "You have %(num_active)d active Reminder Rules for a Survey. "
-                    "Selecting this plan will deactivate these rules.",
+                    "You have %(num_active)d active Reminder Rule or Broadcast which uses a Survey. "
+                    "Selecting this plan will deactivate it.",
+                    "You have %(num_active)d active Reminder Rules and Broadcasts which use a Survey. "
+                    "Selecting this plan will deactivate them.",
                     num_survey
                 ) % {
                     'num_active': num_survey,
