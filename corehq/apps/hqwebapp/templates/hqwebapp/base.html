@@ -120,7 +120,7 @@
         {% endif %}
 
 
-        {% if request.use_maps or request.use_maps_async %}
+        {% if request.use_maps %}
         {% compress css %}
         <link rel="stylesheet" href="{% static 'leaflet/dist/leaflet.css' %}" />
         <link rel="stylesheet" href="{% static 'reports/css/maps.css' %}" />
@@ -504,7 +504,7 @@
         {% endif %}
 
         {% if not requirejs_main %}
-        {% if request.use_maps or request.use_maps_async %}
+        {% if request.use_maps %}
         {% compress js %}
         <script src="{% static 'jquery-color/jquery.color.js' %}"></script>
         <script src="{% static 'leaflet/dist/leaflet.js' %}"></script>
@@ -512,23 +512,8 @@
         {% endif %}
         {% endif %}
 
-        {% if request.maps_prefer_canvas and not requirejs_main %}
-        {% addtoblock js-inline %}
-        {# This is fine as an inline script; this flag is only used by custom reports which we're not currently externalizing #}
-        <script>L_PREFER_CANVAS = true;</script>
-        {% endaddtoblock %}
-        {% endif %}
-
         {% if request.use_maps and not requirejs_main %}
         {% compress js %}
-        <script src="{% static 'reports/js/maps.js' %}"></script>
-        <script src="{% static 'reports/js/maps_utils.js' %}"></script>
-        {% endcompress %}
-        {% endif %}
-
-        {% if request.use_maps_async and not requirejs_main %}
-        {% compress js %}
-        <script src="{% static 'reports/js/async_maps.js' %}"></script>
         <script src="{% static 'reports/js/maps_utils.js' %}"></script>
         {% endcompress %}
         {% endif %}
