@@ -1,11 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import time
-from abc import ABCMeta, abstractmethod
-from datetime import datetime
-from elasticsearch import TransportError
 
+from abc import ABCMeta, abstractmethod
+import argparse
+from datetime import datetime
+import time
+
+from elasticsearch import TransportError
 import six
+
 from corehq.apps.change_feed.document_types import is_deletion
 from corehq.util.doc_processor.interface import BaseDocProcessor, BulkDocProcessor
 from pillowtop.es_utils import set_index_reindex_settings, \
@@ -17,6 +20,15 @@ from pillowtop.utils import prepare_bulk_payloads, build_bulk_payload, ErrorColl
 MAX_TRIES = 3
 RETRY_TIME_DELAY_FACTOR = 15
 MAX_PAYLOAD_SIZE = 10 ** 7  # ~10 MB
+DATE_FORMAT = "%Y-%m-%d"
+
+
+def valid_date(s):
+    try:
+        return datetime.strptime(s, DATE_FORMAT)
+    except ValueError:
+        msg = "Not a valid date: '{0}'.".format(s)
+        raise argparse.ArgumentTypeError(msg)
 
 
 class Reindexer(six.with_metaclass(ABCMeta)):
@@ -69,20 +81,20 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
 
     @staticmethod
     def resumable_reindexer_args(parser):
-            parser.add_argument(
-                '--reset',
-                action='store_true',
-                dest='reset',
-                help='Reset a resumable reindex'
-            )
-            parser.add_argument(
-                '--chunksize',
-                type=int,
-                action='store',
-                dest='chunk_size',
-                default=1000,
-                help='Number of docs to process at a time'
-            )
+        parser.add_argument(
+            '--reset',
+            action='store_true',
+            dest='reset',
+            help='Reset a resumable reindex'
+        )
+        parser.add_argument(
+            '--chunksize',
+            type=int,
+            action='store',
+            dest='chunk_size',
+            default=1000,
+            help='Number of docs to process at a time'
+        )
 
     @staticmethod
     def limit_db_args(parser):
@@ -97,6 +109,21 @@ class ReindexerFactory(six.with_metaclass(ABCMeta)):
         parser.add_argument(
             '--domain',
             dest='domain',
+        )
+
+    @staticmethod
+    def server_modified_on_arg(parser):
+        parser.add_argument(
+            '--startdate',
+            dest='start_date',
+            type=valid_date,
+            help='The start date (inclusive). format YYYY-MM-DD'
+        )
+        parser.add_argument(
+            '--enddate',
+            dest='end_date',
+            type=valid_date,
+            help='The end date (exclusive). format YYYY-MM-DD'
         )
 
 
