@@ -21,7 +21,8 @@ import commcare_translations
 class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
     file_path = ('data', 'suite')
 
-    def test_all_media_paths(self):
+    @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
+    def test_all_media_paths(self, mock):
         image_path = 'jr://file/commcare/image{}.jpg'
         audio_path = 'jr://file/commcare/audio{}.mp3'
         app = Application.wrap(self.get_json('app'))
@@ -146,7 +147,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app.get_module(0).media_audio.update({'en': audio_path})
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(len(app.all_media), 2)
+        self.assertEqual(len(app.all_media()), 2)
 
 
 class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):

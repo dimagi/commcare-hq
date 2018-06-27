@@ -541,7 +541,6 @@ class HQMediaMixin(Document):
 
     archived_media = DictProperty()  # where we store references to the old logos (or other multimedia) on a downgrade, so that information is not lost
 
-    @property
     @memoized
     def all_media(self):
         """
@@ -699,11 +698,11 @@ class HQMediaMixin(Document):
 
     @memoized
     def all_media_paths(self):
-        return set([m.path for m in self.all_media])
+        return set([m.path for m in self.all_media()])
 
     @memoized
     def get_all_paths_of_type(self, media_class_name):
-        return set([m.path for m in self.all_media if m.media_class.__name__ == media_class_name])
+        return set([m.path for m in self.all_media() if m.media_class.__name__ == media_class_name])
 
     def get_media_ref_kwargs(self, module, module_index, form=None,
                              form_index=None, is_menu_media=False):
@@ -794,7 +793,7 @@ class HQMediaMixin(Document):
         """
             Used for the multimedia controller.
         """
-        return [m.as_dict(lang) for m in self.all_media]
+        return [m.as_dict(lang) for m in self.all_media()]
 
     def get_object_map(self):
         object_map = {}
@@ -832,14 +831,14 @@ class HQMediaMixin(Document):
     def check_media_state(self):
         has_missing_refs = False
 
-        for media in self.all_media:
+        for media in self.all_media():
             try:
                 self.multimedia_map[media.path]
             except KeyError:
                 has_missing_refs = True
 
         return {
-            "has_media": bool(self.all_media),
+            "has_media": bool(self.all_media()),
             "has_form_errors": self.media_form_errors,
             "has_missing_refs": has_missing_refs,
         }

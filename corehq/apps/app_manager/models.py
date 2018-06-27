@@ -1593,6 +1593,7 @@ class NavMenuItemMediaMixin(DocumentSchema):
         app = self.get_app()
         if old_value and not media_path:
             # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
             app.all_media_paths.reset_cache(app)
             if old_value not in app.all_media_paths():
                 app.multimedia_map.pop(old_value, None)
