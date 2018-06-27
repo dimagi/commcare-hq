@@ -27,6 +27,8 @@ class AggregationScriptTestBase(TestCase):
         setUpModule and tearDownModule
     """
 
+    always_include_columns = None
+
     def _load_csv(self, path):
         with open(path, encoding='utf-8') as f:
             csv_data = list(csv.reader(f))
@@ -95,16 +97,18 @@ class AggregationScriptTestBase(TestCase):
             dict1 = list1[idx]
             dict2 = list2[idx]
 
-            differences = []
+            differences = set()
 
             for key in dict1.keys():
                 if key != 'id':
                     value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
                     value2 = dict2[key].replace('\r\n', '\n')
                     if value1 != value2:
-                        differences.append(key)
+                        differences.add(key)
 
             if differences:
+                if self.always_include_columns:
+                    differences |= self.always_include_columns
                 messages.append("""
                     Actual and expected row {} are not the same
                     Actual:   {}
@@ -391,6 +395,8 @@ class AggregationScriptTest(AggregationScriptTestBase):
 
 
 class ChildHealthMonthlyAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'awc_id', 'case_id'}
+
     def test_child_health_monthly_2017_04_01(self):
         self._load_and_compare_data(
             'child_health_monthly_2017-04-01',
