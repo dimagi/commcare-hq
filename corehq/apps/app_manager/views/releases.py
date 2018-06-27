@@ -121,7 +121,8 @@ def paginate_releases(request, domain, app_id):
 
 @require_deploy_apps
 def releases_ajax(request, domain, app_id):
-    context = get_releases_context(request, domain, app_id)
+    context = get_apps_base_context(request, domain, app)
+    context.update(get_releases_context(request, domain, app_id))
     response = render(request, "app_manager/partials/releases.html", context)
     response.set_cookie('lang', encode_if_unicode(context['lang']))
     return response
@@ -129,12 +130,11 @@ def releases_ajax(request, domain, app_id):
 
 def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
-    context = get_apps_base_context(request, domain, app)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
     build_profile_access = domain_has_privilege(domain, privileges.BUILD_PROFILES)
     prompt_settings_form = PromptUpdateSettingsForm.from_app(app, request_user=request.couch_user)
 
-    context.update({
+    context = {
         'release_manager': True,
         'can_send_sms': can_send_sms,
         'can_view_cloudcare': has_privilege(request, privileges.CLOUDCARE),
@@ -151,7 +151,7 @@ def get_releases_context(request, domain, app_id):
         'prompt_settings_url': reverse(PromptSettingsUpdateView.urlname, args=[domain, app_id]),
         'prompt_settings_form': prompt_settings_form,
         'full_name': request.couch_user.full_name,
-    })
+    }
     if not app.is_remote_app():
         context.update({
             'enable_update_prompts': app.enable_update_prompts,
