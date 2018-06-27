@@ -10,6 +10,9 @@
         {% javascript_libraries %}
         {% compress js %}
             <script src="{% static 'jquery-treetable/jquery.treetable.js' %}"></script>
+            <script src="{% static 'ace-builds/src-min-noconflict/ace.js' %}"></script>
+            <script src="{% static 'ace-builds/src-min-noconflict/mode-xml.js' %}"></script>
+            <script src="{% static 'ace-builds/src-min-noconflict/ext-searchbox.js' %}"></script>
             <script src="{% static 'hqadmin/js/admin_restore.js' %}"></script>
         {% endcompress %}
 
@@ -83,7 +86,7 @@
                         <div class="tab-content">
                             <div role="tabpanel" class="tab-pane active" id="payload-tab">
                                 {% if not hide_xml %}
-                                    <pre id="payload">{{ payload }}</pre>
+                                    <pre id="payload" data-payload="{% html_attr payload %}"></pre>
                                 {% else %}
                                     XML is hidden
                                 {% endif %}
