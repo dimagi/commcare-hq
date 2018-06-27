@@ -1060,10 +1060,9 @@ def enterprise_dashboard_download(request, domain, slug, export_hash):
 def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
-
     email_enterprise_report.delay(domain, slug, request.couch_user)
-    messages.success(request, _("Generating {title} report, will email to {email} when complete.").format(**{
+    message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
-    }))
-    return HttpResponseRedirect(reverse('enterprise_dashboard', args=(domain,)))
+    })
+    return JsonResponse({'message': message})
