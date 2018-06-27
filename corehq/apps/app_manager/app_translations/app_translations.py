@@ -61,14 +61,14 @@ def read_uploaded_app_translation_file(f):
         msgs.append(
             (messages.error, _(APP_TRANSLATION_UPLOAD_FAIL_MESSAGE).format(e))
         )
-        return False
+        return False, msgs
     except JSONReaderError as e:
         msgs.append(
             (messages.error, _(
                 "App Translation Failed! There is an issue with excel columns. Error details: {}."
             ).format(e))
         )
-        return False
+        return False, msgs
     return workbook, msgs
 
 
