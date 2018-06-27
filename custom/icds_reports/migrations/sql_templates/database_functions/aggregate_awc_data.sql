@@ -497,13 +497,9 @@ BEGIN
   'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL AND ' ||
-     quote_literal(_month_start_6m) || ' < infra_last_update_date';
-
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL OR ' ||
-     quote_literal(_month_start_6m) || ' >= infra_last_update_date';
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET num_awc_infra_last_update = ' ||
+   'CASE WHEN infra_last_update_date IS NOT NULL AND ' ||
+     quote_literal(_month_start_6m) || ' < infra_last_update_date THEN 1 ELSE 0 END';
 
   -- Roll Up by Location
   _rollup_text =   'sum(num_awcs), ' ||
