@@ -189,7 +189,7 @@
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="Open in Web Apps"
-                                   data-bind="attr: {href: $root.webAppsUrl(id)}">
+                                   data-bind="attr: {href: $root.webAppsUrl(id, '{{ app.id }}')}">
                                     <i class="fa fa-desktop"></i>
                                     {% trans 'Open in Web Apps' %}
                                 </a>
