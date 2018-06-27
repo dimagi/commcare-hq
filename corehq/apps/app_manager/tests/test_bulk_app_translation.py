@@ -258,9 +258,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
           ('question7-label', 'question7', 'question7', '', '', '', '', '', ''),
           ('add_markdown-label', 'add_markdown', 'add_markdown', '', '', '', '', '', ''),
           ('update_markdown-label', '# update_markdown', '# update_markdown', '', '', '', '', '', ''),
-          (
-          'vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '', '', '', '', '',
-          ''),
+          ('vetoed_markdown-label', '*i just happen to like stars*', '*i just happen to like stars*', '',
+           '', '', '', '', ''),
           ))
     )
 
