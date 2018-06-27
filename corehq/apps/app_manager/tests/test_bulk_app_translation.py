@@ -228,7 +228,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
 
     upload_empty_translations = (
         (MODULES_AND_FORMS_SHEET_NAME,
-         (('Module', 'module1', 'My & awesome module', '', '', '', '', '', '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
+         (('Module', 'module1', 'My & awesome module', '', '', '', '', '',
+           '8f4f7085a93506cba4295eab9beae8723c0cee2a'),
           ('Form', 'module1_form1', '', '', '', '', '', '', '', '', '93ea2a40df57d8f33b472f5b2b023882281722d4'))),
         ('module1',
          (('name', 'list', '', ''),
