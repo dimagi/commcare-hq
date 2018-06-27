@@ -57,10 +57,9 @@ def load_domain(req, domain):
 ########################################################################################################
 
 
-def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
-    path = urlquote(request.get_full_path())
-    nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
-    return HttpResponseRedirect(nextURL)
+def redirect_for_login_or_domain(request, login_url=None):
+    from django.contrib.auth.views import redirect_to_login
+    return redirect_to_login(request.get_full_path(), login_url)
 
 
 def _page_is_whitelist(path, domain):
@@ -68,12 +67,6 @@ def _page_is_whitelist(path, domain):
     return bool([
         x for x in pages_not_restricted_for_dimagi if x % {'domain': domain} == path
     ])
-
-
-def domain_specific_login_redirect(request, domain):
-    project = Domain.get_by_name(domain)
-    login_url = reverse('login')
-    return _redirect_for_login_or_domain(request, 'next', login_url)
 
 
 def login_and_domain_required(view_func):
@@ -131,8 +124,7 @@ def login_and_domain_required(view_func):
             return view_func(req, domain_name, *args, **kwargs)
         else:
             login_url = reverse('domain_login', kwargs={'domain': domain})
-            return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
-
+            return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner
 
@@ -374,11 +366,9 @@ def api_domain_view(view):
 def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
-        login_url = reverse('login')
         user = request.user
         if not (user.is_authenticated and user.is_active):
-            return _redirect_for_login_or_domain(request,
-                    REDIRECT_FIELD_NAME, login_url)
+            return redirect_for_login_or_domain(request)
 
         # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
