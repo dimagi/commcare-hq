@@ -19,6 +19,6 @@ class Migration(migrations.Migration):
             field=models.CharField(
                 choices=[('MONTHLY', 'Monthly'), ('QUARTERLY', 'Quarterly'), ('YEARLY', 'Yearly')],
                 default='MONTHLY', max_length=25
-            ),
+            )
         ),
     ]
