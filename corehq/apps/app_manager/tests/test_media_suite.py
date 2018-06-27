@@ -46,7 +46,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         should_contain_media = [image_path.format(num) for num in [1, 2, 3, 4]] + \
                                [audio_path.format(num) for num in [1, 2, 3, 4]]
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set(should_contain_media))
+        self.assertEqual(app.all_media_paths(), set(should_contain_media))
         self.assertEqual(set(app.multimedia_map.keys()), set(should_contain_media))
 
         # test multimedia removed
@@ -66,7 +66,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_video_inline'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @patch('corehq.apps.app_manager.models.validate_xform', return_value=None)
     def test_all_media_paths_with_expanded_audio(self, mock):
@@ -74,7 +74,7 @@ class MediaSuiteTest(SimpleTestCase, TestXmlMixin):
         app = Application.wrap(self.get_json('app_expanded_audio'))
 
         self.assertTrue(app.get_module(0).uses_media())
-        self.assertEqual(app.all_media_paths, set([inline_video_path]))
+        self.assertEqual(app.all_media_paths(), set([inline_video_path]))
 
     @override_settings(BASE_ADDRESS='192.cc.hq.1')
     def test_case_list_media(self):

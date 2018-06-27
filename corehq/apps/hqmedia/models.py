@@ -697,7 +697,6 @@ class HQMediaMixin(Document):
         menu_media['audio'] = audio_ref
         return menu_media
 
-    @property
     @memoized
     def all_media_paths(self):
         return set([m.path for m in self.all_media])
@@ -732,7 +731,7 @@ class HQMediaMixin(Document):
         if self.check_media_state()['has_form_errors']:
             return
         paths = list(self.multimedia_map) if self.multimedia_map else []
-        permitted_paths = self.all_media_paths | self.logo_paths
+        permitted_paths = self.all_media_paths() | self.logo_paths
         for path in paths:
             if path not in permitted_paths:
                 map_changed = True
