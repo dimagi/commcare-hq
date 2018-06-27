@@ -627,8 +627,9 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
     def has_translation(row_, langs):
         for lang_ in langs:
-            if row_.get(_get_col_key('default', lang_)):
-                return True
+            for trans_type_ in ['default', 'audio', 'image', 'video']:
+                if row_.get(_get_col_key(trans_type_, lang_)):
+                    return True
 
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
