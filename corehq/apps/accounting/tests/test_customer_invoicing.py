@@ -120,9 +120,6 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         invoice = invoice_set.first()
         self.assertGreater(invoice.balance, Decimal('0.0000'))
         self.assertEqual(invoice.account, self.account)
-        self.assertIn(invoice.subscription, [self.subscription, self.sub2, self.sub3])
-        self.assertIn(invoice.subscription.subscriber.domain,
-                      [self.domain.name, self.domain2.name, self.domain3.name])
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
         self.assertEqual(num_product_line_items, 2)
@@ -150,8 +147,6 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         invoice = invoice_set.first()
         self.assertEqual(invoice.balance, Decimal('1000.0000'))
         self.assertEqual(invoice.account, self.account)
-        self.assertIn(invoice.subscription, [self.sub2, self.sub3])
-        self.assertIn(invoice.subscription.subscriber.domain, [self.domain2.name, self.domain3.name])
 
         num_product_line_items = invoice.lineitem_set.get_products().count()
         self.assertEqual(num_product_line_items, 1)
@@ -316,11 +311,11 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
         super(TestSmsLineItem, self).tearDown()
 
     def test_under_limit(self):
-        num_sms = random.randint(0, self.sms_rate.monthly_limit // 2)
+        num_sms = random.randint(1, self.sms_rate.monthly_limit // 2)
         arbitrary_sms_billables_for_domain(
             self.domain, self.sms_date, num_sms, direction=INCOMING
         )
-        num_sms_advanced = random.randint(0, self.advanced_rate.monthly_limit // 2)
+        num_sms_advanced = random.randint(1, self.advanced_rate.monthly_limit // 2)
         arbitrary_sms_billables_for_domain(
             self.domain2, self.sms_date, num_sms_advanced, direction=INCOMING
         )
