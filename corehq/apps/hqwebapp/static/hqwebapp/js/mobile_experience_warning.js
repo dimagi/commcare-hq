@@ -10,7 +10,7 @@ hqDefine('hqwebapp/js/mobile_experience_warning', [
     $(function() {
 
         if (initialPageData.get('show_mobile_ux_warning')) {
-            var reminder_url = initialPageData.reverse('send_mobile_reminder'),
+            var reminderUrl = initialPageData.reverse('send_mobile_reminder'),
                 $modal = $("#mobile-experience-modal"),
                 $videoModal = $("#mobile-experience-video-modal");
 
@@ -27,7 +27,7 @@ hqDefine('hqwebapp/js/mobile_experience_warning', [
             var sendReminder = function (e) {
                 $.ajax({
                     dataType: 'json',
-                    url: reminder_url,
+                    url: reminderUrl,
                     type: 'post',
                 });
                 e.preventDefault();
