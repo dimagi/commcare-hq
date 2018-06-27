@@ -282,15 +282,9 @@
                 "datatype": "string",
                 "display_name": "form_name",
                 "expression": {
-                    "expression": {
-                        "datatype": null,
-                        "property_path": [
-                            "form",
-                            "@name"
-                        ],
-                        "type": "property_path"
-                    },
-                    "type": "root_doc"
+                    "datatype": null,
+                    "property_name": "form_name",
+                    "type": "property_name"
                 },
                 "is_nullable": true,
                 "is_primary_key": false,

@@ -65,6 +65,15 @@ class AbtExpressionSpec(JsonObject):
         return question.get("options", [])
 
     @classmethod
+    def _get_form_name(cls, item):
+        form = filter(lambda x: x['xmlns'] == item['xmlns'], Application.get(item['app_id']).get_forms())[0]
+        lang = cls._get_language(item)
+        if lang in form.name:
+            return form.name[lang]
+        else:
+            return form.name['en']
+
+    @classmethod
     def _get_unchecked(cls, xform_instance, question_path, answer, ignore=None, section='data'):
         """
         Return the unchecked options in the given question.
@@ -213,6 +222,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
                 elif warning_type == "q3_special" and form_value:
@@ -234,6 +244,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
                 elif warning_type == "not_selected" and form_value:
                     value = spec.get("velue", "")
@@ -249,6 +260,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
                 else:
@@ -268,6 +280,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
         return docs
