@@ -77,7 +77,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
             vm.showMessage = vm.selectedLocations[4] === null;
         }
         if (level < 4) {
-            locationsService.getChildren($item.location_id).then(function (data) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                     vm.selectedLocations[level + 1] = ALL_OPTION;
@@ -275,7 +275,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
     var init = function() {
         if (vm.selectedLocationId && vm.selectedLocationId !== 'all' && vm.selectedLocationId !== 'null') {
-            $rootScope.locationPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                 var locations = data.locations;
 
                 var selectedLocation = data.selected_location;
@@ -326,7 +326,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
             });
         } else {
             initHierarchy();
-            $rootScope.locationPromise = locationsService.getRootLocations().then(function(data) {
+            vm.myPromise = locationsService.getRootLocations().then(function(data) {
                 vm.locationsCache.root = [ ALL_OPTION ].concat(data.locations);
                 vm.selectedLocations[0] = ALL_OPTION;
 
@@ -359,7 +359,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if (level < 4) {
-            locationsService.getChildren($item.location_id).then(function (data) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                 } else {
