@@ -125,6 +125,11 @@ def _deactivate_schedules(domain, survey_only=False):
         )
 
     for rule in _get_active_scheduling_rules(domain, survey_only=survey_only):
+        """
+        Deactivating a scheduling rule involves only deactivating the schedule, and
+        leaving the rule active. See ConditionalAlertListView.get_activate_ajax_response
+        for more information.
+        """
         with transaction.atomic():
             schedule = rule.get_messaging_rule_schedule()
             if isinstance(schedule, AlertSchedule):
