@@ -320,6 +320,7 @@ def view_generic(request, domain, app_id=None, module_id=None, form_id=None,
         'can_preview_form': request.couch_user.has_permission(domain, 'edit_data')
     })
 
+
     confirm = request.session.pop('CONFIRM', False)
     context.update({'confirm': confirm})
 
