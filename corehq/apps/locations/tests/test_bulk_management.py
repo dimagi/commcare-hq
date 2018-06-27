@@ -87,121 +87,6 @@ def LocStub(
     return stub_tuple
 
 
-BASIC_LOCATION_TREE = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
-    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Florida', 'florida', 'state', '', '5432'),
-    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
-    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-]
-
-
-MOVE_SUFFOLK_TO_FLORIDA = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    # this is the only changed line (parent is changed to florida)
-    LocStub('Suffolk', 'suffolk', 'county', 'florida', '2345'),
-    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Florida', 'florida', 'state', '', '5432'),
-    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
-    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-]
-
-DELETE_SUFFOLK = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    # These next two are marked as 'delete'
-    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345', do_delete=True),
-    LocStub('Boston', 'boston', 'city', 'suffolk', '2346', do_delete=True),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Florida', 'florida', 'state', '', '5432'),
-    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
-    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-]
-
-MAKE_SUFFOLK_A_STATE_INVALID = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    # This still lists mass as a parent, which is invalid,
-    # plus, Boston (a city), can't have a state as a parent
-    LocStub('Suffolk', 'suffolk', 'state', 'mass', '2345'),
-    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Florida', 'florida', 'state', '', '5432'),
-    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
-    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-]
-
-MAKE_SUFFOLK_A_STATE_VALID = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    LocStub('Suffolk', 'suffolk', 'state', '', '2345'),
-    LocStub('Boston', 'boston', 'county', 'suffolk', '2346'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Florida', 'florida', 'state', '', '5432'),
-    LocStub('Duval', 'duval', 'county', 'florida', '5433'),
-    LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-]
-
-DUPLICATE_SITE_CODES = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
-    LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('East Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-]
-
-SAME_NAME_SAME_PARENT = [
-    LocStub('Massachusetts', 'mass', 'state', '', '1234'),
-    LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-    # These two locations have the same name AND same parent
-    LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-    LocStub('Cambridge', 'cambridge2', 'city', 'middlesex', '3458'),
-]
-
-BIG_LOCATION_TREE = [
-    LocStub('0', '0', 'city', 'county11'),
-    LocStub('1', '1', 'city', 'county11'),
-    LocStub('2', '2', 'city', 'county11'),
-    LocStub('3', '3', 'city', 'county11'),
-    LocStub('4', '4', 'city', 'county11'),
-    LocStub('5', '5', 'city', 'county11'),
-    LocStub('6', '6', 'city', 'county11'),
-    LocStub('7', '7', 'city', 'county11'),
-    LocStub('8', '8', 'city', 'county11'),
-    LocStub('9', '9', 'city', 'county11'),
-    LocStub('10', '10', 'city', 'county11'),
-    LocStub('11', '11', 'city', 'county11'),
-    LocStub('12', '12', 'city', 'county11'),
-    LocStub('13', '13', 'city', 'county11'),
-    LocStub('14', '14', 'city', 'county11'),
-    LocStub('15', '15', 'city', 'county11'),
-    LocStub('16', '16', 'city', 'county11'),
-    LocStub('17', '17', 'city', 'county11'),
-    LocStub('18', '18', 'city', 'county11'),
-    LocStub('19', '19', 'city', 'county11'),
-    LocStub('20', '20', 'city', 'county11'),
-    LocStub('21', '21', 'city', 'county11'),
-    LocStub('22', '22', 'city', 'county11'),
-    LocStub('23', '23', 'city', 'county11'),
-    LocStub('24', '24', 'city', 'county11'),
-    LocStub('25', '25', 'city', 'county11'),
-    LocStub('26', '26', 'city', 'county11'),
-    LocStub('27', '27', 'city', 'county11'),
-    LocStub('28', '28', 'city', 'county11'),
-    LocStub('29', '29', 'city', 'county11'),
-    LocStub('30', '30', 'city', 'county11'),
-    LocStub('31', '31', 'city', 'county11'),
-    LocStub('32', '32', 'city', 'county11'),
-    LocStub('33', '33', 'city', 'county11'),
-]
-
-
 def _codify(items):
     return {it.site_code: it for it in items}
 
@@ -347,17 +232,39 @@ def assert_errors(result, expected_errors):
 
 
 class TestTreeValidator(SimpleTestCase):
+    basic_location_tree = [
+        LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+        LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
+        LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+        LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+        LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+        LocStub('Florida', 'florida', 'state', '', '5432'),
+        LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+        LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
+    ]
 
     def test_good_location_set(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
         assert_errors(validator, [])
 
     def test_cyclic_location_types(self):
-        validator = get_validator(CYCLIC_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        validator = get_validator(CYCLIC_LOCATION_TYPES, self.basic_location_tree)
         self.assertEqual(len(validator._validate_types_tree()), 3)
 
     def test_bad_type_change(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_INVALID)
+        make_suffolk_a_state_invalid = [
+            LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+            # This still lists mass as a parent, which is invalid,
+            # plus, Boston (a city), can't have a state as a parent
+            LocStub('Suffolk', 'suffolk', 'state', 'mass', '2345'),
+            LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+            LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+            LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+            LocStub('Florida', 'florida', 'state', '', '5432'),
+            LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+            LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
+        ]
+        validator = get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_invalid)
 
         assert_errors(validator, [
             "'suffolk' is a 'state' and should not have a parent",
@@ -365,22 +272,47 @@ class TestTreeValidator(SimpleTestCase):
         ])
 
     def test_good_type_change(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, MAKE_SUFFOLK_A_STATE_VALID)
+        make_suffolk_a_state_valid = [
+            LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+            LocStub('Suffolk', 'suffolk', 'state', '', '2345'),
+            LocStub('Boston', 'boston', 'county', 'suffolk', '2346'),
+            LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+            LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+            LocStub('Florida', 'florida', 'state', '', '5432'),
+            LocStub('Duval', 'duval', 'county', 'florida', '5433'),
+            LocStub('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
+        ]
+        validator = get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_valid)
         assert_errors(validator, [])
 
     def test_duplicate_type_codes(self):
-        validator = get_validator(DUPLICATE_TYPE_CODES, BASIC_LOCATION_TREE)
+        validator = get_validator(DUPLICATE_TYPE_CODES, self.basic_location_tree)
         assert_errors(validator, ["type code 'county' is used 2 times"])
 
     def test_duplicate_location(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, DUPLICATE_SITE_CODES)
+        duplicate_site_codes = [
+            LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+            LocStub('Suffolk', 'suffolk', 'county', 'mass', '2345'),
+            LocStub('Boston', 'boston', 'city', 'suffolk', '2346'),
+            LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+            LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+            LocStub('East Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+        ]
+        validator = get_validator(FLAT_LOCATION_TYPES, duplicate_site_codes)
         assert_errors(validator, [
             "site_code 'cambridge' is used 2 times",
             "location_id '3457' is listed 2 times",
         ])
 
     def test_same_name_same_parent(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, SAME_NAME_SAME_PARENT)
+        same_name_same_parent = [
+            LocStub('Massachusetts', 'mass', 'state', '', '1234'),
+            LocStub('Middlesex', 'middlesex', 'county', 'mass', '3456'),
+            # These two locations have the same name AND same parent
+            LocStub('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
+            LocStub('Cambridge', 'cambridge2', 'city', 'middlesex', '3458'),
+        ]
+        validator = get_validator(FLAT_LOCATION_TYPES, same_name_same_parent)
         assert_errors(validator, [
             " 2 locations with the name 'Cambridge' under the parent 'middlesex'"
         ])
@@ -389,26 +321,26 @@ class TestTreeValidator(SimpleTestCase):
         # all types in the domain should be listed in given excel
         old_types = FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', ROOT_LOCATION_TYPE, False, False, False, 0)]
 
-        old_collection = make_collection(old_types, BASIC_LOCATION_TREE)
-        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
+        old_collection = make_collection(old_types, self.basic_location_tree)
+        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree, old_collection)
         assert_errors(validator, ["type code 'galaxy' is not listed"])
 
     def test_missing_location_ids(self):
         # not all locations need to be specified in the upload
         old_locations = (
-            BASIC_LOCATION_TREE +
+            self.basic_location_tree +
             [LocStub('extra_state', 'ex_code', 'state', '', 'ex_id')]
         )
         old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
-        validator = get_validator(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE, old_collection)
+        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree, old_collection)
         assert_errors(validator, [])
 
     def test_unknown_location_ids(self):
         # all locations in the domain should be listed in given excel
 
-        old_collection = make_collection(FLAT_LOCATION_TYPES, BASIC_LOCATION_TREE)
+        old_collection = make_collection(FLAT_LOCATION_TYPES, self.basic_location_tree)
         new_locations = (
-            BASIC_LOCATION_TREE +
+            self.basic_location_tree +
             [LocStub('extra_state', 'ex_code', 'state', '', 'ex_id')]
         )
         validator = get_validator(FLAT_LOCATION_TYPES, new_locations, old_collection)
@@ -426,6 +358,7 @@ class UploadTestUtils(object):
         LocStub('City112', 'city112', 'city', 'county11'),
         LocStub('City211', 'city211', 'city', 'county21'),
     ]
+
     @classmethod
     def as_pairs(cls, tree):
         # returns list of (site_code, parent_code) tuples
@@ -769,17 +702,21 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
     def test_large_upload(self):
+        big_location_tree = [
+            LocStub('{}'.format(i), '{}'.format(i), 'city', 'county11')
+            for i in range(34)
+        ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
             self.basic_tree
         )
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
-            BIG_LOCATION_TREE
+            big_location_tree
         )
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree + BIG_LOCATION_TREE))
+        self.assertLocationsMatch(self.as_pairs(self.basic_tree + big_location_tree))
 
     def test_new_root(self):
         # new locations can be added without having to specify all of old ones
