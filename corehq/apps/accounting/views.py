@@ -43,7 +43,7 @@ from corehq.apps.accounting.forms import (
     SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
     SuppressInvoiceForm,
@@ -64,6 +64,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     Select2BillingInfoHandler,
     Select2InvoiceTriggerHandler,
+    Select2CustomerInvoiceTriggerHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
@@ -671,6 +672,47 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
                 return HttpResponseRedirect(reverse(self.urlname))
             except (CreditLineError, InvoiceError) as e:
                 messages.error(request, "Error generating invoices: %s" % e, extra_tags='html')
+        return self.get(request, *args, **kwargs)
+
+
+class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_customer_invoice'
+    page_title = 'Trigger Customer Invoice'
+    template_name = 'accounting/trigger_customer_invoice.html'
+    async_handlers = [
+        Select2CustomerInvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def trigger_customer_invoice_form(self):
+        if self.request.method == 'POST':
+            return TriggerCustomerInvoiceForm(self.request.POST)
+        return TriggerCustomerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_customer_form': self.trigger_customer_invoice_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_customer_invoice_form.is_valid():
+            try:
+                self.trigger_customer_invoice_form.trigger_customer_invoice()
+                messages.success(
+                    request,
+                    "Successfully triggered invoices for Customer Billing Account %s."
+                    % self.trigger_customer_invoice_form.cleaned_data['customer_account']
+                )
+            except (CreditLineError, InvoiceError) as e:
+                messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
         return self.get(request, *args, **kwargs)
 
 

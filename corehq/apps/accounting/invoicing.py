@@ -64,7 +64,11 @@ class DomainInvoiceFactory(object):
         self._ensure_full_coverage(subscriptions)
         for subscription in subscriptions:
             try:
-                self._create_invoice_for_subscription(subscription)
+                if subscription.account.is_customer_billing_account:
+                    log_accounting_info("Skipping invoice for subscription: %s, because it is part of a Customer "
+                                        "Billing Account." % (subscription))
+                elif should_create_invoice(subscription, self.domain, self.date_start, self.date_end):
+                    self._create_invoice_for_subscription(subscription)
             except InvoiceAlreadyCreatedError as e:
                 log_accounting_error(
                     "Invoice already existed for domain %s: %s" % (self.domain.name, e),
@@ -124,40 +128,12 @@ class DomainInvoiceFactory(object):
             subscriptions.append(community_subscription)
 
     def _create_invoice_for_subscription(self, subscription):
-        def _get_invoice_start(sub, date_start):
-            return max(sub.date_start, date_start)
-
-        def _get_invoice_end(sub, date_end):
-            if sub.date_end is not None and sub.date_end <= date_end:
-                # Since the Subscription is actually terminated on date_end
-                # have the invoice period be until the day before date_end.
-                return sub.date_end - datetime.timedelta(days=1)
-            else:
-                return date_end
-
-        if subscription.is_trial:
-            # Don't create invoices for trial subscriptions
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because it's a trial."
-                % subscription.pk
-            )
-            return
-
-        if (
-            subscription.skip_invoicing_if_no_feature_charges
-            and not subscription.plan_version.feature_charges_exist_for_domain(self.domain)
-        ):
-            log_accounting_info(
-                "Skipping invoicing for Subscription %s because there are no feature charges."
-                % subscription.pk
-            )
-            return
-
-        invoice_start = _get_invoice_start(subscription, self.date_start)
-        invoice_end = _get_invoice_end(subscription, self.date_end)
+        invoice_start = get_invoice_start(subscription, self.date_start)
+        invoice_end = get_invoice_end(subscription, self.date_end)
 
         with transaction.atomic():
-            invoice = self._generate_invoice(subscription, invoice_start, invoice_end)
+            invoice = generate_invoice(subscription, invoice_start, invoice_end)
+            update_invoice_due_date(invoice, subscription, self.date_end)
             record = BillingRecord.generate_record(invoice)
         if record.should_send_email:
             try:
@@ -210,62 +186,6 @@ class DomainInvoiceFactory(object):
                         (sub.date_end, self.date_end + datetime.timedelta(days=1))
                     )
             return community_ranges
-
-    def _generate_invoice(self, subscription, invoice_start, invoice_end):
-        invoice, is_new_invoice = Invoice.objects.get_or_create(
-            subscription=subscription,
-            date_start=invoice_start,
-            date_end=invoice_end,
-            is_hidden=subscription.do_not_invoice,
-        )
-
-        if not is_new_invoice:
-            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
-
-        if subscription.subscriptionadjustment_set.count() == 0:
-            # record that the subscription was created
-            SubscriptionAdjustment.record_adjustment(
-                subscription,
-                method=SubscriptionAdjustmentMethod.TASK,
-                invoice=invoice,
-            )
-
-        DomainInvoiceFactory._generate_line_items(invoice, subscription)
-        invoice.calculate_credit_adjustments()
-        invoice.update_balance()
-        invoice.save()
-        visible_domain_invoices = Invoice.objects.filter(
-            is_hidden=False,
-            subscription__subscriber__domain=invoice.get_domain(),
-        )
-        total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
-
-        should_set_date_due = (
-            total_balance > SMALL_INVOICE_THRESHOLD or
-            (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
-        )
-        if should_set_date_due:
-            days_until_due = DEFAULT_DAYS_UNTIL_DUE
-            if subscription.date_delay_invoicing is not None:
-                td = subscription.date_delay_invoicing - self.date_end
-                days_until_due = max(days_until_due, td.days)
-            invoice.date_due = self.date_end + datetime.timedelta(days_until_due)
-        invoice.save()
-
-        return invoice
-
-    @staticmethod
-    def _generate_line_items(invoice, subscription):
-        product_rate = subscription.plan_version.product_rate
-        product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
-        product_factory.create()
-
-        for feature_rate in subscription.plan_version.feature_rates.all():
-            feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-                feature_rate.feature.feature_type
-            )
-            feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-            feature_factory.create()
 
     @property
     def subscriber(self):
@@ -353,6 +273,150 @@ class DomainWireInvoiceFactory(object):
         )
 
 
+class CustomerAccountInvoiceFactory(object):
+    """
+        This generates an invoice for a Customer Billing Account.
+    """
+    def __init__(self, date_start, date_end, account, recipients=None):
+        """
+        The Invoice generated will always be for the month preceding the
+        invoicing_date.
+        For example, if today is July 5, 2014 then the invoice will be from
+        June 1, 2014 to June 30, 2014.
+        """
+        self.date_start = date_start
+        self.date_end = date_end
+        self.account = account
+        self.recipients = recipients
+        self.customer_invoice = None
+        self.subscriptions = {}
+
+    def create_invoice(self):
+        for subscription in self.account.subscription_set.all():
+            if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
+                self.subscriptions[subscription.plan_version] = subscription
+        if not self.subscriptions:
+            return
+        self._generate_customer_invoice()
+        self._email_invoice()
+
+    def _generate_customer_invoice(self):
+        plan_version, subscription = self.subscriptions.popitem()
+        invoice = generate_invoice(subscription, self.date_start, self.date_end)
+        for plan in self.subscriptions:
+            generate_line_items(invoice, self.subscriptions[plan])
+            invoice.calculate_credit_adjustments()
+            invoice.update_balance()
+            invoice.save()
+        update_invoice_due_date(invoice, subscription, self.date_end)
+        self.customer_invoice = invoice
+
+    def _email_invoice(self):
+        record = BillingRecord.generate_record(self.customer_invoice)
+        try:
+            if self.recipients:
+                for email in self.recipients:
+                    record.send_email(contact_email=email)
+            elif self.account.dimagi_contact:
+                record.send_email(contact_email=self.account.dimagi_contact,
+                                  cc_emails=[settings.ACCOUNTS_EMAIL])
+            else:
+                record.send_email(contact_email=settings.ACCOUNTS_EMAIL)
+        except InvoiceEmailThrottledError as e:
+            log_accounting_error(str(e))
+
+
+def should_create_invoice(subscription, domain, invoice_start, invoice_end):
+    if subscription.is_trial:
+        log_accounting_info("Skipping invoicing for Subscription %s because it's a trial." % subscription.pk)
+        return False
+    if subscription.skip_invoicing_if_no_feature_charges and not \
+            subscription.plan_version.feature_charges_exist_for_domain(domain):
+        log_accounting_info(
+            "Skipping invoicing for Subscription %s because there are no feature charges."
+            % subscription.pk
+        )
+        return False
+    if subscription.date_start >= invoice_end:
+        # No invoice gets created if the subscription didn't start in the previous month.
+        return False
+    if subscription.date_end and subscription.date_end <= invoice_start:
+        # No invoice gets created if the subscription ended before the invoicing period.
+        return False
+    return True
+
+
+def generate_line_items(invoice, subscription):
+    product_rate = subscription.plan_version.product_rate
+    product_factory = ProductLineItemFactory(subscription, product_rate, invoice)
+    product_factory.create()
+
+    for feature_rate in subscription.plan_version.feature_rates.all():
+        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+            feature_rate.feature.feature_type
+        )
+        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+        feature_factory.create()
+
+
+def get_invoice_start(subscription, date_start):
+    return max(subscription.date_start, date_start)
+
+
+def get_invoice_end(subscription, date_end):
+    if subscription.date_end is not None and subscription.date_end <= date_end:
+        # A Subscription is terminated on date_end, so the invoice period lasts until the day before
+        return subscription.date_end - datetime.timedelta(days=1)
+    else:
+        return date_end
+
+
+def generate_invoice(subscription, invoice_start, invoice_end):
+    invoice, is_new_invoice = Invoice.objects.get_or_create(
+        subscription=subscription,
+        date_start=invoice_start,
+        date_end=invoice_end,
+        is_hidden=subscription.do_not_invoice
+    )
+    if not is_new_invoice:
+        raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+
+    if subscription.subscriptionadjustment_set.count() == 0:
+        # record that the subscription was created
+        SubscriptionAdjustment.record_adjustment(
+            subscription,
+            method=SubscriptionAdjustmentMethod.TASK,
+            invoice=invoice,
+        )
+
+    generate_line_items(invoice, subscription)
+    invoice.calculate_credit_adjustments()
+    invoice.update_balance()
+    invoice.save()
+    return invoice
+
+
+def update_invoice_due_date(invoice, subscription, factory_date_end):
+    visible_domain_invoices = Invoice.objects.filter(
+        is_hidden=False,
+        subscription__subscriber__domain=invoice.get_domain(),
+    )
+    total_balance = sum(invoice.balance for invoice in visible_domain_invoices)
+
+    should_set_date_due = (
+        total_balance > SMALL_INVOICE_THRESHOLD or
+        (invoice.account.auto_pay_enabled and total_balance > Decimal(0))
+    )
+    if should_set_date_due:
+        days_until_due = DEFAULT_DAYS_UNTIL_DUE
+        if subscription.date_delay_invoicing is not None:
+            td = subscription.date_delay_invoicing - factory_date_end
+            days_until_due = max(days_until_due, td.days)
+        invoice.date_due = factory_date_end + datetime.timedelta(days_until_due)
+
+    invoice.save()
+
+
 class LineItemFactory(object):
     """
     This generates a line item based on what type of Feature or Product rate triggers it.
@@ -392,6 +456,10 @@ class LineItemFactory(object):
     def subscribed_domains(self):
         if self.subscription.subscriber.domain is None:
             raise LineItemError("No domain could be obtained as the subscriber.")
+        if self.subscription.account.is_customer_billing_account:
+            return [sub.subscriber.domain for sub in
+                    self.subscription.account.subscription_set
+                        .filter(plan_version=self.subscription.plan_version)]
         return [self.subscription.subscriber.domain]
 
     def create(self):
