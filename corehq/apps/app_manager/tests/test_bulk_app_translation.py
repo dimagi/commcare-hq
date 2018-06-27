@@ -367,6 +367,8 @@ class BulkAppTranslationBasicTest(BulkAppTranslationTestBase):
         )
 
     def test_empty_translations(self):
+        # make the form a registration form
+        self.app.modules[0].forms[0].actions.open_case.condition.type = 'always'
         self.upload_raw_excel_translations(
             self.upload_headers_bad_column,
             self.upload_empty_translations,

@@ -645,15 +645,16 @@ def update_form_translations(sheet, rows, missing_cols, app):
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
     # skip labels that have no translation provided
     skip_label = set()
-    for row in rows:
-        if not has_translation(row, app.langs):
-            skip_label.add(row['label'])
-    for label in skip_label:
-        msgs.append((
-            messages.error,
-            "You must provide at least one translation" +
-            " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
-        ))
+    if form.is_registration_form():
+        for row in rows:
+            if not has_translation(row, app.langs):
+                skip_label.add(row['label'])
+        for label in skip_label:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+            ))
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
