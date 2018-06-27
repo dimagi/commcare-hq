@@ -125,8 +125,8 @@ class LocationStub(object):
                 _("Location in sheet '{}', at row '{}' doesn't contain either location_id or site_code")
                 .format(self.location_type, self.index)
             )
-        # Whether the location already exists in domain or is new
-        self.is_new = False
+        # If a location ID is not provided, the location is presumed to be new
+        self.is_new = not self.location_id
         # The SQLLocation object, either an unsaved or the actual database
         # object depending on whether 'is_new' is True or not
         self.db_object = None
@@ -229,31 +229,6 @@ class LocationStub(object):
             metadata.update(unknown)
 
         return metadata
-
-    def autoset_location_id_or_site_code(self, old_collection):
-        # if one of location_id/site_code are missing, lookup for the other in
-        # location_id/site_code pairs autoset the other if found.
-        # self.is_new is set to True if new location
-
-        if self.location_id and self.site_code:
-            return
-
-        old_locations_by_id = old_collection.locations_by_id
-        old_locations_by_site_code = old_collection.locations_by_site_code
-        if self.location_id:
-            try:
-                self.site_code = old_locations_by_id[self.location_id].site_code
-            except KeyError:
-                # this should have already been caught
-                raise UnexpectedState("unknown location_id: %r" % (self.location_id,))
-        elif self.site_code:
-            try:
-                self.location_id = old_locations_by_site_code[self.site_code].location_id
-            except KeyError:
-                self.is_new = True
-        else:
-            # this should have already been caught in initialization
-            raise UnexpectedState("missing site_code and location_id: %s" % self.name)
 
     def _needs_save(self, old_parent_code):
         if self.is_new or self.do_delete:
@@ -489,8 +464,6 @@ class LocationTreeValidator(object):
         self.locations_to_be_deleted = _to_be_deleted(location_rows)
 
         self.old_collection = old_collection
-        for loc in location_rows:
-            loc.autoset_location_id_or_site_code(old_collection)
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
         self.locations_by_code = {l.site_code: l for l in location_rows}
