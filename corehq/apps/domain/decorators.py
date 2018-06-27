@@ -76,15 +76,15 @@ def login_and_domain_required(view_func):
         user = req.user
         domain_name, domain = load_domain(req, domain)
         if not domain:
-            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
         if user.is_authenticated and user.is_active:
             if not domain.is_active:
-                msg = _((
+                msg = _(
                     'The domain "{domain}" has not yet been activated. '
                     'Please report an issue if you think this is a mistake.'
-                ).format(domain=domain_name))
+                ).format(domain=domain_name)
                 messages.info(req, msg)
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
