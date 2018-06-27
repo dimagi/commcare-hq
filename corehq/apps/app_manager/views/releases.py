@@ -119,15 +119,6 @@ def paginate_releases(request, domain, app_id):
     return json_response(saved_apps)
 
 
-@require_deploy_apps
-def releases_ajax(request, domain, app_id):
-    context = get_apps_base_context(request, domain, app)
-    context.update(get_releases_context(request, domain, app_id))
-    response = render(request, "app_manager/partials/releases.html", context)
-    response.set_cookie('lang', encode_if_unicode(context['lang']))
-    return response
-
-
 def get_releases_context(request, domain, app_id):
     app = get_app(domain, app_id)
     can_send_sms = domain_has_privilege(domain, privileges.OUTBOUND_SMS)
