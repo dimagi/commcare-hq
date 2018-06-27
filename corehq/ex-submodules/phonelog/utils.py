@@ -1,11 +1,12 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import requests
+
 from django.conf import settings
 from django.db import transaction
 from corehq.apps.users.util import format_username
 from corehq.apps.users.dbaccessors import get_user_id_by_username
 from .models import UserEntry, DeviceReportEntry, UserErrorEntry, ForceCloseEntry
+from .tasks import send_device_log_to_sumologic
 
 
 def device_users_by_xform(xform_id):
@@ -182,9 +183,9 @@ class SumoLogicLog(object):
         self.xform = xform
 
     def send_data(self, url):
-        requests.post(url, data=self.log_subreport(), headers=self._get_header('log'), timeout=5)
-        requests.post(url, data=self.user_error_subreport(), headers=self._get_header('user_error'), timeout=5)
-        requests.post(url, data=self.force_close_subreport(), headers=self._get_header('force_close'), timeout=5)
+        send_device_log_to_sumologic.delay(url, self.log_subreport(), self._get_header('log'))
+        send_device_log_to_sumologic.delay(url, self.user_error_subreport(), self._get_header('user_error'))
+        send_device_log_to_sumologic.delay(url, self.force_close_subreport(), self._get_header('force_close'))
 
     def _get_header(self, fmt):
         """
