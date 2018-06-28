@@ -208,7 +208,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 if ($(this).hasClass('ignore-click')) {
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort");
+                    var exportColumn = getExportColumnByRow($(this));
+                    exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
                     var shiftSelectedIndex = getIndexFromRow($(this)),
@@ -237,17 +238,23 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort');
-                        next = next.next();
+                        list()[i].selectedForSort(true);
                     }
                 } else {
-                    $(this).addClass('selected-for-sort last-clicked')
-                        .siblings().removeClass('selected-for-sort last-clicked');
+                    $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+                    for (var i = 0; i < list().length; i++) {
+                        list()[i].selectedForSort(false);
+                    }
+                    getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
 
             var getIndexFromRow = function (row) {
                 return parseInt(row[0].attributes['data-order'].value);
+            };
+
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
             };
 
             var moveRowToIndex = function (row, newIndex) {
