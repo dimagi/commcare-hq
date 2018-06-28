@@ -49,6 +49,11 @@ class AbtExpressionSpec(JsonObject):
         return danger_value == []
 
     @classmethod
+    @quickcache(['app_id', 'xmlns'])
+    def _get_form(cls, app_id, xmlns):
+        return list(filter(lambda x: x['xmlns'] == xmlns, Application.get(app_id).get_forms()))[0]
+
+    @classmethod
     @quickcache(['app_id', 'xmlns', 'lang'])
     def _get_questions(cls, app_id, xmlns, lang):
         questions = Application.get(app_id).get_questions(xmlns, [lang], include_groups=True)
@@ -63,6 +68,15 @@ class AbtExpressionSpec(JsonObject):
         questions = cls._get_questions(item['app_id'], item['xmlns'], cls._get_language(item))
         question = questions.get('/' + section + '/' + "/".join(question_path), {})
         return question.get("options", [])
+
+    @classmethod
+    def _get_form_name(cls, item):
+        form = cls._get_form(item['api_id'], item['xmlns'])
+        lang = cls._get_language(item)
+        if lang in form.name:
+            return form.name[lang]
+        else:
+            return form.name['en']
 
     @classmethod
     def _get_unchecked(cls, xform_instance, question_path, answer, ignore=None, section='data'):
@@ -213,6 +227,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
                 elif warning_type == "q3_special" and form_value:
@@ -234,6 +249,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
                 elif warning_type == "not_selected" and form_value:
                     value = spec.get("velue", "")
@@ -249,6 +265,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
                 else:
@@ -268,6 +285,7 @@ class AbtExpressionSpec(JsonObject):
                                 spec
                             ),
                             'names': names,
+                            'form_name': self._get_form_name(item)
                         })
 
         return docs
