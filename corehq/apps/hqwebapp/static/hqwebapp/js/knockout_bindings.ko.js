@@ -208,7 +208,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 if ($(this).hasClass('ignore-click')) {
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort").toggleClass('success');
+                    $(this).toggleClass("selected-for-sort");
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
                     var shiftSelectedIndex = getIndexFromRow($(this)),
@@ -237,12 +237,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort success');
+                        next.addClass('selected-for-sort');
                         next = next.next();
                     }
                 } else {
-                    $(this).addClass('selected-for-sort success last-clicked')
-                        .siblings().removeClass('selected-for-sort success last-clicked');
+                    $(this).addClass('selected-for-sort last-clicked')
+                        .siblings().removeClass('selected-for-sort last-clicked');
                 }
             });
 
@@ -281,8 +281,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 delay: 150,
                 helper: function (e, item) {
                     if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort success')
-                            .siblings().removeClass('selected-for-sort success');
+                        item.addClass('selected-for-sort')
+                            .siblings().removeClass('selected-for-sort');
                     }
                     item.siblings('.selected-for-sort').hide();
                     return item;
