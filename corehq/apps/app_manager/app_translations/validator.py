@@ -54,9 +54,9 @@ class UploadedTranslationsValidator(object):
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msgs.append(LESS_ROW_COUNT_MISMATCH_MESSAGE)
+            msgs.append(str(LESS_ROW_COUNT_MISMATCH_MESSAGE))
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msgs.append(MORE_ROW_COUNT_MISMATCH_MESSAGE)
+            msgs.append(str(MORE_ROW_COUNT_MISMATCH_MESSAGE))
 
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
