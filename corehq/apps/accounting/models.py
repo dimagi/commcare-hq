@@ -1738,6 +1738,10 @@ class InvoiceBase(models.Model):
         abstract = True
 
     @property
+    def is_customer_invoice(self):
+        return False
+
+    @property
     def invoice_number(self):
         ops_num = settings.INVOICE_STARTING_NUMBER + self.id
         return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
@@ -1941,6 +1945,31 @@ class Invoice(InvoiceBase):
 
         self.update_balance()
         self.save()
+
+
+class CustomerInvoice(InvoiceBase):
+    # CustomerInvoice is tied to a customer level account, instead of a subscription
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
+
+    class Meta(object):
+        app_label = 'accounting'
+
+    @property
+    def is_customer_invoice(self):
+        return True
+
+    def get_domain(self):
+        raise NotImplementedError()
+
+    @property
+    def email_recipients(self):
+        try:
+            billing_contact_info = BillingContactInfo.objects.get(account=self.account)
+            contact_emails = billing_contact_info.email_list
+        except BillingContactInfo.DoesNotExist:
+            contact_emails = []
+        # TODO: Return alternative emails if contact_emails DNE (admin emails?)
+        return contact_emails
 
 
 class SubscriptionAdjustment(models.Model):
@@ -2467,7 +2496,8 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         )
 
         if not invoice.is_wire:
-            for line_item in LineItem.objects.filter(invoice=invoice):
+            # TODO: if invoice.is_customer_invoice:
+            for line_item in LineItem.objects.filter(subscription_invoice=invoice):
                 is_unit = line_item.unit_description is not None
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
@@ -2530,7 +2560,8 @@ class LineItemManager(models.Manager):
 
 
 class LineItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    subscription_invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    customer_invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT, null=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
     base_description = models.TextField(blank=True, null=True)
@@ -2544,6 +2575,20 @@ class LineItem(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
+
+    @property
+    def invoice(self):
+        if self.subscription_invoice:
+            return self.subscription_invoice
+        else:
+            return self.customer_invoice
+
+    @invoice.setter
+    def invoice(self, invoice):
+        if invoice.is_customer_invoice:
+            self.customer_invoice = invoice
+        else:
+            self.subscription_invoice = invoice
 
     @property
     def subtotal(self):
