@@ -97,11 +97,13 @@ def _get_active_scheduled_broadcasts(domain, survey_only=False):
 
 
 def _get_active_scheduling_rules(domain, survey_only=False):
-    result = list(
-        AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_SCHEDULING, active_only=False)
-    )
-    if survey_only:
-        result = [rule for rule in result if rule.get_messaging_rule_schedule().memoized_uses_sms_survey]
+    rules = AutomaticUpdateRule.by_domain(domain.name, AutomaticUpdateRule.WORKFLOW_SCHEDULING, active_only=False)
+
+    result = []
+    for rule in rules:
+        schedule = rule.get_messaging_rule_schedule()
+        if schedule.active and (not survey_only or schedule.memoized_uses_sms_survey):
+            result.append(rule)
 
     return result
 
