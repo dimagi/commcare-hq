@@ -446,7 +446,7 @@ def get_all_built_app_results(domain, app_id=None):
     for doc in paginate_view(
             Application.get_db(),
             'app_manager/saved_app',
-            1000,
+            10,
             **kwargs):
         yield doc
 
