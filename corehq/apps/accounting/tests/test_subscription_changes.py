@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TransactionTestCase
 from mock import patch, Mock, call
 
 from corehq.apps.accounting.models import (
@@ -258,7 +258,7 @@ class TestSoftwarePlanChanges(BaseAccountingTest):
         self.assertRaises(SubscriptionAdjustmentError, lambda: sub2.change_plan(self.advanced_plan))
 
 
-class DeactivateScheduleTest(TestCase):
+class DeactivateScheduleTest(TransactionTestCase):
 
     def setUp(self):
         super(DeactivateScheduleTest, self).setUp()
