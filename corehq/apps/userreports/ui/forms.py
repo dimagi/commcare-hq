@@ -137,7 +137,7 @@ DOC_TYPE_CHOICES = (
 
 class ConfigurableDataSourceEditForm(DocumentFormBase):
 
-    _id = forms.CharField(disabled=True, label=_('Data Source ID'),
+    _id = forms.CharField(required=False, disabled=True, label=_('Data Source ID'),
                           help_text=help_text.DATA_SOURCE_ID)
     table_id = forms.CharField(label=_("Table ID"),
                                help_text=help_text.TABLE_ID)
