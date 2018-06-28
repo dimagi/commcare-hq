@@ -51,10 +51,17 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             setTimeout(update, 100);
         },
         update: function(element, valueAccessor){
+            var caseProperties = ko.utils.unwrapObservable(valueAccessor());
             var casePropertyAutocomplete = {
                 getCompletions: function(editor, session, pos, prefix, callback){
-                    var data = ko.utils.unwrapObservable(valueAccessor());
-                    callback(null, _.map(data, function(suggestion){
+                    var currentValue = editor.getValue(),
+                        leftQuotes = (currentValue.substr(0, pos.column).match(/'|"/g) || []).length,
+                        insideQuote =  leftQuotes && (leftQuotes % 2 !== 0);
+                    if (insideQuote){
+                        // don't autocomplete case properties when inside a quote
+                        return;
+                    }
+                    callback(null, _.map(caseProperties, function(suggestion){
                         return {
                             name: suggestion.name,
                             value: suggestion.name,
