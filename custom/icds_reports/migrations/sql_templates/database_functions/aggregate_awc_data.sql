@@ -307,19 +307,11 @@ BEGIN
 
   -- Pass to calculate awc score and ranks and training status
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET (' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'trained_phase_1, ' ||
     'trained_phase_2, ' ||
     'trained_phase_3, ' ||
     'trained_phase_4) = ' ||
   '(' ||
-    'pse_score + thr_score, ' ||
-    'CASE WHEN (pse_score + thr_score) >= 60 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN ((pse_score + thr_score) >= 40 AND (pse_score + thr_score) < 60) THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN (pse_score + thr_score) < 40 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 1 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 2 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 3 THEN 1 ELSE 0 END, ' ||
@@ -441,10 +433,6 @@ BEGIN
     'sum(awc_num_open), ' ||
     'sum(wer_weighed), ' ||
     'sum(wer_eligible), ' ||
-    'avg(awc_score), ' ||
-    'sum(num_awc_rank_functional), ' ||
-    'sum(num_awc_rank_semi), ' ||
-    'sum(num_awc_rank_non), ' ||
     'sum(cases_ccs_pregnant), ' ||
     'sum(cases_ccs_lactating), ' ||
     'sum(cases_child_health), ' ||
@@ -550,10 +538,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -686,10 +670,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -821,10 +801,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -955,10 +931,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
