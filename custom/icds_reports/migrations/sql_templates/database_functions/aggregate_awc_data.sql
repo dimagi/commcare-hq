@@ -289,31 +289,6 @@ BEGIN
     'CASE WHEN training_phase = 4 THEN 1 ELSE 0 END ' ||
   ')';
 
-  -- Aggregate data from VHND table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'vhnd_immunization = ut.vhnd_immunization, ' ||
-    'vhnd_anc = ut.vhnd_anc, ' ||
-    'vhnd_gmp = ut.vhnd_gmp, ' ||
-    'vhnd_num_pregnancy = ut.vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating = ut.vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12 = ut.vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12 = ut.vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers = ut.vhnd_num_fathers ' ||
-  'FROM (SELECT ' ||
-    'awc_id, ' ||
-    'month, ' ||
-    'sum(child_immu) AS vhnd_immunization, ' ||
-    'sum(anc_today) AS vhnd_anc, ' ||
-    'sum(vhnd_gmp) AS vhnd_gmp, ' ||
-    'sum(vhnd_num_pregnant_women) AS vhnd_num_pregnancy, ' ||
-    'sum(vhnd_num_lactating_women) AS vhnd_num_lactating, ' ||
-    'sum(vhnd_num_mothers_6_12) AS vhnd_num_mothers_6_12, ' ||
-    'sum(vhnd_num_mothers_12) AS vhnd_num_mothers_12, ' ||
-    'sum(vhnd_num_fathers) AS vhnd_num_fathers '
-    'FROM ' || quote_ident(_vhnd_tablename) || ' ' ||
-    'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
-  'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
-
   -- Aggregate data from LS supervision table
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'ls_supervision_visit = ut.ls_supervision_visit, ' ||
@@ -421,14 +396,6 @@ BEGIN
     'sum(usage_num_due_list_ccs), ' ||
     'sum(usage_num_due_list_child_health), ' ||
     'sum(usage_awc_num_active), ' ||
-    'sum(vhnd_immunization), ' ||
-    'sum(vhnd_anc), ' ||
-    'sum(vhnd_gmp), ' ||
-    'sum(vhnd_num_pregnancy), ' ||
-    'sum(vhnd_num_lactating), ' ||
-    'sum(vhnd_num_mothers_6_12), ' ||
-    'sum(vhnd_num_mothers_12), ' ||
-    'sum(vhnd_num_fathers), ' ||
     'sum(ls_supervision_visit), ' ||
     'sum(ls_num_supervised), ' ||
     'avg(ls_awc_location_long), ' ||
@@ -516,14 +483,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
     'ls_supervision_visit, ' ||
     'ls_num_supervised, ' ||
     'ls_awc_location_long, ' ||
@@ -638,14 +597,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
     'ls_supervision_visit, ' ||
     'ls_num_supervised, ' ||
     'ls_awc_location_long, ' ||
@@ -759,14 +710,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
     'ls_supervision_visit, ' ||
     'ls_num_supervised, ' ||
     'ls_awc_location_long, ' ||
@@ -879,14 +822,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
     'ls_supervision_visit, ' ||
     'ls_num_supervised, ' ||
     'ls_awc_location_long, ' ||
