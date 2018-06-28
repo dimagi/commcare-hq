@@ -69,7 +69,6 @@ if settings.SERVER_ENVIRONMENT == 'softlayer':
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
@@ -77,7 +76,6 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
     {'type': 'person', 'name': 'static-person_cases_v2'},
     {'type': 'usage', 'name': 'static-usage_forms'},
-    {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
     {'type': 'aww_user', 'name': 'static-commcare_user_cases'},
     {'type': 'child_tasks', 'name': 'static-child_tasks_cases'},
