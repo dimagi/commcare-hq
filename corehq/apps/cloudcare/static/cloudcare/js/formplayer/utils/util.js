@@ -131,7 +131,6 @@ Util.pagesToShow = function(selectedPage, totalPages, limit) {
 
 Util.CloudcareUrl = function (options) {
     this.appId = options.appId;
-    this.copyOf = options.copyOf;
     this.sessionId = options.sessionId;
     this.steps = options.steps;
     this.page = options.page;
@@ -211,7 +210,6 @@ Util.CloudcareUrl.prototype.toJson = function () {
     var self = this;
     var dict = {
         appId: self.appId,
-        copyOf: self.copyOf,
         sessionId: self.sessionId,
         steps: self.steps,
         page: self.page,
@@ -228,7 +226,6 @@ Util.CloudcareUrl.fromJson = function (json) {
     var data = JSON.parse(json);
     var options = {
         'appId': data.appId,
-        'copyOf': data.copyOf,
         'sessionId': data.sessionId,
         'steps': data.steps,
         'page': data.page,
