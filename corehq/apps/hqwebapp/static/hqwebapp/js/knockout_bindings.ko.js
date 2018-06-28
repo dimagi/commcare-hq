@@ -272,6 +272,11 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 moveRowToIndex(row, list().length - 1);
             });
 
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = $(this).parent().parent();
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            });
+
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
