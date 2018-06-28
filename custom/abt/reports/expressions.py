@@ -49,6 +49,11 @@ class AbtExpressionSpec(JsonObject):
         return danger_value == []
 
     @classmethod
+    @quickcache(['app_id', 'xmlns'])
+    def _get_form(cls, app_id, xmlns):
+        return list(filter(lambda x: x['xmlns'] == xmlns, Application.get(app_id).get_forms()))[0]
+
+    @classmethod
     @quickcache(['app_id', 'xmlns', 'lang'])
     def _get_questions(cls, app_id, xmlns, lang):
         questions = Application.get(app_id).get_questions(xmlns, [lang], include_groups=True)
@@ -66,7 +71,7 @@ class AbtExpressionSpec(JsonObject):
 
     @classmethod
     def _get_form_name(cls, item):
-        form = list(filter(lambda x: x['xmlns'] == item['xmlns'], Application.get(item['app_id']).get_forms()))[0]
+        form = cls._get_form(item['api_id'], item['xmlns'])
         lang = cls._get_language(item)
         if lang in form.name:
             return form.name[lang]
