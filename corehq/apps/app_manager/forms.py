@@ -7,6 +7,7 @@ from crispy_forms.bootstrap import StrictButton, PrependedText
 from django import forms
 from django.urls import reverse
 from django.utils.translation import ugettext as _, ugettext_lazy
+from itertools import islice
 from corehq.apps.builds.models import BuildSpec
 from corehq.apps.domain.models import Domain
 from corehq.apps.hqwebapp import crispy as hqcrispy
@@ -132,7 +133,7 @@ class PromptUpdateSettingsForm(forms.Form):
 
         self.fields['app_version'].choices = [(LATEST_APP_VALUE, 'Latest Released Version')] + [
             (app.version, 'Version {}'.format(app.version))
-            for app in get_all_built_app_ids_and_versions(domain, app_id)[-10:]
+            for app in islice(get_all_built_app_ids_and_versions(domain, app_id), 0, 10)
         ]
 
         self.helper = FormHelper()
