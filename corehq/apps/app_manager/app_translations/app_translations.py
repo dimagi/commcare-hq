@@ -200,7 +200,6 @@ def validate_bulk_app_translation_upload(app, workbook, email):
         return [(messages.success, "No issues found.")]
 
 
-@task(queue="email_queue")
 def _email_app_translations_discrepancies(msgs, email, app_name):
     message = '\n\n'.join([
         """Sheet {}:
