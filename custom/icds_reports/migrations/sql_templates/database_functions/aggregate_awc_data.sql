@@ -156,7 +156,6 @@ BEGIN
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person = ut.cases_person, ' ||
     'cases_person_all = ut.cases_person_all, ' ||
-    'cases_person_has_aadhaar = ut.cases_person_has_aadhaar, ' ||
     'cases_person_beneficiary = ut.cases_person_beneficiary, ' ||
     'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
     'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
@@ -167,12 +166,6 @@ BEGIN
     'awc_id, ' ||
     'sum(seeking_services) AS cases_person, ' ||
     'sum(count) AS cases_person_all, ' ||
-    'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
-                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
-                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
-      ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
     'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
                   '      OR (sex = ' || quote_literal(_female) ||
                   '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
@@ -504,7 +497,6 @@ BEGIN
     _rollup_text2 = 'sum(cases_household), ' ||
         'sum(cases_person), ' ||
         'sum(cases_person_all), ' ||
-        'sum(cases_person_has_aadhaar), ' ||
         'sum(cases_ccs_pregnant_all), ' ||
         'sum(cases_ccs_lactating_all), ' ||
         'sum(cases_child_health_all), ' ||
@@ -614,7 +606,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -746,7 +737,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -877,7 +867,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -1007,7 +996,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
