@@ -156,7 +156,6 @@ BEGIN
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person = ut.cases_person, ' ||
     'cases_person_all = ut.cases_person_all, ' ||
-    'cases_person_beneficiary = ut.cases_person_beneficiary, ' ||
     'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
     'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
@@ -166,11 +165,6 @@ BEGIN
     'awc_id, ' ||
     'sum(seeking_services) AS cases_person, ' ||
     'sum(count) AS cases_person_all, ' ||
-    'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
-                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
-      ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
@@ -505,7 +499,6 @@ BEGIN
         'sum(cases_person_adolescent_girls_11_14_all), ' ||
         'sum(cases_person_adolescent_girls_15_18_all), ' ||
         'sum(infra_infant_weighing_scale), ' ||
-        'sum(cases_person_beneficiary), ' ||
         quote_nullable(_null_value) || ', ' ||
         quote_nullable(_null_value) || ', ' ||
         'sum(num_awc_infra_last_update), ' ||
@@ -614,7 +607,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -745,7 +737,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -875,7 +866,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -1004,7 +994,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
