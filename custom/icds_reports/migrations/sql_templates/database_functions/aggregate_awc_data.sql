@@ -289,38 +289,6 @@ BEGIN
     'CASE WHEN training_phase = 4 THEN 1 ELSE 0 END ' ||
   ')';
 
-  -- Aggregate data from LS supervision table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'ls_supervision_visit = ut.ls_supervision_visit, ' ||
-    'ls_num_supervised = ut.ls_num_supervised, ' ||
-    'ls_awc_location_lat = ut.ls_awc_location_lat, ' ||
-    'ls_awc_location_long = ut.ls_awc_location_long, ' ||
-    'ls_awc_present = ut.ls_awc_present, ' ||
-    'ls_awc_open = ut.ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available = ut.ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early = ut.ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday = ut.ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown = ut.ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other = ut.ls_awc_not_open_other ' ||
-  'FROM (SELECT ' ||
-    'awc_id AS awc_id, ' ||
-    'month, ' ||
-    'sum(count) AS ls_supervision_visit, ' ||
-    'CASE WHEN sum(count) > 0 THEN 1 ELSE 0 END AS ls_num_supervised, ' ||
-    'avg(awc_location_lat) AS ls_awc_location_lat, ' ||
-    'avg(awc_location_long) AS ls_awc_location_long, ' ||
-    'sum(aww_present) AS ls_awc_present, ' ||
-    'sum(awc_open) AS ls_awc_open, ' ||
-    'sum(awc_not_open_aww_not_available) AS ls_awc_not_open_aww_not_available, ' ||
-    'sum(awc_not_open_closed_early) AS ls_awc_not_open_closed_early, ' ||
-    'sum(awc_not_open_holiday) AS ls_awc_not_open_holiday, ' ||
-    'sum(awc_not_open_unknown) AS ls_awc_not_open_unknown, ' ||
-    'sum(awc_not_open_other) AS ls_awc_not_open_other '
-    'FROM ' || quote_ident(_ls_tablename) || ' ' ||
-    'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
-  'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
-
-
   -- Get latest infrastructure data
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'infra_last_update_date = ut.infra_last_update_date, ' ||
@@ -396,17 +364,6 @@ BEGIN
     'sum(usage_num_due_list_ccs), ' ||
     'sum(usage_num_due_list_child_health), ' ||
     'sum(usage_awc_num_active), ' ||
-    'sum(ls_supervision_visit), ' ||
-    'sum(ls_num_supervised), ' ||
-    'avg(ls_awc_location_long), ' ||
-    'avg(ls_awc_location_lat), ' ||
-    'sum(ls_awc_present), ' ||
-    'sum(ls_awc_open), ' ||
-    'sum(ls_awc_not_open_aww_not_available), ' ||
-    'sum(ls_awc_not_open_closed_early), ' ||
-    'sum(ls_awc_not_open_holiday), ' ||
-    'sum(ls_awc_not_open_unknown), ' ||
-    'sum(ls_awc_not_open_other), ' ||
     quote_nullable(_null_value) || ', ' ||
     quote_nullable(_null_value) || ', ' ||
     'sum(infra_type_of_building_pucca), ' ||
@@ -483,17 +440,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
     'infra_type_of_building_pucca, ' ||
@@ -597,17 +543,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
     'infra_type_of_building_pucca, ' ||
@@ -710,17 +645,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
     'infra_type_of_building_pucca, ' ||
@@ -822,17 +746,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
     'infra_type_of_building_pucca, ' ||
