@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import six
 from memoized import memoized
 from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
@@ -54,9 +55,9 @@ class UploadedTranslationsValidator(object):
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msgs.append(str(LESS_ROW_COUNT_MISMATCH_MESSAGE))
+            msgs.append(six.text_type(LESS_ROW_COUNT_MISMATCH_MESSAGE))
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msgs.append(str(MORE_ROW_COUNT_MISMATCH_MESSAGE))
+            msgs.append(six.text_type(MORE_ROW_COUNT_MISMATCH_MESSAGE))
 
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
