@@ -293,10 +293,6 @@ BEGIN
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'infra_last_update_date = ut.infra_last_update_date, ' ||
     'infra_type_of_building = ut.infra_type_of_building, ' ||
-    'infra_type_of_building_pucca = ut.infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca = ut.infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha = ut.infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space = ut.infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water = ut.infra_clean_water, ' ||
     'infra_functional_toilet = ut.infra_functional_toilet, ' ||
     'infra_baby_weighing_scale = ut.infra_baby_weighing_scale, ' ||
@@ -314,10 +310,6 @@ BEGIN
     'month, ' ||
     'submitted_on AS infra_last_update_date, ' ||
     'type_of_building AS infra_type_of_building, ' ||
-    'type_of_building_pucca AS infra_type_of_building_pucca, ' ||
-    'type_of_building_semi_pucca AS infra_type_of_building_semi_pucca, ' ||
-    'type_of_building_kuccha AS infra_type_of_building_kuccha, ' ||
-    'type_of_building_partial_covered_space AS infra_type_of_building_partial_covered_space, ' ||
     'clean_water AS infra_clean_water, ' ||
     'functional_toilet AS infra_functional_toilet, ' ||
     'baby_scale_usable AS infra_baby_weighing_scale, ' ||
@@ -366,10 +358,6 @@ BEGIN
     'sum(usage_awc_num_active), ' ||
     quote_nullable(_null_value) || ', ' ||
     quote_nullable(_null_value) || ', ' ||
-    'sum(infra_type_of_building_pucca), ' ||
-    'sum(infra_type_of_building_semi_pucca), ' ||
-    'sum(infra_type_of_building_kuccha), ' ||
-    'sum(infra_type_of_building_partial_covered_space), ' ||
     'sum(infra_clean_water), ' ||
     'sum(infra_functional_toilet), ' ||
     'sum(infra_baby_weighing_scale), ' ||
@@ -442,10 +430,6 @@ BEGIN
     'usage_awc_num_active, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -545,10 +529,6 @@ BEGIN
     'usage_awc_num_active, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -647,10 +627,6 @@ BEGIN
     'usage_awc_num_active, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -748,10 +724,6 @@ BEGIN
     'usage_awc_num_active, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
