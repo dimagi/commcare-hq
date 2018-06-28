@@ -45,10 +45,6 @@ class RemindersTest(ILSTestScript):
         SupplyPointStatus.objects.all().delete()
         super(RemindersTest, self).tearDown()
 
-    @classmethod
-    def tearDownClass(cls):
-        super(RemindersTest, cls).tearDownClass()
-
 
 class TestStockOnHandReminders(RemindersTest):
 
