@@ -108,6 +108,27 @@ def _get_active_scheduling_rules(domain, survey_only=False):
     return result
 
 
+def get_refresh_alert_schedule_instances_call(broadcast):
+    def refresh():
+        refresh_alert_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+        )
+
+    return refresh
+
+
+def get_refresh_timed_schedule_instances_call(broadcast):
+    def refresh():
+        refresh_timed_schedule_instances.delay(
+            broadcast.schedule_id,
+            broadcast.recipients,
+            start_date=broadcast.start_date
+        )
+
+    return refresh
+
+
 def _deactivate_schedules(domain, survey_only=False):
     """
     The subscription changes are executed within a transaction, so
@@ -118,18 +139,15 @@ def _deactivate_schedules(domain, survey_only=False):
 
     for broadcast in _get_active_immediate_broadcasts(domain, survey_only=survey_only):
         AlertSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
-        transaction.on_commit(lambda: refresh_alert_schedule_instances.delay(
-            broadcast.schedule_id,
-            broadcast.recipients,
-        ))
+        # We have to generate this function outside of this context otherwise it will be
+        # bound to the name broadcast which changes over the course of iteration
+        transaction.on_commit(get_refresh_alert_schedule_instances_call(broadcast))
 
     for broadcast in _get_active_scheduled_broadcasts(domain, survey_only=survey_only):
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
-        transaction.on_commit(lambda: refresh_timed_schedule_instances.delay(
-            broadcast.schedule_id,
-            broadcast.recipients,
-            start_date=broadcast.start_date
-        ))
+        # We have to generate this function outside of this context otherwise it will be
+        # bound to the name broadcast which changes over the course of iteration
+        transaction.on_commit(get_refresh_timed_schedule_instances_call(broadcast))
 
     for rule in _get_active_scheduling_rules(domain, survey_only=survey_only):
         """
