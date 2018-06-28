@@ -109,22 +109,27 @@ def _get_active_scheduling_rules(domain, survey_only=False):
 
 
 def _deactivate_schedules(domain, survey_only=False):
+    """
+    The subscription changes are executed within a transaction, so
+    we need to make sure any celery tasks only get started after the
+    transaction commits.
+    """
     from corehq.messaging.tasks import initiate_messaging_rule_run
 
     for broadcast in _get_active_immediate_broadcasts(domain, survey_only=survey_only):
         AlertSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
-        refresh_alert_schedule_instances.delay(
+        transaction.on_commit(lambda: refresh_alert_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
-        )
+        ))
 
     for broadcast in _get_active_scheduled_broadcasts(domain, survey_only=survey_only):
         TimedSchedule.objects.filter(schedule_id=broadcast.schedule_id).update(active=False)
-        refresh_timed_schedule_instances.delay(
+        transaction.on_commit(lambda: refresh_timed_schedule_instances.delay(
             broadcast.schedule_id,
             broadcast.recipients,
             start_date=broadcast.start_date
-        )
+        ))
 
     for rule in _get_active_scheduling_rules(domain, survey_only=survey_only):
         """

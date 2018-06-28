@@ -17,6 +17,7 @@ from corehq.util.celery_utils import no_result_task
 from dimagi.utils.couch import CriticalSection
 from django.conf import settings
 from django.db.models import Q
+from django.db import transaction
 
 
 def get_sync_key(case_id):
@@ -100,7 +101,7 @@ def _sync_case_for_messaging_rule(domain, case_id, rule_id):
 def initiate_messaging_rule_run(domain, rule_id):
     MessagingRuleProgressHelper(rule_id).set_initial_progress()
     AutomaticUpdateRule.objects.filter(pk=rule_id).update(locked_for_editing=True)
-    run_messaging_rule.delay(domain, rule_id)
+    transaction.on_commit(lambda: run_messaging_rule.delay(domain, rule_id))
 
 
 def get_case_ids_for_messaging_rule(domain, case_type):
