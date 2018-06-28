@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import namedtuple
-from itertools import chain
+from itertools import chain, imap
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
@@ -418,30 +418,34 @@ def get_all_built_app_ids_and_versions(domain, app_id=None):
     [[AppBuildVersion(app_id, build_id, version, comment)], ...]
     If app_id is provided, limit to bulds for that app.
     """
-    return [
-        AppBuildVersion(
+    def _process_result(result):
+        return AppBuildVersion(
             app_id=result['key'][1],
             build_id=result['id'],
             version=result['key'][2],
             comment=result['value']['build_comment'],
         )
-        for result in get_all_built_app_results(domain, app_id)
-    ]
+    return imap(_process_result, get_all_built_app_results(domain, app_id))
 
 
 def get_all_built_app_results(domain, app_id=None):
     from .models import Application
     startkey = [domain]
     endkey = [domain, {}]
+    kwargs = {
+        "include_docs": True,
+    }
     if app_id:
-        startkey = [domain, app_id]
-        endkey = [domain, app_id, {}]
-    return Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=startkey,
-        endkey=endkey,
-        include_docs=True,
-    ).all()
+        kwargs.update({
+            "startkey": [domain, app_id],
+            "endkey": [domain, app_id, {}],
+        })
+    for doc in paginate_view(
+            Application.get_db(),
+            'app_manager/saved_app',
+            1000,
+            **kwargs):
+        yield doc
 
 
 def get_available_versions_for_app(domain, app_id):
