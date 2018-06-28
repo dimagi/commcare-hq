@@ -270,16 +270,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 row.addClass("moving").siblings().removeClass('moving');
 
                 var currentIndex = getIndexFromRow(row);
-                if (list()[currentIndex].selected()) {
-                    for (var i = list().length - 1; i > currentIndex; i--) {
-                        if (list()[i].selected()) {
-                            moveRowToIndex(row, i);
-                            break;
-                        }
-                    }
-                } else {
-                    moveRowToIndex(row, list().length - 1);
-                }
+                moveRowToIndex(row, list().length - 1);
             });
 
             $(element).sortable({
