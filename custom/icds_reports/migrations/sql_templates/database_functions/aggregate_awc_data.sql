@@ -231,15 +231,7 @@ BEGIN
     'usage_num_delivery = ut.usage_num_delivery, ' ||
     'usage_awc_num_active = ut.usage_awc_num_active, ' ||
     'usage_num_due_list_ccs = ut.usage_num_due_list_ccs, ' ||
-    'usage_num_due_list_child_health = ut.usage_num_due_list_child_health, ' ||
-    'usage_time_pse = ut.usage_time_pse, ' ||
-    'usage_time_gmp = ut.usage_time_gmp, ' ||
-    'usage_time_bp = ut.usage_time_bp, ' ||
-    'usage_time_pnc = ut.usage_time_pnc, ' ||
-    'usage_time_ebf = ut.usage_time_ebf, ' ||
-    'usage_time_cf = ut.usage_time_cf, ' ||
-    'usage_time_of_day_pse = ut.usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit = ut.usage_time_of_day_home_visit ' ||
+    'usage_num_due_list_child_health = ut.usage_num_due_list_child_health ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -262,15 +254,7 @@ BEGIN
     'sum(delivery) AS usage_num_delivery, ' ||
     'CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
     'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
-    'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
-    'avg(pse_time) AS usage_time_pse, ' ||
-    'avg(gmp_time) AS usage_time_gmp, ' ||
-    'avg(bp_time) AS usage_time_bp, ' ||
-    'avg(pnc_time) AS usage_time_pnc, ' ||
-    'avg(ebf_time) AS usage_time_ebf, ' ||
-    'avg(cf_time) AS usage_time_cf, ' ||
-    'avg(pse_time_of_day::time) AS usage_time_of_day_pse, ' ||
-    'avg(home_visit_time_of_day::time) AS usage_time_of_day_home_visit '
+    'sum(due_list_child) AS usage_num_due_list_child_health ' ||
     'FROM ' || quote_ident(_usage_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -437,14 +421,6 @@ BEGIN
     'sum(usage_num_due_list_ccs), ' ||
     'sum(usage_num_due_list_child_health), ' ||
     'sum(usage_awc_num_active), ' ||
-    'avg(usage_time_pse), ' ||
-    'avg(usage_time_gmp), ' ||
-    'avg(usage_time_bp), ' ||
-    'avg(usage_time_pnc), ' ||
-    'avg(usage_time_ebf), ' ||
-    'avg(usage_time_cf), ' ||
-    'avg(usage_time_of_day_pse), ' ||
-    'avg(usage_time_of_day_home_visit), ' ||
     'sum(vhnd_immunization), ' ||
     'sum(vhnd_anc), ' ||
     'sum(vhnd_gmp), ' ||
@@ -540,14 +516,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
     'vhnd_immunization, ' ||
     'vhnd_anc, ' ||
     'vhnd_gmp, ' ||
@@ -670,14 +638,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
     'vhnd_immunization, ' ||
     'vhnd_anc, ' ||
     'vhnd_gmp, ' ||
@@ -799,14 +759,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
     'vhnd_immunization, ' ||
     'vhnd_anc, ' ||
     'vhnd_gmp, ' ||
@@ -927,14 +879,6 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
     'vhnd_immunization, ' ||
     'vhnd_anc, ' ||
     'vhnd_gmp, ' ||
