@@ -19,10 +19,10 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 menus;
 
             if (!params.preview) {
-                // Make sure the user has access to this app
+                // Make sure the user has access to the canonical (not a build) version of this app
                 var accessibleApps = hqImport("hqwebapp/js/initial_page_data").get("apps"),
-                    accessibleAppIds = _.pluck(accessibleApps, '_id');
-                if (!_.contains(accessibleAppIds, params.appId)) {
+                    accessibleAppIds = _.map(accessibleApps, function(a) { return a.copy_of || a._id; });
+                if (!_.contains(accessibleAppIds, params.appId) && !_.contains(accessibleAppIds, params.copyOf)) {
                     FormplayerFrontend.trigger(
                         'showError',
                         gettext("Permission Denied")
