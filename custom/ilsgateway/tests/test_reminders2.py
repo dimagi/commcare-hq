@@ -45,15 +45,6 @@ class RemindersTest(ILSTestScript):
         SupplyPointStatus.objects.all().delete()
         super(RemindersTest, self).tearDown()
 
-    @classmethod
-    def tearDownClass(cls):
-        delete_domain_phone_numbers(TEST_DOMAIN)
-        if cls.sms_backend_mapping.id is not None:
-            cls.sms_backend_mapping.delete()
-        cls.sms_backend.delete()
-        cls.domain.delete()
-        super(RemindersTest, cls).tearDownClass()
-
 
 class TestStockOnHandReminders(RemindersTest):
 
