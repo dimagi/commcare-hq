@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+from __future__ import unicode_literals
 from memoized import memoized
 from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
