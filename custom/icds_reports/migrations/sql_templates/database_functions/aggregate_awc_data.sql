@@ -73,8 +73,8 @@ BEGIN
 
   -- Setup base locations and month
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) ||
-    ' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-    'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, is_launched, aggregation_level) ' ||
+    ' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, ' ||
+    'is_launched, aggregation_level) ' ||
     '(SELECT ' ||
       'state_id, ' ||
       'district_id, ' ||
@@ -83,11 +83,6 @@ BEGIN
       'doc_id AS awc_id, ' ||
       quote_literal(_start_date) || ', ' ||
       '1, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
       quote_literal(_no_text) || ', ' ||
       '5 ' ||
     'FROM ' || quote_ident(_awc_location_tablename) ||')';
