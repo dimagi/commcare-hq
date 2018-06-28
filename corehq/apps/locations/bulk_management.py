@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 from collections import Counter, defaultdict, namedtuple
+from attr import attrs, attrib, astuple
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -41,11 +42,16 @@ class LocationUploadResult(object):
         return not self.errors
 
 
-# read-only representation of location type attributes specified in an upload
-LocationTypeData = namedtuple(
-    'LocationTypeData',
-    'name code parent_code do_delete shares_cases view_descendants index'
-)
+@attrs(frozen=True)
+class LocationTypeData(object):
+    """read-only representation of location type attributes specified in an upload"""
+    name = attrib(type=six.text_type)
+    code = attrib(type=six.text_type)
+    parent_code = attrib(converter=lambda code: code or ROOT_LOCATION_TYPE)
+    do_delete = attrib(type=bool)
+    shares_cases = attrib(type=bool)
+    view_descendants = attrib(type=bool)
+    index = attrib(type=int)
 
 
 class LocationTypeStub(object):
@@ -364,7 +370,7 @@ class LocationExcelValidator(object):
         titles = LOCATION_TYPE_SHEET_HEADERS
         name = row.get(titles['name'])
         code = row.get(titles['code'])
-        parent_code = row.get(titles['parent_code']) or ROOT_LOCATION_TYPE
+        parent_code = row.get(titles['parent_code'])
         do_delete = row.get(titles['do_delete'], 'N').lower() in ['y', 'yes']
         shares_cases = row.get(titles['shares_cases'], 'N').lower() in ['y', 'yes']
         view_descendants = row.get(titles['view_descendants'], 'N').lower() in ['y', 'yes']
