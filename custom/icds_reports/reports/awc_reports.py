@@ -13,7 +13,7 @@ from corehq.util.quickcache import quickcache
 from corehq.util.view_utils import absolute_reverse
 from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggAwcMonthly, DailyAttendanceView, \
-    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView, ChildHealthMonthly
+    AggChildHealthMonthly, AggAwcDailyView, AggCcsRecordMonthly, ChildHealthMonthlyView
 from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, percent_increase, \
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
@@ -1042,7 +1042,7 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
 
 @quickcache(['case_id', 'awc_id'], timeout=30 * 60)
 def get_beneficiary_details(case_id, awc_id):
-    data = ChildHealthMonthly.objects.filter(
+    data = ChildHealthMonthlyView.objects.filter(
         case_id=case_id,
         awc_ic=awc_id
     ).order_by('month')
