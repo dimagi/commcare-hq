@@ -99,18 +99,14 @@
         },
         "configured_indicators": [
             {
-                "column_id": "timeEnd",
+                "column_id": "received_on",
                 "datatype": "datetime",
-                "display_name": "timeEnd",
+                "display_name": "received_on",
                 "expression": {
                     "expression": {
                         "datatype": null,
-                        "property_path": [
-                            "form",
-                            "meta",
-                            "timeEnd"
-                        ],
-                        "type": "property_path"
+                        "property_name": "received_on",
+                        "type": "property_name"
                     },
                     "type": "root_doc"
                 },
