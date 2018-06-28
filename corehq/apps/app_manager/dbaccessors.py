@@ -441,12 +441,12 @@ def get_all_built_app_results(domain, app_id=None):
         "endkey": endkey,
         "descending": True,
         "reduce": False,
-        "include_docs": True,
+        "include_docs": False,
     }
     for doc in paginate_view(
             Application.get_db(),
             'app_manager/saved_app',
-            10,
+            1000,
             **kwargs):
         yield doc
 
