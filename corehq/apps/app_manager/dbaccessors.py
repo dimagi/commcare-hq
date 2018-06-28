@@ -5,6 +5,7 @@ from itertools import chain, imap
 
 from couchdbkit.exceptions import DocTypeError
 from couchdbkit.resource import ResourceNotFound
+from corehq.util.couch_helpers import paginate_view
 from corehq.util.quickcache import quickcache
 from django.http import Http404
 from django.core.cache import cache
@@ -430,18 +431,24 @@ def get_all_built_app_ids_and_versions(domain, app_id=None):
 
 def get_all_built_app_results(domain, app_id=None):
     from .models import Application
-    startkey = [domain]
-    endkey = [domain, {}]
+    startkey = [domain, {}]
+    endkey = [domain]
     if app_id:
         startkey = [domain, app_id, {}]
         endkey = [domain, app_id]
-    return Application.get_db().view(
-        'app_manager/saved_app',
-        startkey=startkey,
-        endkey=endkey,
-        descending=True,
-        include_docs=True,
-    ).all()
+    kwargs = {
+        "startkey": startkey,
+        "endkey": endkey,
+        "descending": True,
+        "reduce": False,
+        "include_docs": True,
+    }
+    for doc in paginate_view(
+            Application.get_db(),
+            'app_manager/saved_app',
+            1000,
+            **kwargs):
+        yield doc
 
 
 def get_available_versions_for_app(domain, app_id):
