@@ -40,6 +40,7 @@ def _get_profile(request):
     else:
         return None
 
+
 @require_deploy_apps
 @safe_download
 def download_odk_profile(request, domain, app_id):
