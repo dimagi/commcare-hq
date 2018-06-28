@@ -105,48 +105,12 @@ BEGIN
   -- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'awc_days_open = ut.awc_days_open, ' ||
-    'total_eligible_children = ut.total_eligible_children, ' ||
-    'total_attended_children = ut.total_attended_children, ' ||
-    'pse_avg_attendance_percent = ut.pse_avg_attendance_percent, ' ||
-    'pse_full = ut.pse_full, ' ||
-    'pse_partial = ut.pse_partial, ' ||
-    'pse_non = ut.pse_non, ' ||
-    'pse_score = ut.pse_score, ' ||
-    'awc_days_provided_breakfast = ut.awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal = ut.awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr = ut.awc_days_provided_thr, ' ||
-    'awc_days_provided_pse = ut.awc_days_provided_pse, ' ||
-    'awc_not_open_holiday = ut.awc_not_open_holiday, ' ||
-    'awc_not_open_festival = ut.awc_not_open_festival, ' ||
-    'awc_not_open_no_help = ut.awc_not_open_no_help, ' ||
-    'awc_not_open_department_work = ut.awc_not_open_department_work, ' ||
-    'awc_not_open_other = ut.awc_not_open_other, ' ||
-    'awc_not_open_no_data = ut.awc_not_open_no_data, ' ||
     'awc_num_open = ut.awc_num_open, ' ||
     'awc_days_pse_conducted = ut.awc_days_pse_conducted ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(awc_open_count) AS awc_days_open, ' ||
-    'sum(eligible_children) AS total_eligible_children, ' ||
-    'sum(attended_children) AS total_attended_children, ' ||
-    'avg(attended_children_percent) AS pse_avg_attendance_percent, ' ||
-    'sum(attendance_full) AS pse_full, ' ||
-    'sum(attendance_partial) AS pse_partial, ' ||
-    'sum(attendance_non) AS pse_non, ' ||
-    'CASE WHEN ((sum(attendance_full)::numeric * 1.25) + (0.625 * sum(attendance_partial)::numeric) + (0.0625 * sum(attendance_non)::numeric)) >= 20 THEN 20 ' ||
-      'WHEN ((sum(attendance_full)::numeric * 1.25) + (0.625 * sum(attendance_partial)::numeric) + (0.0625 * sum(attendance_non)::numeric)) >= 10 THEN 10 ' ||
-      'ELSE 1 END AS pse_score, ' ||
-    'sum(open_bfast_count) AS awc_days_provided_breakfast, ' ||
-    'sum(open_hotcooked_count) AS awc_days_provided_hotmeal, ' ||
-    'sum(days_thr_provided_count) AS awc_days_provided_thr, ' ||
-    'sum(open_pse_count) AS awc_days_provided_pse, ' ||
-    'sum(awc_not_open_holiday) AS awc_not_open_holiday, ' ||
-    'sum(awc_not_open_festival) AS awc_not_open_festival, ' ||
-    'sum(awc_not_open_no_help) AS awc_not_open_no_help, ' ||
-    'sum(awc_not_open_department_work) AS awc_not_open_department_work, ' ||
-    'sum(awc_not_open_other) AS awc_not_open_other, ' ||
-    '25 - sum(awc_open_count) AS awc_not_open_no_data, ' ||
     'CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open, ' ||
     'sum(pse_conducted) as awc_days_pse_conducted '
     'FROM ' || quote_ident(_daily_attendance_tablename) || ' ' ||
@@ -504,24 +468,7 @@ BEGIN
   -- Roll Up by Location
   _rollup_text =   'sum(num_awcs), ' ||
     'sum(awc_days_open), ' ||
-    'sum(total_eligible_children), ' ||
-    'sum(total_attended_children), ' ||
-    'avg(pse_avg_attendance_percent), ' ||
-    'sum(pse_full), ' ||
-    'sum(pse_partial), ' ||
-    'sum(pse_non), ' ||
-    'avg(pse_score), ' ||
-    'sum(awc_days_provided_breakfast), ' ||
-    'avg(awc_days_provided_hotmeal), ' ||
-    'sum(awc_days_provided_thr), ' ||
-    'sum(awc_days_provided_pse), ' ||
-    'sum(awc_not_open_holiday), ' ||
-    'sum(awc_not_open_festival), ' ||
-    'sum(awc_not_open_no_help), ' ||
-    'sum(awc_not_open_department_work), ' ||
-    'sum(awc_not_open_other), ' ||
     'sum(awc_num_open), ' ||
-    'sum(awc_not_open_no_data), ' ||
     'sum(wer_weighed), ' ||
     'sum(wer_eligible), ' ||
     'avg(wer_score), ' ||
@@ -636,24 +583,7 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
     'wer_score, ' ||
@@ -795,24 +725,7 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
     'wer_score, ' ||
@@ -953,24 +866,7 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
     'wer_score, ' ||
@@ -1110,24 +1006,7 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
     'wer_score, ' ||
