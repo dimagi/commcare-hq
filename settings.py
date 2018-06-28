@@ -1814,6 +1814,7 @@ BASE_REPEATERS = (
     'corehq.motech.repeaters.models.UserRepeater',
     'corehq.motech.repeaters.models.LocationRepeater',
     'corehq.motech.openmrs.repeaters.OpenmrsRepeater',
+    'corehq.motech.dhis2.repeaters.Dhis2Repeater',
 )
 
 ENIKSHAY_REPEATERS = (

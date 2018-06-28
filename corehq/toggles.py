@@ -499,6 +499,13 @@ DHIS2_INTEGRATION = StaticToggle(
     [NAMESPACE_DOMAIN]
 )
 
+DHIS2_REPEATER_INTEGRATION = StaticToggle(
+    'dhis2_repeater_integration',
+    'DHIS2 Repeater Integration (Needed DHIS@ Integration enabled)',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN]
+)
+
 GRAPH_CREATION = StaticToggle(
     'graph-creation',
     'Case list/detail graph creation',
