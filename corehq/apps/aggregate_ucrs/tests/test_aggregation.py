@@ -33,6 +33,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     case_type = 'agg-cases'
     case_name = 'Mama'
     case_date_opened = datetime(2017, 12, 19)
+    case_date_closed = datetime(2018, 4, 7)
     case_properties = (
         ('first_name', 'First Name', 'string', 'Mama'),
         ('last_name', 'Last Name', 'string', 'Luck'),
@@ -84,6 +85,9 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         for fu_date in cls.fu_visit_dates:
             cls._submit_followup_form(cls.case_id, received_on=fu_date)
 
+        # the closed case causes there to be some data with an end_column
+        cls.closed_case_id = cls._create_closed_case()
+
         # populate the UCRs with the data we just created
         cls.form_adapter = get_indicator_adapter(cls.form_data_source)
         cls.case_adapter = get_indicator_adapter(cls.case_data_source)
@@ -117,7 +121,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     def setUp(self):
         # confirm that our setupClass function properly did its job
         self.assertEqual(3, self.form_adapter.get_query_object().count())
-        self.assertEqual(1, self.case_adapter.get_query_object().count())
+        self.assertEqual(2, self.case_adapter.get_query_object().count())
         self.assertEqual(1, self.parent_case_adapter.get_query_object().count())
 
     @classmethod
@@ -145,6 +149,20 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             index={
                 'parent': (cls.case_type, parent_id)
             }
+        )
+        post_case_blocks([caseblock.as_xml()], domain=cls.domain)
+        return case_id
+
+    @classmethod
+    def _create_closed_case(cls):
+        case_id = uuid.uuid4().hex
+        caseblock = CaseBlock(
+            case_id=case_id,
+            case_type=cls.case_type,
+            date_opened=cls.case_date_opened,
+            date_modified=cls.case_date_closed,
+            case_name=cls.case_name,
+            close=True,
         )
         post_case_blocks([caseblock.as_xml()], domain=cls.domain)
         return case_id
