@@ -311,7 +311,6 @@ class ConfigurableReportPillowProcessor(ConfigurableReportTableManagerMixin, Bul
                     failed_changes.union(to_update)
 
             if async_configs_by_doc_id:
-                # Todo; handle multiple doc-types
                 doc_type_by_id = {
                     _id: changes_by_id[_id].metadata.document_type
                     for _id in async_configs_by_doc_id.keys()

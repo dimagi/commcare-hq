@@ -171,8 +171,7 @@ class PillowBase(six.with_metaclass(ABCMeta, object)):
                 # fall back to processing one by one for failed changes
                 for change in failed_changes:
                     self.process_with_error_handling(change, context, chunked_fallback=True)
-        for change in changes_chunk:
-            context.changes_seen += 1
+        context.changes_seen += len(changes_chunk)
         # update checkpoint for just the latest change
         self._update_checkpoint(changes_chunk[-1], context)
         self._record_datadog_metrics(changes_chunk, failed_changes, timer)
