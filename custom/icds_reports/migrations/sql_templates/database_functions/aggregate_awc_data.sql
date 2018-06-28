@@ -119,7 +119,6 @@ BEGIN
     'cases_child_health_all = ut.cases_child_health_all, ' ||
     'wer_weighed = ut.wer_weighed, ' ||
     'wer_eligible = ut.wer_eligible, ' ||
-    'wer_score = ut.wer_score, ' ||
     'thr_eligible_child = ut.thr_eligible_child, ' ||
     'thr_rations_21_plus_distributed_child = ut.thr_rations_21_plus_distributed_child ' ||
   'FROM (SELECT ' ||
@@ -129,10 +128,6 @@ BEGIN
     'sum(valid_all_registered_in_month) AS cases_child_health_all, ' ||
     'sum(nutrition_status_weighed) AS wer_weighed, ' ||
     'sum(wer_eligible) AS wer_eligible, ' ||
-    'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
-      'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
-      'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.6 THEN 10 ' ||
-      'ELSE 1 END AS wer_score, ' ||
     'sum(thr_eligible) AS thr_eligible_child, ' ||
     'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
     'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
@@ -342,10 +337,10 @@ BEGIN
     'trained_phase_3, ' ||
     'trained_phase_4) = ' ||
   '(' ||
-    'pse_score + thr_score + wer_score, ' ||
-    'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END, ' ||
+    'pse_score + thr_score, ' ||
+    'CASE WHEN (pse_score + thr_score) >= 60 THEN 1 ELSE 0 END, ' ||
+    'CASE WHEN ((pse_score + thr_score) >= 40 AND (pse_score + thr_score) < 60) THEN 1 ELSE 0 END, ' ||
+    'CASE WHEN (pse_score + thr_score) < 40 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 1 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 2 THEN 1 ELSE 0 END, ' ||
     'CASE WHEN training_phase = 3 THEN 1 ELSE 0 END, ' ||
@@ -467,7 +462,6 @@ BEGIN
     'sum(awc_num_open), ' ||
     'sum(wer_weighed), ' ||
     'sum(wer_eligible), ' ||
-    'avg(wer_score), ' ||
     'sum(thr_eligible_child), ' ||
     'sum(thr_rations_21_plus_distributed_child), ' ||
     'sum(thr_eligible_ccs), ' ||
@@ -582,7 +576,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
     'thr_eligible_child, ' ||
     'thr_rations_21_plus_distributed_child, ' ||
     'thr_eligible_ccs, ' ||
@@ -724,7 +717,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
     'thr_eligible_child, ' ||
     'thr_rations_21_plus_distributed_child, ' ||
     'thr_eligible_ccs, ' ||
@@ -865,7 +857,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
     'thr_eligible_child, ' ||
     'thr_rations_21_plus_distributed_child, ' ||
     'thr_eligible_ccs, ' ||
@@ -1005,7 +996,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
     'thr_eligible_child, ' ||
     'thr_rations_21_plus_distributed_child, ' ||
     'thr_eligible_ccs, ' ||
