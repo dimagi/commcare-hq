@@ -113,18 +113,14 @@ BEGIN
     'cases_child_health = ut.cases_child_health, ' ||
     'cases_child_health_all = ut.cases_child_health_all, ' ||
     'wer_weighed = ut.wer_weighed, ' ||
-    'wer_eligible = ut.wer_eligible, ' ||
-    'thr_eligible_child = ut.thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child = ut.thr_rations_21_plus_distributed_child ' ||
+    'wer_eligible = ut.wer_eligible ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(valid_in_month) AS cases_child_health, ' ||
     'sum(valid_all_registered_in_month) AS cases_child_health_all, ' ||
     'sum(nutrition_status_weighed) AS wer_weighed, ' ||
-    'sum(wer_eligible) AS wer_eligible, ' ||
-    'sum(thr_eligible) AS thr_eligible_child, ' ||
-    'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
+    'sum(wer_eligible) AS wer_eligible ' ||
     'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -134,18 +130,14 @@ BEGIN
     'cases_ccs_pregnant = ut.cases_ccs_pregnant, ' ||
     'cases_ccs_lactating = ut.cases_ccs_lactating, ' ||
     'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
-    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
-    'thr_eligible_ccs = ut.thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs = ut.thr_rations_21_plus_distributed_ccs ' ||
+    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(pregnant) AS cases_ccs_pregnant, ' ||
     'sum(lactating) AS cases_ccs_lactating, ' ||
     'sum(pregnant_all) AS cases_ccs_pregnant_all, ' ||
-    'sum(lactating_all) AS cases_ccs_lactating_all, ' ||
-    'sum(thr_eligible) AS thr_eligible_ccs, ' ||
-    'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
+    'sum(lactating_all) AS cases_ccs_lactating_all ' ||
     'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -226,14 +218,6 @@ BEGIN
     'WHERE pregnant = 1 OR lactating = 1 ' ||
     'GROUP BY awc_id) ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
-
-  -- Pass to combine THR information from ccs record and child health table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
-  'CASE WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
-    '(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.7 THEN 20 ' ||
-    'WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
-    '(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.5 THEN 10 ' ||
-    'ELSE 1 END';
 
   -- Aggregate data from usage table
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
@@ -457,11 +441,6 @@ BEGIN
     'sum(awc_num_open), ' ||
     'sum(wer_weighed), ' ||
     'sum(wer_eligible), ' ||
-    'sum(thr_eligible_child), ' ||
-    'sum(thr_rations_21_plus_distributed_child), ' ||
-    'sum(thr_eligible_ccs), ' ||
-    'sum(thr_rations_21_plus_distributed_ccs), ' ||
-    'avg(thr_score), ' ||
     'avg(awc_score), ' ||
     'sum(num_awc_rank_functional), ' ||
     'sum(num_awc_rank_semi), ' ||
@@ -571,11 +550,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
     'awc_score, ' ||
     'num_awc_rank_functional, ' ||
     'num_awc_rank_semi, ' ||
@@ -712,11 +686,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
     'awc_score, ' ||
     'num_awc_rank_functional, ' ||
     'num_awc_rank_semi, ' ||
@@ -852,11 +821,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
     'awc_score, ' ||
     'num_awc_rank_functional, ' ||
     'num_awc_rank_semi, ' ||
@@ -991,11 +955,6 @@ BEGIN
     'awc_num_open, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
     'awc_score, ' ||
     'num_awc_rank_functional, ' ||
     'num_awc_rank_semi, ' ||
