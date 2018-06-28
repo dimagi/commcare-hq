@@ -388,4 +388,4 @@ class Broadcast(models.Model):
 
     @classmethod
     def domain_has_broadcasts(cls, domain):
-        return cls.objects.filter(domain=domain, deleted=False).count() > 0
+        return cls.objects.filter(domain=domain, deleted=False).exists()
