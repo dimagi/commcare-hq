@@ -211,13 +211,13 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $(this).toggleClass("selected-for-sort").toggleClass('success');
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
+                    var shiftSelectedIndex = getIndexFromRow($(this)),
                         shiftClickedRow = $(this),
                         lastClickedIndex = 0,
                         lastClickedRow = null;
                     if ($('.last-clicked').length > 0) {
                         lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
+                        lastClickedIndex = getIndexFromRow(lastClickedRow);
                     } else {
                         lastClickedRow = $(this).parent().children().eq(0);
                     }
