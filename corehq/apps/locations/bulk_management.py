@@ -419,7 +419,7 @@ class NewLocationImporter(object):
         types_changed = any(loc_type.needs_save for loc_type in type_stubs)
         moved_to_root = any(loc.moved_to_root for loc in location_stubs)
         delay_updates = not (types_changed or moved_to_root)
-        save_locations(location_stubs, type_objects, self.old_collection.locations_by_pk,
+        save_locations(location_stubs, type_objects, self.old_collection,
                        self.domain, delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         # that occurs inside LocationType.save needs to be explicitly called here
@@ -810,7 +810,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, old_locations_by_pk, domain,
+def save_locations(location_stubs, types_by_code, old_collection, domain,
                    delay_updates, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
@@ -844,6 +844,7 @@ def save_locations(location_stubs, types_by_code, old_locations_by_pk, domain,
 
         return top_to_bottom_locations
 
+    location_stubs_by_code = {stub.site_code: stub for stub in location_stubs}
     delete_locations = []
     for stubs in chunked(order_by_location_type(), chunk_size):
         with transaction.atomic():
@@ -860,7 +861,14 @@ def save_locations(location_stubs, types_by_code, old_locations_by_pk, domain,
                 if loc.needs_save:
                     loc_object = loc.db_object
                     loc_object.location_type = types_by_code.get(loc.location_type)
-                    loc_object.parent = loc.new_parent
+                    parent_code = loc.parent_code
+                    if parent_code == ROOT_LOCATION_TYPE:
+                        loc_object.parent = None
+                    elif parent_code:
+                        if parent_code in location_stubs_by_code:
+                            loc_object.parent = location_stubs_by_code[parent_code].db_object
+                        else:
+                            loc_object.parent = old_collection.locations_by_site_code[parent_code]
                     loc_object.save()
 
     _seen = set()
@@ -873,7 +881,7 @@ def save_locations(location_stubs, types_by_code, old_locations_by_pk, domain,
                 pk = loc.db_object.pk
                 while pk is not None and pk not in _seen:
                     _seen.add(pk)
-                    location = old_locations_by_pk[pk]
+                    location = old_collection.locations_by_pk[pk]
                     yield location.location_id
                     pk = location.parent_id
 
