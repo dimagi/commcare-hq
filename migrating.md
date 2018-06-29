@@ -66,6 +66,7 @@ To declare dependencies:
 - Search the module for `hqImport` calls. Add any imported modules do the dependency list and parameter list, and replace calls to `hqImport(...)` with the new parameter name.
 - If you removed any `<script>` tags from the template and haven't yet added them to the dependency list, do that.
 - Check the view for any [hqwebapp decorators](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/decorators.py) like `use_jquery_ui` which are used to include many common yet not global third-party libraries. Note that you typically should **not** remove the decorator, because these decorators often control both css and js, but you **do** need to add any js scripts controlled by the decorator to your js module.
+- If the module uses any globals from third parties, add the script as a dependency and also add the global to `thirdPartyGlobals` in [hqModules.js](https://github.com/dimagi/commcare-hq/blob/master/corehq/apps/hqwebapp/static/hqwebapp/js/hqModules.js) which prevents errors on pages that use your module but are not yet migrated to requirejs.
 
 Dependencies that aren't directly referenced as modules **don't** need to be added as function parameters, but they **do** need to be in the dependency list, so just put them at the end of the list. This tends to happen for custom knockout bindings, which are referenced only in the HTML, or jQuery plugins, which are referenced via the jQuery object rather than by the module's name.
 
@@ -75,6 +76,8 @@ It's often prohibitively time-consuming to test every JavaScript interaction on 
 - If you replaced any `hqImport` calls that were inside of event handlers or other callbacks, verify that those areas still work correctly. When a migrated module is used on an unmigrated page, its dependencies need to be available at the time the module is defined. This is a change from previous behavior, where the dependencies didn't need to be defined until `hqImport` first called them. We do not currently have a construct to require dependencies after a module is defined.
 - The most likely missing dependencies are the invisible ones: knockout bindings and jquery plugins like select2. These often don't error but will look substantially different on the page if they haven't been initialized.
 - If your page depends on any third-party modules that might not yet be used on any RequireJS pages, test them. Third-party modules sometimes need to be upgraded to be compatible with RequireJS.
+- If your page touched any javascript modules that are used by pages that haven't yet been migrated, test at least one of those non-migrated pages.
+- Check if your base template has any descendants that should also be migrated.
 
 ## Moving away from classical inheritance
 
