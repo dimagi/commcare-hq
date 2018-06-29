@@ -215,7 +215,6 @@ class BaseEditConfigReportView(BaseUserConfigReportsView):
         return {
             'form': self.edit_form,
             'report': self.config,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
         }
 
     @property
@@ -975,7 +974,6 @@ class BaseEditDataSourceView(BaseUserConfigReportsView):
             'form': self.edit_form,
             'data_source': self.config,
             'read_only': self.read_only,
-            'code_mirror_off': self.request.GET.get('code_mirror', 'true') == 'false',
             'used_by_reports': self.get_reports(),
         }
 
