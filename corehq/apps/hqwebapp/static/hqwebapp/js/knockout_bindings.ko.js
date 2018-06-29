@@ -254,14 +254,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
 
             $(element).on('click', '.send-to-top', function () {
-                var row = $(this).parent().parent();
+                var row = $(this).closest('tr');
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
 
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                var row = $(this).parent().parent();
+                var row = $(this).closest('tr');
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
 
                 var currentIndex = getIndexFromRow(row);
@@ -269,7 +269,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             });
 
             $(element).on('click', '.export-table-checkbox', function () {
-                var row = $(this).parent().parent();
+                var row = $(this).closest('tr');
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
             });
 
