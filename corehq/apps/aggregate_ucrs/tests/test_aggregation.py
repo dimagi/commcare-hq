@@ -33,6 +33,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     case_type = 'agg-cases'
     case_name = 'Mama'
     case_date_opened = datetime(2017, 12, 19)
+    closed_case_date_opened = datetime(2018, 1, 7)
+    closed_case_date_closed = datetime(2018, 3, 7)
     case_properties = (
         ('first_name', 'First Name', 'string', 'Mama'),
         ('last_name', 'Last Name', 'string', 'Luck'),
@@ -84,6 +86,9 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         for fu_date in cls.fu_visit_dates:
             cls._submit_followup_form(cls.case_id, received_on=fu_date)
 
+        # the closed case causes there to be some data with an end_column
+        cls.closed_case_id = cls._create_closed_case()
+
         # populate the UCRs with the data we just created
         cls.form_adapter = get_indicator_adapter(cls.form_data_source)
         cls.case_adapter = get_indicator_adapter(cls.case_data_source)
@@ -117,7 +122,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     def setUp(self):
         # confirm that our setupClass function properly did its job
         self.assertEqual(3, self.form_adapter.get_query_object().count())
-        self.assertEqual(1, self.case_adapter.get_query_object().count())
+        self.assertEqual(2, self.case_adapter.get_query_object().count())
         self.assertEqual(1, self.parent_case_adapter.get_query_object().count())
 
     @classmethod
@@ -145,6 +150,20 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
             index={
                 'parent': (cls.case_type, parent_id)
             }
+        )
+        post_case_blocks([caseblock.as_xml()], domain=cls.domain)
+        return case_id
+
+    @classmethod
+    def _create_closed_case(cls):
+        case_id = uuid.uuid4().hex
+        caseblock = CaseBlock(
+            case_id=case_id,
+            case_type=cls.case_type,
+            date_opened=cls.closed_case_date_opened,
+            date_modified=cls.closed_case_date_closed,
+            case_name=cls.case_name,
+            close=True,
         )
         post_case_blocks([caseblock.as_xml()], domain=cls.domain)
         return case_id
@@ -274,13 +293,13 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         aggregate_table_adapter.rebuild_table()
 
         populate_aggregate_table_data(aggregate_table_adapter)
-        self._check_results()
+        self._check_monthly_results()
 
         # confirm it's also idempotent
         populate_aggregate_table_data(aggregate_table_adapter)
-        self._check_results()
+        self._check_monthly_results()
 
-    def _check_results(self):
+    def _check_monthly_results(self):
         aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.monthly_aggregate_table_definition)
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
@@ -288,9 +307,8 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         doc_id_column = aggregate_table.c['doc_id']
         month_column = aggregate_table.c['month']
 
-        # before december the case should not exist
+        # before december no case should not exist
         self.assertEqual(0, aggregate_query.filter(
-            doc_id_column == self.case_id,
             month_column <= '2017-11-01'
         ).count())
 
@@ -303,6 +321,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(0, row.pregnant_in_month)
         self.assertEqual(None, row.fu_forms_in_month)
+        # and the closed case should still not exist
+        self.assertEqual(0, aggregate_query.filter(
+            doc_id_column == self.closed_case_id,
+            month_column == '2017-12-01',
+        ).count())
 
         # in january the case should exist, and be flagged as pregnant
         row = aggregate_query.filter(
@@ -312,6 +335,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(None, row.fu_forms_in_month)
+        # and the closed case is now live
+        self.assertEqual(1, aggregate_query.filter(
+            doc_id_column == self.closed_case_id,
+            month_column == '2018-01-01',
+        ).count())
 
         # in march the case should exist, be flagged as pregnant, and there is a form
         row = aggregate_query.filter(
@@ -321,6 +349,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(1, row.fu_forms_in_month)
+        # the closed case is still live
+        self.assertEqual(1, aggregate_query.filter(
+            doc_id_column == self.closed_case_id,
+            month_column == '2018-03-01',
+        ).count())
 
         # in april the case should exist, be flagged as pregnant, and there are 2 forms
         row = aggregate_query.filter(
@@ -330,6 +363,11 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self.assertEqual(1, row.open_in_month)
         self.assertEqual(1, row.pregnant_in_month)
         self.assertEqual(2, row.fu_forms_in_month)
+        # the closed case should now be absent
+        self.assertEqual(0, aggregate_query.filter(
+            doc_id_column == self.closed_case_id,
+            month_column == '2018-04-01',
+        ).count())
 
     def test_weekly_aggregation(self):
         # generate our table

@@ -75,12 +75,16 @@ def get_aggregation_start_period(aggregate_table_definition, last_update=None):
 
 
 def get_aggregation_end_period(aggregate_table_definition, last_update=None):
-    return _get_aggregation_from_primary_table(
+    value_from_db = _get_aggregation_from_primary_table(
         aggregate_table_definition=aggregate_table_definition,
         column_id=aggregate_table_definition.time_aggregation.end_column,
         sqlalchemy_agg_fn=sqlalchemy.func.max,
         last_update=last_update,
-    ) or datetime.utcnow()
+    )
+    if not value_from_db:
+        return datetime.utcnow()
+    else:
+        return max(value_from_db, datetime.utcnow())
 
 
 def _get_aggregation_from_primary_table(aggregate_table_definition, column_id, sqlalchemy_agg_fn, last_update):
