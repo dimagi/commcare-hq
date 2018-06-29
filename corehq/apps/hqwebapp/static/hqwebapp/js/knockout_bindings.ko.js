@@ -250,6 +250,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
             };
 
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
+            }
+
             var moveRowToIndex = function (row, newIndex) {
                 var oldIndex = getIndexFromRow(row);
                 row.remove();
@@ -258,19 +262,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
 
             $(element).on('click', '.send-to-top', function () {
-                var row = $(this).closest('tr');
+                var row = getRowFromClickedElement($(this));
                 setIgnoreClick(row);
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                var row = $(this).closest('tr');
+                var row = getRowFromClickedElement($(this));
                 setIgnoreClick(row);
                 moveRowToIndex(row, list().length - 1);
             });
 
             $(element).on('click', '.export-table-checkbox', function () {
-                var row = $(this).closest('tr');
+                var row = getRowFromClickedElement($(this));
                 setIgnoreClick(row);
             });
 
