@@ -12,11 +12,13 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
 
 from ..bulk_management import (
-    NewLocationImporter,
-    LocationTypeData,
+    LocationCollection,
+    LocationData,
     LocationStub,
     LocationTreeValidator,
-    LocationCollection,
+    LocationTypeData,
+    LocationTypeStub,
+    NewLocationImporter,
 )
 from ..const import ROOT_LOCATION_TYPE
 from ..models import LocationType, SQLLocation
@@ -65,11 +67,9 @@ def NewLocRow(
     latitude='',
     longitude='',
     custom_data=NOT_PROVIDED,
-    index=0,
-    data_model=None,
     delete_uncategorized_data=False,
 ):
-    stub_tuple = (
+    return LocationData(
         name,
         site_code,
         location_type,
@@ -80,12 +80,9 @@ def NewLocRow(
         latitude,
         longitude,
         custom_data,
-        index,
-        data_model,
+        delete_uncategorized_data,
+        0,
     )
-    if delete_uncategorized_data:
-        return stub_tuple + (True,)
-    return stub_tuple
 
 
 def _codify(items):
@@ -132,75 +129,6 @@ class TestTreeUtils(SimpleTestCase):
         )
 
 
-class MockLocationStub(LocationStub):
-
-    def lookup_old_collection_data(self, old_collection, locs_by_code):
-        if not self.is_new:
-            self.db_object = MagicMock()
-
-
-@attr.s
-class TestLocationCollection(LocationCollection):
-
-    domain_name = 'location-bulk-management'
-
-    types = attr.ib(factory=list)
-    locations = attr.ib(factory=list)
-
-    def custom_data_validator(self):
-        return lambda data: False
-
-
-class IngoreOldLocationTreeValidator(LocationTreeValidator):
-    """Skip checks that depend on self.old_collection"""
-
-    def _check_required_locations_missing(self):
-        return []
-
-    def _check_unlisted_type_codes(self):
-        return []
-
-    def _check_unknown_location_ids(self):
-        return []
-
-
-def get_validator(location_types, locations, old_collection=None):
-    if old_collection is None:
-        StubClass = MockLocationStub
-        old_collection = TestLocationCollection()
-        Validator = IngoreOldLocationTreeValidator
-    else:
-        StubClass = LocationStub
-        Validator = LocationTreeValidator
-    return Validator(
-        location_types,
-        [StubClass(*loc) for loc in locations],
-        old_collection=old_collection,
-        user=None,  # TODO pass in a real user
-    )
-
-
-def make_collection(types, locations):
-    types_by_code = {t.code: t for t in types}
-    # make LocationTypeStub more like a real LocationType
-    locations = [LocationStub(*loc) for loc in locations]
-    locations_by_code = {loc.site_code: loc for loc in locations}
-    idgen = iter(range(len(locations)))
-    # make LocationStub more like a real SQLLocation
-    for loc in locations:
-        loc.id = next(idgen)
-        loc.location_type = types_by_code[loc.location_type]
-        if loc.parent_code == ROOT_LOCATION_TYPE:
-            loc.parent_id = None
-        else:
-            loc.parent_id = locations_by_code[loc.parent_code].id
-        assert loc.custom_data == NOT_PROVIDED, loc.custom_data
-        loc.metadata = {}
-        loc.full_clean = lambda **k: None
-
-    return TestLocationCollection(types, locations)
-
-
 def assert_errors(result, expected_errors):
     """Assert that result errors match expected errors
 
@@ -232,136 +160,24 @@ def assert_errors(result, expected_errors):
     assert not errors, "\n".join(errors)
 
 
-class TestTreeValidator(SimpleTestCase):
-    basic_location_tree = [
-        NewLocRow('Massachusetts', 'mass', 'state', '', '1234'),
-        NewLocRow('Suffolk', 'suffolk', 'county', 'mass', '2345'),
-        NewLocRow('Boston', 'boston', 'city', 'suffolk', '2346'),
-        NewLocRow('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-        NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-        NewLocRow('Florida', 'florida', 'state', '', '5432'),
-        NewLocRow('Duval', 'duval', 'county', 'florida', '5433'),
-        NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-    ]
-
-    def test_good_location_set(self):
-        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
-        assert_errors(validator, [])
-
-    def test_cyclic_location_types(self):
-        validator = get_validator(CYCLIC_LOCATION_TYPES, self.basic_location_tree)
-        self.assertEqual(len(validator._validate_types_tree()), 3)
-
-    def test_bad_type_change(self):
-        make_suffolk_a_state_invalid = [
-            NewLocRow('Massachusetts', 'mass', 'state', '', '1234'),
-            # This still lists mass as a parent, which is invalid,
-            # plus, Boston (a city), can't have a state as a parent
-            NewLocRow('Suffolk', 'suffolk', 'state', 'mass', '2345'),
-            NewLocRow('Boston', 'boston', 'city', 'suffolk', '2346'),
-            NewLocRow('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-            NewLocRow('Florida', 'florida', 'state', '', '5432'),
-            NewLocRow('Duval', 'duval', 'county', 'florida', '5433'),
-            NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-        ]
-        validator = get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_invalid)
-
-        assert_errors(validator, [
-            "'suffolk' is a 'state' and should not have a parent",
-            "'boston' is a 'city', so it should have a parent that is a 'county'",
-        ])
-
-    def test_good_type_change(self):
-        make_suffolk_a_state_valid = [
-            NewLocRow('Massachusetts', 'mass', 'state', '', '1234'),
-            NewLocRow('Suffolk', 'suffolk', 'state', '', '2345'),
-            NewLocRow('Boston', 'boston', 'county', 'suffolk', '2346'),
-            NewLocRow('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-            NewLocRow('Florida', 'florida', 'state', '', '5432'),
-            NewLocRow('Duval', 'duval', 'county', 'florida', '5433'),
-            NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval', '5434'),
-        ]
-        validator = get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_valid)
-        assert_errors(validator, [])
-
-    def test_duplicate_type_codes(self):
-        validator = get_validator(DUPLICATE_TYPE_CODES, self.basic_location_tree)
-        assert_errors(validator, ["type code 'county' is used 2 times"])
-
-    def test_duplicate_location(self):
-        duplicate_site_codes = [
-            NewLocRow('Massachusetts', 'mass', 'state', '', '1234'),
-            NewLocRow('Suffolk', 'suffolk', 'county', 'mass', '2345'),
-            NewLocRow('Boston', 'boston', 'city', 'suffolk', '2346'),
-            NewLocRow('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-            NewLocRow('East Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-        ]
-        validator = get_validator(FLAT_LOCATION_TYPES, duplicate_site_codes)
-        assert_errors(validator, [
-            "site_code 'cambridge' is used 2 times",
-            "location_id '3457' is listed 2 times",
-        ])
-
-    def test_same_name_same_parent(self):
-        same_name_same_parent = [
-            NewLocRow('Massachusetts', 'mass', 'state', '', '1234'),
-            NewLocRow('Middlesex', 'middlesex', 'county', 'mass', '3456'),
-            # These two locations have the same name AND same parent
-            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex', '3457'),
-            NewLocRow('Cambridge', 'cambridge2', 'city', 'middlesex', '3458'),
-        ]
-        validator = get_validator(FLAT_LOCATION_TYPES, same_name_same_parent)
-        assert_errors(validator, [
-            " 2 locations with the name 'Cambridge' under the parent 'middlesex'"
-        ])
-
-    def test_missing_types(self):
-        # all types in the domain should be listed in given excel
-        old_types = FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)]
-
-        old_collection = make_collection(old_types, self.basic_location_tree)
-        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree, old_collection)
-        assert_errors(validator, ["type code 'galaxy' is not listed"])
-
-    def test_missing_location_ids(self):
-        # not all locations need to be specified in the upload
-        old_locations = (
-            self.basic_location_tree +
-            [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')]
-        )
-        old_collection = make_collection(FLAT_LOCATION_TYPES, old_locations)
-        validator = get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree, old_collection)
-        assert_errors(validator, [])
-
-    def test_unknown_location_ids(self):
-        # all locations in the domain should be listed in given excel
-
-        old_collection = make_collection(FLAT_LOCATION_TYPES, self.basic_location_tree)
-        new_locations = (
-            self.basic_location_tree +
-            [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')]
-        )
-        validator = get_validator(FLAT_LOCATION_TYPES, new_locations, old_collection)
-        assert_errors(validator, ["'id: ex_id' is not found in your domain"])
-
-
 class UploadTestUtils(object):
     domain = 'test-bulk-management'
+
+    @cached_property
+    def locations_by_code(self):
+        return {
+            loc.site_code: loc
+            for loc in SQLLocation.objects.filter(domain=self.domain)
+        }
 
     @classmethod
     def as_pairs(cls, tree):
         # returns list of (site_code, parent_code) tuples
-        pairs = []
+        pairs = set()
         for l in tree:
-            code = l[1]
-            parent_code = l[3] or None
-            do_delete = l[5]
-            if not do_delete:
-                pairs.append((code, parent_code))
-        return set(pairs)
+            if not l.do_delete:
+                pairs.add((l.site_code, l.parent_code))
+        return pairs
 
     def get_loc_id(self, code):
         return self.locations_by_code[code].location_id
@@ -374,13 +190,13 @@ class UploadTestUtils(object):
 
         location_id = self.get_loc_id(site_code)
         return NewLocRow(name, site_code, location_type, parent_code,
-                       location_id=location_id, **kwargs)
+                         location_id=location_id, **kwargs)
 
     def bulk_update_locations(self, types, locations):
         importer = NewLocationImporter(
             self.domain,
             types,
-            [LocationStub(*loc) for loc in locations],
+            locations,
             self.user,
             chunk_size=10
         )
@@ -413,7 +229,7 @@ class UploadTestUtils(object):
             if l.parent:
                 parent = l.parent.site_code
             else:
-                parent = None
+                parent = ROOT_LOCATION_TYPE
             actual.append((attr, parent))
 
         self.assertEqual(set(actual), expected_locations)
@@ -453,6 +269,143 @@ class UploadTestUtils(object):
             self.assertEqual(set(actual), set(desc))
 
 
+class TestTreeValidator(UploadTestUtils, TestCase):
+    basic_location_tree = [
+        NewLocRow('Massachusetts', 'mass', 'state', ''),
+        NewLocRow('Suffolk', 'suffolk', 'county', 'mass'),
+        NewLocRow('Boston', 'boston', 'city', 'suffolk'),
+        NewLocRow('Middlesex', 'middlesex', 'county', 'mass'),
+        NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+        NewLocRow('Florida', 'florida', 'state', ''),
+        NewLocRow('Duval', 'duval', 'county', 'florida'),
+        NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval'),
+    ]
+
+    def setUp(self):
+        super(TestTreeValidator, self).setUp()
+        self.domain_obj = create_domain(self.domain)
+        self.user = WebUser.create(self.domain, 'username', 'password')
+
+    def tearDown(self):
+        super(TestTreeValidator, self).tearDown()
+        self.user.delete()
+        self.domain_obj.delete()
+
+    def get_validator(self, location_types, locations):
+        old_collection = LocationCollection(self.domain_obj)
+        data_model = get_location_data_model(self.domain)
+        return LocationTreeValidator(
+            [LocationTypeStub(data, old_collection) for data in location_types],
+            [LocationStub(data, data_model, old_collection) for data in locations],
+            old_collection=old_collection,
+            user=None,  # TODO pass in a real user
+        )
+
+    def test_good_location_set(self):
+        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
+        assert_errors(validator, [])
+
+    def test_cyclic_location_types(self):
+        validator = self.get_validator(CYCLIC_LOCATION_TYPES, self.basic_location_tree)
+        self.assertEqual(len(validator._validate_types_tree()), 3)
+
+    def test_bad_type_change(self):
+        make_suffolk_a_state_invalid = [
+            NewLocRow('Massachusetts', 'mass', 'state', ''),
+            # This still lists mass as a parent, which is invalid,
+            # plus, Boston (a city), can't have a state as a parent
+            NewLocRow('Suffolk', 'suffolk', 'state', 'mass'),
+            NewLocRow('Boston', 'boston', 'city', 'suffolk'),
+            NewLocRow('Middlesex', 'middlesex', 'county', 'mass'),
+            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            NewLocRow('Florida', 'florida', 'state', ''),
+            NewLocRow('Duval', 'duval', 'county', 'florida'),
+            NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval'),
+        ]
+        validator = self.get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_invalid)
+
+        assert_errors(validator, [
+            "'suffolk' is a 'state' and should not have a parent",
+            "'boston' is a 'city', so it should have a parent that is a 'county'",
+        ])
+
+    def test_good_type_change(self):
+        make_suffolk_a_state_valid = [
+            NewLocRow('Massachusetts', 'mass', 'state', ''),
+            NewLocRow('Suffolk', 'suffolk', 'state', ''),
+            NewLocRow('Boston', 'boston', 'county', 'suffolk'),
+            NewLocRow('Middlesex', 'middlesex', 'county', 'mass'),
+            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            NewLocRow('Florida', 'florida', 'state', ''),
+            NewLocRow('Duval', 'duval', 'county', 'florida'),
+            NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval'),
+        ]
+        validator = self.get_validator(FLAT_LOCATION_TYPES, make_suffolk_a_state_valid)
+        assert_errors(validator, [])
+
+    def test_duplicate_type_codes(self):
+        validator = self.get_validator(DUPLICATE_TYPE_CODES, self.basic_location_tree)
+        assert_errors(validator, ["type code 'county' is used 2 times"])
+
+    def test_duplicate_location(self):
+        duplicate_site_codes = [
+            NewLocRow('Massachusetts', 'mass', 'state', ''),
+            NewLocRow('Suffolk', 'suffolk', 'county', 'mass'),
+            NewLocRow('Boston', 'boston', 'city', 'suffolk'),
+            NewLocRow('Middlesex', 'middlesex', 'county', 'mass'),
+            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            NewLocRow('East Cambridge', 'cambridge', 'city', 'middlesex'),
+        ]
+        validator = self.get_validator(FLAT_LOCATION_TYPES, duplicate_site_codes)
+        assert_errors(validator, [
+            "site_code 'cambridge' is used 2 times",
+        ])
+
+    def test_same_name_same_parent(self):
+        same_name_same_parent = [
+            NewLocRow('Massachusetts', 'mass', 'state', ''),
+            NewLocRow('Middlesex', 'middlesex', 'county', 'mass'),
+            # These two locations have the same name AND same parent
+            NewLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            NewLocRow('Cambridge', 'cambridge2', 'city', 'middlesex'),
+        ]
+        validator = self.get_validator(FLAT_LOCATION_TYPES, same_name_same_parent)
+        assert_errors(validator, [
+            " 2 locations with the name 'Cambridge' under the parent 'middlesex'"
+        ])
+
+    def test_missing_types(self):
+        # all types in the domain should be listed in given excel
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)],
+            self.basic_location_tree,
+        )
+        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
+        assert_errors(validator, ["type code 'galaxy' is not listed"])
+
+    def test_missing_location_ids(self):
+        # not all locations need to be specified in the upload
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_location_tree + [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')],
+        )
+        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
+        assert_errors(validator, [])
+
+    def test_unknown_location_ids(self):
+        # all locations with IDs must already exist
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_location_tree,
+        )
+        new_locations = (
+            self.basic_location_tree +
+            [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')]
+        )
+        validator = self.get_validator(FLAT_LOCATION_TYPES, new_locations)
+        assert_errors(validator, ["'id: ex_id' is not found in your domain"])
+
+
 class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
 
     basic_tree = [
@@ -475,13 +428,6 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.user.delete()
         self.domain_obj.delete()
 
-    @cached_property
-    def locations_by_code(self):
-        return {
-            loc.site_code: loc
-            for loc in SQLLocation.objects.filter(domain=self.domain)
-        }
-
     def test_location_creation(self):
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -503,7 +449,7 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         )
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(set([('1', None), ('2', None)]))
+        self.assertLocationsMatch(set([('1', ROOT_LOCATION_TYPE), ('2', ROOT_LOCATION_TYPE)]))
 
     def test_data_format(self):
         data = [
@@ -517,12 +463,9 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         assert_errors(result, ['index 0 should be valid decimal numbers'])
 
     def test_custom_data(self):
-        data_model = get_location_data_model(self.domain)
         tree = [
-            NewLocRow('省 1', 's1', 'state', '',
-                    custom_data={'a': 1}, data_model=data_model),
-            NewLocRow('County 11', 'c1', 'county', 's1',
-                    custom_data={'国际字幕': '试验'}, data_model=data_model),
+            NewLocRow('省 1', 's1', 'state', '', custom_data={'a': 1}),
+            NewLocRow('County 11', 'c1', 'county', 's1', custom_data={'国际字幕': '试验'}),
         ]
         result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -537,14 +480,10 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.assertEqual(locations["c1"].metadata, {'国际字幕': '试验'})
 
     def test_custom_data_delete_uncategorized(self):
-        data_model = get_location_data_model(self.domain)
-
         # setup some metadata
         tree = [
-            NewLocRow('State 1', 's1', 'state', '',
-                    custom_data={'a': 1}, data_model=data_model),
-            NewLocRow('County 11', 'c1', 'county', 's1',
-                    custom_data={'b': 'test'}, data_model=data_model),
+            NewLocRow('State 1', 's1', 'state', '', custom_data={'a': 1}),
+            NewLocRow('County 11', 'c1', 'county', 's1', custom_data={'b': 'test'}),
         ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -556,11 +495,9 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.assertEqual(locations["c1"].metadata, {'b': 'test'})
 
         tree = [
-            self.UpdateLocRow('State 1', 's1', 'state', '',
-                               custom_data={'a': 1}, data_model=data_model,
-                               delete_uncategorized_data=True),
-            self.UpdateLocRow('County 11', 'c1', 'county', 's1',
-                               custom_data={}, data_model=data_model),
+            self.UpdateLocRow('State 1', 's1', 'state', '', custom_data={'a': 1},
+                              delete_uncategorized_data=True),
+            self.UpdateLocRow('County 11', 'c1', 'county', 's1', custom_data={'b': 'test'}),
         ]
         self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
@@ -568,8 +505,10 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         )
 
         locations = _codify(SQLLocation.objects.all())
-        self.assertEqual(locations["s1"].metadata, {})  # uncategorized data get's removed
-        self.assertEqual(locations["c1"].metadata, {'b': 'test'})  # uncategorized data get's kept
+        # uncategorized data gets removed
+        self.assertEqual(locations["s1"].metadata, {})
+        # uncategorized data gets kept as long as it's specified
+        self.assertEqual(locations["c1"].metadata, {'b': 'test'})
 
     def test_case_sensitivity(self):
         # site-codes are automatically converted to lower-case
@@ -615,7 +554,7 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree).union({
-            ('s3', None), ('county3', 's3')
+            ('s3', ROOT_LOCATION_TYPE), ('county3', 's3')
         }))
 
     def test_partial_parent_edits(self):
@@ -634,7 +573,7 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch({
-            ('s1', None), ('s2', None), ('county11', 's1'),
+            ('s1', ROOT_LOCATION_TYPE), ('s2', ROOT_LOCATION_TYPE), ('county11', 's1'),
             ('county21', 's1'), ('city111', 'county11'), ('city112', 'county11'),
             ('city211', 'county21'),
         })
@@ -715,23 +654,6 @@ class TestBulkManagementNoInitialLocs(UploadTestUtils, TestCase):
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_tree))
 
-    def test_large_upload(self):
-        big_location_tree = [
-            NewLocRow('{}'.format(i), '{}'.format(i), 'city', 'county11')
-            for i in range(34)
-        ]
-        self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            self.basic_tree
-        )
-        result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES,
-            big_location_tree
-        )
-        assert_errors(result, [])
-        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
-        self.assertLocationsMatch(self.as_pairs(self.basic_tree + big_location_tree))
-
     def test_new_root(self):
         # new locations can be added without having to specify all of old ones
         self.bulk_update_locations(
@@ -786,13 +708,6 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         super(TestBulkManagementWithInitialLocs, self).tearDown()
         self.user.delete()
 
-    @cached_property
-    def locations_by_code(self):
-        return {
-            loc.site_code: loc
-            for loc in self.locations.values()
-        }
-
     @property
     def basic_update(self):
         return [
@@ -804,6 +719,23 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
             self.UpdateLocRow('City112', 'city112', 'city', 'county11'),
             self.UpdateLocRow('City211', 'city211', 'city', 'county21'),
         ]
+
+    def test_large_upload(self):
+        big_location_tree = [
+            NewLocRow('{}'.format(i), '{}'.format(i), 'city', 'county11')
+            for i in range(34)
+        ]
+        self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            self.basic_update
+        )
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            big_location_tree
+        )
+        assert_errors(result, [])
+        self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
+        self.assertLocationsMatch(self.as_pairs(self.basic_update + big_location_tree))
 
     def test_move_county21_to_state1(self):
         self.assertLocationsMatch(self.as_pairs(self.basic_update))
@@ -971,7 +903,7 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_update))
         self.assertLocationsMatch(set([
-            ('State 1', None), ('State 2', None), ('County 11', 's1'), ('County 21', 's2'),
+            ('State 1', ROOT_LOCATION_TYPE), ('State 2', ROOT_LOCATION_TYPE), ('County 11', 's1'), ('County 21', 's2'),
             ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
         ]), check_attr='name')
 
@@ -1060,7 +992,7 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch({
-            ('My State 1', None), ('S2', None), ('My County 11', 's1'),
+            ('My State 1', ROOT_LOCATION_TYPE), ('S2', ROOT_LOCATION_TYPE), ('My County 11', 's1'),
             ('County21', 's2'), ('City111', 'county11'), ('City112', 'county11'),
             ('City211', 'county21'),
         }, check_attr='name')
