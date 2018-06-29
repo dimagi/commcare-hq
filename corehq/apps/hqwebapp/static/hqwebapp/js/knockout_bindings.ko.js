@@ -287,9 +287,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
-                    if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort')
-                            .siblings().removeClass('selected-for-sort');
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
                     }
                     item.siblings('.selected-for-sort').hide();
                     return item;
