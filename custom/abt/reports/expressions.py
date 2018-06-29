@@ -51,7 +51,9 @@ class AbtExpressionSpec(JsonObject):
     @classmethod
     @quickcache(['app_id', 'xmlns'])
     def _get_form(cls, app_id, xmlns):
-        return [x for x in Application.get(app_id).get_forms() if x['xmlns'] == xmlns][0]
+        for form in Application.get(app_id).get_forms():
+            if form['xmlns'] == xmlns:
+                return form
 
     @classmethod
     @quickcache(['app_id', 'xmlns', 'lang'])
