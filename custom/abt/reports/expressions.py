@@ -71,7 +71,7 @@ class AbtExpressionSpec(JsonObject):
 
     @classmethod
     def _get_form_name(cls, item):
-        form = cls._get_form(item['api_id'], item['xmlns'])
+        form = cls._get_form(item['app_id'], item['xmlns'])
         lang = cls._get_language(item)
         if lang in form.name:
             return form.name[lang]
