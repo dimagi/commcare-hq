@@ -264,8 +264,8 @@ BEGIN
   -- Update ccs_record cases_person_has_aadhaar and cases_person_beneficiary
   -- pregnant and lactating both imply that the case is open, alive and seeking services in the month
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'cases_person_has_aadhaar_v2 = cases_person_has_aadhaar_v2 + ut.ccs_has_aadhar, ' ||
-    'cases_person_beneficiary_v2 = cases_person_beneficiary_v2 + ut.ccs_beneficiary, ' ||
+    'cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar, ' ||
+    'cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.ccs_beneficiary, ' ||
     'num_anc_visits = ut.num_anc_visits ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
