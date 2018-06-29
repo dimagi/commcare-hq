@@ -213,30 +213,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
                     var shiftSelectedIndex = getIndexFromRow($(this)),
-                        shiftClickedRow = $(this),
                         lastClickedIndex = 0,
-                        lastClickedRow = null;
-                    if ($('.last-clicked').length > 0) {
-                        lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = getIndexFromRow(lastClickedRow);
-                    } else {
-                        lastClickedRow = $(this).parent().children().eq(0);
-                    }
-
-                    var firstRow = null,
                         start = null,
                         end = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedIndex = getIndexFromRow($('.last-clicked').eq(0));
+                    }
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
-                        firstRow = shiftClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
-                        firstRow = lastClickedRow;
                     }
-
-                    var next = firstRow;
                     for (var i = start; i <= end; i++) {
                         list()[i].selectedForSort(true);
                     }
