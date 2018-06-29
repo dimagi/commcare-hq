@@ -387,7 +387,8 @@ class NewLocationImporter(object):
         self.chunk_size = chunk_size
 
     def run(self):
-        tree_validator = LocationTreeValidator(self.type_stubs, self.location_stubs, self.old_collection, self.user)
+        tree_validator = LocationTreeValidator(self.type_stubs, self.location_stubs,
+                                               self.old_collection, self.user)
         self.result.errors = tree_validator.errors
         self.result.warnings = tree_validator.warnings
         if self.result.errors:
@@ -441,6 +442,7 @@ class LocationTreeValidator(object):
         _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
 
         self.user = user
+        self.domain = old_collection.domain_name
         self.all_listed_types = type_stubs
         self.location_types = _not_to_be_deleted(type_stubs)
         self.types_to_be_deleted = _to_be_deleted(type_stubs)
@@ -471,6 +473,7 @@ class LocationTreeValidator(object):
         # level errors make it unrealistic to keep validating
 
         basic_errors = (
+            self._check_location_restriction() +
             self._check_unique_type_codes() +
             self._check_unique_location_codes() +
             self._check_unique_location_ids() +
@@ -501,6 +504,29 @@ class LocationTreeValidator(object):
         # Model field validation must pass
         errors.extend(self._check_model_validation())
 
+        return errors
+
+    def _check_location_restriction(self):
+        if self.user.has_permission(self.domain, 'access_all_locations'):
+            return []
+
+        accessible_site_codes = set(SQLLocation.active_objects
+                                    .accessible_to_user(self.domain, self.user)
+                                    .values_list('site_code', flat=True))
+        errors = []
+        for loc_stub in self.all_listed_locations:
+            if not loc_stub.needs_save:
+                # Allow users to include any loc, as long as there are no changes
+                continue
+            if not loc_stub.is_new:
+                if loc_stub.site_code not in accessible_site_codes:
+                    errors.append(_("You do not have permission to edit '{}'")
+                                  .format(loc_stub.site_code))
+            else:
+                parent_exists = (loc_stub.parent_code in self.old_collection.locations_by_site_code)
+                if (parent_exists and loc_stub.parent_code not in accessible_site_codes):
+                    errors.append(_("You do not have permission to add locations in '{}'")
+                                  .format(loc_stub.parent_code))
         return errors
 
     def _validate_geodata(self):

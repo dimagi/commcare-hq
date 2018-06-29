@@ -6,7 +6,7 @@ from collections import defaultdict
 import attr
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -24,7 +24,7 @@ from ..const import ROOT_LOCATION_TYPE
 from ..models import LocationType, SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
 from ..util import get_location_data_model
-from .util import LocationHierarchyPerTest
+from .util import LocationHierarchyPerTest, restrict_user_by_location
 import six
 from six.moves import range
 
@@ -310,7 +310,7 @@ class TestTreeValidator(UploadTestUtils, TestCase):
             [LocationTypeStub(data, old_collection) for data in location_types],
             [LocationStub(data, data_model, old_collection) for data in locations],
             old_collection=old_collection,
-            user=None,  # TODO pass in a real user
+            user=self.user,
         )
 
     def test_good_location_set(self):
@@ -1035,3 +1035,80 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
             ],
         )
         assert_errors(result, ["site_code 'city211' is in use"])
+
+
+class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
+    location_type_names = [lt.name for lt in FLAT_LOCATION_TYPES]
+    location_structure = [
+        ('Massachusetts', [
+            ('Middlesex', [
+                ('Cambridge', []),
+                ('Somerville', []),
+            ]),
+            ('Suffolk', [
+                ('Boston', []),
+            ])
+        ])
+    ]
+
+    def setUp(self):
+        super(TestRestrictedUserUpload, self).setUp()
+        self.user = WebUser.create(self.domain, 'username', 'password')
+        self.user.set_location(self.domain, self.locations['Middlesex'])
+        restrict_user_by_location(self.domain, self.user)
+
+    def tearDown(self):
+        super(TestRestrictedUserUpload, self).tearDown()
+        self.user.delete()
+
+    def test_only_additions(self):
+        upload = [
+            NewLocRow('Lowell', 'lowell', 'city', 'middlesex'),
+            NewLocRow('Framingham', 'framingham', 'city', 'middlesex'),
+        ]
+        result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, [])
+
+    def test_subtree_upload_no_changes(self):
+        upload = [
+            # Parent locations can be included as long as they're not changed
+            self.UpdateLocRow('Massachusetts', 'massachusetts', 'state', ''),
+            self.UpdateLocRow('Middlesex', 'middlesex', 'county', 'massachusetts'),
+            self.UpdateLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            self.UpdateLocRow('Somerville', 'somerville', 'city', 'middlesex'),
+        ]
+        with patch('corehq.apps.locations.models.SQLLocation.save') as save_location:
+            result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, [])
+        self.assertFalse(save_location.called)
+
+    def test_subtree_upload_with_changes(self):
+        upload = [
+            self.UpdateLocRow('Massachusetts', 'massachusetts', 'state', ''),
+            # This line represents a change
+            self.UpdateLocRow('New Middlesex', 'middlesex', 'county', 'massachusetts'),
+            self.UpdateLocRow('Cambridge', 'cambridge', 'city', 'middlesex'),
+            self.UpdateLocRow('Somerville', 'somerville', 'city', 'middlesex'),
+            NewLocRow('Lowell', 'lowell', 'city', 'middlesex'),
+        ]
+        with patch('corehq.apps.locations.models.SQLLocation.save') as save_location:
+            result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, [])
+        self.assertEqual(save_location.call_count, 2)
+
+    def test_out_of_bounds_edit(self):
+        upload = [
+            # Suffolk isn't accessible
+            self.UpdateLocRow('New Suffolk', 'suffolk', 'county', 'massachusetts'),
+        ]
+        result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, ["You do not have permission to edit 'suffolk'"])
+
+    def test_out_of_bounds_addition(self):
+        upload = [
+            NewLocRow('Lowell', 'lowell', 'city', 'middlesex'),
+            # Suffolk isn't accessible, can't create children there
+            NewLocRow('Revere', 'revere', 'city', 'suffolk'),
+        ]
+        result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, ["You do not have permission to add locations in 'suffolk'"])
