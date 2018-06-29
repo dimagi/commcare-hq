@@ -1,4 +1,4 @@
-/* globals CodeMirror */
+/* globals ace */
 hqDefine('userreports/js/base', function() {
     $(function () {
         $('.jsonwidget').each(function () {
