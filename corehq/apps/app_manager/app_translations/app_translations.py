@@ -658,6 +658,12 @@ def update_form_translations(sheet, rows, missing_cols, app):
         old_trans = etree.tostring(value_node_.xml, method="text", encoding="unicode").strip()
         return _looks_like_markdown(old_trans) and not had_markdown(text_node_)
 
+    def has_translation(row_, langs):
+        for lang_ in langs:
+            for trans_type_ in ['default', 'audio', 'image', 'video']:
+                if row_.get(_get_col_key(trans_type_, lang_)):
+                    return True
+
     # Aggregate Markdown vetoes, and translations that currently have Markdown
     vetoes = defaultdict(lambda: False)  # By default, Markdown is not vetoed for a label
     markdowns = defaultdict(lambda: False)  # By default, Markdown is not in use
@@ -670,7 +676,18 @@ def update_form_translations(sheet, rows, missing_cols, app):
             text_node = itext.find("./{f}translation[@lang='%s']/{f}text[@id='%s']" % (lang, label_id))
             vetoes[label_id] = vetoes[label_id] or is_markdown_vetoed(text_node)
             markdowns[label_id] = markdowns[label_id] or had_markdown(text_node)
-
+    # skip labels that have no translation provided
+    skip_label = set()
+    if form.is_registration_form():
+        for row in rows:
+            if not has_translation(row, app.langs):
+                skip_label.add(row['label'])
+        for label in skip_label:
+            msgs.append((
+                messages.error,
+                "You must provide at least one translation" +
+                " for the label '%s' in sheet '%s'" % (label, sheet.worksheet.title)
+            ))
     # Update the translations
     for lang in app.langs:
         translation_node = itext.find("./{f}translation[@lang='%s']" % lang)
@@ -678,6 +695,8 @@ def update_form_translations(sheet, rows, missing_cols, app):
 
         for row in rows:
             label_id = row['label']
+            if label_id in skip_label:
+                continue
             text_node = translation_node.find("./{f}text[@id='%s']" % label_id)
             if not text_node.exists():
                 msgs.append((
