@@ -246,6 +246,10 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 return list()[getIndexFromRow(row)];
             };
 
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
             var moveRowToIndex = function (row, newIndex) {
                 var oldIndex = getIndexFromRow(row);
                 row.remove();
@@ -255,21 +259,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
             $(element).on('click', '.send-to-top', function () {
                 var row = $(this).closest('tr');
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
-
+                setIgnoreClick(row);
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
                 var row = $(this).closest('tr');
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
-
+                setIgnoreClick(row);
                 moveRowToIndex(row, list().length - 1);
             });
 
             $(element).on('click', '.export-table-checkbox', function () {
                 var row = $(this).closest('tr');
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+                setIgnoreClick(row);
             });
 
             $(element).sortable({
