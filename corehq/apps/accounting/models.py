@@ -1968,8 +1968,54 @@ class CustomerInvoice(InvoiceBase):
             contact_emails = billing_contact_info.email_list
         except BillingContactInfo.DoesNotExist:
             contact_emails = []
-        # TODO: Return alternative emails if contact_emails DNE (admin emails?)
         return contact_emails
+
+    @property
+    def subtotal(self):
+        """
+        This will be inserted in the subtotal field on the printed invoice.
+        """
+        if self.lineitem_set.count() == 0:
+            return Decimal('0.0000')
+        return sum([line_item.total for line_item in self.lineitem_set.all()])
+
+    @property
+    def applied_tax(self):
+        return Decimal('%.4f' % round(self.tax_rate * self.subtotal, 4))
+
+    @property
+    def applied_credit(self):
+        if self.creditadjustment_set.count() == 0:
+            return Decimal('0.0000')
+        return sum([credit.amount for credit in self.creditadjustment_set.all()])
+
+    def get_total(self):
+        """
+        This will be inserted in the total field on the printed invoice.
+        """
+        return self.subtotal + self.applied_tax + self.applied_credit
+
+    def update_balance(self):
+        self.balance = self.get_total()
+        if self.balance <= 0:
+            self.date_paid = datetime.date.today()
+        else:
+            self.date_paid = None
+
+    def calculate_credit_adjustments(self):
+        current_total = self.get_total()
+        credit_lines = CreditLine.get_credits_for_account(self.account)
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, invoice=self)
+
+    def pay_invoice(self, payment_record):
+        # TODO: This is broken because BillingRecords only take Invoices
+        CreditLine.make_payment_towards_invoice(
+            invoice=self,
+            payment_record=payment_record,
+        )
+
+        self.update_balance()
+        self.save()
 
 
 class SubscriptionAdjustment(models.Model):
@@ -2496,8 +2542,11 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         )
 
         if not invoice.is_wire:
-            # TODO: if invoice.is_customer_invoice:
-            for line_item in LineItem.objects.filter(subscription_invoice=invoice):
+            if invoice.is_customer_invoice:
+                line_items = LineItem.objects.filter(customer_invoice=invoice)
+            else:
+                line_items = LineItem.objects.filter(subscription_invoice=invoice)
+            for line_item in line_items:
                 is_unit = line_item.unit_description is not None
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
@@ -3062,6 +3111,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True)
+    customer_invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT, null=True, blank=True)
     payment_record = models.ForeignKey(PaymentRecord,
                                        on_delete=models.PROTECT, null=True, blank=True)
     related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,

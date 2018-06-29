@@ -19,7 +19,7 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    LineItem, FeatureType, Invoice, CustomerInvoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
     SubscriptionAdjustmentMethod, BillingRecord,
     CreditLine,
@@ -301,15 +301,29 @@ class CustomerAccountInvoiceFactory(object):
         self._email_invoice()
 
     def _generate_customer_invoice(self):
-        plan_version, subscription = self.subscriptions.popitem()
-        invoice = generate_invoice(subscription, self.date_start, self.date_end)
+        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+            account=self.account,
+            date_start=self.date_start,
+            date_end=self.date_end
+        )
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
         for plan in self.subscriptions:
             generate_line_items(invoice, self.subscriptions[plan])
-            invoice.calculate_credit_adjustments()
-            invoice.update_balance()
-            invoice.save()
-        update_invoice_due_date(invoice, subscription, self.date_end)
+        invoice.calculate_credit_adjustments()
+        invoice.update_balance()
+        invoice.save()
+        self._update_invoice_due_date(invoice, self.date_end)
         self.customer_invoice = invoice
+
+    def _update_invoice_due_date(self, invoice, factory_date_end):
+        should_set_date_due = (
+                invoice.balance > SMALL_INVOICE_THRESHOLD or
+                (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+        )
+        if should_set_date_due:
+            invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+        invoice.save()
 
     def _email_invoice(self):
         record = BillingRecord.generate_record(self.customer_invoice)
