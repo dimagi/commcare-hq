@@ -315,7 +315,7 @@ class BlobHelper(object):
     not recommended while it is wrapped in this class.
     """
 
-    def __init__(self, doc, database, type_code, domain=None):
+    def __init__(self, doc, database, type_code):
         if doc.get("_id") is None:
             raise TypeError("BlobHelper requires a real _id")
         self._id = doc["_id"]
@@ -331,20 +331,11 @@ class BlobHelper(object):
         self._migrating_blobs_from_couch = bool(doc.get("_attachments")) \
             and not self.couch_only
         self._attachments = doc.get("_attachments")
-        blobs = self.get_external_blobs(doc, self.database.dbname, {})
-        self.external_blobs = {n: BlobMetaPointer.wrap(m.copy())
-                               for n, m in six.iteritems(blobs)}
+        self.external_blobs = {n: BlobMetaPointer.wrap(
+            BlobMetaPointer._normalize_json(database.dbname, self._id, m.copy())
+        ) for n, m in six.iteritems(doc.get("external_blobs", {}))}
 
     _atomic_blobs = None
-
-    @staticmethod
-    def get_external_blobs(doc, dbname, default=None):
-        blobs = doc.get("external_blobs", default)
-        if blobs is default:
-            return blobs
-        doc_id = doc["_id"]
-        return {n: BlobMetaPointer._normalize_json(dbname, doc_id, m)
-                for n, m in six.iteritems(blobs)}
 
     @property
     def blobs(self):

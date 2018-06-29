@@ -657,9 +657,10 @@ class TestBlobHelper(BaseTestCase):
         couch.fetch_attachment = fetch_fail
         obj = mod.BlobHelper({
             "doc_type": "FakeDoc",
+            "domain": "test",
             "_id": "fetch-fail",
             "external_blobs": {"not-found.txt": {"id": "hahaha"}},
-        }, couch, CODES.multimedia, domain="test")
+        }, couch, CODES.multimedia)
         self.assertFalse(obj._migrating_blobs_from_couch)
         with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
@@ -667,10 +668,11 @@ class TestBlobHelper(BaseTestCase):
     def test_fetch_attachment_not_found_while_migrating(self):
         obj = mod.BlobHelper({
             "doc_type": "FakeDoc",
+            "domain": "test",
             "_id": "fetch-fail",
             "_attachments": {"migrating...": {}},
             "external_blobs": {"not-found.txt": {"id": "nope"}},
-        }, self.couch, CODES.multimedia, domain="test")
+        }, self.couch, CODES.multimedia)
         self.assertTrue(obj._migrating_blobs_from_couch)
         with self.assertRaisesMessage(mod.ResourceNotFound, '{} attachment'.format(obj._id)):
             obj.fetch_attachment("not-found.txt")
