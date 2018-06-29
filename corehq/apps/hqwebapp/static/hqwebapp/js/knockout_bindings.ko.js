@@ -208,16 +208,17 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 if ($(this).hasClass('ignore-click')) {
                     $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort").toggleClass('success');
+                    var exportColumn = getExportColumnByRow($(this));
+                    exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
+                    var shiftSelectedIndex = getIndexFromRow($(this)),
                         shiftClickedRow = $(this),
                         lastClickedIndex = 0,
                         lastClickedRow = null;
                     if ($('.last-clicked').length > 0) {
                         lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
+                        lastClickedIndex = getIndexFromRow(lastClickedRow);
                     } else {
                         lastClickedRow = $(this).parent().children().eq(0);
                     }
@@ -237,17 +238,23 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
                     var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort success');
-                        next = next.next();
+                        list()[i].selectedForSort(true);
                     }
                 } else {
-                    $(this).addClass('selected-for-sort success last-clicked')
-                        .siblings().removeClass('selected-for-sort success last-clicked');
+                    $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+                    for (var i = 0; i < list().length; i++) {
+                        list()[i].selectedForSort(false);
+                    }
+                    getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
 
             var getIndexFromRow = function (row) {
                 return parseInt(row[0].attributes['data-order'].value);
+            };
+
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
             };
 
             var moveRowToIndex = function (row, newIndex) {
@@ -280,9 +287,12 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
-                    if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort success')
-                            .siblings().removeClass('selected-for-sort success');
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
                     }
                     item.siblings('.selected-for-sort').hide();
                     return item;
