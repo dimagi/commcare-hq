@@ -419,8 +419,8 @@ class NewLocationImporter(object):
         types_changed = any(loc_type.needs_save for loc_type in type_stubs)
         moved_to_root = any(loc.moved_to_root for loc in location_stubs)
         delay_updates = not (types_changed or moved_to_root)
-        save_locations(location_stubs, type_objects, self.domain,
-                       delay_updates, self.excel_importer, self.chunk_size)
+        save_locations(location_stubs, type_objects, self.old_collection.locations_by_pk,
+                       self.domain, delay_updates, self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         # that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -810,7 +810,8 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_importer=None, chunk_size=100):
+def save_locations(location_stubs, types_by_code, old_locations_by_pk, domain,
+                   delay_updates, excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with
         attributes like 'db_object', 'needs_save', 'do_delete' set
@@ -843,22 +844,6 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
 
         return top_to_bottom_locations
 
-    _seen = set()
-
-    def iter_unprocessed_ancestor_ids(stubs):
-        for loc in stubs:
-            parent_stub = loc.new_parent_stub
-            if parent_stub is None or parent_stub.do_delete:
-                continue
-            while parent_stub is not None:
-                location_id = parent_stub.db_object.location_id
-                assert location_id, repr(parent_stub.db_object)
-                if location_id in _seen:
-                    break
-                _seen.add(location_id)
-                yield location_id
-                parent_stub = parent_stub.new_parent_stub
-
     delete_locations = []
     for stubs in chunked(order_by_location_type(), chunk_size):
         with transaction.atomic():
@@ -877,6 +862,20 @@ def save_locations(location_stubs, types_by_code, domain, delay_updates, excel_i
                     loc_object.location_type = types_by_code.get(loc.location_type)
                     loc_object.parent = loc.new_parent
                     loc_object.save()
+
+    _seen = set()
+
+    def iter_unprocessed_ancestor_ids(stubs):
+        # Returns a generator of all ancestor IDs of locations in 'stubs' which
+        # haven't already been returned in a previous call
+        for loc in stubs:
+            if not loc.is_new:
+                pk = loc.db_object.pk
+                while pk is not None and pk not in _seen:
+                    _seen.add(pk)
+                    location = old_locations_by_pk[pk]
+                    yield location.location_id
+                    pk = location.parent_id
 
     # reverse -> delete leaf nodes first
     for stubs in chunked(reversed(delete_locations), chunk_size):
