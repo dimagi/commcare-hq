@@ -205,9 +205,8 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if ($(this).hasClass('moving')) {
-                    $(this).removeClass('moving');
-                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
+                if ($(this).hasClass('ignore-click')) {
+                    $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
                     $(this).toggleClass("selected-for-sort").toggleClass('success');
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
@@ -260,17 +259,22 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
             $(element).on('click', '.send-to-top', function () {
                 var row = $(this).parent().parent();
-                row.addClass("moving").siblings().removeClass('moving');
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
 
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
                 var row = $(this).parent().parent();
-                row.addClass("moving").siblings().removeClass('moving');
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
 
                 var currentIndex = getIndexFromRow(row);
                 moveRowToIndex(row, list().length - 1);
+            });
+
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = $(this).parent().parent();
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
             });
 
             $(element).sortable({
