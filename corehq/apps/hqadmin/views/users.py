@@ -75,7 +75,8 @@ class AuthenticateAs(BaseAdminSectionView):
     def page_context(self):
         return {
             'hide_filters': True,
-            'form': AuthenticateAsForm(initial=self.kwargs)
+            'form': AuthenticateAsForm(initial=self.kwargs),
+            'js_options': {},
         }
 
     def post(self, request, *args, **kwargs):
