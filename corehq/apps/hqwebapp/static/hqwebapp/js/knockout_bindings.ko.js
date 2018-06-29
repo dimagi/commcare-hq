@@ -264,7 +264,6 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 var row = $(this).closest('tr');
                 row.addClass('ignore-click').siblings().removeClass('ignore-click');
 
-                var currentIndex = getIndexFromRow(row);
                 moveRowToIndex(row, list().length - 1);
             });
 
