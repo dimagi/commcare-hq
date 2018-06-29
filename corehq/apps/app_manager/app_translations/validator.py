@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
 import six
 from memoized import memoized
@@ -9,6 +10,7 @@ from corehq.apps.app_manager.app_translations import (
 )
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from django.utils.translation import ugettext_lazy as _
+from six.moves import zip
 
 
 COLUMNS_TO_COMPARE = {
