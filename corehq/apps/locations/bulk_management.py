@@ -326,27 +326,19 @@ class LocationExcelValidator(object):
     @staticmethod
     def _get_type_data(index, row):
         titles = LOCATION_TYPE_SHEET_HEADERS
-        name = row.get(titles['name'])
-        code = row.get(titles['code'])
-        parent_code = row.get(titles['parent_code'])
-        do_delete = row.get(titles['do_delete'], 'N').lower() in ['y', 'yes']
-        shares_cases = row.get(titles['shares_cases'], 'N').lower() in ['y', 'yes']
-        view_descendants = row.get(titles['view_descendants'], 'N').lower() in ['y', 'yes']
-        return LocationTypeData(name, code, parent_code, do_delete, shares_cases,
-                                view_descendants, index)
+        return LocationTypeData(
+            name=row.get(titles['name']),
+            code=row.get(titles['code']),
+            parent_code=row.get(titles['parent_code']),
+            do_delete=row.get(titles['do_delete'], 'n').lower() in ['y', 'yes'],
+            shares_cases=row.get(titles['shares_cases'], 'n').lower() in ['y', 'yes'],
+            view_descendants=row.get(titles['view_descendants'], 'n').lower() in ['y', 'yes'],
+            index=index,
+        )
 
     @staticmethod
     def _get_location_data(index, row, location_type):
         titles = LOCATION_SHEET_HEADERS
-        name = row.get(titles['name'])
-        site_code = row.get(titles['site_code'])
-        location_type = location_type
-        location_id = row.get(titles['location_id'])
-        parent_code = row.get(titles['parent_code'])
-        latitude = row.get(titles['latitude'])
-        longitude = row.get(titles['longitude'])
-        do_delete = row.get(titles['do_delete'], 'N').lower() in ['y', 'yes']
-        external_id = row.get(titles['external_id'])
 
         def _optional_attr(attr):
             if titles[attr] in row:
@@ -358,12 +350,20 @@ class LocationExcelValidator(object):
             else:
                 return LocationStub.NOT_PROVIDED
 
-        custom_data = _optional_attr('custom_data')
-        delete_uncategorized_data = row.get(titles['delete_uncategorized_data'], 'N').lower() in ['y', 'yes']
-        stub = LocationData(name, site_code, location_type, parent_code, location_id,
-                            do_delete, external_id, latitude, longitude, custom_data,
-                            delete_uncategorized_data, index)
-        return stub
+        return LocationData(
+            name=row.get(titles['name']),
+            site_code=row.get(titles['site_code']),
+            location_type=location_type,
+            parent_code=row.get(titles['parent_code']),
+            location_id=row.get(titles['location_id']),
+            do_delete=row.get(titles['do_delete'], 'N').lower() in ['y', 'yes'],
+            external_id=row.get(titles['external_id']),
+            latitude=row.get(titles['latitude']),
+            longitude=row.get(titles['longitude']),
+            custom_data=_optional_attr('custom_data'),
+            delete_uncategorized_data=row.get(titles['delete_uncategorized_data'], 'N').lower() in ['y', 'yes'],
+            index=index,
+        )
 
 
 class NewLocationImporter(object):
