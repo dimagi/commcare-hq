@@ -165,6 +165,7 @@ class UploadTestUtils(object):
 
     @cached_property
     def locations_by_code(self):
+        self.addCleanup(lambda: delattr(self, 'locations_by_code'))
         return {
             loc.site_code: loc
             for loc in SQLLocation.objects.filter(domain=self.domain)
@@ -281,6 +282,17 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         NewLocRow('Jacksonville', 'jacksonville', 'city', 'duval'),
     ]
 
+    @property
+    def basic_update(self):
+        return [
+            self.UpdateLocRow(
+                l.name,
+                l.site_code,
+                l.location_type,
+                l.parent_code if l.parent_code != ROOT_LOCATION_TYPE else '')
+            for l in self.basic_location_tree
+        ]
+
     def setUp(self):
         super(TestTreeValidator, self).setUp()
         self.domain_obj = create_domain(self.domain)
@@ -376,30 +388,33 @@ class TestTreeValidator(UploadTestUtils, TestCase):
 
     def test_missing_types(self):
         # all types in the domain should be listed in given excel
-        self.bulk_update_locations(
+        result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)],
             self.basic_location_tree,
         )
-        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
+        assert_errors(result, [])
+        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_update)
         assert_errors(validator, ["type code 'galaxy' is not listed"])
 
     def test_missing_location_ids(self):
         # not all locations need to be specified in the upload
-        self.bulk_update_locations(
+        result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
-            self.basic_location_tree + [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')],
+            self.basic_location_tree + [NewLocRow('extra_state', 'ex_code', 'state', '')],
         )
-        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_location_tree)
+        assert_errors(result, [])
+        validator = self.get_validator(FLAT_LOCATION_TYPES, self.basic_update)
         assert_errors(validator, [])
 
     def test_unknown_location_ids(self):
         # all locations with IDs must already exist
-        self.bulk_update_locations(
+        result = self.bulk_update_locations(
             FLAT_LOCATION_TYPES,
             self.basic_location_tree,
         )
+        assert_errors(result, [])
         new_locations = (
-            self.basic_location_tree +
+            self.basic_update +
             [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')]
         )
         validator = self.get_validator(FLAT_LOCATION_TYPES, new_locations)
