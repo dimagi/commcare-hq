@@ -1008,3 +1008,15 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         assert_errors(result, [])
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_update))
+
+    def test_fail_to_update_without_id(self):
+        # You must specify a location_id to perform an update
+        result = self.bulk_update_locations(
+            FLAT_LOCATION_TYPES,
+            [
+                # This site_code is already taken:
+                NewLocRow('New City211', 'city211', 'city', 'county21'),
+                NewLocRow('City212', 'city212', 'city', 'county21'),
+            ],
+        )
+        assert_errors(result, ["site_code 'city211' is in use"])

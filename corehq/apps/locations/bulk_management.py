@@ -470,16 +470,15 @@ class LocationTreeValidator(object):
         # We want to find as many errors as possible up front, but some high
         # level errors make it unrealistic to keep validating
 
-        location_row_errors = (self._check_unknown_location_ids() + self._validate_geodata())
-
-        # all old types/locations should be listed in excel
-        unknown_or_missing_errors = self._check_unlisted_type_codes()
-
-        uniqueness_errors = (self._check_unique_type_codes() +
-                             self._check_unique_location_codes() +
-                             self._check_unique_location_ids())
-
-        basic_errors = uniqueness_errors + unknown_or_missing_errors + location_row_errors
+        basic_errors = (
+            self._check_unique_type_codes() +
+            self._check_unique_location_codes() +
+            self._check_unique_location_ids() +
+            self._check_new_site_codes_available() +
+            self._check_unlisted_type_codes() +
+            self._check_unknown_location_ids() +
+            self._validate_geodata()
+        )
 
         if basic_errors:
             # it doesn't make sense to try to validate a tree when you can't
@@ -566,6 +565,19 @@ class LocationTreeValidator(object):
             _("Location location_id '{}' is listed {} times - they should be listed once")
             .format(location_id, count)
             for location_id, count in counts if count > 1
+        ]
+
+    def _check_new_site_codes_available(self):
+        updated_location_ids = {l.location_id for l in self.all_listed_locations
+                                if l.location_id}
+        # These site codes belong to locations in the db, but not the upload
+        unavailable_site_codes = {l.site_code for l in self.old_collection.locations
+                                  if l.location_id not in updated_location_ids}
+        return [
+            _("Location site_code '{code}' is in use by another location. "
+              "All site_codes must be unique").format(code=l.site_code)
+            for l in self.all_listed_locations
+            if l.site_code in unavailable_site_codes
         ]
 
     def _check_unlisted_type_codes(self):
