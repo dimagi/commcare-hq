@@ -19,6 +19,7 @@ from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
 from corehq.apps.locations.util import get_location_data_model
 from memoized import memoized
 from dimagi.utils.chunked import chunked
+from dimagi.utils.parsing import string_to_boolean
 
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.models import SQLLocation, LocationType
@@ -49,9 +50,9 @@ class LocationTypeData(object):
     name = attrib(type=six.text_type)
     code = attrib(type=six.text_type)
     parent_code = attrib(converter=lambda code: code or ROOT_LOCATION_TYPE)
-    do_delete = attrib(type=bool)
-    shares_cases = attrib(type=bool)
-    view_descendants = attrib(type=bool)
+    do_delete = attrib(type=bool, converter=string_to_boolean)
+    shares_cases = attrib(type=bool, converter=string_to_boolean)
+    view_descendants = attrib(type=bool, converter=string_to_boolean)
     index = attrib(type=int)
 
 
@@ -115,13 +116,13 @@ class LocationData(object):
     location_type = attrib(type=six.text_type)
     parent_code = attrib(converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
     location_id = attrib(type=six.text_type)
-    do_delete = attrib(type=bool)
+    do_delete = attrib(type=bool, converter=string_to_boolean)
     external_id = attrib(type=six.text_type)
     latitude = attrib(converter=string_or_none)
     longitude = attrib(converter=string_or_none)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'
     custom_data = attrib()
-    delete_uncategorized_data = attrib(type=bool)
+    delete_uncategorized_data = attrib(type=bool, converter=string_to_boolean)
     index = attrib(type=int)
 
 
@@ -330,9 +331,9 @@ class LocationExcelValidator(object):
             name=row.get(titles['name']),
             code=row.get(titles['code']),
             parent_code=row.get(titles['parent_code']),
-            do_delete=row.get(titles['do_delete'], 'n').lower() in ['y', 'yes'],
-            shares_cases=row.get(titles['shares_cases'], 'n').lower() in ['y', 'yes'],
-            view_descendants=row.get(titles['view_descendants'], 'n').lower() in ['y', 'yes'],
+            do_delete=row.get(titles['do_delete']),
+            shares_cases=row.get(titles['shares_cases']),
+            view_descendants=row.get(titles['view_descendants']),
             index=index,
         )
 
@@ -356,12 +357,12 @@ class LocationExcelValidator(object):
             location_type=location_type,
             parent_code=row.get(titles['parent_code']),
             location_id=row.get(titles['location_id']),
-            do_delete=row.get(titles['do_delete'], 'N').lower() in ['y', 'yes'],
+            do_delete=row.get(titles['do_delete']),
             external_id=row.get(titles['external_id']),
             latitude=row.get(titles['latitude']),
             longitude=row.get(titles['longitude']),
             custom_data=_optional_attr('custom_data'),
-            delete_uncategorized_data=row.get(titles['delete_uncategorized_data'], 'N').lower() in ['y', 'yes'],
+            delete_uncategorized_data=row.get(titles['delete_uncategorized_data']),
             index=index,
         )
 
