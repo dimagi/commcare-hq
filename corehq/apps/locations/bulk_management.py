@@ -66,8 +66,8 @@ class LocationTypeStub(object):
         self.do_delete = new_data.do_delete
         self.old_collection = old_collection
         self.domain = old_collection.domain_name
-        self.old_version = self.old_collection.types_by_code.get(self.code)
-        self.is_new = self.old_version is None
+        self.old_object = self.old_collection.types_by_code.get(self.code)
+        self.is_new = self.old_object is None
 
     @property
     @memoized
@@ -75,7 +75,7 @@ class LocationTypeStub(object):
         if self.is_new:
             obj = LocationType(domain=self.domain)
         else:
-            obj = copy.copy(self.old_version)
+            obj = copy.copy(self.old_object)
         for attr in self.meta_data_attrs:
             setattr(obj, attr, getattr(self.new_data, attr, None))
         return obj
@@ -88,12 +88,12 @@ class LocationTypeStub(object):
 
         # check if any attributes are being updated
         for attr in self.meta_data_attrs:
-            if getattr(self.old_version, attr, None) != getattr(self.new_data, attr, None):
+            if getattr(self.old_object, attr, None) != getattr(self.new_data, attr, None):
                 return True
 
         # check if the parent is being updated
-        old_parent_code = self.old_version.parent_type.code \
-            if self.old_version.parent_type else ROOT_LOCATION_TYPE
+        old_parent_code = self.old_object.parent_type.code \
+            if self.old_object.parent_type else ROOT_LOCATION_TYPE
         if old_parent_code != self.parent_code:
             return True
 
@@ -147,7 +147,7 @@ class LocationStub(object):
         self.is_new = not self.new_data.location_id
 
     @cached_property
-    def old_version(self):
+    def old_object(self):
         if self.is_new:
             return None
         return self.old_collection.locations_by_id[self.location_id]
@@ -159,7 +159,7 @@ class LocationStub(object):
         if self.is_new:
             db_object = SQLLocation(domain=self.domain)
         else:
-            db_object = copy.copy(self.old_version)
+            db_object = copy.copy(self.old_object)
         for attr in self.meta_data_attrs:
             setattr(db_object, attr, getattr(self.new_data, attr, None))
         db_object.metadata = self.custom_data
@@ -174,7 +174,7 @@ class LocationStub(object):
         elif self.is_new:
             metadata = {}
         else:
-            metadata = copy.copy(self.old_version.metadata)
+            metadata = copy.copy(self.old_object.metadata)
 
         metadata, unknown = self.data_model.get_model_and_uncategorized(metadata)
         if data_provided and not self.new_data.delete_uncategorized_data:
@@ -194,22 +194,22 @@ class LocationStub(object):
             return True
 
         for attr in self.meta_data_attrs:
-            old_value = getattr(self.old_version, attr, None)
+            old_value = getattr(self.old_object, attr, None)
             new_value = getattr(self.new_data, attr, None)
             if (old_value or new_value) and old_value != new_value:
                 # attributes are being updated
                 return True
 
-        if self.db_object.metadata != self.old_version.metadata:
+        if self.db_object.metadata != self.old_object.metadata:
             # custom location data is being updated
             return True
 
-        if self.location_type != self.old_version.location_type.code:
+        if self.location_type != self.old_object.location_type.code:
             # foreign-key refs are being updated
             return True
 
-        if self.old_version.parent_id is not None:
-            old_parent_code = self.old_collection.locations_by_pk[self.old_version.parent_id].site_code
+        if self.old_object.parent_id is not None:
+            old_parent_code = self.old_collection.locations_by_pk[self.old_object.parent_id].site_code
         else:
             old_parent_code = ROOT_LOCATION_TYPE
         return old_parent_code != self.new_data.parent_code
@@ -379,7 +379,7 @@ class NewLocationImporter(object):
         self.old_collection = LocationCollection(self.domain_obj)
         self.type_stubs = [LocationTypeStub(data, self.old_collection) for data in type_data]
         data_model = get_location_data_model(self.domain)
-        self.location_rows = [LocationStub(data, data_model, self.old_collection)
+        self.location_stubs = [LocationStub(data, data_model, self.old_collection)
                               for data in location_data]
         self.user = user
         self.result = LocationUploadResult()
@@ -387,13 +387,13 @@ class NewLocationImporter(object):
         self.chunk_size = chunk_size
 
     def run(self):
-        tree_validator = LocationTreeValidator(self.type_stubs, self.location_rows, self.old_collection, self.user)
+        tree_validator = LocationTreeValidator(self.type_stubs, self.location_stubs, self.old_collection, self.user)
         self.result.errors = tree_validator.errors
         self.result.warnings = tree_validator.warnings
         if self.result.errors:
             return self.result
 
-        self.bulk_commit(self.type_stubs, self.location_rows)
+        self.bulk_commit(self.type_stubs, self.location_stubs)
 
         return self.result
 
@@ -431,11 +431,11 @@ class LocationTreeValidator(object):
     the time validation is complete if/when there are no errors.
 
     :param type_stubs: List of `LocationTypeStub` objects.
-    :param location_rows: List of `LocationStub` objects.
+    :param location_stubs: List of `LocationStub` objects.
     :param old_collection: `LocationCollection`.
     """
 
-    def __init__(self, type_stubs, location_rows, old_collection, user):
+    def __init__(self, type_stubs, location_stubs, old_collection, user):
 
         _to_be_deleted = lambda items: [i for i in items if i.do_delete]
         _not_to_be_deleted = lambda items: [i for i in items if not i.do_delete]
@@ -445,14 +445,14 @@ class LocationTreeValidator(object):
         self.location_types = _not_to_be_deleted(type_stubs)
         self.types_to_be_deleted = _to_be_deleted(type_stubs)
 
-        self.all_listed_locations = location_rows
-        self.locations = _not_to_be_deleted(location_rows)
-        self.locations_to_be_deleted = _to_be_deleted(location_rows)
+        self.all_listed_locations = location_stubs
+        self.locations = _not_to_be_deleted(location_stubs)
+        self.locations_to_be_deleted = _to_be_deleted(location_stubs)
 
         self.old_collection = old_collection
 
         self.types_by_code = {lt.code: lt for lt in self.location_types}
-        self.locations_by_code = {l.site_code: l for l in location_rows}
+        self.locations_by_code = {l.site_code: l for l in location_stubs}
 
         self.errors = self._get_errors()
         self.warnings = self._get_warnings()
