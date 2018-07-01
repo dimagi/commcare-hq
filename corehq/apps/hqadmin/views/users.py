@@ -25,7 +25,7 @@ from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy, ugettext as _
 from django.views.generic import FormView, TemplateView, View
 from lxml import etree
 from lxml.builder import E
@@ -62,7 +62,11 @@ from corehq.apps.hqadmin.views.utils import BaseAdminSectionView
 from six.moves import filter
 
 
-class AuthenticateAs(BaseAdminSectionView):
+class UserAdministration(BaseAdminSectionView):
+    section_name = ugettext_lazy("User Administration")
+
+
+class AuthenticateAs(UserAdministration):
     urlname = 'authenticate_as'
     page_title = _("Login as Other User")
     template_name = 'hqadmin/authenticate_as.html'
@@ -93,7 +97,7 @@ class AuthenticateAs(BaseAdminSectionView):
         return self.get(request, *args, **kwargs)
 
 
-class SuperuserManagement(BaseAdminSectionView):
+class SuperuserManagement(UserAdministration):
     urlname = 'superuser_management'
     page_title = _("Grant or revoke superuser access")
     template_name = 'hqadmin/superuser_management.html'
