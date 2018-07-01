@@ -8,24 +8,26 @@ https://docs.google.com/document/d/1gZFPP8yXjPazaJDP9EmFORi88R-jSytH6TTgMxTGQSk/
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
-from collections import Counter, defaultdict, namedtuple
-from attr import attrs, attrib, astuple
+from collections import Counter, defaultdict
 
+from attr import attrs, attrib
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils.functional import cached_property
 from django.utils.translation import string_concat, ugettext as _, ugettext_lazy
-
-from corehq.apps.locations.util import get_location_data_model
 from memoized import memoized
+
+from corehq.apps.domain.models import Domain
 from dimagi.utils.chunked import chunked
 from dimagi.utils.parsing import string_to_boolean
 
-from corehq.apps.domain.models import Domain
-from corehq.apps.locations.models import SQLLocation, LocationType
+from .const import (
+    LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE,
+    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE)
+from .models import SQLLocation, LocationType
 from .tree_utils import BadParentError, CycleError, assert_no_cycles
-from .const import LOCATION_SHEET_HEADERS, LOCATION_TYPE_SHEET_HEADERS, ROOT_LOCATION_TYPE, \
-    LOCATION_SHEET_HEADERS_OPTIONAL, LOCATION_SHEET_HEADERS_BASE
+from .util import get_location_data_model
+
 import six
 
 
@@ -183,11 +185,6 @@ class LocationStub(object):
 
         return metadata
 
-    def get_new_parent_stub(self, location_stubs_by_code):
-        parent_code = self.new_data.parent_code
-        if parent_code and parent_code != ROOT_LOCATION_TYPE:
-            return location_stubs_by_code[parent_code]
-
     @cached_property
     def needs_save(self):
         if self.is_new or self.do_delete:
@@ -344,7 +341,7 @@ class LocationExcelValidator(object):
         def _optional_attr(attr):
             if titles[attr] in row:
                 val = row.get(titles[attr])
-                if type(val) == dict and '' in val:
+                if isinstance(val, dict) and '' in val:
                     # when excel header is 'data: ', the value is parsed as {'': ''}, but it should be {}
                     val.pop('')
                 return val
@@ -401,7 +398,7 @@ class NewLocationImporter(object):
     def bulk_commit(self, type_stubs, location_stubs):
         type_objects = save_types(type_stubs, self.excel_importer)
         save_locations(location_stubs, type_objects, self.old_collection,
-                       self.domain, self.excel_importer, self.chunk_size)
+                       self.excel_importer, self.chunk_size)
         # Since we updated LocationType objects in bulk, some of the post-save logic
         # that occurs inside LocationType.save needs to be explicitly called here
         for lt in type_stubs:
@@ -803,7 +800,7 @@ def save_types(type_stubs, excel_importer=None):
     return all_objs_by_code
 
 
-def save_locations(location_stubs, types_by_code, old_collection, domain,
+def save_locations(location_stubs, types_by_code, old_collection,
                    excel_importer=None, chunk_size=100):
     """
     :param location_stubs: (list) List of LocationStub objects with

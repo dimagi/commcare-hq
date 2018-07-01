@@ -3,10 +3,9 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
 
-import attr
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
-from mock import MagicMock, patch
+from mock import patch
 
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -21,10 +20,11 @@ from ..bulk_management import (
     NewLocationImporter,
 )
 from ..const import ROOT_LOCATION_TYPE
-from ..models import LocationType, SQLLocation
+from ..models import SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
 from ..util import get_location_data_model
 from .util import LocationHierarchyPerTest, restrict_user_by_location
+
 import six
 from six.moves import range
 
@@ -184,7 +184,7 @@ class UploadTestUtils(object):
         return self.locations_by_code[code].location_id
 
     def UpdateLocRow(self, name, site_code, location_type, parent_code,
-                      location_id=Ellipsis, **kwargs):
+                     location_id=Ellipsis, **kwargs):
         """Like NewLocRow, but looks up location_id from the site_code"""
         if location_id != Ellipsis:
             raise Exception("If you're going to pass in location_id, use NewLocRow.")
@@ -918,8 +918,13 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.assertLocationTypesMatch(FLAT_LOCATION_TYPES)
         self.assertLocationsMatch(self.as_pairs(self.basic_update))
         self.assertLocationsMatch(set([
-            ('State 1', ROOT_LOCATION_TYPE), ('State 2', ROOT_LOCATION_TYPE), ('County 11', 's1'), ('County 21', 's2'),
-            ('City 111', 'county11'), ('City 112', 'county11'), ('City 211', 'county21')
+            ('State 1', ROOT_LOCATION_TYPE),
+            ('State 2', ROOT_LOCATION_TYPE),
+            ('County 11', 's1'),
+            ('County 21', 's2'),
+            ('City 111', 'county11'),
+            ('City 112', 'county11'),
+            ('City 211', 'county21')
         ]), check_attr='name')
 
     def test_partial_type_edit(self):
