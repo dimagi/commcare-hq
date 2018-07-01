@@ -93,6 +93,11 @@ class AuthenticateAs(UserAdministration):
             request.user.backend = 'django.contrib.auth.backends.ModelBackend'
             login(request, request.user)
             return HttpResponseRedirect('/')
+        all_errors = form.errors.pop('__all__', None)
+        if all_errors:
+            messages.error(request, ','.join(all_errors))
+        if form.errors:
+            messages.error(request, form.errors)
         return self.get(request, *args, **kwargs)
 
 
