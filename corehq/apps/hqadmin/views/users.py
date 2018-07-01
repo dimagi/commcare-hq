@@ -79,7 +79,7 @@ class AuthenticateAs(UserAdministration):
     def page_context(self):
         return {
             'hide_filters': True,
-            'form': AuthenticateAsForm(initial=self.kwargs),
+            'form': AuthenticateAsForm(initial=self.request.POST),
         }
 
     def post(self, request, *args, **kwargs):
