@@ -51,8 +51,9 @@ class AuthenticateAsForm(forms.Form):
             if user is None:
                 raise forms.ValidationError("Cannot find user '{}'".format(username))
 
-        if not user.is_commcare_user():
-            raise forms.ValidationError("User '{}' is not a CommCareUser".format(username))
+        if domain or '.commcarehq.org' in username:
+            if not user.is_commcare_user():
+                raise forms.ValidationError("User '{}' is not a CommCareUser".format(username))
 
         return self.cleaned_data
 
