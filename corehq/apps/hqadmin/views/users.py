@@ -80,7 +80,6 @@ class AuthenticateAs(UserAdministration):
         return {
             'hide_filters': True,
             'form': AuthenticateAsForm(initial=self.kwargs),
-            'js_options': {},
         }
 
     def post(self, request, *args, **kwargs):
