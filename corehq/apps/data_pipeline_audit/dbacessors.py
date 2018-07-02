@@ -10,6 +10,7 @@ from corehq.form_processor.backends.sql.dbaccessors import doc_type_to_state
 from corehq.form_processor.models import XFormInstanceSQL, CommCareCaseSQL
 from corehq.form_processor.utils.general import should_use_sql_backend
 from corehq.sql_db.config import get_sql_db_aliases_in_use
+from couchforms.const import DEVICE_LOG_XMLNS
 from couchforms.models import all_known_formlike_doc_types
 
 
@@ -154,7 +155,8 @@ def get_sql_form_ids(domain, doc_type, startdate, enddate):
     state = doc_type_to_state[doc_type]
     for db_alias in get_sql_db_aliases_in_use():
         queryset = XFormInstanceSQL.objects.using(db_alias) \
-            .filter(domain=domain, state=state)
+            .filter(domain=domain, state=state) \
+            .exclude(xmlns=DEVICE_LOG_XMLNS)
 
         if startdate:
             queryset = queryset.filter(received_on__gte=startdate)
