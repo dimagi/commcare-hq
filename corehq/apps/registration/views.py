@@ -128,28 +128,40 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
             web_user.save()
 
-        email = new_user.email
+        if settings.IS_SAAS_ENVIRONMENT:
+            email = new_user.email
+            
+            # registration analytics
+            # only do anything with this in a SAAS environment
 
-        # registration analytics
-        persona = reg_form.cleaned_data['persona']
-        persona_other = reg_form.cleaned_data['persona_other']
-        appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
-                                                          toggles.NAMESPACE_USER)
+            persona = reg_form.cleaned_data['persona']
+            persona_other = reg_form.cleaned_data['persona_other']
+            appcues_ab_test = toggles.APPCUES_AB_TEST.enabled(web_user.username,
+                                                              toggles.NAMESPACE_USER)
 
-        track_workflow(email, "Requested New Account")
-        track_workflow(email, "Persona Field Filled Out", {
-            'personachoice': persona,
-            'personaother': persona_other,
-        })
+            track_workflow(email, "Requested New Account", {
+                'environment': settings.SERVER_ENVIRONMENT,
+            })
+            track_workflow(email, "Persona Field Filled Out", {
+                'personachoice': persona,
+                'personaother': persona_other,
+            })
 
-        track_web_user_registration_hubspot.delay(
-            web_user,
-            {
-                'buyer_persona': persona,
-                'buyer_persona_other': persona_other,
-                "appcues_test": "On" if appcues_ab_test else "Off",
-            }
-        )
+            track_web_user_registration_hubspot(
+                self.request,
+                web_user,
+                {
+                    'buyer_persona': persona,
+                    'buyer_persona_other': persona_other,
+                    "appcues_test": "On" if appcues_ab_test else "Off",
+                }
+            )
+            if not persona or (persona == 'Other' and not persona_other):
+                logging.error(
+                    "Persona fields from the login form were submitted without "
+                    "data. Please alert product as this should not be "
+                    "happening. User: {}".format(email)
+                )
 
         login(self.request, new_user)
 

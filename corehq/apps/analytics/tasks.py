@@ -246,8 +246,7 @@ def update_hubspot_properties(webuser, properties):
         _track_on_hubspot(webuser, properties)
 
 
-@analytics_task()
-def track_web_user_registration_hubspot(web_user, properties):
+def track_web_user_registration_hubspot(request, web_user, properties):
     if not settings.ANALYTICS_IDS.get('HUBSPOT_API_ID'):
         return
 
@@ -269,16 +268,12 @@ def track_web_user_registration_hubspot(web_user, properties):
 
     tracking_info.update(get_ab_test_properties(web_user))
     tracking_info.update(properties)
-    _track_on_hubspot(web_user, tracking_info)
+
+    send_hubspot_form(HUBSPOT_SIGNUP_FORM_ID, request, user=web_user)
 
 
 @analytics_task()
 def track_user_sign_in_on_hubspot(webuser, hubspot_cookie, meta, path):
-    from corehq.apps.registration.views import ProcessRegistrationView
-    if path.startswith(reverse(ProcessRegistrationView.urlname)):
-        # registration view - only track the form itself here.
-        # use track_web_user_registration_hubspot to track properties on signup
-        _send_form_to_hubspot(HUBSPOT_SIGNUP_FORM_ID, webuser, hubspot_cookie, meta)
     _send_form_to_hubspot(HUBSPOT_SIGNIN_FORM_ID, webuser, hubspot_cookie, meta)
 
 
