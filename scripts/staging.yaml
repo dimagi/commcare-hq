@@ -53,7 +53,6 @@ branches:
   - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
   - mk-strict-version-check # MK Jul 2
-  - jls/bower-cached-ajax  # Jenny July 2
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
