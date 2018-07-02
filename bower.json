@@ -78,7 +78,8 @@
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "r.js": "^2.3.5"
+    "r.js": "^2.3.5",
+    "jquery-memoized-ajax": "^0.5.0"
   },
   "devDependencies": {
     "chai": "3.3.0",
