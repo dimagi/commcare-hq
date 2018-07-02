@@ -695,7 +695,7 @@ def recalculate_aggregate_table(model_class):
     state_ids = (
         SQLLocation.objects
         .filter(domain='icds-cas', location_type__name='state')
-        .values_list('id', flat=True)
+        .values_list('location_id', flat=True)
     )
 
     for state_id in state_ids:
