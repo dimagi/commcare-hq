@@ -76,6 +76,7 @@ UCR_TABLE_NAME_MAPPING = [
     {'type': 'infrastructure', 'name': 'static-infrastructure_form'},
     {'type': 'person', 'name': 'static-person_cases_v2'},
     {'type': 'usage', 'name': 'static-usage_forms'},
+    {'type': 'vhnd', 'name': 'static-vhnd_form'},
     {'type': 'complementary_feeding', 'is_ucr': False, 'name': 'icds_dashboard_comp_feed_form'},
     {'type': 'aww_user', 'name': 'static-commcare_user_cases'},
     {'type': 'child_tasks', 'name': 'static-child_tasks_cases'},
