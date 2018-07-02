@@ -235,7 +235,9 @@ class RegisterWebUserForm(forms.Form):
             # sync django user
             duplicate.save()
         if User.objects.filter(username__iexact=data).count() > 0 or duplicate:
-            raise forms.ValidationError('Username already taken; please try another')
+            raise forms.ValidationError(
+                ugettext("Username already taken. Please try another.")
+            )
         return data
 
     def clean_password(self):
@@ -244,10 +246,29 @@ class RegisterWebUserForm(forms.Form):
     def clean_eula_confirmed(self):
         data = self.cleaned_data['eula_confirmed']
         if data is not True:
-            raise forms.ValidationError(
-                "You must agree to our Terms of Service and Business Agreement in order "
-                "to register an account."
-            )
+            raise forms.ValidationError(ugettext(
+                "You must agree to our Terms of Service and Business Agreement "
+                "in order to register an account."
+            ))
+        return data
+
+    def clean_persona(self):
+        data = self.cleaned_data['persona'].strip()
+        if not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
+        return data
+
+    def clean_persona_other(self):
+        data = self.cleaned_data['persona_other'].strip().lower()
+        persona = self.data['persona'].strip()
+        if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
+            raise forms.ValidationError(ugettext(
+                "Please specify how you plan to use CommCare so we know how to "
+                "best help you."
+            ))
         return data
 
     def clean(self):
