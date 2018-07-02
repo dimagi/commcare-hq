@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-
 from __future__ import unicode_literals
 
 from collections import namedtuple
@@ -14,11 +13,19 @@ from celery.schedules import crontab
 from celery.task import periodic_task, task
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.core.management import call_command
 from django.db import Error, IntegrityError, connections, transaction
 from django.db.models import F
 from io import BytesIO
 from couchexport.export import export_from_tables
 
+from corehq.apps.es.cases import CaseES, server_modified_on
+from corehq.apps.es.forms import FormES, submitted
+from corehq.apps.data_pipeline_audit.dbaccessors import (
+    get_es_counts_by_doc_type,
+    get_primary_db_form_counts,
+    get_primary_db_case_counts,
+)
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -650,3 +657,46 @@ def collect_inactive_awws():
     sync.store_file_in_blobdb(export_file)
     sync.save()
     celery_task_logger.info("Ended updating the Inactive AWW")
+
+
+@periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
+def push_missing_docs_to_es():
+    current_date = date(2017, 1, 1)
+    # this interval may need to be reduced, particularly for the recent months
+    interval = timedelta(weeks=1)
+    case_doc_type = 'CommCareCase'
+    xform_doc_type = 'XFormInstance'
+    while current_date <= date.today() + interval:
+        end_date = current_date + interval
+        primary_xforms = get_primary_db_form_counts(
+            'icds-cas', current_date, end_date
+        ).get(xform_doc_type, -1)
+        es_xforms = get_es_counts_by_doc_type(
+            'icds-cas', (FormES,), (submitted(gte=current_date, lt=end_date),)
+        ).get(xform_doc_type.lower(), -2)
+        if primary_xforms != es_xforms:
+            resave_documents.delay(xform_doc_type, current_date, end_date)
+
+        primary_cases = get_primary_db_case_counts(
+            'icds-cas', current_date, end_date
+        ).get(case_doc_type, -1)
+        es_cases = get_es_counts_by_doc_type(
+            'icds-cas', (CaseES,), (server_modified_on(gte=current_date, lt=end_date),)
+        ).get(case_doc_type.lower(), -2)
+        if primary_cases != es_cases:
+            resave_documents.delay(case_doc_type, current_date, end_date)
+
+    # should send an email with status of how many docs needed to be resaved
+
+
+@task(queue='background_queue')
+def resave_documents(doc_type, start_date, end_date):
+    if doc_type == 'XFormInstance':
+        flag = '--xforms'
+    elif doc_type == 'CommCareCase':
+        flag = '--cases'
+    else:
+        raise ValueError("invalid doc_type: {}".format(doc_type))
+
+    # if this is kept long term, this logic should be pulled out of hte management command
+    call_command('resave_failed_forms_and_cases', 'icds-cas', start_date, end_date, flag)
