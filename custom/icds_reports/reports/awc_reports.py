@@ -18,7 +18,8 @@ from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, pe
     match_age, current_age, exclude_records_by_age_for_column, calculate_date_for_age, \
     person_has_aadhaar_column, person_is_beneficiary_column, get_status, wasting_moderate_column, \
     wasting_severe_column, stunting_moderate_column, stunting_severe_column, current_month_stunting_column, \
-    current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column
+    current_month_wasting_column, hfa_recorded_in_month_column, wfh_recorded_in_month_column, \
+    chosen_filters_to_labels, default_age_interval
 from custom.icds_reports.const import MapColors
 import six
 
@@ -430,6 +431,11 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
     this_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*month))
     prev_month_institutional_delivery_data = get_institutional_delivery_data(datetime(*prev_month))
 
+    gender_label, age_label, chosen_filters = chosen_filters_to_labels(
+        config,
+        default_interval=default_age_interval(icds_feature_flag)
+    )
+
     return {
         'kpi': [
             [
@@ -460,7 +466,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
                 },
                 {
                     'label': _('Wasting (Weight-for-Height)'),
-                    'help_text': wasting_help_text(icds_feature_flag),
+                    'help_text': wasting_help_text(icds_feature_flag, age_label),
                     'percent': percent_diff(
                         'wasting',
                         this_month_data,
@@ -482,7 +488,7 @@ def get_awc_reports_maternal_child(domain, config, month, prev_month, show_test=
             [
                 {
                     'label': _('Stunting (Height-for-Age)'),
-                    'help_text': stunting_help_text(icds_feature_flag),
+                    'help_text': stunting_help_text(icds_feature_flag, age_label),
                     'percent': percent_diff(
                         'stunting',
                         this_month_data,

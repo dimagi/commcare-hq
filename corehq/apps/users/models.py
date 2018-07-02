@@ -1338,27 +1338,19 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         }[doc_type].wrap(source)
 
     @classmethod
-    @quickcache(['username'], skip_arg='strict')
-    def get_by_username(cls, username, strict=True):
+    @quickcache(['username'])
+    def get_by_username(cls, username):
         if not username:
             return None
 
-        def get(stale, raise_if_none):
-            result = cls.get_db().view('users/by_username',
-                key=username,
-                include_docs=True,
-                reduce=False,
-                stale=stale if not strict else None,
-            )
-            return result.one(except_all=raise_if_none)
-        try:
-            result = get(stale=settings.COUCH_STALE_QUERY, raise_if_none=True)
-            if result['doc'] is None or result['doc']['username'] != username:
-                raise NoResultFound
-        except NoResultFound:
-            result = get(stale=None, raise_if_none=False)
-
-        if result:
+        view_result = cls.get_db().view(
+            'users/by_username',
+            key=username,
+            include_docs=True,
+            reduce=False,
+        )
+        result = view_result.one()
+        if result and result['doc'] and result['doc']['username'] == username:
             couch_user = cls.wrap_correctly(result['doc'])
             cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)
             return couch_user
@@ -1460,6 +1452,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
 
     @classmethod
     def save_docs(cls, docs, **kwargs):
+        # this won't clear the caches, lets check if it's used anywhere before disallowing it's use
+        _assert = soft_assert('@'.join(['skelly', 'dimagi.com']), exponential_backoff=False)
+        _assert(False, "bulk save called on user class")
         utcnow = datetime.utcnow()
         for doc in docs:
             doc['last_modified'] = utcnow
@@ -1476,7 +1471,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
             if by_username and by_username['id'] != self._id:
                 raise self.Inconsistent("CouchUser with username %s already exists" % self.username)
 
-            if not self.to_be_deleted():
+            if self._rev and not self.to_be_deleted():
                 django_user = self.sync_to_django_user()
                 django_user.save()
 
@@ -1500,7 +1495,13 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
                     # avoid triggering cyclical sync
                     super(CouchUser, couch_user).save(**get_safe_write_kwargs())
                 except ResourceConflict:
-                    cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    if max_tries > 0:
+                        couch_user.clear_quickcache_for_user()
+                        cls.django_user_post_save_signal(sender, django_user, created, max_tries - 1)
+                    else:
+                        raise
+
+                couch_user.clear_quickcache_for_user()
 
     def is_deleted(self):
         return self.base_doc.endswith(DELETED_SUFFIX)

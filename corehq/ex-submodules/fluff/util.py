@@ -79,7 +79,7 @@ def get_column_type(data_type):
     if data_type == TYPE_STRING:
         return sqlalchemy.Unicode(255)
 
-    raise Exception('Enexpected type: {0}'.format(data_type))
+    raise Exception('Unexpected type: {0}'.format(data_type))
 
 
 def default_null_value_placeholder(data_type):

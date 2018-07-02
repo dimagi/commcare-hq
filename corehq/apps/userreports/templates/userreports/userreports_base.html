@@ -93,4 +93,18 @@
             </a>
         </li>
     </ul>
+    {% if request|toggle_enabled:"AGGREGATE_UCRS" %}
+    <h2 class="text-hq-nav-header">{% trans "Aggregate Data Sources" %}</h2>
+        <ul class="nav nav-hq-sidebar">
+        {% with aggregate_table as selected_aggregate_ucr %}
+            {% for aggregate_ucr in aggregate_data_sources %}
+                <li {% if aggregate_ucr.id == selected_aggregate_ucr.id %} class="active"{% endif %}>
+                    <a href="{% url 'aggregate_ucr' domain aggregate_ucr.table_id %}">
+                        {{ aggregate_ucr.display_name }}
+                    </a>
+                </li>
+            {% endfor %}
+        {% endwith %}
+        </ul>
+    {% endif %}
 {% endblock %}
