@@ -273,12 +273,12 @@ class ParentCasePropertyBuilder(object):
 
     """
     def __init__(self, app, defaults=(), per_type_defaults=None, include_parent_properties=True,
-            validate_properties=False):
+            exclude_invalid_properties=False):
         self.app = app
         self.defaults = defaults
         self.per_type_defaults = per_type_defaults or {}
         self.include_parent_properties = include_parent_properties
-        self.validate_properties = validate_properties
+        self.exclude_invalid_properties = exclude_invalid_properties
 
     def _get_relevant_apps(self):
         apps = [self.app]
@@ -407,7 +407,7 @@ class ParentCasePropertyBuilder(object):
         for case_properties in case_properties_by_case_type.values():
             case_properties.update(self.defaults)
 
-        if self.validate_properties:
+        if self.exclude_invalid_properties:
             from corehq.apps.app_manager.models import validate_property
             for case_type, case_properties in case_properties_by_case_type.items():
                 to_remove = []
@@ -488,17 +488,18 @@ def get_parent_type_map(app, if_multiple_parents_arbitrarily_pick_one=False):
         if_multiple_parents_arbitrarily_pick_one=if_multiple_parents_arbitrarily_pick_one)
 
 
-def get_case_properties(app, case_types, defaults=(), include_parent_properties=True, validate_properties=False):
+def get_case_properties(app, case_types, defaults=(), include_parent_properties=True,
+        exclude_invalid_properties=False):
     per_type_defaults = get_per_type_defaults(app.domain, case_types)
     builder = ParentCasePropertyBuilder(app, defaults, per_type_defaults=per_type_defaults,
                                         include_parent_properties=include_parent_properties,
-                                        validate_properties=validate_properties)
+                                        exclude_invalid_properties=exclude_invalid_properties)
     properties = builder.get_case_property_map(case_types)
     return properties
 
 
 def get_all_case_properties(app):
-    return get_case_properties(app, app.get_case_types(), defaults=('name',), validate_properties=True)
+    return get_case_properties(app, app.get_case_types(), defaults=('name',), exclude_invalid_properties=True)
 
 
 def get_all_case_properties_for_case_type(domain, case_type):
