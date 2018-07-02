@@ -75,6 +75,10 @@ class Command(BaseCommand):
     @change_log_level('botocore', logging.WARNING)
     def handle(self, files, output_file, write_csv, sample_size, default_only,
                list_blob_ids, **options):
+
+        print("WARNING this report has not been adapted to the new blob db "
+              "metadata API, and therefore is probably broken.")
+
         print("Loading PUT requests from access logs...", file=sys.stderr)
         data = accumulate_put_requests(files)
         sizes, samples_by_type = get_blob_sizes(data, sample_size, default_only)
