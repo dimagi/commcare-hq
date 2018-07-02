@@ -232,7 +232,7 @@ def touchforms_error_is_config_error(domain, touchforms_error):
             'problem with display condition',
         ))
     else:
-        error_type = touchforms_error.response_data.get('error_type', '')
+        error_type = touchforms_error.response_data.get('error_type') or ''
         return any([s in error_type for s in (
             'XPathTypeMismatchException',
             'XPathUnhandledException',
