@@ -11,7 +11,7 @@ import six
 class AppFactory(object):
     """
     Example usage:
-    >>> factory = AppFactory(build_version='2.11')
+    >>> factory = AppFactory(build_version='2.11.0')
     >>> module1, form1 = factory.new_basic_module('open_case', 'house')
     >>> factory.form_opens_case(form1)
 
