@@ -1585,14 +1585,18 @@ class NavMenuItemMediaMixin(DocumentSchema):
 
         media_dict = getattr(self, media_attr) or {}
         old_value = media_dict.get(lang)
+        media_dict[lang] = media_path or ''
+        setattr(self, media_attr, media_dict)
         # remove the entry from app multimedia mappings if media is being removed now
         # This does not remove the multimedia but just it's reference in mapping
         # Added it here to ensure it's always set instead of getting it only when needed
         app = self.get_app()
         if old_value and not media_path:
-            app.multimedia_map.pop(old_value, None)
-        media_dict[lang] = media_path or ''
-        setattr(self, media_attr, media_dict)
+            # expire all_media_paths before checking for media path used in Application
+            app.all_media.reset_cache(app)
+            app.all_media_paths.reset_cache(app)
+            if old_value not in app.all_media_paths():
+                app.multimedia_map.pop(old_value, None)
 
     def set_icon(self, lang, icon_path):
         self._set_media('media_image', lang, icon_path)
