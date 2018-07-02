@@ -305,7 +305,7 @@ def track_confirmed_account_on_hubspot(webuser):
         })
 
 
-def send_hubspot_form(form_id, request, user=None):
+def send_hubspot_form(form_id, request, user=None, extra_fields=None):
     """
     pulls out relevant info from request object before sending to celery since
     requests cannot be pickled
@@ -314,12 +314,17 @@ def send_hubspot_form(form_id, request, user=None):
         user = getattr(request, 'couch_user', None)
     if request and user and user.is_web_user():
         meta = get_meta(request)
-        send_hubspot_form_task.delay(form_id, user, request.COOKIES.get(HUBSPOT_COOKIE), meta)
+        send_hubspot_form_task.delay(
+            form_id, user, request.COOKIES.get(HUBSPOT_COOKIE),
+            meta, extra_fields=extra_fields
+        )
 
 
 @analytics_task()
-def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta):
-    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta)
+def send_hubspot_form_task(form_id, web_user, hubspot_cookie, meta,
+                           extra_fields=None):
+    _send_form_to_hubspot(form_id, web_user, hubspot_cookie, meta,
+                          extra_fields=extra_fields)
 
 @analytics_task()
 def track_clicked_deploy_on_hubspot(webuser, hubspot_cookie, meta):
