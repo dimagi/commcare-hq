@@ -115,25 +115,29 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def headers(self):
         columns = [
             DataTablesColumn(_('Product')),
-            DataTablesColumn(_('# Facilities')),
+            DataTablesColumn(_('# Facilities'), sortable=False),
             DataTablesColumn(
                 _('Stocked Out'),
                 help_text=_("A facility is counted as stocked out when its \
-                            current stock is below the emergency level.")),
+                            current stock is below the emergency level."),
+                sortable=False),
             DataTablesColumn(
                 _('Understocked'),
                 help_text=_("A facility is counted as under stocked when its \
                             current stock is above the emergency level but below the \
-                            low stock level.")),
+                            low stock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Adequate Stock'),
                 help_text=_("A facility is counted as adequately stocked when \
                             its current stock is above the low level but below the \
-                            overstock level.")),
+                            overstock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Overstocked'),
                 help_text=_("A facility is counted as overstocked when \
-                            its current stock is above the overstock level.")),
+                            its current stock is above the overstock level."),
+                sortable=False),
             DataTablesColumn(
                 _('Insufficient Data'),
                 help_text=_("A facility is marked as insufficient data when \
@@ -142,7 +146,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                             Consumption amount can be unknown if there is \
                             either no default consumption value or the reporting \
                             history does not meet the calculation settings \
-                            for the project."))
+                            for the project."),
+                sortable=False)
         ]
         return DataTablesHeader(*columns)
 
