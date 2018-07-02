@@ -50,7 +50,7 @@ class S3BlobDB(AbstractBlobDB):
             original_stop(name)
             datadog_counter(
                 'commcare.blobs.requests.timing',
-                value=timer.duration * 1000,
+                value=timer.duration,
                 tags=[
                     'action:{}'.format(action),
                     's3_bucket_name:{}'.format(blobdb.s3_bucket_name)
