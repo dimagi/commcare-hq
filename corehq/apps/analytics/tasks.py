@@ -222,9 +222,10 @@ def _send_form_to_hubspot(form_id, webuser, hubspot_cookie, meta, extra_fields=N
             'hs_context': json.dumps({"hutk": hubspot_cookie, "ipAddress": _get_client_ip(meta)}),
         }
         if webuser:
-            data.update({'firstname': webuser.first_name,
-                         'lastname': webuser.last_name,
-                         })
+            data.update({
+                'firstname': webuser.first_name,
+                'lastname': webuser.last_name,
+            })
         if extra_fields:
             data.update(extra_fields)
 
