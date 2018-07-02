@@ -156,16 +156,30 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     def product_data(self):
         return list(self.get_prod_data())
 
+    def filter_by_product_ids(self, product_ids, product_name_map):
+        """
+        This sorts by name of products to be rendered and then
+        returns the product ids to be rendered according to pagination
+        :param product_ids: product ids for the program if selected
+        :return: product ids to filter on
+        """
+        if self.request.GET.get('sSortDir_0') == 'desc':
+            sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k), reverse=True)
+        else:
+            sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k))
+        products_to_show = sorted_product_name_map[self.pagination.start:][:self.pagination.count]
+        return [product_id for product_id, product_name in products_to_show]
+
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
         product_ids = get_product_ids_for_program(self.domain, self.program_id) if self.program_id else None
 
+        product_name_map = get_product_id_name_mapping(self.domain, product_ids)
         ledger_values = get_wrapped_ledger_values(
             domain=self.domain,
             case_ids=sp_ids,
             section_id=STOCK_SECTION_TYPE,
-            entry_ids=product_ids,
-            pagination=self.pagination,
+            entry_ids=self.filter_by_product_ids(product_ids, product_name_map),
         )
         product_grouping = {}
         domain = Domain.get_by_name(self.domain)
@@ -188,7 +202,6 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
                 }
                 product_grouping[ledger_value.entry_id][status] = 1
 
-        product_name_map = get_product_id_name_mapping(self.domain)
         rows = [[
             product_name_map.get(product['entry_id'], product['entry_id']),
             product['facility_count'],
@@ -199,7 +212,10 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             100.0 * product['nodata'] / product['facility_count'],
         ] for product in product_grouping.values()]
 
-        return sorted(rows, key=lambda r: r[0].lower())
+        if self.request.GET.get('sSortDir_0') == 'desc':
+            return sorted(rows, key=lambda r: r[0].lower(), reverse=True)
+        else:
+            return sorted(rows, key=lambda r: r[0].lower())
 
     @property
     def rows(self):
