@@ -486,9 +486,9 @@ def _submit_case_block(create, case_id, **kwargs):
 
 class IteratorTests(TestCase):
     def test_iterator(self):
-        i = XFormQuestionValueIterator("/data/group/repeat_group[2]/question_id")
+        i = XFormQuestionValueIterator("/data/a-group/repeat_group[2]/question_id")
         self.assertIsNone(i.last())
-        self.assertEqual(next(i), ('group', None))
+        self.assertEqual(next(i), ('a-group', None))
         self.assertEqual(next(i), ('repeat_group', 1))
         with self.assertRaises(StopIteration):
             next(i)
