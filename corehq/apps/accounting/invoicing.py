@@ -21,7 +21,7 @@ from corehq.apps.accounting.exceptions import (
 from corehq.apps.accounting.models import (
     LineItem, FeatureType, Invoice, CustomerInvoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord,
+    SubscriptionAdjustmentMethod, BillingRecord, CustomerBillingRecord,
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
@@ -333,7 +333,7 @@ class CustomerAccountInvoiceFactory(object):
         invoice.save()
 
     def _email_invoice(self):
-        record = BillingRecord.generate_record(self.customer_invoice)
+        record = CustomerBillingRecord.generate_record(self.customer_invoice)
         try:
             if self.recipients:
                 for email in self.recipients:
