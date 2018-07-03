@@ -180,16 +180,12 @@ class UploadTestUtils(object):
                 pairs.add((l.site_code, l.parent_code))
         return pairs
 
-    def get_loc_id(self, code):
-        return self.locations_by_code[code].location_id
-
-    def UpdateLocRow(self, name, site_code, location_type, parent_code,
-                     location_id=Ellipsis, **kwargs):
+    def UpdateLocRow(self, name, site_code, location_type, parent_code, **kwargs):
         """Like NewLocRow, but looks up location_id from the site_code"""
-        if location_id != Ellipsis:
+        if 'location_id' in kwargs:
             raise Exception("If you're going to pass in location_id, use NewLocRow.")
 
-        location_id = self.get_loc_id(site_code)
+        location_id = self.locations_by_code[site_code].location_id
         return NewLocRow(name, site_code, location_type, parent_code,
                          location_id=location_id, **kwargs)
 
@@ -415,7 +411,7 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         assert_errors(result, [])
         new_locations = (
             self.basic_update +
-            [NewLocRow('extra_state', 'ex_code', 'state', '', 'ex_id')]
+            [NewLocRow('extra_state', 'ex_code', 'state', '', location_id='ex_id')]
         )
         validator = self.get_validator(FLAT_LOCATION_TYPES, new_locations)
         assert_errors(validator, ["'id: ex_id' is not found in your domain"])
