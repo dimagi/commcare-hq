@@ -31,7 +31,7 @@ class BrokenBuildsForm(forms.Form):
 
 class AuthenticateAsForm(forms.Form):
     username = forms.CharField(max_length=255)
-    domain = forms.CharField(label="Domain (used for mobile workers)", max_length=255, required=False)
+    domain = forms.CharField(label="Domain", max_length=255, required=False)
 
     def clean(self):
         username = self.cleaned_data['username']
