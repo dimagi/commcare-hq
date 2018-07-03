@@ -85,8 +85,7 @@ class AuthenticateAs(UserAdministration):
     def post(self, request, *args, **kwargs):
         form = AuthenticateAsForm(self.request.POST)
         if form.is_valid():
-            username = form.cleaned_data['username']
-            request.user = User.objects.get(username=username)
+            request.user = User.objects.get(username=form.full_username)
 
             # http://stackoverflow.com/a/2787747/835696
             # This allows us to bypass the authenticate call
