@@ -515,15 +515,15 @@ class LocationTreeValidator(object):
             if not loc_stub.needs_save:
                 # Allow users to include any loc, as long as there are no changes
                 continue
-            if not loc_stub.is_new:
+            if loc_stub.is_new:
+                parent_exists = loc_stub.parent_code in self.old_collection.locations_by_site_code
+                if parent_exists and loc_stub.parent_code not in accessible_site_codes:
+                    errors.append(_("You do not have permission to add locations in '{}'")
+                                  .format(loc_stub.parent_code))
+            else:
                 if loc_stub.site_code not in accessible_site_codes:
                     errors.append(_("You do not have permission to edit '{}'")
                                   .format(loc_stub.site_code))
-            else:
-                parent_exists = (loc_stub.parent_code in self.old_collection.locations_by_site_code)
-                if (parent_exists and loc_stub.parent_code not in accessible_site_codes):
-                    errors.append(_("You do not have permission to add locations in '{}'")
-                                  .format(loc_stub.parent_code))
         return errors
 
     def _validate_geodata(self):
