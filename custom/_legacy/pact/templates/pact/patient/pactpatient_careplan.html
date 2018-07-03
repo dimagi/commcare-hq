@@ -16,9 +16,11 @@
 </script>
 
 <div class="row">
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
-    {% include "case/partials/case_hierarchy.html" %}
+    {% if not request|toggle_enabled:"CASE_DATA_FORMPLAYER_EXCLUDE" %}
+        {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+        {# import error on the case details page: http://manage.dimagi.com/default.asp?223100 #}
+        {% include 'cloudcare/includes/formplayer-inline.html' %}
+        {% include "case/partials/case_hierarchy.html" %}
+    {% endif %}
 </div>
 {% endblock %}
