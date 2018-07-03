@@ -52,7 +52,7 @@ class Command(BaseCommand):
     def handle(self, domain, start_date, end_date, *args, **options):
         resave_xforms = options.get('xforms')
         resave_cases = options.get('cases')
-        no_input = options.get('no-input', False)
+        no_input = options.get('no_input', False)
         if resave_xforms:
             perform_resave_on_xforms(domain, start_date, end_date, no_input)
         if resave_cases:
@@ -66,9 +66,9 @@ def perform_resave_on_xforms(domain, start_date, end_date, no_input):
         print(xform_ids_missing_in_es)
     if no_input is not True:
         ok = input("Type 'ok' to continue: ")
-    if ok != "ok":
-        print("No changes made")
-        return
+        if ok != "ok":
+            print("No changes made")
+            return
     form_accessor = FormAccessors(domain)
     for xform_ids in chunked(with_progress_bar(xform_ids_missing_in_es), 100):
         xforms = form_accessor.get_forms(list(xform_ids))
@@ -89,9 +89,9 @@ def perform_resave_on_cases(domain, start_date, end_date, no_input):
         print(case_ids_missing_in_es)
     if no_input is not True:
         ok = input("Type 'ok' to continue: ")
-    if ok != "ok":
-        print("No changes made")
-        return
+        if ok != "ok":
+            print("No changes made")
+            return
     case_accessor = CaseAccessors(domain)
     for case_ids in chunked(with_progress_bar(case_ids_missing_in_es), 100):
         cases = case_accessor.get_cases(list(case_ids))
