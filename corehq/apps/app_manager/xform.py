@@ -1364,7 +1364,7 @@ class XForm(WrappedNode):
             self.add_setvalue(
                 ref="meta/drift",
                 event="xforms-revalidate",
-                value="if(count(instance('commcaresession')/session/context/drift) &gt; 0, "
+                value="if(count(instance('commcaresession')/session/context/drift) = 1, "
                       "instance('commcaresession')/session/context/drift, '')",
             )
 
