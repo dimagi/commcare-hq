@@ -93,7 +93,6 @@ from corehq.apps.export.dbaccessors import (
     get_form_exports_by_domain,
 )
 from corehq.apps.groups.models import Group
-from corehq.apps.reports.dbaccessors import touch_exports, stale_get_export_count
 from corehq.apps.reports.export import CustomBulkExportHelper
 from corehq.apps.reports.exportfilters import default_form_filter
 from corehq.apps.reports.models import FormExportSchema, CaseExportSchema, \
@@ -343,7 +342,6 @@ class DeleteCustomExportView(BaseModifyCustomExportView):
             raise ExportNotFound()
         self.export_type = saved_export.type
         saved_export.delete()
-        touch_exports(self.domain)
         messages.success(
             request,
             mark_safe(
@@ -1481,10 +1479,7 @@ def use_new_daily_saved_exports_ui(domain):
     The new daily saved exports UI puts Daily Saved Exports and Dashboard Feeds on their own pages.
     It also allows for the filtering of both of these types of exports.
     """
-    def _has_no_old_exports(domain_):
-        return not bool(stale_get_export_count(domain_))
-
-    return _has_no_old_exports(domain)
+    return True
 
 
 @location_safe
