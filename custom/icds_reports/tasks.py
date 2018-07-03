@@ -706,4 +706,4 @@ def resave_documents(doc_type, start_date, end_date):
     start_date = start_date.strftime('%Y-%m-%d')
     end_date = end_date.strftime('%Y-%m-%d')
     # if this is kept long term, this logic should be pulled out of hte management command
-    call_command('resave_failed_forms_and_cases', 'icds-cas', start_date, end_date, flag)
+    call_command('resave_failed_forms_and_cases', 'icds-cas', start_date, end_date, flag, '--no-input')
