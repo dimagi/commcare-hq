@@ -294,7 +294,10 @@ class CustomerAccountInvoiceFactory(object):
     def create_invoice(self):
         for subscription in self.account.subscription_set.all():
             if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                self.subscriptions[subscription.plan_version] = subscription
+                if subscription.plan_version in self.subscriptions:
+                    self.subscriptions[subscription.plan_version].append(subscription)
+                else:
+                    self.subscriptions[subscription.plan_version] = [subscription]
         if not self.subscriptions:
             return
         self._generate_customer_invoice()
@@ -308,8 +311,12 @@ class CustomerAccountInvoiceFactory(object):
         )
         if not is_new_invoice:
             raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
-        for plan in self.subscriptions:
-            generate_line_items(invoice, self.subscriptions[plan])
+
+        all_subscriptions = []
+        for (plan, subscriptions) in self.subscriptions.iteritems():
+            generate_line_items(invoice, subscriptions[0])
+            all_subscriptions.extend(subscriptions)
+        invoice.subscriptions.set(all_subscriptions)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
         invoice.save()

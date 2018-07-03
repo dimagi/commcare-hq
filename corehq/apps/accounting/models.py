@@ -1950,6 +1950,7 @@ class Invoice(InvoiceBase):
 class CustomerInvoice(InvoiceBase):
     # CustomerInvoice is tied to a customer level account, instead of a subscription
     account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
+    subscriptions = models.ManyToManyField(Subscription, default=list, blank=True)
 
     class Meta(object):
         app_label = 'accounting'
@@ -2003,9 +2004,12 @@ class CustomerInvoice(InvoiceBase):
             self.date_paid = None
 
     def calculate_credit_adjustments(self):
+        # TODO: first apply credits to all the line items
+        # for line_item in self.lineitem_set.all():
+        #     line_item.calculate_credit_adjustments()
         current_total = self.get_total()
-        credit_lines = CreditLine.get_credits_for_account(self.account)
-        CreditLine.apply_credits_toward_balance(credit_lines, current_total, invoice=self)
+        credit_lines = CreditLine.get_credits_for_customer_invoice(self)
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
     def pay_invoice(self, payment_record):
         # TODO: This is broken because BillingRecords only take Invoices
@@ -2699,11 +2703,11 @@ class CreditLine(ValidateModelMixin, models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None,
+                              line_item=None, invoice=None, customer_invoice=None,
                               payment_record=None, related_credit=None,
                               reason=None, web_user=None):
         note = note or ""
-        if line_item is not None and invoice is not None:
+        if line_item is not None and (invoice is not None or customer_invoice is not None):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
         if reason is None:
             reason = CreditAdjustmentReason.MANUAL
@@ -2712,6 +2716,8 @@ class CreditLine(ValidateModelMixin, models.Model):
             elif related_credit is not None:
                 reason = CreditAdjustmentReason.TRANSFER
             elif invoice is not None:
+                reason = CreditAdjustmentReason.INVOICE
+            elif customer_invoice is not None:
                 reason = CreditAdjustmentReason.INVOICE
             elif line_item is not None:
                 reason = CreditAdjustmentReason.LINE_ITEM
@@ -2725,6 +2731,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
+            customer_invoice=customer_invoice,
             related_credit=related_credit,
             web_user=web_user,
         )
@@ -2773,6 +2780,23 @@ class CreditLine(ValidateModelMixin, models.Model):
             cls.get_credits_by_subscription_and_features(invoice.subscription),
             cls.get_credits_for_account(invoice.subscription.account)
         )
+
+    @classmethod
+    def get_credits_for_customer_invoice(cls, invoice):
+        return itertools.chain(
+            cls.get_credits_for_subscriptions(invoice.subscriptions.all()),
+            cls.get_credits_for_account(invoice.account)
+        )
+
+    @classmethod
+    def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
+        credit_list = []
+        for subscription in subscriptions:
+            credit_list.append(cls.get_credits_by_subscription_and_features(subscription))
+        credits = credit_list.pop()
+        for credit_line in credit_list:
+            credits.union(credit_line)
+        return credits
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
