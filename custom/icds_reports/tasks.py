@@ -26,6 +26,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_form_counts,
     get_primary_db_case_counts,
 )
+from corehq.apps.hqwebwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
@@ -669,6 +670,7 @@ def push_missing_docs_to_es():
     interval = timedelta(weeks=1)
     case_doc_type = 'CommCareCase'
     xform_doc_type = 'XFormInstance'
+    doc_differences = dict()
     while current_date <= date.today() + interval:
         end_date = current_date + interval
         primary_xforms = get_primary_db_form_counts(
@@ -678,6 +680,7 @@ def push_missing_docs_to_es():
             'icds-cas', (FormES,), (submitted(gte=current_date, lt=end_date),)
         ).get(xform_doc_type.lower(), -2)
         if primary_xforms != es_xforms:
+            doc_differences[(current_date, xform_doc_type)] = primary_xforms - es_xforms
             resave_documents.delay(xform_doc_type, current_date, end_date)
 
         primary_cases = get_primary_db_case_counts(
@@ -687,11 +690,23 @@ def push_missing_docs_to_es():
             'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
         ).get(case_doc_type, -2)
         if primary_cases != es_cases:
+            doc_differences[(current_date, case_doc_type)] = primary_xforms - es_xforms
             resave_documents.delay(case_doc_type, current_date, end_date)
 
         current_date += interval
 
     # should send an email with status of how many docs needed to be resaved
+    if doc_differences:
+        message = "\n".join([
+            "{}, {}: {}".format(k[0], k[1], v)
+            for k, v in doc_differences.items()
+        ])
+        send_mail_async.delay(
+            subject="Results from push_missing_docs_to_es",
+            message=message,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=["{}@{}.com".format("jmoney", "dimagi")]
+        )
 
 
 @task(queue='background_queue')
