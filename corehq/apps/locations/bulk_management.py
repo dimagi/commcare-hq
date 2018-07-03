@@ -79,7 +79,7 @@ class LocationTypeStub(object):
         else:
             obj = copy.copy(self.old_object)
         for attr in self.meta_data_attrs:
-            setattr(obj, attr, getattr(self.new_data, attr, None))
+            setattr(obj, attr, getattr(self.new_data, attr))
         return obj
 
     @property
@@ -90,7 +90,7 @@ class LocationTypeStub(object):
 
         # check if any attributes are being updated
         for attr in self.meta_data_attrs:
-            if getattr(self.old_object, attr, None) != getattr(self.new_data, attr, None):
+            if getattr(self.old_object, attr) != getattr(self.new_data, attr):
                 return True
 
         # check if the parent is being updated
@@ -163,7 +163,7 @@ class LocationStub(object):
         else:
             db_object = copy.copy(self.old_object)
         for attr in self.meta_data_attrs:
-            setattr(db_object, attr, getattr(self.new_data, attr, None))
+            setattr(db_object, attr, getattr(self.new_data, attr))
         db_object.metadata = self.custom_data
         return db_object
 
@@ -191,8 +191,8 @@ class LocationStub(object):
             return True
 
         for attr in self.meta_data_attrs:
-            old_value = getattr(self.old_object, attr, None)
-            new_value = getattr(self.new_data, attr, None)
+            old_value = getattr(self.old_object, attr)
+            new_value = getattr(self.new_data, attr)
             if (old_value or new_value) and old_value != new_value:
                 # attributes are being updated
                 return True
@@ -297,7 +297,7 @@ class LocationExcelValidator(object):
             ))
 
         type_data = [self._get_type_data(index, row)
-                      for index, row in enumerate(type_sheet_reader)]
+                     for index, row in enumerate(type_sheet_reader)]
 
         # all locations sheets should have correct headers
         location_data = []
