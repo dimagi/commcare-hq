@@ -1046,10 +1046,11 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id'], timeout=30 * 60)
-def get_beneficiary_details(case_id):
+@quickcache(['case_id', 'awc_id'], timeout=30 * 60)
+def get_beneficiary_details(case_id, awc_id):
     data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id
+        case_id=case_id,
+        awc_id=awc_id
     ).order_by('month')
 
     min_height = 35
