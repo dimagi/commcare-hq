@@ -67,7 +67,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, UnicodeMixIn):
     identifier = StringProperty()
     attachment_src = StringProperty()
-    attachment_from = StringProperty()
+    attachment_from = StringProperty()  # not used
     attachment_name = StringProperty()
     server_mime = StringProperty()  # Server detected MIME
     server_md5 = StringProperty()  # Couch detected hash
@@ -90,7 +90,6 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, Un
 
             ret = cls(identifier=attachment.identifier,
                       attachment_src=attachment.attachment_src,
-                      attachment_from=attachment.attachment_from,
                       attachment_name=attachment.attachment_name,
                       server_mime=mime_type)
         else:

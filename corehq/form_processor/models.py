@@ -969,7 +969,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     )
     identifier = models.CharField(max_length=255, default=None)
     attachment_src = models.TextField(null=True)
-    attachment_from = models.TextField(null=True)
 
     def from_form_attachment(self, attachment):
         """
@@ -992,7 +991,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         if isinstance(attachment, CaseAttachmentSQL):
             assert self.identifier == attachment.identifier
             self.attachment_src = attachment.attachment_src
-            self.attachment_from = attachment.attachment_from
 
     @classmethod
     def from_case_update(cls, attachment):
@@ -1002,7 +1000,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
                 name=attachment.attachment_name or attachment.identifier,
                 identifier=attachment.identifier,
                 attachment_src=attachment.attachment_src,
-                attachment_from=attachment.attachment_from
             )
         else:
             ret = cls(name=attachment.identifier, identifier=attachment.identifier)
@@ -1020,8 +1017,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "blob_id='{a.blob_id}', "
             "properties='{a.properties}', "
             "identifier='{a.identifier}', "
-            "attachment_src='{a.attachment_src}', "
-            "attachment_from='{a.attachment_from}')"
+            "attachment_src='{a.attachment_src}')"
         ).format(a=self)
 
     class Meta(object):

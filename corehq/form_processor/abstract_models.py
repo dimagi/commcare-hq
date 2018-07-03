@@ -288,12 +288,10 @@ class AbstractCommCareCase(CaseToXMLMixin):
 
     @memoized
     def get_attachment_map(self):
-        return dict([
-            (name, {
-                'url': self.get_attachment_server_url(att.identifier),
-                'mime': att.attachment_from
-            }) for name, att in self.case_attachments.items()
-        ])
+        return {
+            name: {'url': self.get_attachment_server_url(att.identifier)}
+            for name, att in self.case_attachments.items()
+        }
 
     def to_xml(self, version, include_case_on_closed=False):
         from xml.etree import cElementTree as ElementTree
@@ -354,7 +352,13 @@ class CaseAttachmentMixin(IsImageMixin):
         """
         Helper method to see if this is a delete vs. update
         """
-        if self.identifier and (self.attachment_src == self.attachment_from is None):
-            return False
-        else:
-            return True
+        # FIXME in its previous form this always returned True
+        #
+        #   if self.identifier and (self.attachment_src == self.attachment_from is None):
+        #       return False
+        #   else:
+        #       return True
+        #
+        # `x == y is None` will always evalute to False unless using a
+        # clever (and wrong) implementation of `__eq__`
+        return True
