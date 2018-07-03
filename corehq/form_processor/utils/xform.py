@@ -71,31 +71,28 @@ class FormSubmissionBuilder(object):
         return form_xml
 
 
-def _build_etree_from_property_dict(form_properties, separator=''):
+def _build_node_list_from_dict(form_properties, separator=''):
     elements = []
-    for key, value in form_properties.items():
-        if isinstance(value, list):
-            for value_element in value:
-                prop = etree.Element(key)
-                children = _build_etree_from_property_dict(value_element, separator=separator)
-                for child in children:
-                    prop.append(child)
-                elements.append(prop)
-        else:
-            prop = etree.Element(key)
+
+    for key, values in form_properties.items():
+        if not isinstance(values, list):
+            values = [values]
+
+        for value in values:
+            node = etree.Element(key)
             if isinstance(value, dict):
-                children = _build_etree_from_property_dict(value, separator=separator)
+                children = _build_node_list_from_dict(value, separator=separator)
                 for child in children:
-                    prop.append(child)
+                    node.append(child)
             else:
-                prop.text = value
-            elements.append(prop)
+                node.text = value
+            elements.append(node)
 
     return elements
 
 
 def build_form_xml_from_property_dict(form_properties, separator=''):
-    return separator.join(etree.tostring(e) for e in _build_etree_from_property_dict(form_properties, separator))
+    return separator.join(etree.tostring(e) for e in _build_node_list_from_dict(form_properties, separator))
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
