@@ -14,6 +14,7 @@ from corehq.apps.app_manager.models import Application, FormActionCondition
 from corehq.apps.app_manager.xform import VELLUM_TYPES
 from corehq.apps.reports.formdetails.exceptions import QuestionListNotFound
 from django.utils.translation import ugettext_lazy as _
+import re
 import six
 from six.moves import map
 
@@ -533,7 +534,8 @@ def build_data_cleaning_questions_and_responses(form_data):
     def _add_to_question_response_map(data, repeat_index=None):
         for index, question in enumerate(data):
             if question.children:
-                _add_to_question_response_map(question.children, repeat_index=repeat_index if question.repeat else index)
+                next_index = repeat_index if question.repeat else index
+                _add_to_question_response_map(question.children, repeat_index=next_index)
             elif question.editable and question.response is not None:  # ignore complex and skipped questions
                 value = question.value
                 if question.repeat:

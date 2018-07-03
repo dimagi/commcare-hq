@@ -346,7 +346,8 @@ class ReadableFormTest(TestCase):
             FormQuestionResponse(group='/data/cups_of_tea/details_of_cup', label='Kind of cup',
                 repeat='/data/cups_of_tea', value='/data/cups_of_tea/details_of_cup/kind_of_cup'),
             FormQuestionResponse(label='Snacks', value='/data/snacks', type='Repeat'),
-            FormQuestionResponse(group='/data/snacks', label='Kind of snack', repeat='/data/snacks', value='/data/snacks/kind_of_snack'),
+            FormQuestionResponse(group='/data/snacks', label='Kind of snack', repeat='/data/snacks',
+                value='/data/snacks/kind_of_snack'),
         ]
         xform = submit_form_locally(formxml, self.domain).xform
         form_data, _ = get_readable_data_for_submission(xform)

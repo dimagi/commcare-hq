@@ -57,6 +57,9 @@ class FormSubmissionBuilderTest(SimpleTestCase):
         ]
         breakfast['muffin'] = 'banana'
         self.assertEqual(
-            '<cup_of_tea><flavor>hibiscus</flavor></cup_of_tea><cup_of_tea><flavor>assam</flavor></cup_of_tea><toast>wheat</toast><toast>white</toast><muffin>banana</muffin>',
+            '<cup_of_tea><flavor>hibiscus</flavor></cup_of_tea>'
+            '<cup_of_tea><flavor>assam</flavor></cup_of_tea>'
+            '<toast>wheat</toast><toast>white</toast>'
+            '<muffin>banana</muffin>',
             build_form_xml_from_property_dict(breakfast)
         )
