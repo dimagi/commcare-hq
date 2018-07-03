@@ -1364,7 +1364,8 @@ class XForm(WrappedNode):
             self.add_setvalue(
                 ref="meta/drift",
                 event="xforms-revalidate",
-                value="instance('commcaresession')/session/context/drift",
+                value="if(count(instance('commcaresession')/session/context/drift) = 1, "
+                      "instance('commcaresession')/session/context/drift, '')",
             )
 
         # never add pollsensor to a pre-2.14 app
