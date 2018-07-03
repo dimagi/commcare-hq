@@ -968,13 +968,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         on_delete=models.CASCADE,
     )
     identifier = models.CharField(max_length=255, default=None)
-    attachment_src = models.TextField(null=True)
 
-    def from_form_attachment(self, attachment):
+    def from_form_attachment(self, attachment, attachment_src):
         """
         Update fields in this attachment with fields from another attachment
 
-        :param attachment: XFormAttachmentSQL or CaseAttachmentSQL object
+        :param attachment: XFormAttachmentSQL object.
+        :param attachment_src: Attachment file name. Used for content type
+        guessing if the form attachment has no content type.
         """
         self.content_length = attachment.content_length
         self.blob_id = attachment.blob_id
@@ -983,14 +984,10 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
         self.content_type = attachment.content_type
         self.properties = attachment.properties
 
-        if not self.content_type and self.attachment_src:
-            guessed = mimetypes.guess_type(self.attachment_src)
+        if not self.content_type and attachment_src:
+            guessed = mimetypes.guess_type(attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 self.content_type = guessed[0]
-
-        if isinstance(attachment, CaseAttachmentSQL):
-            assert self.identifier == attachment.identifier
-            self.attachment_src = attachment.attachment_src
 
     @classmethod
     def from_case_update(cls, attachment):
@@ -999,7 +996,6 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
                 attachment_id=uuid.uuid4(),
                 name=attachment.attachment_name or attachment.identifier,
                 identifier=attachment.identifier,
-                attachment_src=attachment.attachment_src,
             )
         else:
             ret = cls(name=attachment.identifier, identifier=attachment.identifier)
@@ -1016,8 +1012,7 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "md5='{a.md5}', "
             "blob_id='{a.blob_id}', "
             "properties='{a.properties}', "
-            "identifier='{a.identifier}', "
-            "attachment_src='{a.attachment_src}')"
+            "identifier='{a.identifier}')"
         ).format(a=self)
 
     class Meta(object):

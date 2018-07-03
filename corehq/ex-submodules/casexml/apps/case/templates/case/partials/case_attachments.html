@@ -6,8 +6,6 @@
     {% if not forloop.first %}<br>{% endif %}
     <dt>{% trans "Case Property" %}</dt>
         <dd>{{ attach_key }}</dd>
-    <dt>{% trans "Source File" %}</dt>
-        <dd>{{ attachment.attachment_src }}</dd>
     <dt>{% trans "File Type" %}</dt>
         <dd>{{ attachment.server_mime }}</dd>
     <dt>{% trans "File Size" %}</dt>

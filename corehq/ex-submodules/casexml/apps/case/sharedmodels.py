@@ -66,7 +66,7 @@ class CommCareCaseIndex(LooselyEqualDocumentSchema, UnicodeMixIn):
 
 class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, UnicodeMixIn):
     identifier = StringProperty()
-    attachment_src = StringProperty()
+    attachment_src = StringProperty()   # not used
     attachment_from = StringProperty()  # not used
     attachment_name = StringProperty()
     server_mime = StringProperty()  # Server detected MIME
@@ -89,7 +89,6 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, CaseAttachmentMixin, Un
                 mime_type = None
 
             ret = cls(identifier=attachment.identifier,
-                      attachment_src=attachment.attachment_src,
                       attachment_name=attachment.attachment_name,
                       server_mime=mime_type)
         else:
