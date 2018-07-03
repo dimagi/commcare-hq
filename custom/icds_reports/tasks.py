@@ -685,7 +685,7 @@ def push_missing_docs_to_es():
         ).get(case_doc_type, -1)
         es_cases = get_es_counts_by_doc_type(
             'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
-        ).get(case_doc_type.lower(), -2)
+        ).get(case_doc_type, -2)
         if primary_cases != es_cases:
             resave_documents.delay(case_doc_type, current_date, end_date)
 
