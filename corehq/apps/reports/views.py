@@ -20,7 +20,8 @@ from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, \
+    build_data_cleaning_questions_and_responses
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
@@ -1848,29 +1849,10 @@ def _get_form_render_context(request, domain, instance, case_id=None):
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
 
-    # Build map of question values => responses
+    # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map = {}
-    ordered_question_values = []
-
-    def _add_to_question_response_map(data, repeat_index=None):
-        for index, question in enumerate(data):
-            if question.children:
-                _add_to_question_response_map(question.children, repeat_index=repeat_index if question.repeat else index)
-            elif question.editable and question.response is not None:  # ignore complex and skipped questions
-                value = question.value
-                if question.repeat:
-                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
-                                              re.sub(r'^' + question.repeat, '', question.value))
-                question_response_map[value] = {
-                    'label': question.label,
-                    'icon': question.icon,
-                    'value': question.response,
-                    'splitName': re.sub(r'/', '/\u200B', value),
-                }
-                ordered_question_values.append(value)
-    _add_to_question_response_map(form_data)
+    question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
 
     context.update({
         "context_case_id": case_id,

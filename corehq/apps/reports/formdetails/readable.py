@@ -524,3 +524,28 @@ def questions_in_hierarchy(questions):
                 and question.value not in question_lists_by_group:
             question_lists_by_group[question.value] = question.children
     return question_lists_by_group[None]
+
+
+def build_data_cleaning_questions_and_responses(form_data):
+    question_response_map = {}
+    ordered_question_values = []
+
+    def _add_to_question_response_map(data, repeat_index=None):
+        for index, question in enumerate(data):
+            if question.children:
+                _add_to_question_response_map(question.children, repeat_index=repeat_index if question.repeat else index)
+            elif question.editable and question.response is not None:  # ignore complex and skipped questions
+                value = question.value
+                if question.repeat:
+                    value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
+                                              re.sub(r'^' + question.repeat, '', question.value))
+                question_response_map[value] = {
+                    'label': question.label,
+                    'icon': question.icon,
+                    'value': question.response,
+                    'splitName': re.sub(r'/', '/\u200B', value),
+                }
+                ordered_question_values.append(value)
+
+    _add_to_question_response_map(form_data)
+    return (question_response_map, ordered_question_values)
