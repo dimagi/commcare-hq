@@ -67,7 +67,7 @@ hqDefine("reports/js/case_details", function() {
         };
 
         self.get_xform_data = function(xform_id) {
-            $.cachedAjax({
+            $.memoizedAjax({
                 "type": "GET",
                 "url": hqImport("hqwebapp/js/initial_page_data").reverse('case_form_data', xform_id),
                 "success": function(data) {
