@@ -19,7 +19,7 @@ from django.db.models import F
 from io import BytesIO
 from couchexport.export import export_from_tables
 
-from corehq.apps.es.cases import CaseES, server_modified_on
+from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
 from corehq.apps.data_pipeline_audit.dbaccessors import (
     get_es_counts_by_doc_type,
@@ -681,7 +681,7 @@ def push_missing_docs_to_es():
             'icds-cas', current_date, end_date
         ).get(case_doc_type, -1)
         es_cases = get_es_counts_by_doc_type(
-            'icds-cas', (CaseES,), (server_modified_on(gte=current_date, lt=end_date),)
+            'icds-cas', (CaseES,), (server_modified_range(gte=current_date, lt=end_date),)
         ).get(case_doc_type.lower(), -2)
         if primary_cases != es_cases:
             resave_documents.delay(case_doc_type, current_date, end_date)
