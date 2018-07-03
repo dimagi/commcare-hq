@@ -8,8 +8,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
-from couchexport.models import SavedExportSchema
-
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
@@ -19,6 +17,7 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
+from corehq.apps.export.dbaccessors import get_deid_export_count
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
@@ -586,16 +585,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         De-id exports will be hidden
         """
-        startkey = json.dumps([domain.name, ""])[:-3]
-        endkey = "%s{" % startkey
-        reports = SavedExportSchema.view(
-            "couchexport/saved_export_schemas",
-            startkey=startkey,
-            endkey=endkey,
-            include_docs=True,
-            reduce=False,
-        )
-        num_deid_reports = len([r for r in reports if r.is_safe])
+        num_deid_reports = get_deid_export_count(domain)
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(
