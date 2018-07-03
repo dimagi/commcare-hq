@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from __future__ import absolute_import
 from django.db import migrations
 
-from corehq.sql_db.operations import RawSQLMigration, HqRunSQL
+from corehq.sql_db.operations import RawSQLMigration, HqRunSQL, noop_migration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'), {})
 
@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
             "DROP FUNCTION IF EXISTS get_case_attachment_by_name(TEXT, TEXT)",
             "SELECT 1"
         ),
-        migrator.get_migration('get_case_attachment_by_identifier.sql'),
+        noop_migration(),
     ]
