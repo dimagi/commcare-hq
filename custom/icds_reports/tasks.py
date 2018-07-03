@@ -661,6 +661,9 @@ def collect_inactive_awws():
 
 @periodic_task(run_every=crontab(minute=0, hour=0), queue='background_queue')
 def push_missing_docs_to_es():
+    if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
+        return
+
     current_date = date(2017, 1, 1)
     # this interval may need to be reduced, particularly for the recent months
     interval = timedelta(weeks=1)
