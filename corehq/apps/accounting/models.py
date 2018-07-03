@@ -2161,6 +2161,9 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
+    def can_view_statement(self, web_user):
+        raise NotImplementedError()
+
     def send_email(self, contact_email=None, cc_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
@@ -2178,7 +2181,7 @@ class BillingRecordBase(models.Model):
         if web_user is not None:
             if web_user.first_name:
                 greeting = _("Dear %s,") % web_user.first_name
-            can_view_statement = web_user.is_domain_admin(domain)
+            can_view_statement = self.can_view_statement(web_user)
         context['greeting'] = greeting
         context['can_view_statement'] = can_view_statement
         email_html = render_to_string(self.html_template, context)
@@ -2194,12 +2197,17 @@ class BillingRecordBase(models.Model):
         if cc_emails:
             self.emailed_to_list.extend(cc_emails)
         self.save()
-        log_accounting_info(
-            "Sent billing statements for domain %(domain)s to %(emails)s." % {
+        if self.invoice.is_customer_invoice:
+            log_message = "Sent billing statements for account %(account)s to %(emails)s." % {
+                'account': self.invoice.account,
+                'emails': contact_email,
+            }
+        else:
+            log_message = "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
                 'emails': contact_email,
             }
-        )
+        log_accounting_info(log_message)
 
 
 class WireBillingRecord(BillingRecordBase):
@@ -2518,6 +2526,9 @@ class BillingRecord(BillingRecordBase):
             if credit_lines else Decimal('0.0')
         )
 
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
+
 
 class CustomerBillingRecord(BillingRecordBase):
     invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
@@ -2590,7 +2601,7 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def _add_product_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
+            customer_invoice=self.invoice,
             line_item__product_rate__isnull=False
         )
         subscription_credits = CustomerBillingRecord._get_total_balance(
@@ -2622,7 +2633,7 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def _add_user_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
+            customer_invoice=self.invoice,
             line_item__feature_rate__feature__feature_type=FeatureType.USER
         )
         subscription_credits = CustomerBillingRecord._get_total_balance(
@@ -2654,7 +2665,7 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def _add_sms_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
+            customer_invoice=self.invoice,
             line_item__feature_rate__feature__feature_type=FeatureType.SMS
         )
         subscription_credits = CustomerBillingRecord._get_total_balance(
@@ -2686,7 +2697,7 @@ class CustomerBillingRecord(BillingRecordBase):
 
     def _add_general_credits(self, credits):
         credit_adjustments = CreditAdjustment.objects.filter(
-            invoice=self.invoice,
+            customer_invoice=self.invoice,
             line_item__feature_rate=None,
             line_item__product_rate=None
         )
@@ -2716,7 +2727,7 @@ class CustomerBillingRecord(BillingRecordBase):
         return credits
 
     def _subscriptions_in_credit_adjustments(self, credit_adjustments):
-        for subscription in self.invoice.subscriptions:
+        for subscription in self.invoice.subscriptions.all():
             if credit_adjustments.filter(
                     credit_line__subscription=subscription
             ):
@@ -2740,6 +2751,11 @@ class CustomerBillingRecord(BillingRecordBase):
             if credit_lines else Decimal('0.0')
         )
 
+    def can_view_statement(self, web_user):
+        for subscription in self.invoice.subscriptions.all():
+            if web_user.is_domain_admin(subscription.subscriber.domain):
+                return True
+        return False
 
 
 class InvoicePdf(BlobMixin, SafeSaveDocument):
@@ -3014,8 +3030,10 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
         credit_list = []
-        for subscription in subscriptions:
-            credit_list.append(cls.get_credits_by_subscription_and_features(subscription))
+        for subscription in subscriptions.all():
+            credit_list.append(cls.get_credits_by_subscription_and_features(subscription,
+                                                                            feature_type=feature_type,
+                                                                            is_product=is_product))
         credits = credit_list.pop()
         for credit_line in credit_list:
             credits.union(credit_line)

@@ -300,8 +300,15 @@ class CustomerAccountInvoiceFactory(object):
                     self.subscriptions[subscription.plan_version] = [subscription]
         if not self.subscriptions:
             return
-        self._generate_customer_invoice()
-        self._email_invoice()
+        try:
+            self._generate_customer_invoice()
+            import ipdb; ipdb.set_trace()
+            self._email_invoice()
+        except InvoiceAlreadyCreatedError as e:
+            log_accounting_error(
+                "Invoice already existed for account %s: %s" % (self.account.name, e),
+                show_stack_trace=True,
+            )
 
     def _generate_customer_invoice(self):
         invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
