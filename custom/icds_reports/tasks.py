@@ -665,9 +665,8 @@ def push_missing_docs_to_es():
     if settings.SERVER_ENVIRONMENT not in settings.ICDS_ENVS:
         return
 
-    current_date = date(2017, 1, 1)
-    # this interval may need to be reduced, particularly for the recent months
-    interval = timedelta(weeks=1)
+    current_date = date.today() - timedelta(weeks=12)
+    interval = timedelta(days=1)
     case_doc_type = 'CommCareCase'
     xform_doc_type = 'XFormInstance'
     doc_differences = dict()
