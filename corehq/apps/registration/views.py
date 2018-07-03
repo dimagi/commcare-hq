@@ -44,6 +44,8 @@ from corehq.apps.hqwebapp.decorators import use_jquery_ui, \
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq import toggles
 from django.contrib.auth.models import User
+
+from corehq.util.soft_assert import soft_assert
 from dimagi.utils.couch.resource_conflict import retry_resource
 from memoized import memoized
 from dimagi.utils.web import get_ip
@@ -157,10 +159,12 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
                 }
             )
             if not persona or (persona == 'Other' and not persona_other):
-                logging.error(
-                    "Persona fields from the login form were submitted without "
-                    "data. Please alert product as this should not be "
-                    "happening. User: {}".format(email)
+                # There shouldn't be many instances of this.
+                _assert = soft_assert('@'.join(['bbuczyk', 'dimagi.com']), exponential_backoff=False)
+                _assert(
+                    False,
+                    "[BAD PERSONA DATA] Persona fields during "
+                    "login submitted empty. User: {}".format(email)
                 )
 
         login(self.request, new_user)
