@@ -852,10 +852,6 @@ class HQExportSchema(SavedExportSchema):
             self.domain = self.index[0]
         return self
 
-    @classmethod
-    def get_stale_exports(cls, domain):
-        return []
-
 
 class FormExportSchema(HQExportSchema):
     doc_type = 'SavedExportSchema'
