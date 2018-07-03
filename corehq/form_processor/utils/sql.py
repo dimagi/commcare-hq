@@ -130,7 +130,6 @@ def case_attachment_adapter(attachment):
         attachment.blob_id,
         attachment.content_length,
         json.dumps(attachment.properties, cls=JSONEncoder),
-        attachment.identifier,
         attachment.blob_bucket,
     ]
     return ObjectAdapter(fields, CaseAttachmentSQL_DB_TABLE)

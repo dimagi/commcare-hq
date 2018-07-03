@@ -305,18 +305,18 @@ class AbstractCommCareCase(CaseToXMLMixin):
             elem = get_case_element(self, ('create', 'update'), version)
         return ElementTree.tostring(elem)
 
-    def get_attachment_server_url(self, identifier):
+    def get_attachment_server_url(self, name):
         """
         A server specific URL for remote clients to access case attachment resources async.
         """
-        if identifier in self.case_attachments:
+        if name in self.case_attachments:
             from dimagi.utils import web
             from django.urls import reverse
             return "%s%s" % (web.get_url_base(),
                  reverse("api_case_attachment", kwargs={
                      "domain": self.domain,
                      "case_id": self.case_id,
-                     "attachment_id": identifier,
+                     "attachment_id": name,
                  })
             )
         else:

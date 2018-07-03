@@ -436,6 +436,7 @@ class AbstractAttachment(PartitionedModel, models.Model, SaveStateMixin):
     content_length = models.IntegerField(null=True)
     blob_id = models.CharField(max_length=255, default=None)
     blob_bucket = models.CharField(max_length=255, null=True, default=None)
+    name = models.CharField(max_length=255, default=None)
 
     # RFC-1864-compliant Content-MD5 header value
     md5 = models.CharField(max_length=255, default=None)
@@ -519,7 +520,6 @@ class XFormAttachmentSQL(AbstractAttachment, IsImageMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'form'
 
-    name = models.CharField(max_length=255, default=None)
     form = models.ForeignKey(
         XFormInstanceSQL, to_field='form_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
@@ -792,9 +792,9 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
             return found[0]
         return None
 
-    def _get_attachment_from_db(self, identifier):
+    def _get_attachment_from_db(self, name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, identifier)
+        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
@@ -830,7 +830,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
     @property
     @memoized
     def case_attachments(self):
-        return {attachment.identifier: attachment for attachment in self.get_attachments()}
+        return {attachment.name: attachment for attachment in self.get_attachments()}
 
     @property
     @memoized
@@ -961,13 +961,11 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
     objects = RestrictedManager()
     _attachment_prefix = 'case'
 
-    name = models.CharField(max_length=255, default=None)
     case = models.ForeignKey(
         'CommCareCaseSQL', to_field='case_id', db_index=False,
         related_name=AttachmentMixin.ATTACHMENTS_RELATED_NAME, related_query_name="attachment",
         on_delete=models.CASCADE,
     )
-    identifier = models.CharField(max_length=255, default=None)
 
     def from_form_attachment(self, attachment, attachment_src):
         """
@@ -991,14 +989,9 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
 
     @classmethod
     def from_case_update(cls, attachment):
+        ret = cls(name=attachment.identifier)
         if attachment.attachment_src:
-            ret = cls(
-                attachment_id=uuid.uuid4(),
-                name=attachment.attachment_name or attachment.identifier,
-                identifier=attachment.identifier,
-            )
-        else:
-            ret = cls(name=attachment.identifier, identifier=attachment.identifier)
+            ret.attachment_id = uuid.uuid4()
         return ret
 
     def __unicode__(self):
@@ -1011,15 +1004,14 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
             "content_length='{a.content_length}', "
             "md5='{a.md5}', "
             "blob_id='{a.blob_id}', "
-            "properties='{a.properties}', "
-            "identifier='{a.identifier}')"
+            "properties='{a.properties}')"
         ).format(a=self)
 
     class Meta(object):
         app_label = "form_processor"
         db_table = CaseAttachmentSQL_DB_TABLE
         index_together = [
-            ["case", "identifier"],
+            ["case", "name"],
         ]
 
 

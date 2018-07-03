@@ -366,8 +366,7 @@ class CouchCaseUpdateStrategy(UpdateStrategy):
             update_attachments[k] = v
             if v.is_present:
                 # add attachment from xform
-                identifier = v.identifier
-                content = attach_dict[identifier]
+                content = attach_dict[v.identifier]
                 self.case.deferred_put_attachment(
                     content, k, content_type=v.server_mime)
             else:

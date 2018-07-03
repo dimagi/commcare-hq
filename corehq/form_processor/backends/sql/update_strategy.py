@@ -192,12 +192,12 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
 
     def _apply_attachments_action(self, attachment_action, xform):
         current_attachments = self.case.case_attachments
-        for identifier, att in attachment_action.attachments.items():
+        for name, att in attachment_action.attachments.items():
             new_attachment = CaseAttachmentSQL.from_case_update(att)
             if new_attachment.is_present:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if identifier in current_attachments:
-                    existing_attachment = current_attachments[identifier]
+                if name in current_attachments:
+                    existing_attachment = current_attachments[name]
                     existing_attachment.from_form_attachment(
                         form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
@@ -206,8 +206,8 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         form_attachment, att.attachment_src)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
-            elif identifier in current_attachments:
-                existing_attachment = current_attachments[identifier]
+            elif name in current_attachments:
+                existing_attachment = current_attachments[name]
                 self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
@@ -257,7 +257,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._reset_case_state()
 
         original_indices = {index.identifier: index for index in self.case.indices}
-        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
+        original_attachments = {attach.name: attach for attach in self.case.get_attachments()}
 
         real_transactions = []
         for transaction in transactions:
