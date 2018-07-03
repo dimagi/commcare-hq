@@ -14,7 +14,11 @@ def get_file(name, ext):
 def run_on_all_adapters(test_cls):
     return generate_cases([
         (open_xls_workbook, 'xls'),
+        (open_xls_workbook, 'XLS'),
         (open_xlsx_workbook, 'xlsx'),
+        (open_xlsx_workbook, 'XLSX'),
         (open_any_workbook, 'xls'),
+        (open_any_workbook, 'XLS'),
         (open_any_workbook, 'xlsx'),
+        (open_any_workbook, 'XLSX'),
     ], test_cls)
