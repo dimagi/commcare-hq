@@ -55,6 +55,14 @@ class AuthenticateAsFormTest(TestCase):
         form = AuthenticateAsForm(data)
         self.assertFalse(form.is_valid())
 
+    def test_no_login_as_other_webuser(self):
+        data = {
+            'username': 'awebuser'
+        }
+        form = AuthenticateAsForm(data)
+        self.assertFalse(form.is_valid())
+        self.assertTrue('not a CommCareUser' in str(form.errors))
+
 
 class AuthenticateAsIntegrationTest(TestCase):
 
