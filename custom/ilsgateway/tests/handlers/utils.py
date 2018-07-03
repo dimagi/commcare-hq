@@ -125,7 +125,10 @@ class ILSTestScript(TestScript):
             'msd_person',
         ])
         if users:
-            CommCareUser.bulk_delete(users)
+            CommCareUser.bulk_delete([
+                CommCareUser.wrap_correctly(user)
+                for user in users
+            ])
 
         for product in Product.by_domain(TEST_DOMAIN):
             product.delete()
