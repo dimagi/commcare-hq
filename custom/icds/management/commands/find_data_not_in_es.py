@@ -87,6 +87,7 @@ class Command(BaseCommand):
                 XFormInstanceSQL.objects
                 .using(db)
                 .filter(received_on__gte=date, received_on__lt=date + relativedelta(months=1))
+                .filter(state=XFormInstanceSQL.NORMAL)
                 .exclude(xmlns=DEVICE_LOG_XMLNS)
                 .count()
             )
@@ -94,4 +95,4 @@ class Command(BaseCommand):
         return num_forms
 
     def _get_es_forms_received_on_date(self, date):
-        return FormES().remove_default_filter('is_xform_instance').submitted(gte=date, lt=date + relativedelta(months=1)).count()
+        return FormES().submitted(gte=date, lt=date + relativedelta(months=1)).count()
