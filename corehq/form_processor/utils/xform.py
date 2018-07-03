@@ -74,14 +74,22 @@ class FormSubmissionBuilder(object):
 def _build_etree_from_property_dict(form_properties, separator=''):
     elements = []
     for key, value in form_properties.items():
-        prop = etree.Element(key)
-        if isinstance(value, dict):
-            children = _build_etree_from_property_dict(value, separator=separator)
-            for child in children:
-                prop.append(child)
+        if isinstance(value, list):
+            for value_element in value:
+                prop = etree.Element(key)
+                children = _build_etree_from_property_dict(value_element, separator=separator)
+                for child in children:
+                    prop.append(child)
+                elements.append(prop)
         else:
-            prop.text = value
-        elements.append(prop)
+            prop = etree.Element(key)
+            if isinstance(value, dict):
+                children = _build_etree_from_property_dict(value, separator=separator)
+                for child in children:
+                    prop.append(child)
+            else:
+                prop.text = value
+            elements.append(prop)
 
     return elements
 
