@@ -19,7 +19,7 @@ def skip_notifying_missing_mother_person_case(e):
     # so we don't notify when that's the lookup that fails.
 
     return (
-        e.child_case_type = 'person' and
+        e.child_case_type == 'person' and
         e.identifier == 'mother' and
         e.relationship == CommCareCaseIndexSQL.CHILD and
         e.num_related_found == 0
@@ -34,7 +34,7 @@ def skip_notifying_missing_ccs_record_parent(e):
 
     return (
         datetime.utcnow() < datetime(2018, 8, 1) and
-        e.child_case_type = 'ccs_record' and
+        e.child_case_type == 'ccs_record' and
         e.identifier == 'parent' and
         e.relationship == CommCareCaseIndexSQL.CHILD and
         e.num_related_found == 0
