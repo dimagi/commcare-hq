@@ -23,5 +23,4 @@ class Migration(migrations.Migration):
             # populate identifier with name on reverse migration
             "UPDATE form_processor_caseattachmentsql SET identifier=name",
         ),
-        
     ]

@@ -5,7 +5,6 @@ from __future__ import absolute_import
 
 from django.db import migrations
 
-from corehq.form_processor.models import XFormInstanceSQL
 from corehq.sql_db.operations import RawSQLMigration
 
 migrator = RawSQLMigration(('corehq', 'sql_accessors', 'sql_templates'))
