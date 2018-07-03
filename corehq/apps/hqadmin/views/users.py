@@ -80,6 +80,7 @@ class AuthenticateAs(UserAdministration):
         return {
             'hide_filters': True,
             'form': AuthenticateAsForm(initial=self.request.POST),
+            'root_page_url': reverse('authenticate_as'),
         }
 
     def post(self, request, *args, **kwargs):

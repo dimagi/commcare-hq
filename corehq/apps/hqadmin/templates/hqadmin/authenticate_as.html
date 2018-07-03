@@ -4,7 +4,7 @@
 {% load i18n %}
 
 {% block reportcontent %}
-{% initial_page_data "url" page_url %}
+{% initial_page_data "url" root_page_url %}
 <div class="row">
     <div class="col-xs-12">
         <h2>{{ current_page.title }}</h2>
@@ -20,4 +20,8 @@
         {% crispy form %}
     </div>
 </div>
+{% endblock %}
+
+{% block js %} {{ block.super }}
+    <script src="{% static 'hqadmin/js/authenticate_as.js' %}"></script>
 {% endblock %}
