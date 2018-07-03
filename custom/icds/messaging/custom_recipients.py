@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from corehq.apps.locations.models import SQLLocation
+from corehq.form_processor.models import CommCareCaseIndexSQL
 from custom.icds.case_relationships import (
     mother_person_case_from_ccs_record_case,
     mother_person_case_from_child_health_case,
@@ -8,6 +9,7 @@ from custom.icds.case_relationships import (
 )
 from custom.icds.const import SUPERVISOR_LOCATION_TYPE_CODE
 from custom.icds.exceptions import CaseRelationshipError
+from datetime import datetime
 from dimagi.utils.logging import notify_exception
 
 
@@ -24,11 +26,28 @@ def skip_notifying_missing_mother_person_case(e):
     )
 
 
+def skip_notifying_missing_ccs_record_parent(e):
+    # https://manage.dimagi.com/default.asp?277600
+    # This is an open issue so it probably doesn't make sense to keep notifying
+    # these unless it gets resolved. Going to make these start notifying at a
+    # later date so this can be revisited.
+
+    return (
+        datetime.utcnow() < datetime(2018, 8, 1) and
+        e.child_case_type = 'ccs_record' and
+        e.identifier == 'parent' and
+        e.relationship == CommCareCaseIndexSQL.CHILD and
+        e.num_related_found == 0
+    )
+
+
 def recipient_mother_person_case_from_ccs_record_case(case_schedule_instance):
     try:
         return mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        notify_exception(None, message="ICDS ccs_record relationship error")
+    except CaseRelationshipError as e:
+        if not skip_notifying_missing_ccs_record_parent(e):
+            notify_exception(None, message="ICDS ccs_record relationship error")
+
         return None
 
 
