@@ -1026,7 +1026,8 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 getattr(row_data, current_month_stunting_column(icds_features_flag)),
                 'stunted',
-                'Normal height for age'
+                'Normal height for age',
+                data_entered=True if row_data.recorded_height else False
             ),
             current_month_wasting=get_status(
                 getattr(row_data, current_month_wasting_column(icds_features_flag)),
