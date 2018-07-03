@@ -1117,3 +1117,11 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
         ]
         result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
         assert_errors(result, ["You do not have permission to add locations in 'suffolk'"])
+
+    def test_cant_add_top_level_locations(self):
+        upload = [
+            NewLocRow('Lowell', 'lowell', 'city', 'middlesex'),
+            NewLocRow('Idaho', 'idaho', 'state', ''),
+        ]
+        result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
+        assert_errors(result, ["You do not have permission to add top level locations"])

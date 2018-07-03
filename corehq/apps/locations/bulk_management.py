@@ -515,7 +515,14 @@ class LocationTreeValidator(object):
             if not loc_stub.needs_save:
                 # Allow users to include any loc, as long as there are no changes
                 continue
-            if loc_stub.is_new:
+            if loc_stub.is_new and loc_stub.parent_code == ROOT_LOCATION_TYPE:
+                errors.append(_("You do not have permission to add top level locations"))
+            elif loc_stub.is_new:
+                # This checks parent_exists to allow users to create multiple
+                # levels at once. Somewhere up the chain, they must have a
+                # parent that exists - if it isn't accessible, they'll get an
+                # error there, if not, the newly created locs are accessible by
+                # extension
                 parent_exists = loc_stub.parent_code in self.old_collection.locations_by_site_code
                 if parent_exists and loc_stub.parent_code not in accessible_site_codes:
                     errors.append(_("You do not have permission to add locations in '{}'")
