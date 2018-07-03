@@ -11,7 +11,7 @@ from django.template.loader import render_to_string
 from django.utils.translation import ugettext_lazy as _
 
 from corehq.apps.app_manager.dbaccessors import get_all_built_app_ids_and_versions, get_app
-from corehq.apps.app_manager.decorators import safe_download, safe_cached_download
+from corehq.apps.app_manager.decorators import require_deploy_apps, safe_download, safe_cached_download
 from corehq.apps.app_manager.exceptions import ModuleNotFoundException, \
     AppManagerException, FormNotFoundException
 from corehq.apps.app_manager.models import Application
@@ -19,6 +19,7 @@ from corehq.apps.app_manager.util import add_odk_profile_after_build
 from corehq.apps.app_manager.views.utils import back_to_main, get_langs
 from corehq.apps.app_manager.tasks import make_async_build
 from corehq.apps.builds.jadjar import convert_XML_To_J2ME
+from corehq.apps.domain.decorators import login_and_domain_required
 from corehq.apps.hqmedia.views import DownloadMultimediaZip
 from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import set_file_download
@@ -39,6 +40,8 @@ def _get_profile(request):
     else:
         return None
 
+
+@require_deploy_apps
 @safe_download
 def download_odk_profile(request, domain, app_id):
     """
@@ -57,6 +60,7 @@ def download_odk_profile(request, domain, app_id):
     )
 
 
+@require_deploy_apps
 @safe_download
 def download_odk_media_profile(request, domain, app_id):
     if not request.app.copy_of:
@@ -71,6 +75,7 @@ def download_odk_media_profile(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_suite(request, domain, app_id):
     """
@@ -86,6 +91,7 @@ def download_suite(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_media_suite(request, domain, app_id):
     """
@@ -101,6 +107,7 @@ def download_media_suite(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_app_strings(request, domain, app_id, lang):
     """
@@ -113,6 +120,7 @@ def download_app_strings(request, domain, app_id, lang):
     )
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_xform(request, domain, app_id, module_id, form_id):
     """
@@ -133,6 +141,7 @@ def download_xform(request, domain, app_id, module_id, form_id):
         return response
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_jad(request, domain, app_id):
     """
@@ -155,6 +164,7 @@ def download_jad(request, domain, app_id):
     return response
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_jar(request, domain, app_id):
     """
@@ -181,6 +191,7 @@ def download_jar(request, domain, app_id):
     return response
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_raw_jar(request, domain, app_id):
     """
@@ -210,6 +221,7 @@ class DownloadCCZ(DownloadMultimediaZip):
         super(DownloadCCZ, self).check_before_zipping()
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_file(request, domain, app_id, path):
     download_target_version = request.GET.get('download_target_version') == 'true'
@@ -324,6 +336,7 @@ def download_file(request, domain, app_id, path):
         return callback(request, domain, app_id, *callback_args, **callback_kwargs)
 
 
+@login_and_domain_required
 @safe_download
 def download_profile(request, domain, app_id):
     """
@@ -341,6 +354,7 @@ def download_profile(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_download
 def download_media_profile(request, domain, app_id):
     if not request.app.copy_of:
@@ -354,6 +368,7 @@ def download_media_profile(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_cached_download
 def download_practice_user_restore(request, domain, app_id):
     if not request.app.copy_of:
@@ -363,6 +378,7 @@ def download_practice_user_restore(request, domain, app_id):
     )
 
 
+@login_and_domain_required
 @safe_download
 def download_index(request, domain, app_id):
     """
@@ -398,6 +414,7 @@ def download_index(request, domain, app_id):
     })
 
 
+@login_and_domain_required
 def validate_form_for_build(request, domain, app_id, form_unique_id, ajax=True):
     app = get_app(domain, app_id)
     try:
