@@ -2644,10 +2644,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-
         return (
-            use_new_daily_saved_exports_ui(domain) and
             cls.user_added_before_feature_release(user.created_on) and
             not DailySavedExportNotification.notified(user.user_id, domain) and
             (
