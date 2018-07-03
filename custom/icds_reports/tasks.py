@@ -21,7 +21,7 @@ from couchexport.export import export_from_tables
 
 from corehq.apps.es.cases import CaseES, server_modified_range
 from corehq.apps.es.forms import FormES, submitted
-from corehq.apps.data_pipeline_audit.dbaccessors import (
+from corehq.apps.data_pipeline_audit.dbacessors import (
     get_es_counts_by_doc_type,
     get_primary_db_form_counts,
     get_primary_db_case_counts,
