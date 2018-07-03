@@ -689,6 +689,8 @@ def push_missing_docs_to_es():
         if primary_cases != es_cases:
             resave_documents.delay(case_doc_type, current_date, end_date)
 
+        current_date += interval
+
     # should send an email with status of how many docs needed to be resaved
 
 
