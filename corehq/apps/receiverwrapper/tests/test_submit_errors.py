@@ -30,19 +30,27 @@ class SubmissionErrorTest(TestCase, TestFileMixin):
     file_path = ('data',)
     root = os.path.dirname(__file__)
 
+    @classmethod
+    def setUpClass(cls):
+        super(SubmissionErrorTest, cls).setUpClass()
+        cls.domain = create_domain("submit-errors")
+        cls.couch_user = WebUser.create(None, "test", "foobar")
+        cls.couch_user.add_domain_membership(cls.domain.name, is_admin=True)
+        cls.couch_user.save()
+        cls.client = Client()
+        cls.client.login(**{'username': 'test', 'password': 'foobar'})
+        cls.url = reverse("receiver_post", args=[cls.domain])
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.couch_user.delete()
+        cls.domain.delete()
+        super(SubmissionErrorTest, cls).tearDownClass()
+
     def setUp(self):
-        self.domain = create_domain("submit-errors")
-        self.couch_user = WebUser.create(None, "test", "foobar")
-        self.couch_user.add_domain_membership(self.domain.name, is_admin=True)
-        self.couch_user.save()
-        self.client = Client()
-        self.client.login(**{'username': 'test', 'password': 'foobar'})
-        self.url = reverse("receiver_post", args=[self.domain])
         FormProcessorTestUtils.delete_all_xforms(self.domain.name)
 
     def tearDown(self):
-        self.couch_user.delete()
-        self.domain.delete()
         FormProcessorTestUtils.delete_all_cases_forms_ledgers(self.domain.name)
         UnfinishedSubmissionStub.objects.all().delete()
 
