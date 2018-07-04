@@ -640,13 +640,16 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
 STATIC_PREFIX = 'static-'
 CUSTOM_REPORT_PREFIX = 'custom-'
 
-StaticDataSourceMetadata = namedtuple('StaticDataSourceMetadata', 'id path domain')
-StaticReportMetadata = namedtuple('StaticReportMetadata', 'id path domain')
-
 
 class StaticDataSourceConfiguration(JsonObject):
     """
-    For custom data sources maintained in the repository
+    For custom data sources maintained in the repository.
+
+    This class keeps the full list of static data source configurations relevant to the
+    current environment in memory and upon requests builds a new data source configuration
+    from the static config.
+
+    See 0002-keep-static-ucr-configurations-in-memory.md
     """
     _datasource_id_prefix = STATIC_PREFIX
     domains = ListProperty(required=True)
@@ -658,33 +661,37 @@ class StaticDataSourceConfiguration(JsonObject):
         return '{}{}-{}'.format(cls._datasource_id_prefix, domain, table_id)
 
     @classmethod
-    @quickcache([], skip_arg='rebuild')
-    def by_id_mapping(cls, rebuild=False):
-        mapping = {}
-        for wrapped, path in cls._all():
-            for domain in wrapped.domains:
-                ds_id = cls.get_doc_id(domain, wrapped.config['table_id'])
-                mapping[ds_id] = StaticDataSourceMetadata(ds_id, path, domain)
-        return mapping
+    @memoized
+    def by_id_mapping(cls):
+        """Memoized method that maps domains to static data source config"""
+        return {
+            cls.get_doc_id(domain, wrapped.config['table_id']): (domain, wrapped)
+            for wrapped in cls._all()
+            for domain in wrapped.domains
+        }
 
     @classmethod
     def _all(cls):
+        """
+        :return: Generator of all wrapped configs read from disk
+        """
         for path_or_glob in settings.STATIC_DATA_SOURCES:
             if os.path.isfile(path_or_glob):
-                yield _get_wrapped_object_from_file(path_or_glob, cls), path_or_glob
+                yield _get_wrapped_object_from_file(path_or_glob, cls)
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield _get_wrapped_object_from_file(path, cls), path
+                    yield _get_wrapped_object_from_file(path, cls)
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
             for wrapped, path in provider_fn():
-                yield wrapped, path
+                yield wrapped
 
     @classmethod
     def all(cls, use_server_filter=True):
-        for wrapped, path in cls._all():
+        """Unoptimized method that get's all configs by re-reading from disk"""
+        for wrapped in cls._all():
             if (use_server_filter and
                     wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
@@ -695,26 +702,22 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def by_domain(cls, domain):
-        return [ds for ds in cls.all() if ds.domain == domain]
+        return [
+            cls._get_datasource_config(wrapped, dom)
+            for dom, wrapped in cls.by_id_mapping().items()
+            if domain == dom
+        ]
 
     @classmethod
     def by_id(cls, config_id):
-        mapping = cls.by_id_mapping()
-        if config_id not in mapping:
-            mapping = cls.by_id_mapping(rebuild=True)
-
-        metadata = mapping.get(config_id, None)
-        if not metadata:
+        try:
+            domain, wrapped = cls.by_id_mapping()[config_id]
+        except KeyError:
             raise StaticDataSourceConfigurationNotFoundError(_(
                 'The data source referenced by this report could not be found.'
             ))
 
-        return cls._get_from_metadata(metadata)
-
-    @classmethod
-    def _get_from_metadata(cls, metadata):
-        wrapped = _get_wrapped_object_from_file(metadata.path, cls)
-        return cls._get_datasource_config(wrapped, metadata.domain)
+        return cls._get_datasource_config(wrapped, domain)
 
     @classmethod
     def _get_datasource_config(cls, static_config, domain):
@@ -727,6 +730,12 @@ class StaticDataSourceConfiguration(JsonObject):
 class StaticReportConfiguration(JsonObject):
     """
     For statically defined reports based off of custom data sources
+
+    This class keeps the full list of static report configurations relevant to the
+    current environment in memory and upon requests builds a new report configuration
+    from the static report config.
+
+    See 0002-keep-static-ucr-configurations-in-memory.md
     """
     domains = ListProperty(required=True)
     report_id = StringProperty(validators=(_check_ids))
@@ -747,25 +756,25 @@ class StaticReportConfiguration(JsonObject):
     def _all(cls):
         for path_or_glob in settings.STATIC_UCR_REPORTS:
             if os.path.isfile(path_or_glob):
-                yield _get_wrapped_object_from_file(path_or_glob, cls), path_or_glob
+                yield _get_wrapped_object_from_file(path_or_glob, cls)
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield _get_wrapped_object_from_file(path, cls), path
+                    yield _get_wrapped_object_from_file(path, cls)
 
     @classmethod
-    @quickcache([], skip_arg='rebuild')
-    def by_id_mapping(cls, rebuild=False):
-        mapping = {}
-        for wrapped, path in StaticReportConfiguration._all():
-            for domain in wrapped.domains:
-                config_id = cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report)
-                mapping[config_id] = StaticReportMetadata(config_id, path, domain)
-        return mapping
+    @memoized
+    def by_id_mapping(cls):
+        return {
+            cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report): (domain, wrapped)
+            for wrapped in cls._all()
+            for domain in wrapped.domains
+        }
 
     @classmethod
     def all(cls, ignore_server_environment=False):
-        for wrapped, path in StaticReportConfiguration._all():
+        """Only used in tests"""
+        for wrapped in StaticReportConfiguration._all():
             if (not ignore_server_environment and wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
@@ -778,7 +787,11 @@ class StaticReportConfiguration(JsonObject):
         """
         Returns a list of ReportConfiguration objects, NOT StaticReportConfigurations.
         """
-        return [ds for ds in cls.all() if ds.domain == domain]
+        return [
+            cls._get_report_config(wrapped, dom)
+            for dom, wrapped in cls.by_id_mapping().items()
+            if domain == dom
+        ]
 
     @classmethod
     def by_id(cls, config_id, domain=None):
@@ -788,23 +801,19 @@ class StaticReportConfiguration(JsonObject):
         :param domain: Optionally specify domain name to validate access.
                        Raises ``DocumentNotFound`` if domains don't match.
         """
-        mapping = cls.by_id_mapping()
-        if config_id not in mapping:
-            mapping = cls.by_id_mapping(rebuild=True)
-
-        metadata = mapping.get(config_id, None)
-        if not metadata:
+        try:
+            report_domain, wrapped = cls.by_id_mapping()[config_id]
+        except KeyError:
             raise BadSpecError(_('The report configuration referenced by this report could '
                                  'not be found: %(report_id)s') % {'report_id': config_id})
 
-        config = cls._get_from_metadata(metadata)
-        if domain and config.domain != domain:
+        if domain and report_domain != domain:
             raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
                 config_id,
-                config.__class__.__name__,
+                ReportConfiguration.__class__.__name__,
                 domain,
             ))
-        return config
+        return cls._get_report_config(wrapped, domain)
 
     @classmethod
     def by_ids(cls, config_ids):
@@ -826,17 +835,19 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def report_class_by_domain_and_id(cls, domain, config_id):
-        for wrapped, path in cls._all():
-            if cls.get_doc_id(domain, wrapped.report_id, wrapped.custom_configurable_report) == config_id:
-                return wrapped.custom_configurable_report
-        raise BadSpecError(_('The report configuration referenced by this report could '
-                             'not be found.'))
-
-    @classmethod
-    def _get_from_metadata(cls, metadata):
-        wrapped = _get_wrapped_object_from_file(metadata.path, cls)
-        domain = metadata.domain
-        return cls._get_report_config(wrapped, domain)
+        try:
+            report_domain, wrapped = cls.by_id_mapping()[config_id]
+        except KeyError:
+            raise BadSpecError(
+                _('The report configuration referenced by this report could not be found.')
+            )
+        if report_domain != domain:
+            raise DocumentNotFound("Document {} of class {} not in domain {}!".format(
+                config_id,
+                ReportConfiguration.__class__.__name__,
+                domain,
+            ))
+        return wrapped.custom_configurable_report
 
     @classmethod
     def _get_report_config(cls, static_config, domain):
