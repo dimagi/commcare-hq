@@ -271,8 +271,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
-        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
+        self._delete_old_related_models(
+            original_indices,
+            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+        )
+        self._delete_old_related_models(
+            original_attachments,
+            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            key="name",
+        )
 
         self.case.deleted = already_deleted or not bool(real_transactions)
 
@@ -280,9 +287,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
-    def _delete_old_related_models(self, original_models_by_id, models_to_keep):
+    def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
-            original_models_by_id.pop(model.identifier, None)
+            original_models_by_id.pop(getattr(model, key), None)
 
         for model in original_models_by_id.values():
             self.case.track_delete(model)
