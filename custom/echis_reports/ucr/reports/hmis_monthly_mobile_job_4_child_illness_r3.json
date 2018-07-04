@@ -7,7 +7,7 @@
     "production",
     "echis"
   ],
-  "report_id": "TODO",
+  "report_id": "static-hmis_monthly_mobile_job_4_child_illness_r3",
   "data_source_table": "static-hmis_job_aid",
   "config": {
     "description": "Fourth batch of indicators for the HMIS Report",

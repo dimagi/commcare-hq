@@ -7,7 +7,7 @@
     "production",
     "echis"
   ],
-  "report_id": "TODO",
+  "report_id": "static-ivr_weekly_mobile_job_aid",
   "data_source_table": "static-hmis_job_aid",
   "config": {
     "title": "(mobile) IVR Weekly Mobile Job Aid",

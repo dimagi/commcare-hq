@@ -7,7 +7,7 @@
     "production",
     "echis"
   ],
-  "report_id": "TODO",
+  "report_id": "static-hmis_monthly_mobile_job_aid_3_immun_growth_r2",
   "data_source_table": "static-hmis_job_aid",
   "config": {
     "description": "Third batch of indicators for the HMIS Report",

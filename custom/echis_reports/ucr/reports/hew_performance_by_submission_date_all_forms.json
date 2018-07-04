@@ -7,7 +7,7 @@
     "production",
     "echis"
   ],
-  "report_id": "TODO",
+  "report_id": "static-hew_performance_by_submission_date_all_forms",
   "data_source_table": "static-hew_performance_indicators",
   "config": {
     "description": "All forms",
