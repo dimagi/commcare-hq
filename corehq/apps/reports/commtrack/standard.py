@@ -2,7 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.analytics.esaccessors import get_wrapped_ledger_values, get_total_records
+from corehq.apps.reports.analytics.esaccessors import (
+    get_wrapped_ledger_values,
+    get_products_count,
+    get_product_ids_from_ledgers,
+)
 from corehq.apps.reports.commtrack.data_sources import (
     StockStatusDataSource, ReportingStatusDataSource,
     SimplifiedInventoryDataSource, SimplifiedInventoryDataSourceNew
@@ -19,8 +23,12 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import SQLLocation
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
-from corehq.apps.reports.commtrack.util import get_relevant_supply_point_ids, get_product_id_name_mapping, \
-    get_product_ids_for_program, get_consumption_helper_from_ledger_value
+from corehq.apps.reports.commtrack.util import (
+    get_relevant_supply_point_ids,
+    get_product_id_name_mapping,
+    get_product_ids_for_program,
+    get_consumption_helper_from_ledger_value,
+)
 from corehq.apps.reports.commtrack.const import STOCK_SECTION_TYPE
 from corehq.apps.reports.filters.commtrack import AdvancedColumns
 import six
