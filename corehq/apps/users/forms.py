@@ -842,10 +842,7 @@ class CommtrackUserForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.domain = None
-        if 'domain' in kwargs:
-            self.domain = kwargs['domain']
-            del kwargs['domain']
+        self.domain = kwargs.pop('domain', None)
         super(CommtrackUserForm, self).__init__(*args, **kwargs)
         self.fields['assigned_locations'].widget = SupplyPointSelectWidget(
             self.domain, multiselect=True, id='id_assigned_locations'
