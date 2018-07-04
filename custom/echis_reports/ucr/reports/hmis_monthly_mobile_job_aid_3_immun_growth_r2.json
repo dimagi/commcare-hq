@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "_id": "b4536430a459009e03bc43922ac186c4",
-    "config_id": "0494057db850f2769dc4d41c39f2abdd",
     "description": "Third batch of indicators for the HMIS Report",
     "title": "(mobile) HMIS Monthly Mobile Job Aid 3 (R2)(Immunization and growth monitoring)",
     "aggregation_columns": [

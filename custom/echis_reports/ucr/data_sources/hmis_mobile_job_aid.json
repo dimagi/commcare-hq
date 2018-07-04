@@ -8,7 +8,6 @@
     "echis"
   ],
   "config": {
-    "_id": "0494057db850f2769dc4d41c39f2abdd",
     "display_name": "(mobile) HMIS Mobile Job Aid",
     "table_id": "static-hmis_job_aid",
     "referenced_doc_type": "CommCareCase",

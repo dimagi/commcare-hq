@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hew_performance_indicators",
   "config": {
-    "_id": "7aa8fb073b3df2288c6c09225c5e9b85",
-    "config_id": "2f26d67fbc545a9da199d9479ac554d1",
     "title": "HEW performance report by Health Post",
     "description": "By HP",
     "configured_charts": [

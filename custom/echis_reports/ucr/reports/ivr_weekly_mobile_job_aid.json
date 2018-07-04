@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "_id": "2a202a4149fd5d96a23beba13d5ac2bf",
-    "config_id": "0494057db850f2769dc4d41c39f2abdd",
     "title": "(mobile) IVR Weekly Mobile Job Aid",
     "filters": [
       {

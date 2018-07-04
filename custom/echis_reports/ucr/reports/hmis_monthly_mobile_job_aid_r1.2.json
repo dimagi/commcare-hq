@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "_id": "ee3ed4cefa07613a3a8643f499864911",
-    "config_id": "0494057db850f2769dc4d41c39f2abdd",
     "title": "(mobile) HMIS Monthly Mobile Job Aid (R1.2)",
     "aggregation_columns": [
       "report_month_date"

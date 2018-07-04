@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "_id": "288c74d87932316f5dffd78bd4016d60",
-    "config_id": "0494057db850f2769dc4d41c39f2abdd",
     "description": "Second batch of indicators for the HMIS Report",
     "title": "(mobile) HMIS Monthly Mobile Job Aid 2 (R2)(Family planning)",
     "aggregation_columns": [

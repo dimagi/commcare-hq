@@ -8,7 +8,6 @@
     "echis"
   ],
   "config": {
-    "_id": "2f26d67fbc545a9da199d9479ac554d1",
     "description": "Performance indicators for HEWs",
     "display_name": "(mobile) HEW performance",
     "table_id": "static-hew_performance_indicators",

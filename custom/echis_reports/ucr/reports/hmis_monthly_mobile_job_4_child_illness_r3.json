@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "_id": "c36c19dbe3a3627ef6b6f0b9ef3e7fd1",
-    "config_id": "0494057db850f2769dc4d41c39f2abdd",
     "description": "Fourth batch of indicators for the HMIS Report",
     "title": "(mobile) HMIS Monthly Mobile Job Aid 4 (R3)(Child illnesses)",
     "aggregation_columns": [

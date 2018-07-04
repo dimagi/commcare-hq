@@ -10,8 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hew_performance_indicators",
   "config": {
-    "_id": "6bc870885dd6ce82761ff77fbed35b20",
-    "config_id": "2f26d67fbc545a9da199d9479ac554d1",
     "description": "All forms",
     "title": "HEW performance report by submission date (all forms)",
     "configured_charts": [

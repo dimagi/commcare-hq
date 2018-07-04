@@ -10,7 +10,6 @@
   "report_id": "TODO",
   "data_source_table": "static-hew_performance_indicators",
   "config": {
-    "config_id": "2f26d67fbc545a9da199d9479ac554d1",
     "description": "Grouped by HEW",
     "title": "HEW performance report by HEW",
     "configured_charts": [
