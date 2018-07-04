@@ -175,8 +175,13 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k), reverse=True)
         else:
             sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k))
-        products_to_show = sorted_product_name_map[self.pagination.start:][:self.pagination.count]
-        return [product_id for product_id, product_name in products_to_show]
+        product_ids_to_filter = get_product_ids_from_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, None)
+        if self._program_product_ids:
+            product_ids_to_filter = product_ids_to_filter & set(self._program_product_ids)
+        products_to_show = [product_name_map for product_name_map in sorted_product_name_map
+                            if product_name_map[0] in product_ids_to_filter]
+        return [product_id for product_id, product_name in
+                products_to_show[self.pagination.start:][:self.pagination.count]]
 
     def get_prod_data(self):
         sp_ids = get_relevant_supply_point_ids(self.domain, self.active_location)
