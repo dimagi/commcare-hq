@@ -11,7 +11,7 @@ from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumn
 from corehq.apps.commtrack.models import CommtrackConfig, CommtrackActionConfig
 from corehq.apps.products.models import Product, SQLProduct
-from corehq.apps.reports.graph_models import PieChart, MultiBarChart, Axis
+from corehq.apps.reports.graph_models import PieChart
 from corehq.apps.reports.standard import ProjectReport, ProjectReportParametersMixin, DatespanMixin
 from corehq.apps.reports.filters.commtrack import SelectReportingType
 from corehq.form_processor.utils.general import should_use_sql_backend
