@@ -19,8 +19,14 @@ class Migration(migrations.Migration):
             index_together=set([('case', 'name')]),
         ),
         HqRunSQL(
-            "SELECT 1",
-            # populate identifier with name on reverse migration
-            "UPDATE form_processor_caseattachmentsql SET identifier=name",
+            """
+                ALTER TABLE form_processor_caseattachmentsql
+                ALTER COLUMN identifier DROP NOT NULL
+            """,
+            """
+                UPDATE form_processor_caseattachmentsql SET identifier=name;
+                ALTER TABLE form_processor_caseattachmentsql
+                ALTER COLUMN identifier SET NOT NULL
+            """,
         ),
     ]
