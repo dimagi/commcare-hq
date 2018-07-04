@@ -36,7 +36,7 @@ from dimagi.utils.couch import RedisLockableMixIn
 from dimagi.utils.couch.safe_index import safe_index
 from dimagi.utils.couch.undo import DELETED_SUFFIX
 from memoized import memoized
-from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, CaseAttachmentMixin, IsImageMixin
+from .abstract_models import AbstractXFormInstance, AbstractCommCareCase, IsImageMixin
 from .exceptions import AttachmentNotFound
 import six
 from six.moves import map
@@ -956,7 +956,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
         db_table = CommCareCaseSQL_DB_TABLE
 
 
-class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
+class CaseAttachmentSQL(AbstractAttachment, IsImageMixin):
     partition_attr = 'case_id'
     objects = RestrictedManager()
     _attachment_prefix = 'case'
@@ -988,11 +988,8 @@ class CaseAttachmentSQL(AbstractAttachment, CaseAttachmentMixin):
                 self.content_type = guessed[0]
 
     @classmethod
-    def from_case_update(cls, attachment):
-        ret = cls(name=attachment.identifier)
-        if attachment.attachment_src:
-            ret.attachment_id = uuid.uuid4()
-        return ret
+    def new(cls, name):
+        return cls(name=name, attachment_id=uuid.uuid4())
 
     def __unicode__(self):
         return six.text_type(

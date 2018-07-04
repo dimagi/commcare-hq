@@ -343,22 +343,3 @@ class IsImageMixin(object):
         if self.content_type is None:
             return None
         return True if self.content_type.startswith('image/') else False
-
-
-class CaseAttachmentMixin(IsImageMixin):
-
-    @property
-    def is_present(self):
-        """
-        Helper method to see if this is a delete vs. update
-        """
-        # FIXME in its previous form this always returned True
-        #
-        #   if self.identifier and (self.attachment_src == self.attachment_from is None):
-        #       return False
-        #   else:
-        #       return True
-        #
-        # `x == y is None` will always evalute to False unless using a
-        # clever (and wrong) implementation of `__eq__`
-        return True

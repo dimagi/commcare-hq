@@ -191,10 +191,18 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform):
+
+        # NOTE `attachment_action` is a
+        # `casexml.apps.case.xml.parser.CaseAttachmentAction` and
+        # `attachment_action.attachments` is a dict with values of
+        # `casexml.apps.case.xml.parser.CaseAttachment`
+
         current_attachments = self.case.case_attachments
         for name, att in attachment_action.attachments.items():
-            new_attachment = CaseAttachmentSQL.from_case_update(att)
-            if new_attachment.is_present:
+            if att.is_delete:
+                if name in current_attachments:
+                    self.case.track_delete(current_attachments[name])
+            else:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
                 if name in current_attachments:
                     existing_attachment = current_attachments[name]
@@ -202,13 +210,11 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                         form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
+                    new_attachment = CaseAttachmentSQL.new(att.identifier)
                     new_attachment.from_form_attachment(
                         form_attachment, att.attachment_src)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
-            elif name in current_attachments:
-                existing_attachment = current_attachments[name]
-                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True
