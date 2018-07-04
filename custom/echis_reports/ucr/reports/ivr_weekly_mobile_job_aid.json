@@ -1,7 +1,7 @@
 {
   "domains": [
     "l10k2020ethiopia",
-    "TODO"
+    "fmoh-echis-staging"
   ],
   "server_environment": [
     "production",
