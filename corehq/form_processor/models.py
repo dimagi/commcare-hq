@@ -794,7 +794,7 @@ class CommCareCaseSQL(PartitionedModel, models.Model, RedisLockableMixIn,
 
     def _get_attachment_from_db(self, name):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
-        return CaseAccessorSQL.get_attachment_by_identifier(self.case_id, name)
+        return CaseAccessorSQL.get_attachment_by_name(self.case_id, name)
 
     def _get_attachments_from_db(self):
         from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL
