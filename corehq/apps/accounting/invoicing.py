@@ -302,7 +302,6 @@ class CustomerAccountInvoiceFactory(object):
             return
         try:
             self._generate_customer_invoice()
-            import ipdb; ipdb.set_trace()
             self._email_invoice()
         except InvoiceAlreadyCreatedError as e:
             log_accounting_error(
