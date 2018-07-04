@@ -109,19 +109,19 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {'name': 'program', 'value': self.request.GET.get('program')},
         ]
 
-    @memoized
     @property
+    @memoized
     def _sp_ids(self):
         return get_relevant_supply_point_ids(self.domain, self.active_location)
 
-    @memoized
     @property
+    @memoized
     def _program_product_ids(self):
         if self.program_id:
             return get_product_ids_for_program(self.domain, self.program_id)
 
-    @memoized
     @property
+    @memoized
     def _product_name_mapping(self):
         return get_product_id_name_mapping(self.domain, self._program_product_ids)
 
