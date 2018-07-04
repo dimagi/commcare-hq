@@ -289,7 +289,10 @@ class AbstractCommCareCase(CaseToXMLMixin):
     @memoized
     def get_attachment_map(self):
         return {
-            name: {'url': self.get_attachment_server_url(att.identifier)}
+            name: {
+                'url': self.get_attachment_server_url(att.identifier),
+                'content_type': att.content_type,
+            }
             for name, att in self.case_attachments.items()
         }
 
