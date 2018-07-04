@@ -4,7 +4,7 @@ from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 
-REPORT_CASE_INDEX = es_index("dm/case-attachment-refactor-8f7cba6")
+REPORT_CASE_INDEX = es_index("dm-case-attachment-refactor-8f7cba6")
 
 REPORT_CASE_MAPPING = {'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},

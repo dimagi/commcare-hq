@@ -219,7 +219,7 @@ EXPECTED_PROD_INDICES = [
     },
     {
         "alias": "report_cases",
-        "index": "test_dm/case-attachment-refactor-8f7cba6",
+        "index": "test_dm-case-attachment-refactor-8f7cba6",
         "type": "report_case",
         "meta": {
             "settings": {
