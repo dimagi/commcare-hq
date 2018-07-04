@@ -17,7 +17,6 @@ from corehq.apps.accounting.utils import (
 from corehq.apps.cloudcare.dbaccessors import get_cloudcare_apps
 from corehq.apps.data_interfaces.models import AutomaticUpdateRule
 from corehq.apps.domain.models import Domain
-from corehq.apps.export.dbaccessors import get_deid_export_count
 from corehq.apps.fixtures.models import FixtureDataType
 from corehq.apps.reminders.models import METHOD_SMS_SURVEY, METHOD_IVR_SURVEY
 from corehq.apps.users.models import CommCareUser, UserRole
@@ -585,6 +584,7 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
         """
         De-id exports will be hidden
         """
+        from corehq.apps.export.dbaccessors import get_deid_export_count
         num_deid_reports = get_deid_export_count(domain)
         if num_deid_reports > 0:
             return _fmt_alert(
