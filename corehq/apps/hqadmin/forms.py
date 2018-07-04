@@ -47,7 +47,9 @@ class AuthenticateAsForm(forms.Form):
         user = CommCareUser.get_by_username(username=self.full_username)
         if user is None:
             raise forms.ValidationError("Cannot find user '{}'".format(self.full_username))
-
+        # Allowed only login as mobile user
+        # web user would need stronger checks
+        # https://github.com/dimagi/commcare-hq/pull/6940#issuecomment-108765585
         if not user.is_commcare_user():
             raise forms.ValidationError("User '{}' is not a CommCareUser".format(self.full_username))
         return self.cleaned_data
