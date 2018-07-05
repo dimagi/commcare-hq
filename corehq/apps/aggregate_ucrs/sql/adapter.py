@@ -24,7 +24,3 @@ def get_aggregate_table(aggregate_spec):
         sqlalchemy.MetaData(),
         *sql_columns
     )
-
-
-def aggregate_column_to_sql(column_adapter):
-    return column_to_sql(column_adapter.get_ucr_column())
