@@ -47,7 +47,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
-)
+    InvalidDataSourceType)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -906,7 +906,7 @@ class AsyncIndicator(models.Model):
         ])
 
 
-def get_datasource_config(config_id, domain):
+def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
             'The data source referenced by this report could not be found.'
@@ -917,11 +917,19 @@ def get_datasource_config(config_id, domain):
         config = StaticDataSourceConfiguration.by_id(config_id)
         if config.domain != domain:
             _raise_not_found()
-    else:
+    elif data_source_type == DATA_SOURCE_TYPE_STANDARD:
         try:
             config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
         except DocumentNotFound:
             _raise_not_found()
+    elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
+        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+        try:
+            config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
+        except AggregateTableDefinition.DoesNotExist:
+            _raise_not_found()
+    else:
+        raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
     return config, is_static
 
 
