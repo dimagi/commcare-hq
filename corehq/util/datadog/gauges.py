@@ -60,6 +60,30 @@ def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
 
 
 def datadog_bucket_timer(metric, tags, timing_buckets):
+    """
+    create a context manager that times and reports to datadog using timing buckets
+
+    adds a 'duration' tag specifying which predefined timing bucket the timing fell into,
+    see the `bucket_value` function for more info.
+
+    Example Usage:
+
+        timer = datadog_bucket_timer('commcare.some.special.metric', tags=[
+            'type:{}'.format(type),
+        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        with timer:
+            some_special_thing()
+
+    This will result it a datadog counter metric with a 'duration' tag, with the possible values
+    lt_0.001, lt_0.01, lt_0.1, lt_001, lt_010, lt_100, and over_100.
+
+    :param metric: Name of the datadog metric (must start with 'commcare.')
+    :param tags: Datadog tags to include
+    :param timing_buckets: sequence of numbers representing time thresholds, in seconds
+    :return: A context manager that will perform the specified timing
+             and send the specified metric
+
+    """
     timer = TimingContext()
     original_stop = timer.stop
 
