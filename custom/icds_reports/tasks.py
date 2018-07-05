@@ -142,7 +142,6 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
             _create_views(cursor)
             _update_aggregate_locations_tables(cursor)
 
-        tasks = []
         state_ids = (SQLLocation.objects
                      .filter(domain=DASHBOARD_DOMAIN, location_type__name='state')
                      .values_list('location_id', flat=True))
@@ -167,32 +166,29 @@ def move_ucr_data_into_aggregation_tables(date=None, intervals=2):
                 ) for state_id in state_ids
             ])
             stage_1_tasks.append(icds_aggregation_task.si(date=calculation_date, func=_update_months_table))
-            tasks.extend([
-                group(*stage_1_tasks),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_daily_attendance_table),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
-                ),
-                group(
-                    icds_aggregation_task.si(date=calculation_date, func=_agg_awc_table),
-                    no_op_task_for_celery_bug.si(),
-                )
-            ])
+            res = group(*stage_1_tasks).apply_async()
+            res.get()
 
-        tasks.append(group(
+            res_child = chain(
+                icds_aggregation_task.si(date=calculation_date, func=_child_health_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_child_health_table),
+            ).apply_async()
+            res_ccs = chain(
+                icds_aggregation_task.si(date=calculation_date, func=_ccs_record_monthly_table),
+                icds_aggregation_task.si(date=calculation_date, func=_agg_ccs_record_table),
+            ).apply_async()
+            res_daily = icds_aggregation_task.delay(date=calculation_date, func=_daily_attendance_table)
+            res_daily.get()
+            res_ccs.get()
+            res_child.get()
+
+            res_awc = icds_aggregation_task.delay(date=calculation_date, func=_agg_awc_table)
+            res_awc.get()
+
+        chain(
             icds_aggregation_task.si(date=date.strftime('%Y-%m-%d'), func=aggregate_awc_daily),
-            no_op_task_for_celery_bug.si(),
-        ))
-        tasks.append(group(
-            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d')),
-            no_op_task_for_celery_bug.si(),
-        ))
-        chain(*tasks).delay()
+            email_dashboad_team.si(aggregation_date=date.strftime('%Y-%m-%d'))
+        ).delay()
 
 
 def _create_views(cursor):
@@ -210,16 +206,6 @@ def _create_views(cursor):
         # and look for recent changes in this folder.
         _dashboard_team_soft_assert(False, "Unexpected occurred while creating views in dashboard aggregation")
         raise
-
-        
-@task(queue="icds_aggregation_queue")
-def no_op_task_for_celery_bug():
-    # Under celery 3.1.18, we've noticed that tasks need to be grouped when using canvas
-    # If the tasks are not grouped, then once celery gets to that task, no future tasks will be queued.
-    # Grouping one task by itself does not appear to work.
-    # If there's only one task for a group, we can add this to get around this issue.
-    # Once we upgrade celery we can experiment with getting rid of this.
-    pass
 
 
 def _create_aggregate_functions(cursor):
