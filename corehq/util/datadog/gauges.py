@@ -57,6 +57,23 @@ def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
         datadog_logger.exception('Unable to record Datadog stats')
 
 
+def datadog_timer(metric, tags=None):
+    blobdb = self
+    timer = TimingContext()
+    original_stop = timer.stop
+
+    def new_stop(name=None):
+        original_stop(name)
+        datadog_gauge(
+            metric,
+            value=timer.duration,
+            tags=tags
+        )
+
+    timer.stop = new_stop
+    return timer
+
+
 class _DatadogGauge(object):
 
     def __init__(self, name, fn, run_every):

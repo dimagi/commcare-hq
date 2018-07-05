@@ -9,7 +9,7 @@ from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
-from corehq.util.datadog.gauges import datadog_counter
+from corehq.util.datadog.gauges import datadog_timer
 from corehq.util.timer import TimingContext
 
 from dimagi.utils.chunked import chunked
@@ -42,22 +42,10 @@ class S3BlobDB(AbstractBlobDB):
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
     def report_timing(self, action):
-        blobdb = self
-        timer = TimingContext()
-        original_stop = timer.stop
-
-        def new_stop(timer, name=None):
-            original_stop(name)
-            datadog_counter(
-                'commcare.blobs.requests.timing',
-                value=timer.duration,
-                tags=[
-                    'action:{}'.format(action),
-                    's3_bucket_name:{}'.format(blobdb.s3_bucket_name)
-                ]
-            )
-        timer.stop = new_stop
-        return timer
+        return datadog_timer('commcare.blobs.requests.timing', tags=[
+            'action:{}'.format(action),
+            's3_bucket_name:{}'.format(self.s3_bucket_name)
+        ])
 
     def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
