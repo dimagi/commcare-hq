@@ -16,10 +16,13 @@ class SemanticVersionProperty(StringProperty):
 
     def validate(self, value, required=True):
         super(SemanticVersionProperty, self).validate(value, required)
+        if not self.required and not value:
+            return value
         try:
-            major, minor, _ = value.split('.')
+            major, minor, point = value.split('.')
             int(major)
             int(minor)
+            int(point)
         except Exception:
             raise BadValueError("Build version %r does not comply with the x.y.z schema" % value)
         return value
@@ -166,7 +169,7 @@ class CommCareBuild(Document):
 
 
 class BuildSpec(DocumentSchema):
-    version = StringProperty()
+    version = SemanticVersionProperty(required=False)
     build_number = IntegerProperty(required=False)
     latest = BooleanProperty()
 
