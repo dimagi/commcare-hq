@@ -87,19 +87,11 @@ class CommCareCaseAttachment(LooselyEqualDocumentSchema, IsImageMixin, UnicodeMi
         NOTE this is related to but reversed logic from
         `casexml.apps.case.xml.parser.CaseAttachment.is_delete`.
         """
-        # Should this only use `attachment_src` since that is the
-        # only field checked by `from_case_index_update`?
-        return not (
-            self.identifier and
-            self.attachment_src is self.attachment_from is None
-        )
+        return self.attachment_src or self.attachment_from
 
     @classmethod
     def from_case_index_update(cls, attachment):
-        # yet another is_deleted check? but different from the others;
-        # this one only looks at attachment_src instead of some combination
-        # of attachment_src, attachment_from, and attachment_name
-        if attachment.attachment_src:
+        if attachment.attachment_src or attachment.attachment_from:
             guessed = mimetypes.guess_type(attachment.attachment_src)
             if len(guessed) > 0 and guessed[0] is not None:
                 mime_type = guessed[0]

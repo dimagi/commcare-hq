@@ -164,7 +164,8 @@ class CaseAttachment(object):
         identifier: the tag name
         attachment_src: URL of attachment
         attachment_from: source [local, remote, inline]
-        attachment_name: required if inline for inline blob of attachment - likely identical to identifier
+        attachment_name: required if inline for inline blob of attachment -
+        likely identical to identifier
         """
         self.identifier = identifier
         self.attachment_src = attachment_src
@@ -176,17 +177,19 @@ class CaseAttachment(object):
         """
         Helper method to see if this is a delete vs. update
 
+        The spec says "no attributes, empty - This will remove the attachment."
+        This implementation only considers `src` and `from` values since that
+        should be sufficient to detect a deletion. However, technically the
+        `name` value could be considered as well, although having a non-empty
+        `name` with empty `src` and `from` is an undefined state.
+        https://github.com/dimagi/commcare-core/wiki/casexml20#case-action-elements
+
         This property is named differently from
         `casexml.apps.case.sharedmodels.CommCareCaseAttachment.is_present`
         to disambiguate the interface of that class from this one since
         they are not the same but are used in very similar contexts.
         """
-        # FIXME slight disparity between this and CaseAttachmentAction.from_v2
-        # comment: "this is a deletion if all three ... are null"
-        return (
-            self.identifier and
-            self.attachment_src is self.attachment_from is None
-        )
+        return not (self.attachment_src or self.attachment_from)
 
 
 class CaseAttachmentAction(CaseActionBase):
@@ -215,8 +218,6 @@ class CaseAttachmentAction(CaseActionBase):
                 attachment_src = data.get('@src', None)
                 attachment_from = data.get('@from', None)
                 attachment_name = data.get('@name', None)
-            # this is a deletion if all three (attachment_src, attachment_from,
-            # and attachment_name) are null
             attachments[id] = CaseAttachment(id, attachment_src, attachment_from, attachment_name)
         return cls(block, attachments)
 
