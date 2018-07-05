@@ -26,7 +26,7 @@ from corehq.apps.data_pipeline_audit.dbacessors import (
     get_primary_db_form_counts,
     get_primary_db_case_counts,
 )
-from corehq.apps.hqwebwebapp.tasks import send_mail_async
+from corehq.apps.hqwebapp.tasks import send_mail_async
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import get_datasource_config
 from corehq.apps.userreports.util import get_indicator_adapter, get_table_name
