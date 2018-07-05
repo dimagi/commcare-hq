@@ -416,9 +416,6 @@ class SubscriptionForm(forms.Form):
     end_date = forms.DateField(
         label=ugettext_lazy("End Date"), widget=forms.DateInput(), required=False
     )
-    delay_invoice_until = forms.DateField(
-        label=ugettext_lazy("Delay Invoice Until"), widget=forms.DateInput(), required=False
-    )
     plan_edition = forms.ChoiceField(
         label=ugettext_lazy("Edition"), initial=SoftwarePlanEdition.ENTERPRISE,
         choices=SoftwarePlanEdition.CHOICES,
@@ -482,8 +479,6 @@ class SubscriptionForm(forms.Form):
 
         start_date_field = crispy.Field('start_date', css_class="date-picker")
         end_date_field = crispy.Field('end_date', css_class="date-picker")
-        delay_invoice_until_field = crispy.Field('delay_invoice_until',
-                                                 css_class="date-picker")
 
         if is_existing:
             # circular import
@@ -537,7 +532,6 @@ class SubscriptionForm(forms.Form):
                 subscription.date_end.isoformat()
                 if subscription.date_end is not None else subscription.date_end
             )
-            self.fields['delay_invoice_until'].initial = subscription.date_delay_invoicing
             self.fields['domain'].initial = subscription.subscriber.domain
             self.fields['salesforce_contract_id'].initial = subscription.salesforce_contract_id
             self.fields['do_not_invoice'].initial = subscription.do_not_invoice
@@ -559,16 +553,6 @@ class SubscriptionForm(forms.Form):
                 self.fields['start_date'].help_text = '(already started)'
             if has_subscription_already_ended(subscription):
                 self.fields['end_date'].help_text = '(already ended)'
-            if (
-                subscription.date_delay_invoicing is not None
-                and subscription.date_delay_invoicing <= today
-            ):
-                delay_invoice_until_field = hqcrispy.B3TextField(
-                    'delay_invoice_until',
-                    "%(delay_date)s (date has already passed)" % {
-                        'delay_date': self.fields['delay_invoice_until'].initial,
-                    }
-                )
 
             self.fields['plan_version'].required = False
             self.fields['domain'].required = False
@@ -611,7 +595,6 @@ class SubscriptionForm(forms.Form):
                 crispy.Div(*transfer_fields),
                 start_date_field,
                 end_date_field,
-                delay_invoice_until_field,
                 plan_edition_field,
                 plan_version_field,
                 domain_field,
@@ -687,7 +670,6 @@ class SubscriptionForm(forms.Form):
         return dict(
             date_start=self.cleaned_data['start_date'],
             date_end=self.cleaned_data['end_date'],
-            date_delay_invoicing=self.cleaned_data['delay_invoice_until'],
             do_not_invoice=self.cleaned_data['do_not_invoice'],
             no_invoice_reason=self.cleaned_data['no_invoice_reason'],
             do_not_email_invoice=self.cleaned_data['do_not_email_invoice'],
@@ -839,7 +821,6 @@ class ChangeSubscriptionForm(forms.Form):
             pro_bono_status=self.cleaned_data['pro_bono_status'],
             funding_source=self.cleaned_data['funding_source'],
             internal_change=True,
-            date_delay_invoicing=self.subscription.date_delay_invoicing,
         )
 
 

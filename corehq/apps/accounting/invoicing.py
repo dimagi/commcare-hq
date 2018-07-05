@@ -436,9 +436,6 @@ def update_invoice_due_date(invoice, subscription, factory_date_end):
     )
     if should_set_date_due:
         days_until_due = DEFAULT_DAYS_UNTIL_DUE
-        if subscription.date_delay_invoicing is not None:
-            td = subscription.date_delay_invoicing - factory_date_end
-            days_until_due = max(days_until_due, td.days)
         invoice.date_due = factory_date_end + datetime.timedelta(days_until_due)
 
     invoice.save()

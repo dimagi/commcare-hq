@@ -1012,7 +1012,6 @@ class Subscription(models.Model):
     salesforce_contract_id = models.CharField(blank=True, max_length=80)
     date_start = models.DateField()
     date_end = models.DateField(blank=True, null=True)
-    date_delay_invoicing = models.DateField(blank=True, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=False)
     do_not_invoice = models.BooleanField(default=False)
@@ -1156,7 +1155,7 @@ class Subscription(models.Model):
                 )
 
     def update_subscription(self, date_start, date_end,
-                            date_delay_invoicing=None, do_not_invoice=None,
+                            do_not_invoice=None,
                             no_invoice_reason=None, do_not_email_invoice=None,
                             do_not_email_reminder=None, salesforce_contract_id=None,
                             auto_generate_credits=None,
@@ -1167,9 +1166,6 @@ class Subscription(models.Model):
         adjustment_method = adjustment_method or SubscriptionAdjustmentMethod.INTERNAL
 
         self._update_dates(date_start, date_end)
-
-        if self.date_delay_invoicing is None or self.date_delay_invoicing > datetime.date.today():
-            self.date_delay_invoicing = date_delay_invoicing
 
         self._update_properties(
             do_not_invoice=do_not_invoice,
@@ -1241,7 +1237,7 @@ class Subscription(models.Model):
                     note=None, web_user=None, adjustment_method=None,
                     service_type=None, pro_bono_status=None, funding_source=None,
                     transfer_credits=True, internal_change=False, account=None,
-                    do_not_invoice=None, no_invoice_reason=None, date_delay_invoicing=None,
+                    do_not_invoice=None, no_invoice_reason=None,
                     auto_generate_credits=False, is_trial=False):
         """
         Changing a plan TERMINATES the current subscription and
@@ -1262,8 +1258,6 @@ class Subscription(models.Model):
             )
 
         self.date_end = today
-        if self.date_delay_invoicing is not None and self.date_delay_invoicing > today:
-            self.date_delay_invoicing = today
         self.is_active = False
         self.save()
 
@@ -1274,7 +1268,6 @@ class Subscription(models.Model):
             salesforce_contract_id=self.salesforce_contract_id,
             date_start=today,
             date_end=date_end,
-            date_delay_invoicing=date_delay_invoicing,
             is_active=True,
             do_not_invoice=do_not_invoice if do_not_invoice is not None else self.do_not_invoice,
             no_invoice_reason=no_invoice_reason if no_invoice_reason is not None else self.no_invoice_reason,
@@ -2077,7 +2070,6 @@ class SubscriptionAdjustment(models.Model):
             subscription=subscription,
             new_date_start=subscription.date_start,
             new_date_end=subscription.date_end,
-            new_date_delay_invoicing=subscription.date_delay_invoicing,
             new_salesforce_contract_id=subscription.salesforce_contract_id,
             **kwargs
         )
