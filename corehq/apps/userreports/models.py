@@ -769,20 +769,17 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def by_ids(cls, config_ids):
-        config_ids = set(config_ids)
         mapping = cls.by_id_mapping()
 
-        if not config_ids <= set(mapping.keys()):
-            mapping = cls.by_id_mapping(rebuild=True)
-
         return_configs = []
-        for config_id in config_ids:
-            metadata = mapping.get(config_id, None)
-            if not metadata:
+        for config_id in set(config_ids):
+            try:
+                domain, wrapped = mapping[config_id]
+            except KeyError:
                 raise ReportConfigurationNotFoundError(_(
                     "The following report configuration could not be found: {}".format(config_id)
                 ))
-            return_configs.append(cls._get_from_metadata(metadata))
+            return_configs.append(cls._get_report_config(wrapped, domain))
         return return_configs
 
     @classmethod
