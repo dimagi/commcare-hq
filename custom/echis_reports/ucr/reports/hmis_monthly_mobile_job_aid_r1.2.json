@@ -7,7 +7,7 @@
     "production",
     "echis"
   ],
-  "report_id": "static-hmis_monthly_mobile_job_aid_r1.2",
+  "report_id": "static-hmis_monthly_mobile_job_aid_r1_2",
   "data_source_table": "static-hmis_job_aid",
   "config": {
     "title": "(mobile) HMIS Monthly Mobile Job Aid (R1.2)",
