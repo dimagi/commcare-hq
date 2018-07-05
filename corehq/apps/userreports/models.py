@@ -118,7 +118,30 @@ class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
 
-class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class AbstractUCRDataSource(object):
+    """
+    Base wrapper class for datasource-like things to be used in reports.
+
+    This doesn't use abc because of this issue: https://stackoverflow.com/q/8723639/8207
+
+    This is not really a "designed" interface so much as the set of methods/properties that
+    the objects need to have in order to work with UCRs.
+
+    In addition to the methods defined, the following should also exist:
+
+    domain: a string
+    engine_id: a string
+    table_id: a string
+    display_name: a string
+    sql_column_indexes: a list of SQLColumnIndexes
+    sql_settings: a SQLSettings object
+    """
+
+    def get_columns(self):
+        raise NotImplementedError()
+
+
+class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
