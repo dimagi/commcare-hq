@@ -51,7 +51,7 @@ VISIBILITY_CHOICES = (
 
 class ConfigurableReportEditForm(DocumentFormBase):
 
-    _id = forms.CharField(disabled=True, label=_('Report ID'),
+    _id = forms.CharField(required=False, disabled=True, label=_('Report ID'),
                           help_text=help_text.REPORT_ID)
     config_id = forms.ChoiceField()  # gets overridden on instantiation
     title = forms.CharField()

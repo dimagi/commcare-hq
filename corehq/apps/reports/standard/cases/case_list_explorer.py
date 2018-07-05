@@ -33,6 +33,7 @@ class CaseListExplorer(CaseListReport):
 
     exportable = True
     exportable_all = True
+    emailable = True
     _is_exporting = False
 
     fields = [

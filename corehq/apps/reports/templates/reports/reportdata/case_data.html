@@ -12,9 +12,11 @@
 {% endblock %}
 
 {% block js %}{{ block.super }}
-    {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-    {# import error: http://manage.dimagi.com/default.asp?223100 #}
-    {% include 'cloudcare/includes/formplayer-inline.html' %}
+    {% if not request|toggle_enabled:"CASE_DATA_FORMPLAYER_EXCLUDE" %}
+        {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
+        {# import error: http://manage.dimagi.com/default.asp?223100 #}
+        {% include 'cloudcare/includes/formplayer-inline.html' %}
+    {% endif %}
     <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
     <script src="{% static "jquery-memoized-ajax/jquery.memoized.ajax.min.js" %}"></script>
     <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>

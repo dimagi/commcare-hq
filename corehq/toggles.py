@@ -1606,3 +1606,10 @@ AGGREGATE_UCRS = StaticToggle(
     TAG_INTERNAL,  # this might change in the future
     namespaces=[NAMESPACE_DOMAIN]
 )
+
+CASE_DATA_FORMPLAYER_EXCLUDE = StaticToggle(
+    'case_data_formplayer_exclude',
+    'Do not include formplayer on case data page or custom reports',
+    TAG_INTERNAL,
+    [NAMESPACE_DOMAIN, NAMESPACE_USER],
+)

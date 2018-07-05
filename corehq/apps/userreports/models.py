@@ -1,5 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import glob
+import os
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
@@ -637,8 +640,13 @@ class StaticDataSourceConfiguration(JsonObject):
         """
         :return: Generator of all wrapped configs read from disk
         """
-        for path in settings.STATIC_DATA_SOURCES:
-            yield cls.wrap(_read_file(path))
+        for path_or_glob in settings.STATIC_DATA_SOURCES:
+            if os.path.isfile(path_or_glob):
+                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+            else:
+                files = glob.glob(path_or_glob)
+                for path in files:
+                    yield cls.wrap(_read_file(path)), path
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
@@ -711,8 +719,13 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def _all(cls):
-        for path in settings.STATIC_UCR_REPORTS:
-            yield cls.wrap(_read_file(path))
+        for path_or_glob in settings.STATIC_UCR_REPORTS:
+            if os.path.isfile(path_or_glob):
+                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+            else:
+                files = glob.glob(path_or_glob)
+                for path in files:
+                    yield cls.wrap(_read_file(path)), path
 
     @classmethod
     @memoized
