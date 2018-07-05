@@ -122,7 +122,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
     @property
     @memoized
     def _product_name_mapping(self):
-        return get_product_id_name_mapping(self.domain, self._program_product_ids)
+        return get_product_id_name_mapping(self.domain, self.program_id)
 
     @property
     @memoized

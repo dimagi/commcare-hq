@@ -97,10 +97,11 @@ def get_relevant_supply_point_ids(domain, active_sql_location=None):
         return list(filter_relevant(SQLLocation.objects.filter(domain=domain)))
 
 
-def get_product_id_name_mapping(domain, product_ids=None):
+@quickcache(['domain', 'program_id'])
+def get_product_id_name_mapping(domain, program_id=None):
     products = SQLProduct.objects.filter(domain=domain)
-    if product_ids:
-        products = products.filter(product_id__in=product_ids)
+    if program_id:
+        products = products.filter(program_id=program_id)
     return dict(products.values_list('product_id', 'name'))
 
 
