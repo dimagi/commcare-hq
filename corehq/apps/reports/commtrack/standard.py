@@ -196,7 +196,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         # -> that have ledgers and
         # -> fall into requested pagination
         return [product_id for product_id, product_name in sorted_product_name_map
-                if product_id in self._products_with_ledgers()
+                if product_id in self._products_with_ledgers
                 ][self.pagination.start:][:self.pagination.count]
 
     def get_prod_data(self):
