@@ -8,10 +8,12 @@ from .xlsx import open_xlsx_workbook
 
 @contextmanager
 def open_any_workbook(filename):
-    if filename.endswith('.xls'):
+    extension = filename.split('.')[-1].lower()
+
+    if extension == 'xls':
         with open_xls_workbook(filename) as workbook:
             yield workbook
-    elif filename.endswith('.xlsx'):
+    elif extension == 'xlsx':
         with open_xlsx_workbook(filename) as workbook:
             yield workbook
     else:
