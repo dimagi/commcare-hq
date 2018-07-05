@@ -16,13 +16,13 @@ from corehq.apps.aggregate_ucrs.importer import import_aggregation_models_from_s
 from corehq.apps.aggregate_ucrs.ingestion import populate_aggregate_table_data, get_aggregation_start_period, \
     get_aggregation_end_period
 from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
-from corehq.apps.aggregate_ucrs.sql.adapter import AggregateIndicatorSqlAdapter
 from corehq.apps.aggregate_ucrs.tests.base import AggregationBaseTestMixin
 from corehq.apps.app_manager.tests.app_factory import AppFactory
 from corehq.apps.app_manager.tests.util import delete_all_apps
 from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.userreports.app_manager.helpers import get_form_data_source, get_case_data_source
+from corehq.apps.userreports.sql import IndicatorSqlAdapter
 from corehq.apps.userreports.tasks import _iteratively_build_table
 from corehq.apps.userreports.util import get_indicator_adapter
 from corehq.form_processor.utils.xform import FormSubmissionBuilder, TestFormMetadata
@@ -106,6 +106,9 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         cls.monthly_aggregate_table_definition = cls._get_monthly_aggregate_table_definition()
         cls.weekly_aggregate_table_definition = cls._get_weekly_aggregate_table_definition()
         cls.basic_aggregate_table_definition = cls._get_basic_aggregate_table_definition()
+
+        # and adapter
+        cls.monthly_adapter = IndicatorSqlAdapter(cls.monthly_aggregate_table_definition)
 
     @classmethod
     def tearDownClass(cls):
@@ -216,6 +219,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
     @classmethod
     def _get_weekly_aggregate_table_definition(cls):
         spec = cls.get_monthly_config_spec()
+        spec.table_id = 'weekly_aggregate_pregnancies'
         spec.primary_table.data_source_id = cls.case_data_source._id
         spec.secondary_tables[0].data_source_id = cls.form_data_source._id
         spec.time_aggregation.unit = AGGREGATION_UNIT_CHOICE_WEEK
@@ -230,8 +234,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         return import_aggregation_models_from_spec(spec)
 
     def test_aggregate_table(self):
-        adapter = AggregateIndicatorSqlAdapter(self.monthly_aggregate_table_definition)
-        table = adapter.get_table()
+        table = self.monthly_adapter.get_table()
         id_column = table.columns['doc_id']
 
         # basic checks on primary columns
@@ -258,7 +261,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
     def test_basic_aggregation(self):
         # next generate our table
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.basic_aggregate_table_definition)
+        aggregate_table_adapter = IndicatorSqlAdapter(self.basic_aggregate_table_definition)
         aggregate_table_adapter.rebuild_table()
 
         populate_aggregate_table_data(aggregate_table_adapter)
@@ -269,7 +272,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self._check_basic_results()
 
     def _check_basic_results(self):
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.basic_aggregate_table_definition)
+        aggregate_table_adapter = IndicatorSqlAdapter(self.basic_aggregate_table_definition)
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
 
@@ -289,7 +292,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
     def test_monthly_aggregation(self):
         # generate our table
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.monthly_aggregate_table_definition)
+        aggregate_table_adapter = self.monthly_adapter
         aggregate_table_adapter.rebuild_table()
 
         populate_aggregate_table_data(aggregate_table_adapter)
@@ -300,7 +303,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self._check_monthly_results()
 
     def _check_monthly_results(self):
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.monthly_aggregate_table_definition)
+        aggregate_table_adapter = self.monthly_adapter
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
 
@@ -371,7 +374,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
 
     def test_weekly_aggregation(self):
         # generate our table
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.weekly_aggregate_table_definition)
+        aggregate_table_adapter = IndicatorSqlAdapter(self.weekly_aggregate_table_definition)
         aggregate_table_adapter.rebuild_table()
 
         populate_aggregate_table_data(aggregate_table_adapter)
@@ -382,7 +385,7 @@ class UCRAggregationTest(TestCase, AggregationBaseTestMixin):
         self._check_weekly_results()
 
     def _check_weekly_results(self):
-        aggregate_table_adapter = AggregateIndicatorSqlAdapter(self.weekly_aggregate_table_definition)
+        aggregate_table_adapter = IndicatorSqlAdapter(self.weekly_aggregate_table_definition)
         aggregate_table = aggregate_table_adapter.get_table()
         aggregate_query = aggregate_table_adapter.get_query_object()
 
