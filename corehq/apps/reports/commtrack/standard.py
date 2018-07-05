@@ -127,7 +127,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
 
     @property
     def total_records(self):
-        return products_with_ledgers_count(self.domain, self._sp_ids, STOCK_SECTION_TYPE, self._program_product_ids)
+        return products_with_ledgers_count(self.domain, self._sp_ids, STOCK_SECTION_TYPE,
+                                           self._program_product_ids)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -186,17 +187,19 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         product_name_map = self._product_name_mapping
         # sort
         if self.request.GET.get('sSortDir_0') == 'desc':
-            sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k), reverse=True)
+            sorted_product_name_map = sorted(product_name_map.items(),
+                                             key=lambda name_map: name_map[1], reverse=True)
         else:
-            sorted_product_name_map = sorted(product_name_map.items(), key=lambda (k, v): (v, k))
+            sorted_product_name_map = sorted(product_name_map.items(),
+                                             key=lambda name_map: name_map[1])
         # product ids to filter
         # -> all that have ledgers and
         # -> if specific program products ids from filter
         product_ids_to_filter = products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, None)
         if self._program_product_ids:
             product_ids_to_filter = product_ids_to_filter & set(self._program_product_ids)
-        products_to_show = [product_name_map for product_name_map in sorted_product_name_map
-                            if product_name_map[0] in product_ids_to_filter]
+        products_to_show = [_product_name_map for _product_name_map in sorted_product_name_map
+                            if _product_name_map[0] in product_ids_to_filter]
         # product ids according to pagination
         return [product_id for product_id, product_name in
                 products_to_show[self.pagination.start:][:self.pagination.count]]
