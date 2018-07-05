@@ -46,15 +46,19 @@ class LocationUploadResult(object):
         return not self.errors
 
 
+def to_boolean(val):
+    return False if val == '' else string_to_boolean(val)
+
+
 @attrs(frozen=True)
 class LocationTypeData(object):
     """read-only representation of location type attributes specified in an upload"""
     name = attrib(type=six.text_type)
     code = attrib(type=six.text_type)
     parent_code = attrib(converter=lambda code: code or ROOT_LOCATION_TYPE)
-    do_delete = attrib(type=bool, converter=string_to_boolean)
-    shares_cases = attrib(type=bool, converter=string_to_boolean)
-    view_descendants = attrib(type=bool, converter=string_to_boolean)
+    do_delete = attrib(type=bool, converter=to_boolean)
+    shares_cases = attrib(type=bool, converter=to_boolean)
+    view_descendants = attrib(type=bool, converter=to_boolean)
     index = attrib(type=int)
 
 
@@ -118,13 +122,13 @@ class LocationData(object):
     location_type = attrib(type=six.text_type)
     parent_code = attrib(converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
     location_id = attrib(type=six.text_type)
-    do_delete = attrib(type=bool, converter=string_to_boolean)
+    do_delete = attrib(type=bool, converter=to_boolean)
     external_id = attrib(type=six.text_type)
     latitude = attrib(converter=string_or_none)
     longitude = attrib(converter=string_or_none)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'
     custom_data = attrib()
-    delete_uncategorized_data = attrib(type=bool, converter=string_to_boolean)
+    delete_uncategorized_data = attrib(type=bool, converter=to_boolean)
     index = attrib(type=int)
 
 
