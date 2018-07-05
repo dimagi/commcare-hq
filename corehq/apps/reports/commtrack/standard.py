@@ -22,6 +22,7 @@ from dimagi.utils.couch.loosechange import map_reduce
 from corehq.apps.locations.models import SQLLocation
 from memoized import memoized
 from django.utils.translation import ugettext as _, ugettext_noop
+from django.utils.functional import cached_property
 from corehq.apps.reports.commtrack.util import (
     get_relevant_supply_point_ids,
     get_product_id_name_mapping,
@@ -108,29 +109,24 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             {'name': 'program', 'value': self.request.GET.get('program')},
         ]
 
-    @property
-    @memoized
+    @cached_property
     def _sp_ids(self):
         return get_relevant_supply_point_ids(self.domain, self.active_location)
 
-    @property
-    @memoized
+    @cached_property
     def _program_product_ids(self):
         if self.program_id:
             return get_product_ids_for_program(self.domain, self.program_id)
 
-    @property
-    @memoized
+    @cached_property
     def _product_name_mapping(self):
         return get_product_id_name_mapping(self.domain, self.program_id)
 
-    @property
-    @memoized
+    @cached_property
     def _products_with_ledgers(self):
         return products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, self._program_product_ids)
 
-    @property
-    @memoized
+    @cached_property
     def _desc_product_order(self):
         return self.request.GET.get('sSortDir_0') == 'desc'
 
@@ -182,8 +178,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         ]
         return DataTablesHeader(*columns)
 
-    @property
-    @memoized
+    @cached_property
     def product_data(self):
         return list(self.get_prod_data())
 
