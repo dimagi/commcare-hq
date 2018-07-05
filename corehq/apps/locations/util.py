@@ -132,10 +132,11 @@ def get_location_data_model(domain):
 
 class LocationExporter(object):
 
-    def __init__(self, domain, include_consumption=False, async_task=None):
+    def __init__(self, domain, include_consumption=False, headers_only=False, async_task=None):
         self.domain = domain
         self.domain_obj = Domain.get_by_name(domain)
         self.include_consumption_flag = include_consumption
+        self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
         self.location_types = self.domain_obj.location_types
@@ -223,10 +224,13 @@ class LocationExporter(object):
 
     def _write_locations(self, writer, location_type):
         include_consumption = self.include_consumption_flag and location_type.name not in self.administrative_types
-        query = SQLLocation.active_objects.filter(
-            domain=self.domain,
-            location_type=location_type
-        )
+        if self.headers_only:
+            query = SQLLocation.objects.none()
+        else:
+            query = SQLLocation.active_objects.filter(
+                domain=self.domain,
+                location_type=location_type
+            )
 
         def _row_generator(include_consumption=include_consumption):
             for loc in query:
@@ -282,8 +286,9 @@ class LocationExporter(object):
         writer.write([('types', rows)])
 
 
-def dump_locations(domain, download_id, include_consumption=False, task=None):
-    exporter = LocationExporter(domain, include_consumption=include_consumption, async_task=task)
+def dump_locations(domain, download_id, include_consumption, headers_only, task=None):
+    exporter = LocationExporter(domain, include_consumption=include_consumption,
+                                headers_only=headers_only, async_task=task)
 
     fd, path = tempfile.mkstemp()
     writer = Excel2007ExportWriter()

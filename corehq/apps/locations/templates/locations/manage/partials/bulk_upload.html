@@ -15,6 +15,20 @@
     </div>
     {% endif %}
 
-    {{ block.super }}
+    <p>
+        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
+            <button class="btn btn-success">
+                <i class="fa fa-cloud-download"></i>
+                {% blocktrans with plural_noun=bulk_upload.plural_noun|title %}
+                Download {{ plural_noun }}
+                {% endblocktrans %}
+            </button>
+        </a>
+        <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
+            <button class="btn btn-info">
+                {% trans "Download empty template" %}
+            </button>
+        </a>
+    </p>
 
 {% endblock %}
