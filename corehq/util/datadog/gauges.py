@@ -5,6 +5,8 @@ from celery.task import periodic_task
 from corehq.util.datadog import statsd, datadog_logger
 from corehq.util.decorators import ContextDecorator
 from corehq.util.soft_assert import soft_assert
+from corehq.util.datadog.utils import bucket_value
+from corehq.util.timer import TimingContext
 
 
 def datadog_gauge_task(name, fn, run_every, enforce_prefix='commcare'):
@@ -57,17 +59,15 @@ def _datadog_record(fn, name, value, enforce_prefix='commcare', tags=None):
         datadog_logger.exception('Unable to record Datadog stats')
 
 
-def datadog_timer(metric, tags=None):
-    blobdb = self
+def datadog_bucket_timer(metric, tags, timing_buckets):
     timer = TimingContext()
     original_stop = timer.stop
 
     def new_stop(name=None):
         original_stop(name)
-        datadog_gauge(
+        datadog_counter(
             metric,
-            value=timer.duration,
-            tags=tags
+            tags=list(tags) + ['duration:%s' % bucket_value(timer.duration, timing_buckets, 's')]
         )
 
     timer.stop = new_stop
