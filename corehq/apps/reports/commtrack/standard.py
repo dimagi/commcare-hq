@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from corehq.apps.domain.models import Domain
 from corehq.apps.reports.analytics.esaccessors import (
     get_wrapped_ledger_values,
-    products_with_ledgers_count,
     products_with_ledgers,
 )
 from corehq.apps.reports.commtrack.data_sources import (
@@ -126,9 +125,13 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return get_product_id_name_mapping(self.domain, self._program_product_ids)
 
     @property
+    @memoized
+    def _products_with_ledgers(self):
+        return products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, self._program_product_ids)
+
+    @property
     def total_records(self):
-        return products_with_ledgers_count(self.domain, self._sp_ids, STOCK_SECTION_TYPE,
-                                           self._program_product_ids)
+        return len(self._products_with_ledgers)
 
     @classmethod
     def display_in_dropdown(cls, domain=None, project=None, user=None):
@@ -192,17 +195,12 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         else:
             sorted_product_name_map = sorted(product_name_map.items(),
                                              key=lambda name_map: name_map[1])
-        # product ids to filter
-        # -> all that have ledgers and
-        # -> if specific program products ids from filter
-        product_ids_to_filter = products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, None)
-        if self._program_product_ids:
-            product_ids_to_filter = product_ids_to_filter & set(self._program_product_ids)
-        products_to_show = [_product_name_map for _product_name_map in sorted_product_name_map
-                            if _product_name_map[0] in product_ids_to_filter]
-        # product ids according to pagination
-        return [product_id for product_id, product_name in
-                products_to_show[self.pagination.start:][:self.pagination.count]]
+        # product to filter
+        # -> that have ledgers and
+        # -> fall into requested pagination
+        return [product_id for product_id, product_name in sorted_product_name_map
+                if product_id in self._products_with_ledgers()
+                ][self.pagination.start:][:self.pagination.count]
 
     def get_prod_data(self):
         ledger_values = get_wrapped_ledger_values(

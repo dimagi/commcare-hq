@@ -578,11 +578,6 @@ def get_wrapped_ledger_values(domain, case_ids, section_id, entry_ids=None, pagi
     return [StockLedgerValueWrapper.wrap(row) for row in query.run().hits]
 
 
-def products_with_ledgers_count(domain, case_ids, section_id, entry_ids=None):
-    # returns count of products that have ledgers
-    return len(products_with_ledgers(domain, case_ids, section_id, entry_ids))
-
-
 def products_with_ledgers(domain, case_ids, section_id, entry_ids=None):
     # returns entry ids/product ids that have associated ledgers
     query = LedgerES().domain(domain).section(section_id).case(case_ids)
