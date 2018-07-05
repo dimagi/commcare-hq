@@ -694,7 +694,6 @@ def push_missing_docs_to_es():
 
         current_date += interval
 
-    # should send an email with status of how many docs needed to be resaved
     if doc_differences:
         message = "\n".join([
             "{}, {}: {}".format(k[0], k[1], v)
