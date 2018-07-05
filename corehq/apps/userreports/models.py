@@ -661,7 +661,7 @@ class StaticDataSourceConfiguration(JsonObject):
     def by_domain(cls, domain):
         return [
             cls._get_datasource_config(wrapped, dom)
-            for dom, wrapped in cls.by_id_mapping().items()
+            for dom, wrapped in cls.by_id_mapping().values()
             if domain == dom
         ]
 
@@ -741,7 +741,7 @@ class StaticReportConfiguration(JsonObject):
         """
         return [
             cls._get_report_config(wrapped, dom)
-            for dom, wrapped in cls.by_id_mapping().items()
+            for dom, wrapped in cls.by_id_mapping().values()
             if domain == dom
         ]
 
