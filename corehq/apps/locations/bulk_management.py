@@ -507,10 +507,14 @@ class LocationTreeValidator(object):
         if self.user.has_permission(self.domain, 'access_all_locations'):
             return []
 
+        errors = []
+
+        if any(lt.needs_save for lt in self.all_listed_types):
+            errors.append(_('You do not have permission to add or modify location types'))
+
         accessible_site_codes = set(SQLLocation.active_objects
                                     .accessible_to_user(self.domain, self.user)
                                     .values_list('site_code', flat=True))
-        errors = []
         for loc_stub in self.all_listed_locations:
             if not loc_stub.needs_save:
                 # Allow users to include any loc, as long as there are no changes

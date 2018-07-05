@@ -34,8 +34,8 @@ NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
 FLAT_LOCATION_TYPES = [
     LocationTypeData('State', 'state', '', False, False, False, 0),
-    LocationTypeData('County', 'county', 'state', False, False, True, 0),
-    LocationTypeData('City', 'city', 'county', False, True, False, 0),
+    LocationTypeData('County', 'county', 'state', False, False, False, 0),
+    LocationTypeData('City', 'city', 'county', False, False, False, 0),
 ]
 
 DUPLICATE_TYPE_CODES = [
@@ -710,10 +710,6 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def setUp(self):
         super(TestBulkManagementWithInitialLocs, self).setUp()
         self.user = WebUser.create(self.domain, 'username', 'password')
-        self.location_types['County'].view_descendants = True
-        self.location_types['County'].save()
-        self.location_types['City'].shares_cases = True
-        self.location_types['City'].save()
 
     def tearDown(self):
         super(TestBulkManagementWithInitialLocs, self).tearDown()
@@ -1121,3 +1117,9 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
         ]
         result = self.bulk_update_locations(FLAT_LOCATION_TYPES, upload)
         assert_errors(result, ["You do not have permission to add top level locations"])
+
+    def test_cant_modify_types(self):
+        types = FLAT_LOCATION_TYPES + [
+            LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)]
+        result = self.bulk_update_locations(types, [])
+        assert_errors(result, ["You do not have permission to add or modify location types"])
