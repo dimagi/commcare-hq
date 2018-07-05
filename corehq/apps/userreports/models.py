@@ -38,8 +38,8 @@ from corehq.apps.cachehq.mixins import (
 from corehq.apps.userreports.const import (
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_SQL_BACKEND,
-    VALID_REFERENCED_DOC_TYPES
-)
+    VALID_REFERENCED_DOC_TYPES,
+    DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -452,6 +452,8 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     visible = BooleanProperty(default=True)
     # config_id of the datasource
     config_id = StringProperty(required=True)
+    data_source_type = StringProperty(default=DATA_SOURCE_TYPE_STANDARD,
+                                      choices=[DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE])
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
