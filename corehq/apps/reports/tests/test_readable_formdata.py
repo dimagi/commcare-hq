@@ -11,6 +11,7 @@ from django.test.testcases import TestCase
 from mock import patch
 
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
@@ -317,51 +318,53 @@ class ReadableFormTest(TestCase):
 
     @patch('corehq.apps.reports.formdetails.readable.get_questions')
     def test_build_data_cleaning(self, questions_patch):
-        form_properties = OrderedDict()
-        form_properties['something'] = 'blue'
-        form_properties['lights'] = OrderedDict([('red', 'stop'), ('green', 'go')])
-        form_properties['cups_of_tea'] = [
+        builder = XFormBuilder()
+        responses = OrderedDict()
+
+        # Simple question
+        builder.new_question('something', 'Something')
+        responses['something'] = 'blue'
+
+        # Simple group
+        lights = builder.new_group('lights', 'Traffic Lights', data_type='group')
+        lights.new_question('red', 'Red means')
+        lights.new_question('green', 'Green means')
+        responses['lights'] = OrderedDict([('red', 'stop'), ('green', 'go')])
+
+        # Simple repeat group
+        snacks = builder.new_group('snacks', 'Snacks', data_type='repeatGroup')
+        snacks.new_question('kind_of_snack', 'Kind of snack')
+        responses['snacks'] = [
+            {'kind_of_snack': 'samosa'},
+            {'kind_of_snack': 'pakora'},
+        ]
+
+        # Repeat group with nested group
+        cups = builder.new_group('cups_of_tea', 'Cups of tea', data_type='repeatGroup')
+        details = cups.new_group('details_of_cup', 'Details', data_type='group')
+        details.new_question('kind_of_cup', 'Flavor')
+        responses['cups_of_tea'] = [
             {'details_of_cup': {'kind_of_cup': 'green'}},
             {'details_of_cup': {'kind_of_cup': 'black'}},
             {'details_of_cup': {'kind_of_cup': 'more green'}},
         ]
-        form_properties['snacks'] = [
-            {'kind_of_snack': 'samosa'},
-            {'kind_of_snack': 'pakora'},
-        ]
-        formxml = FormSubmissionBuilder(
-            form_id='123',
-            form_properties=form_properties,
-        ).as_xml_string()
 
-        # Gross. Necessary because the test form isn't associated with an application.
-        questions_patch.return_value = [
-            FormQuestionResponse(label='something', value='/data/something'),
-            FormQuestionResponse(label='lights', value='/data/lights', type='FieldList'),
-            FormQuestionResponse(group='/data/lights', label='red', value='/data/lights/red'),
-            FormQuestionResponse(group='/data/lights', label='green', value='/data/lights/green'),
-            FormQuestionResponse(label='Cups of tea', value='/data/cups_of_tea', type='Repeat'),
-            FormQuestionResponse(group='/data/cups_of_tea', label='Details of cup', repeat='/data/cups_of_tea',
-                value='/data/cups_of_tea/details_of_cup', type='FieldList'),
-            FormQuestionResponse(group='/data/cups_of_tea/details_of_cup', label='Kind of cup',
-                repeat='/data/cups_of_tea', value='/data/cups_of_tea/details_of_cup/kind_of_cup'),
-            FormQuestionResponse(label='Snacks', value='/data/snacks', type='Repeat'),
-            FormQuestionResponse(group='/data/snacks', label='Kind of snack', repeat='/data/snacks',
-                value='/data/snacks/kind_of_snack'),
-        ]
-        xform = submit_form_locally(formxml, self.domain).xform
-        form_data, _ = get_readable_data_for_submission(xform)
+        xform = XForm(builder.tostring())
+        questions_patch.return_value = get_questions_from_xform_node(xform, ['en'])
+        xml = FormSubmissionBuilder(form_id='123', form_properties=responses).as_xml_string()
+        submitted_xform = submit_form_locally(xml, self.domain).xform
+        form_data, _ = get_readable_data_for_submission(submitted_xform)
         question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
 
         expected_question_values = [
             '/data/something',
             '/data/lights/red',
             '/data/lights/green',
+            '/data/snacks[1]/kind_of_snack',
+            '/data/snacks[2]/kind_of_snack',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup',
             '/data/cups_of_tea[2]/details_of_cup/kind_of_cup',
             '/data/cups_of_tea[3]/details_of_cup/kind_of_cup',
-            '/data/snacks[1]/kind_of_snack',
-            '/data/snacks[2]/kind_of_snack',
         ]
         self.assertListEqual(ordered_question_values, expected_question_values)
 
@@ -369,11 +372,11 @@ class ReadableFormTest(TestCase):
             '/data/something': 'blue',
             '/data/lights/red': 'stop',
             '/data/lights/green': 'go',
+            '/data/snacks[1]/kind_of_snack': 'samosa',
+            '/data/snacks[2]/kind_of_snack': 'pakora',
             '/data/cups_of_tea[1]/details_of_cup/kind_of_cup': 'green',
             '/data/cups_of_tea[2]/details_of_cup/kind_of_cup': 'black',
             '/data/cups_of_tea[3]/details_of_cup/kind_of_cup': 'more green',
-            '/data/snacks[1]/kind_of_snack': 'samosa',
-            '/data/snacks[2]/kind_of_snack': 'pakora',
         }
         self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
 
