@@ -252,7 +252,7 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
 
             var getRowFromClickedElement = function(element) {
                 return element.closest('tr');
-            }
+            };
 
             var moveRowToIndex = function (row, newIndex) {
                 var oldIndex = getIndexFromRow(row);
