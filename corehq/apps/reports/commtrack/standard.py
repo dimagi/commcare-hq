@@ -130,6 +130,11 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         return products_with_ledgers(self.domain, self._sp_ids, STOCK_SECTION_TYPE, self._program_product_ids)
 
     @property
+    @memoized
+    def _desc_product_order(self):
+        return self.request.GET.get('sSortDir_0') == 'desc'
+
+    @property
     def total_records(self):
         return len(self._products_with_ledgers)
 
@@ -189,12 +194,9 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         """
         product_name_map = self._product_name_mapping
         # sort
-        if self.request.GET.get('sSortDir_0') == 'desc':
-            sorted_product_name_map = sorted(product_name_map.items(),
-                                             key=lambda name_map: name_map[1], reverse=True)
-        else:
-            sorted_product_name_map = sorted(product_name_map.items(),
-                                             key=lambda name_map: name_map[1])
+        sorted_product_name_map = sorted(product_name_map.items(),
+                                         key=lambda name_map: name_map[1],
+                                         reverse=self._desc_product_order)
         # product to filter
         # -> that have ledgers and
         # -> fall into requested pagination
@@ -240,10 +242,8 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
             100.0 * product['nodata'] / product['facility_count'],
         ] for product in product_grouping.values()]
 
-        if self.request.GET.get('sSortDir_0') == 'desc':
-            return sorted(rows, key=lambda r: r[0].lower(), reverse=True)
-        else:
-            return sorted(rows, key=lambda r: r[0].lower())
+        return sorted(rows, key=lambda r: r[0].lower(),
+                      reverse=self._desc_product_order)
 
     @property
     def rows(self):
