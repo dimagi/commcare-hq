@@ -257,7 +257,7 @@ def _get_report_module_context(app, module):
             'columnXpathTemplate': get_column_xpath_client_template(app.mobile_ucr_restore_version),
             'dataPathPlaceholders': data_path_placeholders,
             'languages': app.langs,
-            'mobileUcrVersion': app.mobile_ucr_restore_version,
+            'mobileUcrV1': app.mobile_ucr_restore_version == MOBILE_UCR_VERSION_1,
             'globalSyncDelay': Domain.get_by_name(app.domain).default_mobile_ucr_sync_interval,
         },
         'static_data_options': {
