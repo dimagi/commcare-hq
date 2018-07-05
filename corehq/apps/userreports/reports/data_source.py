@@ -10,7 +10,7 @@ import six
 class ConfigurableReportDataSource(object):
     """
     This class is a proxy class for ConfigurableReportSqlDataSource
-        which is leftover from an experiment to use elasticsearch
+    which is leftover from an experiment to use elasticsearch
     """
 
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by,
