@@ -9,6 +9,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import copy
 from collections import Counter, defaultdict
+from decimal import Decimal, InvalidOperation
 
 from attr import attrs, attrib
 from django.core.exceptions import ValidationError
@@ -110,8 +111,13 @@ def lowercase_string(val):
     return six.text_type(val).lower()
 
 
-def string_or_none(val):
-    return six.text_type(val) if val else None
+def maybe_decimal(val):
+    if not val:
+        return None
+    try:
+        return Decimal(val)
+    except InvalidOperation:
+        return val  # invalid - this will be caught later
 
 
 @attrs(frozen=True)
@@ -124,8 +130,8 @@ class LocationData(object):
     location_id = attrib(type=six.text_type)
     do_delete = attrib(type=bool, converter=to_boolean)
     external_id = attrib(type=six.text_type)
-    latitude = attrib(converter=string_or_none)
-    longitude = attrib(converter=string_or_none)
+    latitude = attrib(converter=maybe_decimal)
+    longitude = attrib(converter=maybe_decimal)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'
     custom_data = attrib()
     delete_uncategorized_data = attrib(type=bool, converter=to_boolean)
@@ -545,12 +551,8 @@ class LocationTreeValidator(object):
         errors = []
         for loc_stub in self.all_listed_locations:
             l = loc_stub.new_data
-            try:
-                if l.latitude:
-                    float(l.latitude)
-                if l.longitude:
-                    float(l.longitude)
-            except ValueError:
+            if (l.latitude and not isinstance(l.latitude, Decimal)
+                    or l.longitude and not isinstance(l.longitude, Decimal)):
                 errors.append(l)
         return [
             _("latitude/longitude 'lat-{lat}, lng-{lng}' for location in sheet '{type}' "

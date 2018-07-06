@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from collections import defaultdict
+from decimal import Decimal
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
@@ -1044,8 +1045,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
                              CustomDataField(slug='language')]
         loc_fields.save()
 
-        self.locations['City111'].latitude = 42.36
-        self.locations['City111'].longitude = 71.06
+        self.locations['City111'].latitude = Decimal('42.36')
+        self.locations['City111'].longitude = Decimal('71.06')
         self.locations['City111'].external_id = '123'
         self.locations['City111'].save()
 
