@@ -1,13 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-import glob
-import os
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
+import glob
 import json
+import os
+import re
 
+from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -68,6 +70,14 @@ from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
 from io import open
+
+
+ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
+
+
+def _check_ids(value):
+    if not ID_REGEX_CHECK.match(value):
+        raise BadValueError("Invalid ID")
 
 
 class ElasticSearchIndexSettings(DocumentSchema):
@@ -719,7 +729,7 @@ class StaticReportConfiguration(JsonObject):
     For statically defined reports based off of custom data sources
     """
     domains = ListProperty()
-    report_id = StringProperty()
+    report_id = StringProperty(validators=(_check_ids))
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
