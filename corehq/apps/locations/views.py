@@ -57,7 +57,7 @@ from .permissions import (
 from .models import LocationType, SQLLocation, filter_for_archived
 from .forms import LocationFormSet, UsersAtLocationForm
 from .tree_utils import assert_no_cycles
-from .util import load_locs_json, location_hierarchy_config, dump_locations
+from .util import load_locs_json, location_hierarchy_config
 import six
 from six.moves import map
 from six.moves import range
@@ -880,13 +880,15 @@ def location_importer_job_poll(request, domain, download_id,
 
 @require_can_edit_locations
 def location_export(request, domain):
+    headers_only = request.GET.get('download_type', 'full') == 'empty'
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
         return HttpResponseRedirect(reverse(LocationsListView.urlname, args=[domain]))
     include_consumption = request.GET.get('include_consumption') == 'true'
     download = DownloadBase()
-    res = download_locations_async.delay(domain, download.download_id, include_consumption)
+    res = download_locations_async.delay(domain, download.download_id,
+                                         include_consumption, headers_only)
     download.set_task(res)
     return redirect(DownloadLocationStatusView.urlname, domain, download.download_id)
 
