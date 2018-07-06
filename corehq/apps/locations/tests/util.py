@@ -195,3 +195,12 @@ class LocationHierarchyPerTest(TestCase):
 
     def tearDown(self):
         self.domain_obj.delete()
+
+
+class MockExportWriter(object):
+    def __init__(self):
+        self.data = {}
+
+    def write(self, document_table):
+        for table_index, table in document_table:
+            self.data[table_index] = list(table)
