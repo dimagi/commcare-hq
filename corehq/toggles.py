@@ -501,7 +501,7 @@ DHIS2_INTEGRATION = StaticToggle(
 
 DHIS2_REPEATER_INTEGRATION = StaticToggle(
     'dhis2_repeater_integration',
-    'DHIS2 Repeater Integration (Needed DHIS@ Integration enabled)',
+    'DHIS2 Repeater Integration (Needed DHIS2 Integration enabled)',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
 )
