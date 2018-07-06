@@ -6,17 +6,8 @@ from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, Cu
 
 from ..util import LocationExporter
 from ..views import LocationFieldsView
-from .util import LocationHierarchyTestCase
+from .util import LocationHierarchyTestCase, MockExportWriter
 from six.moves import zip
-
-
-class MockExportWriter(object):
-    def __init__(self):
-        self.data = {}
-
-    def write(self, document_table):
-        for table_index, table in document_table:
-            self.data[table_index] = list(table)
 
 
 class TestLocationsExport(LocationHierarchyTestCase):

@@ -5,10 +5,12 @@ from collections import defaultdict
 
 from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
-from mock import patch
+from mock import patch, Mock
 
+from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
+from corehq.util.workbook_json.excel import IteratorJSONReader
 
 from ..bulk_management import (
     LocationCollection,
@@ -18,12 +20,13 @@ from ..bulk_management import (
     LocationTypeData,
     LocationTypeStub,
     NewLocationImporter,
+    new_locations_import,
 )
 from ..const import ROOT_LOCATION_TYPE
 from ..models import SQLLocation
 from ..tree_utils import TreeError, assert_no_cycles
-from ..util import get_location_data_model
-from .util import LocationHierarchyPerTest, restrict_user_by_location
+from ..util import get_location_data_model, LocationExporter
+from .util import LocationHierarchyPerTest, restrict_user_by_location, MockExportWriter
 
 import six
 from six.moves import range
@@ -1032,6 +1035,46 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
             ],
         )
         assert_errors(result, ["site_code 'city211' is in use"])
+
+    def test_download_reupload_no_changes(self):
+        # Make sure there's a bunch of data
+        loc_fields = CustomDataFieldsDefinition.get_or_create(
+            self.domain, 'LocationFields')
+        loc_fields.fields = [CustomDataField(slug='favorite_color'),
+                             CustomDataField(slug='language')]
+        loc_fields.save()
+
+        self.locations['City111'].latitude = 42.36
+        self.locations['City111'].longitude = 71.06
+        self.locations['City111'].external_id = '123'
+        self.locations['City111'].save()
+
+        self.locations['County11'].external_id = '321'
+        self.locations['County11'].metadata = {'favorite_color': 'blue'}
+        self.locations['County11'].save()
+
+        # Export locations
+        exporter = LocationExporter(self.domain)
+        writer = MockExportWriter()
+        exporter.write_data(writer)
+
+        # Re-upload that export
+        worksheets = []
+        for sheet_title, headers in exporter.get_headers():
+            sheet = IteratorJSONReader(headers + writer.data[sheet_title])
+            sheet.title = sheet_title
+            worksheets.append(sheet)
+        mock_importer = Mock()
+        mock_importer.worksheets = worksheets
+        with patch('corehq.apps.locations.models.SQLLocation.save') as save_location, \
+             patch('corehq.apps.locations.models.LocationType.save') as save_type:
+            result = new_locations_import(self.domain, mock_importer, self.user)
+
+        # The upload should succeed and not perform any updates
+        assert_errors(result, [])
+        # TODO make these pass
+        # self.assertFalse(save_location.called)
+        # self.assertFalse(save_type.called)
 
 
 class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
