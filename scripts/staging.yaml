@@ -55,6 +55,8 @@ branches:
   - mk-277767 # MK Jul 3
   - sk/caching-user-id # SK Jul 4
   - dmr/time-s3-blobdb  # Danny Jul 5
+  - es/location-upload  # Ethan July 6
+  - es/location-download  # Ethan July 6
 submodules:
   submodules/touchforms-src:
     # let's leave this here even when empty
