@@ -13,7 +13,8 @@ from corehq.apps.accounting.invoicing import CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     DefaultProductPlan,
     FeatureType,
-    SoftwarePlanEdition
+    SoftwarePlanEdition,
+    CustomerInvoice
 )
 from corehq.apps.accounting.tests import generator
 from corehq.apps.accounting.tests.base_tests import BaseAccountingTest
@@ -111,12 +112,8 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
         )
         invoice_factory.create_invoice()
 
-        # The customer invoice will be added to one of the subscriptions invoice_set
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(),
-                                                          self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
-
-        invoice = invoice_set.first()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
         self.assertGreater(invoice.balance, Decimal('0.0000'))
         self.assertEqual(invoice.account, self.account)
 
@@ -140,10 +137,9 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
 
-        invoice = invoice_set.first()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1000.0000'))
         self.assertEqual(invoice.account, self.account)
 
@@ -164,8 +160,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 0)
+        self.assertEqual(CustomerInvoice.objects.count(), 0)
 
     def test_no_invoice_after_end(self):
         """
@@ -179,8 +174,7 @@ class TestCustomerInvoice(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 0)
+        self.assertEqual(CustomerInvoice.objects.count(), 0)
 
 
 class TestProductLineItem(BaseCustomerInvoiceCase):
@@ -203,10 +197,9 @@ class TestProductLineItem(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
 
-        invoice = invoice_set.first()
+        invoice = CustomerInvoice.objects.first()
         product_line_items = invoice.lineitem_set.get_products()
         self.assertEqual(product_line_items.count(), 2)
         for line_item in product_line_items:
@@ -239,10 +232,9 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
 
-        invoice = invoice_set.first()
+        invoice = CustomerInvoice.objects.first()
         self.assertEqual(invoice.balance, Decimal('1100.0000'))
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
         self.assertEqual(user_line_items.count(), 2)
@@ -271,10 +263,9 @@ class TestUserLineItem(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
 
-        invoice = invoice_set.first()
+        invoice = CustomerInvoice.objects.first()
         user_line_items = invoice.lineitem_set.get_feature_by_type(FeatureType.USER)
         self.assertEqual(user_line_items.count(), 2)
         for user_line_item in user_line_items:
@@ -369,9 +360,8 @@ class TestSmsLineItem(BaseCustomerInvoiceCase):
             date_end=invoice_end
         )
         invoice_factory.create_invoice()
-        invoice_set = self.subscription.invoice_set.union(self.sub2.invoice_set.all(), self.sub3.invoice_set.all())
-        self.assertEqual(invoice_set.count(), 1)
-        invoice = invoice_set.first()
+        self.assertEqual(CustomerInvoice.objects.count(), 1)
+        invoice = CustomerInvoice.objects.first()
         return invoice.lineitem_set.get_feature_by_type(FeatureType.SMS)
 
     @classmethod
