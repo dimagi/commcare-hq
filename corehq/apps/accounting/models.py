@@ -2011,7 +2011,6 @@ class CustomerInvoice(InvoiceBase):
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
     def pay_invoice(self, payment_record):
-        # TODO: This is broken because PaymentRecords only take Invoices
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
@@ -3190,7 +3189,10 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):
         """ Make a payment for a billing account towards an invoice """
-        billing_account = invoice.subscription.account
+        if invoice.is_customer_invoice:
+            billing_account = invoice.account
+        else:
+            billing_account = invoice.subscription.account
         cls.add_credit(
             payment_record.amount,
             account=billing_account,
