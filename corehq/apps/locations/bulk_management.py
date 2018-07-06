@@ -207,8 +207,7 @@ class LocationStub(object):
                 # attributes are being updated
                 return True
 
-        if self.db_object.metadata != self.old_object.metadata:
-            # custom location data is being updated
+        if self._metadata_needs_save():
             return True
 
         if self.location_type != self.old_object.location_type.code:
@@ -220,6 +219,17 @@ class LocationStub(object):
         else:
             old_parent_code = ROOT_LOCATION_TYPE
         return old_parent_code != self.new_data.parent_code
+
+    def _metadata_needs_save(self):
+        # Save only for meaningful changes - not just to add empty fields
+        old_metadata, new_metadata = self.old_object.metadata, self.db_object.metadata
+        return (
+            # data is added or modified
+            any(old_metadata.get(k, '') != new_value
+                for k, new_value in new_metadata.items())
+            # data is removed
+            or set(old_metadata.keys()) - set(new_metadata.keys())
+        )
 
 
 class UnexpectedState(Exception):

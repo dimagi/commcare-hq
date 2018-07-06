@@ -1048,6 +1048,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.locations['City111'].latitude = Decimal('42.36')
         self.locations['City111'].longitude = Decimal('71.06')
         self.locations['City111'].external_id = '123'
+        self.locations['County11'].metadata = {'favorite_color': 'purple',
+                                               'language': 'en'}
         self.locations['City111'].save()
 
         self.locations['County11'].external_id = '321'
@@ -1073,9 +1075,8 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
 
         # The upload should succeed and not perform any updates
         assert_errors(result, [])
-        # TODO make these pass
-        # self.assertFalse(save_location.called)
-        # self.assertFalse(save_type.called)
+        self.assertFalse(save_location.called)
+        self.assertFalse(save_type.called)
 
 
 class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
