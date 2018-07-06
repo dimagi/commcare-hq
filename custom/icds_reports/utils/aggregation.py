@@ -1051,41 +1051,41 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('district_id', 'ucr.district_id'),
             ('block_id', 'ucr.block_id'),
             ('supervisor_id', 'ucr.supervisor_id'),
-            ('awc_id', 'ucr.awc_id'),
-            ('month', 'ucr.month'),
-            ('gender', 'ucr.sex'),
-            ('age_tranche', 'ucr.age_tranche'),
-            ('caste', 'ucr.caste'),
-            ('disabled', "COALESCE(ucr.disabled, 'no') as coalesce_disabled"),
-            ('minority', "COALESCE(ucr.minority, 'no') as coalesce_minority"),
-            ('resident', "COALESCE(ucr.resident, 'no') as coalesce_resident"),
-            ('valid_in_month', "SUM(ucr.valid_in_month)"),
-            ('nutrition_status_weighed', "SUM(ucr.nutrition_status_weighed)"),
+            ('awc_id', 'chm.awc_id'),
+            ('month', 'chm.month'),
+            ('gender', 'chm.sex'),
+            ('age_tranche', 'chm.age_tranche'),
+            ('caste', 'chm.caste'),
+            ('disabled', "COALESCE(chm.disabled, 'no') as coalesce_disabled"),
+            ('minority', "COALESCE(chm.minority, 'no') as coalesce_minority"),
+            ('resident', "COALESCE(chm.resident, 'no') as coalesce_resident"),
+            ('valid_in_month', "SUM(chm.valid_in_month)"),
+            ('nutrition_status_weighed', "SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_unweighed', "SUM(ucr.nutrition_status_unweighed)"),
             ('nutrition_status_normal',
                 "SUM(CASE WHEN ucr.nutrition_status_normal = 1 AND "
-                "ucr.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
             ('nutrition_status_moderately_underweight',
                 "SUM(CASE WHEN ucr.nutrition_status_moderately_underweight = 1 "
-                "AND ucr.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
             ('nutrition_status_severely_underweight',
                 "SUM(CASE WHEN ucr.nutrition_status_severely_underweight = 1 "
-                "AND ucr.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
-            ('wer_eligible', "SUM(ucr.wer_eligible)"),
+                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+            ('wer_eligible', "SUM(chm.wer_eligible)"),
             ('thr_eligible', "SUM(chm.thr_eligible)"),
             ('rations_21_plus_distributed',
                 "SUM(CASE WHEN chm.num_rations_distributed >= 21 THEN 1 ELSE 0 END)"),
-            ('pse_eligible', "SUM(ucr.pse_eligible)"),
+            ('pse_eligible', "SUM(chm.pse_eligible)"),
             ('pse_attended_16_days',
                 "COUNT(*) FILTER (WHERE chm.pse_eligible = 1 AND chm.pse_days_attended >= 16)"),
-            ('born_in_month', "SUM(ucr.born_in_month)"),
-            ('low_birth_weight_in_month', "SUM(ucr.low_birth_weight_born_in_month)"),
-            ('bf_at_birth', "SUM(ucr.bf_at_birth_born_in_month)"),
-            ('ebf_eligible', "SUM(ucr.ebf_eligible)"),
+            ('born_in_month', "SUM(chm.born_in_month)"),
+            ('low_birth_weight_in_month', "SUM(chm.low_birth_weight_born_in_month)"),
+            ('bf_at_birth', "SUM(chm.bf_at_birth_born_in_month)"),
+            ('ebf_eligible', "SUM(chm.ebf_eligible)"),
             ('ebf_in_month', "SUM(chm.ebf_in_month)"),
             ('cf_eligible', "SUM(chm.cf_eligible)"),
             ('cf_in_month', "SUM(chm.cf_in_month)"),
-            ('cf_diet_diversity', "SUm(chm.cf_diet_diversity)"),
+            ('cf_diet_diversity', "SUM(chm.cf_diet_diversity)"),
             ('cf_diet_quantity', "SUM(chm.cf_diet_quantity)"),
             ('cf_demo', "SUM(chm.cf_demo)"),
             ('cf_handwashing', "SUM(chm.cf_handwashing)"),
@@ -1095,12 +1095,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('counsel_adequate_bf', "SUM(chm.counsel_adequate_bf)"),
             ('counsel_pediatric_ifa', "SUM(chm.counsel_pediatric_ifa)"),
             ('counsel_play_cf_video', "SUM(chm.counsel_comp_feeding_vid)"),
-            ('fully_immunized_eligible', "SUM(ucr.fully_immunized_eligible)"),
-            ('fully_immunized_on_time', "SUM(ucr.fully_immunized_on_time)"),
-            ('fully_immunized_late', "SUM(ucr.fully_immunized_late)"),
-            ('has_aadhar_id', "SUM(ucr.has_aadhar_id)"),
+            ('fully_immunized_eligible', "SUM(chm.fully_immunized_eligible)"),
+            ('fully_immunized_on_time', "SUM(chm.fully_immunized_on_time)"),
+            ('fully_immunized_late', "SUM(chm.fully_immunized_late)"),
+            ('has_aadhar_id', "SUM(chm.has_aadhar_id)"),
             ('aggregation_level', '5'),
-            ('pnc_eligible', 'SUM(ucr.pnc_eligible)'),
+            ('pnc_eligible', 'SUM(chm.pnc_eligible)'),
             ('height_eligible', 'SUM(ucr.height_eligible)'),
             ('wasting_moderate',
                 "SUM(CASE WHEN ucr.wasting_moderate = 1 AND ucr.nutrition_status_weighed = 1 "
@@ -1123,14 +1123,14 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('stunting_normal',
                 "SUM(CASE WHEN ucr.stunting_normal = 1 AND ucr.height_measured_in_month = 1 "
                 "THEN 1 ELSE 0 END)"),
-            ('valid_all_registered_in_month', "SUM(ucr.valid_all_registered_in_month)"),
+            ('valid_all_registered_in_month', "SUM(chm.valid_all_registered_in_month)"),
             ('ebf_no_info_recorded', "SUM(chm.ebf_no_info_recorded)"),
             ('weighed_and_height_measured_in_month',
-                "SUM(CASE WHEN ucr.nutrition_status_weighed = 1 AND ucr.height_measured_in_month = 1 "
+                "SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND ucr.height_measured_in_month = 1 "
                 "THEN 1 ELSE 0 END)"),
             ('weighed_and_born_in_month',
-                "SUM(CASE WHEN (ucr.born_in_month = 1 AND (ucr.nutrition_status_weighed = 1 "
-                "OR ucr.low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN (chm.born_in_month = 1 AND (chm.nutrition_status_weighed = 1 "
+                "OR chm.low_birth_weight_born_in_month = 1)) THEN 1 ELSE 0 END)"),
             ('zscore_grading_hfa_normal',
                 "SUM(CASE WHEN chm.zscore_grading_hfa_recorded_in_month = 1 AND "
                 "chm.zscore_grading_hfa = 3 THEN 1 ELSE 0 END)"),
@@ -1163,11 +1163,11 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             {calculations}
             FROM "{ucr_child_monthly_table}" ucr
             LEFT OUTER JOIN "{child_health_monthly_table}" chm ON ucr.doc_id = chm.case_id AND ucr.month = chm.month AND ucr.awc_id = chm.awc_id
-            WHERE ucr.month = %(start_date)s
-            GROUP BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, ucr.awc_id,
-                     ucr.month, ucr.sex, ucr.age_tranche, ucr.caste,
+            WHERE ucr.month = %(start_date)s AND chm.month = %(start_date)s
+            GROUP BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id,
+                     chm.month, chm.sex, chm.age_tranche, chm.caste,
                      coalesce_disabled, coalesce_minority, coalesce_resident
-            ORDER BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, ucr.awc_id
+            ORDER BY ucr.state_id, ucr.district_id, ucr.block_id, ucr.supervisor_id, chm.awc_id
         )
         """.format(
             tablename=self.tablename,
