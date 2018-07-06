@@ -486,12 +486,16 @@ class AggChildHealth(models.Model):
     def aggregate(cls, month):
         helper = AggChildHealthAggregationHelper(month)
         agg_query, agg_params = helper.aggregation_query()
-        index_queries = helper.indexes()
+        rollup_queries = [helper.rollup_query(i) for i in range(4, 0, -1)]
+        index_queries = [helper.indexes(i) for i in range(5, 0, -1)]
+        index_queries = [query for index_list in index_queries for query in index_list]
 
         with get_cursor(cls) as cursor:
             with transaction.atomic():
                 cursor.execute(helper.drop_table_query())
                 cursor.execute(agg_query, agg_params)
+                for query in rollup_queries:
+                    cursor.execute(query)
                 for query in index_queries:
                     cursor.execute(query)
 

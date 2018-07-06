@@ -5,6 +5,7 @@ import hashlib
 
 from dateutil.relativedelta import relativedelta
 from django.utils.functional import cached_property
+import six
 
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.models import StaticDataSourceConfiguration, get_datasource_config
@@ -1038,9 +1039,12 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
         config, _ = get_datasource_config(doc_id, self.domain)
         return get_table_name(self.domain, config.table_id)
 
+    def _tablename_func(self, agg_level):
+        return "{}_{}_{}".format(self.base_tablename, self.month.strftime("%Y-%m-%d"), agg_level)
+
     @property
     def tablename(self):
-        return "{}_{}_5".format(self.base_tablename, self.month.strftime("%Y-%m-%d"))
+        return self._tablename_func(5)
 
     def drop_table_query(self):
         return 'DELETE FROM "{}"'.format(self.tablename)
@@ -1183,12 +1187,131 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             "start_date": self.month
         }
 
-    def indexes(self):
-        return [
+    def rollup_query(self, aggregation_level):
+        columns = (
+            ('state_id', 'state_id'),
+            ('district_id', lambda col: col if aggregation_level > 1 else "'All'"),
+            ('block_id', lambda col: col if aggregation_level > 2 else "'All'"),
+            ('supervisor_id', lambda col: col if aggregation_level > 3 else "'All'"),
+            ('awc_id', lambda col: col if aggregation_level > 4 else "'All'"),
+            ('month', 'month'),
+            ('gender', 'gender'),
+            ('age_tranche', 'age_tranche'),
+            ('caste', "'All'"),
+            ('disabled', "'All'"),
+            ('minority', "'All'"),
+            ('resident', "'All'"),
+            ('valid_in_month', ),
+            ('nutrition_status_weighed', ),
+            ('nutrition_status_unweighed', ),
+            ('nutrition_status_normal', ),
+            ('nutrition_status_moderately_underweight', ),
+            ('nutrition_status_severely_underweight', ),
+            ('wer_eligible', ),
+            ('thr_eligible', ),
+            ('rations_21_plus_distributed', ),
+            ('pse_eligible', ),
+            ('pse_attended_16_days', ),
+            ('born_in_month', ),
+            ('low_birth_weight_in_month', ),
+            ('bf_at_birth', ),
+            ('ebf_eligible', ),
+            ('ebf_in_month', ),
+            ('cf_eligible', ),
+            ('cf_in_month', ),
+            ('cf_diet_diversity', ),
+            ('cf_diet_quantity', ),
+            ('cf_demo', ),
+            ('cf_handwashing', ),
+            ('counsel_increase_food_bf', ),
+            ('counsel_manage_breast_problems', ),
+            ('counsel_ebf', ),
+            ('counsel_adequate_bf', ),
+            ('counsel_pediatric_ifa', ),
+            ('counsel_play_cf_video', ),
+            ('fully_immunized_eligible', ),
+            ('fully_immunized_on_time', ),
+            ('fully_immunized_late', ),
+            ('has_aadhar_id', ),
+            ('aggregation_level', str(aggregation_level)),
+            ('pnc_eligible', ),
+            ('height_eligible', ),
+            ('wasting_moderate', ),
+            ('wasting_severe', ),
+            ('stunting_moderate', ),
+            ('stunting_severe', ),
+            ('cf_initiation_in_month', ),
+            ('cf_initiation_eligible', ),
+            ('height_measured_in_month', ),
+            ('wasting_normal', ),
+            ('stunting_normal', ),
+            ('valid_all_registered_in_month', ),
+            ('ebf_no_info_recorded', ),
+            ('weighed_and_height_measured_in_month', ),
+            ('weighed_and_born_in_month', ),
+            ('days_ration_given_child', ),
+            ('zscore_grading_hfa_normal', ),
+            ('zscore_grading_hfa_moderate', ),
+            ('zscore_grading_hfa_severe', ),
+            ('wasting_normal_v2', ),
+            ('wasting_moderate_v2', ),
+            ('wasting_severe_v2', ),
+            ('zscore_grading_hfa_recorded_in_month', ),
+            ('zscore_grading_wfh_recorded_in_month', ),
+        )
+
+        def _transform_column(column_tuple):
+            column = column_tuple[0]
+
+            if len(column_tuple) == 2:
+                agg_col = column_tuple[1]
+                if isinstance(agg_col, six.string_types):
+                    return column_tuple
+                elif callable(agg_col):
+                    return (column, agg_col(column))
+
+            return (column, 'SUM({})'.format(column))
+
+        columns = list(map(_transform_column, columns))
+
+        # in the future these may need to include more columns, but historically
+        # caste, resident, minority and disabled have been skipped
+        group_by = ["state_id", "month", "gender", "age_tranche"]
+        if aggregation_level > 1:
+            group_by.append("district_id")
+        if aggregation_level > 2:
+            group_by.append("block_id")
+        if aggregation_level > 3:
+            group_by.append("supervisor_id")
+
+        return """
+        INSERT INTO "{to_tablename}" (
+            {columns}
+        ) (
+            SELECT {calculations}
+            FROM "{from_tablename}"
+            GROUP BY {group_by}
+            ORDER BY {group_by}
+        )
+        """.format(
+            to_tablename=self._tablename_func(aggregation_level),
+            from_tablename=self._tablename_func(aggregation_level + 1),
+            columns=", ".join([col[0] for col in columns]),
+            calculations=", ".join([col[1] for col in columns]),
+            group_by=", ".join(group_by),
+        )
+
+    def indexes(self, aggregation_level):
+        indexes = [
             'CREATE INDEX ON "{}" (state_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (district_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (block_id)'.format(self.tablename),
-            'CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename),
             'CREATE INDEX ON "{}" (gender)'.format(self.tablename),
             'CREATE INDEX ON "{}" (age_tranche)'.format(self.tablename),
         ]
+        if aggregation_level > 1:
+            indexes.append('CREATE INDEX ON "{}" (district_id)'.format(self.tablename))
+        if aggregation_level > 2:
+            indexes.append('CREATE INDEX ON "{}" (block_id)'.format(self.tablename))
+        if aggregation_level > 3:
+            indexes.append('CREATE INDEX ON "{}" (supervisor_id)'.format(self.tablename))
+
+        return indexes

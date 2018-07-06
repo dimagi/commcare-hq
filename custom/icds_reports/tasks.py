@@ -399,9 +399,6 @@ def _agg_child_health_table(day):
             "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
         ], day)
         AggChildHealth.aggregate(force_to_date(day))
-        _run_custom_sql_script([
-            "SELECT aggregate_child_health(%s)"
-        ], day)
 
 
 @track_time
