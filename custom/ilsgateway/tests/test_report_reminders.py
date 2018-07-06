@@ -16,7 +16,7 @@ from custom.ilsgateway.tests.handlers.utils import prepare_domain
 from custom.ilsgateway.tests.handlers.utils import TEST_DOMAIN, create_products
 from custom.ilsgateway.utils import make_loc
 from custom.logistics.tests.test_script import TestScript
-from custom.logistics.tests.utils import bootstrap_user
+from custom.ilsgateway.tests.utils import bootstrap_user
 import six
 
 
