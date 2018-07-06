@@ -6,13 +6,12 @@ from datetime import datetime
 from corehq.apps.products.models import SQLProduct
 from corehq.apps.locations.models import get_location
 from corehq.apps.reports.datatables import DataTablesHeader, DataTablesColumnGroup, DataTablesColumn
-from corehq.apps.reports.filters.select import MonthFilter, YearFilter
+from corehq.apps.reports.standard import MonthYearMixin
 from corehq.apps.reports.sqlreport import DataFormatter, DictDataFormat
 from corehq.util.translation import localize
 from custom.intrahealth.sqldata import NombreData, TauxConsommationData
 from django.utils.translation import ugettext as _
 from memoized import memoized
-from dimagi.utils.dates import DateSpan
 from dimagi.utils.parsing import json_format_date
 from six.moves import zip
 from six.moves import range
@@ -25,23 +24,7 @@ def get_localized_months():
         return [(_(calendar.month_name[i])).title() for i in range(1, 13)]
 
 
-class MonthYearMixin(object):
-    """
-        Similar to DatespanMixin, but works with MonthField and YearField
-    """
-    fields = [MonthFilter, YearFilter]
-
-    _datespan = None
-
-    @property
-    def datespan(self):
-        if self._datespan is None:
-            datespan = DateSpan.from_month(self.month, self.year)
-            self.request.datespan = datespan
-            self.context.update(dict(datespan=datespan))
-            self._datespan = datespan
-        return self._datespan
-
+class YeksiNaaMonthYearMixin(MonthYearMixin):
     @property
     def month(self):
         if 'month' in self.request.GET:
