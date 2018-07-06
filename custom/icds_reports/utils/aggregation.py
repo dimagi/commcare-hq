@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
 from datetime import date
 import hashlib
 
@@ -925,7 +927,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE inserted_at >= %(last_sync)s
+            WHERE inserted_at between %(last_sync)s and %(now)s
             WINDOW forms AS (
               PARTITION BY awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -933,7 +935,8 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
         """.format(
             ucr_tablename=self.ucr_tablename,
         ), {
-            "last_sync": self.last_sync
+            "last_sync": self.last_sync,
+            "now": datetime.datetime.utcnow()
         }
 
     def missing_location_query(self):
