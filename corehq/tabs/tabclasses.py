@@ -66,7 +66,6 @@ from corehq.privileges import DAILY_SAVED_EXPORT, EXCEL_DASHBOARD
 from corehq.tabs.uitab import UITab
 from corehq.tabs.utils import dropdown_dict, sidebar_to_dropdown, regroup_sidebar_items
 from corehq.toggles import PUBLISH_CUSTOM_REPORTS
-from custom.world_vision import WORLD_VISION_DOMAINS
 from memoized import memoized
 from django_prbac.utils import has_privilege
 from six.moves import map
@@ -84,8 +83,6 @@ class ProjectReportsTab(UITab):
 
     @property
     def view(self):
-        if self.domain in WORLD_VISION_DOMAINS:
-            return "reports_home"
         from corehq.apps.reports.views import MySavedReportsView
         return MySavedReportsView.urlname
 

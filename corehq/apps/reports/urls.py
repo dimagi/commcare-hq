@@ -35,7 +35,6 @@ from .views import (
     MySavedReportsView,
     ScheduledReportsView,
     ReportNotificationUnsubscribeView,
-    default,
     old_saved_reports,
     case_forms,
     case_property_changes,
@@ -92,7 +91,7 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', default, name="reports_home"),
+    url(r'^$', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', old_saved_reports, name='old_saved_reports'),
 
