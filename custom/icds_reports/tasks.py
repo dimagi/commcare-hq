@@ -40,6 +40,7 @@ from corehq.util.soft_assert import soft_assert
 from corehq.util.view_utils import reverse
 from custom.icds_reports.const import DASHBOARD_DOMAIN
 from custom.icds_reports.models import (
+    AggChildHealth,
     AggChildHealthMonthly,
     AggregateComplementaryFeedingForms,
     AggregateGrowthMonitoringForms,
@@ -393,10 +394,14 @@ def _daily_attendance_table(day):
 
 @track_time
 def _agg_child_health_table(day):
-    _run_custom_sql_script([
-        "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
-        "SELECT aggregate_child_health(%s)"
-    ], day)
+    with transaction.atomic():
+        _run_custom_sql_script([
+            "SELECT create_new_aggregate_table_for_month('agg_child_health', %s)",
+        ], day)
+        AggChildHealth.aggregate(force_to_date(day))
+        _run_custom_sql_script([
+            "SELECT aggregate_child_health(%s)"
+        ], day)
 
 
 @track_time
