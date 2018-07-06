@@ -53,6 +53,7 @@ from corehq.apps.accounting.models import (
     FeatureType,
     FundingSource,
     Invoice,
+    CustomerInvoice,
     LastPayment,
     PreOrPostPay,
     ProBonoStatus,
@@ -64,6 +65,7 @@ from corehq.apps.accounting.models import (
     Subscription,
     SubscriptionType,
     WireBillingRecord,
+    CustomerBillingRecord
 )
 from corehq.apps.accounting.tasks import send_subscription_reminder_emails
 from corehq.apps.accounting.utils import (
@@ -1872,13 +1874,17 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, account):
-        invoices = Invoice.objects.filter(date_start__lte=invoice_end, date_end__gte=invoice_start)
+        invoices = CustomerInvoice.objects.filter(
+            date_start__lte=invoice_end,
+            date_end__gte=invoice_start,
+            account=account
+        )
         prev_invoices = []
         for invoice in invoices:
             if invoice.account == account:
                 prev_invoices.append(invoice)
         if prev_invoices:
-            from corehq.apps.accounting.views import InvoiceSummaryView
+            from corehq.apps.accounting.views import CustomerInvoiceSummaryView
             raise InvoiceError(
                 "Invoices exist that were already generated with this same "
                 "criteria. You must manually suppress these invoices: "
@@ -1886,8 +1892,7 @@ class TriggerCustomerInvoiceForm(forms.Form):
                     num_invoices=len(prev_invoices),
                     invoice_list=', '.join(
                         ['<a href="{edit_url}">{name}</a>'.format(
-                            edit_url=reverse(InvoiceSummaryView.urlname,
-                                             args=(x.id,)),
+                            edit_url=reverse(CustomerInvoiceSummaryView.urlname, args=(x.id,)),
                             name=x.invoice_number
                         ) for x in prev_invoices]
                     ),
@@ -2136,7 +2141,7 @@ class InvoiceInfoForm(forms.Form):
 
     def __init__(self, invoice, *args, **kwargs):
         self.invoice = invoice
-        subscription = invoice.subscription if not invoice.is_wire else None
+        subscription = invoice.subscription if not (invoice.is_wire or invoice.is_customer_invoice) else None
         super(InvoiceInfoForm, self).__init__(*args, **kwargs)
         self.helper = FormHelper()
         self.helper.label_class = 'col-sm-3 col-md-2'
@@ -2146,7 +2151,7 @@ class InvoiceInfoForm(forms.Form):
             EditSubscriptionView,
             ManageBillingAccountView,
         )
-        if not invoice.is_wire:
+        if not invoice.is_wire and not invoice.is_customer_invoice:
             subscription_link = mark_safe(make_anchor_tag(
                 reverse(EditSubscriptionView.urlname, args=(subscription.id,)),
                 '{plan_name} ({start_date} - {end_date})'.format(
@@ -2160,7 +2165,13 @@ class InvoiceInfoForm(forms.Form):
 
         self.helper.layout = crispy.Layout(
             crispy.Fieldset(
-                '{} Invoice #{}'.format('Wire' if invoice.is_wire else '', invoice.invoice_number),
+                '{} Invoice #{}'.format('Customer' if invoice.is_customer_invoice else
+                                        'Wire' if invoice.is_wire else '', invoice.invoice_number),
+            )
+
+        )
+        if not invoice.is_customer_invoice:
+            self.helper.layout[0].extend([
                 hqcrispy.B3TextField(
                     'subscription',
                     subscription_link
@@ -2168,39 +2179,40 @@ class InvoiceInfoForm(forms.Form):
                 hqcrispy.B3TextField(
                     'project',
                     invoice.get_domain(),
-                ),
-                hqcrispy.B3TextField(
-                    'account',
-                    mark_safe(
-                        '<a href="%(account_link)s">'
-                        '%(account_name)s'
-                        '</a>' % {
-                            'account_link': reverse(
-                                ManageBillingAccountView.urlname,
-                                args=(invoice.account.id,)
-                            ),
-                            'account_name': invoice.account.name,
-                        }
-                    ),
-                ),
-                hqcrispy.B3TextField(
-                    'current_balance',
-                    get_money_str(invoice.balance),
-                ),
-                hqcrispy.B3MultiField(
-                    'Balance Adjustments',
-                    crispy.Button(
-                        'submit',
-                        'Adjust Balance',
-                        data_toggle='modal',
-                        data_target='#adjustBalanceModal-%d' % invoice.id,
-                        css_class=('btn-default disabled'
-                                   if invoice.is_wire
-                                   else 'btn-default') + ' disable-on-submit',
-                    ),
+                )
+            ])
+        self.helper.layout[0].extend([
+            hqcrispy.B3TextField(
+                'account',
+                mark_safe(
+                    '<a href="%(account_link)s">'
+                    '%(account_name)s'
+                    '</a>' % {
+                        'account_link': reverse(
+                            ManageBillingAccountView.urlname,
+                            args=(invoice.account.id,)
+                        ),
+                        'account_name': invoice.account.name,
+                    }
                 ),
             ),
-        )
+            hqcrispy.B3TextField(
+                'current_balance',
+                get_money_str(invoice.balance),
+            ),
+            hqcrispy.B3MultiField(
+                'Balance Adjustments',
+                crispy.Button(
+                    'submit',
+                    'Adjust Balance',
+                    data_toggle='modal',
+                    data_target='#adjustBalanceModal-%d' % invoice.id,
+                    css_class=('btn-default disabled'
+                               if invoice.is_wire
+                               else 'btn-default') + ' disable-on-submit',
+                ),
+            )
+        ])
 
 
 class ResendEmailForm(forms.Form):
@@ -2257,6 +2269,8 @@ class ResendEmailForm(forms.Form):
         contact_emails = set(self.invoice.email_recipients) | set(self.cleaned_data['additional_recipients'])
         if self.invoice.is_wire:
             record = WireBillingRecord.generate_record(self.invoice)
+        elif self.invoice.is_customer_invoice:
+            record = CustomerBillingRecord.generate_record(self.invoice)
         else:
             record = BillingRecord.generate_record(self.invoice)
         for email in contact_emails:

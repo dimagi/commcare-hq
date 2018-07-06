@@ -2004,15 +2004,14 @@ class CustomerInvoice(InvoiceBase):
             self.date_paid = None
 
     def calculate_credit_adjustments(self):
-        # TODO: first apply credits to all the line items
-        # for line_item in self.lineitem_set.all():
-        #     line_item.calculate_credit_adjustments()
+        for line_item in self.lineitem_set.all():
+            line_item.calculate_credit_adjustments()
         current_total = self.get_total()
         credit_lines = CreditLine.get_credits_for_customer_invoice(self)
         CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
 
     def pay_invoice(self, payment_record):
-        # TODO: This is broken because BillingRecords only take Invoices
+        # TODO: This is broken because PaymentRecords only take Invoices
         CreditLine.make_payment_towards_invoice(
             invoice=self,
             payment_record=payment_record,
@@ -2020,6 +2019,24 @@ class CustomerInvoice(InvoiceBase):
 
         self.update_balance()
         self.save()
+
+    @classmethod
+    def exists_for_domain(cls, domain):
+        invoices = cls.objects.filter(is_hidden=False)
+        for subscription in invoices.subscriptions.filter(is_hidden=False):
+            if subscription.subscriber.domain == domain:
+                return True
+        return False
+
+    @classmethod
+    def autopayable_invoices(cls, date_due):
+        """ Invoices that can be auto paid on date_due """
+        invoices = cls.objects.select_related('account').filter(
+            date_due=date_due,
+            is_hidden=False,
+            account__auto_pay_user__isnull=False
+        )
+        return invoices
 
 
 class SubscriptionAdjustment(models.Model):
@@ -2540,7 +2557,6 @@ class CustomerBillingRecord(BillingRecordBase):
 
     @property
     def html_template(self):
-        # TODO: Is there a need to deal with IMPLEMENTATION
         if self.invoice.account.auto_pay_enabled:
             return self.INVOICE_AUTOPAY_HTML_TEMPLATE
 
@@ -2548,7 +2564,6 @@ class CustomerBillingRecord(BillingRecordBase):
 
     @property
     def text_template(self):
-        # TODO: Is there a need to deal with IMPLEMENTATION
         if self.invoice.account.auto_pay_enabled:
             return self.INVOICE_AUTOPAY_TEXT_TEMPLATE
         return self.INVOICE_TEXT_TEMPLATE
@@ -2571,7 +2586,6 @@ class CustomerBillingRecord(BillingRecordBase):
             'is_total_balance_due': self.invoice.balance >= SMALL_INVOICE_THRESHOLD,
             'payment_status': payment_status,
         })
-        # TODO: Is there a need to deal with IMPLEMENTATION
         if self.invoice.account.auto_pay_enabled:
             try:
                 last_4 = getattr(self.invoice.account.autopay_card, 'last4', None)
@@ -2762,6 +2776,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
+    is_customer = BooleanProperty(default=False)
 
     def generate_pdf(self, invoice):
         self.save()
@@ -2781,6 +2796,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
             is_wire=invoice.is_wire,
+            is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
@@ -2826,6 +2842,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.utcnow()
         self.is_wire = invoice.is_wire
+        self.is_customer = invoice.is_customer_invoice
         self.save()
 
     @staticmethod
@@ -2989,6 +3006,13 @@ class CreditLine(ValidateModelMixin, models.Model):
         assert is_product or feature_type
         assert not (is_product and feature_type)
 
+        if line_item.invoice.is_customer_invoice:
+            return cls.get_credits_for_line_item_in_customer_invoice(line_item, feature_type, is_product)
+        else:
+            return cls.get_credits_for_line_item_in_invoice(line_item, feature_type, is_product)
+
+    @classmethod
+    def get_credits_for_line_item_in_invoice(cls, line_item, feature_type, is_product):
         if feature_type:
             return itertools.chain(
                 cls.get_credits_by_subscription_and_features(
@@ -3000,7 +3024,6 @@ class CreditLine(ValidateModelMixin, models.Model):
                     feature_type=feature_type,
                 )
             )
-
         if is_product:
             return itertools.chain(
                 cls.get_credits_by_subscription_and_features(
@@ -3010,6 +3033,31 @@ class CreditLine(ValidateModelMixin, models.Model):
                 cls.get_credits_for_account(
                     line_item.invoice.subscription.account,
                     is_product=True,
+                )
+            )
+
+    @classmethod
+    def get_credits_for_line_item_in_customer_invoice(cls, line_item, feature_type, is_product):
+        if feature_type:
+            return itertools.chain(
+                cls.get_credits_for_subscriptions(
+                    subscriptions=line_item.invoice.subscriptions.all(),
+                    feature_type=feature_type
+                ),
+                cls.get_credits_for_account(
+                    account=line_item.invoice.account,
+                    feature_type=feature_type
+                )
+            )
+        if is_product:
+            return itertools.chain(
+                cls.get_credits_for_subscriptions(
+                    subscriptions=line_item.invoice.subscriptions.all(),
+                    is_product=is_product
+                ),
+                cls.get_credits_for_account(
+                    account=line_item.invoice.account,
+                    is_product=is_product
                 )
             )
 

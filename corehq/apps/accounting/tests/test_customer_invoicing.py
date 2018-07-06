@@ -36,7 +36,6 @@ class BaseCustomerInvoiceCase(BaseAccountingTest):
 
         cls.billing_contact = generator.create_arbitrary_web_user_name()
         cls.dimagi_user = generator.create_arbitrary_web_user_name(is_dimagi=True)
-        cls.currency = generator.init_default_currency()
         cls.account = generator.billing_account(
             cls.dimagi_user, cls.billing_contact)
         cls.domain = generator.arbitrary_domain()
