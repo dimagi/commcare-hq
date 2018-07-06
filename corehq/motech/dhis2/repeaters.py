@@ -8,7 +8,6 @@ from memoized import memoized
 
 from corehq.form_processor.interfaces.dbaccessors import FormAccessors
 from corehq.motech.dhis2.dhis2_config import Dhis2Config
-from corehq.motech.dhis2.view import send_dhis2_data
 from corehq.motech.repeaters.models import FormRepeater
 from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadGenerator
 from corehq.motech.repeaters.signals import create_repeat_records
@@ -19,7 +18,9 @@ from django.urls import reverse
 
 # it actually triggers on forms,
 # but I wanted to get a case type, and this is the easiest way
+from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
+from corehq.motech.dhis2.hendler import send_data_to_dhis2
 from corehq.toggles import DHIS2_INTEGRATION, DHIS2_REPEATER_INTEGRATION
 from corehq.util import reverse
 
@@ -53,13 +54,12 @@ class Dhis2Repeater(FormRepeater):
 
     @classmethod
     def available_for_domain(cls, domain):
-        return True
-            #DHIS2_REPEATER_INTEGRATION.enabled(domain) and DHIS2_INTEGRATION.enabled(domain)
+        return DHIS2_REPEATER_INTEGRATION.enabled(domain) and DHIS2_INTEGRATION.enabled(domain)
 
     @classmethod
     def get_custom_url(cls, domain):
         from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
-        return reverse(AddOpenmrsRepeaterView.urlname, args=[domain])
+        return reverse(AddDhis2RepeaterView.urlname, args=[domain])
 
     def get_payload(self, repeat_record):
         payload = super(Dhis2Repeater, self).get_payload(repeat_record)
@@ -68,10 +68,9 @@ class Dhis2Repeater(FormRepeater):
     def send_request(self, repeat_record, payload, verify=None):
         for form_config in self.dhis2_config.form_configs:
             if form_config.xmlns == payload['form']['@xmlns']:
-                return send_dhis2_data(
-                    Requests(self.url, self.username, self.password),
-                    self.domain,
-                    self.dhis2_config,
+                return send_data_to_dhis2(
+                    Requests(self.domain, self.url, self.username, self.password),
+                    form_config,
                     payload,
                 )
 
