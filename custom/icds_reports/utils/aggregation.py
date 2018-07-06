@@ -1061,7 +1061,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('resident', "COALESCE(chm.resident, 'no') as coalesce_resident"),
             ('valid_in_month', "SUM(chm.valid_in_month)"),
             ('nutrition_status_weighed', "SUM(chm.nutrition_status_weighed)"),
-            ('nutrition_status_unweighed', "SUM(ucr.nutrition_status_unweighed)"),
+            ('nutrition_status_unweighed', "SUM(chm.wer_eligible) - SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_normal',
                 "SUM(CASE WHEN ucr.nutrition_status_normal = 1 AND "
                 "chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
@@ -1101,7 +1101,11 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('has_aadhar_id', "SUM(chm.has_aadhar_id)"),
             ('aggregation_level', '5'),
             ('pnc_eligible', 'SUM(chm.pnc_eligible)'),
-            ('height_eligible', 'SUM(ucr.height_eligible)'),
+            # height_eligible calculation weirdness is to keep consistent with usage of
+            # age_in_months_start & age_in_months_start in UCR
+            ('height_eligible',
+                "SUM(CASE WHEN chm.age_in_months >= 6 AND chm.age_tranche NOT IN ('72') AND "
+                "chm.valid_in_month = 1 THEN 1 ELSE 0 END)"),
             ('wasting_moderate',
                 "SUM(CASE WHEN ucr.wasting_moderate = 1 AND ucr.nutrition_status_weighed = 1 "
                 "AND ucr.height_measured_in_month = 1 THEN 1 ELSE 0 END)"),
