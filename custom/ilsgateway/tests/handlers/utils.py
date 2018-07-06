@@ -11,9 +11,9 @@ from corehq.apps.sms.tests.util import setup_default_sms_test_backend, delete_do
 from corehq.apps.users.models import CommCareUser
 from corehq.toggles import USE_SMS_WITH_INACTIVE_CONTACTS
 from custom.ilsgateway.models import ILSGatewayConfig
-from custom.ilsgateway.utils import make_loc
-from custom.logistics.tests.test_script import TestScript
+from custom.ilsgateway.tests.test_script import TestScript
 from custom.ilsgateway.tests.utils import bootstrap_user
+from custom.ilsgateway.utils import make_loc
 from casexml.apps.stock.models import DocDomainMapping
 from six.moves import range
 
