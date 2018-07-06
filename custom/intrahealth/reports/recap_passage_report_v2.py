@@ -1,12 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from memoized import memoized
+
+from corehq.apps.reports.standard import MonthYearMixin
 from custom.intrahealth.filters import RecapPassageLocationFilter2, FRMonthFilter, FRYearFilter
 from custom.intrahealth.sqldata import RecapPassageData2, DateSource2
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
 
 
-class RecapPassageReport2(MultiReport):
+class RecapPassageReport2(MonthYearMixin, MultiReport):
     title = "Recap Passage NEW"
     name = "Recap Passage NEW"
     slug = 'recap_passage2'
