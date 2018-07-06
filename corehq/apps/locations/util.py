@@ -235,16 +235,17 @@ class LocationExporter(object):
         def _row_generator(include_consumption=include_consumption):
             for loc in query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
-                row = [
-                    loc.location_id,
-                    loc.site_code,
-                    loc.name,
-                    loc.parent.site_code if loc.parent else '',
-                    loc.latitude or '',
-                    loc.longitude or '',
-                    loc.external_id,
-                    '',  # do delete
-                ]
+                row_data = {
+                    'location_id': loc.location_id,
+                    'site_code': loc.site_code,
+                    'name': loc.name,
+                    'parent_code': loc.parent.site_code if loc.parent else '',
+                    'external_id': loc.external_id,
+                    'latitude': loc.latitude or '',
+                    'longitude': loc.longitude or '',
+                    'do_delete': '',
+                }
+                row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
                 for field in self.data_model.fields:
                     row.append(model_data.get(field.slug, ''))
 
