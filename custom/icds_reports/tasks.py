@@ -77,7 +77,6 @@ if settings.SERVER_ENVIRONMENT == 'softlayer':
 
 UCR_TABLE_NAME_MAPPING = [
     {'type': "awc_location", 'name': 'static-awc_location'},
-    {'type': 'awc_mgmt', 'name': 'static-awc_mgt_forms'},
     {'type': 'ccs_record_monthly', 'name': CCS_RECORD_MONTHLY_UCR},
     {'type': 'child_health_monthly', 'name': CHILD_HEALTH_MONTHLY_UCR},
     {'type': 'daily_feeding', 'name': 'static-daily_feeding_forms'},
@@ -99,7 +98,6 @@ SQL_FUNCTION_PATHS = [
     ('migrations', 'sql_templates', 'database_functions', 'update_location_table.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_table_for_month.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'create_new_agg_table_for_month.sql'),
-    ('migrations', 'sql_templates', 'database_functions', 'insert_into_child_health_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_ccs_record_monthly.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'insert_into_daily_attendance.sql'),
     ('migrations', 'sql_templates', 'database_functions', 'aggregate_child_health.sql'),
