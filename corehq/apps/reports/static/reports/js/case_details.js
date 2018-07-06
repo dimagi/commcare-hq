@@ -22,8 +22,8 @@ hqDefine("reports/js/case_details", [
     dataCorrections,
     singleForm
 ) {
-    var XFormDataModel = function(data) {
-        var self = this;
+    var xformDataModel = function(data) {
+        var self = {};
         self.id = ko.observable(data.id);
 
 
@@ -45,10 +45,12 @@ hqDefine("reports/js/case_details", [
         self.userID = ko.observable(data.user.id);
         self.username = ko.observable(self.format_user(data.user.username));
         self.readable_name = ko.observable(data.readable_name);
+
+        return self;
     };
 
-    var XFormListViewModel = function() {
-        var self = this;
+    var xformListViewModel = function() {
+        var self = {};
 
         self.pagination_options = [10,25,50,100];
 
@@ -67,7 +69,7 @@ hqDefine("reports/js/case_details", [
 
         self.getParameterByName = function(name, url) {
             if (!url) url = window.location.href;
-            name = name.replace(/[\[\]]/g, "\\$&");
+            name = name.replace(/[[\]]/g, "\\$&");
             var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
                 results = regex.exec(url);
             if (!results) return null;
@@ -75,7 +77,7 @@ hqDefine("reports/js/case_details", [
             return decodeURIComponent(results[2].replace(/\+/g, " "));
         };
 
-        var api_url = initialPageData.get('xform_api_url');
+        var apiUrl = initialPageData.get('xform_api_url');
         var init = function() {
             var hash = window.location.hash.split('?');
             if (hash[0] !== '#!history') {
@@ -89,10 +91,10 @@ hqDefine("reports/js/case_details", [
             }
         };
 
-        self.get_xform_data = function(xform_id) {
+        self.get_xform_data = function(xformId) {
             $.memoizedAjax({
                 "type": "GET",
-                "url": initialPageData.reverse('case_form_data', xform_id),
+                "url": initialPageData.reverse('case_form_data', xformId),
                 "success": function(data) {
                     var $panel = $("#xform_data_panel");
                     $panel.html(data.html);
@@ -110,10 +112,10 @@ hqDefine("reports/js/case_details", [
 
         self.xform_history_cb = function(data) {
             self.total_rows(initialPageData.get('xform_ids').length);
-            var mapped_xforms = $.map(data, function (item) {
-                return new XFormDataModel(item);
+            var mappedXforms = $.map(data, function (item) {
+                return xformDataModel(item);
             });
-            self.xforms(mapped_xforms);
+            self.xforms(mappedXforms);
             var xformId = self.selected_xform_doc_id();
             if (xformId) {
                 self.selected_xform_idx(self.xforms.indexOf());
@@ -131,8 +133,8 @@ hqDefine("reports/js/case_details", [
         });
 
         self.refresh_forms = ko.computed(function () {
-            var disp_index = self.disp_page_index();
-            if (disp_index > self.page_count.peek()) {
+            var dispIndex = self.disp_page_index();
+            if (dispIndex > self.page_count.peek()) {
                 self.disp_page_index(self.page_count.peek());
                 return;
             }
@@ -140,15 +142,15 @@ hqDefine("reports/js/case_details", [
                 return;
             }
             self.data_loading(true);
-            var start_num = disp_index || 1;
-            var start_range = (start_num - 1) * self.page_size();
-            var end_range = start_range + self.page_size();
+            var startNum = dispIndex || 1;
+            var startRange = (startNum - 1) * self.page_size();
+            var endRange = startRange + self.page_size();
             $.ajax({
                 "type": "GET",
-                "url":  api_url,
+                "url":  apiUrl,
                 "data": {
-                    'start_range': start_range,
-                    'end_range': end_range,
+                    'start_range': startRange,
+                    'end_range': endRange,
                 },
                 "success": function(data) {
                     self.xform_history_cb(data);
@@ -182,19 +184,19 @@ hqDefine("reports/js/case_details", [
         };
 
         self.page_start_num = ko.computed(function() {
-            var start_num = self.disp_page_index() || 1;
-            var calc_start_num = ((start_num - 1) * self.page_size()) + 1;
-            return calc_start_num;
+            var startNum = self.disp_page_index() || 1;
+            var calcStartNum = ((startNum - 1) * self.page_size()) + 1;
+            return calcStartNum;
         });
 
         self.page_end_num = ko.computed(function() {
-            var start_num = self.disp_page_index() || 1;
-            var end_page_num = ((start_num - 1) * self.page_size()) + self.page_size();
-            if (end_page_num > self.total_rows()) {
+            var startNum = self.disp_page_index() || 1;
+            var endPageNum = ((startNum - 1) * self.page_size()) + self.page_size();
+            if (endPageNum > self.total_rows()) {
                 return self.total_rows();
             }
             else {
-                return end_page_num;
+                return endPageNum;
             }
         });
 
@@ -218,6 +220,8 @@ hqDefine("reports/js/case_details", [
                 }
             }
         });
+
+        return self;
     };
 
     $(function() {
@@ -236,7 +240,7 @@ hqDefine("reports/js/case_details", [
             analyticsDescriptor: 'Clean Case Data',
         });
 
-        $("#history").koApplyBindings(new XFormListViewModel());
+        $("#history").koApplyBindings(xformListViewModel());
 
         var $properties = $("#properties");
         if ($properties.length) {
@@ -262,7 +266,7 @@ hqDefine("reports/js/case_details", [
         }
         $("a[data-toggle='tab']").on("shown", function (e) {
             var hash = $(e.target).attr("href");
-            if (hash.substr(0,1) == "#") {
+            if (hash.substr(0,1) === "#") {
                 location.replace("#!" + hash.substr(1));
             }
         });
