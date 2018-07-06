@@ -42,10 +42,6 @@ from io import open
 
 logger = logging.getLogger(__name__)
 
-CASE_XPATH_PATTERN_MATCHES = [
-    DOT_INTERPOLATE_PATTERN
-]
-
 CASE_XPATH_SUBSTRING_MATCHES = [
     "instance('casedb')",
     'session/data/case_id',
@@ -53,9 +49,6 @@ CASE_XPATH_SUBSTRING_MATCHES = [
     "#parent",
     "#host",
 ]
-
-
-USER_CASE_XPATH_PATTERN_MATCHES = []
 
 USER_CASE_XPATH_SUBSTRING_MATCHES = [
     "#user",
