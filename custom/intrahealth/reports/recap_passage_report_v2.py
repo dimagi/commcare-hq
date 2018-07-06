@@ -2,10 +2,10 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 from memoized import memoized
 
-from corehq.apps.reports.standard import MonthYearMixin
 from custom.intrahealth.filters import YeksiNaaLocationFilter2, FRMonthFilter, FRYearFilter
 from custom.intrahealth.sqldata import RecapPassageData2, DateSource2
 from custom.intrahealth.reports.tableu_de_board_report_v2 import MultiReport
+from custom.intrahealth.reports.utils import MonthYearMixin
 
 
 class RecapPassageReport2(MonthYearMixin, MultiReport):
