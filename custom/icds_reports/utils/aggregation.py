@@ -927,7 +927,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE inserted_at between %(last_sync)s and %(now)s
+            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
