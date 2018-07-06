@@ -319,7 +319,8 @@ class CustomerAccountInvoiceFactory(object):
             raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
 
         all_subscriptions = []
-        for (plan, subscriptions) in self.subscriptions.iteritems():
+        for plan in self.subscriptions:
+            subscriptions = self.subscriptions[plan]
             generate_line_items(invoice, subscriptions[0])
             all_subscriptions.extend(subscriptions)
         invoice.subscriptions.set(all_subscriptions)
@@ -331,8 +332,8 @@ class CustomerAccountInvoiceFactory(object):
 
     def _update_invoice_due_date(self, invoice, factory_date_end):
         should_set_date_due = (
-                invoice.balance > SMALL_INVOICE_THRESHOLD or
-                (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+            invoice.balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
         )
         if should_set_date_due:
             invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)

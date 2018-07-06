@@ -29,7 +29,8 @@ class Migration(migrations.Migration):
                 ('date_end', models.DateField()),
                 ('is_hidden_to_ops', models.BooleanField(default=False)),
                 ('last_modified', models.DateTimeField(auto_now=True)),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, to='accounting.BillingAccount')),
+                ('account', models.ForeignKey(on_delete=django.db.models.deletion.PROTECT,
+                                              to='accounting.BillingAccount')),
             ],
         ),
     ]
