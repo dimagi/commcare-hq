@@ -18,7 +18,7 @@ submissions/
 /bower_components
 bad/
 *.log*
-CommCare.ja*
+/CommCare.ja*
 startover.sh
 celery.db
 tmp.sh
