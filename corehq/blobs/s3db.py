@@ -9,7 +9,7 @@ from corehq.blobs import BlobInfo, DEFAULT_BUCKET
 from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
-from corehq.util.datadog.gauges import datadog_bucket_timer
+from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
 
 from dimagi.utils.chunked import chunked
 
