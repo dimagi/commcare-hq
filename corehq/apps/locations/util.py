@@ -11,7 +11,7 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
     LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -139,7 +139,7 @@ class LocationExporter(object):
         self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
-        self.location_types = self.domain_obj.location_types
+        self.location_types = LocationType.objects.by_domain(domain)
         self.async_task = async_task
         self._location_count = None
         self._locations_exported = 0
