@@ -607,6 +607,13 @@ def _update_ucr_table_mapping():
     celery_task_logger.info("Ended updating ucr_table_name_mapping table")
 
 
+def _get_value(data, field):
+    default = 'N/A'
+    if field == 'days_inactive':
+        default = 0
+    return getattr(data, field) or default
+
+
 @periodic_task(run_every=crontab(minute=30, hour=23), acks_late=True, queue='icds_aggregation_queue')
 def collect_inactive_awws():
     celery_task_logger.info("Started updating the Inactive AWW")
@@ -632,7 +639,7 @@ def collect_inactive_awws():
     rows = [columns]
     for data in excel_data:
         rows.append(
-            [getattr(data, field) or 'N/A' for field in columns]
+            [_get_value(data, field) for field in columns]
         )
 
     celery_task_logger.info("Creating csv file")
