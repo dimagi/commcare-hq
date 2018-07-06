@@ -16,6 +16,7 @@
     {% endif %}
 
     <p>
+        {% if request.can_access_all_locations %}
         <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=full">
             <button class="btn btn-success">
                 <i class="fa fa-cloud-download"></i>
@@ -24,6 +25,7 @@
                 {% endblocktrans %}
             </button>
         </a>
+        {% endif %}
         <a id="download_link" href="{{ bulk_upload.download_url }}?download_type=empty">
             <button class="btn btn-info">
                 {% trans "Download empty template" %}

@@ -768,6 +768,7 @@ class EditLocationView(NewLocationView):
             raise Http404()
 
 
+@location_safe
 class LocationImportStatusView(BaseLocationView):
     urlname = 'location_import_status'
     page_title = ugettext_noop('Organization Structure Import Status')
@@ -789,6 +790,7 @@ class LocationImportStatusView(BaseLocationView):
         return reverse(self.urlname, args=self.args, kwargs=self.kwargs)
 
 
+@location_safe
 class LocationImportView(BaseLocationView):
     urlname = 'location_import'
     page_title = ugettext_noop('Upload Organization Structure From Excel')
@@ -862,6 +864,7 @@ class LocationImportView(BaseLocationView):
 
 
 @require_can_edit_locations
+@location_safe
 def location_importer_job_poll(request, domain, download_id,
                                template="hqwebapp/partials/download_status.html"):
     template = "locations/manage/partials/locations_upload_status.html"
@@ -879,8 +882,11 @@ def location_importer_job_poll(request, domain, download_id,
 
 
 @require_can_edit_locations
+@location_safe
 def location_export(request, domain):
     headers_only = request.GET.get('download_type', 'full') == 'empty'
+    if not request.can_access_all_locations and not headers_only:
+        return no_permissions(request)
     if not LocationType.objects.filter(domain=domain).exists():
         messages.error(request, _("You need to define organization levels before "
                                   "you can do a bulk import or export."))
@@ -894,6 +900,7 @@ def location_export(request, domain):
 
 
 @require_can_edit_locations
+@location_safe
 def location_download_job_poll(request, domain,
                                download_id,
                                template="hqwebapp/partials/shared_download_status.html"):
@@ -905,6 +912,7 @@ def location_download_job_poll(request, domain,
     return render(request, template, context)
 
 
+@location_safe
 class DownloadLocationStatusView(BaseLocationView):
     urlname = 'download_org_structure_status'
     page_title = ugettext_noop('Download Organization Structure Status')
