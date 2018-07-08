@@ -1692,7 +1692,7 @@ class CaseExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
@@ -1789,7 +1789,7 @@ class BaseNewExportView(BaseExportView):
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
-            'can_edit': self.export_instance.can_edit(self.request.couch_user.user_id),
+            'can_edit': self.export_instance.can_edit(self.request.couch_user),
         }
 
     def commit(self, request):
@@ -2008,8 +2008,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             new_export_instance = None
         if (
             new_export_instance
-            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
-            and new_export_instance.owner_id != request.couch_user.user_id
+            and not new_export_instance.can_edit(request.couch_user)
         ):
             raise Http404
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)
