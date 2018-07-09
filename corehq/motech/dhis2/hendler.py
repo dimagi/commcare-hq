@@ -25,7 +25,10 @@ def _get_org_unit(config, form_data=None, payload=None):
         user_id = payload.get('@user_id')
         user = CouchUser.get_by_user_id(user_id)
         location = user.get_sql_location(payload.get('domain'))
-        org_unit_id = location.metadata.get(LOCATION_DHIS_ID, 'null')
+        org_unit_id = location.metadata.get(LOCATION_DHIS_ID, None)
+
+    if not org_unit_id:
+        return {}
     return {'orgUnit': org_unit_id}
 
 

@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from couchdbkit.ext.django.schema import DocumentSchema, ListProperty, StringProperty, SchemaProperty, \
     SchemaListProperty
 
-from corehq.apps.userreports.expressions.getters import safe_recursive_lookup
 from corehq.motech.dhis2.const import DHIS2_EVENT_STATUSES, DHIS2_EVENT_STATUS_COMPLETED
 
 
