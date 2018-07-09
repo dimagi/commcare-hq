@@ -168,7 +168,7 @@ class LocalizedMediaSuiteTest(SimpleTestCase, TestXmlMixin):
         self.app = Application.new_app('domain', "my app")
         self.module = self.app.add_module(Module.new_module("Module 1", None))
         self.form = self.app.new_form(0, "Form 1", None)
-        self.min_spec = BuildSpec.from_string('2.21/latest')
+        self.min_spec = BuildSpec.from_string('2.21.0/latest')
         self.app.build_spec = self.min_spec
 
     def makeXML(self, menu_locale_id, image_locale_id, audio_locale_id):
