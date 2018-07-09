@@ -1024,7 +1024,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "WHEN date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) != %(start_date)s THEN 'unweighed' "
                 "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
-                "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
+                "WHEN gm.zscore_grading_wfa IN (3, 4) THEN 'normal' "
                 "ELSE 'unweighed' END"),
             ("nutrition_status_weighed",
                 "CASE "
@@ -1043,8 +1043,21 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "CASE "
                 "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN 1 "
                 "ELSE 0 END"),
-            ("current_month_stunting", "ucr.current_month_stunting"),
-            ("stunting_last_recorded", "ucr.stunting_last_recorded"),
+            ("current_month_stunting",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
+                "ELSE 'unmeasured' END"),
+            ("stunting_last_recorded",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_hfa = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
+                "ELSE 'unknown' END"),
             ("wasting_last_recorded", "ucr.wasting_last_recorded"),
             ("current_month_wasting", "ucr.current_month_wasting"),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
