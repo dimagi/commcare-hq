@@ -1,10 +1,15 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from collections import namedtuple
 from copy import copy, deepcopy
 from datetime import datetime
+import glob
 import json
+import os
+import re
 
+from couchdbkit.exceptions import BadValueError
 from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
@@ -35,8 +40,8 @@ from corehq.apps.cachehq.mixins import (
 from corehq.apps.userreports.const import (
     FILTER_INTERPOLATION_DOC_TYPES,
     UCR_SQL_BACKEND,
-    VALID_REFERENCED_DOC_TYPES
-)
+    VALID_REFERENCED_DOC_TYPES,
+    DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE)
 from corehq.apps.userreports.dbaccessors import get_number_of_report_configs_by_data_source, \
     get_report_configs_for_domain, get_datasources_for_domain
 from corehq.apps.userreports.exceptions import (
@@ -44,7 +49,7 @@ from corehq.apps.userreports.exceptions import (
     DataSourceConfigurationNotFoundError,
     ReportConfigurationNotFoundError,
     StaticDataSourceConfigurationNotFoundError,
-)
+    InvalidDataSourceType)
 from corehq.apps.userreports.expressions.factory import ExpressionFactory
 from corehq.apps.userreports.filters.factory import FilterFactory
 from corehq.apps.userreports.indicators.factory import IndicatorFactory
@@ -65,6 +70,14 @@ from dimagi.utils.mixins import UnicodeMixIn
 
 from dimagi.utils.modules import to_function
 from io import open
+
+
+ID_REGEX_CHECK = re.compile("^[\w\-:]+$")
+
+
+def _check_ids(value):
+    if not ID_REGEX_CHECK.match(value):
+        raise BadValueError("Invalid ID")
 
 
 class ElasticSearchIndexSettings(DocumentSchema):
@@ -115,7 +128,30 @@ class DataSourceMeta(DocumentSchema):
     build = SchemaProperty(DataSourceBuildInformation)
 
 
-class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
+class AbstractUCRDataSource(object):
+    """
+    Base wrapper class for datasource-like things to be used in reports.
+
+    This doesn't use abc because of this issue: https://stackoverflow.com/q/8723639/8207
+
+    This is not really a "designed" interface so much as the set of methods/properties that
+    the objects need to have in order to work with UCRs.
+
+    In addition to the methods defined, the following should also exist:
+
+    domain: a string
+    engine_id: a string
+    table_id: a string
+    display_name: a string
+    sql_column_indexes: a list of SQLColumnIndexes
+    sql_settings: a SQLSettings object
+    """
+
+    def get_columns(self):
+        raise NotImplementedError()
+
+
+class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document, AbstractUCRDataSource):
     """
     A data source configuration. These map 1:1 with database tables that get created.
     Each data source can back an arbitrary number of reports.
@@ -281,7 +317,6 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
     @property
     @memoized
     def indicators(self):
-
         return CompoundIndicator(
             self.display_name,
             self.default_indicators + [
@@ -300,6 +335,14 @@ class DataSourceConfiguration(UnicodeMixIn, CachedCouchDocumentMixin, Document):
 
     def get_columns(self):
         return self.indicators.get_columns()
+
+    @property
+    @memoized
+    def columns_by_id(self):
+        return {c.id: c for c in self.get_columns()}
+
+    def get_column_by_id(self, column_id):
+        return self.columns_by_id.get(column_id)
 
     def get_items(self, document, eval_context=None):
         if self.filter(document):
@@ -442,6 +485,8 @@ class ReportConfiguration(UnicodeMixIn, QuickCachedDocumentMixin, Document):
     visible = BooleanProperty(default=True)
     # config_id of the datasource
     config_id = StringProperty(required=True)
+    data_source_type = StringProperty(default=DATA_SOURCE_TYPE_STANDARD,
+                                      choices=[DATA_SOURCE_TYPE_STANDARD, DATA_SOURCE_TYPE_AGGREGATE])
     title = StringProperty()
     description = StringProperty()
     aggregation_columns = StringListProperty()
@@ -624,8 +669,13 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def _all(cls):
-        for path in settings.STATIC_DATA_SOURCES:
-            yield cls.wrap(_read_file(path)), path
+        for path_or_glob in settings.STATIC_DATA_SOURCES:
+            if os.path.isfile(path_or_glob):
+                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+            else:
+                files = glob.glob(path_or_glob)
+                for path in files:
+                    yield cls.wrap(_read_file(path)), path
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
@@ -679,7 +729,7 @@ class StaticReportConfiguration(JsonObject):
     For statically defined reports based off of custom data sources
     """
     domains = ListProperty()
-    report_id = StringProperty()
+    report_id = StringProperty(validators=(_check_ids))
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
@@ -695,8 +745,13 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def _all(cls):
-        for path in settings.STATIC_UCR_REPORTS:
-            yield cls.wrap(_read_file(path)), path
+        for path_or_glob in settings.STATIC_UCR_REPORTS:
+            if os.path.isfile(path_or_glob):
+                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+            else:
+                files = glob.glob(path_or_glob)
+                for path in files:
+                    yield cls.wrap(_read_file(path)), path
 
     @classmethod
     @quickcache([], skip_arg='rebuild')
@@ -884,7 +939,7 @@ class AsyncIndicator(models.Model):
         ])
 
 
-def get_datasource_config(config_id, domain):
+def get_datasource_config(config_id, domain, data_source_type=DATA_SOURCE_TYPE_STANDARD):
     def _raise_not_found():
         raise DataSourceConfigurationNotFoundError(_(
             'The data source referenced by this report could not be found.'
@@ -895,11 +950,19 @@ def get_datasource_config(config_id, domain):
         config = StaticDataSourceConfiguration.by_id(config_id)
         if config.domain != domain:
             _raise_not_found()
-    else:
+    elif data_source_type == DATA_SOURCE_TYPE_STANDARD:
         try:
             config = get_document_or_not_found(DataSourceConfiguration, domain, config_id)
         except DocumentNotFound:
             _raise_not_found()
+    elif data_source_type == DATA_SOURCE_TYPE_AGGREGATE:
+        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
+        try:
+            config = AggregateTableDefinition.objects.get(id=int(config_id), domain=domain)
+        except AggregateTableDefinition.DoesNotExist:
+            _raise_not_found()
+    else:
+        raise InvalidDataSourceType('{} is not a valid data source type!'.format(data_source_type))
     return config, is_static
 
 

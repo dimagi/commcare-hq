@@ -5,6 +5,7 @@ import json
 
 from django.contrib import messages
 from django.contrib.auth.models import User
+from django.core.files.base import ContentFile
 from django.core.paginator import Paginator
 from django.forms.forms import NON_FIELD_ERRORS
 from django.forms.utils import ErrorList
@@ -12,6 +13,7 @@ from django.urls import reverse
 from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
+    HttpResponseNotFound,
     HttpResponseRedirect,
     Http404,
     JsonResponse,
@@ -20,6 +22,9 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext as _, ugettext_noop
 from django.views.generic import View
+
+from couchexport.export import Format
+from dimagi.utils.couch.cache.cache_core import get_redis_client
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -38,7 +43,7 @@ from corehq.apps.accounting.forms import (
     SubscriptionForm, CancelForm,
     PlanInformationForm, SoftwarePlanVersionForm, FeatureRateForm,
     ProductRateForm, TriggerInvoiceForm, InvoiceInfoForm, AdjustBalanceForm,
-    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm,
+    ResendEmailForm, ChangeSubscriptionForm, TriggerBookkeeperEmailForm, TriggerCustomerInvoiceForm,
     TestReminderEmailFrom,
     CreateAdminForm,
     SuppressInvoiceForm,
@@ -59,6 +64,7 @@ from corehq.apps.accounting.async_handlers import (
     SoftwareProductRateAsyncHandler,
     Select2BillingInfoHandler,
     Select2InvoiceTriggerHandler,
+    Select2CustomerInvoiceTriggerHandler,
     SubscriberFilterAsyncHandler,
     SubscriptionFilterAsyncHandler,
     AccountFilterAsyncHandler,
@@ -669,6 +675,47 @@ class TriggerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
         return self.get(request, *args, **kwargs)
 
 
+class TriggerCustomerInvoiceView(AccountingSectionView, AsyncHandlerMixin):
+    urlname = 'accounting_trigger_customer_invoice'
+    page_title = 'Trigger Customer Invoice'
+    template_name = 'accounting/trigger_customer_invoice.html'
+    async_handlers = [
+        Select2CustomerInvoiceTriggerHandler,
+    ]
+
+    @property
+    @memoized
+    def trigger_customer_invoice_form(self):
+        if self.request.method == 'POST':
+            return TriggerCustomerInvoiceForm(self.request.POST)
+        return TriggerCustomerInvoiceForm()
+
+    @property
+    def page_url(self):
+        return reverse(self.urlname)
+
+    @property
+    def page_context(self):
+        return {
+            'trigger_customer_form': self.trigger_customer_invoice_form,
+        }
+
+    def post(self, request, *args, **kwargs):
+        if self.async_response is not None:
+            return self.async_response
+        if self.trigger_customer_invoice_form.is_valid():
+            try:
+                self.trigger_customer_invoice_form.trigger_customer_invoice()
+                messages.success(
+                    request,
+                    "Successfully triggered invoices for Customer Billing Account %s."
+                    % self.trigger_customer_invoice_form.cleaned_data['customer_account']
+                )
+            except (CreditLineError, InvoiceError) as e:
+                messages.error(request, 'Error generating invoices: %s' % e, extra_tags='html')
+        return self.get(request, *args, **kwargs)
+
+
 class TriggerBookkeeperEmailView(AccountingSectionView):
     urlname = 'accounting_trigger_bookkeeper_email'
     page_title = "Trigger Bookkeeper Email"
@@ -1034,27 +1081,30 @@ def enterprise_dashboard_total(request, domain, slug):
     return JsonResponse({'total': report.total})
 
 
-def enterprise_dashboard_download(request, domain, slug):
+def enterprise_dashboard_download(request, domain, slug, export_hash):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
 
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
-    writer = csv.writer(response)
+    redis = get_redis_client()
+    content = redis.get(export_hash)
 
-    writer.writerow(report.headers)
-    writer.writerows(report.rows)
+    if content:
+        file = ContentFile(content)
+        response = HttpResponse(file, Format.FORMAT_DICT[Format.UNZIPPED_CSV])
+        response['Content-Length'] = file.size
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(report.filename)
+        return response
 
-    return response
+    return HttpResponseNotFound(_("That report was not found. Please remember that "
+                                  "download links expire after 24 hours."))
 
 
 def enterprise_dashboard_email(request, domain, slug):
     account = _get_account_or_404(request, domain)
     report = EnterpriseReport.create(slug, account.id, request.couch_user)
-
     email_enterprise_report.delay(domain, slug, request.couch_user)
-    messages.success(request, _("Generating {title} report, will email to {email} when complete.").format(**{
+    message = _("Generating {title} report, will email to {email} when complete.").format(**{
         'title': report.title,
         'email': request.couch_user.username,
-    }))
-    return HttpResponseRedirect(reverse('enterprise_dashboard', args=(domain,)))
+    })
+    return JsonResponse({'message': message})

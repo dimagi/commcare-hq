@@ -56,6 +56,8 @@ urlpatterns = [
     url(r'^system/check_services$', check_services, name="check_services"),
     url(r'^system/autostaging/$', branches_on_staging, name="branches_on_staging"),
     url(r'^mass_email/$', mass_email, name="mass_email"),
+    # Same view supported with three possible urls to support tracking
+    # username and domain in the url via audit
     url(r'^auth_as/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/$', AuthenticateAs.as_view(), name=AuthenticateAs.urlname),
     url(r'^auth_as/(?P<username>[^/]*)/(?P<domain>{})/$'.format(new_domain_re),

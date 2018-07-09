@@ -16,6 +16,7 @@ from corehq.apps.accounting.views import (
     TestRenewalEmailView,
     TriggerBookkeeperEmailView,
     TriggerInvoiceView,
+    TriggerCustomerInvoiceView,
     ViewSoftwarePlanVersionView,
     WireInvoiceSummaryView,
     accounting_default,
@@ -30,6 +31,8 @@ urlpatterns = [
     url(r'^$', accounting_default, name='accounting_default'),
     url(r'^trigger_invoice/$', TriggerInvoiceView.as_view(),
         name=TriggerInvoiceView.urlname),
+    url(r'^trigger_customer_invoice/$', TriggerCustomerInvoiceView.as_view(),
+        name=TriggerCustomerInvoiceView.urlname),
     url(r'^single_option_filter/$', AccountingSingleOptionResponseView.as_view(),
         name=AccountingSingleOptionResponseView.urlname),
     url(r'^trigger_email/$', TriggerBookkeeperEmailView.as_view(),
@@ -55,7 +58,7 @@ urlpatterns = [
 
 domain_specific = [
     url(r'^dashboard/$', enterprise_dashboard, name='enterprise_dashboard'),
-    url(r'^dashboard/(?P<slug>[^/]*)/download/$', enterprise_dashboard_download,
+    url(r'^dashboard/(?P<slug>[^/]*)/download/(?P<export_hash>[\w\-]+)/$', enterprise_dashboard_download,
         name='enterprise_dashboard_download'),
     url(r'^dashboard/(?P<slug>[^/]*)/email/$', enterprise_dashboard_email,
         name='enterprise_dashboard_email'),

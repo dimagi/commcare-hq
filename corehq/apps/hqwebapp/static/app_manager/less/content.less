@@ -62,6 +62,10 @@
     animation: spin 4s infinite linear;
     -webkit-animation: spin 4s infinite linear;
   }
+
+  @media(max-width: @screen-sm-max) {
+    display: none;
+  }
 }
 
 @keyframes spin {
@@ -212,6 +216,10 @@
 
 .appmanager-content-row {
   background-color: @cc-brand-low;
+
+  @media(max-width: @screen-sm-max) {
+    overflow: hidden;
+  }
 }
 
 .app-preview-icon::before {

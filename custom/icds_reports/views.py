@@ -620,7 +620,8 @@ class AwcReportsView(BaseReportView):
                 )
         elif step == 'beneficiary_details':
             data = get_beneficiary_details(
-                self.request.GET.get('case_id')
+                self.request.GET.get('case_id'),
+                config['awc_id'],
             )
         return JsonResponse(data=data)
 
@@ -1588,8 +1589,8 @@ class CheckPDFReportStatus(View):
 @location_safe
 class ICDSImagesAccessorAPI(View):
     @method_decorator(api_auth)
-    @require_permission(Permissions.view_report,
-                        'custom.icds_reports.reports.reports.DashboardReport')
+    @method_decorator(require_permission(
+        Permissions.view_report, 'custom.icds_reports.reports.reports.DashboardReport'))
     def get(self, request, domain, form_id=None, attachment_id=None):
         if not form_id or not attachment_id:
             raise Http404

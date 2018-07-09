@@ -600,7 +600,8 @@ class TestFormMeta(BaseIndexTest):
         self.app.build_spec.version = '2.43.0'
         self.assertTrue(
             """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
-value="instance('commcaresession')/session/context/drift"/>""" not in
+value="if(count(instance('commcaresession')/session/context/drift) = 1, \
+instance('commcaresession')/session/context/drift, '')"/>""" not in
             self.form.render_xform()
         )
         self.assertTrue("<orx:drift/>" not in self.form.render_xform())
@@ -609,7 +610,8 @@ value="instance('commcaresession')/session/context/drift"/>""" not in
         self.app.build_spec.version = '2.44.0'
         self.assertTrue(
             """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
-value="instance('commcaresession')/session/context/drift"/>""" in
+value="if(count(instance('commcaresession')/session/context/drift) = 1, \
+instance('commcaresession')/session/context/drift, '')"/>""" in
             self.form.render_xform()
         )
         self.assertTrue("<orx:drift/>" in self.form.render_xform())
@@ -618,7 +620,8 @@ value="instance('commcaresession')/session/context/drift"/>""" in
         self.app.build_spec.version = '2.44.1'
         self.assertTrue(
             """<setvalue event="xforms-revalidate" ref="/data/meta/drift" \
-value="instance('commcaresession')/session/context/drift"/>""" in
+value="if(count(instance('commcaresession')/session/context/drift) = 1, \
+instance('commcaresession')/session/context/drift, '')"/>""" in
             self.form.render_xform()
         )
         self.assertTrue("<orx:drift/>" in self.form.render_xform())

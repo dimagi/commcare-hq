@@ -1,0 +1,43 @@
+{% load crispy_forms_tags %}
+{% load i18n %}
+{% load hq_shared_tags %}
+{% load djangular_tags %}
+{% load humanize %}
+
+<div class="alert alert-info"
+     ng-show="!hasLoaded">
+    <p>
+        <i class="fa fa-spinner fa-spin"></i>
+        <strong>{% blocktrans %}Fetching List of {{ export_type_caps_plural }}...{% endblocktrans %}</strong>
+    </p>
+</div>
+<div class="alert alert-info"
+     ng-show="_.isEmpty(exports) && !!hasLoaded && !exportsListError">
+    <p>
+        {% if is_deid %}
+            {% blocktrans %}
+                No De-Identified {{ export_type_caps_plural }} are available at this time.
+            {% endblocktrans %}
+        {% else %}
+            {% blocktrans %}
+                No {{ export_type_caps_plural }} Created Yet.
+            {% endblocktrans %}
+        {% endif %}
+    </p>
+</div>
+<div class="alert alert-warning"
+     ng-show="!!exportsListError">
+    <strong ng-if="exportsListError === 'default'">
+        {% blocktrans %}
+            Issue fetching list of {{ export_type_plural }}. Please check your Internet connection.
+        {% endblocktrans %}
+    </strong>
+    <strong ng-if="exportsListError !== 'default'">
+        {% angularjs %}{{ exportsListError }}{% endangularjs %}
+    </strong>
+    {% blocktrans %}
+        If this problem persists, please
+        <a href="#modalReportIssue"
+           data-toggle="modal">Report an Issue</a>.
+    {% endblocktrans %}
+</div>

@@ -205,118 +205,126 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if ($(this).hasClass('moving')) {
-                    $(this).removeClass('moving');
-                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
+                if ($(this).hasClass('ignore-click')) {
+                    $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort").toggleClass('success');
+                    var exportColumn = getExportColumnByRow($(this));
+                    exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
-                        shiftClickedRow = $(this),
+                    var shiftSelectedIndex = getIndexFromRow($(this)),
                         lastClickedIndex = 0,
-                        lastClickedRow = null;
-                    if ($('.last-clicked').length > 0) {
-                        lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
-                    } else {
-                        lastClickedRow = $(this).parent().children().eq(0);
-                    }
-
-                    var firstRow = null,
                         start = null,
                         end = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedIndex = getIndexFromRow($('.last-clicked').eq(0));
+                    }
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
-                        firstRow = shiftClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
-                        firstRow = lastClickedRow;
                     }
-
-                    var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort success');
-                        next = next.next();
+                        list()[i].selectedForSort(true);
                     }
                 } else {
-                    $(this).addClass('selected-for-sort success last-clicked')
-                        .siblings().removeClass('selected-for-sort success last-clicked');
+                    $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+                    for (var i = 0; i < list().length; i++) {
+                        list()[i].selectedForSort(false);
+                    }
+                    getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
 
-            $(element).on('click', '.send-to-top', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+            var getIndexFromRow = function (row) {
+                return parseInt(row[0].attributes['data-order'].value);
+            };
 
-                var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
+            };
+
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
+            };
+
+            var moveRowToIndex = function (row, newIndex) {
+                var oldIndex = getIndexFromRow(row);
                 row.remove();
-                list.unshift(list.splice(currentIndex, 1)[0]);
+                var currentListItem = list.splice(oldIndex, 1)[0];
+                list.splice(newIndex, 0, currentListItem);
+            };
+
+            $(element).on('click', '.send-to-top', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                $(this).parent().parent().addClass("moving").siblings().removeClass('moving');
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
 
-                var row = $(this).parent().parent();
-                var currentIndex = row[0].attributes['data-order'].value;
-
-                var lastSelectedRowIndex = null;
-                for (var i = 0; i < list().length; i++) {
-                    if (list()[i].selected()) {
-                        lastSelectedRowIndex = i;
-                    }
-                }
-
-                if (currentIndex < lastSelectedRowIndex) {
-                    var currentListItem = list.splice(currentIndex, 1)[0];
-                    row.remove();
-                    list.splice(lastSelectedRowIndex, 0, currentListItem);
-                }
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
             });
 
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
-                    if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort success')
-                            .siblings().removeClass('selected-for-sort success');
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
                     }
-
-                    var elements = item.siblings('.selected-for-sort').detach();
-                    $('body').append(elements);
-
+                    item.siblings('.selected-for-sort').hide();
                     return item;
                 },
                 stop: function (e, ui) {
                     ui.item.after($('.selected-for-sort'));
 
-                    // TODO - get working
-                    $('.selected-for-sort').sort(function(a, b) {
-                        var aDataOrder = parseInt(a.attributes['data-order'].value),
-                            bDataOrder = parseInt(b.attributes['data-order'].value);
-                        if (aDataOrder < bDataOrder) {
-                            return -1;
-                        } else if (bDataOrder < aDataOrder) {
-                            return 1;
-                        } else {
-                            return 0;
+                    var previousRow = ui.item.prev()[0],
+                        previousIndex = null;
+                    if(previousRow) {
+                        previousIndex = parseInt(previousRow.attributes['data-order'].value);
+                    }
+
+                    var movedIndices = [];
+                    $('.selected-for-sort').each(function (index, element) {
+                        movedIndices.push(parseInt(element.attributes['data-order'].value));
+                    });
+                    movedIndices.sort();
+
+                    var originalList = list.splice(0, list().length);
+
+                    var insertDraggedElements = function() {
+                        movedIndices.forEach(function (movedIndex) {
+                            list.push(originalList[movedIndex]);
+                        });
+                    };
+
+                    if (previousIndex === null) {
+                        insertDraggedElements();
+                    }
+                    originalList.forEach(function(originalListElement, originalListIndex) {
+                        if (!movedIndices.includes(originalListIndex)) {
+                            list.push(originalListElement);
+                        }
+                        if (originalListIndex === previousIndex) {
+                            insertDraggedElements();
                         }
                     });
-
-                    // Reorder the data in knockout
-                    var newList = [],
-                        cur = 0,
-                        i = 0;
-                    for (cur = 0; cur < element.children.length; cur++) {
-                        i = parseInt(element.children[cur].attributes['data-order'].value);
-                        newList.push(list()[i]);
-                    }
-                    list.splice(0, list().length);
-                    for (i = 0; i < newList.length; i++) {
-                        list.push(newList[i]);
-                    }
                 },
             });
             return ko.bindingHandlers.foreach.init(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext);

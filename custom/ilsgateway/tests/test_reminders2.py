@@ -18,7 +18,7 @@ from custom.ilsgateway.tanzania.reminders.stockonhand import SOHReminder
 from custom.ilsgateway.tanzania.reminders.supervision import SupervisionReminder
 from custom.ilsgateway.tests.handlers.utils import ILSTestScript, TEST_DOMAIN, prepare_domain, create_products
 from custom.ilsgateway.utils import make_loc
-from custom.logistics.tests.utils import bootstrap_user
+from custom.ilsgateway.tests.utils import bootstrap_user
 import six
 
 
@@ -44,15 +44,6 @@ class RemindersTest(ILSTestScript):
     def tearDown(self):
         SupplyPointStatus.objects.all().delete()
         super(RemindersTest, self).tearDown()
-
-    @classmethod
-    def tearDownClass(cls):
-        delete_domain_phone_numbers(TEST_DOMAIN)
-        if cls.sms_backend_mapping.id is not None:
-            cls.sms_backend_mapping.delete()
-        cls.sms_backend.delete()
-        cls.domain.delete()
-        super(RemindersTest, cls).tearDownClass()
 
 
 class TestStockOnHandReminders(RemindersTest):

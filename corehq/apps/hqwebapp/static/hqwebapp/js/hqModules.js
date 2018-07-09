@@ -97,10 +97,26 @@ if (typeof define === 'undefined') {
     define = hqDefine;
 }
 
+// For use only with modules that are never used in a requirejs context.
 function hqImport(path) {
     if (COMMCAREHQ_MODULES[path] === undefined) {
         throw new Error("The module '" + path + "' has not yet been defined.\n\n" +
             'Did you include <script src="' + path + '.js"></script> on your html page?');
     }
     return COMMCAREHQ_MODULES[path];
+}
+
+// Support require calls within a module. Best practice is to require all dependencies
+// at module definition time, but this function can be used when doing so would
+// introduce a circular dependency.
+function hqRequire(paths, callback) {
+    if (typeof define === 'function' && define.amd && window.USE_REQUIREJS) {
+        requirejs(paths, callback);
+    } else {
+        var args = [];
+        for (var i = 0; i < paths.length; i++) {
+            args.push(hqImport(paths[i]));
+        }
+        callback.apply(undefined, args);
+    }
 }

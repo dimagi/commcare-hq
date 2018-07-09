@@ -69,7 +69,7 @@ class ScheduleInstance(PartitionedModel):
         if self.recipient_type == self.RECIPIENT_TYPE_CASE:
             try:
                 case = CaseAccessors(self.domain).get_case(self.recipient_id)
-            except (CaseNotFound, ResourceNotFound):
+            except CaseNotFound:
                 return None
 
             if case.domain != self.domain:
@@ -461,7 +461,7 @@ class CaseScheduleInstanceMixin(object):
     def case(self):
         try:
             return CaseAccessors(self.domain).get_case(self.case_id)
-        except (CaseNotFound, ResourceNotFound):
+        except CaseNotFound:
             return None
 
     @property

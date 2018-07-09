@@ -234,6 +234,18 @@ class Select2InvoiceTriggerHandler(BaseSelect2AsyncHandler):
         return [(d, d) for d in domain_names]
 
 
+class Select2CustomerInvoiceTriggerHandler(BaseSelect2AsyncHandler):
+    slug = 'select2_billing'
+    allowed_actions = [
+        'customer_account',
+    ]
+
+    @property
+    def customer_account_response(self):
+        accounts = BillingAccount.objects.filter(is_customer_billing_account=True).values_list('name', flat=True)
+        return [(n, n) for n in accounts]
+
+
 class BaseSingleOptionFilterAsyncHandler(BaseAsyncHandler):
 
     @property

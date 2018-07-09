@@ -214,6 +214,10 @@ class AutomaticUpdateRule(models.Model):
         )
 
     @classmethod
+    def domain_has_conditional_alerts(cls, domain):
+        return cls.by_domain(domain, cls.WORKFLOW_SCHEDULING, active_only=False).exists()
+
+    @classmethod
     @quickcache(['domain', 'workflow', 'active_only'], timeout=30 * 60)
     def by_domain_cached(cls, domain, workflow, active_only=True):
         result = cls.by_domain(domain, workflow, active_only=active_only)

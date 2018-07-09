@@ -10,13 +10,18 @@ import six
 class ConfigurableReportDataSourceMixin(object):
     def __init__(self, domain, config_or_config_id, filters, aggregation_columns, columns, order_by):
         from corehq.apps.userreports.models import DataSourceConfiguration
+        from corehq.apps.aggregate_ucrs.models import AggregateTableDefinition
         self.lang = None
         self.domain = domain
         if isinstance(config_or_config_id, DataSourceConfiguration):
             self._config = config_or_config_id
             self._config_id = self._config._id
+        elif isinstance(config_or_config_id, AggregateTableDefinition):
+            self._config = config_or_config_id
+            self._config_id = config_or_config_id.id
         else:
-            assert isinstance(config_or_config_id, six.string_types)
+            assert isinstance(config_or_config_id, six.string_types), \
+                '{} is not an allowed type'.format(type(config_or_config_id))
             self._config = None
             self._config_id = config_or_config_id
 

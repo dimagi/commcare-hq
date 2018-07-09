@@ -86,6 +86,17 @@ def invoice_column_cell(invoice):
     )
 
 
+def invoice_cost_cell(invoice):
+    from corehq.apps.accounting.views import InvoiceSummaryView
+    return format_datatables_data(
+        mark_safe(make_anchor_tag(
+            reverse(InvoiceSummaryView.urlname, args=(invoice.id,)),
+            '$%.2f' % invoice.subtotal
+        )),
+        invoice.subtotal,
+    )
+
+
 class AddItemInterface(GenericTabularReport):
     base_template = 'accounting/partials/add_new_item_button.html'
     exportable = True
@@ -1023,6 +1034,8 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
             DataTablesColumn("Project Space"),
             DataTablesColumn("Reason"),
             DataTablesColumn("Method"),
+            DataTablesColumn("Invoice"),
+            DataTablesColumn("Invoice Was Sent"),
             DataTablesColumn("Note"),
             DataTablesColumn("By User"),
         )
@@ -1043,6 +1056,8 @@ class SubscriptionAdjustmentInterface(GenericTabularReport):
                 sub_adj.subscription.subscriber.domain,
                 dict(SubscriptionAdjustmentReason.CHOICES).get(sub_adj.reason),
                 dict(SubscriptionAdjustmentMethod.CHOICES).get(sub_adj.method),
+                invoice_cost_cell(sub_adj.invoice) if sub_adj.invoice else None,
+                {True: 'No', False: 'YES'}[sub_adj.invoice.is_hidden] if sub_adj.invoice else None,
                 sub_adj.note,
                 sub_adj.web_user,
             ]]

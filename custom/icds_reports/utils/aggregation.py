@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import datetime
 from datetime import date
 import hashlib
 
@@ -14,6 +16,7 @@ from custom.icds_reports.const import (
     AGG_CCS_RECORD_PNC_TABLE,
     AGG_CHILD_HEALTH_PNC_TABLE,
     AGG_CHILD_HEALTH_THR_TABLE,
+    AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
     DASHBOARD_DOMAIN,
 )
@@ -694,7 +697,7 @@ def recalculate_aggregate_table(model_class):
     state_ids = (
         SQLLocation.objects
         .filter(domain='icds-cas', location_type__name='state')
-        .values_list('id', flat=True)
+        .values_list('location_id', flat=True)
     )
 
     for state_id in state_ids:
@@ -752,8 +755,6 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("age_in_months", "ucr.age_in_months"),
             ("open_in_month", "ucr.open_in_month"),
             ("alive_in_month", "ucr.alive_in_month"),
-            ("pse_eligible", "ucr.pse_eligible"),
-            ("pse_days_attended", "ucr.pse_days_attended"),
             ("born_in_month", "ucr.born_in_month"),
             ("bf_at_birth_born_in_month", "ucr.bf_at_birth_born_in_month"),
             ("fully_immunized_eligible", "ucr.fully_immunized_eligible"),
@@ -764,6 +765,10 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("valid_all_registered_in_month", "ucr.valid_all_registered_in_month"),
             ("person_name", "child_health.person_name"),
             ("mother_name", "child_health.mother_name"),
+            # PSE/DF Indicators
+            ("pse_eligible", "ucr.pse_eligible"),
+            ("pse_days_attended",
+                "CASE WHEN ucr.pse_eligible = 1 THEN COALESCE(df.sum_attended_child_ids, 0) ELSE NULL END"),
             # EBF Indicators
             ("ebf_eligible", "ucr.ebf_eligible"),
             ("ebf_in_month", "CASE WHEN ucr.ebf_eligible = 1 THEN COALESCE(pnc.is_ebf, 0) ELSE 0 END"),
@@ -880,6 +885,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             LEFT OUTER JOIN "{agg_thr_table}" thr ON ucr.doc_id = thr.case_id AND ucr.month = thr.month
             LEFT OUTER JOIN "{agg_gm_table}" gm ON ucr.doc_id = gm.case_id AND ucr.month = gm.month
             LEFT OUTER JOIN "{agg_pnc_table}" pnc ON ucr.doc_id = pnc.case_id AND ucr.month = pnc.month
+            LEFT OUTER JOIN "{agg_df_table}" df ON ucr.doc_id = df.case_id AND ucr.month = df.month
             LEFT OUTER JOIN "{child_health_case_ucr}" child_health ON ucr.doc_id = child_health.doc_id
             LEFT OUTER JOIN "{child_tasks_case_ucr}" child_tasks ON ucr.doc_id = child_tasks.child_health_case_id
             WHERE ucr.month = %(start_date)s
@@ -895,6 +901,7 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             child_health_case_ucr=self.child_health_case_ucr_tablename,
             agg_gm_table=AGG_GROWTH_MONITORING_TABLE,
             agg_pnc_table=AGG_CHILD_HEALTH_PNC_TABLE,
+            agg_df_table=AGG_DAILY_FEEDING_TABLE,
             child_tasks_case_ucr=self.child_tasks_case_ucr_tablename,
         ), {
             "start_date": self.month
@@ -924,7 +931,7 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
                 FIRST_VALUE(form_date) OVER forms as first_submission,
                 LAST_VALUE(form_date) OVER forms as last_submission
             FROM "{ucr_tablename}"
-            WHERE inserted_at >= %(last_sync)s
+            WHERE inserted_at >= %(last_sync)s AND form_date <= %(now)s
             WINDOW forms AS (
               PARTITION BY awc_id
               ORDER BY form_date ASC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING
@@ -932,7 +939,8 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
         """.format(
             ucr_tablename=self.ucr_tablename,
         ), {
-            "last_sync": self.last_sync
+            "last_sync": self.last_sync,
+            "now": datetime.datetime.utcnow()
         }
 
     def missing_location_query(self):
@@ -984,3 +992,42 @@ class InactiveAwwsAggregationHelper(BaseICDSAggregationHelper):
             ucr_table_query=ucr_query,
             awc_location_table_name='awc_location',
         ), params
+
+
+class DailyFeedingFormsChildHealthAggregationHelper(BaseICDSAggregationHelper):
+    ucr_data_source_id = 'dashboard_child_health_daily_feeding_forms'
+    aggregate_parent_table = AGG_DAILY_FEEDING_TABLE
+    aggregate_child_table_prefix = 'icds_db_child_daily_feed_form_'
+
+    def aggregation_query(self):
+        tablename = self.generate_child_tablename(self.month)
+        current_month_start = month_formatter(self.month)
+        next_month_start = month_formatter(self.month + relativedelta(months=1))
+
+        query_params = {
+            "month": month_formatter(self.month),
+            "state_id": self.state_id,
+            "current_month_start": current_month_start,
+            "next_month_start": next_month_start,
+        }
+
+        return """
+        INSERT INTO "{tablename}" (
+          state_id, month, case_id, latest_time_end_processed, sum_attended_child_ids
+        ) (
+          SELECT
+            %(state_id)s AS state_id,
+            %(month)s AS month,
+            child_health_case_id AS case_id,
+            MAX(timeend) AS latest_time_end_processed,
+            SUM(attended_child_ids) AS sum_attended_child_ids
+          FROM "{ucr_tablename}"
+          WHERE state_id = %(state_id)s AND
+                timeend >= %(current_month_start)s AND timeend < %(next_month_start)s AND
+                child_health_case_id IS NOT NULL
+          GROUP BY child_health_case_id
+        )
+        """.format(
+            ucr_tablename=self.ucr_tablename,
+            tablename=tablename
+        ), query_params

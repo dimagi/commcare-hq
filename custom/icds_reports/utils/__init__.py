@@ -59,6 +59,7 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -335,10 +336,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -474,7 +475,7 @@ def zip_folder(pdf_files):
     icds_file = IcdsFile(blob_id=zip_hash, data_type='issnip_monthly')
     in_memory = BytesIO()
     zip_file = zipfile.ZipFile(in_memory, 'w', zipfile.ZIP_DEFLATED)
-    files_to_zip = IcdsFile.objects.filter(blob_id__in=pdf_files.keys(), data_type='issnip_monthly')
+    files_to_zip = IcdsFile.objects.filter(blob_id__in=list(pdf_files.keys()), data_type='issnip_monthly')
 
     for pdf_file in files_to_zip:
         zip_file.writestr(
