@@ -1026,12 +1026,23 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
                 "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
                 "ELSE 'unweighed' END"),
-            ("nutrition_status_weighed", "ucr.nutrition_status_weighed"),
-            ("recorded_weight", "ucr.weight_recorded_in_month"),
+            ("nutrition_status_weighed",
+                "CASE "
+                "WHEN ucr.wer_eligible = 1 AND current_month_nutrition_status != 'unweighed' THEN 1 "
+                "ELSE 0 END"),
+            ("recorded_weight",
+                "CASE "
+                "WHEN wer_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.weight_child_last_recorded) = %(start_date)s THEN gm.weight_child "
+                "ELSE NULL END"),
             ("recorded_height",
-                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN gm.height_child ELSE NULL END, ucr.height_recorded_in_month)"),
+                "CASE "
+                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN gm.height_child "
+                "ELSE NULL END"),
             ("height_measured_in_month",
-                "COALESCE(CASE WHEN (date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s) THEN 1 ELSE NULL END, ucr.height_measured_in_month)"),
+                "CASE "
+                "WHEN date_trunc('MONTH', gm.height_child_last_recorded) = %(start_date)s THEN 1 "
+                "ELSE 0 END"),
             ("current_month_stunting", "ucr.current_month_stunting"),
             ("stunting_last_recorded", "ucr.stunting_last_recorded"),
             ("wasting_last_recorded", "ucr.wasting_last_recorded"),
