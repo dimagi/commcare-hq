@@ -11,10 +11,6 @@ import django.db.models.deletion
 
 class Migration(migrations.Migration):
 
-    replaces = [('accounting', '0032_customerinvoice'), ('accounting', '0033_auto_20180628_2136'),
-                ('accounting', '0034_auto_20180629_1914'), ('accounting', '0035_customerinvoice_subscriptions'),
-                ('accounting', '0036_customerbillingrecord')]
-
     dependencies = [
         ('accounting', '0031_billingaccount_billing_admin_emails'),
     ]
