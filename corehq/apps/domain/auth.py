@@ -152,14 +152,14 @@ def formplayer_as_user_auth(view):
     """Auth decorator for requests coming from Formplayer that are authenticated
     using the shared key.
 
-    All requests with this decorator require the `as_user` param in order to simulate auth by that user.
+    All requests with this decorator require the `as` param in order to simulate auth by that user.
     This is used by SMS forms.
     """
 
     @wraps(view)
     def _inner(request, *args, **kwargs):
         with mutable_querydict(request.GET):
-            as_user = request.GET.pop('as_user', None)
+            as_user = request.GET.pop('as', None)
 
         if not as_user:
             return HttpResponse('User required', status=401)
