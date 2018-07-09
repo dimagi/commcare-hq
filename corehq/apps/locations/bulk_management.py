@@ -228,7 +228,7 @@ class LocationStub(object):
             any(old_metadata.get(k, '') != new_value
                 for k, new_value in new_metadata.items())
             # data is removed
-            or set(old_metadata.keys()) - set(new_metadata.keys())
+            or any(k not in new_metadata for k in old_metadata.keys())
         )
 
 
