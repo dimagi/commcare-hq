@@ -11,7 +11,7 @@ from corehq.apps.consumption.shortcuts import get_loaded_default_monthly_consump
 from corehq.apps.domain.models import Domain
 from corehq.apps.locations.const import LOCATION_TYPE_SHEET_HEADERS, \
     LOCATION_SHEET_HEADERS_BASE, LOCATION_SHEET_HEADERS_OPTIONAL
-from corehq.apps.locations.models import SQLLocation
+from corehq.apps.locations.models import SQLLocation, LocationType
 from corehq.apps.products.models import Product
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
@@ -139,7 +139,7 @@ class LocationExporter(object):
         self.headers_only = headers_only
         self.data_model = get_location_data_model(domain)
         self.administrative_types = {}
-        self.location_types = self.domain_obj.location_types
+        self.location_types = LocationType.objects.by_domain(domain)
         self.async_task = async_task
         self._location_count = None
         self._locations_exported = 0
@@ -235,16 +235,17 @@ class LocationExporter(object):
         def _row_generator(include_consumption=include_consumption):
             for loc in query:
                 model_data, uncategorized_data = self.data_model.get_model_and_uncategorized(loc.metadata)
-                row = [
-                    loc.location_id,
-                    loc.site_code,
-                    loc.name,
-                    loc.parent.site_code if loc.parent else '',
-                    loc.latitude or '',
-                    loc.longitude or '',
-                    loc.external_id,
-                    '',  # do delete
-                ]
+                row_data = {
+                    'location_id': loc.location_id,
+                    'site_code': loc.site_code,
+                    'name': loc.name,
+                    'parent_code': loc.parent.site_code if loc.parent else '',
+                    'external_id': loc.external_id,
+                    'latitude': loc.latitude or '',
+                    'longitude': loc.longitude or '',
+                    'do_delete': '',
+                }
+                row = [row_data[attr] for attr in LOCATION_SHEET_HEADERS_BASE.keys()]
                 for field in self.data_model.fields:
                     row.append(model_data.get(field.slug, ''))
 
