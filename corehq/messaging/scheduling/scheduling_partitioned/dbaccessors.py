@@ -257,3 +257,14 @@ def delete_timed_schedule_instances_for_schedule(cls, schedule_id):
 
     for db_name in get_db_aliases_for_partitioned_query():
         cls.objects.using(db_name).filter(timed_schedule_id=schedule_id).delete()
+
+
+def delete_schedule_instances_by_case_id(domain, case_id):
+    from corehq.messaging.scheduling.scheduling_partitioned.models import (
+        CaseTimedScheduleInstance,
+        CaseAlertScheduleInstance,
+    )
+
+    for cls in (CaseAlertScheduleInstance, CaseTimedScheduleInstance):
+        for db_name in get_db_aliases_for_partitioned_query():
+            cls.objects.using(db_name).filter(domain=domain, case_id=case_id).delete()

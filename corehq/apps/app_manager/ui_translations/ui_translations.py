@@ -85,6 +85,8 @@ def build_ui_translation_download_file(app):
             row[row_index] = all_prop_trans.get(row[0], "")
         return row
 
+    rows = [add_default(fillrow(row)) for row in rows]
+
     data = (("translations", tuple(rows)),)
     with export_raw_to_writer(headers, data, temp) as writer:
         set_commcare_version_in_workbook(writer.book, commcare_version)

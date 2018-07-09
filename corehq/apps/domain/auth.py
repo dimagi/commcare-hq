@@ -2,9 +2,6 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
 import re
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
-from functools import wraps
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
@@ -16,7 +13,6 @@ ANDROID = 'android'
 BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
-TOKEN = 'token'
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -40,8 +36,6 @@ def determine_authtype_from_header(request, default=DIGEST):
     elif auth_header.startswith(b'digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif auth_header.startswith(b'token '):
-        return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 

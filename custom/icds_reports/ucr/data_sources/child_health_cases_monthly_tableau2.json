@@ -1210,41 +1210,16 @@
         "transform": {},
         "display_name": null,
         "expression": {
-          "type": "conditional",
-          "test": {
-            "type": "named",
-            "name": "pse_eligible"
-          },
-          "expression_if_true": {
-            "type": "named",
-            "name": "pse_days"
-          },
-          "expression_if_false": {
-            "type": "property_name",
-            "property_name": "no_exist"
-          }
+          "type": "constant",
+          "constant": 0
         }
       },
       {
         "column_id": "pse_attended_16_days",
         "display_name": null,
         "filter": {
-          "type": "and",
-          "filters": [
-            {
-              "name": "pse_eligible",
-              "type": "named"
-            },
-            {
-              "type": "boolean_expression",
-              "operator": "gte",
-              "property_value": 16,
-              "expression": {
-                "type": "named",
-                "name": "pse_days"
-              }
-            }
-          ]
+          "type": "named",
+          "name": "false"
         },
         "type": "boolean"
       },
@@ -1971,28 +1946,6 @@
           "type": "constant",
           "constant": "unweighed"
         }
-      },
-      "pse_days": {
-        "type": "icds_get_case_forms_in_date",
-        "case_id_expression": {
-          "expression": {
-            "type": "property_name",
-            "property_name": "_id"
-          },
-          "type": "root_doc"
-        },
-        "from_date_expression": {
-          "type": "named",
-          "name": "month_start"
-        },
-        "to_date_expression": {
-          "type": "named",
-          "name": "month_end"
-        },
-        "xmlns": [
-          "http://openrosa.org/formdesigner/66d52f84d606567ea29d5fae88f569d2763b8b62"
-        ],
-        "count": true
       },
       "task_case_id": {
         "type": "nested",

@@ -47,7 +47,6 @@ from corehq.apps.app_manager.fields import ApplicationDataRMIHelper
 from corehq.couchapps.dbaccessors import forms_have_multimedia
 from corehq.apps.data_interfaces.dispatcher import require_can_edit_data
 from corehq.apps.domain.decorators import login_and_domain_required, api_auth
-from corehq.apps.export.utils import convert_saved_export_to_export_instance
 from corehq.apps.export.custom_export_helpers import make_custom_export_helper
 from corehq.apps.export.tasks import (
     generate_schema_for_all_builds,
@@ -1693,7 +1692,7 @@ class CaseExportListView(BaseExportListView):
             if export.is_daily_saved_export:
                 emailed_export = self._get_daily_saved_export_metadata(export)
             is_legacy = False
-            can_edit = export.can_edit(self.request.couch_user.user_id)
+            can_edit = export.can_edit(self.request.couch_user)
             description = export.description
             my_export = export.owner_id == self.request.couch_user.user_id
             sharing = export.sharing
@@ -1790,7 +1789,7 @@ class BaseNewExportView(BaseExportView):
             'allow_deid': has_privilege(self.request, privileges.DEIDENTIFIED_DATA),
             'has_excel_dashboard_access': domain_has_privilege(self.domain, EXCEL_DASHBOARD),
             'has_daily_saved_export_access': domain_has_privilege(self.domain, DAILY_SAVED_EXPORT),
-            'can_edit': self.export_instance.can_edit(self.request.couch_user.user_id),
+            'can_edit': self.export_instance.can_edit(self.request.couch_user),
         }
 
     def commit(self, request):
@@ -1839,7 +1838,10 @@ class BaseModifyNewCustomView(BaseNewExportView):
     def page_context(self):
         result = super(BaseModifyNewCustomView, self).page_context
         result['format_options'] = ["xls", "xlsx", "csv"]
-        result['sharing_options'] = SharingOption.CHOICES
+        if self.export_instance.owner_id:
+            result['sharing_options'] = SharingOption.CHOICES
+        else:
+            result['sharing_options'] = [SharingOption.EDIT_AND_EXPORT]
         schema = self.get_export_schema(
             self.domain,
             self.request.GET.get('app_id') or getattr(self.export_instance, 'app_id'),
@@ -1981,51 +1983,10 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         return reverse(self.urlname, args=[self.domain, self.export_id])
 
     def get(self, request, *args, **kwargs):
-        auto_select = True
         try:
             export_instance = self.new_export_instance
-            # if the export exists we don't want to automatically select new columns
-            auto_select = False
         except ResourceNotFound:
-            # If it's not found, try and see if it's on the legacy system before throwing a 404
-            try:
-                legacy_cls = None
-                if self.export_type == FORM_EXPORT:
-                    legacy_cls = FormExportSchema
-                elif self.export_type == CASE_EXPORT:
-                    legacy_cls = CaseExportSchema
-
-                legacy_export = legacy_cls.get(self.export_id)
-                convert_export = True
-
-                if legacy_export.converted_saved_export_id:
-                    # If this is the case, this means the user has refreshed the Export page
-                    # before saving, thus we've already converted, but the URL still has
-                    # the legacy ID
-                    export_instance = self.export_instance_cls.get(
-                        legacy_export.converted_saved_export_id
-                    )
-
-                    # If the fetched export instance has been deleted, then we know that we
-                    # should retry the conversion
-                    convert_export = export_instance.doc_type.endswith(DELETED_SUFFIX)
-
-                if convert_export:
-                    export_instance, meta = convert_saved_export_to_export_instance(
-                        self.domain,
-                        legacy_export,
-                    )
-
-            except ResourceNotFound:
-                raise Http404()
-            except Exception:
-                messages.error(
-                    request,
-                    mark_safe(
-                        _("Export failed to convert to new version. Try creating another export")
-                    )
-                )
-                return HttpResponseRedirect(self.export_home_url)
+            raise Http404()
 
         schema = self.get_export_schema(
             self.domain,
@@ -2035,7 +1996,8 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
         self.export_instance = self.export_instance_cls.generate_instance_from_schema(
             schema,
             saved_export=export_instance,
-            auto_select=auto_select
+            # The export exists - we don't want to automatically select new columns
+            auto_select=False,
         )
         for message in self.export_instance.error_messages():
             messages.error(request, message)
@@ -2049,8 +2011,7 @@ class BaseEditNewCustomExportView(BaseModifyNewCustomView):
             new_export_instance = None
         if (
             new_export_instance
-            and new_export_instance.sharing in [SharingOption.EXPORT_ONLY, SharingOption.PRIVATE]
-            and new_export_instance.owner_id != request.couch_user.user_id
+            and not new_export_instance.can_edit(request.couch_user)
         ):
             raise Http404
         return super(BaseEditNewCustomExportView, self).post(request, *args, **kwargs)

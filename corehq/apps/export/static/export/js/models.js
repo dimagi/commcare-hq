@@ -597,6 +597,7 @@ hqDefine('export/js/models', function () {
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
         self.isUserDefined = false;
+        self.selectedForSort = ko.observable(false);
     };
 
     /**

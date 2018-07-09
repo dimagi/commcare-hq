@@ -440,7 +440,7 @@ def get_all_built_app_results(domain, app_id=None):
         'app_manager/saved_app',
         startkey=startkey,
         endkey=endkey,
-        include_docs=True,
+        include_docs=False,
     ).all()
 
 

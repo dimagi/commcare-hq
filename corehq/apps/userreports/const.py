@@ -48,3 +48,7 @@ XFORM_CACHE_KEY_PREFIX = 'xform_to_json_cache'
 
 NAMED_EXPRESSION_PREFIX = 'NamedExpression'
 NAMED_FILTER_PREFIX = 'NamedFilter'
+
+
+DATA_SOURCE_TYPE_STANDARD = 'standard'
+DATA_SOURCE_TYPE_AGGREGATE = 'aggregate'

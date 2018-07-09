@@ -811,6 +811,7 @@ http://openrosa.org/formdesigner/898DACE2-0BFF-47BA-B6A8-BF09ABE8B2D1:
     comment: [items_hanging_comments]
     base_path: [household_prep_grp, Q3]
     flag_name: "3. Are there any items on the walls or hanging from the ceiling (posters, pictures, shoes, toothbrushes)?"
+    flag_name_fr: "3. Y a-t-il des objets sur les murs ou suspendus au plafond (affiches, photos, chaussures, brosses à dents)?"
     answer: "yes"
     warning: "Problem reported: Items not removed from the wall or ceiling."
     warning_fr: "Problème signalé : Articles non retirés du mur ou du plafond"

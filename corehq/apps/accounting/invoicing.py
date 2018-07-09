@@ -57,7 +57,6 @@ class DomainInvoiceFactory(object):
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
-        self.is_community_invoice = False
 
     def create_invoices(self):
         subscriptions = self._get_subscriptions()

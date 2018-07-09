@@ -327,7 +327,7 @@ In the example below, the indicator is inside a form group question called "impa
             "property_name": "_id"
         }
     },
-    "column_id": "district",
+    "column_id": "district"
 }
 ```
 
@@ -345,7 +345,7 @@ In the example below, the indicator is inside a form group question called "impa
             "property_name": "location_id"
         }
     },
-    "column_id": "parent_location",
+    "column_id": "parent_location"
 }
 ```
 

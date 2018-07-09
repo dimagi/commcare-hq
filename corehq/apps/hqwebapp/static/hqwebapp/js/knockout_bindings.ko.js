@@ -205,50 +205,53 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             // based on https://jsfiddle.net/hQnWG/614/
 
             $(element).on('click', 'tr', function (e) {
-                if ($(this).hasClass('moving')) {
-                    $(this).removeClass('moving');
-                    ko.bindingHandlers.multirow_sortable.updateSortableList(list);
+                if ($(this).hasClass('ignore-click')) {
+                    $(this).removeClass('ignore-click');
                 } else if (e.ctrlKey || e.metaKey) {
-                    $(this).toggleClass("selected-for-sort").toggleClass('success');
+                    var exportColumn = getExportColumnByRow($(this));
+                    exportColumn.selectedForSort(!exportColumn.selectedForSort());
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
-                    var shiftSelectedIndex = parseInt($(this)[0].attributes['data-order'].value),
-                        shiftClickedRow = $(this),
+                    var shiftSelectedIndex = getIndexFromRow($(this)),
                         lastClickedIndex = 0,
-                        lastClickedRow = null;
-                    if ($('.last-clicked').length > 0) {
-                        lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = parseInt(lastClickedRow[0].attributes['data-order'].value);
-                    } else {
-                        lastClickedRow = $(this).parent().children().eq(0);
-                    }
-
-                    var firstRow = null,
                         start = null,
                         end = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedIndex = getIndexFromRow($('.last-clicked').eq(0));
+                    }
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
-                        firstRow = shiftClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
-                        firstRow = lastClickedRow;
                     }
-
-                    var next = firstRow;
                     for (var i = start; i <= end; i++) {
-                        next.addClass('selected-for-sort success');
-                        next = next.next();
+                        list()[i].selectedForSort(true);
                     }
                 } else {
-                    $(this).addClass('selected-for-sort success last-clicked')
-                        .siblings().removeClass('selected-for-sort success last-clicked');
+                    $(this).addClass('last-clicked').siblings().removeClass('last-clicked');
+                    for (var i = 0; i < list().length; i++) {
+                        list()[i].selectedForSort(false);
+                    }
+                    getExportColumnByRow($(this)).selectedForSort(true);
                 }
             });
 
             var getIndexFromRow = function (row) {
                 return parseInt(row[0].attributes['data-order'].value);
+            };
+
+            var getExportColumnByRow = function(row) {
+                return list()[getIndexFromRow(row)];
+            };
+
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
             };
 
             var moveRowToIndex = function (row, newIndex) {
@@ -259,35 +262,31 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
 
             $(element).on('click', '.send-to-top', function () {
-                var row = $(this).parent().parent();
-                row.addClass("moving").siblings().removeClass('moving');
-
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                var row = $(this).parent().parent();
-                row.addClass("moving").siblings().removeClass('moving');
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
+                moveRowToIndex(row, list().length - 1);
+            });
 
-                var currentIndex = getIndexFromRow(row);
-                if (list()[currentIndex].selected()) {
-                    for (var i = list().length - 1; i > currentIndex; i--) {
-                        if (list()[i].selected()) {
-                            moveRowToIndex(row, i);
-                            break;
-                        }
-                    }
-                } else {
-                    moveRowToIndex(row, list().length - 1);
-                }
+            $(element).on('click', '.export-table-checkbox', function () {
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
             });
 
             $(element).sortable({
                 delay: 150,
                 helper: function (e, item) {
-                    if (!item.hasClass('selected-for-sort')) {
-                        item.addClass('selected-for-sort success')
-                            .siblings().removeClass('selected-for-sort success');
+                    var exportColumn = getExportColumnByRow(item);
+                    if (!exportColumn.selectedForSort()) {
+                        for (var i = 0; i < list().length; i++) {
+                            list()[i].selectedForSort(false);
+                        }
+                        exportColumn.selectedForSort(true);
                     }
                     item.siblings('.selected-for-sort').hide();
                     return item;

@@ -1,5 +1,7 @@
 from __future__ import absolute_import
+from __future__ import unicode_literals
 
+import six
 from memoized import memoized
 from corehq.apps.app_manager.app_translations import (
     expected_bulk_app_sheet_headers,
@@ -8,6 +10,7 @@ from corehq.apps.app_manager.app_translations import (
 )
 from corehq.apps.app_manager.app_translations.const import MODULES_AND_FORMS_SHEET_NAME
 from django.utils.translation import ugettext_lazy as _
+from six.moves import zip
 
 
 COLUMNS_TO_COMPARE = {
@@ -54,9 +57,9 @@ class UploadedTranslationsValidator(object):
         number_of_uploaded_rows = len(uploaded_rows)
         number_of_expected_rows = len(expected_rows)
         if number_of_uploaded_rows < number_of_expected_rows:
-            msgs.append(LESS_ROW_COUNT_MISMATCH_MESSAGE)
+            msgs.append(six.text_type(LESS_ROW_COUNT_MISMATCH_MESSAGE))
         elif number_of_uploaded_rows > number_of_expected_rows:
-            msgs.append(MORE_ROW_COUNT_MISMATCH_MESSAGE)
+            msgs.append(six.text_type(MORE_ROW_COUNT_MISMATCH_MESSAGE))
 
         iterate_on = [expected_rows, uploaded_rows]
         # 2 to account for the sheet header as well
