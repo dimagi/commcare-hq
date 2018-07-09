@@ -25,6 +25,7 @@ from django.views.generic import View
 
 from couchexport.export import Format
 from dimagi.utils.couch.cache.cache_core import get_redis_client
+from couchdbkit import ResourceNotFound
 
 from corehq.apps.domain.decorators import require_superuser
 from corehq.apps.hqwebapp.async_handler import AsyncHandlerMixin
@@ -56,7 +57,7 @@ from corehq.apps.accounting.exceptions import (
 )
 from corehq.apps.accounting.interface import (
     AccountingInterface, SubscriptionInterface, SoftwarePlanInterface,
-    InvoiceInterface, WireInvoiceInterface
+    InvoiceInterface, WireInvoiceInterface, CustomerInvoiceInterface
 )
 from corehq.apps.accounting.async_handlers import (
     FeatureRateAsyncHandler,
@@ -73,8 +74,8 @@ from corehq.apps.accounting.async_handlers import (
     SoftwarePlanAsyncHandler,
 )
 from corehq.apps.accounting.models import (
-    Invoice, WireInvoice, BillingAccount, CreditLine, Subscription,
-    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod
+    Invoice, WireInvoice, CustomerInvoice, BillingAccount, CreditLine, Subscription,
+    SoftwarePlanVersion, SoftwarePlan, CreditAdjustment, DefaultProductPlan, StripePaymentMethod, InvoicePdf
 )
 from corehq.apps.accounting.tasks import email_enterprise_report
 from corehq.apps.accounting.utils import (
@@ -859,7 +860,10 @@ class InvoiceSummaryViewBase(AccountingSectionView):
         elif SuppressInvoiceForm.submit_kwarg in self.request.POST:
             if self.suppress_invoice_form.is_valid():
                 self.suppress_invoice_form.suppress_invoice()
-                return HttpResponseRedirect(InvoiceInterface.get_url())
+                if self.invoice.is_customer_invoice:
+                    return HttpResponseRedirect(CustomerInvoiceInterface.get_url())
+                else:
+                    return HttpResponseRedirect(InvoiceInterface.get_url())
         return self.get(request, *args, **kwargs)
 
 
@@ -925,6 +929,88 @@ class InvoiceSummaryView(InvoiceSummaryViewBase):
             'adjustment_list': self.adjustment_list,
         })
         return context
+
+
+class CustomerInvoiceSummaryView(InvoiceSummaryViewBase):
+    urlname = 'customer_invoice_summary'
+    invoice_class = CustomerInvoice
+
+    @property
+    def parent_pages(self):
+        return [{
+            'title': CustomerInvoiceInterface.name,
+            'url': CustomerInvoiceInterface.get_url()
+        }]
+
+    @property
+    @memoized
+    def adjust_balance_form(self):
+        if self.request.method == 'POST':
+            return AdjustBalanceForm(self.invoice, self.request.POST)
+        return AdjustBalanceForm(self.invoice)
+
+    @property
+    @memoized
+    def billing_records(self):
+        return self.invoice.customerbillingrecord_set.all()
+
+    @property
+    @memoized
+    def adjustment_list(self):
+        adjustment_list = CreditAdjustment.objects.filter(customer_invoice=self.invoice)
+        return adjustment_list.order_by('-date_created')
+
+    @property
+    def can_send_email(self):
+        return True
+
+    @property
+    def page_context(self):
+        context = super(CustomerInvoiceSummaryView, self).page_context
+        context.update({
+            'adjustment_balance_form': self.adjust_balance_form,
+            'adjustment_list': self.adjustment_list
+        })
+        return context
+
+
+class CustomerInvoicePdfView(View):
+    urlname = 'invoice_pdf_view'
+
+    def dispatch(self, request, *args, **kwargs):
+        return super(CustomerInvoicePdfView, self).dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        statement_id = kwargs.get('statement_id')
+        if statement_id is None:
+            raise Http404()
+        try:
+            invoice_pdf = InvoicePdf.get(statement_id)
+        except ResourceNotFound:
+            raise Http404()
+
+        try:
+            if not invoice_pdf.is_customer:
+                raise NotImplementedError
+            else:
+                invoice = CustomerInvoice.objects.get(pk=invoice_pdf.invoice_id)
+        except (Invoice.DoesNotExist, WireInvoice.DoesNotExist, CustomerInvoice.DoesNotExist):
+            raise Http404()
+
+        filename = "%(pdf_id)s_%(edition)s_%(filename)s" % {
+            'pdf_id': invoice_pdf._id,
+            'edition': 'customer',
+            'filename': invoice_pdf.get_filename(invoice),
+        }
+        try:
+            data = invoice_pdf.get_data(invoice)
+            response = HttpResponse(data, content_type='application/pdf')
+            response['Content-Disposition'] = 'inline;filename="%s' % filename
+        except Exception as e:
+            log_accounting_error('Fetching invoice PDF failed: %s' % e)
+            return HttpResponse(_("Could not obtain billing statement. "
+                                  "An issue has been submitted."))
+        return response
 
 
 class ManageAccountingAdminsView(AccountingSectionView, CRUDPaginatedViewMixin):
