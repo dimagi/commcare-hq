@@ -1905,6 +1905,8 @@ class AdminTab(UITab):
                  'url': reverse(ManageNotificationView.urlname)},
                 {'title': _('Mass Email Users'),
                  'url': reverse('mass_email')},
+                {'title': _('Maintenance Alerts'),
+                 'url': reverse('alerts')},
             ]
         sections = [
             (_('Administrative Reports'), [
