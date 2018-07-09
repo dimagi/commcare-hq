@@ -44,22 +44,12 @@ class FormDataValueMap(DocumentSchema):
 class Dhis2FormConfig(DocumentSchema):
     xmlns = StringProperty()
     program_id = StringProperty(required=True)
-
-    # Use if orgUnit is constant, otherwise orgUnit is determined by
-    # the location of the user who submitted the form
     org_unit_id = StringProperty(required=False)
-
-    # Use if eventDate is a question value, otherwise eventDate is
-    # the form's submission date.
     event_date = SchemaProperty(ValueSource)
-
-    # Status defaults to "COMPLETED". Set to a different status if form
-    # leaves the event open.
     event_status = StringProperty(
         choices=DHIS2_EVENT_STATUSES,
         default=DHIS2_EVENT_STATUS_COMPLETED,
     )
-
     datavalue_maps = SchemaListProperty(FormDataValueMap)
 
 
