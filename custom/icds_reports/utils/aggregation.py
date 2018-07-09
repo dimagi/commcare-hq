@@ -1389,7 +1389,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
                 "THEN 1 ELSE 0 END)"),
             ('cf_initiation_in_month', "SUM(chm.cf_initiation_in_month)"),
             ('cf_initiation_eligible', "SUM(chm.cf_initiation_eligible)"),
-            ('height_measured_in_month', "SUM(ucr.height_measured_in_month)"),
+            ('height_measured_in_month', "SUM(chm.height_measured_in_month)"),
             ('wasting_normal',
                 "SUM(CASE WHEN ucr.wasting_normal = 1 AND ucr.nutrition_status_weighed = 1 "
                 "AND ucr.height_measured_in_month = 1 THEN 1 ELSE 0 END)"),
@@ -1399,7 +1399,7 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('valid_all_registered_in_month', "SUM(chm.valid_all_registered_in_month)"),
             ('ebf_no_info_recorded', "SUM(chm.ebf_no_info_recorded)"),
             ('weighed_and_height_measured_in_month',
-                "SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND ucr.height_measured_in_month = 1 "
+                "SUM(CASE WHEN chm.nutrition_status_weighed = 1 AND chm.height_measured_in_month = 1 "
                 "THEN 1 ELSE 0 END)"),
             ('weighed_and_born_in_month',
                 "SUM(CASE WHEN (chm.born_in_month = 1 AND (chm.nutrition_status_weighed = 1 "
