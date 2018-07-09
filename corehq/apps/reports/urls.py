@@ -35,7 +35,6 @@ from .views import (
     MySavedReportsView,
     ScheduledReportsView,
     ReportNotificationUnsubscribeView,
-    old_saved_reports,
     case_forms,
     case_property_changes,
     case_property_names,
@@ -93,7 +92,7 @@ urlpatterns = [
 
     url(r'^$', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
-    url(r'^saved_reports', old_saved_reports, name='old_saved_reports'),
+    url(r'^saved_reports', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
 
     url(r'^case_data/(?P<case_id>[\w\-]+)/$', CaseDataView.as_view(), name=CaseDataView.urlname),
     url(r'^case_data/(?P<case_id>[\w\-]+)/forms/$', case_forms, name="single_case_forms"),

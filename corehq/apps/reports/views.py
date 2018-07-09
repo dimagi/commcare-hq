@@ -233,17 +233,6 @@ def can_view_attachments(request):
     )
 
 
-@login_and_domain_required
-@location_safe
-def default(request, domain):
-    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
-
-
-@login_and_domain_required
-def old_saved_reports(request, domain):
-    return default(request, domain)
-
-
 class BaseProjectReportSectionView(BaseDomainView):
     section_name = ugettext_lazy("Project Reports")
 
