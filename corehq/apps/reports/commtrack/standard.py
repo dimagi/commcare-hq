@@ -189,7 +189,7 @@ class CurrentStockStatusReport(GenericTabularReport, CommtrackReportMixin):
         """
         product_name_map = self._product_name_mapping
         # sort
-        sorted_product_name_map = sorted(product_name_map.items(),
+        sorted_product_name_map = sorted(six.iteritems(product_name_map),
                                          key=lambda name_map: name_map[1],
                                          reverse=self._desc_product_order)
         # product to filter
