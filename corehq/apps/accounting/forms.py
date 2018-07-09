@@ -101,8 +101,8 @@ class BillingAccountBasicForm(forms.Form):
         required=False,
         initial=False
     )
-    billing_admin_emails = forms.CharField(
-        label="Billing Admin Emails",
+    enterprise_admin_emails = forms.CharField(
+        label="Enterprise Admin Emails",
         required=False
     )
     active_accounts = forms.IntegerField(
@@ -143,7 +143,7 @@ class BillingAccountBasicForm(forms.Form):
                 'email_list': ','.join(contact_info.email_list),
                 'is_active': account.is_active,
                 'is_customer_billing_account': account.is_customer_billing_account,
-                'billing_admin_emails': ','.join(account.billing_admin_emails),
+                'enterprise_admin_emails': ','.join(account.enterprise_admin_emails),
                 'dimagi_contact': account.dimagi_contact,
                 'entry_point': account.entry_point,
                 'last_payment_method': account.last_payment_method,
@@ -184,7 +184,7 @@ class BillingAccountBasicForm(forms.Form):
             additional_fields.append(
                 crispy.Div(
                     crispy.Field(
-                        'billing_admin_emails',
+                        'enterprise_admin_emails',
                         css_class='input-xxlarge accounting-email-select2',
                         data_bind='attr: {required: is_customer_billing_account}'
                     ),
@@ -264,10 +264,10 @@ class BillingAccountBasicForm(forms.Form):
     def clean_email_list(self):
         return self.cleaned_data['email_list'].split(',')
 
-    def clean_billing_admin_emails(self):
+    def clean_enterprise_admin_emails(self):
         # Do not return a list with an empty string
-        if self.cleaned_data['billing_admin_emails']:
-            return self.cleaned_data['billing_admin_emails'].split(',')
+        if self.cleaned_data['enterprise_admin_emails']:
+            return self.cleaned_data['enterprise_admin_emails'].split(',')
         else:
             return []
 
@@ -319,7 +319,7 @@ class BillingAccountBasicForm(forms.Form):
         account.name = self.cleaned_data['name']
         account.is_active = self.cleaned_data['is_active']
         account.is_customer_billing_account = self.cleaned_data['is_customer_billing_account']
-        account.billing_admin_emails = self.cleaned_data['billing_admin_emails']
+        account.enterprise_admin_emails = self.cleaned_data['enterprise_admin_emails']
         transfer_id = self.cleaned_data['active_accounts']
         if transfer_id:
             transfer_account = BillingAccount.objects.get(id=transfer_id)
