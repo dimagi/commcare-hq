@@ -361,7 +361,7 @@ class Excel2007ExportWriter(ExportWriter):
     max_table_name_size = 31
 
     def _init(self):
-        self.book = openpyxl.Workbook(optimized_write=True)
+        self.book = openpyxl.Workbook()
         self.tables = {}
         self.table_indices = {}
 
