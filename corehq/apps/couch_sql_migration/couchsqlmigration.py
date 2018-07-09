@@ -21,7 +21,6 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -360,7 +359,6 @@ class CouchSqlDomainMigrator(object):
     def _assert_no_migration_restrictions(self, domain_name):
         assert should_use_sql_backend(domain_name)
         assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
-        assert not stale_get_export_count(domain_name)
         assert not any(custom_report_domain == domain_name
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
         assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
