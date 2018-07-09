@@ -362,6 +362,7 @@ class Excel2007ExportWriter(ExportWriter):
 
     def _init(self):
         self.book = openpyxl.Workbook()
+        self.book.remove(self.book.worksheets[0])
         self.tables = {}
         self.table_indices = {}
 
