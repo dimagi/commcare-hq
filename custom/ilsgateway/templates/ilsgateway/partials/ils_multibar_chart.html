@@ -1,5 +1,5 @@
 {% load hq_shared_tags %}
-<script type="text/javascript">
+<script>
     nv.addGraph(function() {
         var chart_config = {{ chart.config_dict|JSON }};
         multibar_chart_data = {{ chart.data|JSON }};
