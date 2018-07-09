@@ -15,9 +15,6 @@ from couchforms.signals import successful_form_received
 from django.utils.translation import ugettext_lazy as _
 from django.urls import reverse
 
-
-# it actually triggers on forms,
-# but I wanted to get a case type, and this is the easiest way
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
 from corehq.motech.dhis2.hendler import send_data_to_dhis2
@@ -58,7 +55,6 @@ class Dhis2Repeater(FormRepeater):
 
     @classmethod
     def get_custom_url(cls, domain):
-        from corehq.motech.repeaters.views.repeaters import AddOpenmrsRepeaterView
         return reverse(AddDhis2RepeaterView.urlname, args=[domain])
 
     def get_payload(self, repeat_record):
