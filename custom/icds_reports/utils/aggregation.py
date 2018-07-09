@@ -1058,8 +1058,21 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
                 "WHEN gm.zscore_grading_hfa = 2 THEN 'moderate' "
                 "WHEN gm.zscore_grading_hfa = 3 THEN 'normal' "
                 "ELSE 'unknown' END"),
-            ("wasting_last_recorded", "ucr.wasting_last_recorded"),
-            ("current_month_wasting", "ucr.current_month_wasting"),
+            ("wasting_last_recorded",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
+                "ELSE 'unknown' END"),
+            ("current_month_wasting",
+                "CASE "
+                "WHEN ucr.height_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfh_last_recorded) != %(start_date)s THEN 'unmeasured' "
+                "WHEN gm.zscore_grading_wfh = 1 THEN 'severe' "
+                "WHEN gm.zscore_grading_wfh = 2 THEN 'moderate' "
+                "WHEN gm.zscore_grading_wfh = 3 THEN 'normal' "
+                "ELSE 'unmeasured' END"),
             ("zscore_grading_hfa", "gm.zscore_grading_hfa"),
             ("zscore_grading_hfa_recorded_in_month",
                 "CASE WHEN (date_trunc('MONTH', gm.zscore_grading_hfa_last_recorded) = %(start_date)s) THEN 1 ELSE 0 END"),
