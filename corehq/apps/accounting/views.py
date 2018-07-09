@@ -974,11 +974,11 @@ class CustomerInvoiceSummaryView(InvoiceSummaryViewBase):
         return context
 
 
-class InvoicePdfView(View):
+class CustomerInvoicePdfView(View):
     urlname = 'invoice_pdf_view'
 
     def dispatch(self, request, *args, **kwargs):
-        return super(InvoicePdfView, self).dispatch(request, *args, **kwargs)
+        return super(CustomerInvoicePdfView, self).dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         statement_id = kwargs.get('statement_id')

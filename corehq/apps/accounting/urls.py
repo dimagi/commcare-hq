@@ -25,7 +25,7 @@ from corehq.apps.accounting.views import (
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
-    InvoicePdfView
+    CustomerInvoicePdfView
 )
 
 
@@ -56,8 +56,8 @@ urlpatterns = [
     url(r'^wire_invoices/(\d+)/$', WireInvoiceSummaryView.as_view(), name=WireInvoiceSummaryView.urlname),
     url(r'^customer_invoices/(\d+)/$', CustomerInvoiceSummaryView.as_view(),
         name=CustomerInvoiceSummaryView.urlname),
-    url(r'^customer_invoices/(?P<statement_id>[\w-]+).pdf$', InvoicePdfView.as_view(),
-        name=InvoicePdfView.urlname),
+    url(r'^customer_invoices/(?P<statement_id>[\w-]+).pdf$', CustomerInvoicePdfView.as_view(),
+        name=CustomerInvoicePdfView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
 ]
