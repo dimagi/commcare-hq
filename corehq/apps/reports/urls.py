@@ -90,7 +90,7 @@ urlpatterns = [
     url(r'builder/subscribe/activating_subscription/$', ReportBuilderPaywallActivatingSubscription.as_view(),
         name=ReportBuilderPaywallActivatingSubscription.urlname),
 
-    url(r'^$', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
+    url(r'^$', MySavedReportsView.as_view(), name="reports_home"),
     url(r'^saved/', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
     url(r'^saved_reports', MySavedReportsView.as_view(), name=MySavedReportsView.urlname),
 
