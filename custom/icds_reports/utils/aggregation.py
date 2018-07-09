@@ -1335,14 +1335,11 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
             ('nutrition_status_weighed', "SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_unweighed', "SUM(chm.wer_eligible) - SUM(chm.nutrition_status_weighed)"),
             ('nutrition_status_normal',
-                "SUM(CASE WHEN ucr.nutrition_status_normal = 1 AND "
-                "chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'normal' THEN 1 ELSE 0 END)"),
             ('nutrition_status_moderately_underweight',
-                "SUM(CASE WHEN ucr.nutrition_status_moderately_underweight = 1 "
-                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'moderately_underweight' THEN 1 ELSE 0 END)"),
             ('nutrition_status_severely_underweight',
-                "SUM(CASE WHEN ucr.nutrition_status_severely_underweight = 1 "
-                "AND chm.nutrition_status_weighed = 1 THEN 1 ELSE 0 END)"),
+                "SUM(CASE WHEN chm.current_month_nutrition_status = 'severely_underweight' THEN 1 ELSE 0 END)"),
             ('wer_eligible', "SUM(chm.wer_eligible)"),
             ('thr_eligible', "SUM(chm.thr_eligible)"),
             ('rations_21_plus_distributed',
