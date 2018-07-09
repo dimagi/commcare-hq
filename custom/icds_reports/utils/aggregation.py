@@ -1009,10 +1009,23 @@ class ChildHealthMonthlyAggregationHelper(BaseICDSAggregationHelper):
             ("counsel_skin_to_skin",
                 "CASE WHEN ucr.pnc_eligible = 1 THEN COALESCE(pnc.skin_to_skin, 0) ELSE 0 END"),
             # GM Indicators
-            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
             ("wer_eligible", "ucr.wer_eligible"),
-            ("nutrition_status_last_recorded", "ucr.nutrition_status_last_recorded"),
-            ("current_month_nutrition_status", "ucr.current_month_nutrition_status"),
+            ("low_birth_weight_born_in_month", "ucr.low_birth_weight_born_in_month"),
+            ("nutrition_status_last_recorded",
+                "CASE "
+                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
+                "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
+                "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
+                "ELSE 'unknown' END"),
+            ("current_month_nutrition_status",
+                "CASE "
+                "WHEN ucr.wer_eligible = 0 THEN NULL "
+                "WHEN date_trunc('MONTH', gm.zscore_grading_wfa_last_recorded) != %(start_date)s THEN 'unweighed' "
+                "WHEN gm.zscore_grading_wfa = 1 THEN 'severely_underweight' "
+                "WHEN gm.zscore_grading_wfa = 2 THEN 'moderately_underweight' "
+                "WHEN gm.zscore_grading_wfa IN (2, 3) THEN 'normal' "
+                "ELSE 'unweighed' END"),
             ("nutrition_status_weighed", "ucr.nutrition_status_weighed"),
             ("recorded_weight", "ucr.weight_recorded_in_month"),
             ("recorded_height",
