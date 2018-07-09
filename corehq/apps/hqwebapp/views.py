@@ -1146,10 +1146,10 @@ class MaintenanceAlertsView(BasePageView):
         from corehq.apps.hqwebapp.models import MaintenanceAlert
         return {
             'alerts': [{
-            'created': six.text_type(alert.created),
-            'active': alert.active,
-            'html': alert.html,
-            'id': alert.id,
+                'created': six.text_type(alert.created),
+                'active': alert.active,
+                'html': alert.html,
+                'id': alert.id,
             } for alert in MaintenanceAlert.objects.order_by('-active', '-created')[:5]]
         }
 
