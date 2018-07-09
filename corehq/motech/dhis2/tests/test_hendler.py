@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from django.test.testcases import TestCase
 from fakecouch import FakeCouchDb
 
@@ -112,4 +113,3 @@ class TestDhisHendler(TestCase):
             },
             dhis_format
         )
-

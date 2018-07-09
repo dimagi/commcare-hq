@@ -13,7 +13,6 @@ from corehq.motech.repeaters.repeater_generators import FormRepeaterJsonPayloadG
 from corehq.motech.repeaters.signals import create_repeat_records
 from couchforms.signals import successful_form_received
 from django.utils.translation import ugettext_lazy as _
-from django.urls import reverse
 
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
