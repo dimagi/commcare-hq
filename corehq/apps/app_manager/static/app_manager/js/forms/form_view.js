@@ -1,4 +1,3 @@
-/* globals SyntaxHighlighter */
 hqDefine("app_manager/js/forms/form_view", function() {
     var initialPageData = hqImport("hqwebapp/js/initial_page_data").get,
         appManagerUtils = hqImport('app_manager/js/app_manager');
@@ -6,16 +5,12 @@ hqDefine("app_manager/js/forms/form_view", function() {
     appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
     appManagerUtils.updatePageTitle(initialPageData("form_name"));
 
-    function formFilterMatches(filter, patternMatches, substringMatches) {
+    function formFilterMatches(filter, substringMatches) {
         if (typeof(filter) !== 'string') {
             return false;
         }
 
         var result = false;
-        $.each(patternMatches, function(index, pattern) {
-            result = result || filter.match(pattern);
-        });
-
         $.each(substringMatches, function(index, sub) {
             result = result || filter.indexOf(sub) !== -1;
         });
@@ -43,7 +38,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
                     filter = filter.replace(sub, '');
                 });
 
-                if (formFilterMatches(filter, patterns.case, patterns.case_substring)) {
+                if (formFilterMatches(filter, patterns.case_substring)) {
                     return true;
                 }
             }
@@ -52,7 +47,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         self.userCaseReferenceNotAllowed = ko.computed(function() {
             return !initialPageData('is_usercase_in_use') && formFilterMatches(
-                self.formFilter(), patterns.usercase, patterns.usercase_substring
+                self.formFilter(), patterns.usercase_substring
             );
         });
 
@@ -155,30 +150,5 @@ hqDefine("app_manager/js/forms/form_view", function() {
                 $("#xform_file_submit").hide();
             }
         }).trigger('change');
-
-        // Advanced > XForm > View
-        $("#xform-source-opener").click(function(evt){
-            if (evt.shiftKey) {
-                // Shift+click: edit form source
-                $(".source-readonly").hide();
-                $(".source-edit").show();
-                $.get($(this).data('href'), function (data) {
-                    $("#xform-source-edit").text(data).blur();
-                }, 'json');
-            } else {
-                // Plain click: view form source
-                $(".source-edit").hide();
-                $(".source-readonly").show();
-                $("#xform-source").text("Loading...");
-                $.get($(this).data('href'), function (data) {
-                    var brush = new SyntaxHighlighter.brushes.Xml();    // eslint-disable-line eslint-dimagi/no-unblessed-new
-                    brush.init({ toolbar: false });
-                    // brush.getDiv seems to escape inconsistently, so I'm helping it out
-                    data = data.replace(/&/g, '&amp;');
-                    $("#xform-source").html(brush.getDiv(data));
-                }, 'json');
-            }
-            $(".xml-source").modal();
-        });
     });
 });

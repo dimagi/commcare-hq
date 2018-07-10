@@ -2,15 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import base64
 import re
-from rest_framework.authentication import TokenAuthentication
-from rest_framework.exceptions import AuthenticationFailed
 from functools import wraps
+
 from django.contrib.auth import authenticate
 from django.http import HttpResponse
 from tastypie.authentication import ApiKeyAuthentication
 
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import ANONYMOUS_WEB_APPS_USAGE
 from corehq.util.hmac_request import validate_request_hmac
 from dimagi.utils.django.request import mutable_querydict
 from python_digest import parse_digest_credentials
@@ -22,7 +20,6 @@ BASIC = 'basic'
 DIGEST = 'digest'
 API_KEY = 'api_key'
 FORMPLAYER = 'formplayer'
-TOKEN = 'token'
 
 
 def determine_authtype_from_header(request, default=DIGEST):
@@ -41,13 +38,11 @@ def determine_authtype_from_header(request, default=DIGEST):
     client should send the initial request with an Authorization header.
     """
     auth_header = (request.META.get('HTTP_AUTHORIZATION') or '').lower()
-    if auth_header.startswith('basic '):
+    if auth_header.startswith(b'basic '):
         return BASIC
-    elif auth_header.startswith('digest '):
+    elif auth_header.startswith(b'digest '):
         # Note: this will not identify initial, uncredentialed digest requests
         return DIGEST
-    elif auth_header.startswith('token '):
-        return TOKEN
     elif all(ApiKeyAuthentication().extract_credentials(request)):
         return API_KEY
 
@@ -123,25 +118,6 @@ def basicauth(realm=''):
             return response
         return wrapper
     return real_decorator
-
-
-def tokenauth(view):
-
-    @wraps(view)
-    def _inner(request, *args, **kwargs):
-        if not ANONYMOUS_WEB_APPS_USAGE.enabled(request.domain):
-            return HttpResponse(status=401)
-        try:
-            user, token = TokenAuthentication().authenticate(request)
-        except AuthenticationFailed as e:
-            return HttpResponse(e, status=401)
-
-        if user.is_active:
-            request.user = user
-            return view(request, *args, **kwargs)
-        else:
-            return HttpResponse('Inactive user', status=401)
-    return _inner
 
 
 def formplayer_auth(view):

@@ -23,7 +23,7 @@
 {% endblock %}
 
 {% block filter_js %}
-<script type="text/javascript">
+<script>
     $.getScript("{% static 'world_vision/ko/report_filter.drilldown_options.js' %}", function() {
        $('#{{ css_id }}').drilldownOptionFilter({
            drilldown_map: {{ option_map|JSON }},

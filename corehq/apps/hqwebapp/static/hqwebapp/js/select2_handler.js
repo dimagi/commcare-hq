@@ -1,6 +1,8 @@
 hqDefine("hqwebapp/js/select2_handler", [
     "jquery",
     "knockout",
+    "select2-3.5.2-legacy/select2",
+    "bootstrap-timepicker/js/bootstrap-timepicker",
 ], function(
     $,
     ko

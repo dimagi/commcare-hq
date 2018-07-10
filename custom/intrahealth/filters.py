@@ -114,16 +114,6 @@ class FicheLocationFilter2(YeksiNaaLocationFilter2):
     required = 1
 
 
-class RecapPassageLocationFilter2(YeksiNaaLocationFilter2):
-    required = 2
-
-    @property
-    def filter_context(self):
-        context = super(RecapPassageLocationFilter2, self).filter_context
-        context.update(dict(hierarchy=location_hierarchy_config(self.domain)))
-        return context
-
-
 class MonthsDateFilter(BaseReportFilter):
     template = "yeksi_naa/months_datespan.html"
     slug = 'datespan'

@@ -13,6 +13,24 @@
     "named_expressions": {
     },
     "named_filters": {
+      "is_v2.0": {
+        "operator": "eq",
+        "type": "boolean_expression",
+        "expression": {
+          "type": "root_doc",
+          "expression": {
+            "datatype": null,
+            "type": "property_path",
+            "property_path": [
+              "form",
+              "selected_programs",
+              "@count"
+            ]
+          }
+        },
+        "comment": null,
+        "property_value": null
+      },
       "is_v2": {
         "operator": "eq",
         "expression": {
@@ -37,13 +55,30 @@
         "name": "is_v2"
       },
       "expression_if_true": {
-        "datatype": null,
-        "type": "property_path",
-        "property_path": [
-          "form",
-          "products",
-          "item"
-        ]
+        "test": {
+          "comment": null,
+          "type": "named",
+          "name": "is_v2.0"
+        },
+        "expression_if_true": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "products",
+            "item"
+          ]
+        },
+        "type": "conditional",
+        "expression_if_false": {
+          "datatype": null,
+          "type": "property_path",
+          "property_path": [
+            "form",
+            "selected_programs",
+            "item"
+          ]
+        }
       },
       "type": "conditional",
       "expression_if_false": {

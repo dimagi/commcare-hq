@@ -646,6 +646,7 @@ class EditLocationView(NewLocationView):
     creates_new_location = False
 
     @method_decorator(can_edit_location)
+    @use_select2
     def dispatch(self, request, *args, **kwargs):
         return super(EditLocationView, self).dispatch(request, *args, **kwargs)
 

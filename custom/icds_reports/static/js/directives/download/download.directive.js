@@ -157,7 +157,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     var init = function() {
         if (vm.selectedLocationId) {
-            locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
+            vm.myPromise = locationsService.getAncestors(vm.selectedLocationId).then(function(data) {
                 var locations = data.locations;
 
                 var selectedLocation = data.selected_location;
@@ -209,7 +209,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
             });
         } else {
             initHierarchy();
-            locationsService.getRootLocations().then(function(data) {
+            vm.myPromise = locationsService.getRootLocations().then(function(data) {
                 locationsCache.root = [NATIONAL_OPTION].concat(data.locations);
             });
             vm.groupByLevels = vm.levels;
@@ -279,7 +279,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
 
     vm.onSelectForISSNIP = function ($item, level) {
         var selectedLocationId = vm.selectedLocations[selectedLocationIndex()];
-        locationsService.getAwcLocations(selectedLocationId).then(function (data) {
+        vm.myPromise = locationsService.getAwcLocations(selectedLocationId).then(function (data) {
             if ($item.user_have_access) {
                 vm.awcLocations = [ALL_OPTION].concat(data);
             } else {
@@ -293,7 +293,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     vm.onSelect = function($item, level) {
         resetLevelsBelow(level);
         if (level < 4) {
-            locationsService.getChildren($item.location_id).then(function (data) {
+            vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
                     vm.selectedLevel = selectedLocationIndex() + 1;
@@ -347,7 +347,7 @@ function DownloadController($rootScope, $location, locationHierarchy, locationsS
     };
 
     vm.getAwcs = function () {
-        locationsService.getAncestors();
+        vm.myPromise = locationsService.getAncestors();
     };
 
     vm.getFormats = function() {

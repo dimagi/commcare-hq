@@ -484,13 +484,6 @@ DATA_FILE_DOWNLOAD = StaticToggle(
     # TODO: Create Confluence docs and add help link
 )
 
-DATA_CORRECTIONS_FORMS = StaticToggle(
-    'data_corrections_forms',
-    'Data Corrections for Forms: Temporarily flagged until UAT is complete',
-    TAG_PRODUCT,
-    [NAMESPACE_DOMAIN],
-)
-
 DETAIL_LIST_TAB_NODESETS = StaticToggle(
     'detail-list-tab-nodesets',
     'Associate a nodeset with a case detail tab',
@@ -1340,20 +1333,27 @@ LOCATION_USERS = StaticToggle(
     ),
 )
 
+LOCATION_SAFETY_EXEMPTION = StaticToggle(
+    'location_safety_exemption',
+    'Exemption from location restrictions for EWS and ILS',
+    TAG_DEPRECATED,
+    [NAMESPACE_DOMAIN],
+    description=(
+        "ewsghana and ilsgateway do some custom location permissions stuff. "
+        "This feature flag grants them access to the web user pages, but it does "
+        "not actually restrict their access at all. This is implemented strictly "
+        "for backwards compatibility and should not be enabled for any other "
+        "project."
+    ),
+    relevant_environments={'production'},
+    always_enabled={'ews-ghana', 'ils-gateway'},
+)
+
 SORT_CALCULATION_IN_CASE_LIST = StaticToggle(
     'sort_calculation_in_case_list',
     'Configure a custom xpath calculation for Sort Property in Case Lists',
     TAG_SOLUTIONS,
     [NAMESPACE_DOMAIN]
-)
-
-ANONYMOUS_WEB_APPS_USAGE = StaticToggle(
-    'anonymous_web_apps_usage',
-    'Infomap: Allow anonymous users to access Web Apps applications',
-    TAG_CUSTOM,
-    [NAMESPACE_DOMAIN],
-    always_disabled={'icds-cas'},
-    description='Users are automatically logged into Web Apps as a designated mobile worker.'
 )
 
 INCLUDE_METADATA_IN_UCR_EXCEL_EXPORTS = StaticToggle(
@@ -1576,6 +1576,14 @@ EXPORT_MULTISORT = StaticToggle(
 )
 
 
+EXPORT_OWNERSHIP = StaticToggle(
+    'export_ownership',
+    'Allow exports to have ownership.',
+    TAG_SOLUTIONS,
+    [NAMESPACE_DOMAIN],
+)
+
+
 APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     'app_trans_with_transifex',
     'Translate Application Content With Transifex',
@@ -1583,3 +1591,18 @@ APP_TRANSLATIONS_WITH_TRANSIFEX = StaticToggle(
     namespaces=[NAMESPACE_USER]
 )
 
+
+VALIDATE_APP_TRANSLATIONS = StaticToggle(
+    'validate_app_translations',
+    'Validate app translations before uploading them',
+    TAG_CUSTOM,
+    namespaces=[NAMESPACE_USER]
+)
+
+
+AGGREGATE_UCRS = StaticToggle(
+    'aggregate_ucrs',
+    'Enable experimental aggregate UCR support',
+    TAG_INTERNAL,  # this might change in the future
+    namespaces=[NAMESPACE_DOMAIN]
+)

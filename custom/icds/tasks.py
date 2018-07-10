@@ -120,7 +120,7 @@ def pull_translation_files_from_transifex(domain, data, email=None):
     translation_file = None
     try:
         translation_file, filename = transifex.generate_excel_file()
-        with open(translation_file.name) as file_obj:
+        with open(translation_file.name, 'rb') as file_obj:
             email = EmailMessage(
                 subject='[{}] - Transifex pulled translations'.format(settings.SERVER_ENVIRONMENT),
                 body="PFA Translations pulled from transifex.",

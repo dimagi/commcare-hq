@@ -48,6 +48,7 @@ hqDefine("reports/js/single_form", [
 
         $('#edit-form', $container).click(function() {
             analyticsUsage('Edit Form Submission');
+            kissAnalytics.track.event("Clicked Edit Form Submission");
         });
 
         readableForm.init();
@@ -68,6 +69,7 @@ hqDefine("reports/js/single_form", [
                 },
             ],
             saveUrl: initialPageData.reverse("edit_form", options.instance_id),
+            analyticsDescriptor: 'Clean Form Data',
         });
 
         $("#archive-form", $container).submit(function() {

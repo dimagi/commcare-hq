@@ -21,8 +21,8 @@ from django.utils.translation import ugettext as _
 from dimagi.utils.django.request import mutable_querydict
 from django_digest.decorators import httpdigest
 from corehq.apps.domain.auth import (
-    determine_authtype_from_request, basicauth, tokenauth,
-    BASIC, DIGEST, API_KEY, TOKEN,
+    determine_authtype_from_request, basicauth,
+    BASIC, DIGEST, API_KEY,
     get_username_and_password_from_request, FORMPLAYER,
     formplayer_auth, formplayer_as_user_auth)
 
@@ -58,10 +58,9 @@ def load_domain(req, domain):
 ########################################################################################################
 
 
-def _redirect_for_login_or_domain(request, redirect_field_name, login_url):
-    path = urlquote(request.get_full_path())
-    nextURL = '%s?%s=%s' % (login_url, redirect_field_name, path)
-    return HttpResponseRedirect(nextURL)
+def redirect_for_login_or_domain(request, login_url=None):
+    from django.contrib.auth.views import redirect_to_login
+    return redirect_to_login(request.get_full_path(), login_url)
 
 
 def _page_is_whitelist(path, domain):
@@ -71,12 +70,6 @@ def _page_is_whitelist(path, domain):
     ])
 
 
-def domain_specific_login_redirect(request, domain):
-    project = Domain.get_by_name(domain)
-    login_url = reverse('login')
-    return _redirect_for_login_or_domain(request, 'next', login_url)
-
-
 def login_and_domain_required(view_func):
 
     @wraps(view_func)
@@ -84,15 +77,15 @@ def login_and_domain_required(view_func):
         user = req.user
         domain_name, domain = load_domain(req, domain)
         if not domain:
-            msg = _(('The domain "{domain}" was not found.').format(domain=domain_name))
+            msg = _('The domain "{domain}" was not found.').format(domain=domain_name)
             raise Http404(msg)
 
         if user.is_authenticated and user.is_active:
             if not domain.is_active:
-                msg = _((
+                msg = _(
                     'The domain "{domain}" has not yet been activated. '
                     'Please report an issue if you think this is a mistake.'
-                ).format(domain=domain_name))
+                ).format(domain=domain_name)
                 messages.info(req, msg)
                 return HttpResponseRedirect(reverse("domain_select"))
             couch_user = _ensure_request_couch_user(req)
@@ -132,8 +125,7 @@ def login_and_domain_required(view_func):
             return view_func(req, domain_name, *args, **kwargs)
         else:
             login_url = reverse('domain_login', kwargs={'domain': domain})
-            return _redirect_for_login_or_domain(req, REDIRECT_FIELD_NAME, login_url)
-
+            return redirect_for_login_or_domain(req, login_url=login_url)
 
     return _inner
 
@@ -142,23 +134,7 @@ def _ensure_request_couch_user(request):
     couch_user = getattr(request, 'couch_user', None)
     if not couch_user and hasattr(request, 'user'):
         request.couch_user = couch_user = CouchUser.from_django_user(request.user)
-    elif couch_user and couch_user.is_anonymous and hasattr(request, 'user') and not request.user.is_anonymous:
-        # if ANONYMOUS_WEB_APPS_USAGE toggle is enabled then `request.couch_user` get's set to the anonymous
-        # mobile user in middleware which breaks this check if later authentication succeeds e.g. apikey
-        request.couch_user = couch_user = CouchUser.from_django_user(request.user)
     return couch_user
-
-
-def domain_required(view_func):
-    @wraps(view_func)
-    def _inner(req, domain, *args, **kwargs):
-        domain_name, domain = load_domain(req, domain)
-        if domain:
-            return view_func(req, domain_name, *args, **kwargs)
-        else:
-            msg = _('The domain "{domain}" was not found.'.format(domain=domain_name))
-            raise Http404(msg)
-    return _inner
 
 
 class LoginAndDomainMixin(object):
@@ -228,10 +204,6 @@ def login_or_digest_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(httpdigest, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
 
 
-def login_or_token_ex(allow_cc_users=False, allow_sessions=True):
-    return _login_or_challenge(tokenauth, allow_cc_users=allow_cc_users, allow_sessions=allow_sessions)
-
-
 def login_or_formplayer_ex(allow_cc_users=False, allow_sessions=True):
     return _login_or_challenge(
         formplayer_as_user_auth,
@@ -250,12 +222,8 @@ def login_or_api_key_ex(allow_cc_users=False, allow_sessions=True):
 
 def _get_multi_auth_decorator(default, allow_formplayer=False):
     """
-    :param allow_formplayer: If True this will allow two additional auth mechanisms which are used
+    :param allow_formplayer: If True this will allow one additional auth mechanism which is used
          by Formplayer:
-
-         - token auth: this get's used by anonymous web apps. A single user in the domain
-             is selected as the 'anonymous' user and had an auth token created for it. This
-             token is then used to authenticate with HQ without requiring the user to log in.
 
          - formplayer auth: for SMS forms there is no active user involved in the session and so
              formplayer can not use the session cookie to auth. To allow formplayer access to the
@@ -266,16 +234,14 @@ def _get_multi_auth_decorator(default, allow_formplayer=False):
         @wraps(fn)
         def _inner(request, *args, **kwargs):
             authtype = determine_authtype_from_request(request, default=default)
-            if authtype in (TOKEN, FORMPLAYER) and not allow_formplayer:
+            if authtype == FORMPLAYER and not allow_formplayer:
                 return HttpResponseForbidden()
-            function_wrappers = {
+            function_wrapper = {
                 BASIC: login_or_basic_ex(allow_cc_users=True),
                 DIGEST: login_or_digest_ex(allow_cc_users=True),
                 API_KEY: login_or_api_key_ex(allow_cc_users=True),
-                TOKEN: login_or_token_ex(allow_cc_users=True),
                 FORMPLAYER: login_or_formplayer_ex(allow_cc_users=True),
-            }
-            function_wrapper = function_wrappers[authtype]
+            }[authtype]
             return function_wrapper(fn)(request, *args, **kwargs)
         return _inner
     return decorator
@@ -383,6 +349,9 @@ def cls_to_view(additional_decorator=None):
 def api_domain_view(view):
     """
     Decorate this with any domain view that should be accessed via api only
+
+    Currently only required by for a single view used by 'kawok-vc-desarrollo' domain
+    See http://manage.dimagi.com/default.asp?225116#1137527
     """
     @wraps(view)
     @api_key()
@@ -399,11 +368,9 @@ def api_domain_view(view):
 def login_required(view_func):
     @wraps(view_func)
     def _inner(request, *args, **kwargs):
-        login_url = reverse('login')
         user = request.user
         if not (user.is_authenticated and user.is_active):
-            return _redirect_for_login_or_domain(request,
-                    REDIRECT_FIELD_NAME, login_url)
+            return redirect_for_login_or_domain(request)
 
         # User's login and domain have been validated - it's safe to call the view function
         return view_func(request, *args, **kwargs)
