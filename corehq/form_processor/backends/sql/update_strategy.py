@@ -191,22 +191,30 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                     self.case.track_create(index)
 
     def _apply_attachments_action(self, attachment_action, xform):
+
+        # NOTE `attachment_action` is a
+        # `casexml.apps.case.xml.parser.CaseAttachmentAction` and
+        # `attachment_action.attachments` is a dict with values of
+        # `casexml.apps.case.xml.parser.CaseAttachment`
+
         current_attachments = self.case.case_attachments
-        for identifier, att in attachment_action.attachments.items():
-            new_attachment = CaseAttachmentSQL.from_case_update(att)
-            if new_attachment.is_present:
+        for name, att in attachment_action.attachments.items():
+            if att.is_delete:
+                if name in current_attachments:
+                    self.case.track_delete(current_attachments[name])
+            else:
                 form_attachment = xform.get_attachment_meta(att.attachment_src)
-                if identifier in current_attachments:
-                    existing_attachment = current_attachments[identifier]
-                    existing_attachment.from_form_attachment(form_attachment)
+                if name in current_attachments:
+                    existing_attachment = current_attachments[name]
+                    existing_attachment.from_form_attachment(
+                        form_attachment, att.attachment_src)
                     self.case.track_update(existing_attachment)
                 else:
-                    new_attachment.from_form_attachment(form_attachment)
+                    new_attachment = CaseAttachmentSQL.new(att.identifier)
+                    new_attachment.from_form_attachment(
+                        form_attachment, att.attachment_src)
                     new_attachment.case = self.case
                     self.case.track_create(new_attachment)
-            elif identifier in current_attachments:
-                existing_attachment = current_attachments[identifier]
-                self.case.track_delete(existing_attachment)
 
     def _apply_close_action(self, case_update):
         self.case.closed = True
@@ -255,7 +263,7 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         self._reset_case_state()
 
         original_indices = {index.identifier: index for index in self.case.indices}
-        original_attachments = {attach.identifier: attach for attach in self.case.get_attachments()}
+        original_attachments = {attach.name: attach for attach in self.case.get_attachments()}
 
         real_transactions = []
         for transaction in transactions:
@@ -263,8 +271,15 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
                 self._apply_form_transaction(transaction)
                 real_transactions.append(transaction)
 
-        self._delete_old_related_models(original_indices, self.case.get_live_tracked_models(CommCareCaseIndexSQL))
-        self._delete_old_related_models(original_attachments, self.case.get_live_tracked_models(CaseAttachmentSQL))
+        self._delete_old_related_models(
+            original_indices,
+            self.case.get_live_tracked_models(CommCareCaseIndexSQL)
+        )
+        self._delete_old_related_models(
+            original_attachments,
+            self.case.get_live_tracked_models(CaseAttachmentSQL),
+            key="name",
+        )
 
         self.case.deleted = already_deleted or not bool(real_transactions)
 
@@ -272,9 +287,9 @@ class SqlCaseUpdateStrategy(UpdateStrategy):
         if not self.case.modified_on:
             self.case.modified_on = rebuild_transaction.server_date
 
-    def _delete_old_related_models(self, original_models_by_id, models_to_keep):
+    def _delete_old_related_models(self, original_models_by_id, models_to_keep, key="identifier"):
         for model in models_to_keep:
-            original_models_by_id.pop(model.identifier, None)
+            original_models_by_id.pop(getattr(model, key), None)
 
         for model in original_models_by_id.values():
             self.case.track_delete(model)

@@ -114,7 +114,7 @@
     "ReportCaseToElasticsearchPillow": {
         "advertised_name": "ReportCaseToElasticsearchPillow",
         "change_feed_type": "KafkaChangeFeed",
-        "checkpoint_id": "ReportCaseToElasticsearchPillow-test_report_cases_czei39du507m9mmpqk3y01x72a3ux4p0",
+        "checkpoint_id": "ReportCaseToElasticsearchPillow-test_report_cases_201807050731",
         "full_class_name": "pillowtop.pillow.interface.ConstructedPillow",
         "name": "ReportCaseToElasticsearchPillow"
     },

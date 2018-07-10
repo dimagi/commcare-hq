@@ -540,12 +540,11 @@ def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
     for name, attachment in six.iteritems(couch_case.case_attachments):
         blob = couch_case.blobs[name]
+        assert name == attachment.identifier or not attachment.identifier or not name, \
+            (name, attachment.identifier)
         sql_case.track_create(CaseAttachmentSQL(
-            name=name,
+            name=name or attachment.identifier,
             case=sql_case,
-            identifier=attachment.identifier,
-            attachment_src=attachment.attachment_src,
-            attachment_from=attachment.attachment_from,
             content_type=attachment.server_mime,
             content_length=attachment.content_length,
             blob_id=blob.id,
