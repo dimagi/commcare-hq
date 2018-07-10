@@ -5,6 +5,7 @@ import os
 from collections import namedtuple
 from copy import deepcopy
 
+import settings
 from corehq.apps.callcenter.utils import get_call_center_domains
 from corehq.apps.userreports.models import StaticDataSourceConfiguration
 from io import open
@@ -28,8 +29,10 @@ def call_center_data_source_configuration_provider():
     domains = [domain.name for domain in get_call_center_domains() if domain.use_fixtures]
     for data_source_path in data_source_paths:
         data_source_json = _get_json(data_source_path)
+        data_source_json['domains'] = domains
+        data_source_json['server_environment'] = [settings.SERVER_ENVIRONMENT]
         ds_conf = StaticDataSourceConfiguration.wrap(deepcopy(data_source_json))
-        ds_conf.domains = domains
+        # ds_conf.domains = domains
         yield ds_conf, data_source_path
 
 
