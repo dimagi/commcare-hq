@@ -8,13 +8,14 @@ hqDefine("hqwebapp/js/tab_url_hashes", [
     $
 ) {
     $(function(){
+        var tabSelector = "a[data-toggle='tab']:not(.no-hash)";
         if (window.location.hash) {
             $("a[href='" + window.location.hash + "']").tab('show');
         } else {
-            $("a[data-toggle='tab']:first").tab('show');
+            $(tabSelector).first().tab('show');
         }
 
-        $('body').on('click', "a[data-toggle='tab']", function (e) {
+        $('body').on('click', tabSelector, function (e) {
             e.preventDefault();
             var tabName = this.getAttribute('href')
             if (window.history.pushState) {
@@ -28,7 +29,7 @@ hqDefine("hqwebapp/js/tab_url_hashes", [
         });
 
         $(window).on('popstate', function () {
-            var anchor = window.location.hash || $("a[data-toggle='tab']").first().attr('href');
+            var anchor = window.location.hash || $(tabSelector).first().attr('href');
             $("a[href='" + anchor + "']").tab('show');
         });
     });
