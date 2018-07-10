@@ -10,9 +10,11 @@ from custom.icds_reports.messages import wasting_help_text, stunting_help_text
 from custom.icds_reports.models import AggChildHealthMonthly, AggCcsRecordMonthly
 from custom.icds_reports.utils import percent_diff, get_value, apply_exclude, exclude_records_by_age_for_column, \
     wasting_moderate_column, wasting_severe_column, stunting_moderate_column, stunting_severe_column, \
-    hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval
+    hfa_recorded_in_month_column, wfh_recorded_in_month_column, chosen_filters_to_labels, default_age_interval, \
+    dont_cache_empty
 
 
+@dont_cache_empty
 @quickcache(['domain', 'config', 'show_test', 'icds_feature_flag'], timeout=30 * 60)
 def get_maternal_child_data(domain, config, show_test=False, icds_feature_flag=False):
 

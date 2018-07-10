@@ -10,10 +10,11 @@ from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcDailyView, AggAwcMonthly
 from custom.icds_reports.utils import (
     percent_increase, percent_diff, get_value, apply_exclude,
-    person_has_aadhaar_column, person_is_beneficiary_column
-)
+    person_has_aadhaar_column, person_is_beneficiary_column,
+    dont_cache_empty)
 
 
+@dont_cache_empty
 @quickcache(['domain', 'now_date', 'config', 'show_test', 'beta'], timeout=30 * 60)
 def get_demographics_data(domain, now_date, config, show_test=False, beta=False):
     now_date = datetime(*now_date)

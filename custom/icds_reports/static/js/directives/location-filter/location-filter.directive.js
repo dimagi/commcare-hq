@@ -76,7 +76,7 @@ function LocationModalController($uibModalInstance, $location, locationsService,
         if ($location.path().indexOf('awc_reports') !== -1) {
             vm.showMessage = vm.selectedLocations[4] === null;
         }
-        if (level < 4) {
+        if (level < 4 && $item) {
             vm.myPromise = locationsService.getChildren($item.location_id).then(function (data) {
                 if ($item.user_have_access) {
                     vm.locationsCache[$item.location_id] = [ALL_OPTION].concat(data.locations);
@@ -241,7 +241,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                 vm.location_id = 'all';
             }
             storageService.setKey('search', $location.search());
-            if (selectedLocationIndex() === 4) {
+            if (selectedLocationIndex() === 4 && $location.path().indexOf('awc_reports') === -1) {
                 $location.path('awc_reports');
             }
             $scope.$emit('filtersChange');
@@ -322,6 +322,20 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
 
                 if ($location.path().indexOf('awc_reports') !== -1 && selectedLocationIndex() < 4) {
                     vm.open();
+                }
+                if ($location.path().indexOf('awc_reports') === -1 && selectedLocationIndex() === 4) {
+                    vm.onSelect(vm.selectedLocations[3], 3);
+                    vm.selectedLocationId = vm.selectedLocations[3].location_id;
+                    vm.location_id = vm.selectedLocationId;
+                    var locations = vm.getLocationsForLevel(selectedLocationIndex());
+                    var loc = _.filter(locations, function (loc) {
+                        return loc.location_id === vm.selectedLocationId;
+                    });
+                    $location.search('location_name', loc[0]['name']);
+                    $location.search('location_id', vm.selectedLocationId);
+                    $location.search('selectedLocationLevel', selectedLocationIndex());
+                    storageService.setKey('search', $location.search());
+                    $scope.$emit('filtersChange');
                 }
             });
         } else {
