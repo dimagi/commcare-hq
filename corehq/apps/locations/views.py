@@ -821,7 +821,6 @@ class LocationImportView(BaseLocationView):
         })
         return context
 
-    @method_decorator(lock_locations)
     def post(self, request, *args, **kwargs):
         upload = request.FILES.get('bulk_upload_file')
         if not upload:
@@ -843,10 +842,7 @@ class LocationImportView(BaseLocationView):
             expiry=TEN_HOURS,
             file_extension=file_extention_from_filename(upload.name),
         )
-        # We need to start this task after this current request finishes because this
-        # request uses the lock_locations decorator which acquires the same lock that
-        # the task will try to acquire.
-        task = import_locations_async.apply_async(args=[domain, file_ref.download_id], countdown=10)
+        task = import_locations_async.delay(domain, file_ref.download_id)
         # put the file_ref.download_id in cache to lookup from elsewhere
         cache.set(import_locations_task_key(domain), file_ref.download_id, TEN_HOURS)
         file_ref.set_task(task)
