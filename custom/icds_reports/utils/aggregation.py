@@ -1495,13 +1495,15 @@ class AggChildHealthAggregationHelper(BaseICDSAggregationHelper):
 
         # in the future these may need to include more columns, but historically
         # caste, resident, minority and disabled have been skipped
-        group_by = ["state_id", "month", "gender", "age_tranche"]
+        group_by = ["state_id"]
         if aggregation_level > 1:
             group_by.append("district_id")
         if aggregation_level > 2:
             group_by.append("block_id")
         if aggregation_level > 3:
             group_by.append("supervisor_id")
+
+        group_by.extend(["month", "gender", "age_tranche"])
 
         return """
         INSERT INTO "{to_tablename}" (
