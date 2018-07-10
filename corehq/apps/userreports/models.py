@@ -671,11 +671,11 @@ class StaticDataSourceConfiguration(JsonObject):
     def _all(cls):
         for path_or_glob in settings.STATIC_DATA_SOURCES:
             if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+                yield _get_wrapped_object_from_file(path_or_glob, cls), path_or_glob
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield cls.wrap(_read_file(path)), path
+                    yield _get_wrapped_object_from_file(path, cls), path
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
@@ -713,7 +713,7 @@ class StaticDataSourceConfiguration(JsonObject):
 
     @classmethod
     def _get_from_metadata(cls, metadata):
-        wrapped = cls.wrap(_read_file(metadata.path))
+        wrapped = _get_wrapped_object_from_file(metadata.path, cls)
         return cls._get_datasource_config(wrapped, metadata.domain)
 
     @classmethod
@@ -747,11 +747,11 @@ class StaticReportConfiguration(JsonObject):
     def _all(cls):
         for path_or_glob in settings.STATIC_UCR_REPORTS:
             if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+                yield _get_wrapped_object_from_file(path_or_glob, cls), path_or_glob
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield cls.wrap(_read_file(path)), path
+                    yield _get_wrapped_object_from_file(path, cls), path
 
     @classmethod
     @quickcache([], skip_arg='rebuild')
@@ -834,7 +834,7 @@ class StaticReportConfiguration(JsonObject):
 
     @classmethod
     def _get_from_metadata(cls, metadata):
-        wrapped = cls.wrap(_read_file(metadata.path))
+        wrapped = _get_wrapped_object_from_file(metadata.path, cls)
         domain = metadata.domain
         return cls._get_report_config(wrapped, domain)
 
@@ -1026,9 +1026,16 @@ def get_report_config(config_id, domain):
     return config, report_config_id_is_static(config_id)
 
 
-def _read_file(path):
+def _get_wrapped_object_from_file(path, wrapper):
     with open(path, encoding='utf-8') as f:
         if path.endswith('.json'):
-            return json.load(f)
+            doc = json.load(f)
         else:
-            return yaml.load(f)
+            doc = yaml.load(f)
+
+    try:
+        return wrapper.wrap(doc)
+    except Exception as ex:
+        msg = '{}: {}'.format(path, ex.args[0]) if ex.args else str(path)
+        ex.args = (msg,) + ex.args[1:]
+        raise
