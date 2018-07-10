@@ -20,7 +20,7 @@ from corehq.apps.locations.models import SQLLocation
 from corehq.apps.userreports.dbaccessors import get_datasources_for_domain
 from corehq.apps.userreports.tasks import rebuild_indicators_in_place
 from corehq.apps.users.forms import generate_strong_password
-from corehq.apps.users.models import CommCareUser
+from corehq.apps.users.models import CommCareUser, CouchUser
 from corehq.apps.users.util import format_username
 from corehq.toggles import LOCATIONS_IN_UCR
 from corehq.util.couch import IterDB, iter_update, DocUpdate
@@ -157,9 +157,9 @@ def download_locations_async(domain, download_id, include_consumption, headers_o
 
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
-def import_locations_async(domain, file_ref_id, user):
+def import_locations_async(domain, file_ref_id, user_id):
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
-    results = new_locations_import(domain, importer, user)
+    results = new_locations_import(domain, importer, CouchUser.get_by_user_id(user_id))
     importer.mark_complete()
 
     if LOCATIONS_IN_UCR.enabled(domain):

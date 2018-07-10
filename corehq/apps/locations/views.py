@@ -849,7 +849,7 @@ class LocationImportView(BaseLocationView):
         # request uses the lock_locations decorator which acquires the same lock that
         # the task will try to acquire.
         task = import_locations_async.apply_async(
-            args=[domain, file_ref.download_id, request.couch_user],
+            args=[domain, file_ref.download_id, request.couch_user.user_id],
             countdown=10,
         )
         # put the file_ref.download_id in cache to lookup from elsewhere
