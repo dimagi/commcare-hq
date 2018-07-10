@@ -654,3 +654,22 @@ def percent(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
+
+
+def values_are_empty(returned_values):
+    value_to_check = returned_values['records']
+    for line in value_to_check:
+        for tile in line:
+            if tile['value'] or tile['all']:
+                return False
+    return True
+
+
+def dont_cache_empty(f):
+    def decorator(*args, **kwargs):
+        returned_values = f(*args, **kwargs)
+        if values_are_empty(returned_values):
+            # quickcache feature of clearing cache for specific values
+            f.clear(*args, **kwargs)
+        return returned_values
+    return decorator

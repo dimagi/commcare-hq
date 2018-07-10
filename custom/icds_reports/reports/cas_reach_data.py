@@ -8,9 +8,10 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcMonthly, AggAwcDailyView
-from custom.icds_reports.utils import get_value, percent_increase, apply_exclude
+from custom.icds_reports.utils import get_value, percent_increase, apply_exclude, dont_cache_empty
 
 
+@dont_cache_empty
 @quickcache(['domain', 'now_date', 'config', 'show_test'], timeout=30 * 60)
 def get_cas_reach_data(domain, now_date, config, show_test=False):
     now_date = datetime(*now_date)
