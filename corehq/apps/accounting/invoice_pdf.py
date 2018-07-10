@@ -130,7 +130,7 @@ class InvoiceTemplate(object):
                  swift_code=settings.BANK_SWIFT_CODE,
                  applied_credit=None,
                  subtotal=None, tax_rate=None, applied_tax=None, total=None,
-                 is_wire=False, is_prepayment=False):
+                 is_wire=False, is_customer=False, is_prepayment=False):
         self.canvas = Canvas(filename)
         self.canvas.setFontSize(DEFAULT_FONT_SIZE)
         self.logo_filename = os.path.join(os.getcwd(), logo_filename)
@@ -155,6 +155,7 @@ class InvoiceTemplate(object):
         self.applied_tax = applied_tax
         self.total = total
         self.is_wire = is_wire
+        self.is_customer = is_customer
         self.is_prepayment = is_prepayment
 
         self.items = []

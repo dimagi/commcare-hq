@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 from io import BytesIO
 import attr
 import datetime
-import json
 import logging
 
 from django.core import cache
@@ -14,7 +13,6 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import connections
 from django.db.utils import OperationalError
-from restkit import Resource
 from celery import Celery
 import requests
 
@@ -63,8 +61,7 @@ def check_rabbitmq():
         mq_management_url = amqp_parts[0].replace('5672', '15672')
         vhost = amqp_parts[1]
         try:
-            mq = Resource('http://%s' % mq_management_url, timeout=2)
-            vhost_dict = json.loads(mq.get('api/vhosts', timeout=2).body_string())
+            vhost_dict = requests.get('http://%s/api/vhosts' % mq_management_url, timeout=2).json()
             for d in vhost_dict:
                 if d['name'] == vhost:
                     return ServiceStatus(True, 'RabbitMQ OK')
@@ -134,9 +131,11 @@ def check_celery():
 def check_heartbeat():
     celery_monitoring = getattr(settings, 'CELERY_FLOWER_URL', None)
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
-        t = cresource.get("api/workers", params_dict={'status': True}).body_string()
-        all_workers = json.loads(t)
+        all_workers = requests.get(
+            celery_monitoring + '/api/workers',
+            params={'status': True},
+            timeout=3,
+        ).json()
         bad_workers = []
         expected_running, expected_stopped = parse_celery_workers(all_workers)
 

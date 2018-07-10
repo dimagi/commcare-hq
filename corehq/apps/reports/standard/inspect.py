@@ -146,7 +146,7 @@ class SubmitHistory(SubmitHistoryMixin, ProjectReport):
     @property
     def headers(self):
         h = [
-            DataTablesColumn(_("View Form")),
+            DataTablesColumn(_("View Form"), css_class="view-form-link"),
             DataTablesColumn(_("Username"), prop_name='form.meta.username'),
             DataTablesColumn(
                 _("Submission Time") if self.by_submission_time

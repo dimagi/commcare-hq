@@ -8,7 +8,6 @@ from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.views.mobile.users import MobileWorkerListView
 from corehq.apps.users.models import WebUser, CouchUser
 from corehq.apps.users.dbaccessors.all_commcare_users import delete_all_users
-from corehq.apps.users.const import ANONYMOUS_USERNAME
 from corehq.util.test_utils import flag_enabled, generate_cases
 
 
@@ -56,36 +55,6 @@ class TestMobileWorkerListView(TestCase):
                 self.domain,
             )
         )
-        self.assertFalse(user.is_anonymous)
-
-    @flag_enabled('ANONYMOUS_WEB_APPS_USAGE')
-    def test_create_anonymous_mobile_worker(self):
-        resp = self._remote_invoke('create_mobile_worker', {
-            'mobileWorker': {
-                'first_name': 'Test',
-                'last_name': 'Test',
-                'username': 'test.test',
-                'password': '123',
-                'is_anonymous': True,
-            },
-        })
-        content = json.loads(resp.content)
-        self.assertEqual(content['success'], True)
-
-        user = CouchUser.get_by_username(
-            '{}@{}.commcarehq.org'.format(
-                ANONYMOUS_USERNAME,
-                self.domain,
-            )
-        )
-        self.assertTrue(user.is_anonymous)
-
-    def test_check_username_for_anonymous(self):
-        resp = self._remote_invoke('check_username', {
-            'username': ANONYMOUS_USERNAME
-        })
-        content = json.loads(resp.content)
-        self.assertTrue('error' in content)
 
 
 @generate_cases((

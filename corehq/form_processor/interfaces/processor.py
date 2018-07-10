@@ -300,7 +300,9 @@ class XFormQuestionValueIterator(object):
         raise StopIteration
 
     def _next(self):
-        (qid, index) = re.match(r'(\w+)(?:\[(\d+)])?', self.levels.pop()).groups()
+        # Match an identifier (likely a case property or question id)
+        # optionally followed by a repeat group index
+        (qid, index) = re.match(r'([^[]+)(?:\[(\d+)])?', self.levels.pop()).groups()
         if index is not None:
             index = int(index) - 1
         return (qid, index)

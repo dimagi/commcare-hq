@@ -43,9 +43,7 @@ from corehq.apps.app_manager.util import (
     enable_usercase,
     actions_use_usercase,
     advanced_actions_use_usercase,
-    CASE_XPATH_PATTERN_MATCHES,
     CASE_XPATH_SUBSTRING_MATCHES,
-    USER_CASE_XPATH_PATTERN_MATCHES,
     USER_CASE_XPATH_SUBSTRING_MATCHES,
 )
 from corehq.apps.app_manager.xform import (
@@ -488,7 +486,17 @@ def get_xform_source(request, domain, app_id, form_unique_id):
         form = app.get_form(form_unique_id)
     except IndexError:
         raise Http404()
-    return _get_xform_source(request, app, form)
+
+    lang = request.COOKIES.get('lang', app.langs[0])
+    source = form.source
+    response = HttpResponse(source)
+    response['Content-Type'] = "application/xml"
+    for lc in [lang] + app.langs:
+        if lc in form.name:
+            filename = "%s.xml" % unidecode(form.name[lc])
+            break
+    set_file_download(response, filename)
+    return response
 
 
 @require_GET
@@ -511,7 +519,7 @@ def get_form_questions(request, domain, app_id):
     return json_response(xform_questions)
 
 
-def get_apps_modules(domain, current_app_id=None, current_module_id=None):
+def get_apps_modules(domain, current_app_id=None, current_module_id=None, app_doc_types=('Application',)):
     """
     Returns a domain's Applications and their modules.
 
@@ -519,7 +527,9 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None):
     set to True for them. The interface uses this to select the current
     app and module by default.
 
-    Linked, deleted and remote apps are omitted.
+    Linked and remote apps are omitted. Use the app_doc_types parameter
+    to change this behaviour. (Deleted apps are not returned because the
+    underlying Couch view doesn't include them.)
     """
     return [
         {
@@ -535,7 +545,7 @@ def get_apps_modules(domain, current_app_id=None, current_module_id=None):
         for app in get_apps_in_domain(domain)
         # No linked, deleted or remote apps. (Use app.doc_type not
         # app.get_doc_type() so that the suffix isn't dropped.)
-        if app.doc_type == 'Application'
+        if app.doc_type in app_doc_types
     ]
 
 
@@ -666,9 +676,7 @@ def get_form_view_context_and_template(request, domain, form, langs, messages=me
         'is_case_list_form': form.is_case_list_form,
         'edit_name_url': reverse('edit_form_attr', args=[app.domain, app.id, form.unique_id, 'name']),
         'form_filter_patterns': {
-            'case': CASE_XPATH_PATTERN_MATCHES,
             'case_substring': CASE_XPATH_SUBSTRING_MATCHES,
-            'usercase': USER_CASE_XPATH_PATTERN_MATCHES,
             'usercase_substring': USER_CASE_XPATH_SUBSTRING_MATCHES,
         },
         'custom_instances': [
@@ -806,23 +814,6 @@ def view_form(request, domain, app_id, form_unique_id):
         request, domain, app_id,
         form_unique_id=form_unique_id
     )
-
-
-def _get_xform_source(request, app, form, filename="form.xml"):
-    download = json.loads(request.GET.get('download', 'false'))
-    lang = request.COOKIES.get('lang', app.langs[0])
-    source = form.source
-    if download:
-        response = HttpResponse(source)
-        response['Content-Type'] = "application/xml"
-        for lc in [lang] + app.langs:
-            if lc in form.name:
-                filename = "%s.xml" % unidecode(form.name[lc])
-                break
-        set_file_download(response, filename)
-        return response
-    else:
-        return json_response(source)
 
 
 @require_can_edit_apps

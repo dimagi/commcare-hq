@@ -64,7 +64,6 @@
     "d3-3.5.17": "d3#3.5.17",
     "nvd3-1.8.6": "nvd3#1.8.6",
     "codemirror": "5.5.0",
-    "syntaxhighlighter": "alexgorbatchev/syntaxhighlighter#3.0.83",
     "zxcvbn": "4.2.0",
     "font-awesome": "fontawesome#4.7.0",
     "moment": "2.12.0",
@@ -79,7 +78,8 @@
     "jsdiff": "~3.2.0",
     "datamaps": "^0.5.8",
     "topojson": "^3.0.0",
-    "r.js": "^2.3.5"
+    "r.js": "^2.3.5",
+    "jquery-memoized-ajax": "^0.5.0"
   },
   "devDependencies": {
     "chai": "3.3.0",

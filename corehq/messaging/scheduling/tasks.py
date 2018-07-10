@@ -12,6 +12,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
     TimedScheduleInstance,
     CaseAlertScheduleInstance,
     CaseTimedScheduleInstance,
+    CaseScheduleInstanceMixin,
 )
 from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_alert_schedule_instance,
@@ -29,6 +30,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.dbaccessors import (
     delete_case_schedule_instance,
     delete_alert_schedule_instances_for_schedule,
     delete_timed_schedule_instances_for_schedule,
+    delete_schedule_instances_by_case_id,
 )
 from corehq.util.celery_utils import no_result_task
 from datetime import datetime
@@ -423,7 +425,10 @@ def _handle_schedule_instance(instance, save_function):
     """
     :return: True if the event was handled, otherwise False
     """
-    if instance.memoized_schedule.deleted:
+    if (
+        instance.memoized_schedule.deleted or
+        (isinstance(instance, CaseScheduleInstanceMixin) and (instance.case is None or instance.case.is_deleted))
+    ):
         instance.delete()
         return False
 
@@ -484,3 +489,9 @@ def handle_case_timed_schedule_instance(case_id, schedule_instance_id):
             return
 
         _handle_schedule_instance(instance, save_case_schedule_instance)
+
+
+@no_result_task(queue='background_queue', acks_late=True)
+def delete_schedule_instances_for_cases(domain, case_ids):
+    for case_id in case_ids:
+        delete_schedule_instances_by_case_id(domain, case_id)

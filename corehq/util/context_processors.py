@@ -74,7 +74,7 @@ def domain_billing_context(request):
     if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account:
-            if request.couch_user.username in account.billing_admin_emails:
+            if request.couch_user.username in account.enterprise_admin_emails:
                 is_domain_billing_admin = True
             elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
                 is_domain_billing_admin = True
@@ -137,4 +137,24 @@ def commcare_hq_names(request):
             'COMMCARE_NAME': settings.COMMCARE_NAME,
             'COMMCARE_HQ_NAME': settings.COMMCARE_HQ_NAME
         }
+    }
+
+
+def mobile_experience(request):
+    show_mobile_ux_warning = False
+    mobile_ux_cookie_name = ''
+    if (hasattr(request, 'couch_user')
+        and hasattr(request, 'user_agent')
+        and (settings.SERVER_ENVIRONMENT
+             in ['production', 'staging', 'localdev'])):
+        mobile_ux_cookie_name = '{}-has-seen-mobile-ux-warning'.format(request.couch_user.get_id)
+        show_mobile_ux_warning = (
+            not request.COOKIES.get(mobile_ux_cookie_name)
+            and request.user_agent.is_mobile
+            and request.user.is_authenticated
+            and request.user.is_active
+        )
+    return {
+        'show_mobile_ux_warning': show_mobile_ux_warning,
+        'mobile_ux_cookie_name': mobile_ux_cookie_name,
     }

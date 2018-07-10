@@ -188,7 +188,6 @@ DEFAULT_APPS = (
     'django.contrib.sessions',
     'django.contrib.sites',
     'django.contrib.staticfiles',
-    'rest_framework.authtoken',
     'djcelery',
     'django_prbac',
     'djangular',
@@ -303,6 +302,7 @@ HQ_APPS = (
     'corehq.apps.reports.app_config.ReportsModule',
     'corehq.apps.reports_core',
     'corehq.apps.userreports',
+    'corehq.apps.aggregate_ucrs',
     'corehq.apps.data_interfaces',
     'corehq.apps.export',
     'corehq.apps.builds',
@@ -350,7 +350,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -704,7 +703,7 @@ ANALYTICS_CONFIG = {
 
 GREENHOUSE_API_KEY = ''
 
-MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY3p1ZSIsImEiOiJjaWgwa3U5OXIwMGk3a3JrcjF4cjYwdGd2In0.8Tys94ISZlY-h5Y4W160RA'
+MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiZGltYWdpIiwiYSI6ImpZWWQ4dkUifQ.3FNy5rVvLolWLycXPxKVEA'
 
 OPEN_EXCHANGE_RATES_API_ID = ''
 
@@ -1027,6 +1026,7 @@ TEMPLATES = [
                 'corehq.util.context_processors.domain',
                 'corehq.util.context_processors.domain_billing_context',
                 'corehq.util.context_processors.enterprise_mode',
+                'corehq.util.context_processors.mobile_experience',
                 'corehq.util.context_processors.js_api_keys',
                 'corehq.util.context_processors.websockets_override',
                 'corehq.util.context_processors.commcare_hq_names',
@@ -1931,6 +1931,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
+    os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+
 ]
 
 
@@ -2022,7 +2024,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+
+    os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [

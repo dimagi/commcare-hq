@@ -159,8 +159,8 @@ class TransifexApiClient(object):
         if response.status_code != 200:
             return response
         temp_file = tempfile.NamedTemporaryFile()
-        with open(temp_file.name, 'w') as f:
-            f.write(response.content)
+        with open(temp_file.name, 'w', encoding='utf-8') as f:
+            f.write(response.content.decode(encoding='utf-8'))
         if lock_resource:
             self.lock_resource(resource_slug)
         return polib.pofile(temp_file.name)

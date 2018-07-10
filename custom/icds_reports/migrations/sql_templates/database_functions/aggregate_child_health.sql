@@ -125,7 +125,7 @@ BEGIN
     '0, ' ||
     '0, ' ||
     'sum(pse_eligible), ' ||
-    'sum(pse_attended_16_days), ' ||
+    '0, ' ||
     'sum(born_in_month), ' ||
     'sum(low_birth_weight_born_in_month), ' ||
     'sum(bf_at_birth_born_in_month), ' ||
@@ -201,6 +201,7 @@ BEGIN
     'counsel_adequate_bf = temp.counsel_adequate_bf, ' ||
     'ebf_no_info_recorded = temp.ebf_no_info_recorded, ' ||
     'thr_eligible = temp.thr_eligible, ' ||
+    'pse_attended_16_days = temp.pse_attended_16_days, ' ||
     'rations_21_plus_distributed = temp.rations_21_plus_distributed, ' ||
     'zscore_grading_hfa_recorded_in_month = temp.zscore_grading_hfa_recorded_in_month, ' ||
     'zscore_grading_wfh_recorded_in_month = temp.zscore_grading_wfh_recorded_in_month ' ||
@@ -242,6 +243,7 @@ BEGIN
       'sum(counsel_adequate_bf) as counsel_adequate_bf, ' ||
       'sum(ebf_no_info_recorded) as ebf_no_info_recorded, ' ||
       'sum(thr_eligible) as thr_eligible, ' ||
+      'COUNT(*) FILTER (WHERE pse_eligible = 1 AND pse_days_attended >= 16) as pse_attended_16_days, ' ||
       'sum(CASE WHEN num_rations_distributed >= 21 THEN 1 ELSE 0 END) as rations_21_plus_distributed, ' ||
       'sum(zscore_grading_hfa_recorded_in_month) as zscore_grading_hfa_recorded_in_month, '
       'sum(zscore_grading_wfh_recorded_in_month) as zscore_grading_wfh_recorded_in_month ' ||

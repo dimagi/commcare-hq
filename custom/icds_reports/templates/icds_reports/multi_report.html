@@ -54,7 +54,7 @@
 {% endblock %}
 
 {% block js-inline %} {{ block.super }}
-    <script type="text/javascript">
+    <script>
         $(function() {
             $('#fieldset_location_async').on('change', 'select', function(e) {
                 e.stopPropagation();

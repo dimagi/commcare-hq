@@ -385,3 +385,7 @@ class Broadcast(models.Model):
 
     def soft_delete(self):
         raise NotImplementedError()
+
+    @classmethod
+    def domain_has_broadcasts(cls, domain):
+        return cls.objects.filter(domain=domain, deleted=False).exists()

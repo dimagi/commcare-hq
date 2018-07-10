@@ -1,10 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+import copy
 import doctest
 import json
 import os
 import uuid
 import warnings
+
 import mock
 from django.test import SimpleTestCase, TestCase
 
@@ -27,6 +30,7 @@ from corehq.motech.openmrs.repeater_helpers import (
     get_patient_by_identifier,
     get_patient_by_uuid,
     get_relevant_case_updates_from_form_json,
+    save_match_ids,
 )
 
 
@@ -87,6 +91,39 @@ PATIENT_SEARCH_RESPONSE = json.loads("""{
         }
     ]
 }""")
+CASE_CONFIG = {
+    'patient_identifiers': {
+        'uuid': {'doc_type': 'CaseProperty', 'case_property': 'openmrs_uuid'},
+        'e2b97b70-1d5f-11e0-b929-000c29ad1d07': {'doc_type': 'CaseProperty', 'case_property': 'nid'}
+    },
+    'match_on_ids': ['uuid'],
+    'person_properties': {
+        'gender': {'doc_type': 'CaseProperty', 'case_property': 'sex'},
+        'birthdate': {'doc_type': 'CaseProperty', 'case_property': 'dob'},
+    },
+    'person_preferred_name': {
+        'givenName': {'doc_type': 'CaseProperty', 'case_property': 'first_name'},
+        'familyName': {'doc_type': 'CaseProperty', 'case_property': 'last_name'},
+    },
+    'person_preferred_address': {
+        'address1': {'doc_type': 'CaseProperty', 'case_property': 'address_1'},
+        'address2': {'doc_type': 'CaseProperty', 'case_property': 'address_2'},
+    },
+    'person_attributes': {
+        'c1f4239f-3f10-11e4-adec-0800271c1b75': {'doc_type': 'CaseProperty', 'case_property': 'caste'},
+        'c1f455e7-3f10-11e4-adec-0800271c1b75': {
+            'doc_type': 'CasePropertyMap',
+            'case_property': 'class',
+            'value_map': {
+                'sc': 'c1fcd1c6-3f10-11e4-adec-0800271c1b75',
+                'general': 'c1fc20ab-3f10-11e4-adec-0800271c1b75',
+                'obc': 'c1fb51cc-3f10-11e4-adec-0800271c1b75',
+                'other_caste': 'c207073d-3f10-11e4-adec-0800271c1b75',
+                'st': 'c20478b6-3f10-11e4-adec-0800271c1b75'
+            }
+        },
+    },
+}
 
 
 @mock.patch.object(CaseAccessors, 'get_cases', lambda self, case_ids, ordered=False: [{
@@ -398,6 +435,39 @@ class GetPatientTest(SimpleTestCase):
         patient = get_patient_by_identifier(
             requests_mock, 'e2b966d0-1d5f-11e0-b929-000c29ad1d07', '11111111/11/1111')
         self.assertEqual(patient['uuid'], '5ba94fa2-9cb3-4ae6-b400-7bf45783dcbf')
+
+
+class SaveMatchIdsTests(SimpleTestCase):
+
+    def setUp(self):
+        self.case = mock.Mock()
+        self.case.domain = DOMAIN
+        self.case.get_id = 'deadbeef'
+        self.case_config = copy.deepcopy(CASE_CONFIG)
+        self.patient = PATIENT_SEARCH_RESPONSE['results'][0]
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
+    def test_save_openmrs_uuid(self, case_block_mock, _):
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'openmrs_uuid'
+        save_match_ids(self.case, self.case_config, self.patient)
+        case_block_mock.assert_called_with(
+            case_id='deadbeef',
+            create=False,
+            update={'openmrs_uuid': '672c4a51-abad-4b5e-950c-10bc262c9c1a'}
+        )
+
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.submit_case_blocks')
+    @mock.patch('corehq.motech.openmrs.repeater_helpers.CaseBlock')
+    def test_save_external_id(self, case_block_mock, _):
+        self.case_config['patient_identifiers']['uuid']['case_property'] = 'external_id'
+        save_match_ids(self.case, self.case_config, self.patient)
+        case_block_mock.assert_called_with(
+            case_id='deadbeef',
+            create=False,
+            external_id='672c4a51-abad-4b5e-950c-10bc262c9c1a',
+            update={}
+        )
 
 
 class DocTests(SimpleTestCase):

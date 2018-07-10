@@ -4,9 +4,9 @@ from corehq.util.elastic import es_index
 from pillowtop.es_utils import ElasticsearchIndexInfo
 
 
-REPORT_CASE_INDEX = es_index("report_cases_czei39du507m9mmpqk3y01x72a3ux4p0")
+REPORT_CASE_INDEX = es_index("report_cases_201807050731")
 
-REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
+REPORT_CASE_MAPPING = {'_meta': {'comment': '2013-11-05 dmyung',
            'created': None},
  'date_detection': False,
  'date_formats': ['yyyy-MM-dd',
@@ -29,15 +29,12 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
  'properties': {'actions': {'dynamic': True,
                             'properties': {'action_type': {'type': 'string'},
                                            'attachments': {'dynamic': False,
-                                                           'properties': {'attachment_from': {'type': 'string'},
-                                                                          'attachment_name': {'type': 'string'},
-                                                                          'attachment_properties': {'dynamic': False,
-                                                                                                    'type': 'object'},
+                                                           'properties': {'attachment_name': {'type': 'string'},
+                                                                          'attachment_properties': {'dynamic': False,   # noqa: E501
+                                                                                                    'type': 'object'},  # noqa: E501
                                                                           'attachment_size': {'type': 'long'},
-                                                                          'attachment_src': {'type': 'string'},
                                                                           'doc_type': {'index': 'not_analyzed',
                                                                                        'type': 'string'},
-                                                                          'identifier': {'type': 'string'},
                                                                           'server_md5': {'type': 'string'},
                                                                           'server_mime': {'type': 'string'}},
                                                            'type': 'object'},
@@ -65,15 +62,12 @@ REPORT_CASE_MAPPING={'_meta': {'comment': '2013-11-05 dmyung',
                                            'xform_xmlns': {'type': 'string'}},
                             'type': 'nested'},
                 'case_attachments': {'dynamic': True,
-                                     'properties': {'attachment_from': {'type': 'string'},
-                                                    'attachment_name': {'type': 'string'},
+                                     'properties': {'attachment_name': {'type': 'string'},
                                                     'attachment_properties': {'dynamic': False,
                                                                               'type': 'object'},
                                                     'attachment_size': {'type': 'long'},
-                                                    'attachment_src': {'type': 'string'},
                                                     'doc_type': {'index': 'not_analyzed',
                                                                  'type': 'string'},
-                                                    'identifier': {'type': 'string'},
                                                     'server_md5': {'type': 'string'},
                                                     'server_mime': {'type': 'string'}},
                                      'type': 'object'},
