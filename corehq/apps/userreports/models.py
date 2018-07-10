@@ -689,11 +689,7 @@ class StaticDataSourceConfiguration(JsonObject):
                 for wrapped, path in provider_fn():
                     yield wrapped
 
-        for wrapped in __get_all():
-            if (not ignore_server_environment and wrapped.server_environment and
-                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
-                continue
-            yield wrapped
+        return __get_all() if ignore_server_environment else _filter_by_server_env(__get_all())
 
     @classmethod
     def all(cls, ignore_server_environment=True):
@@ -765,11 +761,7 @@ class StaticReportConfiguration(JsonObject):
                     for path in files:
                         yield _get_wrapped_object_from_file(path, cls)
 
-        for wrapped in __get_all():
-            if (not ignore_server_environment and wrapped.server_environment and
-                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
-                continue
-            yield wrapped
+        return __get_all() if ignore_server_environment else _filter_by_server_env(__get_all())
 
     @classmethod
     @memoized
@@ -1052,3 +1044,10 @@ def _get_wrapped_object_from_file(path, wrapper):
         msg = '{}: {}'.format(path, ex.args[0]) if ex.args else str(path)
         ex.args = (msg,) + ex.args[1:]
         raise
+
+
+def _filter_by_server_env(configs):
+    for wrapped in configs:
+        if wrapped.server_environment and settings.SERVER_ENVIRONMENT not in wrapped.server_environment:
+            continue
+        yield wrapped
