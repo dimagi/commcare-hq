@@ -17,7 +17,7 @@ hqDefine("hqwebapp/js/tab_url_hashes", [
 
         $('body').on('click', tabSelector, function (e) {
             e.preventDefault();
-            var tabName = this.getAttribute('href')
+            var tabName = this.getAttribute('href');
             if (window.history.pushState) {
                 window.history.pushState(null, null, tabName);
             } else {
