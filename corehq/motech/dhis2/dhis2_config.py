@@ -5,27 +5,7 @@ from couchdbkit.ext.django.schema import DocumentSchema, ListProperty, StringPro
     SchemaListProperty
 
 from corehq.motech.dhis2.const import DHIS2_EVENT_STATUSES, DHIS2_EVENT_STATUS_COMPLETED
-
-
-def recurse_subclasses(cls):
-    return (
-        cls.__subclasses__() +
-        [subsub for sub in cls.__subclasses__() for subsub in recurse_subclasses(sub)]
-    )
-
-
-class ValueSource(DocumentSchema):
-    @classmethod
-    def wrap(cls, data):
-        if cls is ValueSource:
-            return {
-                sub._doc_type: sub for sub in recurse_subclasses(cls)
-            }[data['doc_type']].wrap(data)
-        else:
-            return super(ValueSource, cls).wrap(data)
-
-    def get_value(self, case_trigger_info):
-        raise NotImplementedError()
+from corehq.motech.value_source import ValueSource
 
 
 class FormQuestion(ValueSource):

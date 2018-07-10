@@ -6,7 +6,7 @@ from collections import namedtuple
 from dimagi.utils.dates import force_to_datetime
 
 from corehq.apps.users.models import CouchUser
-from corehq.motech.dhis2.const import LOCATION_DHIS_ID
+from corehq.motech.dhis2.const import LOCATION_DHIS_ID, DHIS2_API_VERSION
 from corehq.motech.openmrs.repeater_helpers import get_form_question_values
 import logging
 import six
@@ -61,15 +61,15 @@ def _to_dhis_format(config, payload):
     form_data = get_form_question_values(payload)
     dhis_format = {}
 
-    to_dhis_format = {
-        'program_id': _get_program,
-        'org_unit_id': _get_org_unit,
-        'event_date': _get_event_date,
-        'event_status': _get_event_status,
-        'datavalue_maps': _get_datavalues,
-    }
+    to_dhis_format_functions = [
+        _get_program,
+        _get_org_unit,
+        _get_event_date,
+        _get_event_status,
+        _get_datavalues,
+    ]
 
-    for key, func in six.iteritems(to_dhis_format):
+    for key, func in to_dhis_format_functions:
         dhis_format.update(func(config, form_data, payload))
 
     return dhis_format
@@ -77,4 +77,4 @@ def _to_dhis_format(config, payload):
 
 def send_data_to_dhis2(request, dhis2_config, payload):
     dhis_format = _to_dhis_format(dhis2_config, payload)
-    return request.post('/api/26/events', json=dhis_format)
+    return request.post('/api/%s/events' % DHIS2_API_VERSION, json=dhis_format)
