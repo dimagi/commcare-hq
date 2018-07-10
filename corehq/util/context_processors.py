@@ -74,7 +74,7 @@ def domain_billing_context(request):
     if getattr(request, 'couch_user', None) and getattr(request, 'domain', None):
         account = BillingAccount.get_account_by_domain(request.domain)
         if account:
-            if request.couch_user.username in account.billing_admin_emails:
+            if request.couch_user.username in account.enterprise_admin_emails:
                 is_domain_billing_admin = True
             elif has_privilege(request, privileges.ACCOUNTING_ADMIN):
                 is_domain_billing_admin = True
