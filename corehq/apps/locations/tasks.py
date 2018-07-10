@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import logging
 import uuid
+from datetime import datetime
 
 from celery.task import task
 from django.conf import settings
@@ -157,7 +159,21 @@ def download_locations_async(domain, download_id, include_consumption=False):
 @serial_task('{domain}', default_retry_delay=5 * 60, timeout=LOCK_LOCATIONS_TIMEOUT, max_retries=12,
              queue=settings.CELERY_MAIN_QUEUE, ignore_result=False)
 def import_locations_async(domain, file_ref_id):
+    start = datetime.now()
     importer = MultiExcelImporter(import_locations_async, file_ref_id)
+
+    # Log progress and task results because they are not
+    # sent to the view when CELERY_ALWAYS_EAGER is true
+    should_log_progress = getattr(settings, 'CELERY_ALWAYS_EAGER', False)
+    if should_log_progress:
+        def log_add_progress(count=1):
+            original_add_progress(count)
+            log.info("processed %s / %s", importer.progress, importer.total_rows)
+
+        log = logging.getLogger(__name__)
+        original_add_progress = importer.add_progress
+        importer.add_progress = log_add_progress
+
     results = new_locations_import(domain, importer)
     importer.mark_complete()
 
@@ -169,6 +185,19 @@ def import_locations_async(domain, file_ref_id):
         datasources = get_datasources_for_domain(domain, "Location", include_static=True)
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
+
+    if should_log_progress:
+        log.info("location import total time: %s", datetime.now() - start)
+        log.info(
+            "import_locations_async %s results: %s -> success=%s",
+            file_ref_id,
+            " ".join(
+                "%s=%r" % (name, getattr(results, name))
+                for name in ["messages", "warnings", "errors"]
+                if getattr(results, name)
+            ),
+            results.success,
+        )
 
     return {
         'messages': results
