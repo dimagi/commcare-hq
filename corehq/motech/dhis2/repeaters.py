@@ -16,7 +16,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from corehq.motech.repeaters.views.repeaters import AddDhis2RepeaterView
 from corehq.motech.requests import Requests
-from corehq.motech.dhis2.hendler import send_data_to_dhis2
+from corehq.motech.dhis2.handler import send_data_to_dhis2
 from corehq.toggles import DHIS2_INTEGRATION, DHIS2_REPEATER_INTEGRATION
 from corehq.util import reverse
 
@@ -36,6 +36,9 @@ class Dhis2Repeater(FormRepeater):
             isinstance(other, self.__class__) and
             self.get_id == other.get_id
         )
+
+    def __hash__(self):
+        return hash(self.get_id)
 
     @memoized
     def payload_doc(self, repeat_record):
