@@ -543,10 +543,14 @@ def get_data_cleaning_data(form_data, instance):
                 if question.repeat:
                     value = "{}[{}]{}".format(question.repeat, repeat_index + 1,
                                               re.sub(r'^' + question.repeat, '', question.value))
+
+                # Limit data cleaning to nodes that can be found in the response submission.
+                # form_data may contain other data that shouldn't be clean-able, like subcase attributes.
                 try:
-                    node = get_node(instance.get_xml_element(), value, instance.xmlns)
+                    get_node(instance.get_xml_element(), value, instance.xmlns)
                 except XFormQuestionValueNotFound:
                     continue
+
                 question_response_map[value] = {
                     'label': question.label,
                     'icon': question.icon,

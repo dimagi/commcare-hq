@@ -225,8 +225,13 @@ def resave_form(domain, form):
         XFormInstance.get_db().save_doc(form.to_json())
 
 
-def get_node(xml, question, xmlns=None):
-    node = xml
+def get_node(root, question, xmlns=None):
+    '''
+    Given an xml element, find the node corresponding to a question path.
+    See XFormQuestionValueIterator for question path format.
+    Throws XFormQuestionValueNotFound if question is not present.
+    '''
+    node = root
     i = XFormQuestionValueIterator(question)
     for (qid, index) in i:
         try:
@@ -239,12 +244,12 @@ def get_node(xml, question, xmlns=None):
     return node
 
 
-def update_response(xml, question, response, xmlns=None):
+def update_response(root, question, response, xmlns=None):
     '''
-    Given a form submission's xml element, updates the response for an individual question.
+    Given a form submission's xml root, updates the response for an individual question.
     Question and response are both strings; see XFormQuestionValueIterator for question format.
     '''
-    node = get_node(xml, question, xmlns)
+    node = get_node(root, question, xmlns)
     if node.text != response:
         node.text = response
         return True

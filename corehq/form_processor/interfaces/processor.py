@@ -143,6 +143,10 @@ class FormProcessorInterface(object):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     def update_responses(self, xform, value_responses_map, user_id):
+        '''
+        Update a set of question responses. Returns a list of any
+        questions that were not found in the xform.
+        '''
         from corehq.form_processor.utils.xform import update_response
         errors = []
 
