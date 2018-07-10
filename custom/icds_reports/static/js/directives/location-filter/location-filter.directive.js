@@ -327,7 +327,7 @@ function LocationFilterController($rootScope, $scope, $location, $uibModal, loca
                     vm.onSelect(vm.selectedLocations[3], 3);
                     vm.selectedLocationId = vm.selectedLocations[3].location_id;
                     vm.location_id = vm.selectedLocationId;
-                    var locations = vm.getLocationsForLevel(selectedLocationIndex());
+                    locations = vm.getLocationsForLevel(selectedLocationIndex());
                     var loc = _.filter(locations, function (loc) {
                         return loc.location_id === vm.selectedLocationId;
                     });
