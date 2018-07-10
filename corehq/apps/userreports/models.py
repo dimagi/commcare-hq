@@ -649,8 +649,8 @@ class StaticDataSourceConfiguration(JsonObject):
     For custom data sources maintained in the repository
     """
     _datasource_id_prefix = STATIC_PREFIX
-    domains = ListProperty()
-    server_environment = ListProperty()
+    domains = ListProperty(required=True)
+    server_environment = ListProperty(required=True)
     config = DictProperty()
 
     @classmethod
@@ -728,12 +728,12 @@ class StaticReportConfiguration(JsonObject):
     """
     For statically defined reports based off of custom data sources
     """
-    domains = ListProperty()
+    domains = ListProperty(required=True)
     report_id = StringProperty(validators=(_check_ids))
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
-    server_environment = ListProperty()
+    server_environment = ListProperty(required=True)
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
