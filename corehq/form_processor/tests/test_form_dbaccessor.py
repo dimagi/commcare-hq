@@ -424,10 +424,23 @@ class FormAccessorsTests(TestCase):
         xform = submit_form_locally(formxml, DOMAIN).xform
 
         updates = {'breakfast': 'fruit'}
-        FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
         form = FormAccessors(DOMAIN).get_form(xform.form_id)
+        self.assertEqual(0, len(errors))
         self.assertEqual('fruit', form.form_data['breakfast'])
         self.assertEqual('sandwich', form.form_data['lunch'])
+
+    def test_update_responses_error(self):
+        formxml = FormSubmissionBuilder(
+            form_id='123',
+            form_properties={'nine': 'nueve'}
+        ).as_xml_string()
+        xform = submit_form_locally(formxml, DOMAIN).xform
+
+        updates = {'eight': 'ocho'}
+        errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
+        self.assertEqual(1, len(errors))
+        self.assertEqual('eight', errors[0])
 
 
 @use_sql_backend
