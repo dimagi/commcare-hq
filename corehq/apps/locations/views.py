@@ -362,9 +362,9 @@ class LocationTypesView(BaseDomainView):
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
             if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
-        names = payload_loc_type_name_by_pk.values()
+        names = list(payload_loc_type_name_by_pk.values())
         names_are_unique = len(names) == len(set(names))
-        codes = payload_loc_type_code_by_pk.values()
+        codes = list(payload_loc_type_code_by_pk.values())
         codes_are_unique = len(codes) == len(set(codes))
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
