@@ -2,7 +2,7 @@ hqDefine('accounting/js/base_subscriptions_main', [
     'jquery',
     'knockout',
     'accounting/js/widgets',
-    'hqwebapp/js/stay_on_tab',
+    'hqwebapp/js/tab_url_hashes',
     'accounting/js/credits_tab',
     'jquery-ui/ui/datepicker',
 ], function(
