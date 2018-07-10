@@ -59,7 +59,7 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     def test_data_sources_actually_exist(self):
 
         data_sources_on_domain = defaultdict(set)
-        for data_source in StaticDataSourceConfiguration.all(use_server_filter=False):
+        for data_source in StaticDataSourceConfiguration.all(ignore_server_environment=True):
             data_sources_on_domain[data_source.domain].add(data_source.get_id)
 
         def has_no_data_source(report_config):
