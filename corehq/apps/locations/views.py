@@ -332,6 +332,21 @@ class LocationTypesView(BaseDomainView):
             sql_loc_types[pk] = loc_type
             loc_type.save()
 
+        def unique_name_and_code():
+            current_location_types = LocationType.objects.by_domain(request.domain)
+            for location_type in current_location_types:
+                if location_type.pk in payload_loc_type_name_by_pk:
+                    # to check if the name/code was swapped with another location by confirming if
+                    # either name/code has changed but the current name is still present in the names/codes passed
+                    if (
+                            (location_type.name != payload_loc_type_name_by_pk.get(location_type.pk) and
+                             location_type.name in names) or
+                            (location_type.code != payload_loc_type_code_by_pk.get(location_type.pk) and
+                             location_type.code in codes)
+                    ):
+                        return False
+            return True
+
         loc_types = payload['loc_types']
         pks = []
         payload_loc_type_name_by_pk = {}
@@ -345,7 +360,7 @@ class LocationTypesView(BaseDomainView):
             if not _is_fake_pk(pk):
                 pks.append(loc_type['pk'])
             payload_loc_type_name_by_pk[loc_type['pk']] = loc_type['name']
-            if loc_type['code']:
+            if loc_type.get('code'):
                 payload_loc_type_code_by_pk[loc_type['pk']] = loc_type['code']
         names = payload_loc_type_name_by_pk.values()
         names_are_unique = len(names) == len(set(names))
@@ -354,23 +369,13 @@ class LocationTypesView(BaseDomainView):
         if not names_are_unique or not codes_are_unique:
             raise LocationConsistencyError("'name' and 'code' are supposed to be unique")
 
-        current_location_types = LocationType.objects.by_domain(request.domain)
-        for location_type in current_location_types:
-            if location_type.pk in payload_loc_type_name_by_pk:
-                # to check if the name/code was swapped with another location by confirming if
-                # either name/code has changed but the current name is still present in the names/codes passed
-                if (
-                        (location_type.name != payload_loc_type_name_by_pk.get(location_type.pk) and
-                         location_type.name in names) or
-                        (location_type.code != payload_loc_type_code_by_pk[location_type.pk] and
-                         location_type.code in codes)
-                ):
-                    messages.error(request, LocationConsistencyError(_(
-                        "Looks like you are assigning a location name/code to a different location "
-                        "in the same request. Please do this in two separate updates by using a "
-                        "temporary name to free up the name/code to be re-assigned."))
-                    )
-                    return self.get(request, *args, **kwargs)
+        if not unique_name_and_code():
+            messages.error(request, LocationConsistencyError(_(
+                "Looks like you are assigning a location name/code to a different location "
+                "in the same request. Please do this in two separate updates by using a "
+                "temporary name to free up the name/code to be re-assigned."))
+            )
+            return self.get(request, *args, **kwargs)
         hierarchy = self.get_hierarchy(loc_types)
 
         if not self.remove_old_location_types(pks):
