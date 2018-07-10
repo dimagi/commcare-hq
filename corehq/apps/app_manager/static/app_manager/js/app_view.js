@@ -63,7 +63,7 @@ hqDefine("app_manager/js/app_view", function() {
             return self;
         };
         if ($('#multimedia-tab').length) {
-            var multimediaTab = new multimediaTabModel(),
+            var multimediaTab = multimediaTabModel(),
                 initializeMultimediaTab = function() {
                     if (multimediaTab.load_state() === null) {
                         multimediaTab.load_if_necessary();
