@@ -671,32 +671,35 @@ class StaticDataSourceConfiguration(JsonObject):
         }
 
     @classmethod
-    def _all(cls):
+    def _all(cls, use_server_filter=True):
         """
         :return: Generator of all wrapped configs read from disk
         """
-        for path_or_glob in settings.STATIC_DATA_SOURCES:
-            if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob))
-            else:
-                files = glob.glob(path_or_glob)
-                for path in files:
-                    yield cls.wrap(_read_file(path))
+        def __get_all():
+            for path_or_glob in settings.STATIC_DATA_SOURCES:
+                if os.path.isfile(path_or_glob):
+                    yield cls.wrap(_read_file(path_or_glob))
+                else:
+                    files = glob.glob(path_or_glob)
+                    for path in files:
+                        yield cls.wrap(_read_file(path))
 
-        for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
-            provider_fn = to_function(provider_path, failhard=True)
-            for wrapped, path in provider_fn():
-                yield wrapped
+            for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
+                provider_fn = to_function(provider_path, failhard=True)
+                for wrapped, path in provider_fn():
+                    yield wrapped
 
-    @classmethod
-    def all(cls, use_server_filter=True):
-        """Unoptimized method that get's all configs by re-reading from disk"""
-        for wrapped in cls._all():
+        for wrapped in __get_all():
             if (use_server_filter and
                     wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
+            yield wrapped
 
+    @classmethod
+    def all(cls, use_server_filter=True):
+        """Unoptimized method that get's all configs by re-reading from disk"""
+        for wrapped in cls._all(use_server_filter):
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -753,14 +756,21 @@ class StaticReportConfiguration(JsonObject):
         )
 
     @classmethod
-    def _all(cls):
-        for path_or_glob in settings.STATIC_UCR_REPORTS:
-            if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob))
-            else:
-                files = glob.glob(path_or_glob)
-                for path in files:
-                    yield cls.wrap(_read_file(path))
+    def _all(cls, ignore_server_environment=False):
+        def __get_all():
+            for path_or_glob in settings.STATIC_UCR_REPORTS:
+                if os.path.isfile(path_or_glob):
+                    yield cls.wrap(_read_file(path_or_glob))
+                else:
+                    files = glob.glob(path_or_glob)
+                    for path in files:
+                        yield cls.wrap(_read_file(path))
+
+        for wrapped in __get_all():
+            if (not ignore_server_environment and wrapped.server_environment and
+                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
+                continue
+            yield wrapped
 
     @classmethod
     @memoized
@@ -774,11 +784,7 @@ class StaticReportConfiguration(JsonObject):
     @classmethod
     def all(cls, ignore_server_environment=False):
         """Only used in tests"""
-        for wrapped in StaticReportConfiguration._all():
-            if (not ignore_server_environment and wrapped.server_environment and
-                    settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
-                continue
-
+        for wrapped in StaticReportConfiguration._all(ignore_server_environment):
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
