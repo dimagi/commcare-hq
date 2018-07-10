@@ -17,6 +17,7 @@
         "vectorlink-ethiopia",
         "vectorlink-uganda"
     ],
+    "server_environment": ["production"],
     "config": {
         "engine_id": "default",
         "base_item_expression": {

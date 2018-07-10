@@ -28,6 +28,7 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "report_id": "supervisory_report_v2",
     "data_source_table": "supervisory-v2-001",
     "config": {
