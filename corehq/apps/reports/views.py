@@ -1586,21 +1586,22 @@ def edit_case_view(request, domain, case_id):
 
     update = {}
     old_properties = case.dynamic_case_properties()
-    for name in request.POST:
+    properties = request.POST['properties']
+    for name in properties:
         if name != 'external_id':       # handled separately below
             if name in old_properties:  # updating property
-                if old_properties[name] != request.POST[name]:
-                    update[name] = request.POST[name]
-            elif request.POST[name]:    # new property
-                update[name] = request.POST[name]
+                if old_properties[name] != properties[name]:
+                    update[name] = properties[name]
+            elif properties[name]:    # new property
+                update[name] = properties[name]
 
     case_block_kwargs = {}
     if update:
         case_block_kwargs['update'] = update
 
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
-    if 'external_id' in request.POST and request.POST['external_id'] != case.external_id:
-        case_block_kwargs['external_id'] = request.POST['external_id']
+    if 'external_id' in properties and properties['external_id'] != case.external_id:
+        case_block_kwargs['external_id'] = properties['external_id']
 
     if case_block_kwargs:
         submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
@@ -2421,9 +2422,10 @@ def edit_form(request, domain, instance_id):
     assert instance.domain == domain
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
-    old_values, dummy = get_data_cleaning_data(form_data, instance)
-    updates = {name: request.POST[name] for name in request.POST
-            if name in old_values and old_values[name] != request.POST[name]}
+    old_properties, dummy = get_data_cleaning_data(form_data, instance)
+    properties = request.POST['properties']
+    updates = {name: properties[name] for name in properties
+            if name in old_properties and old_properties[name] != properties[name]}
 
     if updates:
         errors = FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id)
