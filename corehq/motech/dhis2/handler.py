@@ -9,7 +9,6 @@ from corehq.apps.users.models import CouchUser
 from corehq.motech.dhis2.const import LOCATION_DHIS_ID, DHIS2_API_VERSION
 from corehq.motech.openmrs.repeater_helpers import get_form_question_values
 import logging
-import six
 
 logger = logging.getLogger('dhis2')
 Dhis2Response = namedtuple('Dhis2Response', 'status_code reason content')
