@@ -10,6 +10,9 @@ from lxml import etree
 from redis.exceptions import RedisError
 
 from casexml.apps.case.exceptions import IllegalCaseId
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
+from corehq.form_processor.models import Attachment
+from couchforms.const import ATTACHMENT_NAME
 from memoized import memoized
 from ..utils import should_use_sql_backend
 import six
@@ -142,31 +145,32 @@ class FormProcessorInterface(object):
         return self.processor.xformerror_from_xform_instance(instance, error_message, with_new_id=with_new_id)
 
     def update_responses(self, xform, value_responses_map, user_id):
+        """
+        Update a set of question responses. Returns a list of any
+        questions that were not found in the xform.
+        """
+        from corehq.form_processor.interfaces.dbaccessors import FormAccessors
         from corehq.form_processor.utils.xform import update_response
 
+        errors = []
         xml = xform.get_xml_element()
-        dirty = False
         for question, response in six.iteritems(value_responses_map):
-            if update_response(xml, question, response, xmlns=xform.xmlns):
-                dirty = True
+            try:
+                update_response(xml, question, response, xmlns=xform.xmlns)
+            except XFormQuestionValueNotFound:
+                errors.append(question)
 
-        if dirty:
-            from couchforms.const import ATTACHMENT_NAME
-            from corehq.form_processor.interfaces.dbaccessors import FormAccessors
-            from corehq.form_processor.models import Attachment
+        existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
+        existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
+                                                                   value_responses_map, user_id)
+        new_xml = etree.tostring(xml)
+        interface = FormProcessorInterface(xform.domain)
+        interface.store_attachments(new_form, [
+            Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
+        ])
+        interface.save_processed_models([new_form, existing_form])
 
-            existing_form = FormAccessors(xform.domain).get_with_attachments(xform.get_id)
-            existing_form, new_form = self.processor.new_form_from_old(existing_form, xml,
-                                                                       value_responses_map, user_id)
-            new_xml = etree.tostring(xml)
-            interface = FormProcessorInterface(xform.domain)
-            interface.store_attachments(new_form, [
-                Attachment(name=ATTACHMENT_NAME, raw_content=new_xml, content_type='text/xml')
-            ])
-            interface.save_processed_models([new_form, existing_form])
-            return True
-
-        return False
+        return errors
 
     def save_processed_models(self, forms, cases=None, stock_result=None):
         forms = _list_to_processed_forms_tuple(forms)
@@ -268,7 +272,7 @@ def _list_to_processed_forms_tuple(forms):
 
 
 class XFormQuestionValueIterator(object):
-    '''
+    """
     Iterator to help navigate a data structure (likely xml or json)
     representing an xml document, based on a given path. Skips root node.
     Each call of `next` returns a tuple of id and index. Iterates until
@@ -283,7 +287,7 @@ class XFormQuestionValueIterator(object):
 
     Note that repeat groups in the given path are ONE-indexed as in xpath, while
     the indices returned by next/last are ZERO-indexed for easier array indexing.
-    '''
+    """
 
     def __init__(self, path):
         path = re.sub(r'^/[^\/]+/', '', path)   # strip root
