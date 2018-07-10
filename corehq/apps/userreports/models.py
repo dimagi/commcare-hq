@@ -756,11 +756,11 @@ class StaticReportConfiguration(JsonObject):
     def _all(cls):
         for path_or_glob in settings.STATIC_UCR_REPORTS:
             if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+                yield cls.wrap(_read_file(path_or_glob))
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield cls.wrap(_read_file(path)), path
+                    yield cls.wrap(_read_file(path))
 
     @classmethod
     @memoized
