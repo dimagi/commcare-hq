@@ -1318,6 +1318,7 @@ class XForm(WrappedNode):
             '{orx}userID',
             '{orx}instanceID',
             '{cc}appVersion',
+            '{orx}drift',
         )
         if form.get_auto_gps_capture():
             tags += ('{cc}location',)
@@ -1356,6 +1357,12 @@ class XForm(WrappedNode):
         self.add_setvalue(
             ref="meta/appVersion",
             value="instance('commcaresession')/session/context/appversion"
+        )
+        self.add_setvalue(
+            ref="meta/drift",
+            event="xforms-revalidate",
+            value="if(count(instance('commcaresession')/session/context/drift) = 1, "
+                  "instance('commcaresession')/session/context/drift, '')",
         )
 
         # never add pollsensor to a pre-2.14 app
