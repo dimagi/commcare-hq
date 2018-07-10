@@ -9,19 +9,27 @@ from django.test import TestCase
 
 from custom.icds_reports.reports.awc_reports import get_beneficiary_details, get_awc_reports_system_usage, \
     get_awc_reports_pse, get_awc_reports_maternal_child, get_awc_report_demographics, \
-    get_awc_report_infrastructure, get_awc_report_beneficiary
+    get_awc_report_beneficiary
 
 
 class TestAWCReport(TestCase):
     def test_beneficiary_details_recorded_weight_none(self):
-        data = get_beneficiary_details(case_id='6b234c5b-883c-4849-9dfd-b1571af8717b', awc_id='a50')
+        data = get_beneficiary_details(
+            case_id='6b234c5b-883c-4849-9dfd-b1571af8717b',
+            awc_id='a50',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 69)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3342')
         self.assertEqual(data['mother_name'], 'संगीता')
 
     def test_beneficiary_details_recorded_weight_is_not_none(self):
-        data = get_beneficiary_details(case_id='8e226cc6-740f-4146-b017-69d9f6e9651b', awc_id='a21')
+        data = get_beneficiary_details(
+            case_id='8e226cc6-740f-4146-b017-69d9f6e9651b',
+            awc_id='a21',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 54)
         self.assertEqual(data['sex'], 'M')
         self.assertEqual(data['person_name'], 'Name 3141')
@@ -31,7 +39,11 @@ class TestAWCReport(TestCase):
         self.assertEqual(filter(lambda r: r['x'] == 96.0, data['wfl'])[0]['y'], 12.6)
 
     def test_beneficiary_details_have_age_in_month_not_have_recorded_height(self):
-        data = get_beneficiary_details(case_id='411c4234-8475-415a-9c28-911b85868aa5', awc_id='a15')
+        data = get_beneficiary_details(
+            case_id='411c4234-8475-415a-9c28-911b85868aa5',
+            awc_id='a15',
+            selected_month=(2017, 6, 1)
+        )
         self.assertEqual(data['age_in_months'], 37)
         self.assertEqual(data['sex'], 'F')
         self.assertEqual(data['person_name'], 'Name 3483')
