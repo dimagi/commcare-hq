@@ -921,18 +921,18 @@ class CaseAccessorSQL(AbstractCaseAccessor):
             return sum([result.deleted_count for result in results])
 
     @staticmethod
-    def get_attachment_by_identifier(case_id, identifier):
+    def get_attachment_by_name(case_id, attachment_name):
         try:
             return CaseAttachmentSQL.objects.raw(
-                'select * from get_case_attachment_by_identifier(%s, %s)',
-                [case_id, identifier]
+                'select * from get_case_attachment_by_name(%s, %s)',
+                [case_id, attachment_name]
             )[0]
         except IndexError:
-            raise AttachmentNotFound(identifier)
+            raise AttachmentNotFound(attachment_name)
 
     @staticmethod
-    def get_attachment_content(case_id, attachment_id):
-        meta = CaseAccessorSQL.get_attachment_by_identifier(case_id, attachment_id)
+    def get_attachment_content(case_id, attachment_name):
+        meta = CaseAccessorSQL.get_attachment_by_name(case_id, attachment_name)
         return AttachmentContent(meta.content_type, meta.read_content(stream=True))
 
     @staticmethod

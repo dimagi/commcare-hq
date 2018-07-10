@@ -8,7 +8,7 @@ from memoized import memoized
 from corehq.apps.aggregate_ucrs.aggregations import AGGREGATION_UNIT_CHOICE_MONTH, AGGREGATION_UNIT_CHOICE_WEEK
 from corehq.apps.aggregate_ucrs.column_specs import PRIMARY_COLUMN_TYPE_CHOICES, PrimaryColumnAdapter, \
     SecondaryColumnAdapter, SECONDARY_COLUMN_TYPE_CHOICES, IdColumnAdapter, MonthColumnAdapter, WeekColumnAdapter
-from corehq.apps.userreports.models import get_datasource_config, SQLSettings
+from corehq.apps.userreports.models import get_datasource_config, SQLSettings, AbstractUCRDataSource
 from corehq.sql_db.connections import UCR_ENGINE_ID
 
 
@@ -43,7 +43,7 @@ class TimeAggregationDefinition(models.Model):
             self.aggregation_unit, self.start_column, self.end_column)
 
 
-class AggregateTableDefinition(models.Model):
+class AggregateTableDefinition(models.Model, AbstractUCRDataSource):
     """
     An aggregate table definition associated with multiple UCR data sources.
     Used to "join" data across multiple UCR tables.
@@ -78,6 +78,12 @@ class AggregateTableDefinition(models.Model):
         # this is necessary for compatibility with IndicatorSqlAdapter
         # todo: will probably need to make this configurable at some point
         return SQLSettings()
+
+    @property
+    def sql_column_indexes(self):
+        # this is necessary for compatibility with IndicatorSqlAdapter
+        # todo: will probably need to make this configurable at some point
+        return []
 
     def get_columns(self):
         for adapter in self.get_column_adapters():

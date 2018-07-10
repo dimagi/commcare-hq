@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block js-inline %}
-    <script type="text/javascript">
+    <script>
         $("#render_to_pdf").click(function() {
            $.get("{{ report.slug }}/to_pdf")
         })

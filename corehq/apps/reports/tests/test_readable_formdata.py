@@ -4,14 +4,18 @@ import json
 import os
 import uuid
 
+from collections import OrderedDict
 from django.test import SimpleTestCase
 import yaml
 from django.test.testcases import TestCase
+from mock import patch
 
 from corehq.apps.app_manager.xform import XForm
+from corehq.apps.app_manager.xform_builder import XFormBuilder
 from corehq.apps.receiverwrapper.util import submit_form_locally
 from corehq.apps.reports.formdetails.readable import (
     FormQuestionResponse,
+    build_data_cleaning_questions_and_responses,
     get_questions_from_xform_node,
     get_readable_form_data,
     get_readable_data_for_submission)
@@ -311,6 +315,70 @@ class ReadableFormTest(TestCase):
             json.dumps([q.to_json() for q in actual]),
             json.dumps([FormQuestionResponse(q).to_json() for q in expected])
         )
+
+    @patch('corehq.apps.reports.formdetails.readable.get_questions')
+    def test_build_data_cleaning(self, questions_patch):
+        builder = XFormBuilder()
+        responses = OrderedDict()
+
+        # Simple question
+        builder.new_question('something', 'Something')
+        responses['something'] = 'blue'
+
+        # Simple group
+        lights = builder.new_group('lights', 'Traffic Lights', data_type='group')
+        lights.new_question('red', 'Red means')
+        lights.new_question('green', 'Green means')
+        responses['lights'] = OrderedDict([('red', 'stop'), ('green', 'go')])
+
+        # Simple repeat group
+        snacks = builder.new_group('snacks', 'Snacks', data_type='repeatGroup')
+        snacks.new_question('kind_of_snack', 'Kind of snack')
+        responses['snacks'] = [
+            {'kind_of_snack': 'samosa'},
+            {'kind_of_snack': 'pakora'},
+        ]
+
+        # Repeat group with nested group
+        cups = builder.new_group('cups_of_tea', 'Cups of tea', data_type='repeatGroup')
+        details = cups.new_group('details_of_cup', 'Details', data_type='group')
+        details.new_question('kind_of_cup', 'Flavor')
+        responses['cups_of_tea'] = [
+            {'details_of_cup': {'kind_of_cup': 'green'}},
+            {'details_of_cup': {'kind_of_cup': 'black'}},
+            {'details_of_cup': {'kind_of_cup': 'more green'}},
+        ]
+
+        xform = XForm(builder.tostring())
+        questions_patch.return_value = get_questions_from_xform_node(xform, ['en'])
+        xml = FormSubmissionBuilder(form_id='123', form_properties=responses).as_xml_string()
+        submitted_xform = submit_form_locally(xml, self.domain).xform
+        form_data, _ = get_readable_data_for_submission(submitted_xform)
+        question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
+
+        expected_question_values = [
+            '/data/something',
+            '/data/lights/red',
+            '/data/lights/green',
+            '/data/snacks[1]/kind_of_snack',
+            '/data/snacks[2]/kind_of_snack',
+            '/data/cups_of_tea[1]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[2]/details_of_cup/kind_of_cup',
+            '/data/cups_of_tea[3]/details_of_cup/kind_of_cup',
+        ]
+        self.assertListEqual(ordered_question_values, expected_question_values)
+
+        expected_response_map = {
+            '/data/something': 'blue',
+            '/data/lights/red': 'stop',
+            '/data/lights/green': 'go',
+            '/data/snacks[1]/kind_of_snack': 'samosa',
+            '/data/snacks[2]/kind_of_snack': 'pakora',
+            '/data/cups_of_tea[1]/details_of_cup/kind_of_cup': 'green',
+            '/data/cups_of_tea[2]/details_of_cup/kind_of_cup': 'black',
+            '/data/cups_of_tea[3]/details_of_cup/kind_of_cup': 'more green',
+        }
+        self.assertDictEqual({k: v['value'] for k, v in question_response_map.items()}, expected_response_map)
 
 
 @use_sql_backend

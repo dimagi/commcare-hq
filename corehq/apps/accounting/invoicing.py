@@ -19,9 +19,9 @@ from corehq.apps.accounting.exceptions import (
     LineItemError,
 )
 from corehq.apps.accounting.models import (
-    LineItem, FeatureType, Invoice, DefaultProductPlan, Subscriber,
+    LineItem, FeatureType, Invoice, CustomerInvoice, DefaultProductPlan, Subscriber,
     Subscription, BillingAccount, SubscriptionAdjustment,
-    SubscriptionAdjustmentMethod, BillingRecord,
+    SubscriptionAdjustmentMethod, BillingRecord, CustomerBillingRecord,
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
@@ -57,7 +57,6 @@ class DomainInvoiceFactory(object):
         self.logged_throttle_error = False
         if self.domain is None:
             raise InvoiceError("Domain '%s' is not a valid domain on HQ!" % domain)
-        self.is_community_invoice = False
 
     def create_invoices(self):
         subscriptions = self._get_subscriptions()
@@ -294,25 +293,53 @@ class CustomerAccountInvoiceFactory(object):
     def create_invoice(self):
         for subscription in self.account.subscription_set.all():
             if should_create_invoice(subscription, subscription.subscriber.domain, self.date_start, self.date_end):
-                self.subscriptions[subscription.plan_version] = subscription
+                if subscription.plan_version in self.subscriptions:
+                    self.subscriptions[subscription.plan_version].append(subscription)
+                else:
+                    self.subscriptions[subscription.plan_version] = [subscription]
         if not self.subscriptions:
             return
-        self._generate_customer_invoice()
-        self._email_invoice()
+        try:
+            self._generate_customer_invoice()
+            self._email_invoice()
+        except InvoiceAlreadyCreatedError as e:
+            log_accounting_error(
+                "Invoice already existed for account %s: %s" % (self.account.name, e),
+                show_stack_trace=True,
+            )
 
     def _generate_customer_invoice(self):
-        plan_version, subscription = self.subscriptions.popitem()
-        invoice = generate_invoice(subscription, self.date_start, self.date_end)
+        invoice, is_new_invoice = CustomerInvoice.objects.get_or_create(
+            account=self.account,
+            date_start=self.date_start,
+            date_end=self.date_end
+        )
+        if not is_new_invoice:
+            raise InvoiceAlreadyCreatedError("invoice id: {id}".format(id=invoice.id))
+
+        all_subscriptions = []
         for plan in self.subscriptions:
-            generate_line_items(invoice, self.subscriptions[plan])
-            invoice.calculate_credit_adjustments()
-            invoice.update_balance()
-            invoice.save()
-        update_invoice_due_date(invoice, subscription, self.date_end)
+            subscriptions = self.subscriptions[plan]
+            generate_line_items(invoice, subscriptions[0])
+            all_subscriptions.extend(subscriptions)
+        invoice.subscriptions.set(all_subscriptions)
+        invoice.calculate_credit_adjustments()
+        invoice.update_balance()
+        invoice.save()
+        self._update_invoice_due_date(invoice, self.date_end)
         self.customer_invoice = invoice
 
+    def _update_invoice_due_date(self, invoice, factory_date_end):
+        should_set_date_due = (
+            invoice.balance > SMALL_INVOICE_THRESHOLD or
+            (invoice.account.auto_pay_enabled and invoice.balance > Decimal(0))
+        )
+        if should_set_date_due:
+            invoice.date_due = factory_date_end + datetime.timedelta(DEFAULT_DAYS_UNTIL_DUE)
+        invoice.save()
+
     def _email_invoice(self):
-        record = BillingRecord.generate_record(self.customer_invoice)
+        record = CustomerBillingRecord.generate_record(self.customer_invoice)
         try:
             if self.recipients:
                 for email in self.recipients:

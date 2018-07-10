@@ -19,11 +19,13 @@ from corehq.apps.accounting.views import (
     TriggerCustomerInvoiceView,
     ViewSoftwarePlanVersionView,
     WireInvoiceSummaryView,
+    CustomerInvoiceSummaryView,
     accounting_default,
     enterprise_dashboard,
     enterprise_dashboard_download,
     enterprise_dashboard_email,
     enterprise_dashboard_total,
+    CustomerInvoicePdfView
 )
 
 
@@ -52,6 +54,10 @@ urlpatterns = [
     url(r'^software_plan_versions/(\d+)/(\d+)/$', ViewSoftwarePlanVersionView.as_view(), name=ViewSoftwarePlanVersionView.urlname),
     url(r'^invoices/(\d+)/$', InvoiceSummaryView.as_view(), name=InvoiceSummaryView.urlname),
     url(r'^wire_invoices/(\d+)/$', WireInvoiceSummaryView.as_view(), name=WireInvoiceSummaryView.urlname),
+    url(r'^customer_invoices/(\d+)/$', CustomerInvoiceSummaryView.as_view(),
+        name=CustomerInvoiceSummaryView.urlname),
+    url(r'^customer_invoices/(?P<statement_id>[\w-]+).pdf$', CustomerInvoicePdfView.as_view(),
+        name=CustomerInvoicePdfView.urlname),
     url(AccountingAdminInterfaceDispatcher.pattern(), AccountingAdminInterfaceDispatcher.as_view(),
         name=AccountingAdminInterfaceDispatcher.name()),
 ]

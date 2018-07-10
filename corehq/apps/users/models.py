@@ -108,6 +108,7 @@ class Permissions(DocumentSchema):
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
@@ -200,7 +201,8 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
-            edit_billing=True
+            edit_billing=True,
+            edit_shared_exports=True,
         )
 
 
@@ -229,6 +231,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
                                                        edit_locations=True,
+                                                       edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
@@ -373,16 +376,34 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
 
 PERMISSIONS_PRESETS = {
-    'edit-apps': {'name': 'App Editor',
-                  'permissions': Permissions(edit_apps=True, view_reports=True)},
-    'field-implementer': {'name': 'Field Implementer',
-                          'permissions': Permissions(edit_commcare_users=True,
-                                                     edit_locations=True,
-                                                     view_reports=True)},
-    'read-only': {'name': 'Read Only',
-                  'permissions': Permissions(view_reports=True)},
-    'no-permissions': {'name': 'Read Only',
-                       'permissions': Permissions(view_reports=True)},
+    'edit-apps': {
+        'name': 'App Editor',
+        'permissions': Permissions(
+            edit_apps=True,
+            view_reports=True,
+        ),
+    },
+    'field-implementer': {
+        'name': 'Field Implementer',
+        'permissions': Permissions(
+            edit_commcare_users=True,
+            edit_locations=True,
+            edit_shared_exports=True,
+            view_reports=True,
+        ),
+    },
+    'read-only': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
+    'no-permissions': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
 }
 
 

@@ -11,26 +11,9 @@
     <link rel="stylesheet" type="text/css" href="{% static "hqwebapp/css/proptable.css" %}">
 {% endblock %}
 
-{% block js %}{{ block.super }}
-    {% if not request|toggle_enabled:"CASE_DATA_FORMPLAYER_EXCLUDE" %}
-        {# This is needed for rendering the case hierarchy. It's included here to prevent an #}
-        {# import error: http://manage.dimagi.com/default.asp?223100 #}
-        {% include 'cloudcare/includes/formplayer-inline.html' %}
-    {% endif %}
-    <script src="{% static "hqwebapp/js/lib/bootstrap-tab-hashes.js" %}"></script>
-    <script src="{% static "jquery-memoized-ajax/jquery.memoized.ajax.min.js" %}"></script>
-    <script src="{% static "jquery-treetable/jquery.treetable.js" %}"></script>
-    <script src="{% static "clipboard/dist/clipboard.js" %}"></script>
-    <script src="{% static "case/js/case_property_modal.js" %}"></script>
-    <script src="{% static "reports/js/data_corrections.js" %}"></script>
-    <script src="{% static "case/js/case_hierarchy.js" %}"></script>
-    <script src="{% static 'reports/js/readable_form.js' %}"></script>
-    <script src="{% static "reports/js/single_form.js" %}"></script>
-    <script src="{% static "reports/js/case_details.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'reports/js/case_details' %}
 
 {% block page_content %}
-
 
 {% initial_page_data 'context_case_id' case.case_id %}
 {% initial_page_data 'dynamic_properties' dynamic_properties %}

@@ -46,30 +46,3 @@ class TestScript(TestCase):
                 self.assertEqual(msg.text, six.text_type(command['text']))
                 self.assertEqual(strip_plus(msg.phone_number), strip_plus(phone_number))
                 msg.delete()
-
-
-class TestParser(TestScript):
-
-    def test_parse_script(self):
-        script = """
-            16176023315 > test
-            16176023315 < test2
-            16176023315 > test3
-        """
-        commands = self.parse_script(script)
-        self.assertEqual(len(commands), 3)
-        self.assertDictEqual(commands[0], {
-            'phone_number': '16176023315',
-            'direction': '>',
-            'text': 'test'
-        })
-        self.assertDictEqual(commands[1], {
-            'phone_number': '16176023315',
-            'direction': '<',
-            'text': 'test2'
-        })
-        self.assertDictEqual(commands[2], {
-            'phone_number': '16176023315',
-            'direction': '>',
-            'text': 'test3'
-        })

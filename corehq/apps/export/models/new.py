@@ -775,8 +775,11 @@ class ExportInstance(BlobMixin, Document):
     def can_view(self, user_id):
         return self.owner_id is None or self.sharing != SharingOption.PRIVATE or self.owner_id == user_id
 
-    def can_edit(self, user_id):
-        return self.owner_id is None or self.sharing == SharingOption.EDIT_AND_EXPORT or self.owner_id == user_id
+    def can_edit(self, user):
+        return self.owner_id is None or self.owner_id == user.get_id or (
+            self.sharing == SharingOption.EDIT_AND_EXPORT
+            and user.can_edit_shared_exports(self.domain)
+        )
 
     @classmethod
     def _move_selected_columns_to_top(cls, columns):
@@ -2644,10 +2647,7 @@ class DailySavedExportNotification(models.Model):
 
     @classmethod
     def user_to_be_notified(cls, domain, user):
-        from corehq.apps.export.views import use_new_daily_saved_exports_ui
-
         return (
-            use_new_daily_saved_exports_ui(domain) and
             cls.user_added_before_feature_release(user.created_on) and
             not DailySavedExportNotification.notified(user.user_id, domain) and
             (

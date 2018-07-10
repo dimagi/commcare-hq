@@ -48,6 +48,7 @@ hqDefine("reports/js/single_form", [
 
         $('#edit-form', $container).click(function() {
             analyticsUsage('Edit Form Submission');
+            kissAnalytics.track.event("Clicked Edit Form Submission");
         });
 
         readableForm.init();

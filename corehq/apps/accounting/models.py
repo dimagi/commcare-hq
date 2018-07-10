@@ -1738,6 +1738,10 @@ class InvoiceBase(models.Model):
         abstract = True
 
     @property
+    def is_customer_invoice(self):
+        return False
+
+    @property
     def invoice_number(self):
         ops_num = settings.INVOICE_STARTING_NUMBER + self.id
         return "%s%d" % (settings.INVOICE_PREFIX, ops_num)
@@ -1943,6 +1947,97 @@ class Invoice(InvoiceBase):
         self.save()
 
 
+class CustomerInvoice(InvoiceBase):
+    # CustomerInvoice is tied to a customer level account, instead of a subscription
+    account = models.ForeignKey(BillingAccount, on_delete=models.PROTECT)
+    subscriptions = models.ManyToManyField(Subscription, default=list, blank=True)
+
+    class Meta(object):
+        app_label = 'accounting'
+
+    @property
+    def is_customer_invoice(self):
+        return True
+
+    def get_domain(self):
+        return None
+
+    @property
+    def email_recipients(self):
+        try:
+            billing_contact_info = BillingContactInfo.objects.get(account=self.account)
+            contact_emails = billing_contact_info.email_list
+        except BillingContactInfo.DoesNotExist:
+            contact_emails = []
+        return contact_emails
+
+    @property
+    def subtotal(self):
+        """
+        This will be inserted in the subtotal field on the printed invoice.
+        """
+        if self.lineitem_set.count() == 0:
+            return Decimal('0.0000')
+        return sum([line_item.total for line_item in self.lineitem_set.all()])
+
+    @property
+    def applied_tax(self):
+        return Decimal('%.4f' % round(self.tax_rate * self.subtotal, 4))
+
+    @property
+    def applied_credit(self):
+        if self.creditadjustment_set.count() == 0:
+            return Decimal('0.0000')
+        return sum([credit.amount for credit in self.creditadjustment_set.all()])
+
+    def get_total(self):
+        """
+        This will be inserted in the total field on the printed invoice.
+        """
+        return self.subtotal + self.applied_tax + self.applied_credit
+
+    def update_balance(self):
+        self.balance = self.get_total()
+        if self.balance <= 0:
+            self.date_paid = datetime.date.today()
+        else:
+            self.date_paid = None
+
+    def calculate_credit_adjustments(self):
+        for line_item in self.lineitem_set.all():
+            line_item.calculate_credit_adjustments()
+        current_total = self.get_total()
+        credit_lines = CreditLine.get_credits_for_customer_invoice(self)
+        CreditLine.apply_credits_toward_balance(credit_lines, current_total, customer_invoice=self)
+
+    def pay_invoice(self, payment_record):
+        CreditLine.make_payment_towards_invoice(
+            invoice=self,
+            payment_record=payment_record,
+        )
+
+        self.update_balance()
+        self.save()
+
+    @classmethod
+    def exists_for_domain(cls, domain):
+        invoices = cls.objects.filter(is_hidden=False)
+        for subscription in invoices.subscriptions.filter(is_hidden=False):
+            if subscription.subscriber.domain == domain:
+                return True
+        return False
+
+    @classmethod
+    def autopayable_invoices(cls, date_due):
+        """ Invoices that can be auto paid on date_due """
+        invoices = cls.objects.select_related('account').filter(
+            date_due=date_due,
+            is_hidden=False,
+            account__auto_pay_user__isnull=False
+        )
+        return invoices
+
+
 class SubscriptionAdjustment(models.Model):
     """
     A record of any adjustments made to a subscription, so we always have a paper trail.
@@ -2082,6 +2177,9 @@ class BillingRecordBase(models.Model):
     def email_subject(self):
         raise NotImplementedError()
 
+    def can_view_statement(self, web_user):
+        raise NotImplementedError()
+
     def send_email(self, contact_email=None, cc_emails=None):
         pdf_attachment = {
             'title': self.pdf.get_filename(self.invoice),
@@ -2099,7 +2197,7 @@ class BillingRecordBase(models.Model):
         if web_user is not None:
             if web_user.first_name:
                 greeting = _("Dear %s,") % web_user.first_name
-            can_view_statement = web_user.is_domain_admin(domain)
+            can_view_statement = self.can_view_statement(web_user)
         context['greeting'] = greeting
         context['can_view_statement'] = can_view_statement
         email_html = render_to_string(self.html_template, context)
@@ -2115,12 +2213,17 @@ class BillingRecordBase(models.Model):
         if cc_emails:
             self.emailed_to_list.extend(cc_emails)
         self.save()
-        log_accounting_info(
-            "Sent billing statements for domain %(domain)s to %(emails)s." % {
+        if self.invoice.is_customer_invoice:
+            log_message = "Sent billing statements for account %(account)s to %(emails)s." % {
+                'account': self.invoice.account,
+                'emails': contact_email,
+            }
+        else:
+            log_message = "Sent billing statements for domain %(domain)s to %(emails)s." % {
                 'domain': domain,
                 'emails': contact_email,
             }
-        )
+        log_accounting_info(log_message)
 
 
 class WireBillingRecord(BillingRecordBase):
@@ -2439,11 +2542,240 @@ class BillingRecord(BillingRecordBase):
             if credit_lines else Decimal('0.0')
         )
 
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
+
+
+class CustomerBillingRecord(BillingRecordBase):
+    invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT)
+    INVOICE_AUTOPAY_HTML_TEMPLATE = 'accounting/email/invoice_autopayment.html'
+    INVOICE_AUTOPAY_TEXT_TEMPLATE = 'accounting/email/invoice_autopayment.txt'
+
+    class Meta(object):
+        app_label = 'accounting'
+
+    @property
+    def html_template(self):
+        if self.invoice.account.auto_pay_enabled:
+            return self.INVOICE_AUTOPAY_HTML_TEMPLATE
+
+        return self.INVOICE_HTML_TEMPLATE
+
+    @property
+    def text_template(self):
+        if self.invoice.account.auto_pay_enabled:
+            return self.INVOICE_AUTOPAY_TEXT_TEMPLATE
+        return self.INVOICE_TEXT_TEMPLATE
+
+    @property
+    def should_send_email(self):
+        return not self.invoice.is_hidden
+
+    def email_context(self):
+        context = super(CustomerBillingRecord, self).email_context()
+        is_small_invoice = self.invoice.balance < SMALL_INVOICE_THRESHOLD
+        payment_status = (_("Paid")
+                          if self.invoice.is_paid or self.invoice.balance == 0
+                          else _("Payment Required"))
+        context.update({
+            # 'plan_name': self.invoice.subscription.plan_version.plan.name,
+            'date_due': self.invoice.date_due,
+            'is_small_invoice': is_small_invoice,
+            'total_balance': self.invoice.balance,
+            'is_total_balance_due': self.invoice.balance >= SMALL_INVOICE_THRESHOLD,
+            'payment_status': payment_status,
+        })
+        if self.invoice.account.auto_pay_enabled:
+            try:
+                last_4 = getattr(self.invoice.account.autopay_card, 'last4', None)
+            except StripePaymentMethod.DoesNotExist:
+                last_4 = None
+            context.update({
+                'auto_pay_user': self.invoice.account.auto_pay_user,
+                'last_4': last_4,
+            })
+
+        context.update({
+            'credits': self.credits,
+        })
+
+        return context
+
+    def credits(self):
+        credits = {
+            'account': {},
+            'subscription': {},
+        }
+        self._add_product_credits(credits)
+        self._add_user_credits(credits)
+        self._add_sms_credits(credits)
+        self._add_general_credits(credits)
+        return credits
+
+    def _add_product_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            customer_invoice=self.invoice,
+            line_item__product_rate__isnull=False
+        )
+        subscription_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_subscriptions(
+                self.invoice.subscriptions,
+                is_product=True
+            )
+        )
+        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
+            credit_adjustments['subscription'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(subscription_credits)
+                }
+            })
+
+        account_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.account,
+                is_product=True
+            )
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'product': {
+                    'amount': quantize_accounting_decimal(account_credits)
+                }
+            })
+        return credits
+
+    def _add_user_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            customer_invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.USER
+        )
+        subscription_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_subscriptions(
+                self.invoice.subscriptions,
+                feature_type=FeatureType.USER
+            )
+        )
+        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
+            credits['subscription'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(subscription_credits)
+                }
+            })
+
+        account_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.account,
+                feature_type=FeatureType.USER
+            )
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'user': {
+                    'amount': quantize_accounting_decimal(account_credits)
+                }
+            })
+        return credits
+
+    def _add_sms_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            customer_invoice=self.invoice,
+            line_item__feature_rate__feature__feature_type=FeatureType.SMS
+        )
+        subscription_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_subscriptions(
+                self.invoice.subscriptions,
+                feature_type=FeatureType.SMS
+            )
+        )
+        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
+            credits['subscription'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(subscription_credits)
+                }
+            })
+
+        account_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.account,
+                feature_type=FeatureType.SMS
+            )
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'sms': {
+                    'amount': quantize_accounting_decimal(account_credits)
+                }
+            })
+        return credits
+
+    def _add_general_credits(self, credits):
+        credit_adjustments = CreditAdjustment.objects.filter(
+            customer_invoice=self.invoice,
+            line_item__feature_rate=None,
+            line_item__product_rate=None
+        )
+        subscription_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_subscriptions(
+                self.invoice.subscriptions
+            )
+        )
+        if subscription_credits or self._subscriptions_in_credit_adjustments(credit_adjustments):
+            credits['subscription'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(subscription_credits)
+                }
+            })
+
+        account_credits = CustomerBillingRecord._get_total_balance(
+            CreditLine.get_credits_for_account(
+                self.invoice.account
+            )
+        )
+        if account_credits or credit_adjustments.filter(credit_line__subscription=None):
+            credits['account'].update({
+                'general': {
+                    'amount': quantize_accounting_decimal(account_credits)
+                }
+            })
+        return credits
+
+    def _subscriptions_in_credit_adjustments(self, credit_adjustments):
+        for subscription in self.invoice.subscriptions.all():
+            if credit_adjustments.filter(
+                    credit_line__subscription=subscription
+            ):
+                return True
+        return False
+
+    def email_subject(self):
+        month_name = self.invoice.date_start.strftime("%B")
+        return "Your %(month)s CommCare Billing Statement for Customer Account %(account)s" % {
+            'month': month_name,
+            'account': self.invoice.account,
+        }
+
+    def email_from(self):
+        return get_dimagi_from_email()
+
+    @staticmethod
+    def _get_total_balance(credit_lines):
+        return (
+            sum([credit_line.balance for credit_line in credit_lines])
+            if credit_lines else Decimal('0.0')
+        )
+
+    def can_view_statement(self, web_user):
+        for subscription in self.invoice.subscriptions.all():
+            if web_user.is_domain_admin(subscription.subscriber.domain):
+                return True
+        return False
+
 
 class InvoicePdf(BlobMixin, SafeSaveDocument):
     invoice_id = StringProperty()
     date_created = DateTimeProperty()
     is_wire = BooleanProperty(default=False)
+    is_customer = BooleanProperty(default=False)
 
     def generate_pdf(self, invoice):
         self.save()
@@ -2463,11 +2795,16 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             applied_credit=getattr(invoice, 'applied_credit', Decimal('0.000')),
             total=invoice.get_total(),
             is_wire=invoice.is_wire,
+            is_customer=invoice.is_customer_invoice,
             is_prepayment=invoice.is_wire and invoice.is_prepayment,
         )
 
         if not invoice.is_wire:
-            for line_item in LineItem.objects.filter(invoice=invoice):
+            if invoice.is_customer_invoice:
+                line_items = LineItem.objects.filter(customer_invoice=invoice)
+            else:
+                line_items = LineItem.objects.filter(subscription_invoice=invoice)
+            for line_item in line_items:
                 is_unit = line_item.unit_description is not None
                 description = line_item.base_description or line_item.unit_description
                 if line_item.quantity > 0:
@@ -2504,6 +2841,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
         self.invoice_id = str(invoice.id)
         self.date_created = datetime.datetime.utcnow()
         self.is_wire = invoice.is_wire
+        self.is_customer = invoice.is_customer_invoice
         self.save()
 
     @staticmethod
@@ -2530,7 +2868,8 @@ class LineItemManager(models.Manager):
 
 
 class LineItem(models.Model):
-    invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT)
+    subscription_invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True)
+    customer_invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT, null=True)
     feature_rate = models.ForeignKey(FeatureRate, on_delete=models.PROTECT, null=True)
     product_rate = models.ForeignKey(SoftwareProductRate, on_delete=models.PROTECT, null=True)
     base_description = models.TextField(blank=True, null=True)
@@ -2544,6 +2883,20 @@ class LineItem(models.Model):
 
     class Meta(object):
         app_label = 'accounting'
+
+    @property
+    def invoice(self):
+        if self.subscription_invoice:
+            return self.subscription_invoice
+        else:
+            return self.customer_invoice
+
+    @invoice.setter
+    def invoice(self, invoice):
+        if invoice.is_customer_invoice:
+            self.customer_invoice = invoice
+        else:
+            self.subscription_invoice = invoice
 
     @property
     def subtotal(self):
@@ -2605,11 +2958,11 @@ class CreditLine(ValidateModelMixin, models.Model):
                 })
 
     def adjust_credit_balance(self, amount, is_new=False, note=None,
-                              line_item=None, invoice=None,
+                              line_item=None, invoice=None, customer_invoice=None,
                               payment_record=None, related_credit=None,
                               reason=None, web_user=None):
         note = note or ""
-        if line_item is not None and invoice is not None:
+        if line_item is not None and (invoice is not None or customer_invoice is not None):
             raise CreditLineError("You may only have an invoice OR a line item making this adjustment.")
         if reason is None:
             reason = CreditAdjustmentReason.MANUAL
@@ -2618,6 +2971,8 @@ class CreditLine(ValidateModelMixin, models.Model):
             elif related_credit is not None:
                 reason = CreditAdjustmentReason.TRANSFER
             elif invoice is not None:
+                reason = CreditAdjustmentReason.INVOICE
+            elif customer_invoice is not None:
                 reason = CreditAdjustmentReason.INVOICE
             elif line_item is not None:
                 reason = CreditAdjustmentReason.LINE_ITEM
@@ -2631,6 +2986,7 @@ class CreditLine(ValidateModelMixin, models.Model):
             payment_record=payment_record,
             line_item=line_item,
             invoice=invoice,
+            customer_invoice=customer_invoice,
             related_credit=related_credit,
             web_user=web_user,
         )
@@ -2649,6 +3005,13 @@ class CreditLine(ValidateModelMixin, models.Model):
         assert is_product or feature_type
         assert not (is_product and feature_type)
 
+        if line_item.invoice.is_customer_invoice:
+            return cls.get_credits_for_line_item_in_customer_invoice(line_item, feature_type, is_product)
+        else:
+            return cls.get_credits_for_line_item_in_invoice(line_item, feature_type, is_product)
+
+    @classmethod
+    def get_credits_for_line_item_in_invoice(cls, line_item, feature_type, is_product):
         if feature_type:
             return itertools.chain(
                 cls.get_credits_by_subscription_and_features(
@@ -2660,7 +3023,6 @@ class CreditLine(ValidateModelMixin, models.Model):
                     feature_type=feature_type,
                 )
             )
-
         if is_product:
             return itertools.chain(
                 cls.get_credits_by_subscription_and_features(
@@ -2674,11 +3036,55 @@ class CreditLine(ValidateModelMixin, models.Model):
             )
 
     @classmethod
+    def get_credits_for_line_item_in_customer_invoice(cls, line_item, feature_type, is_product):
+        if feature_type:
+            return itertools.chain(
+                cls.get_credits_for_subscriptions(
+                    subscriptions=line_item.invoice.subscriptions.all(),
+                    feature_type=feature_type
+                ),
+                cls.get_credits_for_account(
+                    account=line_item.invoice.account,
+                    feature_type=feature_type
+                )
+            )
+        if is_product:
+            return itertools.chain(
+                cls.get_credits_for_subscriptions(
+                    subscriptions=line_item.invoice.subscriptions.all(),
+                    is_product=is_product
+                ),
+                cls.get_credits_for_account(
+                    account=line_item.invoice.account,
+                    is_product=is_product
+                )
+            )
+
+    @classmethod
     def get_credits_for_invoice(cls, invoice):
         return itertools.chain(
             cls.get_credits_by_subscription_and_features(invoice.subscription),
             cls.get_credits_for_account(invoice.subscription.account)
         )
+
+    @classmethod
+    def get_credits_for_customer_invoice(cls, invoice):
+        return itertools.chain(
+            cls.get_credits_for_subscriptions(invoice.subscriptions.all()),
+            cls.get_credits_for_account(invoice.account)
+        )
+
+    @classmethod
+    def get_credits_for_subscriptions(cls, subscriptions, feature_type=None, is_product=False):
+        credit_list = []
+        for subscription in subscriptions.all():
+            credit_list.append(cls.get_credits_by_subscription_and_features(subscription,
+                                                                            feature_type=feature_type,
+                                                                            is_product=is_product))
+        credits = credit_list.pop()
+        for credit_line in credit_list:
+            credits.union(credit_line)
+        return credits
 
     @classmethod
     def get_credits_for_account(cls, account, feature_type=None, is_product=False):
@@ -2783,7 +3189,10 @@ class CreditLine(ValidateModelMixin, models.Model):
     @classmethod
     def make_payment_towards_invoice(cls, invoice, payment_record):
         """ Make a payment for a billing account towards an invoice """
-        billing_account = invoice.subscription.account
+        if invoice.is_customer_invoice:
+            billing_account = invoice.account
+        else:
+            billing_account = invoice.subscription.account
         cls.add_credit(
             payment_record.amount,
             account=billing_account,
@@ -3017,6 +3426,7 @@ class CreditAdjustment(ValidateModelMixin, models.Model):
     amount = models.DecimalField(default=Decimal('0.0000'), max_digits=10, decimal_places=4)
     line_item = models.ForeignKey(LineItem, on_delete=models.PROTECT, null=True, blank=True)
     invoice = models.ForeignKey(Invoice, on_delete=models.PROTECT, null=True, blank=True)
+    customer_invoice = models.ForeignKey(CustomerInvoice, on_delete=models.PROTECT, null=True, blank=True)
     payment_record = models.ForeignKey(PaymentRecord,
                                        on_delete=models.PROTECT, null=True, blank=True)
     related_credit = models.ForeignKey(CreditLine, on_delete=models.PROTECT,
