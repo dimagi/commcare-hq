@@ -671,7 +671,7 @@ class StaticDataSourceConfiguration(JsonObject):
         }
 
     @classmethod
-    def _all(cls, use_server_filter=True):
+    def _all(cls, ignore_server_environment=False):
         """
         :return: Generator of all wrapped configs read from disk
         """
@@ -690,16 +690,15 @@ class StaticDataSourceConfiguration(JsonObject):
                     yield wrapped
 
         for wrapped in __get_all():
-            if (use_server_filter and
-                    wrapped.server_environment and
+            if (not ignore_server_environment and wrapped.server_environment and
                     settings.SERVER_ENVIRONMENT not in wrapped.server_environment):
                 continue
             yield wrapped
 
     @classmethod
-    def all(cls, use_server_filter=True):
+    def all(cls, ignore_server_environment=True):
         """Unoptimized method that get's all configs by re-reading from disk"""
-        for wrapped in cls._all(use_server_filter):
+        for wrapped in cls._all(ignore_server_environment):
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
