@@ -2255,6 +2255,9 @@ class WireBillingRecord(BillingRecordBase):
     def email_from():
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
+
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
 
@@ -2264,6 +2267,9 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 
     def email_subject(self):
         return _("Your prepayment invoice")
+
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
 
 
 class BillingRecord(BillingRecordBase):
