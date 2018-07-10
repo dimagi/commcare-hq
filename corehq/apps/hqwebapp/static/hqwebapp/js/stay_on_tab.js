@@ -1,27 +1,35 @@
+/*
+ * Adds URL hash behavior to bootstrap tabs. This enables bookmarking/refreshing and browser back/forward.
+ * Lightly modified from https://stackoverflow.com/questions/18999501/bootstrap-3-keep-selected-tab-on-page-refresh
+ */
 hqDefine("hqwebapp/js/stay_on_tab", [
     "jquery",
 ], function(
     $
 ) {
-    // Modified from
-    // http://stackoverflow.com/questions/10523433/how-do-i-keep-the-current-tab-active-with-twitter-bootstrap-after-a-page-reload
-    $(function() {
-        // Save latest tab when switching tabs
-        $(document).on('shown.bs.tab', 'a[data-toggle="tab"]', function(e){
-            var href = $(e.target).attr('href');
-            if (href.startsWith("#")) {
-                // App manager does complex things with tabs.
-                // Ignore those, only deal with simple tabs.
-                $.cookie('last_tab', href);
+    $(function(){
+        if (window.location.hash) {
+            $("a[href='" + window.location.hash + "']").tab('show');
+        } else {
+            $("a[data-toggle='tab']:first").tab('show');
+        }
+
+        $('body').on('click', "a[data-toggle='tab']", function (e) {
+            e.preventDefault();
+            var tabName = this.getAttribute('href')
+            if (window.history.pushState) {
+                window.history.pushState(null, null, tabName);
+            } else {
+                window.location.hash = tabName;
             }
+
+            $(this).tab('show');
+            return false;
         });
 
-        // Activate latest (or first) tab on document ready
-        var lastTab = $.cookie('last_tab');
-        if (lastTab) {
-            $('a[href="' + lastTab + '"]').tab('show');
-        } else {
-            $('a[data-toggle="tab"]:first').tab('show');
-        }
+        $(window).on('popstate', function () {
+            var anchor = window.location.hash || $("a[data-toggle='tab']").first().attr('href');
+            $("a[href='" + anchor + "']").tab('show');
+        });
     });
 });
