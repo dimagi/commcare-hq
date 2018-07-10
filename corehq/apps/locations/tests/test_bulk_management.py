@@ -1066,7 +1066,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         # Re-upload that export
         worksheets = []
         for sheet_title, headers in exporter.get_headers():
-            sheet = IteratorJSONReader(headers + writer.data[sheet_title])
+            rows = [[val if val is not None else '' for val in row]
+                    for row in writer.data[sheet_title]]
+            sheet = IteratorJSONReader(headers + rows)
             sheet.title = sheet_title
             worksheets.append(sheet)
         mock_importer = Mock()
