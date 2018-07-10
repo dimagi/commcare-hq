@@ -26,7 +26,7 @@ class _FixtureWorkbook(object):
         except AttributeError:
             # todo: I don't know what would cause this error and it's a bad message
             raise FixtureUploadError([_("Error processing your Excel (.xlsx) file")])
-        except InvalidExcelFileException:
+        except (InvalidExcelFileException, KeyError):
             raise FixtureUploadError([FAILURE_MESSAGES['not_excel_file']])
         except HeaderValueError as e:
             raise FixtureUploadError([six.text_type(e)])
