@@ -66,6 +66,7 @@ CALC_XPATHS = FeaturePreview(
     description=_(
         "Specify a custom xpath expression to calculate a value "
         "in the case list or case detail screen."),
+    help_link='https://confluence.dimagi.com/display/commcarepublic/Calculations+in+the+Case+List+and+Details'
 )
 
 ENUM_IMAGE = FeaturePreview(
