@@ -32,7 +32,6 @@ def call_center_data_source_configuration_provider():
         data_source_json['domains'] = domains
         data_source_json['server_environment'] = [settings.SERVER_ENVIRONMENT]
         ds_conf = StaticDataSourceConfiguration.wrap(deepcopy(data_source_json))
-        # ds_conf.domains = domains
         yield ds_conf, data_source_path
 
 
