@@ -445,12 +445,12 @@ class LocationTreeValidator(object):
     """Validates the given type and location stubs
 
     All types and location stubs are linked with a corresponding
-    db_object, locations also get a parent object (new_parent), by
-    the time validation is complete if/when there are no errors.
+    db_object.
 
     :param type_stubs: List of `LocationTypeStub` objects.
     :param location_stubs: List of `LocationStub` objects.
     :param old_collection: `LocationCollection`.
+    :param user: The user performing the upload
     """
 
     def __init__(self, type_stubs, location_stubs, old_collection, user):
@@ -861,8 +861,9 @@ def save_locations(location_stubs, types_by_code, old_collection,
 
         return top_to_bottom_locations
 
+    # Go through all locations and either flag for deletion or save
     location_stubs_by_code = {stub.site_code: stub for stub in location_stubs}
-    delete_locations = []
+    to_delete = []
     for stubs in chunked(order_by_location_type(), chunk_size):
         with transaction.atomic():
             for loc in stubs:
@@ -871,11 +872,12 @@ def save_locations(location_stubs, types_by_code, old_collection,
                         if excel_importer:
                             excel_importer.add_progress()
                     else:
-                        delete_locations.append(loc)
+                        to_delete.append(loc)
                     continue
                 if excel_importer:
                     excel_importer.add_progress()
                 if loc.needs_save:
+                    # attach location type and parent to location, then save
                     loc_object = loc.db_object
                     loc_object.location_type = types_by_code.get(loc.location_type)
                     parent_code = loc.parent_code
@@ -888,6 +890,11 @@ def save_locations(location_stubs, types_by_code, old_collection,
                             loc_object.parent = old_collection.locations_by_site_code[parent_code]
                     loc_object.save()
 
+    _delete_locations(to_delete, old_collection, excel_importer, chunk_size)
+
+
+def _delete_locations(to_delete, old_collection, excel_importer, chunk_size):
+    # Delete locations in chunks.  Also assemble ancestor IDs to update, but don't repeat across chunks.
     _seen = set()
 
     def iter_unprocessed_ancestor_ids(stubs):
@@ -903,7 +910,7 @@ def save_locations(location_stubs, types_by_code, old_collection,
                     pk = location.parent_id
 
     # reverse -> delete leaf nodes first
-    for stubs in chunked(reversed(delete_locations), chunk_size):
+    for stubs in chunked(reversed(to_delete), chunk_size):
         to_delete = [loc.db_object for loc in stubs]
         ancestor_ids = list(iter_unprocessed_ancestor_ids(stubs))
         with transaction.atomic():
