@@ -42,7 +42,7 @@ class FormplayerRestoreTest(TestCase):
     def test_commcare_user_restore(self, mock_restore):
         # mock for the sake for fast running test
         mock_restore.return_value = (HttpResponse('Success', status=200), None)
-        resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username})
+        resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username})
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.content, "Success")
 
@@ -51,15 +51,15 @@ class FormplayerRestoreTest(TestCase):
         self.assertEqual(resp.status_code, 401)
 
     def test_bad_user(self):
-        resp = self._do_post({'version': 2.0, 'as_user': 'non-user'})
+        resp = self._do_post({'version': 2.0, 'as': 'non-user'})
         self.assertEqual(resp.status_code, 401)
 
     def test_wrong_domain(self):
-        resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username}, uri=self.uri_wrong_domain)
+        resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username}, uri=self.uri_wrong_domain)
         self.assertEqual(resp.status_code, 403)
 
     def test_bad_hmac(self):
-        resp = self._do_post({'version': 2.0, 'as_user': self.commcare_user.username}, hmac='bad')
+        resp = self._do_post({'version': 2.0, 'as': self.commcare_user.username}, hmac='bad')
         self.assertEqual(resp.status_code, 401)
 
     def _do_post(self, data, uri=None, hmac=None):
