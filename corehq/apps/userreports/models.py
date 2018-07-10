@@ -642,11 +642,11 @@ class StaticDataSourceConfiguration(JsonObject):
         """
         for path_or_glob in settings.STATIC_DATA_SOURCES:
             if os.path.isfile(path_or_glob):
-                yield cls.wrap(_read_file(path_or_glob)), path_or_glob
+                yield cls.wrap(_read_file(path_or_glob))
             else:
                 files = glob.glob(path_or_glob)
                 for path in files:
-                    yield cls.wrap(_read_file(path)), path
+                    yield cls.wrap(_read_file(path))
 
         for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
             provider_fn = to_function(provider_path, failhard=True)
