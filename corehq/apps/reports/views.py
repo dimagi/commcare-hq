@@ -20,8 +20,7 @@ from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, \
-    build_data_cleaning_questions_and_responses
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, get_data_cleaning_data
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
@@ -1852,7 +1851,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
+    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
 
     context.update({
         "context_case_id": case_id,
@@ -2421,11 +2420,20 @@ def edit_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
 
-    updates = {name: request.POST[name] for name in request.POST}
-    if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
-        messages.success(request, _('Question responses saved.'))
+    form_data, question_list_not_found = get_readable_data_for_submission(instance)
+    old_values, dummy = get_data_cleaning_data(form_data, instance)
+    updates = {name: request.POST[name] for name in request.POST
+            if name in old_values and old_values[name] != request.POST[name]}
+
+    if updates:
+        errors = FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id)
+        if errors:
+            messages.error(request, _('Could not update questions: {}').format(", ".join(errors)))
+        else:
+            messages.success(request, _('Question responses saved.'))
     else:
-        messages.success(request, _('No changes made to form.'))
+        messages.info(request, _('No changes made to form.'))
+
     return JsonResponse({'success': 1})
 
 
