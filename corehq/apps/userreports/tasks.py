@@ -22,7 +22,7 @@ from couchexport.models import Format
 from soil.util import get_download_file_path, expose_download
 
 from corehq import toggles
-from corehq.apps.reports.util import send_report_download_email
+from corehq.apps.reports.util import send_report_download_email, DatatablesParams
 from corehq.apps.userreports.const import (
     UCR_CELERY_QUEUE, UCR_INDICATOR_CELERY_QUEUE,
     ASYNC_INDICATOR_QUEUE_TIME, ASYNC_INDICATOR_CHUNK_SIZE
@@ -36,7 +36,9 @@ from corehq.apps.userreports.models import (
     DataSourceConfiguration,
     StaticDataSourceConfiguration,
     id_is_static,
+    get_report_config,
 )
+from corehq.apps.userreports.reports.data_source import ConfigurableReportDataSource
 from corehq.apps.userreports.util import get_indicator_adapter, get_async_indicator_modify_lock_key
 from corehq.elastic import ESError
 from corehq.util.context_managers import notify_someone
@@ -174,6 +176,58 @@ def _iteratively_build_table(config, resume_helper=None, in_place=False, limit=-
             current_config.save()
         adapter = get_indicator_adapter(config, raise_errors=True, can_handle_laboratory=True)
         adapter.after_table_build()
+
+
+@task(queue=UCR_CELERY_QUEUE)
+def compare_ucr_dbs(domain, report_config_id, filter_values, sort_column=None, sort_order=None, params=None):
+    from corehq.apps.userreports.laboratory.experiment import UCRExperiment
+
+    new_report_config_id = settings.UCR_COMPARISONS.get(report_config_id)
+    if new_report_config_id is None:
+        return
+
+    def _run_report(spec):
+        data_source = ConfigurableReportDataSource.from_spec(spec, include_prefilters=True)
+        data_source.set_filter_values(filter_values)
+        if sort_column:
+            data_source.set_order_by(
+                [(data_source.top_level_columns[int(sort_column)].column_id, sort_order.upper())]
+            )
+
+        if params:
+            datatables_params = DatatablesParams.from_request_dict(params)
+            start = datatables_params.start
+            limit = datatables_params.count
+        else:
+            start, limit = None, None
+        page = list(data_source.get_data(start=start, limit=limit))
+        total_records = data_source.get_total_records()
+        json_response = {
+            'aaData': page,
+            "iTotalRecords": total_records,
+        }
+        total_row = data_source.get_total_row() if data_source.has_total_row else None
+        if total_row is not None:
+            json_response["total_row"] = total_row
+        return json_response
+
+    old_spec, unused = get_report_config(report_config_id, domain)
+    new_spec, unused = get_report_config(new_report_config_id, domain)
+    experiment_context = {
+        "domain": domain,
+        "report_config_id": report_config_id,
+        "new_report_config_id": new_report_config_id,
+        "filter_values": filter_values,
+    }
+    experiment = UCRExperiment(name="UCR DB Experiment", context=experiment_context)
+    with experiment.control() as c:
+        c.record(_run_report(old_spec))
+
+    with experiment.candidate() as c:
+        c.record(_run_report(new_spec))
+
+    objects = experiment.run()
+    return objects
 
 
 @task(queue=UCR_CELERY_QUEUE, ignore_result=True)
