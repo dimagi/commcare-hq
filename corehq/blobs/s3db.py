@@ -44,7 +44,7 @@ class S3BlobDB(AbstractBlobDB):
         return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
             'action:{}'.format(action),
             's3_bucket_name:{}'.format(self.s3_bucket_name)
-        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        ], timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100))
 
     def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
