@@ -77,7 +77,6 @@ class XFormsConfig(object):
         self.session_data = session_data
         self.preloader_data = preloader_data        
         self.instance_content = instance_content
-        self.touchforms_url = touchforms_url or settings.XFORMS_PLAYER_URL
         self.auth = auth
         self.restore_as = restore_as
         self.restore_as_case_id = restore_as_case_id
