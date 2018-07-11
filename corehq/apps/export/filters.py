@@ -30,6 +30,9 @@ class ExportFilter(object):
     Abstract base class for an export filter on a single case or form property
     """
 
+    def __repr__(self):
+        return repr(self.to_es_filter())
+
     def to_es_filter(self):
         """
         Return an ES filter representing this filter
