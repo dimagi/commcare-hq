@@ -150,4 +150,3 @@ class GIRResource(ModelResource):
             'month': ['gt', 'gte', 'lt', 'lte'],
             'domain_name': ['exact']
         }
-
