@@ -555,3 +555,18 @@ def patch_datadog():
         yield stats
     finally:
         patch.stop()
+
+
+class PatchMeta(type):
+    """A metaclass to patch all inherited classes.
+
+    Usage:
+    class BaseTest(TestCase):
+        patch = mock.patch('something.do.patch', .....)
+    """
+
+    patch = None
+
+    def __init__(self, *args, **kwargs):
+        super(PatchMeta, self).__init__(*args, **kwargs)
+        self.patch(self)

@@ -269,7 +269,10 @@ def track_web_user_registration_hubspot(request, web_user, properties):
     tracking_info.update(get_ab_test_properties(web_user))
     tracking_info.update(properties)
 
-    send_hubspot_form(HUBSPOT_SIGNUP_FORM_ID, request, user=web_user)
+    send_hubspot_form(
+        HUBSPOT_SIGNUP_FORM_ID, request,
+        user=web_user, extra_fields=tracking_info
+    )
 
 
 @analytics_task()

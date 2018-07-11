@@ -108,6 +108,7 @@ class Permissions(DocumentSchema):
     edit_motech = BooleanProperty(default=False)
     edit_data = BooleanProperty(default=False)
     edit_apps = BooleanProperty(default=False)
+    edit_shared_exports = BooleanProperty(default=False)
     access_all_locations = BooleanProperty(default=True)
 
     view_reports = BooleanProperty(default=False)
@@ -200,7 +201,8 @@ class Permissions(DocumentSchema):
             edit_data=True,
             edit_apps=True,
             view_reports=True,
-            edit_billing=True
+            edit_billing=True,
+            edit_shared_exports=True,
         )
 
 
@@ -229,6 +231,7 @@ class UserRolePresets(object):
             cls.READ_ONLY: lambda: Permissions(view_reports=True),
             cls.FIELD_IMPLEMENTER: lambda: Permissions(edit_commcare_users=True,
                                                        edit_locations=True,
+                                                       edit_shared_exports=True,
                                                        view_reports=True),
             cls.APP_EDITOR: lambda: Permissions(edit_apps=True, view_reports=True),
             cls.BILLING_ADMIN: lambda: Permissions(edit_billing=True)
@@ -373,16 +376,34 @@ class UserRole(QuickCachedDocumentMixin, Document):
         return {details['name'] for role, details in six.iteritems(PERMISSIONS_PRESETS)}
 
 PERMISSIONS_PRESETS = {
-    'edit-apps': {'name': 'App Editor',
-                  'permissions': Permissions(edit_apps=True, view_reports=True)},
-    'field-implementer': {'name': 'Field Implementer',
-                          'permissions': Permissions(edit_commcare_users=True,
-                                                     edit_locations=True,
-                                                     view_reports=True)},
-    'read-only': {'name': 'Read Only',
-                  'permissions': Permissions(view_reports=True)},
-    'no-permissions': {'name': 'Read Only',
-                       'permissions': Permissions(view_reports=True)},
+    'edit-apps': {
+        'name': 'App Editor',
+        'permissions': Permissions(
+            edit_apps=True,
+            view_reports=True,
+        ),
+    },
+    'field-implementer': {
+        'name': 'Field Implementer',
+        'permissions': Permissions(
+            edit_commcare_users=True,
+            edit_locations=True,
+            edit_shared_exports=True,
+            view_reports=True,
+        ),
+    },
+    'read-only': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
+    'no-permissions': {
+        'name': 'Read Only',
+        'permissions': Permissions(
+            view_reports=True,
+        ),
+    },
 }
 
 
@@ -1349,7 +1370,9 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         )
         result = view_result.one()
         if result and result['doc'] and result['doc']['username'] == username:
-            return cls.wrap_correctly(result['doc'])
+            couch_user = cls.wrap_correctly(result['doc'])
+            cls.get_by_user_id.set_cached_value(couch_user.__class__, couch_user.get_id).to(couch_user)
+            return couch_user
         else:
             return None
 
@@ -1394,6 +1417,7 @@ class CouchUser(Document, DjangoUserMixin, IsMemberOfMixin, UnicodeMixIn, EulaMi
         if domain:
             if not couch_user.is_member_of(domain):
                 return None
+        cls.get_by_username.set_cached_value(couch_user.__class__, couch_user.username).to(couch_user)
         return couch_user
 
     @classmethod
@@ -1730,6 +1754,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+        if by_username and by_username['id'] != self._id:
+            return False, "A user with the same username already exists in the system"
         if self.base_doc.endswith(DELETED_SUFFIX):
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
@@ -1741,6 +1768,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        return True, None
 
     def retire(self):
         suffix = DELETED_SUFFIX

@@ -28,6 +28,7 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "config": {
         "engine_id": "default",
         "base_item_expression": {

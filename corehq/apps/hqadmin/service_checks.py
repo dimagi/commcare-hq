@@ -85,23 +85,6 @@ def check_kafka():
         return ServiceStatus(True, "Kafka seems to be in order")
 
 
-def check_touchforms():
-    if not getattr(settings, 'XFORMS_PLAYER_URL', None):
-        return ServiceStatus(True, "Touchforms isn't needed for this cluster")
-
-    try:
-        res = requests.post(settings.XFORMS_PLAYER_URL,
-                            data='{"action": "heartbeat"}',
-                            timeout=5)
-    except requests.exceptions.ConnectTimeout:
-        return ServiceStatus(False, "Could not establish a connection in time")
-    except requests.ConnectionError:
-        return ServiceStatus(False, "Could not connect to touchforms")
-    else:
-        msg = "Touchforms returned a {} status code".format(res.status_code)
-        return ServiceStatus(res.ok, msg)
-
-
 @change_log_level('urllib3.connectionpool', logging.WARNING)
 def check_elasticsearch():
     cluster_health = check_es_cluster_health()
@@ -263,10 +246,6 @@ CHECKS = {
     'heartbeat': {
         "always_check": False,
         "check_func": check_heartbeat,
-    },
-    'touchforms': {
-        "always_check": True,
-        "check_func": check_touchforms,
     },
     'elasticsearch': {
         "always_check": True,

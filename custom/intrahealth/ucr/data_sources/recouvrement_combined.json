@@ -5,6 +5,7 @@
     "testing-ipm-senegal",
     "ct-apr"
   ],
+  "server_environment": ["production", "pna"],
   "config": {
     "table_id": "recouvrement_combined",
     "display_name": "Recouvrement Combined",
