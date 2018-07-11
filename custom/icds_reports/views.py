@@ -622,6 +622,7 @@ class AwcReportsView(BaseReportView):
             data = get_beneficiary_details(
                 self.request.GET.get('case_id'),
                 config['awc_id'],
+                tuple(current_month.timetuple())[:3]
             )
         return JsonResponse(data=data)
 

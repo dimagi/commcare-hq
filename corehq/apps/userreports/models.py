@@ -652,8 +652,8 @@ class StaticDataSourceConfiguration(JsonObject):
     See 0002-keep-static-ucr-configurations-in-memory.md
     """
     _datasource_id_prefix = STATIC_PREFIX
-    domains = ListProperty()
-    server_environment = ListProperty()
+    domains = ListProperty(required=True)
+    server_environment = ListProperty(required=True)
     config = DictProperty()
 
     @classmethod
@@ -678,11 +678,11 @@ class StaticDataSourceConfiguration(JsonObject):
         def __get_all():
             for path_or_glob in settings.STATIC_DATA_SOURCES:
                 if os.path.isfile(path_or_glob):
-                    yield cls.wrap(_read_file(path_or_glob))
+                    yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
                     files = glob.glob(path_or_glob)
                     for path in files:
-                        yield cls.wrap(_read_file(path))
+                        yield _get_wrapped_object_from_file(path, cls)
 
             for provider_path in settings.STATIC_DATA_SOURCE_PROVIDERS:
                 provider_fn = to_function(provider_path, failhard=True)
@@ -735,12 +735,12 @@ class StaticReportConfiguration(JsonObject):
 
     See 0002-keep-static-ucr-configurations-in-memory.md
     """
-    domains = ListProperty()
+    domains = ListProperty(required=True)
     report_id = StringProperty(validators=(_check_ids))
     data_source_table = StringProperty()
     config = DictProperty()
     custom_configurable_report = StringProperty()
-    server_environment = ListProperty()
+    server_environment = ListProperty(required=True)
 
     @classmethod
     def get_doc_id(cls, domain, report_id, custom_configurable_report):
@@ -755,11 +755,11 @@ class StaticReportConfiguration(JsonObject):
         def __get_all():
             for path_or_glob in settings.STATIC_UCR_REPORTS:
                 if os.path.isfile(path_or_glob):
-                    yield cls.wrap(_read_file(path_or_glob))
+                    yield _get_wrapped_object_from_file(path_or_glob, cls)
                 else:
                     files = glob.glob(path_or_glob)
                     for path in files:
-                        yield cls.wrap(_read_file(path))
+                        yield _get_wrapped_object_from_file(path, cls)
 
         return __get_all() if ignore_server_environment else _filter_by_server_env(__get_all())
 
@@ -1031,12 +1031,19 @@ def get_report_config(config_id, domain):
     return config, report_config_id_is_static(config_id)
 
 
-def _read_file(path):
+def _get_wrapped_object_from_file(path, wrapper):
     with open(path, encoding='utf-8') as f:
         if path.endswith('.json'):
-            return json.load(f)
+            doc = json.load(f)
         else:
-            return yaml.load(f)
+            doc = yaml.load(f)
+
+    try:
+        return wrapper.wrap(doc)
+    except Exception as ex:
+        msg = '{}: {}'.format(path, ex.args[0]) if ex.args else str(path)
+        ex.args = (msg,) + ex.args[1:]
+        raise
 
 
 def _filter_by_server_env(configs):

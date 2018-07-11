@@ -8,6 +8,7 @@ from django.conf import settings
 from django.test import TestCase, Client, override_settings
 from django.urls import reverse
 from corehq.apps.users.models import CommCareUser
+from corehq.util.hmac_request import get_hmac_digest
 from corehq.util.test_utils import softer_assert
 
 
@@ -53,7 +54,7 @@ class SessionDetailsViewTest(TestCase):
     def test_with_hmac_signing(self):
         assert not settings.DEBUG
         data = json.dumps({'sessionId': self.session_key, 'domain': 'domain'})
-        header_value = base64.b64encode(hmac.new(b'123abc', data, hashlib.sha256).digest())
+        header_value = get_hmac_digest(b'123abc', data)
         response = Client().post(
             self.url,
             data,

@@ -6,13 +6,15 @@
     "production",
     "echis"
   ],
-  "report_id": "static-hmis_monthly_mobile_job_aid_3_immun_growth_r2",
+  "report_id": "static-hmis_monthly_mobile_job_aid_focal_person_immun_growth",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "description": "Third batch of indicators for the HMIS Report",
-    "title": "(mobile) HMIS Monthly Mobile Job Aid 3 (R2)(Immunization and growth monitoring)",
+    "description": "Immunization and growth monitoring HMIS indicators for Focal person (Immunization and growth monitoring)",
+    "title": "(mobile) HMIS Monthly Mobile Job Aid - Focal Person (Immunization and growth monitoring)",
     "aggregation_columns": [
-      "report_month_date"
+      "report_month_date",
+      "health_post_id",
+      "health_post"
     ],
     "filters": [
       {
@@ -46,10 +48,10 @@
         "compare_as_string": false,
         "datatype": "date",
         "required": false,
-        "slug": "report_month_date_for_filter_gregorian",
+        "display": "Report Month (for mobile)",
         "field": "report_month_date_for_filter_gregorian",
         "type": "date",
-        "display": "Report Month (for mobile)"
+        "slug": "report_month_date_for_filter_gregorian"
       },
       {
         "display": "Test or Real",
@@ -81,6 +83,21 @@
         "column_id": "report_month_date",
         "visible": true,
         "display": "Reporting Month",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "health_post",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post",
+        "visible": true,
+        "display": "Health Post",
         "calculate_total": false,
         "type": "field",
         "width": null,
@@ -490,6 +507,21 @@
         "type": "field",
         "width": null,
         "aggregation": "sum"
+      },
+      {
+        "field": "health_post_id",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post_id",
+        "visible": true,
+        "display": "Health Post ID",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
       }
     ]
   }

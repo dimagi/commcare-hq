@@ -6,34 +6,16 @@
     "production",
     "echis"
   ],
-  "report_id": "static-hew_performance_by_health_post",
+  "report_id": "static-hew_performance_focal_person",
   "data_source_table": "static-hew_performance_indicators",
   "config": {
-    "title": "HEW performance report by Health Post",
-    "description": "By HP",
-    "configured_charts": [
-      {
-        "y_axis_columns": [
-          {
-            "display": "ANC forms",
-            "column_id": "anc_visit_count"
-          },
-          {
-            "display": "PNC forms",
-            "column_id": "pnc_visit_count"
-          }
-        ],
-        "x_axis_column": "health_post",
-        "title": "Performance – by Health Post",
-        "display_params": {},
-        "is_stacked": false,
-        "aggregation_column": null,
-        "chart_id": "Chart",
-        "type": "multibar"
-      }
-    ],
+    "description": "HEW performance report for Focal Person",
+    "title": "HEW performance report (Focal Person)",
     "aggregation_columns": [
-      "health_post"
+      "health_center",
+      "health_post",
+      "received_on",
+      "hew_name"
     ],
     "filters": [
       {
@@ -45,20 +27,20 @@
           "show_full_path": false
         },
         "show_all": true,
-        "display": "Location",
+        "slug": "health_location",
         "field": "health_post_id",
         "ancestor_expression": {},
         "type": "dynamic_choice_list",
-        "slug": "health_location"
+        "display": "Location"
       },
       {
         "compare_as_string": false,
         "datatype": "date",
         "required": false,
-        "display": "Submitted date",
+        "slug": "received_on",
         "field": "received_on",
         "type": "date",
-        "slug": "received_on"
+        "display": "Submitted date"
       },
       {
         "required": false,
@@ -70,11 +52,11 @@
           "show_full_path": false
         },
         "show_all": true,
-        "display": "HEW name",
+        "slug": "hew_name",
         "field": "hew_name",
         "ancestor_expression": {},
         "type": "dynamic_choice_list",
-        "slug": "hew_name"
+        "display": "HEW name"
       },
       {
         "required": false,
@@ -86,11 +68,11 @@
           "show_full_path": false
         },
         "show_all": true,
-        "display": "Health post",
+        "slug": "health_post",
         "field": "health_post",
         "ancestor_expression": {},
         "type": "dynamic_choice_list",
-        "slug": "health_post"
+        "display": "Health post"
       },
       {
         "required": false,
@@ -129,6 +111,36 @@
     ],
     "columns": [
       {
+        "field": "received_on",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "received_on",
+        "visible": true,
+        "display": "Submitted date",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "hew_name",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "hew_name",
+        "visible": true,
+        "display": "HEW name",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
         "field": "health_post",
         "sortable": false,
         "description": null,
@@ -144,6 +156,21 @@
         "aggregation": "simple"
       },
       {
+        "field": "health_center",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_center",
+        "visible": true,
+        "display": "Health Center",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
         "field": "anc_visit_count",
         "sortable": false,
         "description": null,
@@ -152,7 +179,7 @@
         "transform": {},
         "column_id": "anc_visit_count",
         "visible": true,
-        "display": "ANC forms",
+        "display": "ANC visits",
         "calculate_total": false,
         "type": "field",
         "width": null,
@@ -167,7 +194,22 @@
         "transform": {},
         "column_id": "pnc_visit_count",
         "visible": true,
-        "display": "PNC forms",
+        "display": "PNC visits",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "sum"
+      },
+      {
+        "field": "visit_count",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "visit_count",
+        "visible": true,
+        "display": "All visits",
         "calculate_total": false,
         "type": "field",
         "width": null,

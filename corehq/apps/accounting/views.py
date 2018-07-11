@@ -1136,7 +1136,7 @@ def _get_account_or_404(request, domain):
     if account is None:
         raise Http404()
 
-    if request.couch_user.username not in account.billing_admin_emails:
+    if request.couch_user.username not in account.enterprise_admin_emails:
         if not has_privilege(request, privileges.ACCOUNTING_ADMIN):
             raise Http404()
 

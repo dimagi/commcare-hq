@@ -348,7 +348,7 @@ class BillingAccount(ValidateModelMixin, models.Model):
     )
     is_active = models.BooleanField(default=True)
     is_customer_billing_account = models.BooleanField(default=False)
-    billing_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
+    enterprise_admin_emails = ArrayField(models.EmailField(), default=list, blank=True)
     entry_point = models.CharField(
         max_length=25,
         default=EntryPoint.NOT_SET,
@@ -2255,6 +2255,9 @@ class WireBillingRecord(BillingRecordBase):
     def email_from():
         return "Dimagi Accounting <{email}>".format(email=settings.INVOICING_CONTACT_EMAIL)
 
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
+
 
 class WirePrepaymentBillingRecord(WireBillingRecord):
 
@@ -2264,6 +2267,9 @@ class WirePrepaymentBillingRecord(WireBillingRecord):
 
     def email_subject(self):
         return _("Your prepayment invoice")
+
+    def can_view_statement(self, web_user):
+        return web_user.is_domain_admin(self.invoice.get_domain())
 
 
 class BillingRecord(BillingRecordBase):

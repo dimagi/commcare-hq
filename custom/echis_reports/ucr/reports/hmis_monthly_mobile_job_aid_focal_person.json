@@ -6,12 +6,14 @@
     "production",
     "echis"
   ],
-  "report_id": "static-hmis_monthly_mobile_job_aid_r1_2",
+  "report_id": "static-hmis_monthly_mobile_job_aid_focal_person",
   "data_source_table": "static-hmis_job_aid",
   "config": {
-    "title": "(mobile) HMIS Monthly Mobile Job Aid (R1.2)",
+    "title": "(mobile) HMIS Monthly Mobile Job Aid - Focal Person",
     "aggregation_columns": [
-      "report_month_date"
+      "report_month_date",
+      "health_post_id",
+      "health_post"
     ],
     "filters": [
       {
@@ -45,10 +47,10 @@
         "compare_as_string": false,
         "datatype": "date",
         "required": false,
-        "slug": "report_month_date_for_filter_gregorian",
+        "display": "Report Month (for mobile)",
         "field": "report_month_date_for_filter_gregorian",
         "type": "date",
-        "display": "Report Month (for mobile)"
+        "slug": "report_month_date_for_filter_gregorian"
       },
       {
         "display": "Test or Real",
@@ -80,6 +82,21 @@
         "column_id": "report_month_date",
         "visible": true,
         "display": "Reporting Month",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
+      },
+      {
+        "field": "health_post",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post",
+        "visible": true,
+        "display": "Health Post",
         "calculate_total": false,
         "type": "field",
         "width": null,
@@ -339,6 +356,21 @@
         "type": "field",
         "width": null,
         "aggregation": "sum"
+      },
+      {
+        "field": "health_post_id",
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "css_class": null,
+        "transform": {},
+        "column_id": "health_post_id",
+        "visible": true,
+        "display": "Health Post ID",
+        "calculate_total": false,
+        "type": "field",
+        "width": null,
+        "aggregation": "simple"
       }
     ]
   }
