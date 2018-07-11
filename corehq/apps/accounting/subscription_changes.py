@@ -580,12 +580,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_deidentified_data(domain, new_plan_version):
+    def response_deidentified_data(project, new_plan_version):
         """
         De-id exports will be hidden
         """
         from corehq.apps.export.dbaccessors import get_deid_export_count
-        num_deid_reports = get_deid_export_count(domain)
+        num_deid_reports = get_deid_export_count(project.name)
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(
