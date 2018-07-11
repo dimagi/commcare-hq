@@ -23,7 +23,7 @@ class TestGetReportConfigs(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'static_reports')
     root = os.path.dirname(__file__)
 
-    def setUp(self):
+    def tearDown(self):
         StaticReportConfiguration.by_id_mapping.reset_cache(StaticReportConfiguration.__class__)
 
     def test_static_reports(self):
