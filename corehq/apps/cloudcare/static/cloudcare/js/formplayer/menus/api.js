@@ -20,9 +20,8 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
 
             if (!params.preview) {
                 // Make sure the user has access to this app
-                var accessibleApps = hqImport("hqwebapp/js/initial_page_data").get("apps"),
-                    accessibleAppIds = _.pluck(accessibleApps, '_id');
-                if (!_.contains(accessibleAppIds, params.appId)) {
+                var currentApp = FormplayerFrontend.request("appselect:getApp", params.appId);
+                if (!currentApp) {
                     FormplayerFrontend.trigger(
                         'showError',
                         gettext("Permission Denied")
