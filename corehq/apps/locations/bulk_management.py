@@ -10,7 +10,6 @@ from __future__ import unicode_literals
 import copy
 from collections import Counter, defaultdict
 from decimal import Decimal, InvalidOperation
-from string import strip
 
 from attr import attrs, attrib
 from django.core.exceptions import ValidationError
@@ -50,6 +49,10 @@ class LocationUploadResult(object):
 
 def to_boolean(val):
     return False if val == '' else string_to_boolean(val)
+
+
+def strip(val):
+    return val.strip()
 
 
 @attrs(frozen=True)
