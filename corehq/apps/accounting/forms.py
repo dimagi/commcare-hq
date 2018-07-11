@@ -1861,14 +1861,10 @@ class TriggerCustomerInvoiceForm(forms.Form):
 
     @staticmethod
     def clean_previous_invoices(invoice_start, invoice_end, account):
-        invoices = CustomerInvoice.objects.filter(
-            date_start__lte=invoice_end,
-            date_end__gte=invoice_start,
-            account=account
-        )
+        invoices = CustomerInvoice.objects.filter(account=account)
         prev_invoices = []
         for invoice in invoices:
-            if invoice.account == account:
+            if invoice.date_start <= invoice_start <= invoice.date_end:
                 prev_invoices.append(invoice)
         if prev_invoices:
             from corehq.apps.accounting.views import CustomerInvoiceSummaryView
