@@ -20,8 +20,7 @@ from corehq.apps.locations.permissions import conditionally_location_safe, \
     report_class_is_location_safe
 from corehq.apps.receiverwrapper.auth import AuthContext
 from corehq.apps.reports.display import xmlns_to_name
-from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, \
-    build_data_cleaning_questions_and_responses
+from corehq.apps.reports.formdetails.readable import get_readable_data_for_submission, get_data_cleaning_data
 from corehq.apps.users.permissions import FORM_EXPORT_PERMISSION, CASE_EXPORT_PERMISSION, \
     DEID_EXPORT_PERMISSION
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors, LedgerAccessors
@@ -1585,23 +1584,20 @@ def edit_case_view(request, domain, case_id):
     case = get_case_or_404(domain, case_id)
     user = request.couch_user
 
-    update = {}
     old_properties = case.dynamic_case_properties()
-    for name in request.POST:
-        if name != 'external_id':       # handled separately below
-            if name in old_properties:  # updating property
-                if old_properties[name] != request.POST[name]:
-                    update[name] = request.POST[name]
-            elif request.POST[name]:    # new property
-                update[name] = request.POST[name]
+    old_properties['external_id'] = None    # special handling below
+    updates = _get_data_cleaning_updates(request, old_properties)
 
     case_block_kwargs = {}
-    if update:
-        case_block_kwargs['update'] = update
 
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
-    if 'external_id' in request.POST and request.POST['external_id'] != case.external_id:
-        case_block_kwargs['external_id'] = request.POST['external_id']
+    if 'external_id' in updates:
+        if updates['external_id'] != case.external_id:
+            case_block_kwargs['external_id'] = updates['external_id']
+        updates.pop('external_id')
+
+    if updates:
+        case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
         submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
@@ -1852,7 +1848,7 @@ def _get_form_render_context(request, domain, instance, case_id=None):
     # Build ordered list of questions and dict of question values => responses
     # Question values will be formatted to be processed by XFormQuestionValueIterator,
     # for example "/data/group/repeat_group[2]/question_id"
-    question_response_map, ordered_question_values = build_data_cleaning_questions_and_responses(form_data)
+    question_response_map, ordered_question_values = get_data_cleaning_data(form_data, instance)
 
     context.update({
         "context_case_id": case_id,
@@ -2413,6 +2409,15 @@ def unarchive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
+def _get_data_cleaning_updates(request, old_properties):
+    updates = {}
+    properties = json.loads(request.POST.get('properties'))
+    for prop, value in six.iteritems(properties):
+        if prop not in old_properties or old_properties[prop] != value:
+            updates[prop] = value
+    return updates
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2421,11 +2426,19 @@ def edit_form(request, domain, instance_id):
     instance = _get_location_safe_form(domain, request.couch_user, instance_id)
     assert instance.domain == domain
 
-    updates = {name: request.POST[name] for name in request.POST}
-    if FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id):
-        messages.success(request, _('Question responses saved.'))
+    form_data, question_list_not_found = get_readable_data_for_submission(instance)
+    old_properties, dummy = get_data_cleaning_data(form_data, instance)
+    updates = _get_data_cleaning_updates(request, old_properties)
+
+    if updates:
+        errors = FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id)
+        if errors:
+            messages.error(request, _('Could not update questions: {}').format(", ".join(errors)))
+        else:
+            messages.success(request, _('Question responses saved.'))
     else:
-        messages.success(request, _('No changes made to form.'))
+        messages.info(request, _('No changes made to form.'))
+
     return JsonResponse({'success': 1})
 
 
