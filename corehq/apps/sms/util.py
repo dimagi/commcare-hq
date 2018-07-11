@@ -6,7 +6,6 @@ import datetime
 from couchdbkit.resource import ResourceNotFound
 from corehq.apps.translations.models import StandaloneTranslationDoc
 from corehq.apps.users.models import CouchUser
-from corehq.toggles import SMS_USE_FORMPLAYER
 from django.conf import settings
 from corehq.apps.hqcase.utils import submit_case_block_from_template
 from corehq.util.quickcache import quickcache
@@ -220,31 +219,20 @@ def touchforms_error_is_config_error(domain, touchforms_error):
     Returns True if the given TouchformsError is the result of a
     form configuration error.
     """
-    if SMS_USE_FORMPLAYER.enabled(domain):
-        # Unfortunately there isn't a better way to do this.
-        # What we want to do is try and pick out the types of exceptions
-        # that are configuration errors such as an xpath reference error
-        # or misconfigured case sharing settings.
-        exception_text = touchforms_error.response_data.get('exception', '').lower()
-        return any(s in exception_text for s in (
-            'case sharing settings',
-            'error in calculation',
-            'problem with display condition',
-        ))
-    else:
-        error_type = touchforms_error.response_data.get('error_type', '')
-        return any([s in error_type for s in (
-            'XPathTypeMismatchException',
-            'XPathUnhandledException',
-            'XFormParseException',
-        )])
+    # Unfortunately there isn't a better way to do this.
+    # What we want to do is try and pick out the types of exceptions
+    # that are configuration errors such as an xpath reference error
+    # or misconfigured case sharing settings.
+    exception_text = touchforms_error.response_data.get('exception', '').lower()
+    return any(s in exception_text for s in (
+        'case sharing settings',
+        'error in calculation',
+        'problem with display condition',
+    ))
 
 
 def get_formplayer_exception(domain, touchforms_error):
-    if SMS_USE_FORMPLAYER.enabled(domain):
-        return touchforms_error.response_data.get('exception')
-    else:
-        return touchforms_error.response_data.get('human_readable_message')
+    return touchforms_error.response_data.get('exception')
 
 
 @quickcache(['backend_id'], timeout=5 * 60)
