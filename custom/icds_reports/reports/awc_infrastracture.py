@@ -7,10 +7,9 @@ from django.utils.translation import ugettext as _
 
 from corehq.util.quickcache import quickcache
 from custom.icds_reports.models import AggAwcMonthly
-from custom.icds_reports.utils import apply_exclude, percent_diff, get_value, dont_cache_empty
+from custom.icds_reports.utils import apply_exclude, percent_diff, get_value
 
 
-@dont_cache_empty
 @quickcache(['domain', 'config', 'show_test'], timeout=30 * 60)
 def get_awc_infrastructure_data(domain, config, show_test=False):
     def get_data_for(month, filters):
