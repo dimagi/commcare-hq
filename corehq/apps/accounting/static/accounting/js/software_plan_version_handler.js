@@ -5,7 +5,7 @@ hqDefine("accounting/js/software_plan_version_handler", [
     'hqwebapp/js/initial_page_data',
     'hqwebapp/js/select2_handler',
     'hqwebapp/js/multiselect_utils',
-    'hqwebapp/js/tab_url_hashes',
+    'hqwebapp/js/sticky_tabs',
     'select2-3.5.2-legacy/select2',
 ], function(
     $,
