@@ -1284,12 +1284,12 @@ LOGGING = {
         },
         'boto3': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
             'propagate': True
         },
         'botocore': {
             'handlers': ['console'],
-            'level': 'INFO',
+            'level': 'WARNING',
             'propagate': True
         },
         'sentry.errors.uncaught': {
