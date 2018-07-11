@@ -26,6 +26,7 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"spray-progress-report-level-4",
     "config": {

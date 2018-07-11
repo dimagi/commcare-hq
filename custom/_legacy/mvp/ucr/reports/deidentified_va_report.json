@@ -1,6 +1,7 @@
 {
     "domains": ["mvp-sauri", "mvp-mbola", "mvp-mwandama", "mvp-ruhiira", "mvp-koraro", "mvp-mayange",
                 "mvp-sada", "mvp-bonsaaso", "mvp-potou", "mvp-pampaida", "mvp-tiby"],
+    "server_environment": ["production"],
     "data_source_table": "va_indicators",
     "report_id": "deidentified-va-report",
     "config": {
