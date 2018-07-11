@@ -10,6 +10,7 @@ from corehq.blobs.exceptions import BadName, NotFound
 from corehq.blobs.interface import AbstractBlobDB, SAFENAME
 from corehq.blobs.util import ClosingContextProxy, set_blob_expire_object
 from corehq.util.datadog.gauges import datadog_counter, datadog_bucket_timer
+from dimagi.utils.logging import notify_exception
 
 from dimagi.utils.chunked import chunked
 
@@ -41,10 +42,18 @@ class S3BlobDB(AbstractBlobDB):
         self.db.meta.client.meta.events.unregister('before-sign.s3', fix_s3_host)
 
     def report_timing(self, action):
+        def record_long_request(duration):
+            if duration > 100:
+                notify_exception(None, "S3BlobDB request took a long time.", details={
+                    'duration': duration,
+                    's3_bucket_name': self.s3_bucket_name,
+                    'action': action,
+                })
+
         return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
             'action:{}'.format(action),
             's3_bucket_name:{}'.format(self.s3_bucket_name)
-        ], timing_buckets=(.001, .01, .1, 1, 10, 100))
+        ], timing_buckets=(.03, .1, .3, 1, 3, 10, 30, 100), callback=record_long_request)
 
     def put(self, content, identifier, bucket=DEFAULT_BUCKET, timeout=None):
         path = self.get_path(identifier, bucket)
