@@ -1584,24 +1584,20 @@ def edit_case_view(request, domain, case_id):
     case = get_case_or_404(domain, case_id)
     user = request.couch_user
 
-    update = {}
     old_properties = case.dynamic_case_properties()
-    properties = request.POST['properties']
-    for name in properties:
-        if name != 'external_id':       # handled separately below
-            if name in old_properties:  # updating property
-                if old_properties[name] != properties[name]:
-                    update[name] = properties[name]
-            elif properties[name]:    # new property
-                update[name] = properties[name]
+    old_properties['external_id'] = None    # special handling below
+    updates = _get_data_cleaning_updates(request, old_properties)
 
     case_block_kwargs = {}
-    if update:
-        case_block_kwargs['update'] = update
 
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
-    if 'external_id' in properties and properties['external_id'] != case.external_id:
-        case_block_kwargs['external_id'] = properties['external_id']
+    if 'external_id' in updates:
+        if updates['external_id'] != case.external_id:
+            case_block_kwargs['external_id'] = properties['external_id']
+        updates.pop('external_id')
+
+    if updates:
+        case_block_kwargs['update'] = updates
 
     if case_block_kwargs:
         submit_case_blocks([CaseBlock(case_id=case_id, **case_block_kwargs).as_string()],
@@ -2413,6 +2409,15 @@ def unarchive_form(request, domain, instance_id):
     return HttpResponseRedirect(redirect)
 
 
+def _get_data_cleaning_updates(request, old_properties):
+    updates = {}
+    properties = json.loads(request.POST.get('properties'))
+    for prop, value in six.iteritems(properties):
+        if prop not in old_properties or old_properties[prop] != value:
+            updates[prop] = value
+    return updates
+
+
 @require_form_view_permission
 @require_permission(Permissions.edit_data)
 @require_POST
@@ -2423,9 +2428,7 @@ def edit_form(request, domain, instance_id):
 
     form_data, question_list_not_found = get_readable_data_for_submission(instance)
     old_properties, dummy = get_data_cleaning_data(form_data, instance)
-    properties = request.POST['properties']
-    updates = {name: properties[name] for name in properties
-            if name in old_properties and old_properties[name] != properties[name]}
+    updates = _get_data_cleaning_updates(request, old_properties)
 
     if updates:
         errors = FormProcessorInterface(domain).update_responses(instance, updates, request.couch_user.get_id)

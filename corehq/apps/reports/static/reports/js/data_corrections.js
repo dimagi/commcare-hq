@@ -204,9 +204,9 @@ hqDefine("reports/js/data_corrections", [
             $.post({
                 url: options.saveUrl,
                 data: {
-                    properties: _.mapObject(self.properties, function(model) {
+                    properties: JSON.stringify(_.mapObject(self.properties, function(model) {
                         return model.value();
-                    }),
+                    })),
                 },
                 success: function() {
                     window.location.reload();

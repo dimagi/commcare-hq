@@ -439,8 +439,7 @@ class FormAccessorsTests(TestCase):
 
         updates = {'eight': 'ocho'}
         errors = FormProcessorInterface(DOMAIN).update_responses(xform, updates, 'user1')
-        self.assertEqual(1, len(errors))
-        self.assertEqual('eight', errors[0])
+        self.assertEqual(['eight'], errors)
 
 
 @use_sql_backend
