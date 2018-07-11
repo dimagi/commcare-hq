@@ -24,6 +24,7 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
     @classmethod
     def tearDownClass(cls):
         StaticDataSourceConfiguration.by_id_mapping.reset_cache(StaticDataSourceConfiguration.__class__)
+        super(BaseFormsTest, cls).tearDownClass()
 
     @override_settings(SERVER_ENVIRONMENT='icds-new')
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
