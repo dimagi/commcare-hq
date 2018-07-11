@@ -59,7 +59,6 @@ branches:
   - es/location-download  # Ethan July 6
   - jls/data-clean-unknown-nodes  # Jenny July 10
   - jls/unify-tab-history  # Jenny July 10
-  - np/update-couchdbkit  # NP 7/10
 submodules:
   submodules/django-digest-src:
     branches: []
