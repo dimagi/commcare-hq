@@ -27,6 +27,7 @@ from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
     get_all_daily_saved_export_instance_ids,
+    _properly_wrap_export_instance,
 )
 from .export import get_export_file, rebuild_export, should_rebuild_export
 from .models.new import EmailExportWhenDoneRequest
@@ -38,7 +39,8 @@ logger = logging.getLogger('export_migration')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances, filters, download_id, filename=None, expiry=10 * 60 * 60):
+def populate_export_download_task(export_instances_json, filters, download_id, filename=None, expiry=10 * 60 * 60):
+    export_instances = [_properly_wrap_export_instance(doc) for doc in export_instances_json]
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
