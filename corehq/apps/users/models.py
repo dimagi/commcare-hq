@@ -1754,6 +1754,9 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
         - It will not restore the user's phone numbers
         - It will not restore reminders for cases
         """
+        by_username = self.get_db().view('users/by_username', key=self.username, reduce=False).first()
+        if by_username and by_username['id'] != self._id:
+            return False, "A user with the same username already exists in the system"
         if self.base_doc.endswith(DELETED_SUFFIX):
             self.base_doc = self.base_doc[:-len(DELETED_SUFFIX)]
 
@@ -1765,6 +1768,7 @@ class CommCareUser(CouchUser, SingleMembershipMixin, CommCareMobileContactMixin)
 
         undelete_system_forms.delay(self.domain, set(deleted_form_ids), set(deleted_case_ids))
         self.save()
+        return True, None
 
     def retire(self):
         suffix = DELETED_SUFFIX

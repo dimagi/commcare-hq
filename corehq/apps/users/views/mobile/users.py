@@ -366,8 +366,11 @@ def delete_commcare_user(request, domain, user_id):
 @require_POST
 def restore_commcare_user(request, domain, user_id):
     user = CommCareUser.get_by_user_id(user_id, domain)
-    user.unretire()
-    messages.success(request, "User %s and all their submissions have been restored" % user.username)
+    success, message = user.unretire()
+    if success:
+        messages.success(request, "User %s and all their submissions have been restored" % user.username)
+    else:
+        messages.error(request, message)
     return HttpResponseRedirect(reverse(EditCommCareUserView.urlname, args=[domain, user_id]))
 
 
