@@ -1,6 +1,8 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
+from ast import literal_eval
 from datetime import datetime
 from time import sleep, time
 
@@ -10,6 +12,8 @@ from celery.task import task
 from django.conf import settings
 import kombu.five
 import six
+
+from soil.progress import get_task_status
 
 
 def no_result_task(*args, **kwargs):
@@ -37,14 +41,17 @@ def no_result_task(*args, **kwargs):
 
 class TaskInfo(object):
 
+    @staticmethod
+    def parse_timestamp(timestamp):
+        if timestamp is None:
+            return None
+        return datetime.fromtimestamp(time() - kombu.five.monotonic() + timestamp)
+
     def __init__(self, _id, name, time_start=None):
         self.id = _id
         self.name = name
         # http://stackoverflow.com/questions/20091505/celery-task-with-a-time-start-attribute-in-1970
-        if time_start:
-            self.time_start = datetime.fromtimestamp(time() - kombu.five.monotonic() + time_start)
-        else:
-            self.time_start = None
+        self.time_start = self.parse_timestamp(time_start)
 
 
 class InvalidTaskTypeError(Exception):
@@ -189,3 +196,95 @@ def get_running_workers(timeout=10):
         worker_names.extend(list(worker_info))
 
     return worker_names
+
+
+def _parse_args(task):
+
+    def parse_populate_export_download_task_args(task):
+        # params: export_instances_json, filters, download_id, filename=None, expiry=10 * 60 * 60
+        from corehq.apps.export.dbaccessors import _properly_wrap_export_instance
+
+        try:
+            args = literal_eval(task['args'])
+            kwargs = literal_eval(task['kwargs'])
+        except (SyntaxError, ValueError):
+            pass
+        else:
+            export_instances_json = kwargs.get('export_instances_json', args[0])
+            task['export_instances'] = [{
+                'id': doc['_id'],
+                'name': doc['name'],
+                'domain': doc['domain'],
+            } for doc in export_instances_json]
+        return task
+
+    def parse_start_export_task_args(task):
+        # params: export_instance_id, last_access_cutoff
+        from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
+
+        try:
+            args = literal_eval(task['args'])
+            kwargs = literal_eval(task['kwargs'])
+        except (SyntaxError, ValueError):
+            pass
+        else:
+            export_instance_id = kwargs.get('export_instance_id', args[0])
+            export_instance = get_properly_wrapped_export_instance(export_instance_id)
+            task['export_instance'] = {
+                'id': export_instance._id,
+                'name': export_instance.name,
+                'domain': export_instance.domain,
+            }
+
+        return task
+
+    func = {
+        'corehq.apps.export.tasks.populate_export_download_task': parse_populate_export_download_task_args,
+        'corehq.apps.export.tasks._start_export_task': parse_start_export_task_args,
+    }.get(task['name'])
+    return func(task) if func else task
+
+
+def _get_workers(app, queue):
+    result = app.control.ping(timeout=0.1)  # Don't wait longer than 0.1s
+    return [name for info in result for name in info if queue in name]
+
+
+def _get_queue_tasks(app, workers):
+    inspect = app.control.inspect(workers)
+    for worker, tasks in six.iteritems(inspect.reserved()):
+        for task in tasks:
+            # Don't use TaskInfo because we need the task's args and
+            # kwargs to unpack what the task doing.
+            task['state'] = 'reserved'
+            yield task
+    for worker, tasks in six.iteritems(inspect.scheduled()):
+        for task in tasks:
+            task['request']['state'] = 'scheduled'
+            yield task['request']
+    for worker, tasks in six.iteritems(inspect.active()):
+        for task in tasks:
+            task['state'] = 'active'
+            yield task
+
+
+def get_queue_length(queue):
+    app = Celery()
+    app.config_from_object(settings)
+    workers = _get_workers(app, queue)
+    if workers:
+        return len(list(_get_queue_tasks(app, workers)))
+
+
+def get_queue_tasks(queue):
+    app = Celery()
+    app.config_from_object(settings)
+    workers = _get_workers(app, queue)
+    if workers:
+        for task in _get_queue_tasks(app, workers):
+            task = _parse_args(task)
+            if 'time_start' in task:
+                task['time_start'] = TaskInfo.parse_timestamp(task['time_start'])
+            async_result = app.AsyncResult(task['id'])
+            task['status'] = get_task_status(async_result)
+            yield task
