@@ -26,7 +26,7 @@ class UCRExperiment(laboratory.Experiment):
             self.log_exception(control_value, candidate.exc_info)
         else:
             self.log_timing(control, candidate)
-            if cmp(control_value, candidate_value) != 0:
+            if control_value != candidate_value:
                 self.log_diff(control_value, candidate_value)
 
     def log_exception(self, control_value, candidate_exc):
