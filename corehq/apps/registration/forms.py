@@ -263,7 +263,7 @@ class RegisterWebUserForm(forms.Form):
 
     def clean_persona_other(self):
         data = self.cleaned_data['persona_other'].strip().lower()
-        persona = self.data['persona'].strip()
+        persona = self.cleaned_data['persona'].strip()
         if persona == 'Other' and not data and settings.IS_SAAS_ENVIRONMENT:
             raise forms.ValidationError(ugettext(
                 "Please specify how you plan to use CommCare so we know how to "
