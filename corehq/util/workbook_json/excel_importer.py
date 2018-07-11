@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from soil import DownloadBase
@@ -20,7 +20,7 @@ class ExcelImporter(object):
     """
 
     def __init__(self, task, file_ref_id):
-        self.start = datetime.now()
+        self.start = self.last_update = datetime.now()
         self.task = task
         self.progress = 0
         self.total_rows = 100
@@ -49,7 +49,9 @@ class ExcelImporter(object):
         self.progress += count
         if self.task:
             DownloadBase.set_progress(self.task, self.progress, self.total_rows)
-        self.log("processed %s / %s", self.progress, self.total_rows)
+        if datetime.now() > self.last_update + timedelta(seconds=5):
+            self.log("processed %s / %s", self.progress, self.total_rows)
+            self.last_update = datetime.now()
 
 
 class SingleExcelImporter(ExcelImporter):
