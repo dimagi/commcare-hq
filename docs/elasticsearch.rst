@@ -68,6 +68,16 @@ This can just be a random alphanumeric string.  This will trigger a preindex
 as outlined in the `Indexes` section.
 
 
+Updating indexes in a production environment
+''''''''''''''''''''''''''''''''''''''''''''
+Updates in a production environment should be done in two steps, so to not show incomplete data.
+
+1. Setup a release of your branch using cchq <env> setup_limited_release:keep_days=n_days
+2. In your release directory, kick off a index using ``./mange.py ptop_preindex``
+3. Verify that the reindex has completed successfully
+4. Merge your PR and deploy your latest master branch.
+
+
 How to un-bork your broken indexes
 ----------------------------------
 Sometimes things get in a weird state and (locally!) it's easiest to just
