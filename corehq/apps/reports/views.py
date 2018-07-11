@@ -1593,7 +1593,7 @@ def edit_case_view(request, domain, case_id):
     # User may also update external_id; see CaseDisplayWrapper.dynamic_properties
     if 'external_id' in updates:
         if updates['external_id'] != case.external_id:
-            case_block_kwargs['external_id'] = properties['external_id']
+            case_block_kwargs['external_id'] = updates['external_id']
         updates.pop('external_id')
 
     if updates:
