@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 import json
 
 from django.http import HttpResponse
-from django.http.response import HttpResponseForbidden
+from django.http.response import HttpResponseForbidden, HttpResponseBadRequest
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 
@@ -14,13 +14,12 @@ from casexml.apps.case.mock import CaseFactory
 from corehq.apps.accounting.utils import domain_has_privilege
 from corehq.apps.app_manager.models import Application
 from corehq.apps.domain.decorators import login_or_api_key
+from corehq.util.view_utils import get_case_or_404
 from corehq.apps.users.models import CommCareUser
 from corehq.apps.zapier.queries import get_subscription_by_url
 from corehq.apps.zapier.services import delete_subscription_with_url
 from corehq.apps.zapier.consts import EventTypes, CASE_TYPE_REPEATER_CLASS_MAP
 from corehq import privileges
-from corehq.form_processor.exceptions import CaseNotFound
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from dimagi.utils.web import json_response
 
 from .models import ZapierSubscription
@@ -70,7 +69,7 @@ class SubscribeView(View):
                 case_type=data['case_type'],
             )
         else:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
 
         # respond with the ID so that zapier can use it to unsubscribe
         return json_response({'id': subscription.id})
@@ -89,10 +88,10 @@ class UnsubscribeView(View):
         try:
             data = json.loads(request.body)
         except ValueError:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
         url = data.get('target_url')
         if not url:
-            return HttpResponse(status=400)
+            return HttpResponseBadRequest()
         delete_subscription_with_url(url)
         return HttpResponse('OK')
 
@@ -118,9 +117,9 @@ class ZapierCreateCase(View):
         user_name = request.GET.get('user')
 
         if not case_type or not owner_id or not domain or not case_name:
-            return HttpResponseForbidden('Please fill in all required fields')
+            return HttpResponseBadRequest('Please fill in all required fields')
 
-        couch_user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CommCareUser.get_by_username(user_name)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
@@ -156,17 +155,14 @@ class ZapierUpdateCase(View):
 
         properties.pop('case_id')
 
-        couch_user = CommCareUser.get_by_username(user_name, domain)
+        couch_user = CommCareUser.get_by_username(user_name)
         if not couch_user.is_member_of(domain):
             return HttpResponseForbidden("This user does not have access to this domain.")
 
-        try:
-            case = CaseAccessors(domain).get_case(case_id)
-        except CaseNotFound:
-            return HttpResponseForbidden("Could not find case in domain")
+        case = get_case_or_404(domain, case_id)
 
         if not case.type == case_type:
-            return HttpResponseForbidden("Case type mismatch")
+            return HttpResponseBadRequest("Case type mismatch")
 
         factory = CaseFactory(domain=domain)
         factory.update_case(

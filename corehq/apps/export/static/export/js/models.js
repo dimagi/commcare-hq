@@ -52,6 +52,10 @@ hqDefine('export/js/models', function () {
             return format;
         });
 
+        self.sharingOptions = options.sharingOptions !== undefined ? options.sharingOptions : _.map(constants.SHARING_OPTIONS, function(format){
+            return format;
+        });
+
         // If any column has a deid transform, show deid column
         self.isDeidColumnVisible = ko.observable(self.is_deidentified() || _.any(self.tables(), function(table) {
             return table.selected() && _.any(table.columns(), function(column) {
@@ -220,6 +224,28 @@ hqDefine('export/js/models', function () {
         }
     };
 
+    ExportInstance.prototype.getSharingOptionValues = function() {
+        return _.filter(constants.SHARING_OPTIONS, function(format) {
+            return this.sharingOptions.indexOf(format) !== -1;
+        }, this);
+    };
+
+    ExportInstance.prototype.getSharingOptionText = function(format) {
+        if (format === constants.SHARING_OPTIONS.PRIVATE) {
+            return gettext('Private');
+        } else if (format === constants.SHARING_OPTIONS.EXPORT_ONLY) {
+            return gettext('Export Only');
+        } else if (format === constants.SHARING_OPTIONS.EDIT_AND_EXPORT) {
+            return gettext('Edit and Export');
+        }
+    };
+
+    ExportInstance.prototype.getSharingHelpText = gettext(
+        '<strong>Private</strong>: Only you can edit and export.'
+        + ' <strong>Export Only</strong>: You can edit and export, other users can only export.'
+        + ' <strong>Edit and Export</strong>: All users can edit and export.'
+    );
+
     /**
      * isNew
      *
@@ -361,6 +387,7 @@ hqDefine('export/js/models', function () {
             '_id',
             'name',
             'description',
+            'sharing',
             'tables',
             'type',
             'export_format',
@@ -570,6 +597,7 @@ hqDefine('export/js/models', function () {
         self.showOptions = ko.observable(false);
         self.userDefinedOptionToAdd = ko.observable('');
         self.isUserDefined = false;
+        self.selectedForSort = ko.observable(false);
     };
 
     /**

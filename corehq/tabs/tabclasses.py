@@ -1762,12 +1762,16 @@ class AccountingTab(UITab):
 
         from corehq.apps.accounting.views import (
             TriggerInvoiceView, TriggerBookkeeperEmailView,
-            TestRenewalEmailView,
+            TestRenewalEmailView, TriggerCustomerInvoiceView
         )
         items.append(('Other Actions', (
             {
                 'title': _(TriggerInvoiceView.page_title),
                 'url': reverse(TriggerInvoiceView.urlname),
+            },
+            {
+                'title': _(TriggerCustomerInvoiceView.page_title),
+                'url': reverse(TriggerCustomerInvoiceView.urlname),
             },
             {
                 'title': _(TriggerBookkeeperEmailView.page_title),

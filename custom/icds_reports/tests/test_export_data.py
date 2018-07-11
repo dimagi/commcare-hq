@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 from __future__ import unicode_literals
-from datetime import date
+from datetime import date, datetime
 import json
 
 from django.core.serializers.json import DjangoJSONEncoder
@@ -679,9 +679,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            365,
-                            1493,
-                            "24.45 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -699,9 +699,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            365,
-                            1493,
-                            "24.45 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -719,9 +719,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            365,
-                            1493,
-                            "24.45 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -739,9 +739,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            365,
-                            1493,
-                            "24.45 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -759,9 +759,9 @@ class TestExportData(TestCase):
                         [
                             "st1",
                             7266,
-                            365,
-                            1493,
-                            "24.45 %",
+                            369,
+                            1518,
+                            "24.31 %",
                             120,
                             120,
                             171,
@@ -779,9 +779,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            269,
-                            1590,
-                            "16.92 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -799,9 +799,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            269,
-                            1590,
-                            "16.92 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -819,9 +819,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            269,
-                            1590,
-                            "16.92 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -839,9 +839,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            269,
-                            1590,
-                            "16.92 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -859,9 +859,9 @@ class TestExportData(TestCase):
                         [
                             "st2",
                             6662,
-                            269,
-                            1590,
-                            "16.92 %",
+                            275,
+                            1615,
+                            "17.03 %",
                             139,
                             139,
                             154,
@@ -928,9 +928,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -948,9 +948,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -968,9 +968,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -988,9 +988,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -1008,9 +1008,9 @@ class TestExportData(TestCase):
                         [
                             'st1',
                             7266,
-                            365,
-                            1493,
-                            '24.45 %',
+                            369,
+                            1518,
+                            '24.31 %',
                             120,
                             120,
                             171,
@@ -1028,9 +1028,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1048,9 +1048,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1068,9 +1068,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1088,9 +1088,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1108,9 +1108,9 @@ class TestExportData(TestCase):
                         [
                             'st2',
                             6662,
-                            269,
-                            1590,
-                            '16.92 %',
+                            275,
+                            1615,
+                            '17.03 %',
                             139,
                             139,
                             154,
@@ -1147,193 +1147,91 @@ class TestExportData(TestCase):
         self.assertListEqual(
             SystemUsageExport(
                 config={
-                    'domain': 'icds-cas'
+                    'domain': 'icds-cas',
+                    'month': datetime(2017, 5, 1)
                 }
             ).get_excel_data('b1'),
             [
-                [
-                    "System Usage",
+                ['System Usage', [
                     [
-                        [
-                            "State",
-                            "Number of days AWC was open in the given month",
-                            "Number of launched AWCs (ever submitted at least one HH reg form)",
-                            "Number of household registration forms",
-                            "Number of add pregnancy forms",
-                            "Number of birth preparedness forms",
-                            "Number of delivery forms",
-                            "Number of PNC forms",
-                            "Number of exclusive breastfeeding forms",
-                            "Number of complementary feeding forms",
-                            "Number of growth monitoring forms",
-                            "Number of take home rations forms",
-                            "Number of due list forms"
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st1",
-                            38,
-                            16,
-                            85,
-                            4,
-                            4,
-                            1,
-                            0,
-                            5,
-                            12,
-                            14,
-                            47,
-                            5
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ],
-                        [
-                            "st2",
-                            34,
-                            22,
-                            79,
-                            4,
-                            4,
-                            2,
-                            2,
-                            5,
-                            4,
-                            20,
-                            65,
-                            17
-                        ]
-                    ]
-                ],
-                [
-                    "Export Info",
+                        'State',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st1', 'Not Applicable', 8, 0, 1, 4, 1, 0, 5, 12, 3, 46, 5],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17],
+                    ['st2', 'Not Applicable', 11, 0, 4, 4, 1, 1, 4, 4, 20, 65, 17]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]]
+            ]
+        )
+
+    def test_system_usage_export_for_awc_level(self):
+        self.assertListEqual(
+            SystemUsageExport(
+                config={
+                    'domain': 'icds-cas',
+                    'block_id': 'b1',
+                    'aggregation_level': 5,
+                    'month': datetime(2017, 5, 1)
+                },
+                loc_level=5,
+            ).get_excel_data('b1'),
+            [
+                ['System Usage', [
                     [
-                        [
-                            "Generated at",
-                            "16:21:11 15 November 2017"
-                        ],
-                        [
-                            "Block",
-                            "b1"
-                        ]
-                    ]
-                ]
+                        'State',
+                        'District',
+                        'Block',
+                        'Supervisor',
+                        'AWC',
+                        'Number of days AWC was open in the given month',
+                        'Number of launched AWCs (ever submitted at least one HH reg form)',
+                        'Number of household registration forms', 'Number of add pregnancy forms',
+                        'Number of birth preparedness forms', 'Number of delivery forms',
+                        'Number of PNC forms', 'Number of exclusive breastfeeding forms',
+                        'Number of complementary feeding forms', 'Number of growth monitoring forms',
+                        'Number of take home rations forms', 'Number of due list forms'
+                    ],
+                    ['st1', 'd1', 'b1', 's1', 'a1', 18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a17', 11, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a25', 13, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a33', 12, 'Data Not Entered', 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
+                    ['st1', 'd1', 'b1', 's1', 'a41', 16, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
+                    ['st1', 'd1', 'b1', 's1', 'a49', 14, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's1', 'a9', 18, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a10', 8, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a18', 17, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a2', 10, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a26', 12, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a34', 4, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a42', 7, 'Data Not Entered', 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+                    ['st1', 'd1', 'b1', 's2', 'a50', 19, 'Data Not Entered', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+                ]],
+                ['Export Info', [
+                    ['Generated at', '16:21:11 15 November 2017'],
+                    ['Block', 'b1'],
+                    ['Grouped By', 'AWC'],
+                    ['Month', 'May'],
+                    ['Year', 2017]
+                ]],
             ]
         )
 

@@ -1,13 +1,13 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-import json
+
 from importlib import import_module
 from itertools import groupby
 
 from django.conf import settings
 from django.contrib.auth import get_user_model, SESSION_KEY
 from django.utils.safestring import mark_safe
-from restkit import Resource
+import requests
 
 from corehq.apps.hqadmin.models import HistoricalPillowCheckpoint
 from pillowtop.utils import force_seq_int
@@ -29,14 +29,15 @@ def check_for_rewind(checkpoint):
 def get_celery_stats():
 
     def get_stats(celery_monitoring, status_only=False, refresh=False):
-        cresource = Resource(celery_monitoring, timeout=3)
-        endpoint = "api/workers"
         params = {'refresh': 'true'} if refresh else {}
         if status_only:
             params['status'] = 'true'
         try:
-            t = cresource.get(endpoint, params_dict=params).body_string()
-            return json.loads(t)
+            return requests.get(
+                celery_monitoring + '/api/workers',
+                params=params,
+                timeout=3,
+            ).json()
         except Exception:
             return {}
 

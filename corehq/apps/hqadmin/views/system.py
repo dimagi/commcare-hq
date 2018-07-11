@@ -6,6 +6,7 @@ import json
 import socket
 from collections import defaultdict, namedtuple
 
+import requests
 from django.conf import settings
 from django.http import (
     HttpResponseRedirect,
@@ -19,7 +20,6 @@ from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy
 from django.views.decorators.http import require_POST
-from restkit import Resource
 from restkit.errors import Unauthorized
 
 from corehq.apps.domain.decorators import (
@@ -148,12 +148,14 @@ def system_ajax(request):
         return json_response(es_index_status)
 
     if celery_monitoring:
-        cresource = Resource(celery_monitoring, timeout=3)
         if type == "flower_poll":
             ret = []
             try:
-                t = cresource.get("api/tasks", params_dict={'limit': task_limit}).body_string()
-                all_tasks = json.loads(t)
+                all_tasks = requests.get(
+                    celery_monitoring + '/api/tasks',
+                    params={'limit': task_limit},
+                    timeout=3,
+                ).json()
             except Exception as ex:
                 return json_response({'error': "Error with getting from celery_flower: %s" % ex}, status_code=500)
 

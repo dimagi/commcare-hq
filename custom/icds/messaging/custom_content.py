@@ -14,6 +14,7 @@ from custom.icds.case_relationships import (
 from custom.icds.const import (STATE_TYPE_CODE, ANDHRA_PRADESH_SITE_CODE, MAHARASHTRA_SITE_CODE,
     HINDI, TELUGU, MARATHI, AWC_LOCATION_TYPE_CODE, SUPERVISOR_LOCATION_TYPE_CODE)
 from custom.icds.exceptions import CaseRelationshipError
+from custom.icds.messaging.custom_recipients import skip_notifying_missing_ccs_record_parent
 from custom.icds.messaging.indicators import (
     DEFAULT_LANGUAGE,
     AWWIndicator,
@@ -32,11 +33,16 @@ from django.template.loader import render_to_string
 GROWTH_MONITORING_XMLNS = 'http://openrosa.org/formdesigner/b183124a25f2a0ceab266e4564d3526199ac4d75'
 
 
-def notify_exception_and_return_empty_list():
-    notify_exception(
-        None,
-        message="Error with ICDS custom content handler",
-    )
+def notify_exception_and_return_empty_list(e):
+    if not (
+        isinstance(e, CaseRelationshipError) and
+        skip_notifying_missing_ccs_record_parent(e)
+    ):
+        notify_exception(
+            None,
+            message="Error with ICDS custom content handler",
+        )
+
     return []
 
 
@@ -106,18 +112,18 @@ def static_negative_growth_indicator(recipient, schedule_instance):
 
     try:
         child_person_case = child_person_case_from_child_health_case(schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_prev = Decimal(form.form_data.get('weight_prev'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     try:
         weight_child = Decimal(form.form_data.get('weight_child'))
-    except (InvalidOperation, TypeError):
-        return notify_exception_and_return_empty_list()
+    except (InvalidOperation, TypeError) as e:
+        return notify_exception_and_return_empty_list(e)
 
     if weight_child > weight_prev:
         return []
@@ -176,8 +182,8 @@ def render_missed_visit_message(recipient, case_schedule_instance, template):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     if person_case_is_migrated_or_opted_out(mother_case):
         return []
@@ -225,8 +231,8 @@ def cf_visits_complete(recipient, case_schedule_instance):
 
     try:
         mother_case = mother_person_case_from_ccs_record_case(case_schedule_instance.case)
-    except CaseRelationshipError:
-        return notify_exception_and_return_empty_list()
+    except CaseRelationshipError as e:
+        return notify_exception_and_return_empty_list(e)
 
     context = {
         'beneficiary': mother_case.name,

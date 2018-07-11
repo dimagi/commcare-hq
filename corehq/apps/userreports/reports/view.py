@@ -9,7 +9,7 @@ from django.shortcuts import redirect, render
 
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
 from corehq.apps.reports_core.filters import Choice, PreFilter
 from corehq.apps.hqwebapp.decorators import (
     use_select2,
@@ -62,9 +62,7 @@ from corehq.apps.userreports.util import (
 from corehq.util.couch import get_document_or_404, get_document_or_not_found, \
     DocumentNotFound
 from corehq.util.view_utils import reverse
-from couchexport.export import export_from_tables
 from couchexport.models import Format
-from dimagi.utils.couch.pagination import DatatablesParams
 from memoized import memoized
 
 from dimagi.utils.web import json_request

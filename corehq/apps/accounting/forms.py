@@ -37,7 +37,7 @@ from corehq.apps.accounting.exceptions import (
     CreateAccountingAdminError,
     InvoiceError,
 )
-from corehq.apps.accounting.invoicing import DomainInvoiceFactory
+from corehq.apps.accounting.invoicing import DomainInvoiceFactory, CustomerAccountInvoiceFactory
 from corehq.apps.accounting.models import (
     BillingAccount,
     BillingContactInfo,
@@ -1811,6 +1811,90 @@ class TriggerInvoiceForm(forms.Form):
         year = int(self.cleaned_data['year'])
         month = int(self.cleaned_data['month'])
 
+        if (year, month) >= (today.year, today.month):
+            raise ValidationError('Statement period must be in the past')
+
+
+class TriggerCustomerInvoiceForm(forms.Form):
+    month = forms.ChoiceField(label="Statement Period Month")
+    year = forms.ChoiceField(label="Statement Period Year")
+    customer_account = forms.CharField(label="Billing Account")
+
+    def __init__(self, *args, **kwargs):
+        super(TriggerCustomerInvoiceForm, self).__init__(*args, **kwargs)
+        today = datetime.date.today()
+        one_month_ago = today - relativedelta(months=1)
+        self.fields['month'].initial = one_month_ago.month
+        self.fields['month'].choices = list(MONTHS.items())
+        self.fields['year'].initial = one_month_ago.year
+        self.fields['year'].choices = [
+            (y, y) for y in range(one_month_ago.year, 2012, -1)
+        ]
+        self.helper = FormHelper()
+        self.helper.label_class = 'col-sm-3 col-md-2'
+        self.helper.field_class = 'col-sm-9 col-md-8 col-lg-6'
+        self.helper.form_class = 'form form-horizontal'
+        self.helper.layout = crispy.Layout(
+            crispy.Fieldset(
+                'Trigger Customer Invoice Details',
+                crispy.Field('month', css_class="input-large"),
+                crispy.Field('year', css_class="input-large"),
+                crispy.Field('customer_account', css_class="input-xxlarge accounting-async-select2",
+                             placeholder="Search for Customer Billing Account")
+            ),
+            hqcrispy.FormActions(
+                StrictButton(
+                    "Trigger Customer Invoice",
+                    css_class="btn-primary disable-on-submit",
+                    type="submit",
+                ),
+            )
+        )
+
+    @transaction.atomic
+    def trigger_customer_invoice(self):
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
+        invoice_start, invoice_end = get_first_last_days(year, month)
+        try:
+            account = BillingAccount.objects.get(name=self.cleaned_data['customer_account'])
+            self.clean_previous_invoices(invoice_start, invoice_end, account)
+            invoice_factory = CustomerAccountInvoiceFactory(
+                date_start=invoice_start,
+                date_end=invoice_end,
+                account=account
+            )
+            invoice_factory.create_invoice()
+        except BillingAccount.DoesNotExist:
+            raise InvoiceError(
+                "There is no Billing Account associated with %s" % self.cleaned_data['customer_account']
+            )
+
+    @staticmethod
+    def clean_previous_invoices(invoice_start, invoice_end, account):
+        invoices = Invoice.objects.filter(date_start__lte=invoice_end, date_end__gte=invoice_start)
+        prev_invoices = [invoice if invoice.account == account else [] for invoice in invoices]
+        if prev_invoices:
+            from corehq.apps.accounting.views import InvoiceSummaryView
+            raise InvoiceError(
+                "Invoices exist that were already generated with this same "
+                "criteria. You must manually suppress these invoices: "
+                "{invoice_list}".format(
+                    num_invoices=len(prev_invoices),
+                    invoice_list=', '.join(
+                        ['<a href="{edit_url}">{name}</a>'.format(
+                            edit_url=reverse(InvoiceSummaryView.urlname,
+                                             args=(x.id,)),
+                            name=x.invoice_number
+                        ) for x in prev_invoices]
+                    ),
+                )
+            )
+
+    def clean(self):
+        today = datetime.date.today()
+        year = int(self.cleaned_data['year'])
+        month = int(self.cleaned_data['month'])
         if (year, month) >= (today.year, today.month):
             raise ValidationError('Statement period must be in the past')
 
