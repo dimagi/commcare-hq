@@ -8,28 +8,33 @@ hqDefine("hqwebapp/js/tab_url_hashes", [
     $
 ) {
     $(function(){
-        var tabSelector = "a[data-toggle='tab']:not(.no-hash)";
+        var tabSelector = "a[data-toggle='tab']",
+            navSelector = ".nav.sticky-tabs";
         if (window.location.hash) {
             $("a[href='" + window.location.hash + "']").tab('show');
         } else {
-            $(tabSelector).first().tab('show');
+            $(navSelector + ' ' + tabSelector).first().tab('show');
         }
 
         $('body').on('click', tabSelector, function (e) {
+            var $link = $(this);
+            if (!$link.closest(navSelector).length) {
+                return true;
+            }
             e.preventDefault();
-            var tabName = this.getAttribute('href');
+            var tabName = $link.attr('href');
             if (window.history.pushState) {
                 window.history.pushState(null, null, tabName);
             } else {
                 window.location.hash = tabName;
             }
 
-            $(this).tab('show');
+            $link.tab('show');
             return false;
         });
 
         $(window).on('popstate', function () {
-            var anchor = window.location.hash || $(tabSelector).first().attr('href');
+            var anchor = window.location.hash || $(navSelector + ' ' + tabSelector).first().attr('href');
             $("a[href='" + anchor + "']").tab('show');
         });
     });
