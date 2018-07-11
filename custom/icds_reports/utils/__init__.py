@@ -662,13 +662,3 @@ def values_are_empty(returned_values):
             if tile['value'] or tile['all']:
                 return False
     return True
-
-
-def dont_cache_empty(f):
-    def decorator(*args, **kwargs):
-        returned_values = f(*args, **kwargs)
-        if values_are_empty(returned_values):
-            # quickcache feature of clearing cache for specific values
-            f.clear(*args, **kwargs)
-        return returned_values
-    return decorator
