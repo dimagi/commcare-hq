@@ -43,9 +43,11 @@ class S3BlobDB(AbstractBlobDB):
 
     def report_timing(self, action):
         def record_long_request(duration):
-            if duration > 30:
+            if duration > 100:
                 notify_exception(None, "S3BlobDB request took a long time.", details={
                     'duration': duration,
+                    's3_bucket_name': self.s3_bucket_name,
+                    'action': action,
                 })
 
         return datadog_bucket_timer('commcare.blobs.requests.timing', tags=[
