@@ -211,7 +211,7 @@ def _get_base_vellum_options(request, domain, app, displayLang):
         'javaRosa': {
             'langs': app.langs,
             'displayLanguage': displayLang,
-            'showOnlyCurrentLang': (app.smart_lang_display and len(app.langs) > 2),
+            'showOnlyCurrentLang': (app.smart_lang_display and (len(app.langs) > 2)),
         },
         'uploader': {
             'uploadUrls': {
