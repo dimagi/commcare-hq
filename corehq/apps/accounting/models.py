@@ -2821,7 +2821,7 @@ class InvoicePdf(BlobMixin, SafeSaveDocument):
             for line_item in line_items:
                 is_unit = line_item.unit_description is not None
                 is_quarterly = line_item.invoice.is_customer_invoice and \
-                               line_item.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
+                    line_item.invoice.account.invoicing_plan != InvoicingPlan.MONTHLY
                 unit_cost = line_item.subtotal
                 if is_unit:
                     unit_cost = line_item.unit_cost
