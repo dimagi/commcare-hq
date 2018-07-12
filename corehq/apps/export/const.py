@@ -97,6 +97,9 @@ EXPORT_DOWNLOAD_QUEUE = 'export_download_queue'
 # Used for automatically triggered exports
 SAVED_EXPORTS_QUEUE = 'saved_exports_queue'
 
+# If the queue contains this many tasks, log what's in it
+QUEUE_LENGTH_LOGGING_THRESHHOLD = 100
+
 # The maximum file size of one DataFile
 MAX_DATA_FILE_SIZE = 104857600  # 100 MB
 

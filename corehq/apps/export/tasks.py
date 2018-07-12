@@ -13,16 +13,20 @@ from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
+from corehq.util.celery_utils import get_queue_length, get_queue_tasks
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header, TransientTempfile
 from corehq.util.quickcache import quickcache
 from couchexport.groupexports import export_for_group
 from couchexport.models import Format
-from dimagi.utils.couch import CriticalSection
 from soil.util import expose_blob_download, process_email_request
 
-from .const import SAVED_EXPORTS_QUEUE, EXPORT_DOWNLOAD_QUEUE
+from .const import (
+    SAVED_EXPORTS_QUEUE,
+    EXPORT_DOWNLOAD_QUEUE,
+    QUEUE_LENGTH_LOGGING_THRESHHOLD,
+)
 from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
@@ -35,7 +39,8 @@ from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
 from six.moves import filter
 
-logger = logging.getLogger('export_migration')
+
+logger = logging.getLogger('export_tasks')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
@@ -107,6 +112,8 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     if manual:
         if status.not_started() or status.missing():
             # cancel pending task before kicking off a new one
+            # (May result in many revoked tasks if users kick off the
+            # same export several times.)
             download_data.task.revoke()
         if status.started():
             return  # noop - make the user wait before starting a new one
@@ -114,13 +121,35 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
         if status.not_started() or status.started():
             return  # noop - one's already on the way
 
+    queue = EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE
+    queue_len = get_queue_length(queue)
+    if queue_len == QUEUE_LENGTH_LOGGING_THRESHHOLD:
+        # This makes the assumption, which may not be true, that the
+        logger.info('Queue {} at 100 tasks. Logging task data.'.format(queue))
+        for task in get_queue_tasks(queue):
+            inst_str = '; '.join((
+                'ID: {}'.format(task['export_instance']['id']),
+                'Name: {}'.format(task['export_instance']['name']),
+                'Domain: {}'.format(task['export_instance']['domain']),
+            ))
+            task_str = '; '.join((
+                'Task ID: {}'.format(task['id']),
+                'State: {}'.format(task['state']),
+                'Status: {}'.format(task['status'].state),
+                'Start time: {}'.format(task['start_time'] or 'N/A'),
+                'Progress: {}%'.format(task['status'].progress.percent),
+                'Error: "{}"'.format(task['status'].progress.error_message or "N/A"),
+                'Export instance: ({})'.format(inst_str),
+            ))
+            logger.info(task_str)
+
     # associate task with the export instance
     download_data.set_task(
         _start_export_task.apply_async(
             args=[
                 export_instance_id, last_access_cutoff
             ],
-            queue=EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE,
+            queue=queue,
         )
     )
 
