@@ -78,13 +78,13 @@
                     </div>
 
                     <div>
-                        <ul class="nav nav-tabs" role="tablist">
-                            <li role="presentation" class="active"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
+                        <ul class="nav nav-tabs sticky-tabs" role="tablist">
+                            <li role="presentation"><a href="#payload-tab" role="tab" data-toggle="tab">Payload</a></li>
                             <li role="presentation"><a href="#timing-tab" role="tab" data-toggle="tab">Timing</a></li>
                         </ul>
 
                         <div class="tab-content">
-                            <div role="tabpanel" class="tab-pane active" id="payload-tab">
+                            <div role="tabpanel" class="tab-pane" id="payload-tab">
                                 {% if not hide_xml %}
                                     <pre id="payload" data-payload="{% html_attr payload %}"></pre>
                                 {% else %}

@@ -1,9 +1,7 @@
 /* globals hqDefine */
 hqDefine('users/js/edit_commcare_user', function() {
     var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-        couch_user_id = initial_page_data('couch_user_id'),
-        activeTabCookie = 'active_tab',
-        last_active_tab = $.cookie(activeTabCookie);
+        couch_user_id = initial_page_data('couch_user_id');
 
     $('.verify-button').tooltip();
     $('#id_language').select2({
@@ -15,21 +13,6 @@ hqDefine('users/js/edit_commcare_user', function() {
             document.getElementById('add_phone_number').submit();
         });
         return false;
-    });
-
-    if (last_active_tab) {
-        $(last_active_tab).addClass('active');
-        $('#user-settings-tabs a[href="' + last_active_tab + '"]').parent().addClass('active');
-    } else {
-        var first_tab = $('#user-settings-tabs a[data-toggle="tab"]').first();
-        first_tab.parent().addClass('active');
-        $(first_tab.attr('href')).addClass('active');
-    }
-    $('#user-settings-tabs a[data-toggle="tab"]').on('shown.bs.tab', function() {
-        $.cookie(activeTabCookie, $(this).attr('href'), {
-            path: initial_page_data('path'),
-            expires: 1,
-        });
     });
 
     var alert_user = hqImport("hqwebapp/js/alert_user").alert_user;
