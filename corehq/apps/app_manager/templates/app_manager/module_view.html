@@ -81,7 +81,7 @@
   <div class="tabbable appmanager-tabs-container">
 
     {% if not module.is_surveys %}
-      <ul class="nav nav-tabs" id="module-view-tabs">
+      <ul class="nav nav-tabs sticky-tabs" id="module-view-tabs">
         {% block tab-headers %}
           <li><a href="#module-settings" data-toggle="tab">{% trans "Settings" %}</a></li>
           {% for detail in details %}
