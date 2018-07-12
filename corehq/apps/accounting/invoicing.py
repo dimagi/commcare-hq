@@ -3,6 +3,7 @@ from __future__ import division
 from __future__ import unicode_literals
 import calendar
 import datetime
+from dateutil.relativedelta import relativedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -25,12 +26,13 @@ from corehq.apps.accounting.models import (
     CreditLine,
     EntryPoint, WireInvoice, WireBillingRecord,
     SMALL_INVOICE_THRESHOLD, UNLIMITED_FEATURE_USAGE,
-    SubscriptionType
+    SubscriptionType, InvoicingPlan
 )
 from corehq.apps.accounting.utils import (
     ensure_domain_instance,
     log_accounting_error,
     log_accounting_info,
+    months_from_date
 )
 from corehq.apps.smsbillables.models import SmsBillable
 from corehq.apps.users.models import CommCareUser
@@ -566,7 +568,23 @@ class ProductLineItemFactory(LineItemFactory):
     def quantity(self):
         if self.is_prorated:
             return self.num_prorated_days
+        if self.invoice.is_customer_invoice:
+            if self.invoice.account.invoicing_plan == InvoicingPlan.QUARTERLY:
+                return self.quantity_over_period(3)
+            elif self.invoice.account.invoicing_plan == InvoicingPlan.YEARLY:
+                return self.quantity_over_period(12)
         return 1
+
+    def quantity_over_period(self, num_months):
+        quantity = 0
+        date_start = months_from_date(self.invoice.date_end, -(num_months - 1))
+        while date_start < self.invoice.date_end:
+            if self.subscription.date_end and self.subscription.date_end <= date_start:
+                continue
+            elif self.subscription.date_start <= date_start:
+                quantity += 1
+            date_start = date_start + relativedelta(months=1)
+        return quantity
 
     @property
     def plan_name(self):
