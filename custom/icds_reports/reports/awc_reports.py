@@ -1026,12 +1026,14 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
             current_month_stunting=get_status(
                 getattr(row_data, current_month_stunting_column(icds_features_flag)),
                 'stunted',
-                'Normal height for age'
+                'Normal height for age',
+                data_entered=True if row_data.recorded_height else False
             ),
             current_month_wasting=get_status(
                 getattr(row_data, current_month_wasting_column(icds_features_flag)),
                 'wasted',
-                'Normal weight for height'
+                'Normal weight for height',
+                data_entered=True if row_data.recorded_height and row_data.recorded_weight else False
             ),
             pse_days_attended=row_data.pse_days_attended
         )
@@ -1046,10 +1048,14 @@ def get_awc_report_beneficiary(start, length, draw, order, awc_id, month, two_be
     return config
 
 
-@quickcache(['case_id'], timeout=30 * 60)
-def get_beneficiary_details(case_id):
+@quickcache(['case_id', 'awc_id', 'selected_month'], timeout=30 * 60)
+def get_beneficiary_details(case_id, awc_id, selected_month):
+    selected_month = datetime(*selected_month)
+    six_month_before = selected_month - relativedelta(months=6)
     data = ChildHealthMonthlyView.objects.filter(
-        case_id=case_id
+        case_id=case_id,
+        awc_id=awc_id,
+        month__range=(six_month_before, selected_month)
     ).order_by('month')
 
     min_height = 35

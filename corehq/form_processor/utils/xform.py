@@ -11,6 +11,7 @@ import xml2json
 from corehq.apps.tzmigration.api import phone_timezones_should_be_processed
 from corehq.form_processor.interfaces.processor import XFormQuestionValueIterator
 from corehq.form_processor.models import Attachment
+from corehq.form_processor.exceptions import XFormQuestionValueNotFound
 from dimagi.ext import jsonobject
 from dimagi.utils.parsing import json_format_datetime
 
@@ -71,14 +72,28 @@ class FormSubmissionBuilder(object):
         return form_xml
 
 
-def build_form_xml_from_property_dict(form_properties, separator=''):
+def _build_node_list_from_dict(form_properties, separator=''):
     elements = []
-    for key, value in form_properties.items():
-        prop = etree.Element(key)
-        prop.text = value
-        elements.append(prop)
 
-    return separator.join(etree.tostring(e) for e in elements)
+    for key, values in form_properties.items():
+        if not isinstance(values, list):
+            values = [values]
+
+        for value in values:
+            node = etree.Element(key)
+            if isinstance(value, dict):
+                children = _build_node_list_from_dict(value, separator=separator)
+                for child in children:
+                    node.append(child)
+            else:
+                node.text = value
+            elements.append(node)
+
+    return elements
+
+
+def build_form_xml_from_property_dict(form_properties, separator=''):
+    return separator.join(etree.tostring(e) for e in _build_node_list_from_dict(form_properties, separator))
 
 
 def get_simple_form_xml(form_id, case_id=None, metadata=None, simple_form=SIMPLE_FORM):
@@ -210,17 +225,32 @@ def resave_form(domain, form):
         XFormInstance.get_db().save_doc(form.to_json())
 
 
-def update_response(xml, question, response, xmlns=None):
+def get_node(root, question, xmlns=None):
     '''
-    Given a form submission's xml element, updates the response for an individual question.
-    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    Given an xml element, find the node corresponding to a question path.
+    See XFormQuestionValueIterator for question path format.
+    Throws XFormQuestionValueNotFound if question is not present.
     '''
-    node = xml
+    node = root
     i = XFormQuestionValueIterator(question)
     for (qid, index) in i:
-        node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
+        try:
+            node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
+        except IndexError:
+            raise XFormQuestionValueNotFound()
     node = node.find("{{{}}}{}".format(xmlns, i.last()))
-    if node is not None and node.text != response:
+    if node is None:
+        raise XFormQuestionValueNotFound()
+    return node
+
+
+def update_response(root, question, response, xmlns=None):
+    '''
+    Given a form submission's xml root, updates the response for an individual question.
+    Question and response are both strings; see XFormQuestionValueIterator for question format.
+    '''
+    node = get_node(root, question, xmlns)
+    if node.text != response:
         node.text = response
         return True
     return False

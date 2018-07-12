@@ -286,8 +286,8 @@ hqDefine('app_manager/js/modules/report_module', function () {
         var currentReports = options.currentReports || [];
         var availableReports = options.availableReports || [];
         var saveURL = options.saveURL;
-        self.supportSyncDelay = options.mobileUcrVersion !== 1;
-        self.supportCustomUcrSlug = options.mobileUcrVersion !== 1;
+        self.supportSyncDelay = !options.mobileUcrV1;
+        self.supportCustomUcrSlug = !options.mobileUcrV1;
         self.globalSyncDelay = options.globalSyncDelay;
         self.staticFilterData = options.staticFilterData;
         self.languages = options.languages;

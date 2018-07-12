@@ -1624,7 +1624,6 @@ class ConfirmNewSubscriptionForm(EditBillingAccountInfoForm):
                         pro_bono_status=ProBonoStatus.NO,
                         do_not_invoice=False,
                         no_invoice_reason='',
-                        date_delay_invoicing=None,
                     )
                 else:
                     Subscription.new_domain_subscription(
@@ -1880,13 +1879,10 @@ class InternalSubscriptionManagementForm(forms.Form):
 
     @property
     def subscription_default_fields(self):
-        fields = {
+        return {
             'internal_change': True,
             'web_user': self.web_user,
         }
-        if self.current_subscription:
-            fields['date_delay_invoicing'] = self.current_subscription.date_delay_invoicing
-        return fields
 
     def __init__(self, domain, web_user, *args, **kwargs):
         super(InternalSubscriptionManagementForm, self).__init__(*args, **kwargs)

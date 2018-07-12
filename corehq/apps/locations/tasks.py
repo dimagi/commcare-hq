@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import logging
 import uuid
 
 from celery.task import task
@@ -170,6 +171,20 @@ def import_locations_async(domain, file_ref_id, user_id):
         datasources = get_datasources_for_domain(domain, "Location", include_static=True)
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
+
+    if getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+        # Log results because they are not sent to the view when
+        # CELERY_ALWAYS_EAGER is true
+        logging.getLogger(__name__).info(
+            "import_locations_async %s results: %s -> success=%s",
+            file_ref_id,
+            " ".join(
+                "%s=%r" % (name, getattr(results, name))
+                for name in ["messages", "warnings", "errors"]
+                if getattr(results, name)
+            ),
+            results.success,
+        )
 
     return {
         'messages': results

@@ -8,8 +8,6 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _, ungettext
 
-from couchexport.models import SavedExportSchema
-
 from corehq import privileges
 from corehq.apps.accounting.utils import (
     get_active_reminders_by_domain_name,
@@ -582,20 +580,12 @@ class DomainDowngradeStatusHandler(BaseModifySubscriptionHandler):
             )
 
     @staticmethod
-    def response_deidentified_data(domain, new_plan_version):
+    def response_deidentified_data(project, new_plan_version):
         """
         De-id exports will be hidden
         """
-        startkey = json.dumps([domain.name, ""])[:-3]
-        endkey = "%s{" % startkey
-        reports = SavedExportSchema.view(
-            "couchexport/saved_export_schemas",
-            startkey=startkey,
-            endkey=endkey,
-            include_docs=True,
-            reduce=False,
-        )
-        num_deid_reports = len([r for r in reports if r.is_safe])
+        from corehq.apps.export.dbaccessors import get_deid_export_count
+        num_deid_reports = get_deid_export_count(project.name)
         if num_deid_reports > 0:
             return _fmt_alert(
                 ungettext(

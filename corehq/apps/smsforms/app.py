@@ -8,23 +8,19 @@ from corehq.apps.users.models import CouchUser
 from corehq.form_processor.utils import is_commcarecase
 from corehq.messaging.scheduling.util import utcnow
 from .models import XFORMS_SESSION_SMS, SQLXFormsSession
-from touchforms.formplayer.api import (
+from corehq.apps.formplayer_api.smsforms.api import (
     XFormsConfig,
-    DigestAuth,
     get_raw_instance,
     InvalidSessionIdException,
     TouchformsError,
 )
-from touchforms.formplayer import sms as tfsms
+from corehq.apps.formplayer_api.smsforms import sms as tfsms
 from django.conf import settings
 from xml.etree.cElementTree import XML, tostring
 from dimagi.utils.parsing import json_format_datetime
 import re
 
 COMMCONNECT_DEVICE_ID = "commconnect"
-
-AUTH = DigestAuth(settings.TOUCHFORMS_API_USER, 
-                  settings.TOUCHFORMS_API_PASSWORD)
 
 
 def start_session(session, domain, contact, app, module, form, case_id=None, yield_responses=False,
@@ -71,7 +67,6 @@ def start_session(session, domain, contact, app, module, form, case_id=None, yie
     config = XFormsConfig(form_content=form.render_xform(),
                           language=language,
                           session_data=session_data,
-                          auth=AUTH,
                           domain=domain,
                           **kwargs)
 

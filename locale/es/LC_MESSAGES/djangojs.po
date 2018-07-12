@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-06-26 19:06+0000\n"
+"POT-Creation-Date: 2018-07-10 19:35+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -17,6 +17,15 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:34
+#, fuzzy
+#| msgid "Could not clear user data. Please report an issue if this persists."
+msgid ""
+"Error sending email, please try again or report an issue if this persists."
+msgstr ""
+"No es posible borrar los datos del usuario. Por favor reporte un problema si "
+"esto continúa."
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js:66
 #: corehq/apps/domain/static/domain/js/pro-bono.js:29
@@ -63,7 +72,7 @@ msgstr ""
 "actualice la página e intente de nuevo "
 
 #: corehq/apps/app_manager/static/app_manager/js/details/graph_config.js:557
-#: corehq/apps/reports/static/reports/js/single_form.js:104
+#: corehq/apps/reports/static/reports/js/single_form.js:105
 msgid "Copied!"
 msgstr "¡Copiado!"
 
@@ -390,27 +399,27 @@ msgstr "Editar Formulario"
 msgid "Form Settings"
 msgstr "Configuración del Formulario"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:84
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:80
 msgid "Home Screen"
 msgstr "Pantalla Principal"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:85
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:81
 msgid "First Menu"
 msgstr "Primer Menú"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:82
 msgid "Menu: "
 msgstr "Menú:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:88
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:84
 msgid "Parent Menu: "
 msgstr "Menú Padre:"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:90
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:86
 msgid "Previous Screen"
 msgstr "Pantallla Anterior"
 
-#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:99
+#: corehq/apps/app_manager/static/app_manager/js/forms/form_view.js:95
 msgid "Link to other form"
 msgstr "Enlace a otro formulario"
 
@@ -2367,7 +2376,7 @@ msgstr "Escriba para filtrar respuestas"
 msgid "Not a valid choice"
 msgstr "Opción no válida"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:620
+#: corehq/apps/cloudcare/static/cloudcare/js/form_entry/fullform-ui.js:623
 msgid ""
 "Another process prevented us from servicing your request. Please try again "
 "later."
@@ -2511,8 +2520,8 @@ msgstr ""
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:30
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:47
 #: corehq/apps/data_interfaces/static/data_interfaces/js/list_automatic_update_rules.js:65
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:467
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:485
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:444
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:462
 msgid "Issue communicating with server. Try again."
 msgstr "Ocurrió un problema al comunicarse con el servidor. Intente otra vez."
 
@@ -2639,20 +2648,16 @@ msgid "Excel 2007+"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:235
-#, fuzzy
-#| msgid "Activate"
 msgid "Private"
-msgstr "Activo"
+msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:237
 msgid "Export Only"
 msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:239
-#, fuzzy
-#| msgid "Edit Mapping for "
 msgid "Edit and Export"
-msgstr "Editar Mapeo para"
+msgstr ""
 
 #: corehq/apps/export/static/export/js/models.js:244
 msgid ""
@@ -2665,15 +2670,15 @@ msgstr ""
 msgid "The table path should end with []"
 msgstr "La ruta de la tabla debe terminar con []"
 
-#: corehq/apps/export/static/export/js/models.js:670
+#: corehq/apps/export/static/export/js/models.js:671
 msgid "Sensitive ID"
 msgstr "ID Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:672
+#: corehq/apps/export/static/export/js/models.js:673
 msgid "Sensitive Date"
 msgstr "Fecha Confidencial"
 
-#: corehq/apps/export/static/export/js/models.js:674
+#: corehq/apps/export/static/export/js/models.js:675
 msgid "None"
 msgstr "Ninguna"
 
@@ -2904,15 +2909,15 @@ msgstr ""
 "Ocurrió un error al eliminar su ubicación. Si el problema persiste, por "
 "favor reporte un problema"
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:15
+#: corehq/apps/locations/static/locations/js/widgets_main.js:16
 msgid "Choose a primary location"
 msgstr "Elegir una ubicación principal"
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:17
+#: corehq/apps/locations/static/locations/js/widgets_main.js:18
 msgid "No locations set for this user"
 msgstr ""
 
-#: corehq/apps/locations/static/locations/js/widgets_main.js:29
+#: corehq/apps/locations/static/locations/js/widgets_main.js:30
 msgid "Select a Location"
 msgstr "Seleccione una Ubicación"
 
@@ -3003,7 +3008,7 @@ msgstr ""
 "Usted puede enviar por correo electrónico una versión guardada <br />de este "
 "reporte. "
 
-#: corehq/apps/reports/static/reports/js/case_details.js:9
+#: corehq/apps/reports/static/reports/js/case_details.js:32
 msgid "Unknown"
 msgstr "Desconocido"
 
@@ -3018,7 +3023,7 @@ msgstr ""
 
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:32
 #: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:35
-#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:171
+#: corehq/apps/reports/static/reports/js/config.dataTables.bootstrap.js:174
 #: corehq/apps/reports/static/reports/js/tabular.js:32
 msgid "Sorry!"
 msgstr "¡Lo sentimos!"
@@ -3056,10 +3061,8 @@ msgid "Search Reports..."
 msgstr "Buscar Reportes..."
 
 #: corehq/apps/reports/static/reports/js/filters/case_list_explorer.js:22
-#, fuzzy
-#| msgid "Case Type"
 msgid "case types"
-msgstr "Tipo de Caso"
+msgstr ""
 
 #: corehq/apps/reports/static/reports/js/filters/case_list_explorer_knockout_bindings.js:44
 msgid "e.g. (dob <= '2017-02-01' and initial_home_visit_completed = 'yes') "
@@ -3081,6 +3084,18 @@ msgstr "Que tengan números de teléfono"
 #: corehq/apps/reports/static/reports/js/filters/phone_number.js:6
 msgid "That do not have phone numbers"
 msgstr "Que no tengan números de teléfono"
+
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1090
+#, fuzzy
+#| msgid "Other Tips"
+msgid "Other"
+msgstr "Otros Consejos"
+
+#: corehq/apps/reports/static/reports/js/maps_utils.js:1091
+#, fuzzy
+#| msgid "Form Data"
+msgid "No Data"
+msgstr "Datos del Formulario"
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js:126
 msgid "Sorry, we couldn't load that."
@@ -3158,11 +3173,11 @@ msgstr ""
 "El reporte de Excel que solicitó será enviado al correo electrónico definido "
 "en la configuración de su cuenta."
 
-#: corehq/apps/reports/static/reports/js/single_form.js:63
+#: corehq/apps/reports/static/reports/js/single_form.js:64
 msgid "Labels"
 msgstr "Etiquetas"
 
-#: corehq/apps/reports/static/reports/js/single_form.js:67
+#: corehq/apps/reports/static/reports/js/single_form.js:68
 msgid "Question IDs"
 msgstr "ID de Preguntas"
 
@@ -3359,7 +3374,7 @@ msgid "Password was not changed "
 msgstr "No se cambió de contraseña"
 
 #: corehq/apps/users/static/users/js/edit_commcare_user.js:49
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:410
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:387
 msgid ""
 "Password Requirements: 1 special character, 1 number, 1 capital letter, "
 "minimum length of 8 characters."
@@ -3398,44 +3413,44 @@ msgstr ""
 "Esta contraseña se genera automáticamente. Por favor cópiela o cree la suya. "
 "No se mostrará de nuevo. "
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:274
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:251
 msgid "Username is available."
 msgstr "El nombre de usuario está disponible."
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:305
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:353
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:282
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:330
 msgid "Sorry, there was an issue communicating with the server."
 msgstr "Lo sentimos, ocurrió un problema al comunicarnos con el servidor."
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:495
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:472
 msgid "Username"
 msgstr "Nombre de Usuario"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:496
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:473
 msgid "First Name"
 msgstr "Nombre"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:497
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:474
 msgid "Last Name"
 msgstr "Apellido"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:498
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:475
 msgid "Status"
 msgstr "Estatus"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:503
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:480
 msgid "Show 10 Mobile Workers"
 msgstr "Mostrar 10 Usuarios Móviles"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:504
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:481
 msgid "Show 25 Mobile Workers"
 msgstr "Mostrar 25 Usuarios Móviles"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:505
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:482
 msgid "Show 50 Mobile Workers"
 msgstr "Mostrar 50 Usuarios Móviles"
 
-#: corehq/apps/users/static/users/js/mobile_workers.ng.js:506
+#: corehq/apps/users/static/users/js/mobile_workers.ng.js:483
 msgid "Show 100 Mobile Workers"
 msgstr "Mostrar 100 Usuarios Móviles"
 

@@ -12,12 +12,12 @@
     {% endfor %}
 {% endblock %}
 {% block js %} {{ block.super }}
-    <script type="text/javascript" src="{% static 'mvp/js/mvp.indicatorQueue.js' %}"></script>
-    <script type="text/javascript" src="{% static 'mvp/ko/mvp.async_table.js' %}"></script>
+    <script src="{% static 'mvp/js/mvp.indicatorQueue.js' %}"></script>
+    <script src="{% static 'mvp/ko/mvp.async_table.js' %}"></script>
 {% endblock %}
 {% block js-inline %} {{ block.super }}
 {% if not report.needs_filters %}
-<script type="text/javascript">
+<script>
     $(function () {
         var indicator_table = new CHWIndicatorTable({
             indicators: {{ indicators|JSON }}

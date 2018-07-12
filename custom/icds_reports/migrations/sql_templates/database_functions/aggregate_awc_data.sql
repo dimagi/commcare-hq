@@ -18,8 +18,6 @@ DECLARE
   _daily_attendance_tablename text;
   _awc_location_tablename text;
   _usage_tablename text;
-  _vhnd_tablename text;
-  _ls_tablename text;
   _infra_tablename text;
   _household_tablename text;
   _person_tablename text;
@@ -30,6 +28,7 @@ DECLARE
   _yes_text text;
   _no_text text;
   _female text;
+  _month_start_6m date;
   _month_end_6yr date;
   _month_start_11yr date;
   _month_end_11yr date;
@@ -41,6 +40,7 @@ BEGIN
   _start_date = date_trunc('MONTH', $1)::DATE;
   _end_date = (date_trunc('MONTH', $1) + INTERVAL '1 MONTH - 1 day')::DATE;
   _previous_month_date = (date_trunc('MONTH', _start_date) + INTERVAL '- 1 MONTH')::DATE;
+  _month_start_6m = (_start_date + INTERVAL ' - 6 MONTHS')::DATE;
   _month_end_6yr = (_end_date + INTERVAL ' - 6 YEAR')::DATE;
   _month_start_11yr = (_start_date + INTERVAL ' - 11 YEAR')::DATE;
   _month_end_11yr = (_end_date + INTERVAL ' - 11 YEAR')::DATE;
@@ -65,16 +65,14 @@ BEGIN
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('daily_feeding') INTO _daily_attendance_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('usage') INTO _usage_tablename;
-  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('vhnd') INTO _vhnd_tablename;
-  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_mgmt') INTO _ls_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('household') INTO _household_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('person') INTO _person_tablename;
 
   -- Setup base locations and month
   EXECUTE 'INSERT INTO ' || quote_ident(_tablename5) ||
-    ' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, thr_score, thr_eligible_ccs, ' ||
-    'thr_eligible_child, thr_rations_21_plus_distributed_ccs, thr_rations_21_plus_distributed_child, wer_score, pse_score, awc_not_open_no_data, is_launched, training_phase, aggregation_level) ' ||
+    ' (state_id, district_id, block_id, supervisor_id, awc_id, month, num_awcs, ' ||
+    'is_launched, aggregation_level) ' ||
     '(SELECT ' ||
       'state_id, ' ||
       'district_id, ' ||
@@ -83,16 +81,7 @@ BEGIN
       'doc_id AS awc_id, ' ||
       quote_literal(_start_date) || ', ' ||
       '1, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '0, ' ||
-      '25, ' ||
       quote_literal(_no_text) || ', ' ||
-            '0, ' ||
       '5 ' ||
     'FROM ' || quote_ident(_awc_location_tablename) ||')';
 
@@ -105,48 +94,12 @@ BEGIN
   -- Aggregate daily attendance table.  Not using monthly table as it doesn't have all indicators
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'awc_days_open = ut.awc_days_open, ' ||
-    'total_eligible_children = ut.total_eligible_children, ' ||
-    'total_attended_children = ut.total_attended_children, ' ||
-    'pse_avg_attendance_percent = ut.pse_avg_attendance_percent, ' ||
-    'pse_full = ut.pse_full, ' ||
-    'pse_partial = ut.pse_partial, ' ||
-    'pse_non = ut.pse_non, ' ||
-    'pse_score = ut.pse_score, ' ||
-    'awc_days_provided_breakfast = ut.awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal = ut.awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr = ut.awc_days_provided_thr, ' ||
-    'awc_days_provided_pse = ut.awc_days_provided_pse, ' ||
-    'awc_not_open_holiday = ut.awc_not_open_holiday, ' ||
-    'awc_not_open_festival = ut.awc_not_open_festival, ' ||
-    'awc_not_open_no_help = ut.awc_not_open_no_help, ' ||
-    'awc_not_open_department_work = ut.awc_not_open_department_work, ' ||
-    'awc_not_open_other = ut.awc_not_open_other, ' ||
-    'awc_not_open_no_data = ut.awc_not_open_no_data, ' ||
     'awc_num_open = ut.awc_num_open, ' ||
     'awc_days_pse_conducted = ut.awc_days_pse_conducted ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(awc_open_count) AS awc_days_open, ' ||
-    'sum(eligible_children) AS total_eligible_children, ' ||
-    'sum(attended_children) AS total_attended_children, ' ||
-    'avg(attended_children_percent) AS pse_avg_attendance_percent, ' ||
-    'sum(attendance_full) AS pse_full, ' ||
-    'sum(attendance_partial) AS pse_partial, ' ||
-    'sum(attendance_non) AS pse_non, ' ||
-    'CASE WHEN ((sum(attendance_full)::numeric * 1.25) + (0.625 * sum(attendance_partial)::numeric) + (0.0625 * sum(attendance_non)::numeric)) >= 20 THEN 20 ' ||
-      'WHEN ((sum(attendance_full)::numeric * 1.25) + (0.625 * sum(attendance_partial)::numeric) + (0.0625 * sum(attendance_non)::numeric)) >= 10 THEN 10 ' ||
-      'ELSE 1 END AS pse_score, ' ||
-    'sum(open_bfast_count) AS awc_days_provided_breakfast, ' ||
-    'sum(open_hotcooked_count) AS awc_days_provided_hotmeal, ' ||
-    'sum(days_thr_provided_count) AS awc_days_provided_thr, ' ||
-    'sum(open_pse_count) AS awc_days_provided_pse, ' ||
-    'sum(awc_not_open_holiday) AS awc_not_open_holiday, ' ||
-    'sum(awc_not_open_festival) AS awc_not_open_festival, ' ||
-    'sum(awc_not_open_no_help) AS awc_not_open_no_help, ' ||
-    'sum(awc_not_open_department_work) AS awc_not_open_department_work, ' ||
-    'sum(awc_not_open_other) AS awc_not_open_other, ' ||
-    '25 - sum(awc_open_count) AS awc_not_open_no_data, ' ||
     'CASE WHEN (sum(awc_open_count) > 0) THEN 1 ELSE 0 END AS awc_num_open, ' ||
     'sum(pse_conducted) as awc_days_pse_conducted '
     'FROM ' || quote_ident(_daily_attendance_tablename) || ' ' ||
@@ -158,23 +111,14 @@ BEGIN
     'cases_child_health = ut.cases_child_health, ' ||
     'cases_child_health_all = ut.cases_child_health_all, ' ||
     'wer_weighed = ut.wer_weighed, ' ||
-    'wer_eligible = ut.wer_eligible, ' ||
-    'wer_score = ut.wer_score, ' ||
-    'thr_eligible_child = ut.thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child = ut.thr_rations_21_plus_distributed_child ' ||
+    'wer_eligible = ut.wer_eligible ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(valid_in_month) AS cases_child_health, ' ||
     'sum(valid_all_registered_in_month) AS cases_child_health_all, ' ||
     'sum(nutrition_status_weighed) AS wer_weighed, ' ||
-    'sum(wer_eligible) AS wer_eligible, ' ||
-    'CASE WHEN sum(wer_eligible) = 0 THEN 1 ' ||
-      'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.8 THEN 20 ' ||
-      'WHEN (sum(nutrition_status_weighed)::numeric / sum(wer_eligible)) >= 0.6 THEN 10 ' ||
-      'ELSE 1 END AS wer_score, ' ||
-    'sum(thr_eligible) AS thr_eligible_child, ' ||
-    'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_child '
+    'sum(wer_eligible) AS wer_eligible ' ||
     'FROM ' || quote_ident(_child_health_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -184,18 +128,14 @@ BEGIN
     'cases_ccs_pregnant = ut.cases_ccs_pregnant, ' ||
     'cases_ccs_lactating = ut.cases_ccs_lactating, ' ||
     'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
-    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
-    'thr_eligible_ccs = ut.thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs = ut.thr_rations_21_plus_distributed_ccs ' ||
+    'cases_ccs_lactating_all = ut.cases_ccs_lactating_all ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
     'sum(pregnant) AS cases_ccs_pregnant, ' ||
     'sum(lactating) AS cases_ccs_lactating, ' ||
     'sum(pregnant_all) AS cases_ccs_pregnant_all, ' ||
-    'sum(lactating_all) AS cases_ccs_lactating_all, ' ||
-    'sum(thr_eligible) AS thr_eligible_ccs, ' ||
-    'sum(rations_21_plus_distributed) AS thr_rations_21_plus_distributed_ccs '
+    'sum(lactating_all) AS cases_ccs_lactating_all ' ||
     'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -214,8 +154,6 @@ BEGIN
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'cases_person = ut.cases_person, ' ||
     'cases_person_all = ut.cases_person_all, ' ||
-    'cases_person_has_aadhaar = ut.cases_person_has_aadhaar, ' ||
-    'cases_person_beneficiary = ut.cases_person_beneficiary, ' ||
     'cases_person_adolescent_girls_11_14 = ut.cases_person_adolescent_girls_11_14, ' ||
     'cases_person_adolescent_girls_11_14_all = ut.cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18 = ut.cases_person_adolescent_girls_15_18, ' ||
@@ -225,17 +163,6 @@ BEGIN
     'awc_id, ' ||
     'sum(seeking_services) AS cases_person, ' ||
     'sum(count) AS cases_person_all, ' ||
-    'sum(CASE WHEN aadhar_date <= ' || quote_literal(_end_date) ||
-                  ' AND (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
-                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
-      ' THEN seeking_services ELSE 0 END) as cases_person_has_aadhaar, ' ||
-    'sum(CASE WHEN (' || quote_literal(_month_end_6yr) || ' <= dob ' ||
-                  '      OR (sex = ' || quote_literal(_female) ||
-                  '          AND dob BETWEEN ' || quote_literal(_month_end_49yr) || ' AND ' || quote_literal(_month_start_11yr) || '))' ||
-                  ' AND (date_death IS NULL OR date_death >= ' || quote_literal(_end_date) || ')' ||
-      ' THEN seeking_services ELSE 0 END) as cases_person_beneficiary, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_11_14, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_11yr) || ' > dob AND ' || quote_literal(_month_start_15yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN 1 ELSE 0 END) as cases_person_adolescent_girls_11_14_all, ' ||
     'sum(CASE WHEN ' || quote_literal(_month_end_15yr) || ' > dob AND ' || quote_literal(_month_start_18yr) || ' <= dob' || ' AND sex = ' || quote_literal(_female) || ' THEN seeking_services ELSE 0 END) as cases_person_adolescent_girls_15_18, ' ||
@@ -277,14 +204,6 @@ BEGIN
     'GROUP BY awc_id) ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
 
-  -- Pass to combine THR information from ccs record and child health table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET thr_score = ' ||
-  'CASE WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
-    '(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.7 THEN 20 ' ||
-    'WHEN ((thr_rations_21_plus_distributed_ccs + thr_rations_21_plus_distributed_child)::numeric / ' ||
-    '(CASE WHEN (thr_eligible_child + thr_eligible_ccs) = 0 THEN 1 ELSE (thr_eligible_child + thr_eligible_ccs) END)) >= 0.5 THEN 10 ' ||
-    'ELSE 1 END';
-
   -- Aggregate data from usage table
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'usage_num_pse = ut.usage_num_pse, ' ||
@@ -297,7 +216,6 @@ BEGIN
     'num_launched_blocks = ut.num_launched_awcs, ' ||
     'num_launched_supervisors = ut.num_launched_awcs, ' ||
     'num_launched_awcs = ut.num_launched_awcs, ' ||
-    'training_phase = ut.training_phase, ' ||
     'usage_num_add_person = ut.usage_num_add_person, ' ||
     'usage_num_add_pregnancy = ut.usage_num_add_pregnancy, ' ||
     'usage_num_home_visit = ut.usage_num_home_visit, ' ||
@@ -310,15 +228,7 @@ BEGIN
     'usage_num_delivery = ut.usage_num_delivery, ' ||
     'usage_awc_num_active = ut.usage_awc_num_active, ' ||
     'usage_num_due_list_ccs = ut.usage_num_due_list_ccs, ' ||
-    'usage_num_due_list_child_health = ut.usage_num_due_list_child_health, ' ||
-    'usage_time_pse = ut.usage_time_pse, ' ||
-    'usage_time_gmp = ut.usage_time_gmp, ' ||
-    'usage_time_bp = ut.usage_time_bp, ' ||
-    'usage_time_pnc = ut.usage_time_pnc, ' ||
-    'usage_time_ebf = ut.usage_time_ebf, ' ||
-    'usage_time_cf = ut.usage_time_cf, ' ||
-    'usage_time_of_day_pse = ut.usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit = ut.usage_time_of_day_home_visit ' ||
+    'usage_num_due_list_child_health = ut.usage_num_due_list_child_health ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -328,7 +238,6 @@ BEGIN
     'sum(add_household) AS usage_num_hh_reg, ' ||
     'CASE WHEN sum(add_household) > 0 THEN ' || quote_literal(_yes_text) || ' ELSE ' || quote_literal(_no_text) || ' END as is_launched, '
     'CASE WHEN sum(add_household) > 0 THEN 1 ELSE 0 END as num_launched_awcs, '
-    'CASE WHEN sum(thr) > 0 THEN 4 WHEN (sum(due_list_ccs) + sum(due_list_child)) > 0 THEN 3 WHEN sum(add_pregnancy) > 0 THEN 2 WHEN sum(add_household) > 0 THEN 1 ELSE 0 END AS training_phase, '
     'sum(add_person) AS usage_num_add_person, ' ||
     'sum(add_pregnancy) AS usage_num_add_pregnancy, ' ||
     'sum(home_visit) AS usage_num_home_visit, ' ||
@@ -341,15 +250,7 @@ BEGIN
     'sum(delivery) AS usage_num_delivery, ' ||
     'CASE WHEN (sum(due_list_ccs) + sum(due_list_child) + sum(pse) + sum(gmp) + sum(thr) + sum(home_visit) + sum(add_pregnancy) + sum(add_household)) >= 15 THEN 1 ELSE 0 END AS usage_awc_num_active, ' ||
     'sum(due_list_ccs) AS usage_num_due_list_ccs, ' ||
-    'sum(due_list_child) AS usage_num_due_list_child_health, ' ||
-    'avg(pse_time) AS usage_time_pse, ' ||
-    'avg(gmp_time) AS usage_time_gmp, ' ||
-    'avg(bp_time) AS usage_time_bp, ' ||
-    'avg(pnc_time) AS usage_time_pnc, ' ||
-    'avg(ebf_time) AS usage_time_ebf, ' ||
-    'avg(cf_time) AS usage_time_cf, ' ||
-    'avg(pse_time_of_day::time) AS usage_time_of_day_pse, ' ||
-    'avg(home_visit_time_of_day::time) AS usage_time_of_day_home_visit '
+    'sum(due_list_child) AS usage_num_due_list_child_health ' ||
     'FROM ' || quote_ident(_usage_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
   'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
@@ -363,100 +264,10 @@ BEGIN
   'WHERE month <= ' || quote_literal(_previous_month_date) || ' AND usage_num_hh_reg > 0 AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
 
-  -- Update training status based on the previous month as well
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-     'training_phase = ut.training_phase ' ||
-    'FROM (SELECT awc_id, training_phase ' ||
-       'FROM agg_awc ' ||
-  'WHERE month = ' || quote_literal(_previous_month_date) || ' AND awc_id <> ' || quote_literal(_all_text) || ') ut ' ||
-  'WHERE ut.awc_id = agg_awc.awc_id AND agg_awc.training_phase < ut.training_phase';
-
-  -- Pass to calculate awc score and ranks and training status
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' SET (' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
-    'trained_phase_1, ' ||
-    'trained_phase_2, ' ||
-    'trained_phase_3, ' ||
-    'trained_phase_4) = ' ||
-  '(' ||
-    'pse_score + thr_score + wer_score, ' ||
-    'CASE WHEN (pse_score + thr_score + wer_score) >= 60 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN ((pse_score + thr_score + wer_score) >= 40 AND (pse_score + thr_score + wer_score) < 60) THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN (pse_score + thr_score + wer_score) < 40 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN training_phase = 1 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN training_phase = 2 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN training_phase = 3 THEN 1 ELSE 0 END, ' ||
-    'CASE WHEN training_phase = 4 THEN 1 ELSE 0 END ' ||
-  ')';
-
-  -- Aggregate data from VHND table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'vhnd_immunization = ut.vhnd_immunization, ' ||
-    'vhnd_anc = ut.vhnd_anc, ' ||
-    'vhnd_gmp = ut.vhnd_gmp, ' ||
-    'vhnd_num_pregnancy = ut.vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating = ut.vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12 = ut.vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12 = ut.vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers = ut.vhnd_num_fathers ' ||
-  'FROM (SELECT ' ||
-    'awc_id, ' ||
-    'month, ' ||
-    'sum(child_immu) AS vhnd_immunization, ' ||
-    'sum(anc_today) AS vhnd_anc, ' ||
-    'sum(vhnd_gmp) AS vhnd_gmp, ' ||
-    'sum(vhnd_num_pregnant_women) AS vhnd_num_pregnancy, ' ||
-    'sum(vhnd_num_lactating_women) AS vhnd_num_lactating, ' ||
-    'sum(vhnd_num_mothers_6_12) AS vhnd_num_mothers_6_12, ' ||
-    'sum(vhnd_num_mothers_12) AS vhnd_num_mothers_12, ' ||
-    'sum(vhnd_num_fathers) AS vhnd_num_fathers '
-    'FROM ' || quote_ident(_vhnd_tablename) || ' ' ||
-    'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
-  'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
-
-  -- Aggregate data from LS supervision table
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'ls_supervision_visit = ut.ls_supervision_visit, ' ||
-    'ls_num_supervised = ut.ls_num_supervised, ' ||
-    'ls_awc_location_lat = ut.ls_awc_location_lat, ' ||
-    'ls_awc_location_long = ut.ls_awc_location_long, ' ||
-    'ls_awc_present = ut.ls_awc_present, ' ||
-    'ls_awc_open = ut.ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available = ut.ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early = ut.ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday = ut.ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown = ut.ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other = ut.ls_awc_not_open_other ' ||
-  'FROM (SELECT ' ||
-    'awc_id AS awc_id, ' ||
-    'month, ' ||
-    'sum(count) AS ls_supervision_visit, ' ||
-    'CASE WHEN sum(count) > 0 THEN 1 ELSE 0 END AS ls_num_supervised, ' ||
-    'avg(awc_location_lat) AS ls_awc_location_lat, ' ||
-    'avg(awc_location_long) AS ls_awc_location_long, ' ||
-    'sum(aww_present) AS ls_awc_present, ' ||
-    'sum(awc_open) AS ls_awc_open, ' ||
-    'sum(awc_not_open_aww_not_available) AS ls_awc_not_open_aww_not_available, ' ||
-    'sum(awc_not_open_closed_early) AS ls_awc_not_open_closed_early, ' ||
-    'sum(awc_not_open_holiday) AS ls_awc_not_open_holiday, ' ||
-    'sum(awc_not_open_unknown) AS ls_awc_not_open_unknown, ' ||
-    'sum(awc_not_open_other) AS ls_awc_not_open_other '
-    'FROM ' || quote_ident(_ls_tablename) || ' ' ||
-    'WHERE month = ' || quote_literal(_start_date) || ' GROUP BY awc_id, month) ut ' ||
-  'WHERE ut.month = agg_awc.month AND ut.awc_id = agg_awc.awc_id';
-
-
   -- Get latest infrastructure data
   EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
     'infra_last_update_date = ut.infra_last_update_date, ' ||
     'infra_type_of_building = ut.infra_type_of_building, ' ||
-    'infra_type_of_building_pucca = ut.infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca = ut.infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha = ut.infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space = ut.infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water = ut.infra_clean_water, ' ||
     'infra_functional_toilet = ut.infra_functional_toilet, ' ||
     'infra_baby_weighing_scale = ut.infra_baby_weighing_scale, ' ||
@@ -474,10 +285,6 @@ BEGIN
     'month, ' ||
     'submitted_on AS infra_last_update_date, ' ||
     'type_of_building AS infra_type_of_building, ' ||
-    'type_of_building_pucca AS infra_type_of_building_pucca, ' ||
-    'type_of_building_semi_pucca AS infra_type_of_building_semi_pucca, ' ||
-    'type_of_building_kuccha AS infra_type_of_building_kuccha, ' ||
-    'type_of_building_partial_covered_space AS infra_type_of_building_partial_covered_space, ' ||
     'clean_water AS infra_clean_water, ' ||
     'functional_toilet AS infra_functional_toilet, ' ||
     'baby_scale_usable AS infra_baby_weighing_scale, ' ||
@@ -495,45 +302,16 @@ BEGIN
   'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 1 WHERE infra_last_update_date IS NOT NULL';
-
-  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET ' ||
-    'num_awc_infra_last_update = 0 WHERE infra_last_update_date IS NULL';
+  EXECUTE 'UPDATE ' || quote_ident(_tablename5) || ' agg_awc SET num_awc_infra_last_update = ' ||
+   'CASE WHEN infra_last_update_date IS NOT NULL AND ' ||
+     quote_literal(_month_start_6m) || ' < infra_last_update_date THEN 1 ELSE 0 END';
 
   -- Roll Up by Location
   _rollup_text =   'sum(num_awcs), ' ||
     'sum(awc_days_open), ' ||
-    'sum(total_eligible_children), ' ||
-    'sum(total_attended_children), ' ||
-    'avg(pse_avg_attendance_percent), ' ||
-    'sum(pse_full), ' ||
-    'sum(pse_partial), ' ||
-    'sum(pse_non), ' ||
-    'avg(pse_score), ' ||
-    'sum(awc_days_provided_breakfast), ' ||
-    'avg(awc_days_provided_hotmeal), ' ||
-    'sum(awc_days_provided_thr), ' ||
-    'sum(awc_days_provided_pse), ' ||
-    'sum(awc_not_open_holiday), ' ||
-    'sum(awc_not_open_festival), ' ||
-    'sum(awc_not_open_no_help), ' ||
-    'sum(awc_not_open_department_work), ' ||
-    'sum(awc_not_open_other), ' ||
     'sum(awc_num_open), ' ||
-    'sum(awc_not_open_no_data), ' ||
     'sum(wer_weighed), ' ||
     'sum(wer_eligible), ' ||
-    'avg(wer_score), ' ||
-    'sum(thr_eligible_child), ' ||
-    'sum(thr_rations_21_plus_distributed_child), ' ||
-    'sum(thr_eligible_ccs), ' ||
-    'sum(thr_rations_21_plus_distributed_ccs), ' ||
-    'avg(thr_score), ' ||
-    'avg(awc_score), ' ||
-    'sum(num_awc_rank_functional), ' ||
-    'sum(num_awc_rank_semi), ' ||
-    'sum(num_awc_rank_non), ' ||
     'sum(cases_ccs_pregnant), ' ||
     'sum(cases_ccs_lactating), ' ||
     'sum(cases_child_health), ' ||
@@ -551,39 +329,8 @@ BEGIN
     'sum(usage_num_due_list_ccs), ' ||
     'sum(usage_num_due_list_child_health), ' ||
     'sum(usage_awc_num_active), ' ||
-    'avg(usage_time_pse), ' ||
-    'avg(usage_time_gmp), ' ||
-    'avg(usage_time_bp), ' ||
-    'avg(usage_time_pnc), ' ||
-    'avg(usage_time_ebf), ' ||
-    'avg(usage_time_cf), ' ||
-    'avg(usage_time_of_day_pse), ' ||
-    'avg(usage_time_of_day_home_visit), ' ||
-    'sum(vhnd_immunization), ' ||
-    'sum(vhnd_anc), ' ||
-    'sum(vhnd_gmp), ' ||
-    'sum(vhnd_num_pregnancy), ' ||
-    'sum(vhnd_num_lactating), ' ||
-    'sum(vhnd_num_mothers_6_12), ' ||
-    'sum(vhnd_num_mothers_12), ' ||
-    'sum(vhnd_num_fathers), ' ||
-    'sum(ls_supervision_visit), ' ||
-    'sum(ls_num_supervised), ' ||
-    'avg(ls_awc_location_long), ' ||
-    'avg(ls_awc_location_lat), ' ||
-    'sum(ls_awc_present), ' ||
-    'sum(ls_awc_open), ' ||
-    'sum(ls_awc_not_open_aww_not_available), ' ||
-    'sum(ls_awc_not_open_closed_early), ' ||
-    'sum(ls_awc_not_open_holiday), ' ||
-    'sum(ls_awc_not_open_unknown), ' ||
-    'sum(ls_awc_not_open_other), ' ||
     quote_nullable(_null_value) || ', ' ||
     quote_nullable(_null_value) || ', ' ||
-    'sum(infra_type_of_building_pucca), ' ||
-    'sum(infra_type_of_building_semi_pucca), ' ||
-    'sum(infra_type_of_building_kuccha), ' ||
-    'sum(infra_type_of_building_partial_covered_space), ' ||
     'sum(infra_clean_water), ' ||
     'sum(infra_functional_toilet), ' ||
     'sum(infra_baby_weighing_scale), ' ||
@@ -595,17 +342,11 @@ BEGIN
     'sum(usage_num_hh_reg), ' ||
     'sum(usage_num_add_person), ' ||
     'sum(usage_num_add_pregnancy), ' ||
-    quote_literal(_yes_text) || ', ' ||
-    quote_nullable(_null_value) || ', ' ||
-    'sum(trained_phase_1), ' ||
-    'sum(trained_phase_2), ' ||
-    'sum(trained_phase_3), ' ||
-    'sum(trained_phase_4), ';
+    quote_literal(_yes_text) || ', ';
 
     _rollup_text2 = 'sum(cases_household), ' ||
         'sum(cases_person), ' ||
         'sum(cases_person_all), ' ||
-        'sum(cases_person_has_aadhaar), ' ||
         'sum(cases_ccs_pregnant_all), ' ||
         'sum(cases_ccs_lactating_all), ' ||
         'sum(cases_child_health_all), ' ||
@@ -614,7 +355,6 @@ BEGIN
         'sum(cases_person_adolescent_girls_11_14_all), ' ||
         'sum(cases_person_adolescent_girls_15_18_all), ' ||
         'sum(infra_infant_weighing_scale), ' ||
-        'sum(cases_person_beneficiary), ' ||
         quote_nullable(_null_value) || ', ' ||
         quote_nullable(_null_value) || ', ' ||
         'sum(num_awc_infra_last_update), ' ||
@@ -636,36 +376,9 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -683,39 +396,8 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -728,11 +410,6 @@ BEGIN
     'usage_num_add_person, ' ||
     'usage_num_add_pregnancy, ' ||
     'is_launched, ' ||
-    'training_phase, ' ||
-    'trained_phase_1, ' ||
-    'trained_phase_2, ' ||
-    'trained_phase_3, ' ||
-    'trained_phase_4, ' ||
     'aggregation_level, ' ||
     'num_launched_states, ' ||
     'num_launched_districts, ' ||
@@ -742,7 +419,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -751,7 +427,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -795,36 +470,9 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -842,39 +490,8 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -887,11 +504,6 @@ BEGIN
     'usage_num_add_person, ' ||
     'usage_num_add_pregnancy, ' ||
     'is_launched, ' ||
-    'training_phase, ' ||
-    'trained_phase_1, ' ||
-    'trained_phase_2, ' ||
-    'trained_phase_3, ' ||
-    'trained_phase_4, ' ||
     'aggregation_level, ' ||
     'num_launched_states, ' ||
     'num_launched_districts, ' ||
@@ -901,7 +513,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -910,7 +521,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -953,36 +563,9 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -1000,39 +583,8 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -1045,11 +597,6 @@ BEGIN
     'usage_num_add_person, ' ||
     'usage_num_add_pregnancy, ' ||
     'is_launched, ' ||
-    'training_phase, ' ||
-    'trained_phase_1, ' ||
-    'trained_phase_2, ' ||
-    'trained_phase_3, ' ||
-    'trained_phase_4, ' ||
     'aggregation_level, ' ||
     'num_launched_states, ' ||
     'num_launched_districts, ' ||
@@ -1059,7 +606,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -1068,7 +614,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||
@@ -1110,36 +655,9 @@ BEGIN
     'month, ' ||
     'num_awcs, ' ||
     'awc_days_open, ' ||
-    'total_eligible_children, ' ||
-    'total_attended_children, ' ||
-    'pse_avg_attendance_percent, ' ||
-    'pse_full, ' ||
-    'pse_partial, ' ||
-    'pse_non, ' ||
-    'pse_score, ' ||
-    'awc_days_provided_breakfast, ' ||
-    'awc_days_provided_hotmeal, ' ||
-    'awc_days_provided_thr, ' ||
-    'awc_days_provided_pse, ' ||
-    'awc_not_open_holiday, ' ||
-    'awc_not_open_festival, ' ||
-    'awc_not_open_no_help, ' ||
-    'awc_not_open_department_work, ' ||
-    'awc_not_open_other, ' ||
     'awc_num_open, ' ||
-    'awc_not_open_no_data, ' ||
     'wer_weighed, ' ||
     'wer_eligible, ' ||
-    'wer_score, ' ||
-    'thr_eligible_child, ' ||
-    'thr_rations_21_plus_distributed_child, ' ||
-    'thr_eligible_ccs, ' ||
-    'thr_rations_21_plus_distributed_ccs, ' ||
-    'thr_score, ' ||
-    'awc_score, ' ||
-    'num_awc_rank_functional, ' ||
-    'num_awc_rank_semi, ' ||
-    'num_awc_rank_non, ' ||
     'cases_ccs_pregnant, ' ||
     'cases_ccs_lactating, ' ||
     'cases_child_health, ' ||
@@ -1157,39 +675,8 @@ BEGIN
     'usage_num_due_list_ccs, ' ||
     'usage_num_due_list_child_health, ' ||
     'usage_awc_num_active, ' ||
-    'usage_time_pse, ' ||
-    'usage_time_gmp, ' ||
-    'usage_time_bp, ' ||
-    'usage_time_pnc, ' ||
-    'usage_time_ebf, ' ||
-    'usage_time_cf, ' ||
-    'usage_time_of_day_pse, ' ||
-    'usage_time_of_day_home_visit, ' ||
-    'vhnd_immunization, ' ||
-    'vhnd_anc, ' ||
-    'vhnd_gmp, ' ||
-    'vhnd_num_pregnancy, ' ||
-    'vhnd_num_lactating, ' ||
-    'vhnd_num_mothers_6_12, ' ||
-    'vhnd_num_mothers_12, ' ||
-    'vhnd_num_fathers, ' ||
-    'ls_supervision_visit, ' ||
-    'ls_num_supervised, ' ||
-    'ls_awc_location_long, ' ||
-    'ls_awc_location_lat, ' ||
-    'ls_awc_present, ' ||
-    'ls_awc_open, ' ||
-    'ls_awc_not_open_aww_not_available, ' ||
-    'ls_awc_not_open_closed_early, ' ||
-    'ls_awc_not_open_holiday, ' ||
-    'ls_awc_not_open_unknown, ' ||
-    'ls_awc_not_open_other, ' ||
     'infra_last_update_date, ' ||
     'infra_type_of_building, ' ||
-    'infra_type_of_building_pucca, ' ||
-    'infra_type_of_building_semi_pucca, ' ||
-    'infra_type_of_building_kuccha, ' ||
-    'infra_type_of_building_partial_covered_space, ' ||
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
@@ -1202,11 +689,6 @@ BEGIN
     'usage_num_add_person, ' ||
     'usage_num_add_pregnancy, ' ||
     'is_launched, ' ||
-    'training_phase, ' ||
-    'trained_phase_1, ' ||
-    'trained_phase_2, ' ||
-    'trained_phase_3, ' ||
-    'trained_phase_4, ' ||
     'aggregation_level, ' ||
     'num_launched_states, ' ||
     'num_launched_districts, ' ||
@@ -1216,7 +698,6 @@ BEGIN
     'cases_household, ' ||
     'cases_person, ' ||
     'cases_person_all, ' ||
-    'cases_person_has_aadhaar, ' ||
     'cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all, ' ||
     'cases_child_health_all, ' ||
@@ -1225,7 +706,6 @@ BEGIN
     'cases_person_adolescent_girls_11_14_all, ' ||
     'cases_person_adolescent_girls_15_18_all, ' ||
     'infra_infant_weighing_scale, ' ||
-    'cases_person_beneficiary, ' ||
     'cases_person_referred, ' ||
     'awc_days_pse_conducted, ' ||
     'num_awc_infra_last_update, ' ||

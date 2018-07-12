@@ -10,7 +10,7 @@ from corehq.apps.ivr.models import Call
 from corehq.apps.reminders.util import get_one_way_number_for_recipient
 from corehq.apps.locations.models import SQLLocation
 from corehq.apps.smsforms.models import get_session_by_session_id, SQLXFormsSession
-from touchforms.formplayer.api import TouchformsError
+from corehq.apps.formplayer_api.smsforms.api import TouchformsError
 from corehq.apps.sms.api import (
     send_sms, send_sms_to_verified_number, MessageMetadata
 )
