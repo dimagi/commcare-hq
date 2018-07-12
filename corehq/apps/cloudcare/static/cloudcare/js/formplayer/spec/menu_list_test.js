@@ -67,6 +67,7 @@ describe('Render a case list', function () {
             user.domain = 'test-domain';
             user.username = 'test-username';
             user.formplayer_url = 'url';
+            user.displayOptions = {};
 
         });
 
