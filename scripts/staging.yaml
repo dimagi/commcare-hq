@@ -59,6 +59,7 @@ branches:
   - es/location-download  # Ethan July 6
   - jls/data-clean-unknown-nodes  # Jenny July 10
   - jls/unify-tab-history  # Jenny July 10
+  - emord-patch-1  # J$ upgrade pillow
 submodules:
   submodules/django-digest-src:
     branches: []
