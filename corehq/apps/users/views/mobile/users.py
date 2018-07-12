@@ -42,7 +42,7 @@ from corehq.apps.accounting.models import (
     EntryPoint,
 )
 from corehq.apps.accounting.utils import domain_has_privilege
-from corehq.apps.custom_data_fields import CustomDataEditor
+from corehq.apps.custom_data_fields.edit_entity import CustomDataEditor
 from corehq.apps.custom_data_fields.models import CUSTOM_DATA_FIELD_PREFIX
 from corehq.apps.domain.dbaccessors import get_doc_ids_in_domain_by_class
 from corehq.apps.domain.decorators import domain_admin_required

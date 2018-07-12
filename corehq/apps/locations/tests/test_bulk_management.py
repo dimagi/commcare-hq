@@ -8,6 +8,7 @@ from django.test import SimpleTestCase, TestCase
 from django.utils.functional import cached_property
 from mock import patch, Mock
 
+from corehq.apps.custom_data_fields.dbaccessors import get_by_domain_and_type
 from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition, CustomDataField
 from corehq.apps.domain.shortcuts import create_domain
 from corehq.apps.users.models import WebUser
@@ -36,27 +37,22 @@ from six.moves import range
 
 NOT_PROVIDED = LocationStub.NOT_PROVIDED
 
+
+def LocTypeRow(
+    name,
+    code,
+    parent_code,
+    do_delete=False,
+    shares_cases=False,
+    view_descendants=False,
+):
+    return LocationTypeData(name, code, parent_code, do_delete, shares_cases, view_descendants, 0)
+
+
 FLAT_LOCATION_TYPES = [
-    LocationTypeData('State', 'state', '', False, False, False, 0),
-    LocationTypeData('County', 'county', 'state', False, False, False, 0),
-    LocationTypeData('City', 'city', 'county', False, False, False, 0),
-]
-
-DUPLICATE_TYPE_CODES = [
-    LocationTypeData('State', 'state', '', False, False, False, 0),
-    LocationTypeData('County', 'county', 'state', False, False, True, 0),
-    LocationTypeData('City', 'city', 'county', False, True, False, 0),
-    LocationTypeData('Other County', 'county', 'state', False, False, True, 0),
-]
-
-CYCLIC_LOCATION_TYPES = [
-    LocationTypeData('State', 'state', '', False, False, False, 0),
-    LocationTypeData('County', 'county', 'state', False, False, True, 0),
-    LocationTypeData('City', 'city', 'county', False, True, False, 0),
-    # These three cycle:
-    LocationTypeData('Region', 'region', 'village', False, False, False, 0),
-    LocationTypeData('District', 'district', 'region', False, False, True, 0),
-    LocationTypeData('Village', 'village', 'district', False, True, False, 0),
+    LocTypeRow('State', 'state', ''),
+    LocTypeRow('County', 'county', 'state'),
+    LocTypeRow('City', 'city', 'county'),
 ]
 
 
@@ -318,7 +314,16 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         assert_errors(validator, [])
 
     def test_cyclic_location_types(self):
-        validator = self.get_validator(CYCLIC_LOCATION_TYPES, self.basic_location_tree)
+        cyclic_location_types = [
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state'),
+            LocTypeRow('City', 'city', 'county'),
+            # These three cycle:
+            LocTypeRow('Region', 'region', 'village'),
+            LocTypeRow('District', 'district', 'region'),
+            LocTypeRow('Village', 'village', 'district'),
+        ]
+        validator = self.get_validator(cyclic_location_types, self.basic_location_tree)
         self.assertEqual(len(validator._validate_types_tree()), 3)
 
     def test_bad_type_change(self):
@@ -356,7 +361,13 @@ class TestTreeValidator(UploadTestUtils, TestCase):
         assert_errors(validator, [])
 
     def test_duplicate_type_codes(self):
-        validator = self.get_validator(DUPLICATE_TYPE_CODES, self.basic_location_tree)
+        duplicate_type_codes = [
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state'),
+            LocTypeRow('City', 'city', 'county'),
+            LocTypeRow('Other County', 'county', 'state'),
+        ]
+        validator = self.get_validator(duplicate_type_codes, self.basic_location_tree)
         assert_errors(validator, ["type code 'county' is used 2 times"])
 
     def test_duplicate_location(self):
@@ -389,7 +400,7 @@ class TestTreeValidator(UploadTestUtils, TestCase):
     def test_missing_types(self):
         # all types in the domain should be listed in given excel
         result = self.bulk_update_locations(
-            FLAT_LOCATION_TYPES + [LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)],
+            FLAT_LOCATION_TYPES + [LocTypeRow('Galaxy', 'galaxy', '')],
             self.basic_location_tree,
         )
         assert_errors(result, [])
@@ -716,6 +727,7 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.user = WebUser.create(self.domain, 'username', 'password')
 
     def tearDown(self):
+        get_by_domain_and_type.clear(self.domain, 'LocationFields')
         super(TestBulkManagementWithInitialLocs, self).tearDown()
         self.user.delete()
 
@@ -819,9 +831,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_delete_city_type_valid(self):
         # delete a location type and locations of that type
         delete_city_types = [
-            LocationTypeData('State', 'state', '', False, False, False, 0),
-            LocationTypeData('County', 'county', 'state', False, False, True, 0),
-            LocationTypeData('City', 'city', 'county', True, True, False, 0),
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state'),
+            LocTypeRow('City', 'city', 'county'),
         ]
         delete_cities_locations = [
             self.UpdateLocRow('S1', 's1', 'state', ''),
@@ -846,9 +858,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_delete_everything(self):
         # delete everything
         delete_city_types = [
-            LocationTypeData('State', 'state', '', True, False, False, 0),
-            LocationTypeData('County', 'county', 'state', True, False, True, 0),
-            LocationTypeData('City', 'city', 'county', True, True, False, 0),
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state'),
+            LocTypeRow('City', 'city', 'county'),
         ]
         delete_cities_locations = [
             self.UpdateLocRow('S1', 's1', 'state', '', do_delete=True),
@@ -873,9 +885,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         # delete a location type but don't delete locations of that type.
         # this is invalid upload and should not go through
         delete_city_types = [
-            LocationTypeData('State', 'state', '', False, False, False, 0),
-            LocationTypeData('County', 'county', 'state', False, False, True, 0),
-            LocationTypeData('City', 'city', 'county', True, True, False, 0),
+            LocTypeRow('State', 'state', ''),
+            LocTypeRow('County', 'county', 'state'),
+            LocTypeRow('City', 'city', 'county', do_delete=True),
         ]
 
         result = self.bulk_update_locations(
@@ -928,10 +940,11 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         self.assertLocationsMatch(self.as_pairs(self.basic_update))
 
         edit_types = [
-            LocationTypeData('State', 'state', '', False, False, False, 0),
+            LocTypeRow('State', 'state', ''),
             # change name of this type
-            LocationTypeData('District', 'county', 'state', False, False, False, 0),
-            LocationTypeData('City', 'city', 'county', False, False, False, 0),
+            LocTypeRow('District', 'county', 'state'),
+            # Make this one share cases
+            LocTypeRow('City', 'city', 'county', shares_cases=True),
         ]
 
         result = self.bulk_update_locations(
@@ -946,9 +959,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
     def test_rearrange_locations(self):
         # a total rearrangement like reversing the tree can be done
         reverse_order = [
-            LocationTypeData('State', 'state', 'county', False, False, False, 0),
-            LocationTypeData('County', 'county', 'city', False, False, False, 0),
-            LocationTypeData('City', 'city', '', False, False, False, 0),
+            LocTypeRow('State', 'state', 'county'),
+            LocTypeRow('County', 'county', 'city'),
+            LocTypeRow('City', 'city', ''),
         ]
         edit_types_of_locations = [
             # change parent from TOP to county
@@ -1064,7 +1077,9 @@ class TestBulkManagementWithInitialLocs(UploadTestUtils, LocationHierarchyPerTes
         # Re-upload that export
         worksheets = []
         for sheet_title, headers in exporter.get_headers():
-            sheet = IteratorJSONReader(headers + writer.data[sheet_title])
+            rows = [[val if val is not None else '' for val in row]
+                    for row in writer.data[sheet_title]]
+            sheet = IteratorJSONReader(headers + rows)
             sheet.title = sheet_title
             worksheets.append(sheet)
         mock_importer = Mock()
@@ -1165,6 +1180,6 @@ class TestRestrictedUserUpload(UploadTestUtils, LocationHierarchyPerTest):
 
     def test_cant_modify_types(self):
         types = FLAT_LOCATION_TYPES + [
-            LocationTypeData('Galaxy', 'galaxy', '', False, False, False, 0)]
+            LocTypeRow('Galaxy', 'galaxy', '')]
         result = self.bulk_update_locations(types, [])
         assert_errors(result, ["You do not have permission to add or modify location types"])

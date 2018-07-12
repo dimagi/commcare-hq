@@ -51,12 +51,16 @@ def to_boolean(val):
     return False if val == '' else string_to_boolean(val)
 
 
+def strip(val):
+    return val.strip()
+
+
 @attrs(frozen=True)
 class LocationTypeData(object):
     """read-only representation of location type attributes specified in an upload"""
-    name = attrib(type=six.text_type)
-    code = attrib(type=six.text_type)
-    parent_code = attrib(converter=lambda code: code or ROOT_LOCATION_TYPE)
+    name = attrib(type=six.text_type, converter=strip)
+    code = attrib(type=six.text_type, converter=strip)
+    parent_code = attrib(type=six.text_type, converter=lambda code: code or ROOT_LOCATION_TYPE)
     do_delete = attrib(type=bool, converter=to_boolean)
     shares_cases = attrib(type=bool, converter=to_boolean)
     view_descendants = attrib(type=bool, converter=to_boolean)
@@ -108,7 +112,7 @@ class LocationTypeStub(object):
 
 
 def lowercase_string(val):
-    return six.text_type(val).lower()
+    return six.text_type(val).strip().lower()
 
 
 def maybe_decimal(val):
@@ -123,13 +127,14 @@ def maybe_decimal(val):
 @attrs(frozen=True)
 class LocationData(object):
     """read-only representation of location attributes specified in an upload"""
-    name = attrib(type=six.text_type)
-    site_code = attrib(converter=lowercase_string)
-    location_type = attrib(type=six.text_type)
-    parent_code = attrib(converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
-    location_id = attrib(type=six.text_type)
+    name = attrib(type=six.text_type, converter=strip)
+    site_code = attrib(type=six.text_type, converter=lowercase_string)
+    location_type = attrib(type=six.text_type, converter=strip)
+    parent_code = attrib(type=six.text_type,
+                         converter=lambda val: lowercase_string(val) if val else ROOT_LOCATION_TYPE)
+    location_id = attrib(type=six.text_type, converter=strip)
     do_delete = attrib(type=bool, converter=to_boolean)
-    external_id = attrib(type=six.text_type)
+    external_id = attrib(type=six.text_type, converter=strip)
     latitude = attrib(converter=maybe_decimal)
     longitude = attrib(converter=maybe_decimal)
     # This can be a dict or 'NOT_PROVIDED_IN_EXCEL'

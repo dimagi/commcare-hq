@@ -22,7 +22,7 @@ from soil.util import expose_cached_download, get_download_context
 from corehq import toggles
 from corehq.apps.commtrack.util import unicode_slug
 from corehq.apps.consumption.shortcuts import get_default_monthly_consumption
-from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.domain.decorators import domain_admin_required
 from corehq.apps.domain.views import BaseDomainView
 from corehq.apps.hqwebapp.decorators import use_jquery_ui, use_multiselect, use_select2, use_select2_v4
@@ -849,7 +849,7 @@ class LocationImportView(BaseLocationView):
         # request uses the lock_locations decorator which acquires the same lock that
         # the task will try to acquire.
         task = import_locations_async.apply_async(
-            args=[domain, file_ref.download_id, request.couch_user],
+            args=[domain, file_ref.download_id, request.couch_user.user_id],
             countdown=10,
         )
         # put the file_ref.download_id in cache to lookup from elsewhere

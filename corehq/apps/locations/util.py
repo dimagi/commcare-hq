@@ -16,7 +16,6 @@ from corehq.apps.products.models import Product
 from corehq.blobs import get_blob_db
 from corehq.form_processor.interfaces.supply import SupplyInterface
 from corehq.util.files import safe_filename_header
-from corehq.util.quickcache import quickcache
 from couchexport.models import Format
 from couchexport.writers import Excel2007ExportWriter
 from dimagi.utils.couch.loosechange import map_reduce
@@ -120,10 +119,9 @@ def parent_child(domain):
                       data=six.iteritems(dict(location_hierarchy_config(domain))))
 
 
-@quickcache(['domain'], timeout=60)
 def get_location_data_model(domain):
     from .views import LocationFieldsView
-    from corehq.apps.custom_data_fields import CustomDataFieldsDefinition
+    from corehq.apps.custom_data_fields.models import CustomDataFieldsDefinition
     return CustomDataFieldsDefinition.get_or_create(
         domain,
         LocationFieldsView.field_type,
