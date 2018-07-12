@@ -654,12 +654,3 @@ def percent(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
-
-
-def values_are_empty(returned_values):
-    value_to_check = returned_values['records']
-    for line in value_to_check:
-        for tile in line:
-            if tile['value'] or tile['all']:
-                return False
-    return True
