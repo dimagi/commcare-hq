@@ -335,15 +335,20 @@
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "named",
-            "name": "infra_details"
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "infra_details"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "toilet_functional"
+            }
           },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "toilet_functional"
-          }
+          "true_values": ["yes"],
+          "false_values": ["no"]
         }
       },
       {
