@@ -4,6 +4,7 @@
  */
 hqDefine("hqwebapp/js/sticky_tabs", [
     "jquery",
+    "bootstrap",    // needed for $.tab
 ], function(
     $
 ) {
