@@ -24,23 +24,19 @@
     },
     "configured_indicators": [
       {
-        "display_name": "AWC ID",
-        "transform": {},
+        "column_id": "awc_id",
         "datatype": "string",
+        "type": "expression",
         "expression": {
           "type": "named",
           "name": "user_location_id"
         },
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "awc_id",
-        "create_index": true,
-        "type": "expression"
+        "create_index": true
       },
       {
-        "display_name": "Supervisor ID",
-        "transform": {},
+        "column_id": "supervisor_id",
         "datatype": "string",
+        "type": "expression",
         "expression": {
           "type": "ancestor_location",
           "location_id": {
@@ -50,16 +46,12 @@
           "location_type": "supervisor",
           "location_property": "_id"
         },
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "supervisor_id",
-        "create_index": true,
-        "type": "expression"
+        "create_index": true
       },
       {
-        "display_name": "Block ID",
-        "transform": {},
+        "column_id": "block_id",
         "datatype": "string",
+        "type": "expression",
         "expression": {
           "type": "ancestor_location",
           "location_id": {
@@ -68,16 +60,12 @@
           },
           "location_type": "block",
           "location_property": "_id"
-        },
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "block_id",
-        "type": "expression"
+        }
       },
       {
-        "display_name": "District ID",
-        "transform": {},
+        "column_id": "district_id",
         "datatype": "string",
+        "type": "expression",
         "expression": {
           "type": "ancestor_location",
           "location_id": {
@@ -86,16 +74,12 @@
           },
           "location_type": "district",
           "location_property": "_id"
-        },
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "district_id",
-        "type": "expression"
+        }
       },
       {
-        "display_name": "State ID",
-        "transform": {},
+        "column_id": "state_id",
         "datatype": "string",
+        "type": "expression",
         "expression": {
           "type": "ancestor_location",
           "location_id": {
@@ -104,11 +88,7 @@
           },
           "location_type": "state",
           "location_property": "_id"
-        },
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "state_id",
-        "type": "expression"
+        }
       },
       {
         "column_id": "timeend",
