@@ -405,7 +405,7 @@
         }
       },
       {
-        "column_id": "preschool_kits_available",
+        "column_id": "preschool_kit_available",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
@@ -418,7 +418,7 @@
             },
             "value_expression": {
               "type": "property_name",
-              "property_name": "preschool_kits"
+              "property_name": "preschool_kit"
             }
           },
           "true_values": ["yes"],
@@ -762,7 +762,7 @@
         }
       },
       {
-        "column_id": "preschool_kits_usable",
+        "column_id": "preschool_kit_usable",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
@@ -775,7 +775,7 @@
             },
             "value_expression": {
               "type": "property_name",
-              "property_name": "preschool_kits"
+              "property_name": "preschool_kit"
             }
           },
           "true_values": ["yes"],
