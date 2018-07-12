@@ -166,13 +166,12 @@ Container.prototype.fromJS = function(json) {
                 if (options.target.pendingAnswer &&
                         options.target.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
-                    if (Formplayer.Utils.answersEqual(options.data.answer, options.target.pendingAnswer())) {
+                    if (options.data.answer == options.target.entry.rawAnswer()) {
                         // We can now mark it as not dirty
-                        options.data.answer = _.clone(options.target.pendingAnswer());
                         options.target.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
                     } else {
-                        // still dirty, keep answer the same as the pending one
-                        options.data.answer = _.clone(options.target.pendingAnswer());
+                        // form is still dirty. try to trigger again
+                        options.target.triggerAnswer();
                     }
                 }
 
