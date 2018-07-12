@@ -16,7 +16,6 @@
     "configured_filter": {
       "operator": "eq",
       "expression": {
-        "datatype": null,
         "type": "property_name",
         "property_name": "xmlns"
       },
@@ -112,13 +111,9 @@
         "type": "expression"
       },
       {
-        "display_name": null,
-        "transform": {},
-        "datatype": "date",
+        "column_id": "timeend",
+        "datatype": "datetime",
         "type": "expression",
-        "is_primary_key": false,
-        "is_nullable": true,
-        "column_id": "submitted_on",
         "expression": {
           "type": "root_doc",
           "expression": {
@@ -133,28 +128,13 @@
         }
       },
       {
-        "display_name": null,
-        "transform": {},
-        "datatype": "date",
-        "is_primary_key": false,
-        "create_index": true,
-        "is_nullable": true,
-        "column_id": "month",
+        "column_id": "received_on",
+        "datatype": "datetime",
         "type": "expression",
         "expression": {
-          "type": "month_start_date",
-          "date_expression": {
-            "type": "root_doc",
-            "expression": {
-              "datatype": "date",
-              "type": "property_path",
-              "property_path": [
-                "form",
-                "meta",
-                "timeEnd"
-              ]
-            }
-          }
+          "datatype": "datetime",
+          "type": "property_name",
+          "property_name": "received_on"
         }
       },
       {
