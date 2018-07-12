@@ -138,11 +138,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "where_housed",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -157,11 +154,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "provided_building",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -176,11 +170,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "other_building",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -195,11 +186,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "awc_building",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -214,11 +202,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "access_physically_challenged",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -233,11 +218,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "toilet_facility",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -252,11 +234,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "type_toilet",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -271,11 +250,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "source_drinking_water",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -290,11 +266,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "kitchen",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -309,11 +282,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "space_storing_supplies",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -328,11 +298,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "adequate_space_pse",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -347,11 +314,8 @@
         }
       },
       {
-        "display_name": null,
-        "datatype": "string",
-        "is_primary_key": false,
-        "is_nullable": true,
         "column_id": "space_pse",
+        "datatype": "small_integer",
         "type": "expression",
         "expression": {
           "type": "nested",
@@ -366,10 +330,12 @@
         }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "medicine_kits_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -380,77 +346,38 @@
               "property_name": "medicine_kits"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "medicine_kits_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "expression": {
-          "type": "conditional",
-          "test": {
-            "operator": "eq",
-            "expression": {
-              "datatype": "string",
-              "type": "nested",
-              "argument_expression": {
-                "type": "named",
-                "name": "supply_available_1"
-              },
-              "value_expression": {
-                "type": "property_name",
-                "property_name": "preschool_kit"
-              }
-            },
-            "type": "boolean_expression",
-            "property_value": "yes"
-          },
-          "expression_if_true": {
-            "type": "constant",
-            "constant": 1
-          },
-          "expression_if_false": {
-            "type": "conditional",
-            "test": {
-              "operator": "eq",
-              "expression": {
-                "datatype": "string",
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "supply_available_1"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "preschool_kit"
-                }
-              },
-              "type": "boolean_expression",
-              "property_value": "no"
-            },
-            "expression_if_true": {
-              "type": "constant",
-              "constant": 0
-            },
-            "expression_if_false": {
-              "type": "constant",
-              "constant": null
-            }
-          }
-        },
+        "column_id": "preschool_kits_available",
+        "datatype": "small_integer",
         "type": "expression",
-        "datatype": "integer",
-        "is_nullable": true,
-        "display_name": null,
-        "column_id": "preschool_kit_available"
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "supply_available_1"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "preschool_kits"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "baby_scale_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -461,18 +388,17 @@
               "property_name": "baby_scale"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "baby_scale_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "flat_scale_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -483,18 +409,17 @@
               "property_name": "flat_scale"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "flat_scale_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "adult_scale_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -505,18 +430,17 @@
               "property_name": "adult_scale"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "adult_scale_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "cooking_utensils_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -527,18 +451,17 @@
               "property_name": "cooking_utensils"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "cooking_utensils_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "iec_bcc_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -549,18 +472,17 @@
               "property_name": "iec_bcc"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "iec_bcc_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "nhed_kit_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -571,18 +493,17 @@
               "property_name": "nhed_kit"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "nhed_kit_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "referral_slip_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -593,18 +514,17 @@
               "property_name": "referral_slip"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "referral_slip_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "plates_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -615,18 +535,17 @@
               "property_name": "plates"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "plates_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "tumblers_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -637,18 +556,17 @@
               "property_name": "tumblers"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "tumblers_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "measure_cups_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -659,18 +577,17 @@
               "property_name": "measure_cups"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "measure_cups_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "food_storage_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -681,18 +598,17 @@
               "property_name": "food_storage"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "food_storage_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "water_storage_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -703,18 +619,17 @@
               "property_name": "water_storage"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "water_storage_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "chair_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -725,18 +640,17 @@
               "property_name": "chair"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "chair_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "table_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -747,18 +661,17 @@
               "property_name": "table"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "table_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "mats_available",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -769,18 +682,17 @@
               "property_name": "mats"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "mats_available"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "medicine_kits_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -791,78 +703,38 @@
               "property_name": "medicine_kits"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "medicine_kits_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
-
       {
-        "expression": {
-          "type": "conditional",
-          "test": {
-            "operator": "eq",
-            "expression": {
-              "datatype": "string",
-              "type": "nested",
-              "argument_expression": {
-                "type": "named",
-                "name": "supply_usable_1"
-              },
-              "value_expression": {
-                "type": "property_name",
-                "property_name": "preschool_kit"
-              }
-            },
-            "type": "boolean_expression",
-            "property_value": "yes"
-          },
-          "expression_if_true": {
-            "type": "constant",
-            "constant": 1
-          },
-          "expression_if_false": {
-            "type": "conditional",
-            "test": {
-              "operator": "eq",
-              "expression": {
-                "datatype": "string",
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "supply_usable_1"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "preschool_kit"
-                }
-              },
-              "type": "boolean_expression",
-              "property_value": "no"
-            },
-            "expression_if_true": {
-              "type": "constant",
-              "constant": 0
-            },
-            "expression_if_false": {
-              "type": "constant",
-              "constant": null
-            }
-          }
-        },
+        "column_id": "preschool_kits_usable",
+        "datatype": "small_integer",
         "type": "expression",
-        "datatype": "integer",
-        "is_nullable": true,
-        "display_name": null,
-        "column_id": "preschool_kit_usable"
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "supply_usable_1"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "preschool_kits"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "baby_scale_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -873,18 +745,17 @@
               "property_name": "baby_scale"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "baby_scale_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "adult_scale_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -895,18 +766,17 @@
               "property_name": "adult_scale"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "adult_scale_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "cooking_utensils_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -917,18 +787,17 @@
               "property_name": "cooking_utensils"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "cooking_utensils_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "iec_bcc_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -939,18 +808,17 @@
               "property_name": "iec_bcc"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "iec_bcc_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "nhed_kit_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -961,18 +829,17 @@
               "property_name": "nhed_kit"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "nhed_kit_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "referral_slip_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -983,18 +850,17 @@
               "property_name": "referral_slip"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "referral_slip_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "plates_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1005,18 +871,17 @@
               "property_name": "plates"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "plates_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "tumblers_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1027,18 +892,17 @@
               "property_name": "tumblers"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "tumblers_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "measure_cups_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1049,18 +913,17 @@
               "property_name": "measure_cups"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "measure_cups_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "food_storage_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1071,18 +934,17 @@
               "property_name": "food_storage"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "food_storage_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "water_storage_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1093,18 +955,17 @@
               "property_name": "water_storage"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "water_storage_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "chair_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1115,18 +976,17 @@
               "property_name": "chair"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "chair_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "table_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1137,18 +997,17 @@
               "property_name": "table"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "table_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
+        "column_id": "mats_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1159,18 +1018,17 @@
               "property_name": "mats"
             }
           },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "mats_usable"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
-        "filter": {
-          "operator": "eq",
-          "type": "boolean_expression",
-          "expression": {
+        "column_id": "use_salt",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
             "type": "nested",
             "argument_expression": {
               "type": "named",
@@ -1181,11 +1039,9 @@
               "property_name": "use_salt"
             }
           },
-          "property_value": "yes"
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "use_salt"
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
       },
       {
         "type": "expression",
