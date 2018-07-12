@@ -254,7 +254,10 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
         'lifecyclestage': 'lead',
+        'date_created': web_user.date_joined.isoformat(),
     }
+    env = get_instance_string()
+    tracking_info['{}date_created'.format(env)] = web_user.date_joined.isoformat(),
 
     if (hasattr(web_user, 'phone_numbers') and len(web_user.phone_numbers) > 0):
         tracking_info.update({
@@ -268,7 +271,7 @@ def track_web_user_registration_hubspot(request, web_user, properties):
 
     tracking_info.update(get_ab_test_properties(web_user))
     tracking_info.update(properties)
-
+    
     send_hubspot_form(
         HUBSPOT_SIGNUP_FORM_ID, request,
         user=web_user, extra_fields=tracking_info
@@ -488,6 +491,10 @@ def track_periodic_data():
                     {
                         'property': '{}over_300_form_submissions'.format(env),
                         'value': max_forms > HUBSPOT_THRESHOLD
+                    },
+                    {
+                        'property': 'date_created',
+                        'value': date_created
                     },
                     {
                         'property': '{}date_created'.format(env),
