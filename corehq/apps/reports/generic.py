@@ -20,7 +20,7 @@ from corehq.apps.reports.models import ReportConfig
 from corehq.apps.reports.datatables import DataTablesHeader
 from corehq.apps.reports.filters.dates import DatespanFilter
 from corehq.apps.reports.util import \
-    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER
+    DEFAULT_CSS_FORM_ACTIONS_CLASS_REPORT_FILTER, DatatablesParams
 from corehq.apps.hqwebapp.decorators import (
     use_jquery_ui,
     use_datatables,
@@ -33,7 +33,6 @@ from corehq.util.timezones.utils import get_timezone_for_user
 from corehq.util.view_utils import absolute_reverse, reverse
 from couchexport.export import export_from_tables
 from couchexport.shortcuts import export_response
-from dimagi.utils.couch.pagination import DatatablesParams
 from memoized import memoized
 from dimagi.utils.modules import to_function
 from dimagi.utils.web import json_request, json_response

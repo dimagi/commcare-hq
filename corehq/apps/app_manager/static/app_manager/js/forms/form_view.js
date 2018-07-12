@@ -5,16 +5,12 @@ hqDefine("app_manager/js/forms/form_view", function() {
     appManagerUtils.setAppendedPageTitle(gettext("Form Settings"));
     appManagerUtils.updatePageTitle(initialPageData("form_name"));
 
-    function formFilterMatches(filter, patternMatches, substringMatches) {
+    function formFilterMatches(filter, substringMatches) {
         if (typeof(filter) !== 'string') {
             return false;
         }
 
         var result = false;
-        $.each(patternMatches, function(index, pattern) {
-            result = result || filter.match(pattern);
-        });
-
         $.each(substringMatches, function(index, sub) {
             result = result || filter.indexOf(sub) !== -1;
         });
@@ -42,7 +38,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
                     filter = filter.replace(sub, '');
                 });
 
-                if (formFilterMatches(filter, patterns.case, patterns.case_substring)) {
+                if (formFilterMatches(filter, patterns.case_substring)) {
                     return true;
                 }
             }
@@ -51,7 +47,7 @@ hqDefine("app_manager/js/forms/form_view", function() {
 
         self.userCaseReferenceNotAllowed = ko.computed(function() {
             return !initialPageData('is_usercase_in_use') && formFilterMatches(
-                self.formFilter(), patterns.usercase, patterns.usercase_substring
+                self.formFilter(), patterns.usercase_substring
             );
         });
 

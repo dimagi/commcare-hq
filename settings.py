@@ -321,7 +321,6 @@ HQ_APPS = (
     'fluff.fluff_filter',
     'soil',
     'toggle',
-    'touchforms.formplayer',
     'phonelog',
     'pillowtop',
     'pillow_retry',
@@ -351,7 +350,6 @@ HQ_APPS = (
     'custom.reports.mc',
     'custom.apps.crs_reports',
     'custom.hope',
-    'custom.logistics',
     'custom.ilsgateway',
     'custom.zipline',
     'custom.ewsghana',
@@ -1933,6 +1931,8 @@ STATIC_UCR_REPORTS = [
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'dmc_lab_summary.json'),
     os.path.join('custom', 'enikshay', 'ucr', 'reports', 'diagnostic_register.json'),
 
+    os.path.join('custom', 'echis_reports', 'ucr', 'reports', '*.json'),
+
 ]
 
 
@@ -2024,7 +2024,9 @@ STATIC_DATA_SOURCES = [
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_product.json'),
     os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'yeksi_naa_reports_logisticien.json'),
-    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json')
+    os.path.join('custom', 'intrahealth', 'ucr', 'data_sources', 'visite_de_l_operateur_per_program.json'),
+
+    os.path.join('custom', 'echis_reports', 'ucr', 'data_sources', '*.json'),
 ]
 
 STATIC_DATA_SOURCE_PROVIDERS = [

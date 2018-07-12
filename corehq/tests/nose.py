@@ -50,7 +50,6 @@ class HqTestFinderPlugin(Plugin):
         "submodules/dimagi-utils-src",
         "submodules/django-digest-src",
         "submodules/toggle",
-        "submodules/touchforms-src",
     ]
 
     def options(self, parser, env):

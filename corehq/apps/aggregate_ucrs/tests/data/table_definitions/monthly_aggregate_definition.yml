@@ -1,5 +1,5 @@
 domain: agg
-table_id: monthy_aggregate_pregnancies
+table_id: monthly_aggregate_pregnancies
 display_name: Pregnancy Data Per Month
 primary_table:
   data_source_id: 550c3cd432d931387e75e8506b5caf9e  # the data source ID of e.g. the 'pregnancy_cases' table

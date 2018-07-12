@@ -41,7 +41,9 @@ describe('Render a case list', function () {
             requests;
 
         before(function() {
-            hqImport("hqwebapp/js/initial_page_data").register("apps", [{"_id": "my-app-id"}]);
+            hqImport("hqwebapp/js/initial_page_data").register("apps", [{
+                "_id": "my-app-id",
+            }]);
         });
 
         beforeEach(function() {
@@ -126,6 +128,8 @@ describe('Render a case list', function () {
         it('Should execute an async restore', function() {
             var promise = FormplayerFrontend.request('app:select:menus', {
                 appId: 'my-app-id',
+                // Bypass permissions check by using preview mode
+                preview: true,
             });
 
             // Should have fired off a request for a restore

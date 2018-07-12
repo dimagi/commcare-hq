@@ -1038,13 +1038,6 @@ FORMPLAYER_USE_LIVEQUERY = StaticToggle(
     [NAMESPACE_DOMAIN],
 )
 
-SMS_USE_FORMPLAYER = StaticToggle(
-    'sms_use_formplayer',
-    'Use Formplayer for SMS',
-    TAG_INTERNAL,
-    [NAMESPACE_DOMAIN],
-)
-
 FIXTURE_CASE_SELECTION = StaticToggle(
     'fixture_case',
     'ICDS: Allow a configurable case list that is filtered based on a fixture type and '

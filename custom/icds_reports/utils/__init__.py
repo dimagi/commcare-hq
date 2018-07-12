@@ -59,6 +59,7 @@ GREY = '#9D9D9D'
 DEFAULT_VALUE = "Data not Entered"
 
 DATA_NOT_ENTERED = "Data Not Entered"
+DATA_NOT_VALID = "Data Not Valid"
 
 india_timezone = pytz.timezone('Asia/Kolkata')
 
@@ -335,10 +336,10 @@ def get_latest_issue_tracker_build_id():
     return get_latest_released_build_id('icds-cas', ISSUE_TRACKER_APP_ID)
 
 
-def get_status(value, second_part='', normal_value='', exportable=False):
-    status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+def get_status(value, second_part='', normal_value='', exportable=False, data_entered=False):
+    status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     if not value or value in ['unweighed', 'unmeasured', 'unknown']:
-        status = {'value': DATA_NOT_ENTERED, 'color': 'black'}
+        status = {'value': DATA_NOT_VALID if data_entered else DATA_NOT_ENTERED, 'color': 'black'}
     elif value in ['severely_underweight', 'severe']:
         status = {'value': 'Severely ' + second_part, 'color': 'red'}
     elif value in ['moderately_underweight', 'moderate']:
@@ -653,3 +654,12 @@ def percent(x, y):
 class ICDSDatabaseColumn(DatabaseColumn):
     def get_raw_value(self, row):
         return (self.view.get_value(row) or '') if row else ''
+
+
+def values_are_empty(returned_values):
+    value_to_check = returned_values['records']
+    for line in value_to_check:
+        for tile in line:
+            if tile['value'] or tile['all']:
+                return False
+    return True

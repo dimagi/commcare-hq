@@ -102,7 +102,7 @@ class AggregationScriptTestBase(TestCase):
             for key in dict1.keys():
                 if key != 'id':
                     value1 = dict1[key].decode('utf-8').replace('\r\n', '\n')
-                    value2 = dict2[key].replace('\r\n', '\n')
+                    value2 = dict2.get(key, '').replace('\r\n', '\n')
                     if value1 != value2:
                         differences.add(key)
 
@@ -119,7 +119,7 @@ class AggregationScriptTestBase(TestCase):
                         difference, dict1[difference].decode('utf-8')) for difference in differences]
                     ),
                     ', '.join(['{}: {}'.format(
-                        difference, dict2[difference]) for difference in differences]
+                        difference, dict2.get(difference, '')) for difference in differences]
                     )
                 ))
 

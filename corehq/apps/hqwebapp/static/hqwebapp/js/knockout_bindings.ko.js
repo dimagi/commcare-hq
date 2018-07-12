@@ -213,30 +213,19 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                     $(this).toggleClass('last-clicked').siblings().removeClass('last-clicked');
                 } else if (e.shiftKey) {
                     var shiftSelectedIndex = getIndexFromRow($(this)),
-                        shiftClickedRow = $(this),
                         lastClickedIndex = 0,
-                        lastClickedRow = null;
-                    if ($('.last-clicked').length > 0) {
-                        lastClickedRow = $('.last-clicked').eq(0);
-                        lastClickedIndex = getIndexFromRow(lastClickedRow);
-                    } else {
-                        lastClickedRow = $(this).parent().children().eq(0);
-                    }
-
-                    var firstRow = null,
                         start = null,
                         end = null;
+                    if ($('.last-clicked').length > 0) {
+                        lastClickedIndex = getIndexFromRow($('.last-clicked').eq(0));
+                    }
                     if (shiftSelectedIndex < lastClickedIndex) {
                         start = shiftSelectedIndex;
                         end = lastClickedIndex;
-                        firstRow = shiftClickedRow;
                     } else {
                         start = lastClickedIndex;
                         end = shiftSelectedIndex;
-                        firstRow = lastClickedRow;
                     }
-
-                    var next = firstRow;
                     for (var i = start; i <= end; i++) {
                         list()[i].selectedForSort(true);
                     }
@@ -257,6 +246,14 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
                 return list()[getIndexFromRow(row)];
             };
 
+            var setIgnoreClick = function(row) {
+                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+            };
+
+            var getRowFromClickedElement = function(element) {
+                return element.closest('tr');
+            };
+
             var moveRowToIndex = function (row, newIndex) {
                 var oldIndex = getIndexFromRow(row);
                 row.remove();
@@ -265,23 +262,20 @@ hqDefine("hqwebapp/js/knockout_bindings.ko", ['jquery', 'knockout', 'jquery-ui/u
             };
 
             $(element).on('click', '.send-to-top', function () {
-                var row = $(this).parent().parent();
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
-
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
                 moveRowToIndex(row, 0);
             });
 
             $(element).on('click', '.send-to-bottom', function () {
-                var row = $(this).parent().parent();
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
-
-                var currentIndex = getIndexFromRow(row);
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
                 moveRowToIndex(row, list().length - 1);
             });
 
             $(element).on('click', '.export-table-checkbox', function () {
-                var row = $(this).parent().parent();
-                row.addClass('ignore-click').siblings().removeClass('ignore-click');
+                var row = getRowFromClickedElement($(this));
+                setIgnoreClick(row);
             });
 
             $(element).sortable({

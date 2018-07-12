@@ -41,6 +41,7 @@ FILE_NAME_TO_TABLE_MAPPING = {
     'thr_form': 'config_report_icds-cas_static-dashboard_thr_forms_b8bca6ea',
     'gm_form': 'config_report_icds-cas_static-dashboard_growth_monitor_8f61534c',
     'pnc_forms': 'config_report_icds-cas_static-postnatal_care_forms_0c30d94e',
+    'dashboard_daily_feeding': 'config_report_icds-cas_dashboard_child_health_daily_fe_f83b12b7',
 }
 
 

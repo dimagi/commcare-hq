@@ -27,6 +27,7 @@
         "vectorlink-zambia",
         "vectorlink-zimbabwe"
     ],
+    "server_environment": ["production"],
     "data_source_table":"static-sms-indicators-001",
     "report_id":"static-sms-indicator-report",
     "config": {

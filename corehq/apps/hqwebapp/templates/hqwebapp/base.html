@@ -361,7 +361,7 @@
             <script src="{% static 'hqwebapp/js/hqModules.js' %}"></script>
             <script src="{% static 'hqwebapp/js/requirejs_config.js' %}"></script>
             <script src="{% static 'hqwebapp/js/resource_versions.js' %}"></script>
-            <script type="text/javascript">
+            <script>
                 requirejs.config({
                     deps: ['knockout', 'ko.mapping'],
                     callback: function (ko, mapping) {
@@ -522,9 +522,9 @@
             </div>
           </div>
           <!--[if lte IE 8]>
-          <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2-legacy.js"></script>
+          <script charset="utf-8" src="//js.hsforms.net/forms/v2-legacy.js"></script>
           <![endif]-->
-          <script charset="utf-8" type="text/javascript" src="//js.hsforms.net/forms/v2.js"></script>
+          <script charset="utf-8" src="//js.hsforms.net/forms/v2.js"></script>
           <script>
             hbspt.forms.create({
               portalId: "{{ ANALYTICS_IDS.HUBSPOT_API_ID }}",

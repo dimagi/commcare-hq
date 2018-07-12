@@ -49,15 +49,13 @@
 trunk: master
 name: autostaging
 branches:
-  - bmb/improve-mobile-signup # biyeun june 6
   - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
-  - mk-strict-version-check # MK Jul 2
+  - dmr/tweak-s3db-timings  # Danny Jul 11
+  - es/location-upload  # Ethan July 6
+  - jls/unify-tab-history  # Jenny July 10
+  - emord-patch-1  # J$ upgrade pillow
 submodules:
-  submodules/touchforms-src:
-    # let's leave this here even when empty
-    # just so we always get latest master
-    branches: []
   submodules/django-digest-src:
     branches: []
   corehq/apps/hqmedia/static/hqmedia/MediaUploader:
