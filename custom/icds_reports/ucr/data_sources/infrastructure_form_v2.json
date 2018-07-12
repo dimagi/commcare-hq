@@ -1086,78 +1086,51 @@
         }
       },
       {
-        "filter": {
-          "type": "or",
-          "filters": [
-            {
-              "operator": "eq",
-              "type": "boolean_expression",
-              "expression": {
-                "datatype": "string",
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "infra_details"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "toilet_functional"
-                }
-              },
-              "property_value": "yes"
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "functional_toilet"
+        "column_id": "toilet_functional",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "infra_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "toilet_functional"
+          }
+        }
       },
       {
-        "filter": {
-          "type": "or",
-          "filters": [
-            {
-              "operator": "eq",
-              "type": "boolean_expression",
-              "expression": {
-                "datatype": "string",
-                "type": "nested",
-                "argument_expression": {
-                  "type": "named",
-                  "name": "infra_details"
-                },
-                "value_expression": {
-                  "type": "property_name",
-                  "property_name": "adequate_space_pse"
-                }
-              },
-              "property_value": "1"
-            }
-          ]
-        },
-        "display_name": null,
-        "type": "boolean",
-        "column_id": "has_adequate_space_pse"
+        "column_id": "adequate_space_pse",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "infra_details"
+          },
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "adequate_space_pse"
+          }
+        }
       },
       {
         "column_id": "electricity_awc",
         "datatype": "small_integer",
         "type": "expression",
         "expression": {
-          "type": "icds_boolean",
-          "boolean_property": {
-            "type": "nested",
-            "argument_expression": {
-              "type": "named",
-              "name": "infra_details"
-            },
-            "value_expression": {
-              "type": "property_name",
-              "property_name": "electricity_awc"
-            }
+          "type": "nested",
+          "argument_expression": {
+            "type": "named",
+            "name": "infra_details"
           },
-          "true_values": ["1"],
-          "false_values": ["0"]
+          "value_expression": {
+            "type": "property_name",
+            "property_name": "electricity_awc"
+          }
         }
       }
     ],
