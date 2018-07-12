@@ -729,6 +729,48 @@
         }
       },
       {
+        "column_id": "infantometer_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "supply_usable_1"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "infantometer"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
+        "column_id": "stadiometer_usable",
+        "datatype": "small_integer",
+        "type": "expression",
+        "expression": {
+          "type": "icds_boolean",
+          "boolean_property": {
+            "type": "nested",
+            "argument_expression": {
+              "type": "named",
+              "name": "supply_usable_1"
+            },
+            "value_expression": {
+              "type": "property_name",
+              "property_name": "stadiometer"
+            }
+          },
+          "true_values": ["yes"],
+          "false_values": ["no"]
+        }
+      },
+      {
         "column_id": "baby_scale_usable",
         "datatype": "small_integer",
         "type": "expression",
@@ -1309,48 +1351,6 @@
           },
           "true_values": ["1"],
           "false_values": ["0"]
-        }
-      },
-      {
-        "column_id": "infantometer",
-        "datatype": "small_integer",
-        "type": "expression",
-        "expression": {
-          "type": "icds_boolean",
-          "boolean_property": {
-            "type": "nested",
-            "argument_expression": {
-              "type": "named",
-              "name": "supply_usable_1"
-            },
-            "value_expression": {
-              "type": "property_name",
-              "property_name": "infantometer"
-            }
-          },
-          "true_values": ["yes"],
-          "false_values": ["no"]
-        }
-      },
-      {
-        "column_id": "stadiometer",
-        "datatype": "small_integer",
-        "type": "expression",
-        "expression": {
-          "type": "icds_boolean",
-          "boolean_property": {
-            "type": "nested",
-            "argument_expression": {
-              "type": "named",
-              "name": "supply_usable_1"
-            },
-            "value_expression": {
-              "type": "property_name",
-              "property_name": "stadiometer"
-            }
-          },
-          "true_values": ["yes"],
-          "false_values": ["no"]
         }
       }
     ],
