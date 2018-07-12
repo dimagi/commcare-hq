@@ -57,10 +57,12 @@
     </div>
 </header>
 
-{% if not show_inactive and request.can_access_all_locations %}
+{% if not show_inactive %}
 <div class="row">
     <div class="col-sm-12">
         <div class="btn-toolbar">
+
+            {% if request.can_access_all_locations %}
             <a class="btn btn-info"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
@@ -70,6 +72,8 @@
             >
                 <i class="fa fa-cloud-download"></i> {% trans 'Download Organization Structure' %}
             </a>
+            {% endif %}
+
             <a class="btn btn-default"
                {% if not has_location_types or not can_edit_any_location %}
                    disabled
@@ -79,6 +83,8 @@
             >
                 <i class="fa fa-cloud-upload"></i> {% trans 'Bulk Upload' %}
             </a>
+
+            {% if request.can_access_all_locations %}
             <a class="btn btn-default track-usage-link" href="{% url "location_types" domain %}"
                data-category="Organization Structure" data-action="Edit Organization Levels">
                 {% trans "Edit Organization Levels" %}
@@ -87,6 +93,8 @@
                data-category="Organization Structure" data-action="Edit Location Fields">
                 {% trans "Edit Location Fields" %}
             </a>
+            {% endif %}
+
         </div>
     </div>
 </div>

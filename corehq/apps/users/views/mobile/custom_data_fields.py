@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from django.utils.decorators import method_decorator
 from django.utils.translation import ugettext_lazy as _
 
-from corehq.apps.custom_data_fields import CustomDataModelMixin
+from corehq.apps.custom_data_fields.edit_model import CustomDataModelMixin
 from corehq.apps.users.decorators import require_can_edit_commcare_users
 from corehq.apps.users.tasks import remove_unused_custom_fields_from_users_task
 from corehq.apps.users.views import BaseUserSettingsView
