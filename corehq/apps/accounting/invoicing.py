@@ -412,7 +412,7 @@ def generate_invoice(subscription, invoice_start, invoice_end):
         # record that the subscription was created
         SubscriptionAdjustment.record_adjustment(
             subscription,
-            method=SubscriptionAdjustmentMethod.TASK,
+            method=SubscriptionAdjustmentMethod.INVOICING,
             invoice=invoice,
         )
 

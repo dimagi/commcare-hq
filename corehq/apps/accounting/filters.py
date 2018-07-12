@@ -182,8 +182,10 @@ class CreatedSubAdjMethodFilter(BaseSingleOptionFilter):
     options = (
         (SubscriptionAdjustmentMethod.INTERNAL, "Operations Created"),
         (SubscriptionAdjustmentMethod.USER, "User Created"),
-        (SubscriptionAdjustmentMethod.TASK, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.INVOICING, "Created During Invoicing"),
+        (SubscriptionAdjustmentMethod.TASK, "[Deprecated] Created During Invoicing"),
         (SubscriptionAdjustmentMethod.TRIAL, "30 Day Trial (default signup)"),
+        (SubscriptionAdjustmentMethod.DEFAULT_COMMUNITY, "Defaulted to Community"),
     )
 
 
