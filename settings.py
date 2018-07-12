@@ -1274,12 +1274,12 @@ LOGGING = {
         'formplayer_timing': {
             'handlers': ['formplayer_timing'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'formplayer_diff': {
             'handlers': ['formplayer_diff'],
             'level': 'INFO',
-            'propogate': True,
+            'propagate': True,
         },
         'ucr_timing': {
             'handlers': ['ucr_timing'],
