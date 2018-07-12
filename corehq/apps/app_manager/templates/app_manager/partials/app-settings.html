@@ -165,10 +165,10 @@
 <div class="tabbable">
     <ul class="nav nav-tabs">
     {% if app.get_doc_type == 'LinkedApplication' %}
-        <li class="active"><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
+        <li><a href="#linked-app" data-toggle="tab">{% trans "Linked Application" %}</a></li>
         <li><a href="#actions" data-toggle="tab">{% trans "Actions" %}</a></li>
     {% else %}
-        <li class="active"><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
+        <li><a href="#languages" data-toggle="tab">{% trans "Languages" %}</a></li>
         {% if app.get_doc_type == 'Application' %}
             <li><a href="#multimedia-tab" data-toggle="tab">{% trans "Multimedia" %}</a></li>
         {% endif %}
@@ -179,7 +179,7 @@
     </ul>
     <div class="tab-content appmanager-tab-content">
         {% if app.get_doc_type == 'LinkedApplication' %}
-        <div class="tab-pane active" id="linked-app">
+        <div class="tab-pane" id="linked-app">
             <p> Your app is at version {{ app.version }}.
                 {% if master_version %}The master app is at version {{ master_version }}.
                 {% else %}Unable to get master version.
@@ -205,7 +205,7 @@
             </div>
         {% endif %}
         {% if app.get_doc_type != 'LinkedApplication' %}
-            <div class="tab-pane active" id="languages">
+            <div class="tab-pane" id="languages">
                 {% include 'app_manager/languages.html' %}
             </div>
         {% endif %}
