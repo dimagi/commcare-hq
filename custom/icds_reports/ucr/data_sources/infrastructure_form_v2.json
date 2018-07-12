@@ -881,29 +881,6 @@
         "column_id": "baby_scale_usable"
       },
       {
-        "comment": "This variable doesn't actually exist in the app.",
-        "filter": {
-          "operator": "eq",
-          "expression": {
-            "datatype": "string",
-            "type": "nested",
-            "argument_expression": {
-              "type": "named",
-              "name": "supply_usable_1"
-            },
-            "value_expression": {
-              "type": "property_name",
-              "property_name": "flat_scale"
-            }
-          },
-          "type": "boolean_expression",
-          "property_value": "yes"
-        },
-        "type": "boolean",
-        "display_name": null,
-        "column_id": "flat_scale_usable"
-      },
-      {
         "filter": {
           "operator": "eq",
           "expression": {
