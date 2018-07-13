@@ -457,12 +457,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
     @quickcache(['couch_user._id', 'is_active'], timeout=5*60, memoize_timeout=10)
     def active_for_couch_user(couch_user, is_active=True):
         domain_names = couch_user.get_domains()
-        return Domain.view(
-            "domain/by_status",
-            keys=[[is_active, d] for d in domain_names],
-            reduce=False,
-            include_docs=True,
-        ).all()
+        return SqlDomain.objects.filter(
+            domain_doc__is_active=is_active, domain_doc__name__in=domain_names
+        ).values_list('domain_doc')
 
     @staticmethod
     def active_for_user(user, is_active=True):
