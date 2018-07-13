@@ -24,7 +24,8 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                    "info": "Of the AWCs that have submitted an Infrastructure Details form, the percentage "
+                            "of AWCs that reported having a source of clean drinking water. ",
                     "average": 96.15384615384616,
                     'extended_info': [
                         {
@@ -73,7 +74,8 @@ class TestCleanWater(TestCase):
             ),
             {
                 "rightLegend": {
-                    "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                    "info": "Of the AWCs that have submitted an Infrastructure Details form, the percentage "
+                            "of AWCs that reported having a source of clean drinking water. ",
                     "average": 100.0,
                     'extended_info': [
                         {
@@ -195,7 +197,8 @@ class TestCleanWater(TestCase):
                 loc_level='supervisor'
             ),
             {
-                "info": "Percentage of AWCs that reported having a source of clean drinking water",
+                "info": "Of the AWCs that have submitted an Infrastructure Details form, "
+                        "the percentage of AWCs that reported having a source of clean drinking water. ",
                 "tooltips_data": {
                     "s2": {
                         "in_month": 3,
