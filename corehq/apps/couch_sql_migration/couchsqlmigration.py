@@ -130,7 +130,7 @@ class CouchSqlDomainMigrator(object):
         # process main forms (including cases and ledgers)
         changes = _get_main_form_iterator(
             self.domain).iter_all_changes(
-                self._get_resumable_iterator_key('main_forms'))
+                resumable_key=self._get_resumable_iterator_key('main_forms'))
 
         for change in self._with_progress(['XFormInstance'], changes):
             self.log_debug('Processing doc: {}({})'.format('XFormInstance', change.id))
@@ -236,7 +236,7 @@ class CouchSqlDomainMigrator(object):
 
         changes = _get_unprocessed_form_iterator(
             self.domain).iter_all_changes(
-                self._get_resumable_iterator_key('unprocessed_forms'))
+                resumable_key=self._get_resumable_iterator_key('unprocessed_forms'))
         for change in self._with_progress(UNPROCESSED_DOC_TYPES, changes):
             couch_form_json = change.get_document()
             pool.spawn(self._migrate_unprocessed_form, couch_form_json)
@@ -266,7 +266,7 @@ class CouchSqlDomainMigrator(object):
         pool = Pool(10)
         changes = _get_case_iterator(
             self.domain, doc_types=doc_types).iter_all_changes(
-                self._get_resumable_iterator_key('unprocessed_cases'))
+                resumable_key=self._get_resumable_iterator_key('unprocessed_cases'))
         for change in self._with_progress(doc_types, changes):
             pool.spawn(self._copy_unprocessed_case, change)
 
@@ -321,7 +321,7 @@ class CouchSqlDomainMigrator(object):
         pool = Pool(10)
         changes = _get_case_iterator(
             self.domain).iter_all_changes(
-                self._get_resumable_iterator_key("case_diffs"))
+                resumable_key=self._get_resumable_iterator_key("case_diffs"))
         for change in self._with_progress(CASE_DOC_TYPES, changes, progress_name='Calculating diffs'):
             cases[change.id] = change.get_document()
             if len(cases) == batch_size:
