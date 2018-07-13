@@ -10,9 +10,10 @@ hqDefine("hqwebapp/js/sticky_tabs", [
 ) {
     $(function(){
         var tabSelector = "a[data-toggle='tab']",
-            navSelector = ".nav.sticky-tabs";
-        if (window.location.hash) {
-            $("a[href='" + window.location.hash + "']").tab('show');
+            navSelector = ".nav.sticky-tabs",
+            $tabFromUrl = $("a[href='" + (window.location.hash || "" )+ "']");
+        if ($tabFromUrl.length) {
+            $tabFromUrl.tab('show');
         } else {
             $(navSelector + ' ' + tabSelector).first().tab('show');
         }
