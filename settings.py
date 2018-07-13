@@ -1632,6 +1632,12 @@ AVAILABLE_CUSTOM_SCHEDULING_RECIPIENTS = {
     'ICDS_SUPERVISOR_FROM_AWC_OWNER':
         ['custom.icds.messaging.custom_recipients.supervisor_from_awc_owner',
          "ICDS: Supervisor Location from AWC Owner"],
+    'HOST_CASE_OWNER_LOCATION':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location)"],
+    'HOST_CASE_OWNER_LOCATION_PARENT':
+        ['corehq.messaging.scheduling.custom_recipients.host_case_owner_location_parent',
+         "Custom: Extension Case -> Host Case -> Owner (which is a location) -> Parent location"],
     'CASE_OWNER_LOCATION_PARENT':
         ['custom.abt.messaging.custom_recipients.abt_case_owner_location_parent_new_framework',
          "Abt: The case owner's location's parent location"],

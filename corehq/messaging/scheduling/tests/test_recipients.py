@@ -242,6 +242,111 @@ class SchedulingRecipientTest(TestCase):
                 recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE)
             self.assertEqual(instance.recipient.case_id, parent.case_id)
 
+    @run_with_all_backends
+    def test_host_case_owner_location(self):
+        with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
+            with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
+
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.city_location.location_id})
+                set_parent_case(self.domain, extension_case, host_case, relationship='extension')
+
+                # Test the recipient is returned correctly
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsInstance(instance.recipient, SQLLocation)
+                self.assertEqual(instance.recipient.location_id, self.city_location.location_id)
+
+                # Test location that does not exist
+                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test on a case that is not an extension case
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=host_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test with case id that doesn't exist
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id='does-not-exist',
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION',
+                )
+                self.assertIsNone(instance.recipient)
+
+    @run_with_all_backends
+    def test_host_case_owner_location_parent(self):
+        with create_test_case(self.domain, 'test-extension-case', 'name') as extension_case:
+            with create_test_case(self.domain, 'test-host-case', 'name') as host_case:
+
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.city_location.location_id})
+                set_parent_case(self.domain, extension_case, host_case, relationship='extension')
+
+                # Test the recipient is returned correctly
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsInstance(instance.recipient, SQLLocation)
+                self.assertEqual(instance.recipient.location_id, self.state_location.location_id)
+
+                # Test no parent location
+                update_case(self.domain, host_case.case_id,
+                    case_properties={'owner_id': self.country_location.location_id})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test location that does not exist
+                update_case(self.domain, host_case.case_id, case_properties={'owner_id': 'does-not-exist'})
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=extension_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test on a case that is not an extension case
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id=host_case.case_id,
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
+                # Test with case id that doesn't exist
+                instance = CaseTimedScheduleInstance(
+                    domain=self.domain,
+                    case_id='does-not-exist',
+                    recipient_type=CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM,
+                    recipient_id='HOST_CASE_OWNER_LOCATION_PARENT',
+                )
+                self.assertIsNone(instance.recipient)
+
     def test_expand_location_recipients_without_descendants(self):
         schedule = TimedSchedule.create_simple_daily_schedule(
             self.domain,
