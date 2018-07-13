@@ -82,12 +82,19 @@ class Command(BaseCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_couch_sql_migration_started(domain, self.dry_run)
+
+            if options.get('run_timestamp'):
+                if not couch_sql_migration_in_progress(domain):
+                    raise CommandError("Migration must be in progress if run_timestamp is passed in")
+            else:
+                set_couch_sql_migration_started(domain, self.dry_run)
+
             do_couch_to_sql_migration(
                 domain,
                 with_progress=not self.no_input,
                 debug=self.debug,
                 run_timestamp=options.get('run_timestamp'))
+
             has_diffs = self.print_stats(domain, short=True, diffs_only=True)
             if has_diffs:
                 print("\nUse '--stats-short', '--stats-long', '--show-diffs' to see more info.\n")
