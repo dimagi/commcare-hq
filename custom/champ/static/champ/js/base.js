@@ -12,12 +12,13 @@ hqDefine("champ/js/base", function() {
         }
 
         $('#reportFiltersAccordion').css('display', 'none');
-        if (slug === "prevision_vs_achievements_graph_report") {
-            ko.applyBindings(new PrecisionVsAchievementsGraphModel(), $('#champApp').get(0));
-        } else if (slug === "prevision_vs_achievements_table_report") {
-            ko.applyBindings(new PrecisionVsAchievementsTableModel(), $('#champApp').get(0));
-        } else if (slug === "service_uptake_report") {
-            ko.applyBindings(new ServiceUptakeModel(), $('#champApp').get(0));
+        var slugToModule = {
+            "prevision_vs_achievements_graph_report": "champ/js/knockout/prevision_vs_achievement_graph",
+            "prevision_vs_achievements_table_report": "champ/js/knockout/prevision_vs_achievement_table",
+            "service_uptake_report": "champ/js/knockout/service_uptake",
+        };
+        if (slugToModule[slug]) {
+            $('#champApp').koApplyBindings(hqImport(slugToModule[slug]).model());
         }
     });
 });
