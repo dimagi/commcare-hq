@@ -10,6 +10,7 @@ hqDefine("reports/js/case_details", [
     'reports/js/single_form',
     'case/js/case_hierarchy',
     'reports/js/readable_form',
+    'bootstrap',    // needed for $.tab
     'jquery-memoized-ajax/jquery.memoized.ajax.min',
 ], function(
     $,
@@ -98,6 +99,12 @@ hqDefine("reports/js/case_details", [
                 "success": function(data) {
                     var $panel = $("#xform_data_panel");
                     $panel.html(data.html);
+
+                    // form data panel uses sticky tabs when it's its own page
+                    // but that behavior would be disruptive here
+                    $panel.find(".sticky-tabs").removeClass("sticky-tabs");
+                    $panel.find(".nav-tabs a[data-toggle='tab']").first().tab('show');
+
                     singleForm.initSingleForm({
                         instance_id: data.xform_id,
                         form_question_map: data.question_response_map,
