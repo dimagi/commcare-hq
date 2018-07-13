@@ -79,7 +79,8 @@ class TestMedicineKit(TestCase):
             loc_level='state'
         )
         expected = (
-            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs that reported having a Medicine Kit"
+            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a Medicine Kit"
         )
         self.assertEquals(data['rightLegend']['info'], expected)
 
