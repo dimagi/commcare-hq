@@ -42,5 +42,6 @@ def host_case_owner_location_parent_from_case(domain, case):
 def host_case_owner_location(case_schedule_instance):
     return host_case_owner_location_from_case(case_schedule_instance.domain, case_schedule_instance.case)
 
+
 def host_case_owner_location_parent(case_schedule_instance):
     return host_case_owner_location_parent_from_case(case_schedule_instance.domain, case_schedule_instance.case)
