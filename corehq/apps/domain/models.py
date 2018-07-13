@@ -459,7 +459,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         domain_names = couch_user.get_domains()
         return SqlDomain.objects.filter(
             domain_doc__is_active=is_active, domain_doc__name__in=domain_names
-        ).values_list('domain_doc')
+        ).values_list('domain_doc', flat=True)
 
     @staticmethod
     def active_for_user(user, is_active=True):
@@ -656,7 +656,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_names_by_prefix(cls, prefix):
-        return SqlDomain.objects.filter(domain_doc__name__startswith=name).values_list('domain_doc__name')
+        return SqlDomain.objects.filter(domain_doc__name__startswith=name).values_list('domain_doc__name', flat=True)
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)
@@ -942,13 +942,13 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         # WARNING: behavior change
         return SqlDomain.objects.filter(
             copy_history__contains=self._id
-        ).values_list('domain_doc')
+        ).values_list('domain_doc', flat=True)
 
     def copies_of_parent(self):
         # WARNING: behavior change
         return SqlDomain.objects.filter(
             copy_history__overlap=[s._id for s in self.copied_from.snapshots()]
-        ).values_list('domain_doc')
+        ).values_list('domain_doc', flat=True)
 
     def delete(self):
         self._pre_delete()

@@ -438,8 +438,8 @@ class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
     @property
     def query(self):
-        return SqlDomain.objects.filter(domain_doc__name__startswith=self.search_string)
+        return SqlDomain.objects.filter(domain_doc__name__startswith=self.search_string).values_list('domain_doc__name', flat=True)
 
     @property
     def domain_name_response(self):
-        return [self._fmt_select2_data(p['key'], p['key']) for p in self.paginated_data]
+        return [self._fmt_select2_data(p, p) for p in self.paginated_data]

@@ -106,7 +106,7 @@ def get_docs_in_domain_by_class(domain, doc_class):
 
 
 def get_domain_ids_by_names(names):
-    return SqlDomain.objects.filter(domain_doc__name__in=names).values_list('id')
+    return SqlDomain.objects.filter(domain_doc__name__in=names).values_list('id', flat=True)
 
 
 def iter_domains():
