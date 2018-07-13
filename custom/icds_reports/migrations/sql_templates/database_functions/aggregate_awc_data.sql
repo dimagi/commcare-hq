@@ -140,7 +140,7 @@ BEGIN
     'sum(pregnant) AS cases_ccs_pregnant, ' ||
     'sum(lactating) AS cases_ccs_lactating, ' ||
     'sum(pregnant_all) AS cases_ccs_pregnant_all, ' ||
-    'sum(lactating_all) AS cases_ccs_lactating_all ' ||
+    'sum(lactating_all) AS cases_ccs_lactating_all, ' ||
     'sum(has_aadhar_id) AS ccs_has_aadhar '
     'FROM ' || quote_ident(_ccs_record_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' AND aggregation_level = 5 GROUP BY awc_id, month) ut ' ||
