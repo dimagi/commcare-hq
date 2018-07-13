@@ -1,4 +1,4 @@
-/* global FormplayerFrontend */
+/* global FormplayerFrontend, Backbone */
 /* eslint-env mocha */
 describe('Render a case list', function () {
     var Menus = FormplayerFrontend.Menus;
