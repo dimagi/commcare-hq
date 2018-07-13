@@ -269,8 +269,6 @@ def icds_aggregation_task(self, date, func):
     try:
         func(date)
     except Error as exc:
-        import ipdb; ipdb.set_trace()
-
         _dashboard_team_soft_assert(
             False,
             "{} aggregation failed on {} for {}. This task will be retried in 15 minutes".format(
