@@ -11,6 +11,7 @@
         <table class="table table-bordered table-striped">
             <tr>
                 <thead>
+                <th>View</th>
                 <th>Date</th>
                 <th>User</th>
                 <th>Result</th>
@@ -20,6 +21,10 @@
             <tbody>
             {% for v in audit_views %}
                 <tr>
+                    <td>
+                        <a href="{% url 'raw_couch' %}?id={{ v.id }}">View
+                        </a>
+                    </td>
                     <td>
                         {{ v.key.1 }}/{{ v.key.2 }}/{{ v.key.3 }}
                     </td>

@@ -38,10 +38,11 @@ def fix_xforms_with_missing_xmlns():
     with open(log_file_path, "r") as f:
         stats = get_summary_stats_from_stream(f)
 
-    mail_admins_async.delay(
-        'Summary of fix_xforms_with_undefined_xmlns',
-        json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
-    )
+    if any(stats.values()):
+        mail_admins_async.delay(
+            'Summary of fix_xforms_with_undefined_xmlns',
+            json.dumps(stats, sort_keys=True, indent=4, default=json_handler)
+        )
 
     return stats, log_file_path
 

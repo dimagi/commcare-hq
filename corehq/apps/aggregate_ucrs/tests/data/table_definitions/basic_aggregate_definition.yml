@@ -1,0 +1,35 @@
+domain: agg
+table_id: pregnancies_with_forms
+display_name: Pregnancy Data With Form Aggregates
+primary_table:
+  data_source_id: 550c3cd432d931387e75e8506b5caf9e  # the data source ID of e.g. the 'pregnancy_cases' table
+  key_column: doc_id
+  columns:
+    - column_id: name
+      type: reference
+      config_params:
+        referenced_column: name
+    - column_id: pregnancy_start_date
+      type: reference
+      config_params:
+        referenced_column: lmp
+time_aggregation:
+secondary_tables:
+  # join with a table that has relevant forms by case ID
+  - data_source_id: d824a4864ecb421fb3be8bf8173a05d7
+    join_column_primary: doc_id
+    join_column_secondary: form.case.@case_id  # how rows will get joined from primary to secondary tables
+    columns:
+      - column_id: fu_forms
+        aggregation_type: sum
+        config_params:
+          referenced_column: count  # in ucr "count" is an auto-created column that has a 1 in every row
+  # also join with the parent table based on the column from the main table
+  - data_source_id: 340c92112a514017b63ed66715f6f1aa
+    join_column_primary: indices.parent
+    join_column_secondary: doc_id  # how rows will get joined from primary to secondary tables
+    columns:
+      - column_id: parent_name
+        aggregation_type: min  # this is silly / hacky. must be a way to just pick the first
+        config_params:
+          referenced_column: name

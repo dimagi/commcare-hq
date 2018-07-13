@@ -60,15 +60,6 @@
                                 ng-click="initializeMobileWorker()">
                             <i class="fa fa-plus"></i> {% trans "Create Mobile Worker" %}
                         </button>
-                        {% if request|toggle_enabled:"ANONYMOUS_WEB_APPS_USAGE" %}
-                        <button type="button"
-                                class="btn btn-success"
-                                data-toggle="modal"
-                                data-target="#newAnonymousMobileWorkerModal"
-                                ng-click="initializeAnonymousMobileWorker()">
-                            <i class="fa fa-plus"></i> {% trans "Create Anonymous Mobile Worker" %}
-                        </button>
-                        {% endif %}
                         {% if can_bulk_edit_users and can_access_all_locations %}
                             <a id="bulk_download" class="btn btn-info" href="{{ bulk_download_url }}">
                                 <i class="fa fa-cloud-download"></i> {% trans "Download Mobile Workers" %}
@@ -84,39 +75,6 @@
                         {% endif %}
                     </div>
                 </div>
-            </div>
-            <div class="modal fade" id="newAnonymousMobileWorkerModal">
-                 <div class="modal-dialog">
-                     <form id="newAnonyousMobileWorkerForm"
-                           name="mobileWorkerForm"
-                           novalidate
-                           ng-submit="submitNewAnonymousMobileWorker()">
-                         <div class="modal-content">
-                             <div class="modal-header">
-                                 <button type="button" class="close" data-dismiss="modal">
-                                     <span aria-hidden="true">&times;</span>
-                                     <span class="sr-only">{% trans 'Close' %}</span>
-                                 </button>
-                                 <h3 class="modal-title">{% trans "Create New Anonymous Mobile Worker" %}</h3>
-                             </div>
-                             <div class="modal-body">
-                                 <div class="form-horizontal">
-                                     {% crispy new_anonymous_mobile_worker_form %}
-                                     {% if custom_fields_form.fields %}
-                                         {% crispy custom_fields_form %}
-                                     {% endif %}
-                                 </div>
-                             </div>
-                             <div class="modal-footer">
-                                 <button type="button" class="btn btn-default" ng-click="markDefault()" data-dismiss="modal">{% trans 'Cancel' %}</button>
-                                 <button type="submit"
-                                         class="btn btn-primary">
-                                     {% trans "Create" %}
-                                 </button>
-                             </div>
-                         </div>
-                     </form>
-                 </div>
             </div>
             <div class="modal fade" id="newMobileWorkerModal">
                 {% if can_add_extra_users %}
@@ -347,10 +305,7 @@
                             {% angularjs %}
                             <td>
                                 <a href="{{ user.editUrl }}">
-
-                                     <i ng-if="user.is_anonymous" class="fa fa-users"></i>
-                                     <i ng-if="!user.is_anonymous" class="fa fa-user"></i>
-
+                                     <i class="fa fa-user"></i>
                                     <strong>{{ user.username }}</strong>
                                     <span ng-if="!!user.name">({{ user.name }})</span>
                                 </a>

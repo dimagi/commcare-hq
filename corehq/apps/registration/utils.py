@@ -39,7 +39,6 @@ def activate_new_user(form, is_domain_admin=True, domain=None, ip=None):
     new_user.first_name = full_name[0]
     new_user.last_name = full_name[1]
     new_user.email = username
-    new_user.email_opt_out = False  # auto add new users
     new_user.subscribed_to_commcare_users = False
     new_user.eula.signed = True
     new_user.eula.date = now
@@ -105,7 +104,9 @@ def request_new_domain(request, form, is_new_user=True):
         # domains with no subscription are equivalent to be on free Community plan
         create_30_day_advanced_trial(new_domain, current_user.username)
     else:
-        ensure_explicit_community_subscription(new_domain.name, date.today())
+        ensure_explicit_community_subscription(
+            new_domain.name, date.today(), SubscriptionAdjustmentMethod.USER
+        )
 
     UserRole.init_domain_with_presets(new_domain.name)
 
@@ -132,7 +133,8 @@ def request_new_domain(request, form, is_new_user=True):
         send_domain_registration_email(request.user.email,
                                        dom_req.domain,
                                        dom_req.activation_guid,
-                                       request.user.get_full_name())
+                                       request.user.get_full_name(),
+                                       request.user.first_name)
     send_new_request_update_email(request.user, get_ip(request), new_domain.name, is_new_user=is_new_user)
 
     send_hubspot_form(HUBSPOT_CREATED_NEW_PROJECT_SPACE_FORM_ID, request)
@@ -144,15 +146,15 @@ FORUM_LINK = 'https://forum.dimagi.com/'
 PRICING_LINK = 'https://www.commcarehq.org/pricing'
 
 
-def send_domain_registration_email(recipient, domain_name, guid, full_name):
+def send_domain_registration_email(recipient, domain_name, guid, full_name, first_name):
     DNS_name = get_site_domain()
     registration_link = 'http://' + DNS_name + reverse('registration_confirm_domain') + guid + '/'
-
     params = {
         "domain": domain_name,
         "pricing_link": PRICING_LINK,
         "registration_link": registration_link,
         "full_name": full_name,
+        "first_name": first_name,
         "forum_link": FORUM_LINK,
         "wiki_link": WIKI_LINK,
         'url_prefix': '' if settings.STATIC_CDN else 'http://' + DNS_name,

@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+import logging
 import uuid
 
 from celery.task import task
@@ -170,6 +171,20 @@ def import_locations_async(domain, file_ref_id):
         for datasource in datasources:
             rebuild_indicators_in_place.delay(datasource.get_id)
 
+    if getattr(settings, 'CELERY_ALWAYS_EAGER', False):
+        # Log results because they are not sent to the view when
+        # CELERY_ALWAYS_EAGER is true
+        logging.getLogger(__name__).info(
+            "import_locations_async %s results: %s -> success=%s",
+            file_ref_id,
+            " ".join(
+                "%s=%r" % (name, getattr(results, name))
+                for name in ["messages", "warnings", "errors"]
+                if getattr(results, name)
+            ),
+            results.success,
+        )
+
     return {
         'messages': results
     }
@@ -180,7 +195,7 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
     """
     Update location fixtures for users given locations
     """
-    from corehq.apps.users.models import CommCareUser, update_fixture_status_for_users
+    from corehq.apps.users.models import CouchUser, update_fixture_status_for_users
     from corehq.apps.locations.dbaccessors import user_ids_at_locations
     from corehq.apps.fixtures.models import UserFixtureType
     from dimagi.utils.couch.database import iter_docs
@@ -191,8 +206,8 @@ def update_users_at_locations(domain, location_ids, supply_point_ids, ancestor_i
 
     # unassign users from locations
     unassign_user_ids = user_ids_at_locations(location_ids)
-    for doc in iter_docs(CommCareUser.get_db(), unassign_user_ids):
-        user = CommCareUser.wrap(doc)
+    for doc in iter_docs(CouchUser.get_db(), unassign_user_ids):
+        user = CouchUser.wrap_correctly(doc)
         for location_id in location_ids:
             if location_id not in user.get_location_ids(domain):
                 continue

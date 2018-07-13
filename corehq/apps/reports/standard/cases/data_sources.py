@@ -17,6 +17,10 @@ from corehq.util.dates import iso_string_to_datetime
 from corehq.util.view_utils import absolute_reverse
 from corehq.util.quickcache import quickcache
 from memoized import memoized
+from corehq.apps.case_search.const import (
+    CASE_COMPUTED_METADATA,
+    SPECIAL_CASE_PROPERTIES,
+)
 
 
 class CaseInfo(object):
@@ -35,6 +39,7 @@ class CaseInfo(object):
     @property
     def case_name(self):
         return self.case['name']
+    name = case_name
 
     @property
     def case_name_display(self):
@@ -243,12 +248,11 @@ class SafeCaseDisplay(object):
         self.case = case
         self.report = report
 
-    def get(self, column):
-        name = column['name']
+    def get(self, name):
         if name == '_link':
             return self._link
 
-        if column.get('meta_type') == 'info':
+        if name in (SPECIAL_CASE_PROPERTIES + CASE_COMPUTED_METADATA):
             return getattr(CaseDisplay(self.report, self.case), name.replace('@', ''))
 
         return self.case.get(name)
@@ -259,4 +263,6 @@ class SafeCaseDisplay(object):
             link = absolute_reverse('case_data', args=[self.report.domain, self.case.get('_id')])
         except NoReverseMatch:
             return _("No link found")
-        return html.mark_safe("<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("Link")))
+        return html.mark_safe(
+            "<a class='ajax_dialog' href='{}' target='_blank'>{}</a>".format(link, _("View Case"))
+        )

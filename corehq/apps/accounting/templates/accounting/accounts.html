@@ -8,6 +8,7 @@
 {% block page_content %}
     {% initial_page_data 'account_form_is_active' basic_form.is_active.value %}
     {% initial_page_data 'is_customer_billing_account' basic_form.is_customer_billing_account.value %}
+    {% initial_page_data 'enterprise_admin_emails' basic_form.enterprise_admin_emails.value %}
 
     <ul class="nav nav-tabs" id="user-settings-tabs">
         <li><a href="#account" data-toggle="tab">{% trans "Account" %}</a></li>
@@ -16,7 +17,6 @@
         {% if account.auto_pay_user %}
             <li><a href="#autopay" data-toggle="tab">{% trans "Autopay" %}</a></li>
         {% endif %}
-        <li><a href="#dashboard" data-toggle="tab">{% trans "Dashboard" %}</a></li>
     </ul>
 
     <div class="tab-content tab-padded">
@@ -49,11 +49,6 @@
                 </p>
             </div>
         {% endif %}
-        <div class="tab-pane" id="dashboard">
-            <a target="_blank" class="btn btn-lg btn-primary" href="{% url "enterprise_dashboard" account.id %}">
-                Go to Dashboard
-            </a>
-        </div>
     </div>
 
 {% endblock %}

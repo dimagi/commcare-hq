@@ -4,7 +4,7 @@ from django.test import TestCase
 from mock import patch, MagicMock
 
 from corehq.apps.export.models import FormExportInstance, CaseExportInstance
-from corehq.apps.reports.tasks import saved_exports
+from corehq.apps.export.tasks import saved_exports
 
 
 class TestDailySavedExports(TestCase):

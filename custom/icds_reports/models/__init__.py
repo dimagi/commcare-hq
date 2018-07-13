@@ -9,6 +9,7 @@ from custom.icds_reports.models.aggregate import (
     AggAwcDaily,
     DailyAttendance,
     AggregateComplementaryFeedingForms,
+    AggregateChildHealthDailyFeedingForms,
     AggregateChildHealthPostnatalCareForms,
     AggregateCcsRecordPostnatalCareForms,
     AggregateChildHealthTHRForms,

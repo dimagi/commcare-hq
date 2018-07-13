@@ -12,6 +12,7 @@ import csv342 as csv
 import json
 import bz2
 from collections import OrderedDict
+import openpyxl
 
 from django.template.loader import render_to_string, get_template
 from django.utils.functional import Promise
@@ -360,14 +361,7 @@ class Excel2007ExportWriter(ExportWriter):
     max_table_name_size = 31
 
     def _init(self):
-        try:
-            import openpyxl
-        except ImportError:
-            raise Exception("It doesn't look like this machine is configured for "
-                            "excel export. To export to excel you have to run the "
-                            "command:  easy_install openpyxl")
-
-        self.book = openpyxl.Workbook(optimized_write=True)
+        self.book = openpyxl.Workbook(write_only=True)
         self.tables = {}
         self.table_indices = {}
 

@@ -68,7 +68,7 @@ from corehq.messaging.scheduling.scheduling_partitioned.models import (
 from corehq.messaging.tasks import initiate_messaging_rule_run
 from corehq.sql_db.util import run_query_across_partitioned_databases
 from corehq.toggles import REMINDERS_MIGRATION_IN_PROGRESS
-from datetime import time, datetime
+from datetime import time, datetime, timedelta
 from django.db import transaction
 from django.db.models import Q
 from django.core.management.base import BaseCommand
@@ -294,23 +294,22 @@ class BroadcastMigrator(BaseMigrator):
         obj.save()
 
     def migrate_schedule_instances(self):
-        recipient = self.broadcast.recipients[0]
-
         if not isinstance(self.schedule, AlertSchedule):
             raise TypeError("Expected AlertSchedule")
 
-        instance = AlertScheduleInstance(
-            domain=self.broadcast.domain,
-            recipient_type=recipient[0],
-            recipient_id=recipient[1],
-            current_event_num=0,
-            schedule_iteration_num=2,
-            next_event_due=self.handler.start_datetime,
-            active=False,
-            alert_schedule_id=self.schedule.schedule_id,
-        )
+        for recipient in self.broadcast.recipients:
+            instance = AlertScheduleInstance(
+                domain=self.broadcast.domain,
+                recipient_type=recipient[0],
+                recipient_id=recipient[1],
+                current_event_num=0,
+                schedule_iteration_num=2,
+                next_event_due=self.handler.start_datetime,
+                active=False,
+                alert_schedule_id=self.schedule.schedule_id,
+            )
 
-        instance.save(force_insert=True)
+            instance.save(force_insert=True)
 
     def get_alert_schedule_instance_class(self):
         return AlertScheduleInstance
@@ -466,9 +465,7 @@ def get_broadcast_recipients(handler):
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient == RECIPIENT_LOCATION:
-        if len(handler.location_ids) != 1:
-            raise ValueError("Expected exactly one location id for %s" % handler._id)
-        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, handler.location_ids[0])]
+        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id) for location_id in handler.location_ids]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -584,6 +581,56 @@ def migrate_simple_weekly_schedule(handler):
         extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
         repeat_every=repeat_every,
     )
+
+
+def get_offset_based_start_date_schedule_migration_function(repeat_every_override):
+
+    def migrate_offset_based_start_date_schedule(handler):
+        base_datetime = datetime(2000, 1, 1)
+        running_datetime = datetime(2000, 1, 1)
+
+        event_and_content_objects = []
+        for event in handler.events:
+            running_datetime += timedelta(days=event.day_num)
+            running_datetime += timedelta(hours=event.fire_time.hour)
+            running_datetime += timedelta(minutes=event.fire_time.minute)
+
+            event_and_content_objects.append((
+                TimedEvent(
+                    day=(running_datetime - base_datetime).days,
+                    time=running_datetime.time(),
+                ),
+                get_content(handler, event)
+            ))
+
+        if handler.max_iteration_count == 1:
+            repeat_every = event_and_content_objects[-1][0].day + 1
+        elif repeat_every_override:
+            repeat_every = repeat_every_override
+        else:
+            raise ValueError("Expected repeat_every_override")
+
+        if len(event_and_content_objects) == 1 and event_and_content_objects[0][0].day == 0:
+            return TimedSchedule.create_simple_daily_schedule(
+                handler.domain,
+                event_and_content_objects[0][0],
+                event_and_content_objects[0][1],
+                total_iterations=handler.max_iteration_count,
+                start_offset=handler.start_offset,
+                extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+                repeat_every=repeat_every,
+            )
+        else:
+            return TimedSchedule.create_custom_daily_schedule(
+                handler.domain,
+                event_and_content_objects,
+                total_iterations=handler.max_iteration_count,
+                start_offset=handler.start_offset,
+                extra_options=get_extra_scheduling_options(handler, include_utc_option=True),
+                repeat_every=repeat_every,
+            )
+
+    return migrate_offset_based_start_date_schedule
 
 
 def migrate_custom_daily_schedule(handler):
@@ -751,6 +798,26 @@ class Command(BaseCommand):
             else:
                 # Custom daily schedule goes here
                 return migrate_custom_daily_schedule
+        elif (
+            handler.start_date and
+            handler.event_interpretation == EVENT_AS_OFFSET and
+            handler.start_day_of_week == DAY_ANY
+        ):
+            if not self.confirm(
+                "Does %s.%s reference a date and not a timestamp? " % (handler.case_type, handler.start_date)
+            ):
+                return None
+
+            repeat_every_override = None
+            if handler.max_iteration_count != 1:
+                repeat_every_override = self.get_int(
+                    "What is the schedule length for %s? (Enter 0 to stop migration)" % handler._id
+                )
+
+                if repeat_every_override <= 0:
+                    return None
+
+            return get_offset_based_start_date_schedule_migration_function(repeat_every_override)
 
         return None
 
@@ -778,9 +845,6 @@ class Command(BaseCommand):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
-            return None
-
-        if handler.recipient == RECIPIENT_LOCATION and len(handler.location_ids) != 1:
             return None
 
         if handler.locked:
@@ -915,6 +979,14 @@ class Command(BaseCommand):
                 return True
             elif answer == 'n':
                 return False
+
+    def get_int(self, message):
+        while True:
+            answer = moves.input(message)
+            try:
+                return int(answer)
+            except (ValueError, TypeError):
+                pass
 
     def get_locked_count(self, domain):
         return AutomaticUpdateRule.objects.filter(

@@ -22,7 +22,6 @@ from casexml.apps.case.xml.parser import CaseNoopAction
 from corehq.apps.couch_sql_migration.diff import filter_form_diffs, filter_case_diffs, filter_ledger_diffs
 from corehq.apps.domain.dbaccessors import get_doc_count_in_domain_by_type
 from corehq.apps.domain.models import Domain
-from corehq.apps.reports.dbaccessors import stale_get_export_count
 from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processed
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
@@ -390,7 +389,6 @@ class CouchSqlDomainMigrator(object):
     def _assert_no_migration_restrictions(self, domain_name):
         assert should_use_sql_backend(domain_name)
         assert not COUCH_SQL_MIGRATION_BLACKLIST.enabled(domain_name, NAMESPACE_DOMAIN)
-        assert not stale_get_export_count(domain_name)
         assert not any(custom_report_domain == domain_name
                        for custom_report_domain in settings.DOMAIN_MODULE_MAP.keys())
         assert not REMINDERS_MIGRATION_IN_PROGRESS.enabled(domain_name)
@@ -575,12 +573,11 @@ def _migrate_case_attachments(couch_case, sql_case):
     """Copy over attachment meta """
     for name, attachment in six.iteritems(couch_case.case_attachments):
         blob = couch_case.blobs[name]
+        assert name == attachment.identifier or not attachment.identifier or not name, \
+            (name, attachment.identifier)
         sql_case.track_create(CaseAttachmentSQL(
-            name=name,
+            name=name or attachment.identifier,
             case=sql_case,
-            identifier=attachment.identifier,
-            attachment_src=attachment.attachment_src,
-            attachment_from=attachment.attachment_from,
             content_type=attachment.server_mime,
             content_length=attachment.content_length,
             blob_id=blob.id,

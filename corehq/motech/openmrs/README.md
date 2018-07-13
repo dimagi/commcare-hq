@@ -200,36 +200,32 @@ ValueSource:
 1. It can assign a constant. This uses the ConstantString subclass of
    ValueSource. e.g.
    ```javascript
-       "person_properties": [
-         {
-           "birthdate": {
-             "doc_type": "ConstantString",
-             "value": "Oct 7, 3761 BCE"
-           }
+       "person_properties": {
+         "birthdate": {
+           "doc_type": "ConstantString",
+           "value": "Oct 7, 3761 BCE"
          }
-       ]
+       }
    ```
 
 2. It can assign a case property value. Use CaseProperty for this. e.g.
    ```javascript
-       "person_properties": [
-         {
-           "birthdate": {
-             "doc_type": "CaseProperty",
-             "case_property": "dob"
-           }
+       "person_properties": {
+         "birthdate": {
+           "doc_type": "CaseProperty",
+           "case_property": "dob"
          }
-       ]
+       }
     ```
 
 2. It can map a case property value to a Concept UUID.
-   CasePropertyConcept does this. e.g.
+   CasePropertyMap does this. e.g.
    ```javascript
-       "person_attributes": [
+       "person_attributes": {
          "c1f455e7-3f10-11e4-adec-0800271c1b75": {
-           "doc_type": "CasePropertyConcept",
+           "doc_type": "CasePropertyMap",
            "case_property": "class",
-           "value_concepts": {
+           "value_map": {
              "sc": "c1fcd1c6-3f10-11e4-adec-0800271c1b75",
              "general": "c1fc20ab-3f10-11e4-adec-0800271c1b75",
              "obc": "c1fb51cc-3f10-11e4-adec-0800271c1b75",
@@ -237,7 +233,7 @@ ValueSource:
              "st": "c20478b6-3f10-11e4-adec-0800271c1b75"
            }
          }
-       ]
+       }
     ```
 
 There are two more OpenmrsCaseConfig fields:
