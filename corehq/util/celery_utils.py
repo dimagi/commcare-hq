@@ -45,12 +45,12 @@ class TaskInfo(object):
     def parse_timestamp(timestamp):
         if timestamp is None:
             return None
+        # http://stackoverflow.com/questions/20091505/celery-task-with-a-time-start-attribute-in-1970
         return datetime.fromtimestamp(time() - kombu.five.monotonic() + timestamp)
 
     def __init__(self, _id, name, time_start=None):
         self.id = _id
         self.name = name
-        # http://stackoverflow.com/questions/20091505/celery-task-with-a-time-start-attribute-in-1970
         self.time_start = self.parse_timestamp(time_start)
 
 
@@ -201,8 +201,22 @@ def get_running_workers(timeout=10):
 def _parse_args(task):
 
     def parse_populate_export_download_task_args(task):
-        # params: export_instances_json, filters, download_id, filename=None, expiry=10 * 60 * 60
-        from corehq.apps.export.dbaccessors import _properly_wrap_export_instance
+        """
+        Parses the parameters of populate_export_download_task() to
+        determine which export instances it was called with.
+
+        Returns `task` dict with new key "export_instances". If the
+        parameters can't be parsed, `task` is returned as-is.
+
+        (`task` is passed by reference, so the return value can be
+        ignored.)
+        """
+        # task['args'] is a string representation of the args that
+        # populate_export_download_task() was called with, and task['kwargs']
+        # is the same for its keyword arguments. The parameters of
+        # populate_export_download_task() are: export_instance_ids, filters,
+        # download_id, filename=None, expiry=10 * 60 * 60
+        from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 
         try:
             args = literal_eval(task['args'])
@@ -210,16 +224,23 @@ def _parse_args(task):
         except (SyntaxError, ValueError):
             pass
         else:
-            export_instances_json = kwargs.get('export_instances_json', args[0])
+            export_instance_ids = args[0] if args else kwargs['export_instance_ids']
+            export_instances = (get_properly_wrapped_export_instance(doc_id) for doc_id in export_instance_ids)
             task['export_instances'] = [{
-                'id': doc['_id'],
-                'name': doc['name'],
-                'domain': doc['domain'],
-            } for doc in export_instances_json]
+                'id': inst._id,
+                'name': inst.name,
+                'domain': inst.domain,
+            } for inst in export_instances]
         return task
 
     def parse_start_export_task_args(task):
-        # params: export_instance_id, last_access_cutoff
+        """
+        Parses the parameters of start_export_task() to determine the
+        export instance is was called with.
+
+        Results are returned in new key `export_instance`.
+        """
+        # start_export_task() params: export_instance_id, last_access_cutoff
         from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
 
         try:
@@ -288,3 +309,32 @@ def get_queue_tasks(queue):
             async_result = app.AsyncResult(task['id'])
             task['status'] = get_task_status(async_result)
             yield task
+
+
+def get_task_str(task):
+    """
+    Return a one-line string representation of a task.
+    """
+    def get_inst_str(inst):
+        return '; '.join((
+            'ID: {}'.format(inst['id']),
+            'Name: {}'.format(inst['name']),
+            'Domain: {}'.format(inst['domain']),
+        ))
+
+    if 'export_instances' in task:
+        inst_str = '), ('.join((get_inst_str(inst) for inst in task['export_instances']))
+    elif 'export_instance' in task:
+        inst_str = get_inst_str(task['export_instance'])
+    else:
+        inst_str = ''
+    task_str = '; '.join((
+        'Task ID: {}'.format(task['id']),
+        'State: {}'.format(task['state']),
+        'Status: {}'.format(task['status'].state),
+        'Start time: {}'.format(task['start_time'] or 'N/A'),
+        'Progress: {}%'.format(task['status'].progress.percent),
+        'Error: "{}"'.format(task['status'].progress.error_message or "N/A"),
+        'Export instances: [({})]'.format(inst_str),
+    ))
+    return task_str

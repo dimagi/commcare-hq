@@ -18,7 +18,7 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.celery_utils import get_queue_length, get_queue_tasks
+from corehq.util.celery_utils import get_queue_length, get_queue_tasks, get_task_str
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
 from corehq.apps.export.esaccessors import (
@@ -294,30 +294,16 @@ def get_export_download(export_instances, filters, filename=None):
 
     queue_len = get_queue_length(EXPORT_DOWNLOAD_QUEUE)
     if queue_len == QUEUE_LENGTH_LOGGING_THRESHHOLD:
-        # This makes the assumption, which may not be true, that the
+        # This makes the assumption that the task that is holding up the queue
+        # is still active.
         logger.info('Queue {} at 100 tasks. Logging task data.'.format(EXPORT_DOWNLOAD_QUEUE))
         for task in get_queue_tasks(EXPORT_DOWNLOAD_QUEUE):
-            insts_str = '), ('.join((
-                '; '.join((
-                    'ID: {}'.format(inst['id']),
-                    'Name: {}'.format(inst['name']),
-                    'Domain: {}'.format(inst['domain']),
-                )) for inst in task['export_instances']
-            ))
-            task_str = '; '.join((
-                'Task ID: {}'.format(task['id']),
-                'State: {}'.format(task['state']),
-                'Status: {}'.format(task['status'].state),
-                'Start time: {}'.format(task['start_time'] or 'N/A'),
-                'Progress: {}%'.format(task['status'].progress.percent),
-                'Error: "{}"'.format(task['status'].progress.error_message or "N/A"),
-                'Export instances: [({})]'.format(insts_str),
-            ))
+            task_str = get_task_str(task)
             logger.info(task_str)
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(
-        [inst.to_json() for inst in export_instances],
+        [inst._id for inst in export_instances],
         filters,
         download.download_id,
         filename=filename

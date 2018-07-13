@@ -13,7 +13,7 @@ from corehq.apps.reports.models import HQGroupExportConfiguration
 from corehq.apps.users.models import CouchUser
 from corehq.blobs import get_blob_db
 from corehq.dbaccessors.couchapps.all_docs import get_doc_ids_by_class
-from corehq.util.celery_utils import get_queue_length, get_queue_tasks
+from corehq.util.celery_utils import get_queue_length, get_queue_tasks, get_task_str
 from corehq.util.datadog.gauges import datadog_track_errors
 from corehq.util.decorators import serial_task
 from corehq.util.files import safe_filename_header, TransientTempfile
@@ -31,7 +31,6 @@ from .dbaccessors import (
     get_case_inferred_schema,
     get_properly_wrapped_export_instance,
     get_all_daily_saved_export_instance_ids,
-    _properly_wrap_export_instance,
 )
 from .export import get_export_file, rebuild_export, should_rebuild_export
 from .models.new import EmailExportWhenDoneRequest
@@ -44,8 +43,8 @@ logger = logging.getLogger('export_tasks')
 
 
 @task(queue=EXPORT_DOWNLOAD_QUEUE)
-def populate_export_download_task(export_instances_json, filters, download_id, filename=None, expiry=10 * 60 * 60):
-    export_instances = [_properly_wrap_export_instance(doc) for doc in export_instances_json]
+def populate_export_download_task(export_instance_ids, filters, download_id, filename=None, expiry=10 * 60 * 60):
+    export_instances = [get_properly_wrapped_export_instance(doc_id) for doc_id in export_instance_ids]
     with TransientTempfile() as temp_path, datadog_track_errors('populate_export_download_task'):
         export_file = get_export_file(
             export_instances,
@@ -124,23 +123,11 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
     queue = EXPORT_DOWNLOAD_QUEUE if manual else SAVED_EXPORTS_QUEUE
     queue_len = get_queue_length(queue)
     if queue_len == QUEUE_LENGTH_LOGGING_THRESHHOLD:
-        # This makes the assumption, which may not be true, that the
+        # This makes the assumption that the task that is holding up the queue
+        # is still active.
         logger.info('Queue {} at 100 tasks. Logging task data.'.format(queue))
         for task in get_queue_tasks(queue):
-            inst_str = '; '.join((
-                'ID: {}'.format(task['export_instance']['id']),
-                'Name: {}'.format(task['export_instance']['name']),
-                'Domain: {}'.format(task['export_instance']['domain']),
-            ))
-            task_str = '; '.join((
-                'Task ID: {}'.format(task['id']),
-                'State: {}'.format(task['state']),
-                'Status: {}'.format(task['status'].state),
-                'Start time: {}'.format(task['start_time'] or 'N/A'),
-                'Progress: {}%'.format(task['status'].progress.percent),
-                'Error: "{}"'.format(task['status'].progress.error_message or "N/A"),
-                'Export instance: ({})'.format(inst_str),
-            ))
+            task_str = get_task_str(task)
             logger.info(task_str)
 
     # associate task with the export instance
