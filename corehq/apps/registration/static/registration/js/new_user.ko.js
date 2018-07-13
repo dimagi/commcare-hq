@@ -252,8 +252,8 @@ hqDefine('registration/js/new_user.ko', function () {
 
         var _getDataForSubmission = function () {
             var password = self.password();
-            if (typeof(hex_parser) !== 'undefined') {
-                password = (new hex_parser()).encode(self.password());
+            if (hqImport("hqwebapp/js/initial_page_data").get("implement_password_obfuscation")) {
+                password = (hqImport("nic_compliance/js/encoder")()).encode(self.password());
             }
             var data = {
                 full_name: self.fullName(),
