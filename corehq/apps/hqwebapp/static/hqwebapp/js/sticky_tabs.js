@@ -8,10 +8,19 @@ hqDefine("hqwebapp/js/sticky_tabs", [
 ], function(
     $
 ) {
+    var getHash = function() {
+        if (window.location.hash) {
+            // .replace handles the #history?form_id=foo style of URL hashes used by
+            // the case data page's history tab (case_data.js)
+            return window.location.hash.replace(/\?.*/, "");
+        }
+        return "";
+    };
+
     $(function(){
         var tabSelector = "a[data-toggle='tab']",
             navSelector = ".nav.sticky-tabs",
-            $tabFromUrl = $("a[href='" + (window.location.hash || "" )+ "']");
+            $tabFromUrl = $("a[href='" + getHash() + "']");
         if ($tabFromUrl.length) {
             $tabFromUrl.tab('show');
         } else {
@@ -36,7 +45,7 @@ hqDefine("hqwebapp/js/sticky_tabs", [
         });
 
         $(window).on('popstate', function () {
-            var anchor = window.location.hash || $(navSelector + ' ' + tabSelector).first().attr('href');
+            var anchor = getHash() || $(navSelector + ' ' + tabSelector).first().attr('href');
             $("a[href='" + anchor + "']").tab('show');
         });
     });
