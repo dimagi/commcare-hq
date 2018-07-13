@@ -1,5 +1,7 @@
 hqDefine('nic_compliance/js/encoder', function () {
-    function HexParsr() {
+    function HexParser() {
+        var self = {};
+
         function paddingStr() {
             var s = Math.random().toString(36).slice(2, 8);
             return s.length === 6 ? s : paddingStr();
@@ -15,17 +17,19 @@ hqDefine('nic_compliance/js/encoder', function () {
             });
         };
 
-        this.addPadding = function(secret_password) {
+        self.addPadding = function(secret_password) {
             return _paddingLeft + secret_password + _paddingRight;
         };
 
-        this.encode = function(password) {
+        self.encode = function(password) {
             if(password) {
-                var secret_password = this.addPadding(window.btoa(b64EncodeUnicode(password)));
-                return this.addPadding(window.btoa(secret_password));
+                var secret_password = self.addPadding(window.btoa(b64EncodeUnicode(password)));
+                return self.addPadding(window.btoa(secret_password));
             }
             return password;
         };
+
+        return self;
     }
 
     $(function(){
@@ -33,7 +37,7 @@ hqDefine('nic_compliance/js/encoder', function () {
         if(password_field.length) {
 
             password_field.parents("form")[0].onsubmit = function() {
-                var password_encoder = new HexParsr();
+                var password_encoder = new HexParser();
                 password_field.val(password_encoder.encode(password_field.val()));
             };
         }
@@ -42,12 +46,12 @@ hqDefine('nic_compliance/js/encoder', function () {
             $(reset_password_fields[0]).parents("form")[0].onsubmit = function() {
                 for(var i=0; i<reset_password_fields.length; i++) {
                     password_field = $(reset_password_fields[i]);
-                    var password_encoder = new HexParsr();
+                    var password_encoder = new HexParser();
                     password_field.val(password_encoder.encode(password_field.val()));
                 }
             };
         }
     });
 
-    return HexParsr;
+    return HexParser;
 });
