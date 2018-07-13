@@ -579,8 +579,9 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
                 return None
 
         def _get_by_name(stale=False):
-            extra_args = {'stale': settings.COUCH_STALE_QUERY} if stale else {}
-            result = cls.view("domain/domains", key=name, reduce=False, include_docs=True, **extra_args).first()
+            result = SqlDomain.objects.filter(domain_doc__name=name).first()
+            if result:
+                result = result.domain_doc
             if not isinstance(result, Domain):
                 # A stale view may return a result with no doc if the doc has just been deleted.
                 # In this case couchdbkit just returns the raw view result as a dict
@@ -596,7 +597,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_or_create_with_name(cls, name, is_active=False, secure_submissions=True, use_sql_backend=False):
-        result = cls.view("domain/domains", key=name, reduce=False, include_docs=True).first()
+        result = SqlDomain.objects.filter(domain_doc__name=name).first()
         if result:
             return result
         else:
@@ -655,13 +656,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
     @classmethod
     def get_names_by_prefix(cls, prefix):
-        return [d['key'] for d in Domain.view(
-            "domain/domains",
-            startkey=prefix,
-            endkey=prefix + "zzz",
-            reduce=False,
-            include_docs=False
-        ).all()]
+        return SqlDomain.objects.filter(domain_doc__name__startswith=name).values_list('domain_doc__name')
 
     def case_sharing_included(self):
         return self.case_sharing or reduce(lambda x, y: x or y, [getattr(app, 'case_sharing', False) for app in self.applications()], False)

@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, SqlDomain
 from corehq.util.couch import get_db_by_doc_type
 from corehq.util.couch_helpers import paginate_view
 from dimagi.utils.parsing import json_format_datetime
@@ -106,15 +106,11 @@ def get_docs_in_domain_by_class(domain, doc_class):
 
 
 def get_domain_ids_by_names(names):
-    return [result['id'] for result in Domain.view(
-        "domain/domains",
-        keys=names,
-        reduce=False,
-        include_docs=False
-    )]
+    return SqlDomain.objects.filter(domain_doc__name__in=names).values_list('id')
 
 
 def iter_domains():
+    # TODO iterate
     for row in paginate_view(
             Domain.get_db(),
             'domain/domains',

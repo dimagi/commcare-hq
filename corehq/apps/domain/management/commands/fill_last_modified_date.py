@@ -12,6 +12,7 @@ class Command(BaseCommand):
     def _get_domains_without_last_modified_date(self):
         docs = iter_docs(Domain.get_db(), [
             domain['id']
+            # TODO
             for domain in Domain.view(
                 "domain/domains",
                 reduce=False,

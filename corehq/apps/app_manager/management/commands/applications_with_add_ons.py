@@ -36,6 +36,7 @@ class Command(BaseCommand):
         else:
             domain_ids = [
                 result['id'] for result in
+                # TODO
                 Domain.get_db().view(
                     "domain/domains", reduce=False, include_docs=False
                 ).all()

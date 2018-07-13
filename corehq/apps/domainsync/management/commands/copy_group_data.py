@@ -61,6 +61,7 @@ class Command(BaseCommand):
         group.save(force_update=True)
 
         print('getting domain')
+        # TODO
         domain = Domain.wrap(
             sourcedb.view('domain/domains', key=group.domain, include_docs=True,
                           reduce=False, limit=1).one()['doc']

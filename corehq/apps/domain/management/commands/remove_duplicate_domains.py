@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from django.core.management import BaseCommand
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, SqlDomain
 
 
 class Command(BaseCommand):
@@ -22,11 +22,7 @@ class Command(BaseCommand):
 
         for domain in list(dups):
             real_dom = Domain.get_by_name(domain)
-            total_doms = Domain.view("domain/domains",
-                key=domain,
-                reduce=False,
-                include_docs=True,
-            ).all()
+            total_doms = SqlDomain.objects.filter(domain_doc__name=domain).values_list(['domain_doc'])
             fake_doms = [d for d in total_doms if d.get_id != real_dom.get_id]
 
             self.stdout.write('Found Dup: %s\n' % domain)

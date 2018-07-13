@@ -276,6 +276,7 @@ class Command(BaseCommand):
     def copy_domain(self, source_couch, domain):
         print("Copying domain doc")
         sourcedb = source_couch.get_db_for_class(Domain)
+        # TODO
         result = sourcedb.view(
             "domain/domains",
             key=domain,

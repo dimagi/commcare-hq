@@ -14,7 +14,7 @@ from corehq.apps.accounting.models import (
     Subscription,
 )
 from corehq.apps.accounting.utils import fmt_feature_rate_dict, fmt_product_rate_dict
-from corehq.apps.domain.models import Domain
+from corehq.apps.domain.models import Domain, SqlDomain
 from corehq.apps.hqwebapp.async_handler import BaseAsyncHandler, AsyncHandlerError
 from corehq.apps.hqwebapp.encoders import LazyEncoder
 
@@ -438,17 +438,7 @@ class DomainFilterAsyncHandler(BaseSingleOptionFilterAsyncHandler):
 
     @property
     def query(self):
-        db = Domain.get_db()
-        startkey = self.search_string
-        endkey = "{}Z".format(self.search_string) if startkey else ''
-        query = db.view(
-            'domain/domains',
-            reduce=False,
-            startkey=startkey,
-            endkey=endkey,
-            limit=20,
-        )
-        return query
+        return SqlDomain.objects.filter(domain_doc__name__startswith=self.search_string)
 
     @property
     def domain_name_response(self):
