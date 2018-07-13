@@ -126,8 +126,8 @@ def rebuild_saved_export(export_instance_id, last_access_cutoff=None, manual=Fal
         # This makes the assumption that the task that is holding up the queue
         # is still active.
         logger.info('Queue {} at 100 tasks. Logging task data.'.format(queue))
-        for task in get_queue_tasks(queue):
-            task_str = get_task_str(task)
+        for task_ in get_queue_tasks(queue):
+            task_str = get_task_str(task_)
             logger.info(task_str)
 
     # associate task with the export instance

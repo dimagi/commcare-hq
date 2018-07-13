@@ -274,19 +274,19 @@ def _get_workers(app, queue):
 def _get_queue_tasks(app, workers):
     inspect = app.control.inspect(workers)
     for worker, tasks in six.iteritems(inspect.active()):
-        for task in tasks:
+        for task_ in tasks:
             # Don't use TaskInfo because we need the task's args and
             # kwargs to unpack what the task doing.
-            task['state'] = 'active'
-            yield task
+            task_['state'] = 'active'
+            yield task_
     for worker, tasks in six.iteritems(inspect.scheduled()):
-        for task in tasks:
-            task['request']['state'] = 'scheduled'
-            yield task['request']
+        for task_ in tasks:
+            task_['request']['state'] = 'scheduled'
+            yield task_['request']
     for worker, tasks in six.iteritems(inspect.reserved()):
-        for task in tasks:
-            task['state'] = 'reserved'
-            yield task
+        for task_ in tasks:
+            task_['state'] = 'reserved'
+            yield task_
 
 
 def get_queue_length(queue):
@@ -302,13 +302,13 @@ def get_queue_tasks(queue):
     app.config_from_object(settings)
     workers = _get_workers(app, queue)
     if workers:
-        for task in _get_queue_tasks(app, workers):
-            task = _parse_args(task)
-            if 'time_start' in task:
-                task['time_start'] = TaskInfo.parse_timestamp(task['time_start'])
-            async_result = app.AsyncResult(task['id'])
-            task['status'] = get_task_status(async_result)
-            yield task
+        for task_ in _get_queue_tasks(app, workers):
+            task_ = _parse_args(task_)
+            if 'time_start' in task_:
+                task_['time_start'] = TaskInfo.parse_timestamp(task_['time_start'])
+            async_result = app.AsyncResult(task_['id'])
+            task_['status'] = get_task_status(async_result)
+            yield task_
 
 
 def get_task_str(task):
