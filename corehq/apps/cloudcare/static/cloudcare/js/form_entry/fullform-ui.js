@@ -166,7 +166,7 @@ Container.prototype.fromJS = function(json) {
                 if (options.target.pendingAnswer &&
                         options.target.pendingAnswer() !== Formplayer.Const.NO_PENDING_ANSWER) {
                     // There is a request in progress
-                    if (options.data.answer == options.target.entry.rawAnswer()) {
+                    if (options.data.answer == options.target.entry.rawAnswer())  // eslint-disable-line eqeqeq
                         // We can now mark it as not dirty
                         options.target.pendingAnswer(Formplayer.Const.NO_PENDING_ANSWER);
                     } else {
