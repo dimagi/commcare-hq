@@ -77,7 +77,11 @@ from time import sleep
 from io import open
 
 
-ABT_CUSTOM_RECIPIENT = 'CASE_OWNER_LOCATION_PARENT'
+CUSTOM_RECIPIENTS = (
+    'CASE_OWNER_LOCATION_PARENT',
+    'HOST_CASE_OWNER_LOCATION',
+    'HOST_CASE_OWNER_LOCATION_PARENT',
+)
 
 
 def log(message):
@@ -453,8 +457,8 @@ def get_rule_recipients(handler):
         return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_PARENT_CASE, None)]
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
-    elif handler.recipient == ABT_CUSTOM_RECIPIENT:
-        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, ABT_CUSTOM_RECIPIENT)]
+    elif handler.recipient in CUSTOM_RECIPIENTS:
+        return [(CaseScheduleInstanceMixin.RECIPIENT_TYPE_CUSTOM, handler.recipient)]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -735,14 +739,13 @@ class Command(BaseCommand):
             except ValueError:
                 return None
 
-        if handler.recipient not in (
+        if handler.recipient not in (CUSTOM_RECIPIENTS + (
             RECIPIENT_OWNER,
             RECIPIENT_CASE,
             RECIPIENT_USER_GROUP,
             RECIPIENT_USER,
             RECIPIENT_PARENT_CASE,
-            ABT_CUSTOM_RECIPIENT,
-        ):
+        )):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
