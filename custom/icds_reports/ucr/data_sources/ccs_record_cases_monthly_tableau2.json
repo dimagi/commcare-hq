@@ -627,6 +627,14 @@
                   },
                   "property_value": ["", null]
                 }
+              },
+              "expression_if_true": {
+                "type": "constant",
+                "constant": "yes"
+              },
+              "expression_if_false": {
+                "type": "constant",
+                "constant": "no"
               }
             }
           }
