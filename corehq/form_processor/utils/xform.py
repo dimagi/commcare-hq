@@ -225,20 +225,24 @@ def resave_form(domain, form):
         XFormInstance.get_db().save_doc(form.to_json())
 
 
-def get_node(root, question, xmlns=None):
+def get_node(root, question, xmlns=''):
     '''
     Given an xml element, find the node corresponding to a question path.
     See XFormQuestionValueIterator for question path format.
     Throws XFormQuestionValueNotFound if question is not present.
     '''
+
+    def _next_node(node, xmlns, id, index=None):
+        try:
+            return node.findall("{{{}}}{}".format(xmlns, id))[index or 0]
+        except (IndexError, KeyError):
+            raise XFormQuestionValueNotFound()
+
     node = root
     i = XFormQuestionValueIterator(question)
     for (qid, index) in i:
-        try:
-            node = node.findall("{{{}}}{}".format(xmlns, qid))[index or 0]
-        except IndexError:
-            raise XFormQuestionValueNotFound()
-    node = node.find("{{{}}}{}".format(xmlns, i.last()))
+        node = _next_node(node, xmlns, qid, index)
+    node = _next_node(node, xmlns, i.last())
     if node is None:
         raise XFormQuestionValueNotFound()
     return node
