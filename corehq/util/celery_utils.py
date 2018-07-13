@@ -273,19 +273,19 @@ def _get_workers(app, queue):
 
 def _get_queue_tasks(app, workers):
     inspect = app.control.inspect(workers)
-    for worker, tasks in six.iteritems(inspect.reserved()):
+    for worker, tasks in six.iteritems(inspect.active()):
         for task in tasks:
             # Don't use TaskInfo because we need the task's args and
             # kwargs to unpack what the task doing.
-            task['state'] = 'reserved'
+            task['state'] = 'active'
             yield task
     for worker, tasks in six.iteritems(inspect.scheduled()):
         for task in tasks:
             task['request']['state'] = 'scheduled'
             yield task['request']
-    for worker, tasks in six.iteritems(inspect.active()):
+    for worker, tasks in six.iteritems(inspect.reserved()):
         for task in tasks:
-            task['state'] = 'active'
+            task['state'] = 'reserved'
             yield task
 
 
