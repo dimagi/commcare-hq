@@ -1,14 +1,18 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime
+import json
 import time
 import uuid
+
+import six
 from six.moves import map
 
 from couchdbkit import PreconditionFailed
 
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.postgres.fields import JSONField
 from django.template.loader import render_to_string
 from corehq.apps.app_manager.dbaccessors import get_brief_apps_in_domain
 from corehq.apps.cachehq.mixins import QuickCachedDocumentMixin
@@ -1269,3 +1273,37 @@ class TransferDomainRequest(models.Model):
             'deactivate_url': self.deactivate_url(),
             'activate_url': self.activate_url(),
         }
+
+
+class DocumentField(JSONField):
+    def __init__(self, document_class, *args, **kwargs):
+        self.document_class = document_class
+        super(DocumentField, self).__init__(*args, **kwargs)
+
+    def deconstruct(self):
+        name, path, args, kwargs = super(DocumentField, self).deconstruct()
+        kwargs['document_class'] = self.document_class
+        return name, path, args, kwargs
+
+    def from_db_value(self, value, expression, connection, context):
+        return self.document_class.wrap(value)
+
+    def to_python(self, value):
+        if isinstance(value, self.document_class):
+            return value
+
+        if isinstance(value, six.string_types):
+            value = json.loads(value)
+
+        return self.document_class.wrap(value)
+
+    def get_prep_value(self, value):
+        if isinstance(value, self.document_class):
+            value = value.to_json()
+
+        return super(DocumentField, self).get_prep_value(value)
+
+
+class SqlDomain(models.Model):
+    id = models.CharField(max_length=40, primary_key=True)
+    domain_doc = DocumentField(document_class=Domain)
