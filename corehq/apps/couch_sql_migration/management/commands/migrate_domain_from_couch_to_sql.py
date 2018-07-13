@@ -72,7 +72,10 @@ class Command(BaseCommand):
 
         if options['MIGRATE']:
             self.require_only_option('MIGRATE', options)
-            set_couch_sql_migration_started(domain)
+            if options.get('run_timestamp'):
+                assert couch_sql_migration_in_progress(domain)
+            else:
+                set_couch_sql_migration_started(domain)
             with SignalHandlerContext([signal.SIGTERM, signal.SIGINT], _get_sigterm_handler(domain)):
                 do_couch_to_sql_migration(
                     domain,
