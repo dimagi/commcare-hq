@@ -17,14 +17,14 @@ hqDefine('nic_compliance/js/encoder', function () {
             });
         };
 
-        self.addPadding = function(secret_password) {
-            return _paddingLeft + secret_password + _paddingRight;
+        self.addPadding = function(secretPassword) {
+            return _paddingLeft + secretPassword + _paddingRight;
         };
 
         self.encode = function(password) {
             if(password) {
-                var secret_password = self.addPadding(window.btoa(b64EncodeUnicode(password)));
-                return self.addPadding(window.btoa(secret_password));
+                var secretPassword = self.addPadding(window.btoa(b64EncodeUnicode(password)));
+                return self.addPadding(window.btoa(secretPassword));
             }
             return password;
         };
@@ -33,21 +33,20 @@ hqDefine('nic_compliance/js/encoder', function () {
     }
 
     $(function(){
-        var password_field = $("#id_auth-password, #id_password");
-        if(password_field.length) {
-
-            password_field.parents("form")[0].onsubmit = function() {
-                var password_encoder = new HexParser();
-                password_field.val(password_encoder.encode(password_field.val()));
+        var passwordField = $("#id_auth-password, #id_password");
+        if (passwordField.length) {
+            passwordField.parents("form")[0].onsubmit = function() {
+                var passwordEncoder = HexParser();
+                passwordField.val(passwordEncoder.encode(passwordField.val()));
             };
         }
-        var reset_password_fields = $("#id_old_password, #id_new_password1, #id_new_password2");
-        if(reset_password_fields.length) {
-            $(reset_password_fields[0]).parents("form")[0].onsubmit = function() {
-                for(var i=0; i<reset_password_fields.length; i++) {
-                    password_field = $(reset_password_fields[i]);
-                    var password_encoder = new HexParser();
-                    password_field.val(password_encoder.encode(password_field.val()));
+        var resetPasswordFields = $("#id_old_password, #id_new_password1, #id_new_password2");
+        if (resetPasswordFields.length) {
+            $(resetPasswordFields[0]).parents("form")[0].onsubmit = function() {
+                for(var i=0; i < resetPasswordFields.length; i++) {
+                    passwordField = $(resetPasswordFields[i]);
+                    var passwordEncoder = HexParser();
+                    passwordField.val(passwordEncoder.encode(passwordField.val()));
                 }
             };
         }
