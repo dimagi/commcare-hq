@@ -944,10 +944,16 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
         return LICENSE_LINKS.get(self.license)
 
     def copies(self):
-        return Domain.view('domain/copied_from_snapshot', key=self._id, include_docs=True)
+        # WARNING: behavior change
+        return SqlDomain.objects.filter(
+            copy_history__contains=self._id
+        ).values_list('domain_doc')
 
     def copies_of_parent(self):
-        return Domain.view('domain/copied_from_snapshot', keys=[s._id for s in self.copied_from.snapshots()], include_docs=True)
+        # WARNING: behavior change
+        return SqlDomain.objects.filter(
+            copy_history__overlap=[s._id for s in self.copied_from.snapshots()]
+        ).values_list('domain_doc')
 
     def delete(self):
         self._pre_delete()
