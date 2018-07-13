@@ -26,7 +26,7 @@ from corehq.apps.tzmigration.api import force_phone_timezones_should_be_processe
 from corehq.form_processor.backends.sql.dbaccessors import CaseAccessorSQL, doc_type_to_state, LedgerAccessorSQL
 from corehq.form_processor.backends.sql.processor import FormProcessorSQL
 from corehq.form_processor.interfaces.processor import FormProcessorInterface, ProcessedForms
-from corehq.form_processor.interfaces import dbaccessors
+from corehq.form_processor.backends.couch.dbaccessors import FormAccessorCouch
 from corehq.form_processor.models import (
     XFormInstanceSQL, XFormOperationSQL, XFormAttachmentSQL, CommCareCaseSQL,
     CaseTransaction, RebuildWithReason, CommCareCaseIndexSQL, CaseAttachmentSQL
@@ -177,8 +177,11 @@ class CouchSqlDomainMigrator(object):
 
     def _rebuild_queues(self, pool):
         prev_ids = self.queues.get_ids_from_run_timestamp()
-        form_db = dbaccessors.FormAccessors(self.domain)
-        for form in form_db.iter_forms(prev_ids):
+
+        for prev_id in prev_ids:
+            if not prev_id:
+                continue
+            form = FormAccessorCouch.get_form(prev_id)
             self._try_to_process_form(form, pool)
 
         self._try_to_process_queues(pool)
