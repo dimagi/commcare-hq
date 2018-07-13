@@ -113,7 +113,7 @@ BEGIN
     'wer_weighed = ut.wer_weighed, ' ||
     'wer_eligible = ut.wer_eligible, ' ||
     'cases_person_beneficiary_v2 = ut.cases_child_health, ' ||
-    'cases_person_has_aadhar_v2 = ut.child_has_aadhar ' ||
+    'cases_person_has_aadhaar_v2 = ut.child_has_aadhar ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -133,7 +133,7 @@ BEGIN
     'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
     'cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating, ' ||
-    'cases_person_has_aadhar_v2 = COALESCE(cases_person_has_aadhar_v2, 0) + ut.ccs_has_aadhar ' ||
+    'cases_person_has_aadhaar_v2 = COALESCE(cases_person_has_aadhaar_v2, 0) + ut.ccs_has_aadhar ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
@@ -184,8 +184,6 @@ BEGIN
     'num_children_immunized = ut.num_children_immunized ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
-    'sum(has_aadhar_id) as child_has_aadhar, ' ||
-    'count(*) as child_beneficiary, ' ||
     'sum(immunization_in_month) AS num_children_immunized ' ||
     'FROM ' || quote_ident(_child_health_monthly_tablename) || ' ' ||
     'WHERE valid_in_month = 1' ||
