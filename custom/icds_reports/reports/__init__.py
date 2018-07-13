@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
+
 from dateutil.relativedelta import relativedelta
+from memoized import memoized
 
 from corehq.apps.reports.generic import GenericTabularReport
 from corehq.apps.reports.standard import CustomProjectReport, ProjectReportParametersMixin, \
     MonthYearMixin
-from memoized import memoized
-
 from corehq.util.dates import get_first_last_days
+from custom.icds_reports.reports.reports import MPRReport, ASRReport, DashboardReport
 
 
 class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYearMixin, GenericTabularReport):
@@ -125,16 +126,12 @@ class IcdsBaseReport(CustomProjectReport, ProjectReportParametersMixin, MonthYea
         return [export_sheet_name, table]
 
 
-from custom.icds_reports.reports.reports import MPRReport, ASRReport, TableauReport, DashboardReport
-
-
 CUSTOM_REPORTS = (
     ('BLOCK REPORTS', (
         MPRReport,
         ASRReport
     )),
     ('CUSTOM REPORTS', (
-        TableauReport,
         DashboardReport,
     )),
 )
