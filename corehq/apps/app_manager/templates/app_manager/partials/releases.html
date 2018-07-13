@@ -48,8 +48,8 @@
     {% include 'app_manager/partials/releases_table.html' %}
 {% else%}
     <div class="tabbable">
-        <ul class="nav nav-tabs">
-            <li class="active"><a href="#versions-tab" data-toggle="tab">
+        <ul class="nav nav-tabs sticky-tabs">
+            <li><a href="#versions-tab" data-toggle="tab">
                 {% trans "Versions" %}</a>
             </li>
             {% if enable_update_prompts %}
@@ -61,7 +61,7 @@
         </ul>
         <div class="spacer"></div>
         <div class="tab-content">
-            <div id="versions-tab" class="tab-pane active">
+            <div id="versions-tab" class="tab-pane">
                 {% include 'app_manager/partials/releases_table.html' %}
             </div>
             {% if enable_update_prompts %}
