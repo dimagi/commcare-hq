@@ -321,9 +321,11 @@ class CustomerAccountInvoiceFactory(object):
 
         all_subscriptions = []
         for plan in self.subscriptions:
-            subscriptions = self.subscriptions[plan]
-            generate_line_items(invoice, subscriptions[0])
-            all_subscriptions.extend(subscriptions)
+            # Use oldest subscription to bill client for the full length of their software plan
+            self.subscriptions[plan].sort(key=lambda s: s.date_start)
+            oldest_subscription = self.subscriptions[plan][0]
+            generate_line_items(invoice, oldest_subscription)
+            all_subscriptions.extend(self.subscriptions[plan])
         invoice.subscriptions.set(all_subscriptions)
         invoice.calculate_credit_adjustments()
         invoice.update_balance()
