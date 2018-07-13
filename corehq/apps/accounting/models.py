@@ -199,12 +199,16 @@ class SubscriptionAdjustmentMethod(object):
     TASK = "TASK"
     TRIAL = "TRIAL"
     AUTOMATIC_DOWNGRADE = 'AUTOMATIC_DOWNGRADE'
+    DEFAULT_COMMUNITY = 'DEFAULT_COMMUNITY'
+    INVOICING = 'INVOICING'
     CHOICES = (
         (USER, "User"),
         (INTERNAL, "Ops"),
-        (TASK, "Task (Invoicing)"),
+        (TASK, "[Deprecated] Task (Invoicing)"),
         (TRIAL, "30 Day Trial"),
         (AUTOMATIC_DOWNGRADE, "Automatic Downgrade"),
+        (DEFAULT_COMMUNITY, 'Default to Community'),
+        (INVOICING, 'Invoicing')
     )
 
 

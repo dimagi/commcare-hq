@@ -124,7 +124,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             username=reg_form.cleaned_data['email'],
             password=reg_form.cleaned_data['password']
         )
-        web_user = WebUser.get_by_username(new_user.username)
+        web_user = WebUser.get_by_username(new_user.username, strict=True)
 
         if 'phone_number' in reg_form.cleaned_data and reg_form.cleaned_data['phone_number']:
             web_user.phone_numbers.append(reg_form.cleaned_data['phone_number'])
@@ -132,7 +132,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
 
         if settings.IS_SAAS_ENVIRONMENT:
             email = new_user.email
-            
+
             # registration analytics
             # only do anything with this in a SAAS environment
 

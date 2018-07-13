@@ -294,23 +294,22 @@ class BroadcastMigrator(BaseMigrator):
         obj.save()
 
     def migrate_schedule_instances(self):
-        recipient = self.broadcast.recipients[0]
-
         if not isinstance(self.schedule, AlertSchedule):
             raise TypeError("Expected AlertSchedule")
 
-        instance = AlertScheduleInstance(
-            domain=self.broadcast.domain,
-            recipient_type=recipient[0],
-            recipient_id=recipient[1],
-            current_event_num=0,
-            schedule_iteration_num=2,
-            next_event_due=self.handler.start_datetime,
-            active=False,
-            alert_schedule_id=self.schedule.schedule_id,
-        )
+        for recipient in self.broadcast.recipients:
+            instance = AlertScheduleInstance(
+                domain=self.broadcast.domain,
+                recipient_type=recipient[0],
+                recipient_id=recipient[1],
+                current_event_num=0,
+                schedule_iteration_num=2,
+                next_event_due=self.handler.start_datetime,
+                active=False,
+                alert_schedule_id=self.schedule.schedule_id,
+            )
 
-        instance.save(force_insert=True)
+            instance.save(force_insert=True)
 
     def get_alert_schedule_instance_class(self):
         return AlertScheduleInstance
@@ -466,9 +465,7 @@ def get_broadcast_recipients(handler):
     elif handler.recipient == RECIPIENT_USER_GROUP:
         return [(ScheduleInstance.RECIPIENT_TYPE_USER_GROUP, handler.user_group_id)]
     elif handler.recipient == RECIPIENT_LOCATION:
-        if len(handler.location_ids) != 1:
-            raise ValueError("Expected exactly one location id for %s" % handler._id)
-        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, handler.location_ids[0])]
+        return [(ScheduleInstance.RECIPIENT_TYPE_LOCATION, location_id) for location_id in handler.location_ids]
     else:
         raise ValueError("Unexpected recipient: '%s'" % handler.recipient)
 
@@ -848,9 +845,6 @@ class Command(BaseCommand):
             return None
 
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
-            return None
-
-        if handler.recipient == RECIPIENT_LOCATION and len(handler.location_ids) != 1:
             return None
 
         if handler.locked:
