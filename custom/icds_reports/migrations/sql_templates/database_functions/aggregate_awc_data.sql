@@ -133,7 +133,7 @@ BEGIN
     'cases_ccs_pregnant_all = ut.cases_ccs_pregnant_all, ' ||
     'cases_ccs_lactating_all = ut.cases_ccs_lactating_all, ' ||
     'cases_person_beneficiary_v2 = COALESCE(cases_person_beneficiary_v2, 0) + ut.cases_ccs_pregnant + ut.cases_ccs_lactating, ' ||
-    'cases_person_has_aadhar_v2 = COALSECE(cases_person_has_aadhar_v2, 0) + ut.ccs_has_aadhar ' ||
+    'cases_person_has_aadhar_v2 = COALESCE(cases_person_has_aadhar_v2, 0) + ut.ccs_has_aadhar ' ||
   'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
