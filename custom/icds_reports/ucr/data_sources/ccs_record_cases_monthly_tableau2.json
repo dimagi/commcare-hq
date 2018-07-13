@@ -615,17 +615,18 @@
               }
             },
             "expression_if_false": {
-            "type": "conditional",
-            "test": {
-              "type": "not",
-              "filter": {
-                "type": "boolean_expression",
-                "operator": "in",
-                "expression": {
-                  "type": "named",
-                  "name": "aadhar_number_from_forms"
-                },
-                "property_value": ["", null]
+              "type": "conditional",
+              "test": {
+                "type": "not",
+                "filter": {
+                  "type": "boolean_expression",
+                  "operator": "in",
+                  "expression": {
+                    "type": "named",
+                    "name": "aadhar_number_from_forms"
+                  },
+                  "property_value": ["", null]
+                }
               }
             }
           }
