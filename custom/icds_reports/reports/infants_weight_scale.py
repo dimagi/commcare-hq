@@ -57,7 +57,8 @@ def get_infants_weight_scale_data_map(domain, config, loc_level, show_test=False
         "rightLegend": {
             "average": average,
             "info": _((
-                "Percentage of AWCs that reported having a weighing scale for infants"
+                "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+                "that reported having a weighing scale for infants"
             )),
             "extended_info": [
                 {
@@ -217,7 +218,8 @@ def get_infants_weight_scale_sector_data(domain, config, loc_level, location_id,
     return {
         "tooltips_data": dict(tooltips_data),
         "info": _((
-            "Percentage of AWCs that reported having a weighing scale for infants"
+            "Of the AWCs that have submitted an Infrastructure Details form, the percentage of AWCs "
+            "that reported having a weighing scale for infants"
         )),
         "chart_data": [
             {

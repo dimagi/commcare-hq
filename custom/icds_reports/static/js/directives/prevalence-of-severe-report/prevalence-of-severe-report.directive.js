@@ -41,7 +41,9 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     };
 
     vm.rightLegend = {
-        info: 'Percentage of children' + vm.chosenFilters() + 'enrolled for Anganwadi Services with weight-for-height below -2Z standard deviations of the WHO Child Growth Standards median.',
+        info: 'Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between ' + vm.chosenFilters() + 'who were moderately/severely wasted in the current month. \n' +
+        '\n' +
+        'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence of insufficient food intake or a high incidence of infectious diseases.',
     };
 
     vm.templatePopup = function(loc, row) {
@@ -94,10 +96,10 @@ function PrevalenceOfSevereReportController($scope, $routeParams, $location, $fi
     var options = {
         'xAxisTickFormat': '%b %Y',
         'yAxisTickFormat': ".2%",
-        'captionContent': ' Percentage of children between ' + vm.chosenFilters() + ' enrolled for Anganwadi Services with weight-for-height below -2 standard deviations of the WHO Child Growth Standards median. \n' +
+        'captionContent': ' Of the children enrolled for Anganwadi services, whose weight and height was measured, the percentage of children between ' + vm.chosenFilters() + ' who were moderately/severely wasted in the current month. \n' +
         '\n' +
-        'Wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
-        'of insufficient food intake or a high incidence of infectious diseases. Severe Acute Malnutrition (SAM) is nutritional status for a child who has severe wasting (weight-for-height) below -3 Z and Moderate Acute Malnutrition (MAM) is nutritional status for a child that has moderate wasting (weight-for-height) below -2Z.',
+        'Severe Acute Malnutrition (SAM) or wasting in children is a symptom of acute undernutrition usually as a consequence\n' +
+        'of insufficient food intake or a high incidence of infectious diseases.',
     };
     vm.chartOptions = vm.getChartOptions(options);
     vm.chartOptions.chart.width = 1100;
