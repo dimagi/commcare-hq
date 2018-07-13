@@ -352,22 +352,6 @@
         }
       },
       {
-        "column_id": "adequate_space_pse",
-        "datatype": "small_integer",
-        "type": "expression",
-        "expression": {
-          "type": "nested",
-          "argument_expression": {
-            "type": "named",
-            "name": "infra_details"
-          },
-          "value_expression": {
-            "type": "property_name",
-            "property_name": "adequate_space_pse"
-          }
-        }
-      },
-      {
         "column_id": "electricity_awc",
         "datatype": "small_integer",
         "type": "expression",
