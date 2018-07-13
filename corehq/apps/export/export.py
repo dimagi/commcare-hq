@@ -2,7 +2,6 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 import contextlib
-import logging
 import time
 import sys
 from collections import Counter
@@ -18,7 +17,6 @@ from couchexport.export import FormattedRow, get_writer
 from couchexport.models import Format
 from corehq.elastic import iter_es_docs_from_query
 from corehq.toggles import PAGINATED_EXPORTS
-from corehq.util.celery_utils import get_queue_length, get_queue_tasks, get_task_str
 from corehq.util.files import safe_filename, TransientTempfile
 from corehq.util.datadog.gauges import datadog_histogram, datadog_track_errors
 from corehq.apps.export.esaccessors import (
@@ -31,16 +29,9 @@ from corehq.apps.export.models.new import (
     FormExportInstance,
     SMSExportInstance,
 )
-from corehq.apps.export.const import (
-    MAX_EXPORTABLE_ROWS,
-    EXPORT_DOWNLOAD_QUEUE,
-    QUEUE_LENGTH_LOGGING_THRESHHOLD,
-)
+from corehq.apps.export.const import MAX_EXPORTABLE_ROWS
 import six
 from io import open
-
-
-logger = logging.getLogger('export_tasks')
 
 
 class ExportFile(object):
@@ -291,15 +282,6 @@ def get_export_writer(export_instances, temp_path, allow_pagination=True):
 
 def get_export_download(export_instances, filters, filename=None):
     from corehq.apps.export.tasks import populate_export_download_task
-
-    queue_len = get_queue_length(EXPORT_DOWNLOAD_QUEUE)
-    if queue_len == QUEUE_LENGTH_LOGGING_THRESHHOLD:
-        # This makes the assumption that the task that is holding up the queue
-        # is still active.
-        logger.info('Queue {} at 100 tasks. Logging task data.'.format(EXPORT_DOWNLOAD_QUEUE))
-        for task in get_queue_tasks(EXPORT_DOWNLOAD_QUEUE):
-            task_str = get_task_str(task)
-            logger.info(task_str)
 
     download = DownloadBase()
     download.set_task(populate_export_download_task.delay(

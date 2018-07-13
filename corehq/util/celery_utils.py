@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import unicode_literals
 
-from ast import literal_eval
 from datetime import datetime
 from time import sleep, time
 
@@ -12,8 +11,6 @@ from celery.task import task
 from django.conf import settings
 import kombu.five
 import six
-
-from soil.progress import get_task_status
 
 
 def no_result_task(*args, **kwargs):
@@ -196,145 +193,3 @@ def get_running_workers(timeout=10):
         worker_names.extend(list(worker_info))
 
     return worker_names
-
-
-def _parse_args(task):
-
-    def parse_populate_export_download_task_args(task):
-        """
-        Parses the parameters of populate_export_download_task() to
-        determine which export instances it was called with.
-
-        Returns `task` dict with new key "export_instances". If the
-        parameters can't be parsed, `task` is returned as-is.
-
-        (`task` is passed by reference, so the return value can be
-        ignored.)
-        """
-        # task['args'] is a string representation of the args that
-        # populate_export_download_task() was called with, and task['kwargs']
-        # is the same for its keyword arguments. The parameters of
-        # populate_export_download_task() are: export_instance_ids, filters,
-        # download_id, filename=None, expiry=10 * 60 * 60
-        from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-
-        try:
-            args = literal_eval(task['args'])
-            kwargs = literal_eval(task['kwargs'])
-        except (SyntaxError, ValueError):
-            pass
-        else:
-            export_instance_ids = args[0] if args else kwargs['export_instance_ids']
-            export_instances = (get_properly_wrapped_export_instance(doc_id) for doc_id in export_instance_ids)
-            task['export_instances'] = [{
-                'id': inst._id,
-                'name': inst.name,
-                'domain': inst.domain,
-            } for inst in export_instances]
-        return task
-
-    def parse_start_export_task_args(task):
-        """
-        Parses the parameters of start_export_task() to determine the
-        export instance is was called with.
-
-        Results are returned in new key `export_instance`.
-        """
-        # start_export_task() params: export_instance_id, last_access_cutoff
-        from corehq.apps.export.dbaccessors import get_properly_wrapped_export_instance
-
-        try:
-            args = literal_eval(task['args'])
-            kwargs = literal_eval(task['kwargs'])
-        except (SyntaxError, ValueError):
-            pass
-        else:
-            export_instance_id = kwargs.get('export_instance_id', args[0])
-            export_instance = get_properly_wrapped_export_instance(export_instance_id)
-            task['export_instance'] = {
-                'id': export_instance._id,
-                'name': export_instance.name,
-                'domain': export_instance.domain,
-            }
-
-        return task
-
-    func = {
-        'corehq.apps.export.tasks.populate_export_download_task': parse_populate_export_download_task_args,
-        'corehq.apps.export.tasks._start_export_task': parse_start_export_task_args,
-    }.get(task['name'])
-    return func(task) if func else task
-
-
-def _get_workers(app, queue):
-    result = app.control.ping(timeout=0.1)  # Don't wait longer than 0.1s
-    return [name for info in result for name in info if queue in name]
-
-
-def _get_queue_tasks(app, workers):
-    inspect = app.control.inspect(workers)
-    for worker, tasks in six.iteritems(inspect.active()):
-        for task_ in tasks:
-            # Don't use TaskInfo because we need the task's args and
-            # kwargs to unpack what the task doing.
-            task_['state'] = 'active'
-            yield task_
-    for worker, tasks in six.iteritems(inspect.scheduled()):
-        for task_ in tasks:
-            task_['request']['state'] = 'scheduled'
-            yield task_['request']
-    for worker, tasks in six.iteritems(inspect.reserved()):
-        for task_ in tasks:
-            task_['state'] = 'reserved'
-            yield task_
-
-
-def get_queue_length(queue):
-    app = Celery()
-    app.config_from_object(settings)
-    workers = _get_workers(app, queue)
-    if workers:
-        return len(list(_get_queue_tasks(app, workers)))
-
-
-def get_queue_tasks(queue):
-    app = Celery()
-    app.config_from_object(settings)
-    workers = _get_workers(app, queue)
-    if workers:
-        for task_ in _get_queue_tasks(app, workers):
-            task_ = _parse_args(task_)
-            if 'time_start' in task_:
-                task_['time_start'] = TaskInfo.parse_timestamp(task_['time_start'])
-            async_result = app.AsyncResult(task_['id'])
-            task_['status'] = get_task_status(async_result)
-            yield task_
-
-
-def get_task_str(task):
-    """
-    Return a one-line string representation of a task.
-    """
-    def get_inst_str(inst):
-        return '; '.join((
-            'ID: {}'.format(inst['id']),
-            'Name: {}'.format(inst['name']),
-            'Domain: {}'.format(inst['domain']),
-        ))
-
-    if 'export_instances' in task:
-        inst_str = '), ('.join((get_inst_str(inst) for inst in task['export_instances']))
-    elif 'export_instance' in task:
-        inst_str = get_inst_str(task['export_instance'])
-    else:
-        inst_str = ''
-    task_str = '; '.join((
-        'Task ID: {}'.format(task['id']),
-        'State: {}'.format(task['state']),
-        'Status: {}'.format(task['status'].state),
-        'Start time: {}'.format(task['start_time'] or 'N/A'),
-        'Progress: {}%'.format(task['status'].progress.percent),
-        'Error: "{}"'.format(task['status'].progress.error_message or "N/A"),
-        'Export instances: [({})]'.format(inst_str),
-    ))
-    return task_str
