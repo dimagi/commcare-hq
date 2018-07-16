@@ -917,13 +917,6 @@ CUSTOM_MENU_BAR = StaticToggle(
     namespaces=[NAMESPACE_DOMAIN],
 )
 
-ICDS_REPORTS = StaticToggle(
-    'icds_reports',
-    'Enable access to the Tableau dashboard for ICDS',
-    TAG_DEPRECATED,
-    [NAMESPACE_DOMAIN]
-)
-
 DASHBOARD_ICDS_REPORT = StaticToggle(
     'dashboard_icds_reports',
     'ICDS: Enable access to the dashboard reports for ICDS',
