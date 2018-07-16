@@ -55,6 +55,7 @@ branches:
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
   - emord-patch-1  # J$ upgrade pillow
+  - jls/appcues-template-apps  # Jenny July 16
 submodules:
   submodules/django-digest-src:
     branches: []
