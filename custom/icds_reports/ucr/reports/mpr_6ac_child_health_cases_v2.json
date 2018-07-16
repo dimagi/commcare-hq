@@ -306,6 +306,30 @@
         "field": "pse_partial_male",
         "calculate_total": true,
         "type": "field"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "age_in_months",
+        "field": "age_in_months",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "age_in_months"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "month",
+        "field": "month",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "month"
       }
     ],
     "sort_expression": [],

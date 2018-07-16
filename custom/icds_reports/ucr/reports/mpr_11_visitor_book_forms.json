@@ -234,6 +234,18 @@
         "calculate_total": false,
         "type": "field",
         "display": "visitor_other"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
       }
     ],
     "sort_expression": [],

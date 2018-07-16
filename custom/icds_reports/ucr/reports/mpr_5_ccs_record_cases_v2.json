@@ -347,6 +347,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "thr_total_rations_lactating"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "month",
+        "field": "month",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "month"
       }
     ],
     "sort_expression": [],

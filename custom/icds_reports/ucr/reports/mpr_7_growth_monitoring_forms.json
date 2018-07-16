@@ -204,6 +204,30 @@
         "calculate_total": true,
         "type": "field",
         "display": "F_sev_resident_weighed_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "age_in_months",
+        "field": "age_in_months",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "age_in_months"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "last_date_gmp",
+        "field": "last_date_gmp",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "last_date_gmp"
       }
     ],
     "sort_expression": [],

@@ -354,6 +354,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "dead_pnc_migrant_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "date_death",
+        "field": "date_death",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "date_death"
       }
     ],
     "sort_expression": [],

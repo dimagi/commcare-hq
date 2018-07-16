@@ -306,6 +306,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "due_list_prep_antenatal_checkup"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
       }
     ],
     "sort_expression": [],
