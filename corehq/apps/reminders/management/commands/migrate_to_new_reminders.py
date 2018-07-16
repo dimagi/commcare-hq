@@ -345,6 +345,7 @@ def get_extra_scheduling_options(handler, translated=True, include_utc_option=Fa
         'active': handler.active,
         'default_language_code': handler.default_lang if translated else None,
         'include_descendant_locations': handler.include_child_locations,
+        'user_data_filter': handler.user_data_filter or {},
     }
 
     if include_utc_option:
@@ -751,7 +752,11 @@ class Command(BaseCommand):
         if handler.recipient == RECIPIENT_USER_GROUP and not handler.user_group_id:
             return None
 
-        if handler.user_data_filter:
+        if handler.user_data_filter and handler.recipient not in (
+            RECIPIENT_USER_GROUP,
+            RECIPIENT_OWNER,
+            RECIPIENT_USER,
+        ):
             return None
 
         fire_time_types = [event.fire_time_type for event in handler.events]
@@ -856,7 +861,10 @@ class Command(BaseCommand):
         if handler.start_condition_type != ON_DATETIME:
             return None
 
-        if handler.user_data_filter:
+        if handler.user_data_filter and handler.recipient not in (
+            RECIPIENT_USER_GROUP,
+            RECIPIENT_LOCATION,
+        ):
             return None
 
         reminder_result = list(
