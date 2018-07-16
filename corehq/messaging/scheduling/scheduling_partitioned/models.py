@@ -219,6 +219,31 @@ class ScheduleInstance(PartitionedModel):
         else:
             raise UnknownRecipientType(recipient.__class__.__name__)
 
+    def convert_to_set(self, value):
+        if isinstance(value, (list, tuple)):
+            return set(value)
+
+        return set([value])
+
+    def passes_user_data_filter(self, contact):
+        if not isinstance(contact, CouchUser):
+            return True
+
+        if not self.memoized_schedule.user_data_filter:
+            return True
+
+        for key, value in six.iteritems(self.memoized_schedule.user_data_filter):
+            if key not in contact.user_data:
+                return False
+
+            allowed_values_set = self.convert_to_set(value)
+            actual_values_set = self.convert_to_set(contact.user_data[key])
+
+            if actual_values_set.isdisjoint(allowed_values_set):
+                return False
+
+        return True
+
     def expand_recipients(self):
         """
         Can be used as a generator to iterate over all individual contacts who
@@ -230,7 +255,8 @@ class ScheduleInstance(PartitionedModel):
 
         for member in recipient_list:
             for contact in self._expand_recipient(member):
-                yield contact
+                if self.passes_user_data_filter(contact):
+                    yield contact
 
     def get_content_send_lock(self, client, recipient):
         if is_commcarecase(recipient):
