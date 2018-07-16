@@ -593,16 +593,16 @@ def update_exchange_rates(app_id=settings.OPEN_EXCHANGE_RATES_API_ID):
             )
 
 
-def ensure_explicit_community_subscription(domain_name, from_date, method):
+def ensure_explicit_community_subscription(domain_name, from_date, method, web_user=None):
     if not Subscription.visible_objects.filter(
         Q(date_end__gt=from_date) | Q(date_end__isnull=True),
         date_start__lte=from_date,
         subscriber__domain=domain_name,
     ).exists():
-        assign_explicit_community_subscription(domain_name, from_date, method)
+        assign_explicit_community_subscription(domain_name, from_date, method, web_user=web_user)
 
 
-def assign_explicit_community_subscription(domain_name, start_date, method, account=None):
+def assign_explicit_community_subscription(domain_name, start_date, method, account=None, web_user=None):
     future_subscriptions = Subscription.visible_objects.filter(
         date_start__gt=start_date,
         subscriber__domain=domain_name,
@@ -629,6 +629,7 @@ def assign_explicit_community_subscription(domain_name, start_date, method, acco
         adjustment_method=method,
         internal_change=True,
         service_type=SubscriptionType.PRODUCT,
+        web_user=web_user,
     )
 
 
