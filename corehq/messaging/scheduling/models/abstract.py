@@ -74,6 +74,17 @@ class Schedule(models.Model):
     # where this makes a difference, this option is set to True during the migration.
     use_utc_as_default_timezone = models.BooleanField(default=False)
 
+    #   If {}, this option will be ignored.
+    #   Otherwise, for each recipient in the recipient list that is a CouchUser,
+    # that recipient's custom user data will be checked against this option to
+    # determine if the recipient should stay in the recipient list or not.
+    #   This should be a dictionary where each key is the name of a custom user data
+    # field, and each value is a list of allowed values for that field.
+    #   For example, if this is set to: {'nickname': ['bob', 'jim'], 'phone_type': ['android']}
+    # then the recipient list would be filtered to only include users whose phone
+    # type is android and whose nickname is either bob or jim.
+    user_data_filter = jsonfield.JSONField(default=dict)
+
     class Meta(object):
         abstract = True
 
