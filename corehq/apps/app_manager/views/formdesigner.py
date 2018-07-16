@@ -145,7 +145,8 @@ def _get_form_designer_view(request, domain, app, module, form):
 
     notify_form_opened(domain, request.couch_user, app.id, form.unique_id)
 
-    return render(request, "app_manager/form_designer.html", context)
+    response = render(request, "app_manager/form_designer.html", context)
+    return response
 
 
 @require_GET
