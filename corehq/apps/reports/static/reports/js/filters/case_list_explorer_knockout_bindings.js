@@ -55,8 +55,9 @@ hqDefine("reports/js/filters/case_list_explorer_knockout_bindings", ['jquery', '
             var casePropertyAutocomplete = {
                 getCompletions: function(editor, session, pos, prefix, callback){
                     var currentValue = editor.getValue(),
-                        leftQuotes = (currentValue.substr(0, pos.column).match(/'|"/g) || []).length,
-                        insideQuote =  leftQuotes && (leftQuotes % 2 !== 0);
+                        leftQuotesSingle = (currentValue.substr(0, pos.column).match(/'/g) || []).length,
+                        leftQuotesDouble = (currentValue.substr(0, pos.column).match(/"/g) || []).length,
+                        insideQuote = leftQuotesSingle && (leftQuotesSingle % 2 !== 0) || leftQuotesDouble && (leftQuotesDouble % 2 !== 0);
                     if (insideQuote){
                         // don't autocomplete case properties when inside a quote
                         return;
