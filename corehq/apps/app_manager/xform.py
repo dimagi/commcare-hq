@@ -1936,6 +1936,7 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'intent',
         'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "Audio": {
         'tag': 'upload',
@@ -1947,6 +1948,7 @@ VELLUM_TYPES = {
         'tag': 'input',
         'type': 'barcode',
         'icon': 'fcc fcc-fd-android-intent',
+        'editable': True,
     },
     "DataBindOnly": {
         'icon': 'fcc fcc-fd-variable',
