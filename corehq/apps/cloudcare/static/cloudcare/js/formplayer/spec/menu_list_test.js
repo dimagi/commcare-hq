@@ -69,6 +69,8 @@ describe('Render a case list', function () {
             user.formplayer_url = 'url';
             user.restoreAs = '';
             user.displayOptions = {};
+
+            FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function() {
