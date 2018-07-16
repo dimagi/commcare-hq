@@ -18,6 +18,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 options,
                 menus;
 
+$.when(FormplayerFrontend.request("appselect:apps")).done(function (appCollection) {
             if (!params.preview) {
                 // Make sure the user has access to this app
                 var currentApp = FormplayerFrontend.request("appselect:getApp", params.appId);
@@ -99,6 +100,7 @@ FormplayerFrontend.module("Menus", function (Menus, FormplayerFrontend, Backbone
                 Object.freeze(options);
             }
             menus.fetch($.extend(true, {}, options));
+});
             return defer.promise();
         },
     };
