@@ -869,6 +869,9 @@ class ScheduleForm(Form):
     CONTENT_IVR_SURVEY = 'ivr_survey'
     CONTENT_CUSTOM_SMS = 'custom_sms'
 
+    YES = 'Y'
+    NO = 'N'
+
     REPEAT_NO = 'no'
     REPEAT_EVERY_1 = 'repeat_every_1'
     REPEAT_EVERY_N = 'repeat_every_n'
@@ -1039,6 +1042,25 @@ class ScheduleForm(Form):
 
     # The custom immediate schedule use case doesn't make sense for broadcasts
     allow_custom_immediate_schedule = False
+
+    use_user_data_filter = ChoiceField(
+        label='',
+        choices=(
+            (NO, ugettext_lazy("No")),
+            (YES, ugettext_lazy("Yes")),
+        ),
+        required=False,
+    )
+
+    user_data_property_name = TrimmedCharField(
+        label=ugettext_lazy("User data filter: property name"),
+        required=False,
+    )
+
+    user_data_property_value = TrimmedCharField(
+        label=ugettext_lazy("User data filter: property value"),
+        required=False,
+    )
 
     def is_valid(self):
         # Make sure .is_valid() is called on all appropriate forms before returning.
@@ -1220,6 +1242,15 @@ class ScheduleForm(Form):
                 if schedule.default_language_code
                 else self.LANGUAGE_PROJECT_DEFAULT
             )
+            if schedule.user_data_filter:
+                # The only structure created with these UIs is of the form {name: [value]}
+                # See Schedule.user_data_filter for an explanation of the full possible
+                # structure.
+                name = list(schedule.user_data_filter)[0]
+                result['use_user_data_filter'] = self.YES
+                result['user_data_property_name'] = name
+                result['user_data_property_value'] = schedule.user_data_filter[name][0]
+
             result['use_utc_as_default_timezone'] = schedule.use_utc_as_default_timezone
             if isinstance(schedule, AlertSchedule):
                 if schedule.ui_type == Schedule.UI_TYPE_IMMEDIATE:
@@ -1684,6 +1715,21 @@ class ScheduleForm(Form):
                 data_bind='visible: %s' % ('true' if self.display_utc_timezone_option else 'false'),
             ),
             crispy.Field('default_language_code'),
+            hqcrispy.B3MultiField(
+                _("Filter user recipients"),
+                crispy.Div(
+                    twbscrispy.InlineField(
+                        'use_user_data_filter',
+                        data_bind='value: use_user_data_filter',
+                    ),
+                    css_class='col-sm-4',
+                ),
+            ),
+            crispy.Div(
+                crispy.Field('user_data_property_name'),
+                crispy.Field('user_data_property_value'),
+                data_bind="visible: use_user_data_filter() === 'Y'",
+            ),
         ]
 
     def get_advanced_survey_layout_fields(self):
@@ -2067,6 +2113,26 @@ class ScheduleForm(Form):
 
         return validate_int(self.cleaned_data.get('occurrences'), 2)
 
+    def clean_user_data_property_name(self):
+        if self.cleaned_data.get('use_user_data_filter') != self.YES:
+            return None
+
+        value = self.cleaned_data.get('user_data_property_name')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        return value
+
+    def clean_user_data_property_value(self):
+        if self.cleaned_data.get('use_user_data_filter') != self.YES:
+            return None
+
+        value = self.cleaned_data.get('user_data_property_value')
+        if not value:
+            raise ValidationError(_("This field is required."))
+
+        return value
+
     def distill_recipients(self):
         form_data = self.cleaned_data
         return (
@@ -2113,7 +2179,16 @@ class ScheduleForm(Form):
             ),
             'location_type_filter': form_data['location_types'],
             'use_utc_as_default_timezone': form_data['use_utc_as_default_timezone'],
+            'user_data_filter': self.distill_user_data_filter(),
         }
+
+    def distill_user_data_filter(self):
+        if self.cleaned_data['use_user_data_filter'] != self.YES:
+            return {}
+
+        name = self.cleaned_data['user_data_property_name']
+        value = self.cleaned_data['user_data_property_value']
+        return {name: [value]}
 
     def distill_start_offset(self):
         raise NotImplementedError()
@@ -2465,9 +2540,6 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     START_OFFSET_NEGATIVE = 'NEGATIVE'
     START_OFFSET_POSITIVE = 'POSITIVE'
 
-    YES = 'Y'
-    NO = 'N'
-
     # start_date is defined on the superclass but cleaning it in this subclass
     # depends on start_date_type, which depends on send_frequency
     field_order = [
@@ -2529,8 +2601,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     reset_case_property_enabled = ChoiceField(
         required=True,
         choices=(
-            (NO, ugettext_lazy("Disabled")),
-            (YES, ugettext_lazy("Restart schedule when this case property takes any new value: ")),
+            (ScheduleForm.NO, ugettext_lazy("Disabled")),
+            (ScheduleForm.YES, ugettext_lazy("Restart schedule when this case property takes any new value: ")),
         ),
     )
 
@@ -2569,8 +2641,8 @@ class ConditionalAlertScheduleForm(ScheduleForm):
     capture_custom_metadata_item = ChoiceField(
         label='',
         choices=(
-            (NO, ugettext_lazy("No")),
-            (YES, ugettext_lazy("Yes")),
+            (ScheduleForm.NO, ugettext_lazy("No")),
+            (ScheduleForm.YES, ugettext_lazy("Yes")),
         ),
         required=False,
     )
