@@ -99,12 +99,11 @@ class FakeXFormES(object):
         return doc
 
 
-class APIResourceTest(TestCase):
+class APIResourceTest(six.with_metaclass(PatchMeta, TestCase)):
     """
     Base class for shared API tests. Sets up a domain and user and provides
     some helper methods and properties for accessing the API
     """
-    __metaclass__ = PatchMeta
     patch = flag_enabled('API_THROTTLE_WHITELIST')
 
     resource = None  # must be set by subclasses
