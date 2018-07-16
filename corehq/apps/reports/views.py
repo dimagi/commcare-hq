@@ -95,7 +95,6 @@ from couchexport.tasks import rebuild_schemas
 from couchexport.util import SerializableFunction
 from couchforms.filters import instances
 
-from custom.world_vision import WORLD_VISION_DOMAINS
 from dimagi.utils.chunked import chunked
 from dimagi.utils.couch.bulk import wrapped_docs
 from dimagi.utils.couch.cache.cache_core import get_redis_client
@@ -231,20 +230,6 @@ def can_view_attachments(request):
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.user.username)
         or toggles.ALLOW_CASE_ATTACHMENTS_VIEW.enabled(request.domain)
     )
-
-
-@login_and_domain_required
-@location_safe
-def default(request, domain):
-    if domain in WORLD_VISION_DOMAINS and settings.DOMAIN_MODULE_MAP.get(domain):
-        from custom.world_vision.reports.mixed_report import MixedTTCReport
-        return HttpResponseRedirect(MixedTTCReport.get_url(domain))
-    return HttpResponseRedirect(reverse(MySavedReportsView.urlname, args=[domain]))
-
-
-@login_and_domain_required
-def old_saved_reports(request, domain):
-    return default(request, domain)
 
 
 class BaseProjectReportSectionView(BaseDomainView):
