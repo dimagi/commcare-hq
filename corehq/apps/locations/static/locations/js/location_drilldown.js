@@ -1,4 +1,3 @@
-/* globals REQUIRED */
 hqDefine('locations/js/location_drilldown', [
     'jquery',
     'knockout',
@@ -92,7 +91,7 @@ hqDefine('locations/js/location_drilldown', [
 
         // load location hierarchy and set initial path
         model.load = function(locs, selected) {
-            model.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, model));
+            model.root(new model.func({name: '_root', children: locs, auto_drill: model.auto_drill}, model, options.required));
             model.path_push(model.root());
 
             if (selected) {
@@ -110,7 +109,7 @@ hqDefine('locations/js/location_drilldown', [
         return model;
     }
 
-    function locationModel(data, root, depth, func, withAllOption) {
+    function locationModel(data, root, depth, func, withAllOption, requiredOption) {
         var loc = {};
 
         loc.name = ko.observable();
@@ -194,7 +193,7 @@ hqDefine('locations/js/location_drilldown', [
                 //'all choices' meta-entry; annoying that we have to stuff this in
                 //the children list, but all my attempts to make computed observables
                 //based of children() caused infinite loops.
-                if(loc.withAllOption || (!loc.withAllOption && loc.depth > REQUIRED))
+                if(loc.withAllOption || (!loc.withAllOption && loc.depth > requiredOption))
                     children.splice(0, 0, {name: '_all', auto_drill: loc.auto_drill});
             }
             loc.children($.map(children, function(e) {
@@ -215,11 +214,11 @@ hqDefine('locations/js/location_drilldown', [
         //warning: duplicate code with location_tree.async.js
         loc.allowed_child_types = ko.computed(function() {
             var types = [];
-            $.each(root.location_types, function(i, loc_type) {
-                $.each(loc_type.allowed_parents, function(i, parent_type) {
-                    if (loc.type() === parent_type ||
-                        (loc.type() === undefined && parent_type === null)) {
-                        types.push(loc_type.type);
+            $.each(root.location_types, function(i, locType) {
+                $.each(locType.allowed_parents, function(i, parentType) {
+                    if (loc.type() === parentType ||
+                        (loc.type() === undefined && parentType === null)) {
+                        types.push(locType.type);
                     }
                 });
             });
