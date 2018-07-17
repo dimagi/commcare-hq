@@ -180,6 +180,30 @@
         "calculate_total": true,
         "type": "field",
         "display": "M_migrant_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "age_at_reg",
+        "field": "age_at_reg",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "age_at_reg"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "opened_on",
+        "field": "opened_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "opened_on"
       }
     ],
     "sort_expression": [],

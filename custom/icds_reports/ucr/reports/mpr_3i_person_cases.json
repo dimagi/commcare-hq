@@ -138,6 +138,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "pregnant_migrant_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "opened_on",
+        "field": "opened_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "opened_on"
       }
     ],
     "sort_expression": [],

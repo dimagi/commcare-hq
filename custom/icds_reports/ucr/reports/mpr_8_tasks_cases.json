@@ -138,6 +138,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "open_child_1yr_immun_complete"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "date_turns_one_yr",
+        "field": "date_turns_one_yr",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "date_turns_one_yr"
       }
     ],
     "sort_expression": [],

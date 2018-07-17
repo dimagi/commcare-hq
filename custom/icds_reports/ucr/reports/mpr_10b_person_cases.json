@@ -258,6 +258,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "other_reached_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "last_referral_date",
+        "field": "last_referral_date",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "last_referral_date"
       }
     ],
     "sort_expression": [],

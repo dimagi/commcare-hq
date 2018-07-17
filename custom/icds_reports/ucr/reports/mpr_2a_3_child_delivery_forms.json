@@ -315,6 +315,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "lbw_M_migrant_birth_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
       }
     ],
     "sort_expression": [],

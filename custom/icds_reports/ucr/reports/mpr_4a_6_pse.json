@@ -198,6 +198,18 @@
         "calculate_total": true,
         "type": "field",
         "display": "open_one_acts_count"
+      },
+      {
+        "sortable": false,
+        "description": null,
+        "format": "default",
+        "aggregation": "simple",
+        "column_id": "submitted_on",
+        "field": "submitted_on",
+        "transform": {},
+        "calculate_total": false,
+        "type": "field",
+        "display": "submitted_on"
       }
     ],
     "sort_expression": [],
