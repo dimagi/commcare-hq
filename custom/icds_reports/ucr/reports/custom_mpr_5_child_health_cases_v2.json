@@ -8,7 +8,7 @@
     "softlayer",
     "icds-new"
   ],
-  "report_id": "static-mpr_5_child_health_cases_v2",
+  "report_id": "static-custom_mpr_5_child_health_cases_v2",
   "data_source_table": "static-child_cases_monthly_v2",
   "config": {
     "title": "MPR - 5 - Child Health Cases (Custom SQL) (Static) v2",
