@@ -5,9 +5,7 @@
 
 {% block title %}{% trans "Import Cases from Excel" %}{% endblock %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'case_importer/js/import_history.js' %}"></script>
-{% endblock js %}
+{% requirejs_main "case_importer/js/main" %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
