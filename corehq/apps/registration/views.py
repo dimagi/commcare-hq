@@ -179,7 +179,7 @@ class ProcessRegistrationView(JSONResponseMixin, NewUserNumberAbTestMixin, View)
             ab_test = ab_tests.ABTest(ab_tests.APPCUES_TEMPLATE_APP, self.request)
             appcues_ab_test = ab_test.context['version'] == ab_tests.APPCUES_TEMPLATE_APP_OPTION_ON
             self._create_new_account(reg_form, additional_hubspot_data={
-                "appcues_test": "On" if appcues_ab_test  else "Off",
+                "appcues_test": "On" if appcues_ab_test else "Off",
             })
             try:
                 request_new_domain(
