@@ -201,10 +201,20 @@ def excel_fields(request, domain):
             'excel_fields': excel_fields,
             'case_field_specs': case_field_specs,
             'domain': domain,
-            'report': {
-                'name': 'Import: Match columns to fields'
+            'slug': base.ImportCases.slug,
+            'current_page': {
+                'title': _('Matchings'),
+                'page_name': _('Matchings'),
+                'parents': [{
+                    'title': base.ImportCases.name,
+                    'page_name': base.ImportCases.name,
+                    'url': base.ImportCases.get_url(domain=domain, relative=True),
+                }],
             },
-            'slug': base.ImportCases.slug
+            'section': {
+                'page_name': DataInterfaceSection.section_name,
+                'url': reverse(DataInterfaceSection.urlname, args=[domain]),
+            },
         }
     )
 
