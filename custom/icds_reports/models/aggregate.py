@@ -15,9 +15,11 @@ from custom.icds_reports.const import (
     AGG_CHILD_HEALTH_THR_TABLE,
     AGG_DAILY_FEEDING_TABLE,
     AGG_GROWTH_MONITORING_TABLE,
+    AGG_INFRASTRUCTURE_TABLE,
 )
 from custom.icds_reports.utils.aggregation import (
     AggChildHealthAggregationHelper,
+    AwcInfrastructureAggregationHelper,
     ChildHealthMonthlyAggregationHelper,
     ComplementaryFormsAggregationHelper,
     DailyFeedingFormsChildHealthAggregationHelper,
@@ -1003,6 +1005,58 @@ class AggregateChildHealthDailyFeedingForms(models.Model):
     @classmethod
     def aggregate(cls, state_id, month):
         helper = DailyFeedingFormsChildHealthAggregationHelper(state_id, month)
+        curr_month_query, curr_month_params = helper.create_table_query()
+        agg_query, agg_params = helper.aggregation_query()
+
+        with get_cursor(cls) as cursor:
+            cursor.execute(helper.drop_table_query())
+            cursor.execute(curr_month_query, curr_month_params)
+            cursor.execute(agg_query, agg_params)
+
+
+class AggregateAwcInfrastructureForms(models.Model):
+    """Aggregated data for AWC locations based on infrastructure forms
+
+    A child table exists for each state_id and month.
+
+    Each of these columns represent the last non-null value from forms
+    completed in the past six months unless otherwise noted.
+    """
+
+    # partitioned based on these fields
+    state_id = models.CharField(max_length=40)
+    month = models.DateField(help_text="Will always be YYYY-MM-01")
+
+    # primary key as it's unique for every partition
+    awc_id = models.CharField(max_length=40, primary_key=True)
+
+    latest_time_end_processed = models.DateTimeField(
+        help_text="The latest form.meta.timeEnd that has been processed for this case"
+    )
+
+    awc_building = models.PositiveSmallIntegerField(null=True)
+    source_drinking_water = models.PositiveSmallIntegerField(null=True)
+    toilet_functional = models.PositiveSmallIntegerField(null=True)
+    electricity_awc = models.PositiveSmallIntegerField(null=True)
+    adequate_space_pse = models.PositiveSmallIntegerField(null=True)
+
+    adult_scale_available = models.PositiveSmallIntegerField(null=True)
+    baby_scale_available = models.PositiveSmallIntegerField(null=True)
+    flat_scale_available = models.PositiveSmallIntegerField(null=True)
+
+    adult_scale_usable = models.PositiveSmallIntegerField(null=True)
+    baby_scale_usable = models.PositiveSmallIntegerField(null=True)
+    cooking_utensils_usable = models.PositiveSmallIntegerField(null=True)
+    infantometer_usable = models.PositiveSmallIntegerField(null=True)
+    medicine_kits_usable = models.PositiveSmallIntegerField(null=True)
+    stadiometer_usable = models.PositiveSmallIntegerField(null=True)
+
+    class Meta(object):
+        db_table = AGG_INFRASTRUCTURE_TABLE
+
+    @classmethod
+    def aggregate(cls, state_id, month):
+        helper = AwcInfrastructureAggregationHelper(state_id, month)
         curr_month_query, curr_month_params = helper.create_table_query()
         agg_query, agg_params = helper.aggregation_query()
 
