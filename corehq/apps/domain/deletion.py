@@ -9,6 +9,7 @@ from django.db.models import Q
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
 from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from dimagi.utils.chunked import chunked
 
 
 class BaseDeletion(object):
@@ -116,13 +117,15 @@ def _terminate_subscriptions(domain_name):
 def _delete_sql_cases(domain_name):
     case_accessor = CaseAccessors(domain_name)
     case_ids = case_accessor.get_case_ids_in_domain()
-    case_accessor.soft_delete_cases(case_ids)
+    for case_id_chunk in chunked(case_ids, 500):
+        case_accessor.soft_delete_cases(case_id_chunk)
 
 
 def _delete_sql_forms(domain_name):
     form_accessor = FormAccessors(domain_name)
     form_ids = form_accessor.get_all_form_ids_in_domain()
-    form_accessor.soft_delete_forms(form_ids)
+    for form_id_chunk in chunked(form_ids, 500):
+        form_accessor.soft_delete_forms(form_id_chunk)
 
 
 # We use raw queries instead of ORM because Django queryset delete needs to
