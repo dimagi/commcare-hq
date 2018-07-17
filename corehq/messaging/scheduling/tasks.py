@@ -433,8 +433,13 @@ def _handle_schedule_instance(instance, save_function):
         return False
 
     if instance.active and instance.next_event_due < datetime.utcnow():
-        instance.handle_current_event()
         instance.check_active_flag_against_schedule()
+        if not instance.active:
+            # The instance was just deactivated
+            save_function(instance)
+            return False
+
+        instance.handle_current_event()
         save_function(instance)
         return True
 
