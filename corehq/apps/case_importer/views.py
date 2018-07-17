@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 import os.path
 from django.http import HttpResponseRedirect
+from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from corehq.apps.app_manager.dbaccessors import get_case_types_from_apps
 from corehq.apps.case_importer import base
@@ -12,6 +13,7 @@ from django.views.decorators.http import require_POST
 from corehq.apps.case_importer.suggested_fields import get_suggested_case_fields
 from corehq.apps.case_importer.tracking.case_upload_tracker import CaseUpload
 from corehq.util.workbook_reading import SpreadsheetFileExtError
+from corehq.apps.data_interfaces.views import DataInterfaceSection
 from corehq.apps.case_importer.util import get_importer_error_message
 from corehq.apps.reports.analytics.esaccessors import get_case_types_for_domain_es
 from corehq.apps.users.decorators import require_permission
@@ -105,10 +107,21 @@ def excel_config(request, domain):
             'unrecognized_case_types': unrecognized_case_types,
             'case_types_from_apps': case_types_from_apps,
             'domain': domain,
-            'report': {
-                'name': 'Import: Configuration'
+            'slug': base.ImportCases.slug,
+
+            'current_page': {
+                'title': _('Case Options'),
+                'page_name': _('Case Options'),
+                'parents': [{
+                    'title': base.ImportCases.name,
+                    'page_name': base.ImportCases.name,
+                    'url': base.ImportCases.get_url(domain=domain, relative=True),
+                }],
             },
-            'slug': base.ImportCases.slug
+            'section': {
+                'page_name': DataInterfaceSection.section_name,
+                'url': reverse(DataInterfaceSection.urlname, args=[domain]),
+            },
         }
     )
 
