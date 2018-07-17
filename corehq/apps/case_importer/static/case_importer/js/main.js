@@ -40,9 +40,9 @@ hqDefine("case_importer/js/main", [
         });
 
         $('.custom_field').on('change, keypress, keydown, keyup', function() {
-            var original_value = $(this).val();
-            var value = sanitizeCaseField(original_value);
-            if (value !== original_value) {
+            var originalValue = $(this).val();
+            var value = excelFieldsModule.sanitizeCaseField(originalValue);
+            if (value !== originalValue) {
                 $(this).val(value);
             }
         });
