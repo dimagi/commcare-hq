@@ -1,14 +1,25 @@
-/* globals _, ko, $ */
-
-hqDefine('locations/js/location_types', function(){
+hqDefine('locations/js/location_types', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+    'analytix/js/google',
+    'select2-3.5.2-legacy/select2',
+], function(
+    $,
+    ko,
+    _,
+    initialPageData,
+    googleAnalytics
+){
     'use strict';
     var ROOT_LOCATION_ID = -1;
 
-    function LocationSettingsViewModel(loc_types, commtrack_enabled) {
+    function LocationSettingsViewModel(locTypes, commtrackEnabled) {
         var self = this;
         self.loc_types = ko.observableArray();
-        self.loc_types($.map(loc_types, function(loc_type) {
-            return new LocationTypeModel(loc_type, commtrack_enabled, self);
+        self.loc_types($.map(locTypes, function(locType) {
+            return new LocationTypeModel(locType, commtrackEnabled, self);
         }));
 
         self.json_payload = ko.observable();
@@ -16,58 +27,58 @@ hqDefine('locations/js/location_types', function(){
         self.loc_types_error = ko.observable(false);
         self.advanced_mode = ko.observable(false);
 
-        self.loc_type_options = function(loc_type) {
+        self.loc_type_options = function(locType) {
             return self.loc_types().filter(function(type) {
-                return type.name !== loc_type.name;
+                return type.name !== locType.name;
             });
         };
 
         self.loc_types_by_id = function() {
-            return _.reduce(self.loc_types(), function(memo, loc_type){
-                memo[loc_type.pk] = loc_type;
+            return _.reduce(self.loc_types(), function(memo, locType){
+                memo[locType.pk] = locType;
                 return memo;
             }, {});
         };
 
         self.loc_types_by_parent = function() {
-            return _.reduce(self.loc_types(), function(memo, loc_type){
-                var parent_type = loc_type.parent_type() || 0;
-                if (memo[parent_type]){
-                    memo[parent_type].push(loc_type);
+            return _.reduce(self.loc_types(), function(memo, locType){
+                var parentType = locType.parent_type() || 0;
+                if (memo[parentType]){
+                    memo[parentType].push(locType);
                 } else {
-                    memo[parent_type] = [loc_type];
+                    memo[parentType] = [locType];
                 }
                 return memo;
             }, {});
         };
 
-        self.types_by_index = function(location_types){
-            return _.reduce(location_types, function(memo, loc_type){
-                var level = loc_type.level();
+        self.types_by_index = function(locationTypes){
+            return _.reduce(locationTypes, function(memo, locType){
+                var level = locType.level();
                 if (memo[level]){
-                    memo[level].push(loc_type);
+                    memo[level].push(locType);
                 } else {
-                    memo[level] = [loc_type];
+                    memo[level] = [locType];
                 }
                 return memo;
             }, {}, self);
         };
 
-        self.remove_loctype = function(loc_type) {
-            self.loc_types.remove(loc_type);
+        self.remove_loctype = function(locType) {
+            self.loc_types.remove(locType);
         };
 
         self.new_loctype = function() {
-            var parent_pk = (_.last(self.loc_types()) || {}).pk;
-            var new_loctype = new LocationTypeModel({parent_type: parent_pk}, commtrack_enabled, self);
-            new_loctype.onBind = function() {
+            var parentPK = (_.last(self.loc_types()) || {}).pk;
+            var newLocType = new LocationTypeModel({parent_type: parentPK}, commtrackEnabled, self);
+            newLocType.onBind = function() {
                 var $inp = $(self.$e).find('.loctype_name');
                 $inp.focus();
                 setTimeout(function() { $inp.select(); }, 0);
             };
-            self.loc_types.push(new_loctype);
+            self.loc_types.push(newLocType);
             $(".include-only").last().select2();
-            hqImport('analytix/js/google').track.event('Organization Levels', 'New Organization Level');
+            googleAnalytics.track.event('Organization Levels', 'New Organization Level');
         };
 
         self.validate = function() {
@@ -85,12 +96,12 @@ hqDefine('locations/js/location_types', function(){
             _.each({
                 'name': 'duplicate_name_error',
                 'code': 'duplicate_code_error',
-            }, function (error_fn, field) {
-                var counts_by_value = _.countBy(self.loc_types(), function (loc_type) {
-                    return loc_type[field]();
+            }, function (errorFn, field) {
+                var countsByValue = _.countBy(self.loc_types(), function (locType) {
+                    return locType[field]();
                 });
                 var duplicates = [];
-                _.each(counts_by_value, function (count, value) {
+                _.each(countsByValue, function (count, value) {
                     if (field === 'code' && value === ''){
                         // exclude empty codes
                         // if code is empty, the backend will autofill it as name
@@ -101,21 +112,21 @@ hqDefine('locations/js/location_types', function(){
                         valid = false;
                     }
                 });
-                _.each(self.loc_types(), function (loc_type) {
-                    loc_type[error_fn](false);
-                    if (_.contains(duplicates, loc_type[field]())) {
-                        loc_type[error_fn](true);
+                _.each(self.loc_types(), function (locType) {
+                    locType[errorFn](false);
+                    if (_.contains(duplicates, locType[field]())) {
+                        locType[errorFn](true);
                     }
                 });
             });
 
-            var top_level_loc = false;
+            var topLevelLoc = false;
             $.each(self.loc_types(), function(i, e) {
                 if (!e.parent_type()) {
-                    top_level_loc = true;
+                    topLevelLoc = true;
                 }
             });
-            if (self.loc_types().length && !top_level_loc) {
+            if (self.loc_types().length && !topLevelLoc) {
                 self.loc_types_error(true);
                 valid = false;
             }
@@ -127,25 +138,25 @@ hqDefine('locations/js/location_types', function(){
         };
 
         self.has_cycles = function() {
-            var loc_type_parents = {};
-            $.each(self.loc_types(), function(i, loc_type) {
-                loc_type_parents[loc_type.pk] = loc_type.parent_type();
+            var locTypeParents = {};
+            $.each(self.loc_types(), function(i, locType) {
+                locTypeParents[locType.pk] = locType.parent_type();
             });
 
-            var already_visited = function(lt, visited) {
+            var alreadyVisited = function(lt, visited) {
                 if (visited.indexOf(lt) !== -1) {
                     return true;
-                } else if (!loc_type_parents[lt]) {
+                } else if (!locTypeParents[lt]) {
                     return false;
                 } else {
                     visited.push(lt);
-                    return already_visited(loc_type_parents[lt], visited);
+                    return alreadyVisited(locTypeParents[lt], visited);
                 }
             };
             for (var i = 0; i < self.loc_types().length; i++) {
                 var visited = [],
-                    loc_type = self.loc_types()[i].pk;
-                if (already_visited(loc_type, visited)) {
+                    locType = self.loc_types()[i].pk;
+                if (alreadyVisited(locType, visited)) {
                     return true;
                 }
             }
@@ -170,7 +181,7 @@ hqDefine('locations/js/location_types', function(){
     }
 
     // Make a fake pk to refer to this location type even if the name changes
-    var get_fake_pk = function () {
+    var getFakePK = function () {
         var counter = 0;
         return function() {
             counter ++;
@@ -178,24 +189,24 @@ hqDefine('locations/js/location_types', function(){
         };
     }();
 
-    function LocationTypeModel(loc_type, commtrack_enabled, view_model) {
+    function LocationTypeModel(locType, commtrackEnabled, viewModel) {
         var self = this;
-        var name = loc_type.name || '';
-        self.pk = loc_type.pk || get_fake_pk();
+        var name = locType.name || '';
+        self.pk = locType.pk || getFakePK();
         self.name = ko.observable(name);
 
-        self.parent_type = ko.observable(loc_type.parent_type);
-        self.tracks_stock = ko.observable(!loc_type.administrative);
-        self.shares_cases = ko.observable(loc_type.shares_cases);
-        self.view_descendants = ko.observable(loc_type.view_descendants);
-        self.has_user = ko.observable(loc_type.has_user);
-        self.code = ko.observable(loc_type.code || '');
-        self.expand_from = ko.observable(loc_type.expand_from_root ? ROOT_LOCATION_ID : loc_type.expand_from);
-        self.expand_to = ko.observable(loc_type.expand_to);
-        self.include_without_expanding = ko.observable(loc_type.include_without_expanding);
-        self.include_only = ko.observableArray(loc_type.include_only || []);
+        self.parent_type = ko.observable(locType.parent_type);
+        self.tracks_stock = ko.observable(!locType.administrative);
+        self.shares_cases = ko.observable(locType.shares_cases);
+        self.view_descendants = ko.observable(locType.view_descendants);
+        self.has_user = ko.observable(locType.has_user);
+        self.code = ko.observable(locType.code || '');
+        self.expand_from = ko.observable(locType.expand_from_root ? ROOT_LOCATION_ID : locType.expand_from);
+        self.expand_to = ko.observable(locType.expand_to);
+        self.include_without_expanding = ko.observable(locType.include_without_expanding);
+        self.include_only = ko.observableArray(locType.include_only || []);
 
-        self.view = view_model;
+        self.view = viewModel;
 
         self.name_error = ko.observable(false);
         self.duplicate_name_error = ko.observable(false);
@@ -211,37 +222,37 @@ hqDefine('locations/js/location_types', function(){
         };
 
         self.children = function(){
-            var all_children = [self],
-                to_check = [self];
+            var allChildren = [self],
+                toCheck = [self];
             if (!self.view.has_cycles()){
-                while (to_check.length > 0){
-                    var current_loc = to_check.pop(),
-                        children = self.view.loc_types_by_parent()[current_loc.pk];
+                while (toCheck.length > 0){
+                    var currentLoc = toCheck.pop(),
+                        children = self.view.loc_types_by_parent()[currentLoc.pk];
                     if (children){
                         children.forEach(function(child){
-                            all_children.push(child);
+                            allChildren.push(child);
                             if (self.view.loc_types_by_parent()[child.pk]){
-                                to_check.push(child);
+                                toCheck.push(child);
                             }
                         }, self);
                     }
                 }
             }
-            return all_children;
+            return allChildren;
         };
 
         self.parents = function(){
             var parents = [],
-                to_check = [self];
+                toCheck = [self];
             if (!self.view.has_cycles()) {
-                while (to_check.length > 0){
-                    var current_loc = to_check.pop(),
-                        parent_type = current_loc.parent_type();
-                    if (parent_type && self.view.loc_types_by_id()[parent_type]){
-                        var parent = self.view.loc_types_by_id()[parent_type];
+                while (toCheck.length > 0){
+                    var currentLoc = toCheck.pop(),
+                        parentType = currentLoc.parent_type();
+                    if (parentType && self.view.loc_types_by_id()[parentType]){
+                        var parent = self.view.loc_types_by_id()[parentType];
                         parents.push(parent);
                         if (parent.parent_type()){
-                            to_check.push(parent);
+                            toCheck.push(parent);
                         }
                     }
                 }
@@ -256,32 +267,32 @@ hqDefine('locations/js/location_types', function(){
 
         self.compiled_name = function(){
             // Shows all types that have the same level as this one "type1 | type2"
-            var compiled_name = "",
-                location_types_same_level = self.view.types_by_index(self.view.loc_types())[self.level()];
+            var compiledName = "",
+                locationTypesSameLevel = self.view.types_by_index(self.view.loc_types())[self.level()];
 
-            location_types_same_level.forEach(function(location_type, index){
-                compiled_name += location_type.name();
-                if (index !== location_types_same_level.length - 1){
-                    compiled_name += " | ";
+            locationTypesSameLevel.forEach(function(locationType, index){
+                compiledName += locationType.name();
+                if (index !== locationTypesSameLevel.length - 1){
+                    compiledName += " | ";
                 }
             });
-            return compiled_name;
+            return compiledName;
         };
 
         self.expand_from_options = function() {
             // traverse all locations upwards, include a root option
-            var root_type = new LocationTypeModel(
+            var rootType = new LocationTypeModel(
                     {name: "root", pk: ROOT_LOCATION_ID},
-                    commtrack_enabled, this
+                    commtrackEnabled, this
                 ),
                 parents = self.parents();
-            parents.push(root_type);
+            parents.push(rootType);
             return parents.reverse();
         };
 
         self.expand_to_options = function(){
             // display all locations with the same index as being on the same level
-            var locs_to_return = [],
+            var locsToReturn = [],
                 locs = self.children();
             if (self.expand_from() && self.expand_from() !== ROOT_LOCATION_ID){
                 locs = self.view.loc_types_by_id()[self.expand_from()].children();
@@ -289,34 +300,34 @@ hqDefine('locations/js/location_types', function(){
             if (self.expand_from() && self.expand_from() === ROOT_LOCATION_ID){
                 locs = self.view.loc_types();
             }
-            var locs_same_levels = self.view.types_by_index(locs);
-            for (var level in locs_same_levels){
+            var locsSameLevels = self.view.types_by_index(locs);
+            for (var level in locsSameLevels){
                 // Only display a single child at each level
-                var child_to_add = locs_same_levels[level][0];
-                locs_to_return.push(new LocationTypeModel({
-                    name: child_to_add.compiled_name(),
-                    pk: child_to_add.pk,
+                var childToAdd = locsSameLevels[level][0];
+                locsToReturn.push(new LocationTypeModel({
+                    name: childToAdd.compiled_name(),
+                    pk: childToAdd.pk,
                 }, false, self.view));
             }
             return {
-                children: locs_to_return.slice(0, locs_to_return.length - 1),
-                leaf: locs_to_return[locs_to_return.length - 1],
+                children: locsToReturn.slice(0, locsToReturn.length - 1),
+                leaf: locsToReturn[locsToReturn.length - 1],
             };
         };
 
         self.include_without_expanding_options = function(){
             if (self.expand_from() !== ROOT_LOCATION_ID){
-                var types_same_levels = self.view.types_by_index(self.view.loc_types()),
-                    levels_to_return = [];
-                for (var level in types_same_levels){
+                var typesSameLevels = self.view.types_by_index(self.view.loc_types()),
+                    levelsToReturn = [];
+                for (var level in typesSameLevels){
                     // Only display a single child at each level
-                    var level_to_add = types_same_levels[level][0];
-                    levels_to_return.push(new LocationTypeModel({
-                        name: level_to_add.compiled_name(),
-                        pk: level_to_add.pk,
+                    var levelToAdd = typesSameLevels[level][0];
+                    levelsToReturn.push(new LocationTypeModel({
+                        name: levelToAdd.compiled_name(),
+                        pk: levelToAdd.pk,
                     }, false, self.view));
                 }
-                return levels_to_return;
+                return levelsToReturn;
             } else {
                 return [];
             }
@@ -331,7 +342,7 @@ hqDefine('locations/js/location_types', function(){
                 pk: self.pk,
                 name: self.name(),
                 parent_type: self.parent_type() || null,
-                administrative: commtrack_enabled ? !self.tracks_stock() : true,
+                administrative: commtrackEnabled ? !self.tracks_stock() : true,
                 shares_cases: self.shares_cases() === true,
                 view_descendants: self.view_descendants() === true,
                 has_user: self.has_user() === true,
@@ -346,27 +357,26 @@ hqDefine('locations/js/location_types', function(){
     }
 
     $(function() {
-        var initial_page_data = hqImport('hqwebapp/js/initial_page_data').get,
-            loc_types = initial_page_data('location_types'),
-            commtrack_enabled = initial_page_data('commtrack_enabled'),
-            model = new LocationSettingsViewModel(loc_types, commtrack_enabled);
-
-        var $settings = $('#settings');
+        var locTypes = initialPageData.get('location_types'),
+            commtrackEnabled = initialPageData.get('commtrack_enabled'),
+            model = new LocationSettingsViewModel(locTypes, commtrackEnabled);
 
         var warnBeforeUnload = function() {
             return gettext("You have unsaved changes.");
         };
 
-        $settings.submit(function() {
-            var valid = model.presubmit();
-            if (valid) {
-                // Don't warn if they're leaving the page due to form submission
-                window.onbeforeunload = undefined;
-            }
-            return valid;
-        });
-
-        $settings.koApplyBindings(model);
+        var $settings = $('#settings');
+        if ($settings.length) {
+            $settings.submit(function() {
+                var valid = model.presubmit();
+                if (valid) {
+                    // Don't warn if they're leaving the page due to form submission
+                    window.onbeforeunload = undefined;
+                }
+                return valid;
+            });
+            $settings.koApplyBindings(model);
+        }
 
         $("form#settings").on("change input", function() {
             $(this).find(":submit").addClass("btn-success").enable();
