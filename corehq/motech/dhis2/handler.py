@@ -68,7 +68,7 @@ def _to_dhis_format(config, payload):
         _get_datavalues,
     ]
 
-    for key, func in to_dhis_format_functions:
+    for func in to_dhis_format_functions:
         dhis_format.update(func(config, form_data, payload))
 
     return dhis_format
