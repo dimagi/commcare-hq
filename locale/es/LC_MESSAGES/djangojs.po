@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-07-10 19:35+0000\n"
+"POT-Creation-Date: 2018-07-17 19:53+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Gladys Teos <info@enestranslations.com>, 2017\n"
 "Language-Team: Spanish (https://www.transifex.com/dimagi/teams/9388/es/)\n"
@@ -19,13 +19,9 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: corehq/apps/accounting/static/accounting/js/enterprise_dashboard.js:34
-#, fuzzy
-#| msgid "Could not clear user data. Please report an issue if this persists."
 msgid ""
 "Error sending email, please try again or report an issue if this persists."
 msgstr ""
-"No es posible borrar los datos del usuario. Por favor reporte un problema si "
-"esto continúa."
 
 #: corehq/apps/accounting/static/accounting/js/widgets.js:66
 #: corehq/apps/domain/static/domain/js/pro-bono.js:29
@@ -283,6 +279,7 @@ msgid "User Data"
 msgstr ""
 
 #: corehq/apps/app_manager/static/app_manager/js/forms/case_config_ui_advanced.js:84
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:23
 msgid "Lookup Table"
 msgstr "Tabla de Búsqueda"
@@ -528,17 +525,17 @@ msgstr "Seleccione un usuario"
 msgid "(Default)"
 msgstr "(Predeterminado)"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:393
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:394
 msgid "Sorry, that didn't go through. Please reload your page and try again"
 msgstr ""
 "Lo sentimos, eso no se envió. Por favor cargue nuevamente su página e "
 "intente de nuevo"
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:427
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:428
 msgid "The versions list has changed since you loaded the page."
 msgstr "La lista de versiones ha cambiado desde que cargó la página."
 
-#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:432
+#: corehq/apps/app_manager/static/app_manager/js/releases/releases.js:433
 msgid "No new changes!"
 msgstr "¡No hay nuevos cambios!"
 
@@ -584,23 +581,23 @@ msgstr "Tiene cambios sin guardar en sus idiomas admitidos"
 msgid "There are errors in your configuration"
 msgstr "Hay errores en su configuración"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:144
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:140
 msgid "You must have at least one language"
 msgstr "Debe tener al menos un idioma"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:156
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:152
 msgid "Please enter language"
 msgstr "Por favor ingrese un idioma"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:158
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:154
 msgid "Invalid language code"
 msgstr "Código de idioma inválido"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:166
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:162
 msgid "Language appears twice"
 msgstr "El idioma aparece dos veces"
 
-#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:168
+#: corehq/apps/app_manager/static/app_manager/js/supported_languages.js:164
 msgid "This conflicts with a current language"
 msgstr "Esto entra en conflicto con un idioma actual"
 
@@ -1455,7 +1452,6 @@ msgstr ""
 "Analizando Error. Por favor verifique que su formulario sea un XML válido."
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:21
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:22
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/utils/util.js:24
 msgid "OK"
 msgstr "SÍ"
@@ -1909,6 +1905,18 @@ msgid "App Properties"
 msgstr "Propiedades de la Aplicación"
 
 #: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
+#, fuzzy
+#| msgid ""
+#| "An error occurred while deleting your location. If the problem persists, "
+#| "please report an issue"
+msgid ""
+"Could not load app properties. If this error persists, please report an "
+"issue."
+msgstr ""
+"Ocurrió un error al eliminar su ubicación. Si el problema persiste, por "
+"favor reporte un problema"
+
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:24
 msgid ""
 "The {questionid} is an internal identifier for a question. It does not "
 "appear on the phone. It is the name of the question in data exports."
@@ -2234,7 +2242,7 @@ msgstr "Iniciar Carga"
 msgid "Replace"
 msgstr "Reemplazar"
 
-#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:26
+#: corehq/apps/app_manager/static/app_manager/js/vellum/src/main-components.js:25
 msgid "No Reference"
 msgstr "Sin Referencia"
 
@@ -2391,7 +2399,7 @@ msgid "Form successfully saved!"
 msgstr ""
 
 #: corehq/apps/cloudcare/static/cloudcare/js/formplayer/app.js:420
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:41
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:42
 msgid "Waiting for server progress"
 msgstr "Esperando el progreso del servidor"
 
@@ -2419,11 +2427,11 @@ msgstr ""
 msgid "Show Full Menu"
 msgstr "Mostrar el Menú Completo"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:28
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:29
 msgid "Permission Denied"
 msgstr "Permiso Denegado"
 
-#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:68
+#: corehq/apps/cloudcare/static/cloudcare/js/formplayer/menus/api.js:69
 msgid ""
 "Unable to connect to form playing service. Please report an issue if you "
 "continue to see this message."
@@ -3086,16 +3094,12 @@ msgid "That do not have phone numbers"
 msgstr "Que no tengan números de teléfono"
 
 #: corehq/apps/reports/static/reports/js/maps_utils.js:1090
-#, fuzzy
-#| msgid "Other Tips"
 msgid "Other"
-msgstr "Otros Consejos"
+msgstr "Otro"
 
 #: corehq/apps/reports/static/reports/js/maps_utils.js:1091
-#, fuzzy
-#| msgid "Form Data"
 msgid "No Data"
-msgstr "Datos del Formulario"
+msgstr "No hay Datos"
 
 #: corehq/apps/reports/static/reports/js/project_health_dashboard.js:126
 msgid "Sorry, we couldn't load that."
@@ -3559,35 +3563,35 @@ msgstr ""
 msgid "minute(s)"
 msgstr "minuto(s)"
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:197
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:198
 msgid "last"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:199
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:200
 msgid "last - 1"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:201
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:202
 msgid "last - 2"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:230
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:231
 msgid "every day"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:232
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:233
 msgid "every week"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:234
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:235
 msgid "every month"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:379
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:380
 msgid "Send Broadcast"
 msgstr ""
 
-#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:381
+#: corehq/messaging/scheduling/static/scheduling/js/create_schedule.ko.js:382
 msgid "Schedule Broadcast"
 msgstr ""
 
