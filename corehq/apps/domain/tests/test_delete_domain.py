@@ -7,8 +7,9 @@ from decimal import Decimal
 from mock import patch
 
 from dateutil.relativedelta import relativedelta
-from django.test import TestCase
+from django.test import TestCase, override_settings
 
+from casexml.apps.case.mock import CaseFactory
 from casexml.apps.stock.models import DocDomainMapping, StockReport, StockTransaction
 
 from corehq.apps.accounting.models import (
@@ -26,6 +27,7 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 from six.moves import range
 
 
@@ -218,6 +220,24 @@ class TestDeleteDomain(TestCase):
         self.domain.delete()
 
         self.assertEqual(len(mock_get_response.call_args_list), 1)
+
+    def _test_case_deletion(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            CaseFactory(domain_name).create_case()
+            self.assertEqual(len(CaseAccessors(domain_name).get_case_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(CaseAccessors(self.domain.name).get_case_ids_in_domain()), 0)
+        self.assertEqual(len(CaseAccessors(self.domain2.name).get_case_ids_in_domain()), 1)
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_case_deletion_sql(self):
+        self._test_case_deletion()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
+    def test_case_deletion_couch(self):
+        self._test_case_deletion()
 
     def tearDown(self):
         self.domain2.delete()

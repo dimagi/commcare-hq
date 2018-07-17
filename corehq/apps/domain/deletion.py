@@ -8,6 +8,7 @@ from django.db.models import Q
 
 from corehq.apps.accounting.models import Subscription
 from corehq.apps.accounting.utils import get_change_status
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
 
 
 class BaseDeletion(object):
@@ -112,6 +113,12 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
+def _delete_sql_cases(domain_name):
+    case_accessor = CaseAccessors(domain_name)
+    case_ids = case_accessor.get_case_ids_in_domain()
+    case_accessor.soft_delete_cases(case_ids)
+
+
 # We use raw queries instead of ORM because Django queryset delete needs to
 # fetch objects into memory to send signals and handle cascades. It makes deletion very slow
 # if we have a millions of rows in stock data tables.
@@ -143,6 +150,7 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends),
     CustomDeletion('users', _delete_web_user_membership),
     CustomDeletion('accounting', _terminate_subscriptions),
+    CustomDeletion('form_processor', _delete_sql_cases),
 ]
 
 
