@@ -131,9 +131,6 @@ class TestDeleteDomain(TestCase):
             domain='test2',
             name='facility2',
         )
-        for i in range(2):
-            self._create_data('test', i)
-            self._create_data('test2', i)
 
     def _assert_sql_counts(self, domain, number):
         self.assertEqual(StockTransaction.objects.filter(report__domain=domain).count(), number)
@@ -156,6 +153,10 @@ class TestDeleteDomain(TestCase):
         self.assertEqual(MobileBackendInvitation.objects.filter(domain=domain).count(), number)
 
     def test_sql_objects_deletion(self):
+        for i in range(2):
+            self._create_data('test', i)
+            self._create_data('test2', i)
+
         self._assert_sql_counts('test', 2)
         self._assert_sql_counts('test2', 2)
         self.domain.delete()
