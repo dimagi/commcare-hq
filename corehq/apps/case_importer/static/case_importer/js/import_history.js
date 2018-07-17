@@ -3,12 +3,30 @@ hqDefine('case_importer/js/import_history', [
     'knockout',
     'underscore',
     'hqwebapp/js/initial_page_data',
+    'hqwebapp/js/components.ko',
 ], function (
     $,
     ko,
     _,
     initialPageData
 ) {
+    var uploadModel = function(options) {
+        var self = _.extend({}, _.omit(options, 'comment', 'task_status'));
+
+        self.comment = ko.observable(options.comment || '');
+        self.task_status = ko.observable(options.task_status);
+
+        self.commentUrl = function() {
+            return initialPageData.reverse('case_importer_update_upload_comment', self.upload_id);
+        };
+
+        self.downloadUrl = function() {
+            return initialPageData.reverse('case_importer_upload_file_download', self.upload_id);
+        };
+
+        return self;
+    };
+
     var recentUploads = function () {
         var self = {};
         // this is used both for the state of the ajax request
@@ -60,9 +78,8 @@ hqDefine('case_importer/js/import_history', [
             }
             $.get(initialPageData.reverse('case_importer_uploads'), {limit: initialPageData.getUrlParameter('limit')}).done(function (data) {
                 self.state(self.states.SUCCESS);
-                _(data).each(function (case_upload) {
-                    case_upload.comment = ko.observable(case_upload.comment || '');
-                    case_upload.task_status = ko.observable(case_upload.task_status);
+                data = _.map(data, function (caseUpload) {
+                    return uploadModel(caseUpload);
                 });
                 self.updateCaseUploads(data);
 
