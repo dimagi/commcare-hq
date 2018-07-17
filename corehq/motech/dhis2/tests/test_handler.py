@@ -9,7 +9,6 @@ from corehq.motech.dhis2.dhis2_config import Dhis2FormConfig
 from corehq.motech.dhis2.forms import Dhis2ConfigForm
 from corehq.motech.dhis2.handler import _to_dhis_format
 from corehq.motech.dhis2.repeaters import Dhis2Repeater
-import mock
 import json
 
 
@@ -18,10 +17,6 @@ class TestDhisHendler(TestCase):
     @classmethod
     def setUpClass(cls):
         super(TestDhisHendler, cls).setUpClass()
-        _call_center_domain_mock = mock.patch(
-            'corehq.apps.callcenter.data_source.call_center_data_source_configuration_provider'
-        )
-        _call_center_domain_mock.start()
 
         domain = create_domain('dhis2')
         location_type = LocationType.objects.create(
@@ -38,12 +33,11 @@ class TestDhisHendler(TestCase):
         cls.user = WebUser.create(domain.name, 'test', 'passwordtest')
         cls.user.set_location(domain.name, cls.location)
 
-        _call_center_domain_mock.stop()
-
     @classmethod
     def tearDownClass(cls):
         cls.location.delete()
         cls.user.delete()
+        super(TestDhisHendler, cls).tearDownClass()
 
     def setUp(self):
         self.db = Dhis2Repeater.get_db()
