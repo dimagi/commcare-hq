@@ -45,10 +45,10 @@ hqDefine('case_importer/js/import_history', [
         };
         var taskStatusesInDataMatchCurrent = function (data) {
             return (
-                _.chain(self.case_uploads()).pluck('task_status').map(function (task_status) {
-                    return task_status();
-                }).isEqual(_(data).pluck('task_status').map(function (task_status) {
-                    return task_status();
+                _.chain(self.case_uploads()).pluck('task_status').map(function (taskStatus) {
+                    return taskStatus();
+                }).isEqual(_(data).pluck('task_status').map(function (taskStatus) {
+                    return taskStatus();
                 })).value()
             );
         };
@@ -59,12 +59,12 @@ hqDefine('case_importer/js/import_history', [
                     // this prevents some jumpiness when not necessary
                     // and is particularly bad if you're in the middle of editing a comment
                     _.each(_.zip(self.case_uploads(), data), function (pair) {
-                        var case_upload = pair[0];
-                        var new_case_upload = pair[1];
-                        if (case_upload.upload_id !== new_case_upload.upload_id) {
-                            throw {message: "Somehow even after checking, the case upload lists didn't line up."};
+                        var caseUpload = pair[0];
+                        var newCaseUpload = pair[1];
+                        if (caseUpload.upload_id !== newCaseUpload.upload_id) {
+                            throw new Error("Somehow even after checking, the case upload lists didn't line up.");
                         }
-                        case_upload.task_status(new_case_upload.task_status());
+                        caseUpload.task_status(newCaseUpload.task_status());
                     });
                 } else {
                     self.case_uploads(data);
@@ -83,9 +83,9 @@ hqDefine('case_importer/js/import_history', [
                 });
                 self.updateCaseUploads(data);
 
-                var anyInProgress = _.any(self.case_uploads(), function (case_upload) {
-                    return case_upload.task_status().state === self.states.STARTED ||
-                            case_upload.task_status().state === self.states.NOT_STARTED;
+                var anyInProgress = _.any(self.case_uploads(), function (caseUpload) {
+                    return caseUpload.task_status().state === self.states.STARTED ||
+                            caseUpload.task_status().state === self.states.NOT_STARTED;
                 });
                 if (anyInProgress) {
                     _.delay(self.fetchCaseUploads, 5000);

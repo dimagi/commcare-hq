@@ -103,8 +103,8 @@ hqDefine('case_importer/js/excel_fields', [
         return self;
     }
 
-    var sanitizeCaseField = function (original_value) {
-        var value = original_value;
+    var sanitizeCaseField = function (originalValue) {
+        var value = originalValue;
         // space to underscore
         value = value.replace(/\s/g, "_");
         // remove other symbols
