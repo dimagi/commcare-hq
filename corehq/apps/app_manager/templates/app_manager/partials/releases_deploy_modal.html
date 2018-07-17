@@ -180,7 +180,7 @@
                         </div>
                     </div>
                 </div>
-                {% if can_view_cloudcare %}
+                {% if can_view_cloudcare and app.cloudcare_enabled %}
                     <div class="panel panel-appmanager">
                         <div class="panel-heading">
                             <h4 class="panel-title">
@@ -189,7 +189,7 @@
                                    data-category="App Manager"
                                    data-action="Deploy Type"
                                    data-label="Open in Web Apps"
-                                   data-bind="attr: {href: $root.webAppsUrl(id)}">
+                                   data-bind="attr: {href: $root.webAppsUrl(id, '{{ app.id }}')}">
                                     <i class="fa fa-desktop"></i>
                                     {% trans 'Open in Web Apps' %}
                                 </a>
