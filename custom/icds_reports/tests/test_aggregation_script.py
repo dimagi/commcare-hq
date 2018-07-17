@@ -316,6 +316,8 @@ class AggChildHealthAggregationTest(AggregationScriptTestBase):
 
 
 class AggAwcAggregationTest(AggregationScriptTestBase):
+    always_include_columns = {'state_id', 'district_id', 'block_id', 'supervisor_id', 'awc_id'}
+
     def test_agg_awc_daily(self):
         self._load_and_compare_data(
             'agg_awc_daily_2017-05-28',
