@@ -38,17 +38,10 @@ hqDefine('registration/js/new_user.ko', function () {
 
     // Can't set up analytics until the values for the A/B tests are ready
     _kissmetrics.whenReadyAlways(function() {
-        _private.isAbPhoneNumberShown = _kissmetrics.getAbTest('New User Phone Number') === 'show_number';
-        _kissmetrics.identifyTraits({
-            "Phone number field": _private.isAbPhoneNumberShown ? "Shown" : "Not shown",
-        });
         _kissmetrics.track.event("Viewed CommCare signup page");
 
         _private.submitSuccessAnalytics = function (data) {
             _kissmetrics.track.event("Account Creation was Successful");
-            if (_private.isAbPhoneNumberShown) {
-                _kissmetrics.track.event("Phone Number Field Filled Out");
-            }
 
             var appcuesEvent = "Assigned user to Appcues test",
                 appcuesData = {
