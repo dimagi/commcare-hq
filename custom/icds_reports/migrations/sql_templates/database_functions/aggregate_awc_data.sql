@@ -63,9 +63,9 @@ BEGIN
   _ccs_record_monthly_tablename := 'ccs_record_monthly' || '_' || _start_date;
   _child_health_monthly_tablename := 'child_health_monthly' || '_' || _start_date;
   _daily_attendance_tablename := 'daily_attendance' || '_' || _start_date;
+  _infra_tablename := 'icds_dashboard_infrastructure_forms';
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('awc_location') INTO _awc_location_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('usage') INTO _usage_tablename;
-  EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('infrastructure') INTO _infra_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('household') INTO _household_tablename;
   EXECUTE 'SELECT table_name FROM ucr_table_name_mapping WHERE table_type = ' || quote_literal('person') INTO _person_tablename;
 
@@ -276,24 +276,29 @@ BEGIN
     'electricity_awc = ut.electricity_awc, ' ||
     'infantometer = ut.infantometer, ' ||
     'stadiometer = ut.stadiometer ' ||
-  'FROM (SELECT DISTINCT ON (awc_id) ' ||
+  'FROM (SELECT ' ||
     'awc_id, ' ||
     'month, ' ||
-    'submitted_on AS infra_last_update_date, ' ||
-    'type_of_building AS infra_type_of_building, ' ||
-    'clean_water AS infra_clean_water, ' ||
-    'functional_toilet AS infra_functional_toilet, ' ||
+    'latest_time_end_processed::date AS infra_last_update_date, ' ||
+    'CASE ' ||
+      'WHEN awc_building = 1 THEN ' || quote_literal('pucca') || ' ' ||
+      'WHEN awc_building = 2 THEN ' || quote_literal('semi_pucca') || ' ' ||
+      'WHEN awc_building = 3 THEN ' || quote_literal('kuccha') || ' ' ||
+      'WHEN awc_building = 4 THEN ' || quote_literal('partial_covered_space') || ' ' ||
+    'ELSE NULL END AS infra_type_of_building, ' ||
+    'CASE WHEN source_drinking_water IN (1, 2, 3) THEN 1 ELSE 0 END AS infra_clean_water, ' ||
+    'toilet_functional AS infra_functional_toilet, ' ||
     'baby_scale_usable AS infra_baby_weighing_scale, ' ||
-    'GREATEST(adult_scale_available, adult_scale_usable) AS infra_adult_weighing_scale, ' ||
-    'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
+    'GREATEST(adult_scale_available, adult_scale_usable, 0) AS infra_adult_weighing_scale, ' ||
+    'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable, 0) AS infra_infant_weighing_scale, ' ||
     'cooking_utensils_usable AS infra_cooking_utensils, ' ||
     'medicine_kits_usable AS infra_medicine_kits, ' ||
-    'has_adequate_space_pse AS infra_adequate_space_pse, ' ||
+    'CASE WHEN adequate_space_pse = 1 THEN 1 ELSE 0 END AS infra_adequate_space_pse, ' ||
     'electricity_awc AS electricity_awc, ' ||
-    'infantometer AS infantometer, ' ||
-    'stadiometer AS stadiometer ' ||
+    'infantometer_usable AS infantometer, ' ||
+    'stadiometer_usable AS stadiometer ' ||
     'FROM ' || quote_ident(_infra_tablename) || ' ' ||
-    'WHERE month <= ' || quote_literal(_end_date) || ' ORDER BY awc_id, submitted_on DESC) ut ' ||
+    'WHERE month = ' || quote_literal(_start_date) || ') ut ' ||
   'WHERE ut.awc_id = agg_awc.awc_id';
     -- could possibly add multicol indexes to make order by faster?
 
