@@ -5,6 +5,10 @@
 
 {% block title %}{% trans "Import Cases from Excel" %}{% endblock %}
 
+{% block js %}{{ block.super }}
+    <script src="{% static 'case_importer/js/import_history.js' %}"></script>
+{% endblock js %}
+
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
         <li>
@@ -17,6 +21,10 @@
 {% endblock %}
 
 {% block page_content %}
+    {% registerurl 'case_importer_uploads' domain %}
+    {% registerurl 'case_importer_upload_file_download' domain '---' %}
+    {% registerurl 'case_importer_update_upload_comment' domain '---' %}
+
     {% include 'case_importer/partials/help_message.html' %}
 
     <form class="form-horizontal form-report"
@@ -51,5 +59,7 @@
 
 
     <h2>Recent Uploads</h2>
-    {% include 'case_importer/partials/import_history.html' %}
+    <div id="recent-uploads" class="ko-template">
+        {% include 'case_importer/partials/ko_import_history.html' %}
+    </div>
 {% endblock %}
