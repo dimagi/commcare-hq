@@ -1,9 +1,7 @@
 {% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'hqcase/js/explode_cases.js' %}"></script>
-{% endblock %}
+{% requirejs_main 'hqcase/js/explode_cases' %}
 
 {% block page_content %}
     {% registerurl "users_select2_options" domain %}

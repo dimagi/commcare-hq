@@ -85,7 +85,7 @@ from corehq.apps.app_manager.xpath import (
     interpolate_xpath,
     LocationXpath,
 )
-from corehq.apps.builds import get_default_build_spec
+from corehq.apps.builds.utils import get_default_build_spec
 from dimagi.utils.couch.undo import DeleteRecord, DELETED_SUFFIX
 from dimagi.utils.dates import DateSpan
 from memoized import memoized
