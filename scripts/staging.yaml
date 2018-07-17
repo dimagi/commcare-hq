@@ -54,8 +54,6 @@ branches:
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
   - jls/appcues-template-apps  # Jenny July 16
-  - je/upgrade-gunicorn # 7/17
-  - je/move-to-pycryptodome # 7/17
 submodules:
   submodules/django-digest-src:
     branches: []
