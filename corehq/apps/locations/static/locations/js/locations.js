@@ -1,7 +1,14 @@
-hqDefine('locations/js/locations', function() {
-    var initialPageData = hqImport('hqwebapp/js/initial_page_data');
-    var LocationModels = hqImport('locations/js/location_tree');
-
+hqDefine('locations/js/locations', [
+    'jquery',
+    'hqwebapp/js/initial_page_data',
+    'locations/js/utils',
+    'locations/js/location_tree',
+], function(
+    $,
+    initialPageData,
+    locationUtils,
+    LocationModels
+) {
     $(function() {
         var locs = initialPageData.get('locations'),
             can_edit_root = initialPageData.get('can_edit_root'),
@@ -21,6 +28,6 @@ hqDefine('locations/js/locations', function() {
         var model = new LocationModels.LocationSearchViewModel(tree_model, options);
         $('#location_search').koApplyBindings(model);
 
-        hqImport('locations/js/utils').enableLocationSearchSelect();
+        locationUtils.enableLocationSearchSelect();
     });
 });
