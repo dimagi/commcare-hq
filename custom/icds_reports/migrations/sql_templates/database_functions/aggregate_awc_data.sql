@@ -268,7 +268,6 @@ BEGIN
     'infra_clean_water = ut.infra_clean_water, ' ||
     'infra_functional_toilet = ut.infra_functional_toilet, ' ||
     'infra_baby_weighing_scale = ut.infra_baby_weighing_scale, ' ||
-    'infra_flat_weighing_scale = ut.infra_flat_weighing_scale, ' ||
     'infra_adult_weighing_scale = ut.infra_adult_weighing_scale, ' ||
     'infra_infant_weighing_scale = ut.infra_infant_weighing_scale, ' ||
     'infra_cooking_utensils = ut.infra_cooking_utensils, ' ||
@@ -285,7 +284,6 @@ BEGIN
     'clean_water AS infra_clean_water, ' ||
     'functional_toilet AS infra_functional_toilet, ' ||
     'baby_scale_usable AS infra_baby_weighing_scale, ' ||
-    'flat_scale_usable AS infra_flat_weighing_scale, ' ||
     'GREATEST(adult_scale_available, adult_scale_usable) AS infra_adult_weighing_scale, ' ||
     'GREATEST(baby_scale_available, flat_scale_available, baby_scale_usable) AS infra_infant_weighing_scale, ' ||
     'cooking_utensils_usable AS infra_cooking_utensils, ' ||
@@ -331,7 +329,6 @@ BEGIN
     'sum(infra_clean_water), ' ||
     'sum(infra_functional_toilet), ' ||
     'sum(infra_baby_weighing_scale), ' ||
-    'sum(infra_flat_weighing_scale), ' ||
     'sum(infra_adult_weighing_scale), ' ||
     'sum(infra_cooking_utensils), ' ||
     'sum(infra_medicine_kits), ' ||
@@ -398,7 +395,6 @@ BEGIN
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
-    'infra_flat_weighing_scale, ' ||
     'infra_adult_weighing_scale, ' ||
     'infra_cooking_utensils, ' ||
     'infra_medicine_kits, ' ||
@@ -492,7 +488,6 @@ BEGIN
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
-    'infra_flat_weighing_scale, ' ||
     'infra_adult_weighing_scale, ' ||
     'infra_cooking_utensils, ' ||
     'infra_medicine_kits, ' ||
@@ -585,7 +580,6 @@ BEGIN
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
-    'infra_flat_weighing_scale, ' ||
     'infra_adult_weighing_scale, ' ||
     'infra_cooking_utensils, ' ||
     'infra_medicine_kits, ' ||
@@ -677,7 +671,6 @@ BEGIN
     'infra_clean_water, ' ||
     'infra_functional_toilet, ' ||
     'infra_baby_weighing_scale, ' ||
-    'infra_flat_weighing_scale, ' ||
     'infra_adult_weighing_scale, ' ||
     'infra_cooking_utensils, ' ||
     'infra_medicine_kits, ' ||
