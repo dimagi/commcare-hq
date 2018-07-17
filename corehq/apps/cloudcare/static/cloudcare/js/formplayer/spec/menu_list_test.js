@@ -67,7 +67,10 @@ describe('Render a case list', function () {
             user.domain = 'test-domain';
             user.username = 'test-username';
             user.formplayer_url = 'url';
+            user.restoreAs = '';
+            user.displayOptions = {};
 
+            FormplayerFrontend.Apps.API.primeApps(user.restoreAs, new Backbone.Collection());
         });
 
         afterEach(function() {
@@ -110,6 +113,7 @@ describe('Render a case list', function () {
                     domain: user.domain,
                     username: user.username,
                     preserveCache: true,
+                    restoreAs: '',
                 }
             );
             assert.equal(requests[1].url, user.formplayer_url + '/sync-db');
