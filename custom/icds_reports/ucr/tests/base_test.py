@@ -5,7 +5,7 @@ import mock
 from datetime import date, datetime
 from dateutil.relativedelta import relativedelta
 from xml.etree import cElementTree as ElementTree
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from casexml.apps.case.mock import CaseFactory
 from corehq.util.test_utils import TestFileMixin
 from corehq.apps.receiverwrapper.util import submit_form_locally
@@ -42,6 +42,7 @@ def mget_query_fake(index, ids, source):
     ]
 
 
+@override_settings(SERVER_ENVIRONMENT='icds-new')
 @mock.patch('custom.icds_reports.ucr.expressions.mget_query', mget_query_fake)
 class BaseICDSDatasourceTest(TestCase, TestFileMixin):
     dependent_apps = ['corehq.apps.domain', 'corehq.apps.case']
