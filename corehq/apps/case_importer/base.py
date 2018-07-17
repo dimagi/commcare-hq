@@ -14,14 +14,23 @@ class ImportCases(DataInterface):
     asynchronous = False
 
     @property
-    def template_context(self):
+    def template_context(self, domain=None):
         return {
-            'current_page': {
-                'title': self.name,
-                'page_name': self.name,
-            },
-            'section': {
-                'page_name': DataInterfaceSection.section_name,
-                'url': reverse(DataInterfaceSection.urlname, args=[self.domain]),
-            },
+            'current_page': self.current_page_context(domain=self.domain),
+            'section': self.section_context(),
+        }
+
+    @classmethod
+    def section_context(cls, domain=None):
+        return {
+            'page_name': DataInterfaceSection.section_name,
+            'url': reverse(DataInterfaceSection.urlname, args=[domain]),
+        }
+
+    @classmethod
+    def current_page_context(cls, domain=None):
+        return {
+            'title': cls.name,
+            'page_name': cls.name,
+            'url': cls.get_url(domain=domain, relative=True),
         }

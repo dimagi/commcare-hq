@@ -34,6 +34,19 @@ def render_error(request, domain, message):
     return HttpResponseRedirect(base.ImportCases.get_url(domain=domain))
 
 
+# Cobble together the context needed to render breadcrumbs that class-based views get from BasePageView
+# For use by function-based views that extend hqwebapp/base_section.html
+def _case_importer_breadcrumb_context(page_name, domain):
+    return {
+        'current_page': {
+            'title': page_name,
+            'page_name': page_name,
+            'parents': [base.ImportCases.current_page_context(domain=domain)]
+        },
+        'section': base.ImportCases.section_context(),
+    }
+
+
 @require_can_edit_data
 def excel_config(request, domain):
     """
@@ -100,30 +113,15 @@ def excel_config(request, domain):
             'file until you have existing cases or applications.'
         ))
 
-    return render(
-        request,
-        "case_importer/excel_config.html", {
-            'columns': columns,
-            'unrecognized_case_types': unrecognized_case_types,
-            'case_types_from_apps': case_types_from_apps,
-            'domain': domain,
-            'slug': base.ImportCases.slug,
-
-            'current_page': {
-                'title': _('Case Options'),
-                'page_name': _('Case Options'),
-                'parents': [{
-                    'title': base.ImportCases.name,
-                    'page_name': base.ImportCases.name,
-                    'url': base.ImportCases.get_url(domain=domain, relative=True),
-                }],
-            },
-            'section': {
-                'page_name': DataInterfaceSection.section_name,
-                'url': reverse(DataInterfaceSection.urlname, args=[domain]),
-            },
-        }
-    )
+    context = {
+        'columns': columns,
+        'unrecognized_case_types': unrecognized_case_types,
+        'case_types_from_apps': case_types_from_apps,
+        'domain': domain,
+        'slug': base.ImportCases.slug,
+    }
+    context.update(_case_importer_breadcrumb_context(_('Case Options'), domain))
+    return render(request, "case_importer/excel_config.html", context)
 
 
 @require_POST
@@ -190,33 +188,18 @@ def excel_fields(request, domain):
 
     case_field_specs = [field_spec.to_json() for field_spec in field_specs]
 
-    return render(
-        request,
-        "case_importer/excel_fields.html", {
-            'case_type': case_type,
-            'search_column': search_column,
-            'search_field': search_field,
-            'create_new_cases': create_new_cases,
-            'columns': columns,
-            'excel_fields': excel_fields,
-            'case_field_specs': case_field_specs,
-            'domain': domain,
-            'slug': base.ImportCases.slug,
-            'current_page': {
-                'title': _('Matchings'),
-                'page_name': _('Matchings'),
-                'parents': [{
-                    'title': base.ImportCases.name,
-                    'page_name': base.ImportCases.name,
-                    'url': base.ImportCases.get_url(domain=domain, relative=True),
-                }],
-            },
-            'section': {
-                'page_name': DataInterfaceSection.section_name,
-                'url': reverse(DataInterfaceSection.urlname, args=[domain]),
-            },
-        }
-    )
+    context = {
+        'case_type': case_type,
+        'search_column': search_column,
+        'search_field': search_field,
+        'create_new_cases': create_new_cases,
+        'columns': columns,
+        'excel_fields': excel_fields,
+        'case_field_specs': case_field_specs,
+        'domain': domain,
+    }
+    context.update(_case_importer_breadcrumb_context(_('Match Excel Columns to Case Properties'), domain))
+    return render(request, "case_importer/excel_fields.html", context)
 
 
 @require_POST
