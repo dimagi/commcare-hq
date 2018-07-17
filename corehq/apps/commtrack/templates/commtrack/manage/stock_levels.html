@@ -3,9 +3,7 @@
 {% load crispy_forms_tags %}
 {% load hq_shared_tags %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static "commtrack/js/stock_levels.js" %}"></script>
-{% endblock %}
+{% requirejs_main 'commtrack/js/stock_levels' %}
 
 {% block page_content %}
     {% initial_page_data 'form_context' stock_levels_form.get_context %}
