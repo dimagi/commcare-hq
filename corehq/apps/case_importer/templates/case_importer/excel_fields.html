@@ -3,10 +3,7 @@
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-<script src="{% static 'fast-levenshtein/levenshtein.js' %}"></script>
-<script src="{% static 'case_importer/js/excel_fields.js' %}"></script>
-{% endblock %}
+{% requirejs_main "case_importer/js/main" %}
 
 {% block page_breadcrumbs %}
     <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
