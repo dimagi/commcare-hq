@@ -1,6 +1,15 @@
-hqDefine('case_importer/js/import_history', function () {
-    var urllib = hqImport('hqwebapp/js/initial_page_data');
-    var RecentUploads = function () {
+hqDefine('case_importer/js/import_history', [
+    'jquery',
+    'knockout',
+    'underscore',
+    'hqwebapp/js/initial_page_data',
+], function (
+    $,
+    ko,
+    _,
+    initialPageData
+) {
+    var recentUploads = function () {
         var self = {};
         // this is used both for the state of the ajax request
         // and for the state of celery task
@@ -49,7 +58,7 @@ hqDefine('case_importer/js/import_history', function () {
                 // only show spinner on first fetch
                 self.state(self.states.STARTED);
             }
-            $.get(urllib.reverse('case_importer_uploads'), {limit: urllib.getUrlParameter('limit')}).done(function (data) {
+            $.get(initialPageData.reverse('case_importer_uploads'), {limit: initialPageData.getUrlParameter('limit')}).done(function (data) {
                 self.state(self.states.SUCCESS);
                 _(data).each(function (case_upload) {
                     case_upload.comment = ko.observable(case_upload.comment || '');
@@ -71,9 +80,7 @@ hqDefine('case_importer/js/import_history', function () {
         return self;
     };
 
-    $(function () {
-        var recentUploads = RecentUploads();
-        $('#recent-uploads').koApplyBindings(recentUploads);
-        _.delay(recentUploads.fetchCaseUploads);
-    });
+    return {
+        recentUploadsModel: recentUploads,
+    };
 });
