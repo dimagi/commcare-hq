@@ -87,9 +87,9 @@ def excel_config(request, domain):
             'A maximum of %(max_columns)s is supported.'
         ) % {'max_columns': MAX_CASE_IMPORTER_COLUMNS})
 
-    case_types_from_apps = get_case_types_from_apps(domain)
-    unrecognized_case_types = [t for t in get_case_types_for_domain_es(domain)
-                               if t not in case_types_from_apps]
+    case_types_from_apps = sorted(get_case_types_from_apps(domain))
+    unrecognized_case_types = sorted([t for t in get_case_types_for_domain_es(domain)
+                                      if t not in case_types_from_apps])
 
     if len(case_types_from_apps) == 0 and len(unrecognized_case_types) == 0:
         return render_error(request, domain, _(
