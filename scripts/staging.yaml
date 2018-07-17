@@ -51,7 +51,6 @@ name: autostaging
 branches:
   - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
-  - dmr/tweak-s3db-timings  # Danny Jul 11
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
   - jls/appcues-template-apps  # Jenny July 16
