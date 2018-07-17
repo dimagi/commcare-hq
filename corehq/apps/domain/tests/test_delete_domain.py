@@ -27,7 +27,8 @@ from corehq.apps.products.models import Product, SQLProduct
 from corehq.apps.sms.models import (SMS, SQLLastReadMessage, ExpectedCallback,
     PhoneNumber, MessagingEvent, MessagingSubEvent, SelfRegistrationInvitation,
     SQLMobileBackend, SQLMobileBackendMapping, MobileBackendInvitation)
-from corehq.form_processor.interfaces.dbaccessors import CaseAccessors
+from corehq.form_processor.interfaces.dbaccessors import CaseAccessors, FormAccessors
+from corehq.form_processor.tests.utils import create_form_for_test
 from six.moves import range
 
 
@@ -238,6 +239,17 @@ class TestDeleteDomain(TestCase):
     @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=False)
     def test_case_deletion_couch(self):
         self._test_case_deletion()
+
+    @override_settings(TESTS_SHOULD_USE_SQL_BACKEND=True)
+    def test_form_deletion(self):
+        for domain_name in [self.domain.name, self.domain2.name]:
+            create_form_for_test(domain_name)
+            self.assertEqual(len(FormAccessors(domain_name).get_all_form_ids_in_domain()), 1)
+
+        self.domain.delete()
+
+        self.assertEqual(len(FormAccessors(self.domain.name).get_all_form_ids_in_domain()), 0)
+        self.assertEqual(len(FormAccessors(self.domain2.name).get_all_form_ids_in_domain()), 1)
 
     def tearDown(self):
         self.domain2.delete()
