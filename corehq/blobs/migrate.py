@@ -80,6 +80,7 @@ from tempfile import mkdtemp
 from django.conf import settings
 
 from corehq.apps.accounting.models import InvoicePdf
+from corehq.apps.builds.models import CommCareBuild
 from corehq.apps.export import models as exports
 from corehq.apps.ota.models import DemoUserRestore
 from corehq.blobs import get_blob_db, DEFAULT_BUCKET, BlobInfo
@@ -648,6 +649,7 @@ class SqlModelMigrator(Migrator):
 
 
 MIGRATIONS = {m.slug: m for m in [
+    Migrator('commcare_builds', [CommCareBuild], CouchAttachmentMigrator),
     Migrator('invoice_pdfs', [InvoicePdf], CouchAttachmentMigrator),
     Migrator("saved_exports", [SavedBasicExport], CouchAttachmentMigrator),
     Migrator("applications", [
