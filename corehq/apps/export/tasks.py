@@ -1,13 +1,14 @@
 from __future__ import absolute_import
 from __future__ import unicode_literals
 from datetime import datetime, timedelta
-import logging
 from functools import wraps
 
 import six
 from celery.schedules import crontab
 from celery.task import task, periodic_task
 from django.conf import settings
+from django.utils.text import slugify
+
 from soil import DownloadBase
 from soil.progress import get_task_status
 
@@ -30,7 +31,13 @@ from .dbaccessors import (
     get_properly_wrapped_export_instance,
     get_all_daily_saved_export_instance_ids,
 )
-from .export import get_export_file, rebuild_export, should_rebuild_export
+from .export import (
+    _record_datadog_export_duration,
+    _time_in_milliseconds,
+    get_export_file,
+    rebuild_export,
+    should_rebuild_export,
+)
 from .models.new import EmailExportWhenDoneRequest
 from .system_properties import MAIN_CASE_TABLE_PROPERTIES
 
@@ -48,30 +55,47 @@ def logged_export_task(func):
             return kwargs['export_instance_ids']
         return []
 
-    def get_inst_str(export_instance_id):
-        export_instance = get_properly_wrapped_export_instance(export_instance_id)
-        return '; '.join((
-            'ID: {}'.format(export_instance._id),
-            'Name: {}'.format(export_instance.name),
-            'Domain: {}'.format(export_instance.domain),
-        ))
+    def unzip_attrs(objs, *attrs):
+        """
+        Unzips attribute values from an iterable of objects
 
-    def get_task_str(export_func, args, kwargs):
+        >>> from dimagi.ext.jsonobject import JsonObject
+        >>> obj_fr = JsonObject({'one': 'un', 'two': 'deux', 'three': 'trois'})
+        >>> obj_xh = JsonObject({'one': 'nye', 'two': 'mbini', 'three': 'ntathu'})
+        >>> ones, twos = unzip_attrs([obj_fr, obj_xh], 'one', 'two')
+        >>> ones
+        ['un', 'nye']
+        >>> twos
+        ['deux', 'mbini']
+
+        """
+        attr_list = [[] for _ in range(len(attrs))]
+        for obj in objs:
+            for i, attr in enumerate(attrs):
+                attr_list[i].append(getattr(obj, attr))
+        return attr_list
+
+    def get_task_data(export_func, args, kwargs):
+        task_name = export_func.__name__
         export_instance_ids = get_export_instance_ids(args, kwargs)
-        inst_str = '), ('.join((get_inst_str(doc_id) for doc_id in export_instance_ids))
-        task_str = 'Task: {}; Export instances: [({})]'.format(export_func.__name__, inst_str)
-        return task_str
+        export_instances = (get_properly_wrapped_export_instance(doc_id) for doc_id in export_instance_ids)
+        domains, instance_names = unzip_attrs(export_instances, 'domain', 'name')
+        return task_name, domains, instance_names
 
     @wraps(func)
     def log_export_task(*args, **kwargs):
-        logger = logging.getLogger('export_tasks')
+        task_name, domains, instance_names = get_task_data(func, args, kwargs)
+        start = _time_in_milliseconds()
 
-        task_str = get_task_str(func, args, kwargs)
-        logger.info('Started {}'.format(task_str))
-        started_at = datetime.utcnow()
         result = func(*args, **kwargs)
-        duration = datetime.utcnow() - started_at
-        logger.info('Completed {}; Duration {}'.format(task_str, duration))
+
+        end = _time_in_milliseconds()
+        tags = [
+            'task:{}'.format(task_name),
+        ]
+        tags.extend({'domain:{}'.format(d) for d in domains})
+        tags.extend(['export:{}'.format(slugify(n)) for n in instance_names])
+        _record_datadog_export_duration(end - start, None, None, tags=tags)
         return result
 
     return log_export_task

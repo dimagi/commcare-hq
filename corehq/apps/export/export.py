@@ -419,6 +419,12 @@ def __record_datadog_export(duration, doc_bytes, n_rows, metric, tags):
             duration // n_rows,
             tags=tags,
         )
+    if not (doc_bytes or n_rows):
+        datadog_histogram(
+            metric,
+            duration,
+            tags=tags,
+        )
 
 
 def _get_base_query(export_instance):
