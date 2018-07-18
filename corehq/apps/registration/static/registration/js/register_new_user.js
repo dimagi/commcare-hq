@@ -40,33 +40,31 @@ $(function () {
     });
 
     // Handle phone number input
-    if (initial_page_data('show_number')) {
-        var $number = $('#id_phone_number');
-        $number.intlTelInput({
-            separateDialCode: true,
-            utilsScript: initial_page_data('number_utils_script'),
-        });
-        $number.keydown(function (e) {
-            // prevents non-numeric numbers from being entered.
-            // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
-            // Allow: backspace, delete, tab, escape, enter and .
-            if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
-                // Allow: Ctrl+A, Command+A
-                (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
-                // Allow: home, end, left, right, down, up
-                (e.keyCode >= 35 && e.keyCode <= 40)
-            ) {
-                // let it happen, don't do anything
-                return;
-            }
+    var $number = $('#id_phone_number');
+    $number.intlTelInput({
+        separateDialCode: true,
+        utilsScript: initial_page_data('number_utils_script'),
+    });
+    $number.keydown(function (e) {
+        // prevents non-numeric numbers from being entered.
+        // from http://stackoverflow.com/questions/995183/how-to-allow-only-numeric-0-9-in-html-inputbox-using-jquery
+        // Allow: backspace, delete, tab, escape, enter and .
+        if ($.inArray(e.keyCode, [46, 8, 9, 27, 13, 110, 190]) !== -1 ||
+            // Allow: Ctrl+A, Command+A
+            (e.keyCode === 65 && (e.ctrlKey === true || e.metaKey === true)) ||
+            // Allow: home, end, left, right, down, up
+            (e.keyCode >= 35 && e.keyCode <= 40)
+        ) {
+            // let it happen, don't do anything
+            return;
+        }
 
-            // Ensure that it is a number and stop the keypress
-            if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
-                e.preventDefault();
-            }
-        });
-        reg.setGetPhoneNumberFn(function () {
-            return $number.intlTelInput("getNumber");
-        });
-    }
+        // Ensure that it is a number and stop the keypress
+        if ((e.shiftKey || (e.keyCode < 48 || e.keyCode > 57)) && (e.keyCode < 96 || e.keyCode > 105)) {
+            e.preventDefault();
+        }
+    });
+    reg.setGetPhoneNumberFn(function () {
+        return $number.intlTelInput("getNumber");
+    });
 });
