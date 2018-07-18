@@ -336,6 +336,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
         self.renameCaseTag = function(oldTag, newTag, parentOnly) {
             var actions = self.load_update_cases();
             var action;
+
             for (var i = 0; i < actions.length; i++) {
                 action = actions[i];
                 if (!parentOnly && action.case_tag() === oldTag) {
@@ -506,7 +507,7 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
             }
             if (!case_type) {
                 return gettext("Case Type required");
-            } else if (!case_tag) {
+            } else if (!case_tag || self.warn_blank_case_tag) {
                 return gettext("Case Tag required");
             }
             if (!/^[a-zA-Z][\w_-]*(\/[a-zA-Z][\w_-]*)*$/.test(case_tag)) {
@@ -712,6 +713,11 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 withPrevious: 1,
             });
             self.case_tag.subscribe(function(tag) {
+                if (!tag) {
+                    // Don't allow user to blank out case tag, and let them know
+                    self.warn_blank_case_tag = true;
+                    self.case_tag(self.case_tag.previous());
+                }
                 self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
             });
 
@@ -974,6 +980,12 @@ hqDefine('app_manager/js/forms/case_config_ui_advanced', function() {
                 withPrevious: 1,
             });
             self.case_tag.subscribe(function(tag) {
+                if (!tag) {
+                    // Don't allow user to blank out case tag, and let them know
+                    self.warn_blank_case_tag = true;
+                    self.case_tag(self.case_tag.previous());
+                }
+                self.warn_blank_case_tag = false;
                 self.caseConfig.caseConfigViewModel.renameCaseTag(self.case_tag.previous(), tag, true);
             });
 
