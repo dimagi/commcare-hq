@@ -730,7 +730,7 @@ def dump_users_and_groups(domain, download_id, user_filters):
 
         return group_memoizer
 
-    writer = Excel2007ExportWriter()
+    writer = Excel2007ExportWriter(format_as_text=True)
     group_memoizer = _load_memoizer(domain)
     location_cache = LocationIdToSiteCodeCache(domain)
 

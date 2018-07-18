@@ -51,11 +51,12 @@ name: autostaging
 branches:
   - jls/requirejs-locations  # Jenny June 22
   - nh/omrs/levenshtein # Norman June 29
-  - dmr/tweak-s3db-timings  # Danny Jul 11
   - es/location-upload  # Ethan July 6
   - jls/unify-tab-history  # Jenny July 10
-  - emord-patch-1  # J$ upgrade pillow
   - jls/appcues-template-apps  # Jenny July 16
+  - je/upgrade-gunicorn # 7/17
+  - jls/requirejs-case-importer  # Jenny July 17
+  - np/domain-blob  # NP July 17
 submodules:
   submodules/django-digest-src:
     branches: []
