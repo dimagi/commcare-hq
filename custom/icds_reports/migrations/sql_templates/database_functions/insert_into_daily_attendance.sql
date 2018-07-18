@@ -25,7 +25,8 @@ BEGIN
     'form_location, ' ||
     'form_location_lat, ' ||
     'form_location_long, ' ||
-    'image_name ' ||
+    'image_name, ' ||
+    'pse_conducted ' ||
     'FROM ' || quote_ident(_daily_attendance_tablename) || ' ' ||
     'WHERE month = ' || quote_literal(_start_date) || ' ' ||
     'ORDER BY awc_id, submitted_on, inserted_at DESC)';
