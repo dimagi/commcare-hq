@@ -254,7 +254,6 @@ def track_web_user_registration_hubspot(request, web_user, properties):
         'created_account_in_hq': True,
         'is_a_commcare_user': True,
         'lifecyclestage': 'lead',
-        'date_created': web_user.date_joined.isoformat(),
     }
     env = get_instance_string()
     tracking_info['{}date_created'.format(env)] = web_user.date_joined.isoformat()
