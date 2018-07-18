@@ -3,10 +3,10 @@ from __future__ import unicode_literals
 
 import os
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 from mock import patch
 
-from corehq.apps.userreports.models import get_datasource_config
+from corehq.apps.userreports.models import get_datasource_config, StaticDataSourceConfiguration
 from corehq.form_processor.utils import convert_xform_to_json
 from corehq.util.test_utils import TestFileMixin
 
@@ -21,6 +21,12 @@ class BaseFormsTest(SimpleTestCase, TestFileMixin):
     root = os.path.dirname(__file__)
     maxDiff = None
 
+    @classmethod
+    def tearDownClass(cls):
+        StaticDataSourceConfiguration.by_id_mapping.reset_cache(StaticDataSourceConfiguration.__class__)
+        super(BaseFormsTest, cls).tearDownClass()
+
+    @override_settings(SERVER_ENVIRONMENT='icds-new')
     @patch('corehq.apps.callcenter.data_source.get_call_center_domains', lambda: [])
     def _get_config(self):
         config, _ = get_datasource_config(self.ucr_name, self.domain)

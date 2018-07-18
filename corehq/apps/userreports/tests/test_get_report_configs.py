@@ -23,6 +23,9 @@ class TestGetReportConfigs(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'static_reports')
     root = os.path.dirname(__file__)
 
+    def tearDown(self):
+        StaticReportConfiguration.by_id_mapping.reset_cache(StaticReportConfiguration.__class__)
+
     def test_static_reports(self):
         with override_settings(STATIC_UCR_REPORTS=[
             self.get_path('static_report_config', 'json'),
