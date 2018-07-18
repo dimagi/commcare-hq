@@ -20,7 +20,6 @@ class TestDomainUserHistory(BaseInvoiceTestCase):
     def tearDown(self):
         for user in self.domain.all_users():
             user.delete()
-        import ipdb; ipdb.set_trace()
         for domain_user_history in DomainUserHistory.objects.all():
             domain_user_history.delete()
 
