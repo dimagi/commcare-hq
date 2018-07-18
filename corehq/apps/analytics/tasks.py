@@ -492,10 +492,6 @@ def track_periodic_data():
                         'value': max_forms > HUBSPOT_THRESHOLD
                     },
                     {
-                        'property': 'date_created',
-                        'value': date_created
-                    },
-                    {
                         'property': '{}date_created'.format(env),
                         'value': date_created
                     },
