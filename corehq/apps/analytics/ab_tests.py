@@ -29,7 +29,7 @@ class ABTest(object):
         if self._cookie_id in self.request.COOKIES:
             return self.request.COOKIES[self._cookie_id]
         if assign_if_blank:
-            return random.sample(self.options, 1)[0]
+            return random.choice(self.options)
         return None
 
     def update_response(self, response):
