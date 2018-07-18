@@ -9,6 +9,7 @@ from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
+from corehq.apps.domain.models import Domain, LOGO_ATTACHMENT
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
@@ -196,6 +197,44 @@ class TestSavedExportsMigrations(BaseMigrationTest):
         exp = SavedBasicExport.get(saved._id)
         self.assertEqual(exp.get_payload(), new_payload)
         self.assertEqual(exp.fetch_attachment("other"), old_payload)
+
+
+class TestDomainMigrations(BaseMigrationTest):
+
+    slug = "domains"
+
+    def test_migrate_happy_path(self):
+        domain = Domain(name='test_logo_attachment')
+        domain.save()
+        domain_logo = b'logo: binary data not valid utf-8 \xe4\x94'
+        super(BlobMixin, domain).put_attachment(domain_logo, LOGO_ATTACHMENT)
+        domain.save()
+
+        self.do_migration([domain])
+
+        domain = Domain.get(domain._id)
+        self.assertEqual(domain.get_custom_logo()[0], domain_logo)
+
+    def test_migrate_with_concurrent_modification(self):
+        domain = Domain(name='test_logo_attachment')
+        domain.save()
+        new_logo = b'something new'
+        old_logo = b'something old'
+        super(BlobMixin, domain).put_attachment(old_logo, LOGO_ATTACHMENT)
+        super(BlobMixin, domain).put_attachment(old_logo, 'other')
+        domain.save()
+        self.assertEqual(len(domain._attachments), 2)
+
+        def modify(domain_doc):
+            domain_doc = Domain.get(domain_doc._id)
+            domain_doc.put_attachment(new_logo, LOGO_ATTACHMENT)
+            domain_doc.save()
+
+        self.do_failed_migration({domain: (1, 1)}, modify)
+
+        domain = Domain.get(domain._id)
+        self.assertEqual(domain.get_custom_logo()[0], new_logo)
+        self.assertEqual(domain.fetch_attachment('other'), old_logo)
 
 
 class TestApplicationMigrations(BaseMigrationTest):
