@@ -13,6 +13,7 @@ from django.utils.translation import ugettext as _, ungettext
 
 from memoized import memoized
 
+from corehq.util.dates import get_first_last_days
 from corehq.apps.accounting.exceptions import (
     InvoiceAlreadyCreatedError,
     InvoiceEmailThrottledError,
@@ -383,11 +384,34 @@ def generate_line_items(invoice, subscription):
     product_factory.create()
 
     for feature_rate in subscription.plan_version.feature_rates.all():
-        feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
-            feature_rate.feature.feature_type
-        )
-        feature_factory = feature_factory_class(subscription, feature_rate, invoice)
-        feature_factory.create()
+        if feature_rate.feature.feature_type == FeatureType.USER and\
+                invoice.is_customer_invoice and invoice.account.invoicing_plan != InvoicingPlan.MONTHLY:
+            generate_feature_line_items_over_period(invoice, subscription, feature_rate)
+        else:
+            generate_line_item_from_feature_rate(feature_rate, invoice, subscription)
+
+
+def generate_feature_line_items_over_period(invoice, subscription, feature_rate):
+    # Iterate through all months in the invoice date range to get accurate feature line items
+    invoice_start = invoice.date_start
+    invoice_end = invoice.date_end
+    start, end = get_first_last_days(year=invoice.date_start.year, month=invoice.date_start.month)
+    while start < invoice_end:
+        invoice.date_start = start
+        invoice.date_end = end
+        generate_line_item_from_feature_rate(feature_rate, invoice, subscription)
+        start = months_from_date(start, 1)
+        start, end = get_first_last_days(year=start.year, month=start.month)
+    invoice.date_start = invoice_start
+    invoice.date_end = invoice_end
+
+
+def generate_line_item_from_feature_rate(feature_rate, invoice, subscription):
+    feature_factory_class = FeatureLineItemFactory.get_factory_by_feature_type(
+        feature_rate.feature.feature_type
+    )
+    feature_factory = feature_factory_class(subscription, feature_rate, invoice)
+    feature_factory.create()
 
 
 def get_invoice_start(subscription, date_start):
