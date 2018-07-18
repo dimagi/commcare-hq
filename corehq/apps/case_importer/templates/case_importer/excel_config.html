@@ -1,25 +1,9 @@
-{% extends "hqwebapp/two_column.html" %}
+{% extends "hqwebapp/base_section.html" %}
 {% load hq_shared_tags %}
 {% load report_tags %}
 {% load i18n %}
 
-{% block js %}{{ block.super }}
-    <script src="{% static 'case_importer/js/excel_config.js' %}"></script>
-{% endblock %}
-
-{% block page_breadcrumbs %}
-    <ol id="hq-breadcrumbs" class="breadcrumb breadcrumb-hq-section">
-        <li>
-            <a href="{% url "data_interfaces_default" domain %}"><strong>{% trans "Data" %}</strong></a>
-        </li>
-        <li>
-            <a href="#" id="back_breadcrumb">{% trans "Import Cases from Excel" %}</a>
-        </li>
-        <li class="active">
-            {% trans "Case Options" %}
-        </li>
-    </ol>
-{% endblock %}
+{% requirejs_main "case_importer/js/main" %}
 
 {% block page_content %}
     {% include 'case_importer/partials/help_message.html' %}
