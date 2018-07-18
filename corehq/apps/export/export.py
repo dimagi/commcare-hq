@@ -9,6 +9,7 @@ from collections import Counter
 import datetime
 
 from couchdbkit import ResourceConflict
+from django.utils.text import slugify
 
 from dimagi.utils.logging import notify_exception
 from soil import DownloadBase
@@ -378,7 +379,11 @@ def write_export_instance(writer, export_instance, documents, progress_tracker=N
             DownloadBase.set_progress(progress_tracker, row_number + 1, documents.count)
 
     end = _time_in_milliseconds()
-    tags = ['format:{}'.format(writer.format)]
+    tags = [
+        'format:{}'.format(writer.format),
+        'domain:{}'.format(export_instance.domain),
+        'export:{}'.format(slugify(export_instance.name)),
+    ]
     _record_datadog_export_write_rows(write_total, total_bytes, total_rows, tags)
     _record_datadog_export_compute_rows(compute_total, total_bytes, total_rows, tags)
     _record_datadog_export_duration(end - start, total_bytes, total_rows, tags)
