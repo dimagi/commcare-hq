@@ -174,14 +174,14 @@ class AggregationScriptTest(AggregationScriptTestBase):
         self._load_and_compare_data(
             'daily_attendance_2017-04-01',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-04-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
+            sort_key=['awc_id', 'pse_date']
         )
 
     def test_daily_attendance_2017_05_01(self):
         self._load_and_compare_data(
             'daily_attendance_2017-05-01',
             os.path.join(OUTPUT_PATH, 'daily_attendance_2017-05-01_sorted.csv'),
-            sort_key=['awc_id', 'doc_id']
+            sort_key=['awc_id', 'pse_date']
         )
 
     def test_agg_child_health_2017_04_01_1(self):
