@@ -2,9 +2,13 @@ from __future__ import absolute_import
 from __future__ import unicode_literals
 
 import logging
+import os
+import sys
 from datetime import date
+from io import open
 
 from django.apps import apps
+from django.conf import settings
 from django.db import connection, transaction
 from django.db.models import Q
 
@@ -119,11 +123,18 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
+def silence_during_tests():
+    if settings.UNIT_TESTING:
+        return open(os.devnull, 'w')
+    else:
+        return sys.stdout
+
+
 def _delete_all_cases(domain_name):
     logger.info('Deleting cases...')
     case_accessor = CaseAccessors(domain_name)
     case_ids = case_accessor.get_case_ids_in_domain()
-    for case_id_chunk in chunked(with_progress_bar(case_ids), 500):
+    for case_id_chunk in chunked(with_progress_bar(case_ids, stream=silence_during_tests()), 500):
         case_accessor.soft_delete_cases(list(case_id_chunk))
     logger.info('Deleting cases complete.')
 
@@ -132,7 +143,7 @@ def _delete_all_forms(domain_name):
     logger.info('Deleting forms...')
     form_accessor = FormAccessors(domain_name)
     form_ids = form_accessor.get_all_form_ids_in_domain()
-    for form_id_chunk in chunked(with_progress_bar(form_ids), 500):
+    for form_id_chunk in chunked(with_progress_bar(form_ids, stream=silence_during_tests()), 500):
         form_accessor.soft_delete_forms(list(form_id_chunk))
     logger.info('Deleting forms complete.')
 
