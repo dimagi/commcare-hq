@@ -50,8 +50,8 @@
             <strong data-bind="text: user_name"></strong>
             <!--ko if: upload_comment_edit_allowed-->
             <inline-edit params="
-                value: comment(),
-                url: commentUrl(),
+                value: comment,
+                url: commentUrl,
                 rows: 1,
                 placeholder: '{% trans "(Click here to add a comment)"|escapejs %}',
                 saveValueName: 'comment',
