@@ -113,7 +113,6 @@ COUCH_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 DJANGO_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.django.log")
 ACCOUNTING_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.accounting.log")
 ANALYTICS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.analytics.log")
-EXPORT_TASKS_LOG_FILE = "%s/%s" % (FILEPATH, "commcarehq.export_tasks.log")
 UCR_TIMING_FILE = "%s/%s" % (FILEPATH, "ucr.timing.log")
 UCR_DIFF_FILE = "%s/%s" % (FILEPATH, "ucr.diff.log")
 UCR_EXCEPTION_FILE = "%s/%s" % (FILEPATH, "ucr.exception.log")
@@ -1126,14 +1125,6 @@ LOGGING = {
             'maxBytes': 10 * 1024 * 1024,  # 10 MB
             'backupCount': 20  # Backup 200 MB of logs
         },
-        'export_tasks_handler': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'verbose',
-            'filename': EXPORT_TASKS_LOG_FILE,
-            'maxBytes': 10 * 1024 * 1024,  # 10 MB
-            'backupCount': 20  # Backup 200 MB of logs
-        },
         'formplayer_diff': {
             'level': 'INFO',
             'class': 'logging.handlers.RotatingFileHandler',
@@ -1264,11 +1255,6 @@ LOGGING = {
         'elasticsearch': {
             'handlers': ['file'],
             'level': 'ERROR',
-            'propagate': True,
-        },
-        'export_tasks': {
-            'handlers': ['export_tasks_handler'],
-            'level': 'INFO',
             'propagate': True,
         },
         'formplayer_timing': {
