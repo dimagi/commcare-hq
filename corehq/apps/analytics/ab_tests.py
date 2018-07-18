@@ -43,17 +43,6 @@ class ABTest(object):
         }
 
 
-NEW_USER_NUMBER_OPTION_SHOW_NUM = 'show_number'
-NEW_USER_NUMBER_OPTION_HIDE_NUM = 'hide_number'
-
-
-NEW_USER_NUMBER = ABTestConfig(
-    'New User Phone Number',
-    'new_phone_may2018',
-    (NEW_USER_NUMBER_OPTION_SHOW_NUM, NEW_USER_NUMBER_OPTION_HIDE_NUM)
-)
-
-
 APPCUES_TEMPLATE_APP_OPTION_ON = 'appcues_on'
 APPCUES_TEMPLATE_APP_OPTION_OFF = 'appcues_off'
 
