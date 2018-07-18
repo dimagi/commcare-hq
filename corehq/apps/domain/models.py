@@ -1008,11 +1008,7 @@ class Domain(QuickCachedDocumentMixin, BlobMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            (
-                self['_attachments'][LOGO_ATTACHMENT]['content_type']
-                if self['_attachments']
-                else self.external_blobs[LOGO_ATTACHMENT].content_type
-            )
+            self.blobs[LOGO_ATTACHMENT].content_type
         )
 
     def get_case_display(self, case):
