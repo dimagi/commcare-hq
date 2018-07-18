@@ -671,7 +671,7 @@ class StaticDataSourceConfiguration(JsonObject):
         }
 
     @classmethod
-    def _all(cls, ignore_server_environment=False):
+    def _all(cls):
         """
         :return: Generator of all wrapped configs read from disk
         """
@@ -689,12 +689,12 @@ class StaticDataSourceConfiguration(JsonObject):
                 for wrapped, path in provider_fn():
                     yield wrapped
 
-        return __get_all() if ignore_server_environment else _filter_by_server_env(__get_all())
+        return __get_all() if settings.UNIT_TESTING else _filter_by_server_env(__get_all())
 
     @classmethod
-    def all(cls, ignore_server_environment=True):
+    def all(cls):
         """Unoptimized method that get's all configs by re-reading from disk"""
-        for wrapped in cls._all(ignore_server_environment):
+        for wrapped in cls._all():
             for domain in wrapped.domains:
                 yield cls._get_datasource_config(wrapped, domain)
 
@@ -751,7 +751,7 @@ class StaticReportConfiguration(JsonObject):
         )
 
     @classmethod
-    def _all(cls, ignore_server_environment=False):
+    def _all(cls):
         def __get_all():
             for path_or_glob in settings.STATIC_UCR_REPORTS:
                 if os.path.isfile(path_or_glob):
@@ -761,7 +761,7 @@ class StaticReportConfiguration(JsonObject):
                     for path in files:
                         yield _get_wrapped_object_from_file(path, cls)
 
-        return __get_all() if ignore_server_environment else _filter_by_server_env(__get_all())
+        return __get_all() if settings.UNIT_TESTING else _filter_by_server_env(__get_all())
 
     @classmethod
     @memoized
@@ -773,9 +773,9 @@ class StaticReportConfiguration(JsonObject):
         }
 
     @classmethod
-    def all(cls, ignore_server_environment=False):
+    def all(cls):
         """Only used in tests"""
-        for wrapped in StaticReportConfiguration._all(ignore_server_environment):
+        for wrapped in StaticReportConfiguration._all():
             for domain in wrapped.domains:
                 yield cls._get_report_config(wrapped, domain)
 
