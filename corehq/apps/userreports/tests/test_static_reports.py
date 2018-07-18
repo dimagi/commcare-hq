@@ -17,6 +17,10 @@ class TestStaticReportConfig(SimpleTestCase, TestFileMixin):
     file_path = ('data', 'static_reports')
     root = os.path.dirname(__file__)
 
+    def setUp(self):
+        super(TestStaticReportConfig, self).setUp()
+        StaticReportConfiguration.by_id_mapping.reset_cache(StaticReportConfiguration.__class__)
+
     def test_wrap(self):
         wrapped = StaticReportConfiguration.wrap(self.get_json('static_report_config'))
         self.assertEqual(["example", "dimagi"], wrapped.domains)
