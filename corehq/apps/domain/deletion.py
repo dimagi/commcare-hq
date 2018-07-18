@@ -114,14 +114,14 @@ def _terminate_subscriptions(domain_name):
         ).update(is_hidden_to_ops=True)
 
 
-def _delete_sql_cases(domain_name):
+def _delete_all_cases(domain_name):
     case_accessor = CaseAccessors(domain_name)
     case_ids = case_accessor.get_case_ids_in_domain()
     for case_id_chunk in chunked(case_ids, 500):
         case_accessor.soft_delete_cases(list(case_id_chunk))
 
 
-def _delete_sql_forms(domain_name):
+def _delete_all_forms(domain_name):
     form_accessor = FormAccessors(domain_name)
     form_ids = form_accessor.get_all_form_ids_in_domain()
     for form_id_chunk in chunked(form_ids, 500):
@@ -159,8 +159,8 @@ DOMAIN_DELETE_OPERATIONS = [
     CustomDeletion('sms', _delete_domain_backends),
     CustomDeletion('users', _delete_web_user_membership),
     CustomDeletion('accounting', _terminate_subscriptions),
-    CustomDeletion('form_processor', _delete_sql_cases),
-    CustomDeletion('form_processor', _delete_sql_forms),
+    CustomDeletion('form_processor', _delete_all_cases),
+    CustomDeletion('form_processor', _delete_all_forms),
 ]
 
 
