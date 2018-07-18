@@ -32,6 +32,7 @@
     {% endcompress %}
     {% if module.doc_type == 'AdvancedModule' %}
         {% compress js %}
+        <script src="{% static 'app_manager/js/forms/advanced/case_properties.js' %}"></script>
         <script src="{% static 'app_manager/js/forms/advanced/case_config_ui.js' %}"></script>
         <script src="{% static 'app_manager/js/visit_scheduler.js' %}"></script>
         {% endcompress %}
