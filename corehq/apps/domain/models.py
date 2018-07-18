@@ -1000,8 +1000,7 @@ class Domain(BlobMixin, QuickCachedDocumentMixin, Document, SnapshotMixin):
 
     @property
     def has_custom_logo(self):
-        return (self['_attachments'] and
-                LOGO_ATTACHMENT in self['_attachments'])
+        return self.has_attachment(LOGO_ATTACHMENT)
 
     def get_custom_logo(self):
         if not self.has_custom_logo:
@@ -1009,7 +1008,11 @@ class Domain(BlobMixin, QuickCachedDocumentMixin, Document, SnapshotMixin):
 
         return (
             self.fetch_attachment(LOGO_ATTACHMENT),
-            self['_attachments'][LOGO_ATTACHMENT]['content_type']
+            (
+                self['_attachments'][LOGO_ATTACHMENT]['content_type']
+                if self['_attachments']
+                else self.external_blobs[LOGO_ATTACHMENT].content_type
+            )
         )
 
     def get_case_display(self, case):
