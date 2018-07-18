@@ -356,7 +356,7 @@ class ScheduleInstance(PartitionedModel):
         Subclasses can override this to provide additional checks under
         which a ScheduleInstance should be deactivated, which will be checked
         when the ScheduleInstances are being refreshed as well as right before
-        processing them, through check_active_flag_against_schedule().
+        and after processing them, through check_active_flag_against_schedule().
         """
         return False
 
@@ -537,7 +537,7 @@ class CaseScheduleInstanceMixin(object):
                 else:
                     stop_date = UserTime(stop_date, timezone).server_time().done()
 
-                if util.utcnow() > stop_date:
+                if self.next_event_due > stop_date:
                     return True
 
         return False
