@@ -17,11 +17,8 @@ from corehq.blobs.tests.util import (
     TemporaryFilesystemBlobDB, TemporaryMigratingBlobDB
 )
 from corehq.blobs.util import random_url_id
-from corehq.sql_db.models import PartitionedModel
-from corehq.util.doc_processor.couch import CouchDocumentProvider, doc_type_tuples_to_dict
-from corehq.util.test_utils import trap_extra_setup
+from corehq.util.doc_processor.couch import doc_type_tuples_to_dict
 
-from django.conf import settings
 from django.test import TestCase
 from testil import replattr, tempdir
 
