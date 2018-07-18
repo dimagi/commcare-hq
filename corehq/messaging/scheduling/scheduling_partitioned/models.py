@@ -537,7 +537,7 @@ class CaseScheduleInstanceMixin(object):
                 else:
                     stop_date = UserTime(stop_date, timezone).server_time().done()
 
-                if self.next_event_due > stop_date:
+                if self.next_event_due >= stop_date:
                     return True
 
         return False
