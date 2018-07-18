@@ -1,4 +1,5 @@
 doc_id,inserted_at,awc_id,supervisor_id,block_id,district_id,state_id,submitted_on,awc_open_count,open_bfast_count,open_hotcooked_count,days_thr_provided_count,open_pse_count,open_four_acts_count,open_one_acts_count,count,month,eligible_children,attended_children,attended_children_percent,attendance_full,attendance_partial,attendance_non,form_location,form_location_lat,form_location_long,awc_not_open_holiday,awc_not_open_festival,awc_not_open_no_help,awc_not_open_department_work,awc_not_open_other,awc_not_open,image_name,pse_conducted
+1fd46af3-fjda-4071-a98d-f0ad80481d0a,2017-06-01,a1,s1,b1,d1,st1,2017-04-07,1,1,1,0,1,1,1,1,2017-04-01,32,21,0.65625,0,1,0,,,,0,0,0,0,1,0,1fd.jpg,
 1fd46af3-bef6-4071-a98d-f0ad80481d0a,2017-07-01,a1,s1,b1,d1,st1,2017-04-07,1,1,1,0,1,1,1,1,2017-04-01,32,21,0.65625,0,1,0,,,,0,0,0,0,0,0,1491543874896.jpg,
 21d50057-4dd0-43bf-8b3f-9868e5fd66c9,2017-07-01,a1,s1,b1,d1,st1,2017-04-08,1,1,1,0,1,1,1,1,2017-04-01,31,20,0.64516129,0,1,0,,,,0,0,0,0,0,0,1491630683473.jpg,
 1c9eefdf-0cc1-4c1a-bfa8-fde88f182c97,2017-07-01,a1,s1,b1,d1,st1,2017-04-10,1,1,1,0,1,1,1,1,2017-04-01,31,21,0.677419355,0,1,0,,,,0,0,0,0,0,0,1491802160291.jpg,
