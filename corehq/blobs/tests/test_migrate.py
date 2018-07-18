@@ -9,6 +9,7 @@ from io import BytesIO
 from os.path import join
 
 import corehq.blobs.migrate as mod
+from corehq.apps.builds.models import CommCareBuild
 from corehq.blobs import get_blob_db
 from corehq.blobs.mixin import BlobMixin
 from corehq.blobs.s3db import maybe_not_found
@@ -440,6 +441,47 @@ class TestCommCareCaseMigrations(BaseMigrationTest):
             exp = type(item).get(item._id)
             self.assertEqual(exp.fetch_attachment(name), new_data)
             self.assertEqual(exp.fetch_attachment("other.png"), old_data)
+
+
+class TestCommCareBuildMigrations(BaseMigrationTest):
+
+    slug = 'commcare_builds'
+
+    def test_migrate_happy_path(self):
+        commcare_build = CommCareBuild()
+        commcare_build.save()
+        payload = b'binary payload \xe4\x94'
+        payload_name = 'payload.jar'
+        super(BlobMixin, commcare_build).put_attachment(payload, payload_name)
+        commcare_build.save()
+        self.assertEqual(len(commcare_build._attachments), 1)
+
+        self.do_migration([commcare_build])
+
+        commcare_build = CommCareBuild.get(commcare_build._id)
+        self.assertEqual(commcare_build.fetch_file(payload_name), payload)
+        self.assertIsNone(commcare_build._attachments)
+
+    def test_migrate_with_concurrent_modification(self):
+        commcare_build = CommCareBuild()
+        commcare_build.save()
+        old_payload = b'old payload \xe4\x94'
+        new_payload = b'new payload \xe4\x94'
+        payload_name = 'payload.jar'
+        super(BlobMixin, commcare_build).put_attachment(old_payload, payload_name)
+        commcare_build.save()
+        self.assertEqual(len(commcare_build._attachments), 1)
+
+        def modify(doc):
+            doc = CommCareBuild.get(doc._id)
+            doc.put_attachment(new_payload, payload_name)
+            doc.save()
+
+        self.do_failed_migration({commcare_build: (1, 1)}, modify)
+
+        commcare_build = CommCareBuild.get(commcare_build._id)
+        self.assertEqual(commcare_build.fetch_file(payload_name), new_payload)
+        self.assertIsNone(commcare_build._attachments)
 
 
 class TestMigrateBackend(TestCase):
